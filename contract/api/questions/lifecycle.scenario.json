@@ -1,0 +1,82 @@
+{
+  "title": "Kommentieren, entscheiden, verwerfen und wieder öffnen",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    {
+      "name": "Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "compare": "status"
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "compare": "status"
+    },
+    {
+      "name": "Ticket Login anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Login" },
+      "compare": "status"
+    },
+    {
+      "name": "Frage zum Ticket anlegen",
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions",
+      "body": { "title": "Welcher Speicher?", "occasion": "Board", "ticketIds": ["ARC-0001"] }
+    },
+    {
+      "name": "Kommentar schreiben",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/comments",
+      "body": { "body": "  Bitte bis Freitag klären.  " }
+    },
+    {
+      "name": "zweiten Kommentar schreiben",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/comments",
+      "body": { "body": "SQL Server wäre auch möglich." }
+    },
+    { "name": "Ticket wartet auf die offene Frage", "method": "GET", "path": "/api/db/tickets/ARC-0001" },
+    { "name": "Board-Ansicht mit offener Frage", "method": "GET", "path": "/api/db/boards/1/view" },
+    {
+      "name": "Frage mit Freitext entscheiden",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision",
+      "body": { "rev": 3, "text": "SQLite", "reason": "reicht für den Anfang" }
+    },
+    { "name": "Ticket wartet nach der Entscheidung nicht mehr", "method": "GET", "path": "/api/db/tickets/ARC-0001" },
+    { "name": "Board-Ansicht nach der Entscheidung", "method": "GET", "path": "/api/db/boards/1/view" },
+    {
+      "name": "entschiedene Frage wieder öffnen",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/reopen",
+      "body": { "rev": 4, "reason": "neue Lage" }
+    },
+    {
+      "name": "Frage verwerfen",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/discard",
+      "body": { "rev": 5, "reason": "doppelt zu ARC-F0002" }
+    },
+    { "name": "Ticket wartet auf die verworfene Frage nicht", "method": "GET", "path": "/api/db/tickets/ARC-0001" },
+    {
+      "name": "verworfene Frage ohne Grund wieder öffnen",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/reopen",
+      "body": { "rev": 6 }
+    },
+    {
+      "name": "ohne Begründung entscheiden",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision",
+      "body": { "rev": 7, "text": "Doch SQLite" }
+    },
+    { "name": "Frage mit ganzem Verlauf lesen", "method": "GET", "path": "/api/db/questions/ARC-F0001" },
+    { "name": "Liste mit Zählern nach der Entscheidung", "method": "GET", "path": "/api/db/projects/ARC/questions?state=answered" }
+  ]
+}

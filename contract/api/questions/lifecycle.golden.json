@@ -1,0 +1,1503 @@
+[
+  {
+    "name": "Projekt anlegen",
+    "request": {
+      "body": {
+        "key": "ARC",
+        "name": "Arches"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Board anlegen",
+    "request": {
+      "body": {
+        "name": "Sprint",
+        "project": "ARC"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Ticket Login anlegen",
+    "request": {
+      "body": {
+        "title": "Login"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Frage zum Ticket anlegen",
+    "request": {
+      "body": {
+        "occasion": "Board",
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "title": "Welcher Speicher?"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 1,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Kommentar schreiben",
+    "request": {
+      "body": {
+        "body": "  Bitte bis Freitag klären.  "
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/comments"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "Bitte bis Freitag klären.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 2,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "zweiten Kommentar schreiben",
+    "request": {
+      "body": {
+        "body": "SQL Server wäre auch möglich."
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/comments"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "Bitte bis Freitag klären.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "questionId": "ARC-F0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "SQL Server wäre auch möglich.",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 3,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Ticket wartet auf die offene Frage",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/ARC-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "backlog",
+        "comments": [],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "status",
+            "from": null,
+            "note": "angelegt",
+            "ticketId": "ARC-0001",
+            "to": "backlog"
+          }
+        ],
+        "id": "ARC-0001",
+        "labels": [],
+        "needsPlanning": true,
+        "number": 1,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 1,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "backlog",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Login",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [
+          {
+            "id": "ARC-F0001",
+            "title": "Welcher Speicher?"
+          }
+        ],
+        "worktree": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Board-Ansicht mit offener Frage",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/view"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "boardId": 1,
+        "columns": [
+          {
+            "id": "backlog",
+            "tickets": [
+              {
+                "assignee": null,
+                "blockedReason": null,
+                "boardId": 1,
+                "branch": null,
+                "column": "backlog",
+                "commentCount": 0,
+                "consumes": [],
+                "createdAt": "<TIME>",
+                "createdById": "11111111-1111-1111-1111-111111111111",
+                "createdByName": "Vertrag",
+                "dependents": [],
+                "dependsOn": [],
+                "dependsOpen": [],
+                "dependsUnmerged": [],
+                "hasAcceptance": false,
+                "hasDescription": false,
+                "hasDiagram": false,
+                "hasHandbook": false,
+                "hasPlan": false,
+                "id": "ARC-0001",
+                "labels": [],
+                "needsPlanning": true,
+                "number": 1,
+                "plannedAt": null,
+                "plannedBy": null,
+                "planningClaimAt": null,
+                "planningClaimBy": null,
+                "priority": "normal",
+                "produces": [],
+                "projectId": 1,
+                "rev": 1,
+                "sessions": [],
+                "sortOrder": 0,
+                "spec": null,
+                "specTask": null,
+                "status": "backlog",
+                "stepsDone": 0,
+                "stepsTotal": 0,
+                "targetBranch": null,
+                "title": "Login",
+                "touches": [],
+                "unlocks": [],
+                "updatedAt": "<TIME>",
+                "waiting": false,
+                "waitingOnQuestions": [
+                  {
+                    "id": "ARC-F0001",
+                    "title": "Welcher Speicher?"
+                  }
+                ],
+                "worktree": null
+              }
+            ],
+            "title": "Backlog"
+          },
+          {
+            "id": "waiting",
+            "tickets": [],
+            "title": "Wartet"
+          },
+          {
+            "id": "in_planning",
+            "tickets": [],
+            "title": "In Planung"
+          },
+          {
+            "id": "planned",
+            "tickets": [],
+            "title": "Geplant"
+          },
+          {
+            "id": "in_progress",
+            "tickets": [],
+            "title": "In Arbeit"
+          },
+          {
+            "id": "blocked",
+            "tickets": [],
+            "title": "Blockiert"
+          },
+          {
+            "id": "done",
+            "tickets": [],
+            "title": "Erledigt"
+          },
+          {
+            "id": "not_needed",
+            "tickets": [],
+            "title": "Nicht mehr nötig"
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Frage mit Freitext entscheiden",
+    "request": {
+      "body": {
+        "reason": "reicht für den Anfang",
+        "rev": 3,
+        "text": "SQLite"
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "Bitte bis Freitag klären.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "questionId": "ARC-F0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "SQL Server wäre auch möglich.",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": {
+          "at": "<TIME>",
+          "byId": "11111111-1111-1111-1111-111111111111",
+          "byName": "Vertrag",
+          "option": null,
+          "outcome": "answered",
+          "reason": "reicht für den Anfang",
+          "text": "SQLite"
+        },
+        "dependsOn": [],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Antwort: SQLite. Begründung: reicht für den Anfang",
+            "type": "decided"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [],
+        "researched": false,
+        "rev": 4,
+        "state": "answered",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Ticket wartet nach der Entscheidung nicht mehr",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/ARC-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "backlog",
+        "comments": [],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "status",
+            "from": null,
+            "note": "angelegt",
+            "ticketId": "ARC-0001",
+            "to": "backlog"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "question",
+            "from": "open",
+            "note": "Frage entschieden: ARC-F0001 „Welcher Speicher?“",
+            "ticketId": "ARC-0001",
+            "to": "answered"
+          }
+        ],
+        "id": "ARC-0001",
+        "labels": [],
+        "needsPlanning": true,
+        "number": 1,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 1,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "backlog",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Login",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Board-Ansicht nach der Entscheidung",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/view"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "boardId": 1,
+        "columns": [
+          {
+            "id": "backlog",
+            "tickets": [
+              {
+                "assignee": null,
+                "blockedReason": null,
+                "boardId": 1,
+                "branch": null,
+                "column": "backlog",
+                "commentCount": 0,
+                "consumes": [],
+                "createdAt": "<TIME>",
+                "createdById": "11111111-1111-1111-1111-111111111111",
+                "createdByName": "Vertrag",
+                "dependents": [],
+                "dependsOn": [],
+                "dependsOpen": [],
+                "dependsUnmerged": [],
+                "hasAcceptance": false,
+                "hasDescription": false,
+                "hasDiagram": false,
+                "hasHandbook": false,
+                "hasPlan": false,
+                "id": "ARC-0001",
+                "labels": [],
+                "needsPlanning": true,
+                "number": 1,
+                "plannedAt": null,
+                "plannedBy": null,
+                "planningClaimAt": null,
+                "planningClaimBy": null,
+                "priority": "normal",
+                "produces": [],
+                "projectId": 1,
+                "rev": 1,
+                "sessions": [],
+                "sortOrder": 0,
+                "spec": null,
+                "specTask": null,
+                "status": "backlog",
+                "stepsDone": 0,
+                "stepsTotal": 0,
+                "targetBranch": null,
+                "title": "Login",
+                "touches": [],
+                "unlocks": [],
+                "updatedAt": "<TIME>",
+                "waiting": false,
+                "waitingOnQuestions": [],
+                "worktree": null
+              }
+            ],
+            "title": "Backlog"
+          },
+          {
+            "id": "waiting",
+            "tickets": [],
+            "title": "Wartet"
+          },
+          {
+            "id": "in_planning",
+            "tickets": [],
+            "title": "In Planung"
+          },
+          {
+            "id": "planned",
+            "tickets": [],
+            "title": "Geplant"
+          },
+          {
+            "id": "in_progress",
+            "tickets": [],
+            "title": "In Arbeit"
+          },
+          {
+            "id": "blocked",
+            "tickets": [],
+            "title": "Blockiert"
+          },
+          {
+            "id": "done",
+            "tickets": [],
+            "title": "Erledigt"
+          },
+          {
+            "id": "not_needed",
+            "tickets": [],
+            "title": "Nicht mehr nötig"
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "entschiedene Frage wieder öffnen",
+    "request": {
+      "body": {
+        "reason": "neue Lage",
+        "rev": 4
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/reopen"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "Bitte bis Freitag klären.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "questionId": "ARC-F0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "SQL Server wäre auch möglich.",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Antwort: SQLite. Begründung: reicht für den Anfang",
+            "type": "decided"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Wieder geöffnet. Grund: neue Lage. Frühere Entscheidung: Antwort: SQLite. Begründung: reicht für den Anfang (Vertrag)",
+            "type": "reopened"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 5,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Frage verwerfen",
+    "request": {
+      "body": {
+        "reason": "doppelt zu ARC-F0002",
+        "rev": 5
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/discard"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "Bitte bis Freitag klären.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "questionId": "ARC-F0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "SQL Server wäre auch möglich.",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": {
+          "at": "<TIME>",
+          "byId": "11111111-1111-1111-1111-111111111111",
+          "byName": "Vertrag",
+          "option": null,
+          "outcome": "discarded",
+          "reason": "doppelt zu ARC-F0002",
+          "text": null
+        },
+        "dependsOn": [],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Antwort: SQLite. Begründung: reicht für den Anfang",
+            "type": "decided"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Wieder geöffnet. Grund: neue Lage. Frühere Entscheidung: Antwort: SQLite. Begründung: reicht für den Anfang (Vertrag)",
+            "type": "reopened"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Verworfen. Begründung: doppelt zu ARC-F0002",
+            "type": "discarded"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [],
+        "researched": false,
+        "rev": 6,
+        "state": "discarded",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Ticket wartet auf die verworfene Frage nicht",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/ARC-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "backlog",
+        "comments": [],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "status",
+            "from": null,
+            "note": "angelegt",
+            "ticketId": "ARC-0001",
+            "to": "backlog"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "question",
+            "from": "open",
+            "note": "Frage entschieden: ARC-F0001 „Welcher Speicher?“",
+            "ticketId": "ARC-0001",
+            "to": "answered"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "question",
+            "from": "answered",
+            "note": "Frage wieder geöffnet: ARC-F0001 „Welcher Speicher?“",
+            "ticketId": "ARC-0001",
+            "to": "open"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "question",
+            "from": "open",
+            "note": "Frage verworfen: ARC-F0001 „Welcher Speicher?“",
+            "ticketId": "ARC-0001",
+            "to": "discarded"
+          }
+        ],
+        "id": "ARC-0001",
+        "labels": [],
+        "needsPlanning": true,
+        "number": 1,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 1,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "backlog",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Login",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "verworfene Frage ohne Grund wieder öffnen",
+    "request": {
+      "body": {
+        "rev": 6
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/reopen"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "Bitte bis Freitag klären.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "questionId": "ARC-F0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "SQL Server wäre auch möglich.",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Antwort: SQLite. Begründung: reicht für den Anfang",
+            "type": "decided"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Wieder geöffnet. Grund: neue Lage. Frühere Entscheidung: Antwort: SQLite. Begründung: reicht für den Anfang (Vertrag)",
+            "type": "reopened"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Verworfen. Begründung: doppelt zu ARC-F0002",
+            "type": "discarded"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Wieder geöffnet. Frühere Entscheidung: Verworfen. Begründung: doppelt zu ARC-F0002 (Vertrag)",
+            "type": "reopened"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 7,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "ohne Begründung entscheiden",
+    "request": {
+      "body": {
+        "rev": 7,
+        "text": "Doch SQLite"
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "Bitte bis Freitag klären.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "questionId": "ARC-F0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "SQL Server wäre auch möglich.",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": {
+          "at": "<TIME>",
+          "byId": "11111111-1111-1111-1111-111111111111",
+          "byName": "Vertrag",
+          "option": null,
+          "outcome": "answered",
+          "reason": "",
+          "text": "Doch SQLite"
+        },
+        "dependsOn": [],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Antwort: SQLite. Begründung: reicht für den Anfang",
+            "type": "decided"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Wieder geöffnet. Grund: neue Lage. Frühere Entscheidung: Antwort: SQLite. Begründung: reicht für den Anfang (Vertrag)",
+            "type": "reopened"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Verworfen. Begründung: doppelt zu ARC-F0002",
+            "type": "discarded"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Wieder geöffnet. Frühere Entscheidung: Verworfen. Begründung: doppelt zu ARC-F0002 (Vertrag)",
+            "type": "reopened"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Antwort: Doch SQLite.",
+            "type": "decided"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [],
+        "researched": false,
+        "rev": 8,
+        "state": "answered",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Frage mit ganzem Verlauf lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/questions/ARC-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "Bitte bis Freitag klären.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "questionId": "ARC-F0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Vertrag",
+            "body": "SQL Server wäre auch möglich.",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": {
+          "at": "<TIME>",
+          "byId": "11111111-1111-1111-1111-111111111111",
+          "byName": "Vertrag",
+          "option": null,
+          "outcome": "answered",
+          "reason": "",
+          "text": "Doch SQLite"
+        },
+        "dependsOn": [],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Antwort: SQLite. Begründung: reicht für den Anfang",
+            "type": "decided"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Wieder geöffnet. Grund: neue Lage. Frühere Entscheidung: Antwort: SQLite. Begründung: reicht für den Anfang (Vertrag)",
+            "type": "reopened"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Verworfen. Begründung: doppelt zu ARC-F0002",
+            "type": "discarded"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Wieder geöffnet. Frühere Entscheidung: Verworfen. Begründung: doppelt zu ARC-F0002 (Vertrag)",
+            "type": "reopened"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Antwort: Doch SQLite.",
+            "type": "decided"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [],
+        "researched": false,
+        "rev": 8,
+        "state": "answered",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Liste mit Zählern nach der Entscheidung",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions?state=answered"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "answered": 1,
+          "discarded": 0,
+          "mine": 0,
+          "open": 0
+        },
+        "questions": [
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": {
+              "at": "<TIME>",
+              "byId": "11111111-1111-1111-1111-111111111111",
+              "byName": "Vertrag",
+              "option": null,
+              "outcome": "answered",
+              "reason": "",
+              "text": "Doch SQLite"
+            },
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0001",
+            "mine": true,
+            "number": 1,
+            "occasion": "Board",
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": false,
+            "researched": false,
+            "rev": 8,
+            "state": "answered",
+            "tags": [],
+            "ticketIds": [
+              "ARC-0001"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0001",
+                "status": "backlog",
+                "title": "Login"
+              }
+            ],
+            "title": "Welcher Speicher?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          }
+        ]
+      },
+      "status": 200
+    }
+  }
+]

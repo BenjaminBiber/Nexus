@@ -1,0 +1,1476 @@
+[
+  {
+    "name": "Projekt anlegen",
+    "request": {
+      "body": {
+        "key": "ARC",
+        "name": "Arches"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Board anlegen",
+    "request": {
+      "body": {
+        "name": "Sprint",
+        "project": "ARC"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Ticket Login anlegen",
+    "request": {
+      "body": {
+        "title": "Login"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Ticket Export anlegen",
+    "request": {
+      "body": {
+        "title": "Export"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Frage anlegen",
+    "request": {
+      "body": {
+        "description": "Erste Fassung.",
+        "occasion": "Board",
+        "tags": [
+          "speicher"
+        ],
+        "title": "Welcher Speicher?"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "Erste Fassung.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 1,
+        "state": "open",
+        "tags": [
+          "speicher"
+        ],
+        "ticketIds": [],
+        "tickets": [],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Titel, Beschreibung und Tags ändern",
+    "request": {
+      "body": {
+        "description": "Zweite Fassung.",
+        "rev": 1,
+        "tags": [
+          "db",
+          "speicher"
+        ],
+        "title": "Welcher Speicher für das Board?"
+      },
+      "method": "PATCH",
+      "path": "/api/db/questions/ARC-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "Zweite Fassung.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Welcher Speicher? → Welcher Speicher für das Board?",
+            "type": "title"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Erste Fassung.",
+            "type": "description"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "speicher → db, speicher",
+            "type": "tags"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 2,
+        "state": "open",
+        "tags": [
+          "db",
+          "speicher"
+        ],
+        "ticketIds": [],
+        "tickets": [],
+        "title": "Welcher Speicher für das Board?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Anlass entfernen",
+    "request": {
+      "body": {
+        "occasion": null,
+        "rev": 2
+      },
+      "method": "PATCH",
+      "path": "/api/db/questions/ARC-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "Zweite Fassung.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Welcher Speicher? → Welcher Speicher für das Board?",
+            "type": "title"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Erste Fassung.",
+            "type": "description"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "speicher → db, speicher",
+            "type": "tags"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Board → (keiner)",
+            "type": "occasion"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 3,
+        "state": "open",
+        "tags": [
+          "db",
+          "speicher"
+        ],
+        "ticketIds": [],
+        "tickets": [],
+        "title": "Welcher Speicher für das Board?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Änderung ohne Wirkung",
+    "request": {
+      "body": {
+        "rev": 3,
+        "title": "Welcher Speicher für das Board?"
+      },
+      "method": "PATCH",
+      "path": "/api/db/questions/ARC-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "Zweite Fassung.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Welcher Speicher? → Welcher Speicher für das Board?",
+            "type": "title"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Erste Fassung.",
+            "type": "description"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "speicher → db, speicher",
+            "type": "tags"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Board → (keiner)",
+            "type": "occasion"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 3,
+        "state": "open",
+        "tags": [
+          "db",
+          "speicher"
+        ],
+        "ticketIds": [],
+        "tickets": [],
+        "title": "Welcher Speicher für das Board?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "veraltete Version beim Ändern",
+    "request": {
+      "body": {
+        "rev": 1,
+        "title": "Alte Fassung"
+      },
+      "method": "PATCH",
+      "path": "/api/db/questions/ARC-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "conflict",
+        "current": {
+          "comments": [],
+          "createdAt": "<TIME>",
+          "createdById": "11111111-1111-1111-1111-111111111111",
+          "decision": null,
+          "dependsOn": [],
+          "description": "Zweite Fassung.",
+          "history": [
+            {
+              "at": "<TIME>",
+              "byId": "11111111-1111-1111-1111-111111111111",
+              "byKind": "human",
+              "byName": "Vertrag",
+              "questionId": "ARC-F0001",
+              "text": "Frage angelegt",
+              "type": "created"
+            },
+            {
+              "at": "<TIME>",
+              "byId": "11111111-1111-1111-1111-111111111111",
+              "byKind": "human",
+              "byName": "Vertrag",
+              "questionId": "ARC-F0001",
+              "text": "Welcher Speicher? → Welcher Speicher für das Board?",
+              "type": "title"
+            },
+            {
+              "at": "<TIME>",
+              "byId": "11111111-1111-1111-1111-111111111111",
+              "byKind": "human",
+              "byName": "Vertrag",
+              "questionId": "ARC-F0001",
+              "text": "Erste Fassung.",
+              "type": "description"
+            },
+            {
+              "at": "<TIME>",
+              "byId": "11111111-1111-1111-1111-111111111111",
+              "byKind": "human",
+              "byName": "Vertrag",
+              "questionId": "ARC-F0001",
+              "text": "speicher → db, speicher",
+              "type": "tags"
+            },
+            {
+              "at": "<TIME>",
+              "byId": "11111111-1111-1111-1111-111111111111",
+              "byKind": "human",
+              "byName": "Vertrag",
+              "questionId": "ARC-F0001",
+              "text": "Board → (keiner)",
+              "type": "occasion"
+            }
+          ],
+          "id": "ARC-F0001",
+          "number": 1,
+          "occasion": null,
+          "optionCount": 0,
+          "originKind": "human",
+          "originName": "Vertrag",
+          "originSession": null,
+          "projectId": 1,
+          "projectKey": "ARC",
+          "ready": true,
+          "research": [],
+          "researched": false,
+          "rev": 3,
+          "state": "open",
+          "tags": [
+            "db",
+            "speicher"
+          ],
+          "ticketIds": [],
+          "tickets": [],
+          "title": "Welcher Speicher für das Board?",
+          "updatedAt": "<TIME>",
+          "waitingOn": []
+        },
+        "message": "Frage ARC-F0001 wurde inzwischen geändert (Version 3, erwartet 1). Bitte neu lesen."
+      },
+      "status": 409
+    }
+  },
+  {
+    "name": "Tickets setzen",
+    "request": {
+      "body": {
+        "rev": 3,
+        "ticketIds": [
+          "ARC-0002",
+          "arc-0001",
+          "ARC-0002"
+        ]
+      },
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/tickets"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "Zweite Fassung.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Welcher Speicher? → Welcher Speicher für das Board?",
+            "type": "title"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Erste Fassung.",
+            "type": "description"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "speicher → db, speicher",
+            "type": "tags"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Board → (keiner)",
+            "type": "occasion"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "(keine) → ARC-0001, ARC-0002",
+            "type": "tickets"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 4,
+        "state": "open",
+        "tags": [
+          "db",
+          "speicher"
+        ],
+        "ticketIds": [
+          "ARC-0001",
+          "ARC-0002"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          },
+          {
+            "boardId": 1,
+            "id": "ARC-0002",
+            "status": "backlog",
+            "title": "Export"
+          }
+        ],
+        "title": "Welcher Speicher für das Board?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Ticket wartet auf die Frage",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/ARC-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "backlog",
+        "comments": [],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "status",
+            "from": null,
+            "note": "angelegt",
+            "ticketId": "ARC-0001",
+            "to": "backlog"
+          }
+        ],
+        "id": "ARC-0001",
+        "labels": [],
+        "needsPlanning": true,
+        "number": 1,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 1,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "backlog",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Login",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [
+          {
+            "id": "ARC-F0001",
+            "title": "Welcher Speicher für das Board?"
+          }
+        ],
+        "worktree": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Tickets unverändert setzen",
+    "request": {
+      "body": {
+        "rev": 4,
+        "ticketIds": [
+          "arc-0001",
+          "ARC-0002"
+        ]
+      },
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/tickets"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "Zweite Fassung.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Welcher Speicher? → Welcher Speicher für das Board?",
+            "type": "title"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Erste Fassung.",
+            "type": "description"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "speicher → db, speicher",
+            "type": "tags"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Board → (keiner)",
+            "type": "occasion"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "(keine) → ARC-0001, ARC-0002",
+            "type": "tickets"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 4,
+        "state": "open",
+        "tags": [
+          "db",
+          "speicher"
+        ],
+        "ticketIds": [
+          "ARC-0001",
+          "ARC-0002"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          },
+          {
+            "boardId": 1,
+            "id": "ARC-0002",
+            "status": "backlog",
+            "title": "Export"
+          }
+        ],
+        "title": "Welcher Speicher für das Board?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Tickets leeren",
+    "request": {
+      "body": {
+        "rev": 4,
+        "ticketIds": []
+      },
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/tickets"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "Zweite Fassung.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Welcher Speicher? → Welcher Speicher für das Board?",
+            "type": "title"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Erste Fassung.",
+            "type": "description"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "speicher → db, speicher",
+            "type": "tags"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Board → (keiner)",
+            "type": "occasion"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "(keine) → ARC-0001, ARC-0002",
+            "type": "tickets"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "ARC-0001, ARC-0002 → (keine)",
+            "type": "tickets"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 5,
+        "state": "open",
+        "tags": [
+          "db",
+          "speicher"
+        ],
+        "ticketIds": [],
+        "tickets": [],
+        "title": "Welcher Speicher für das Board?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Ticket wartet nicht mehr",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/ARC-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "backlog",
+        "comments": [],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "status",
+            "from": null,
+            "note": "angelegt",
+            "ticketId": "ARC-0001",
+            "to": "backlog"
+          }
+        ],
+        "id": "ARC-0001",
+        "labels": [],
+        "needsPlanning": true,
+        "number": 1,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 1,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "backlog",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Login",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "zweite Frage anlegen",
+    "request": {
+      "body": {
+        "title": "Wie heißt die Spalte?"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0002",
+            "text": "Frage angelegt",
+            "type": "created"
+          }
+        ],
+        "id": "ARC-F0002",
+        "number": 2,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 1,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [],
+        "tickets": [],
+        "title": "Wie heißt die Spalte?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Abhängigkeiten setzen",
+    "request": {
+      "body": {
+        "dependsOn": [
+          "arc-f0002",
+          "ARC-0001",
+          "arc-f0002"
+        ],
+        "rev": 5
+      },
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/depends"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [
+          "ARC-F0002",
+          "ARC-0001"
+        ],
+        "description": "Zweite Fassung.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Welcher Speicher? → Welcher Speicher für das Board?",
+            "type": "title"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Erste Fassung.",
+            "type": "description"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "speicher → db, speicher",
+            "type": "tags"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Board → (keiner)",
+            "type": "occasion"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "(keine) → ARC-0001, ARC-0002",
+            "type": "tickets"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "ARC-0001, ARC-0002 → (keine)",
+            "type": "tickets"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "(keine) → ARC-F0002, ARC-0001",
+            "type": "depends"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [],
+        "researched": false,
+        "rev": 6,
+        "state": "open",
+        "tags": [
+          "db",
+          "speicher"
+        ],
+        "ticketIds": [],
+        "tickets": [],
+        "title": "Welcher Speicher für das Board?",
+        "updatedAt": "<TIME>",
+        "waitingOn": [
+          {
+            "id": "ARC-F0002",
+            "state": "open"
+          },
+          {
+            "id": "ARC-0001",
+            "state": "backlog"
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Abhängigkeit auf sich selbst",
+    "request": {
+      "body": {
+        "dependsOn": [
+          "ARC-F0001"
+        ],
+        "rev": 6
+      },
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/depends"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "dependency-self",
+        "message": "ARC-F0001 kann sich nicht selbst voraussetzen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Abhängigkeit im Kreis",
+    "request": {
+      "body": {
+        "dependsOn": [
+          "ARC-F0001"
+        ],
+        "rev": 1
+      },
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0002/depends"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "dependency-cycle",
+        "message": "Abhängigkeiten liefen im Kreis: ARC-F0002 -> ARC-F0001 -> ARC-F0002."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Abhängigkeiten leeren",
+    "request": {
+      "body": {
+        "dependsOn": [],
+        "rev": 6
+      },
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/depends"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "Zweite Fassung.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Welcher Speicher? → Welcher Speicher für das Board?",
+            "type": "title"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Erste Fassung.",
+            "type": "description"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "speicher → db, speicher",
+            "type": "tags"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Board → (keiner)",
+            "type": "occasion"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "(keine) → ARC-0001, ARC-0002",
+            "type": "tickets"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "ARC-0001, ARC-0002 → (keine)",
+            "type": "tickets"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "(keine) → ARC-F0002, ARC-0001",
+            "type": "depends"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "ARC-F0002, ARC-0001 → (keine)",
+            "type": "depends"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 7,
+        "state": "open",
+        "tags": [
+          "db",
+          "speicher"
+        ],
+        "ticketIds": [],
+        "tickets": [],
+        "title": "Welcher Speicher für das Board?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Frage nach allen Änderungen lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/questions/ARC-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "Zweite Fassung.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Welcher Speicher? → Welcher Speicher für das Board?",
+            "type": "title"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Erste Fassung.",
+            "type": "description"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "speicher → db, speicher",
+            "type": "tags"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Board → (keiner)",
+            "type": "occasion"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "(keine) → ARC-0001, ARC-0002",
+            "type": "tickets"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "ARC-0001, ARC-0002 → (keine)",
+            "type": "tickets"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "(keine) → ARC-F0002, ARC-0001",
+            "type": "depends"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "ARC-F0002, ARC-0001 → (keine)",
+            "type": "depends"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 7,
+        "state": "open",
+        "tags": [
+          "db",
+          "speicher"
+        ],
+        "ticketIds": [],
+        "tickets": [],
+        "title": "Welcher Speicher für das Board?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  }
+]

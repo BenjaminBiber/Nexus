@@ -1,0 +1,747 @@
+[
+  {
+    "name": "Projekt anlegen",
+    "request": {
+      "body": {
+        "key": "ARC",
+        "name": "Arches"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "zweites Projekt anlegen",
+    "request": {
+      "body": {
+        "key": "BEN",
+        "name": "Bento"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Board im ersten Projekt anlegen",
+    "request": {
+      "body": {
+        "name": "Sprint",
+        "project": "ARC"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Board im zweiten Projekt anlegen",
+    "request": {
+      "body": {
+        "name": "Sprint",
+        "project": "BEN"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Ticket im ersten Projekt anlegen",
+    "request": {
+      "body": {
+        "title": "Login"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Ticket im zweiten Projekt anlegen",
+    "request": {
+      "body": {
+        "title": "Fremd"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/2/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Frage anlegen",
+    "request": {
+      "body": {
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "title": "Welcher Speicher?"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Fragen eines unbekannten Projekts auflisten",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/XXX/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt XXX gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "unbekannte Frage lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/questions/ARC-F0099"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-not-found",
+        "message": "Frage ARC-F0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "keine Fragenummer lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/questions/kaputt"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-id-invalid",
+        "message": "„kaputt“ ist keine Fragenummer (erwartet z. B. ARC-F0001)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Filter mit unbekanntem Zustand",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions?state=quatsch"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Filter „quatsch“ ist ungültig. Erlaubt: open, answered, discarded, all."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Filter Ticket doppelt angegeben",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions?ticket=ARC-0001&ticket=ARC-0002"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Parameter „ticket“ muss genau einmal als Text angegeben werden."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Filter Zustand doppelt angegeben",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions?state=open&state=all"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Parameter „state“ muss genau einmal als Text angegeben werden."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Frage ohne Titel stellen",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „title“ fehlt oder ist kein Text."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Frage mit leerem Titel stellen",
+    "request": {
+      "body": {
+        "title": "   "
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "title-empty",
+        "message": "Der Titel darf nicht leer sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Frage mit unbekanntem Ticket stellen",
+    "request": {
+      "body": {
+        "ticketIds": [
+          "ARC-0099"
+        ],
+        "title": "Mit Ticket"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-ticket-unknown",
+        "message": "Ticket ARC-0099 gibt es nicht."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Frage mit Ticket eines anderen Projekts stellen",
+    "request": {
+      "body": {
+        "ticketIds": [
+          "BEN-0001"
+        ],
+        "title": "Mit fremdem Ticket"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-ticket-other-project",
+        "message": "Ticket BEN-0001 gehört zu einem anderen Projekt. Eine Frage betrifft nur Tickets ihres Projekts."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Frage mit unbekannter Abhängigkeit stellen",
+    "request": {
+      "body": {
+        "dependsOn": [
+          "ARC-F0099"
+        ],
+        "title": "Mit Abhängigkeit"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "dependency-unknown",
+        "message": "Voraussetzung ARC-F0099 gibt es nicht."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Frage mit ungültigem Verweis stellen",
+    "request": {
+      "body": {
+        "dependsOn": [
+          "quatsch"
+        ],
+        "title": "Mit Verweis"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "reference-invalid",
+        "message": "„quatsch“ ist weder eine Frage (z. B. ARC-F0001) noch ein Ticket (z. B. ARC-0001)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ändern ohne Version",
+    "request": {
+      "body": {
+        "title": "Neu"
+      },
+      "method": "PATCH",
+      "path": "/api/db/questions/ARC-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "rev-missing",
+        "message": "Zum Ändern gehört die gelesene Version (rev)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ändern ohne Änderung",
+    "request": {
+      "body": {
+        "rev": 1
+      },
+      "method": "PATCH",
+      "path": "/api/db/questions/ARC-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "nothing-changed",
+        "message": "Keine Änderung angegeben."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Tickets ohne Liste setzen",
+    "request": {
+      "body": {
+        "rev": 1
+      },
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/tickets"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „ticketIds“ fehlt oder ist keine Liste von Texten."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Abhängigkeiten ohne Liste setzen",
+    "request": {
+      "body": {
+        "rev": 1
+      },
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/depends"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „dependsOn“ fehlt oder ist keine Liste von Texten."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Tickets einer unbekannten Frage setzen",
+    "request": {
+      "body": {
+        "rev": 1,
+        "ticketIds": []
+      },
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0099/tickets"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-not-found",
+        "message": "Frage ARC-F0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Kommentar ohne Text",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/comments"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „body“ fehlt oder ist kein Text."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "leerer Kommentar",
+    "request": {
+      "body": {
+        "body": "   "
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/comments"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "comment-empty",
+        "message": "Der Kommentar darf nicht leer sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Kommentar an unbekannter Frage",
+    "request": {
+      "body": {
+        "body": "Hallo"
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0099/comments"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-not-found",
+        "message": "Frage ARC-F0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "entscheiden ohne Option und ohne Text",
+    "request": {
+      "body": {
+        "rev": 1
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "decision-ambiguous",
+        "message": "Bitte entweder eine Option wählen oder einen eigenen Text eingeben, nicht beides und nicht keines."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "entscheiden mit Option und Text",
+    "request": {
+      "body": {
+        "option": "O1",
+        "rev": 1,
+        "text": "SQLite"
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "decision-ambiguous",
+        "message": "Bitte entweder eine Option wählen oder einen eigenen Text eingeben, nicht beides und nicht keines."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekannte Option wählen",
+    "request": {
+      "body": {
+        "option": "O1",
+        "rev": 1
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "decision-option-unknown",
+        "message": "Die Option O1 gibt es in der neuesten Recherche nicht."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "entscheiden an unbekannter Frage",
+    "request": {
+      "body": {
+        "rev": 1,
+        "text": "SQLite"
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0099/decision"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-not-found",
+        "message": "Frage ARC-F0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "verwerfen ohne Begründung",
+    "request": {
+      "body": {
+        "rev": 1
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/discard"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "decision-reason-missing",
+        "message": "Bitte eine Begründung angeben."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "offene Frage wieder öffnen",
+    "request": {
+      "body": {
+        "rev": 1
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/reopen"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-state-invalid",
+        "message": "Die Frage ARC-F0001 ist bereits offen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "entscheiden mit veralteter Version",
+    "request": {
+      "body": {
+        "rev": 9,
+        "text": "SQLite"
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "conflict",
+        "current": {
+          "comments": [],
+          "createdAt": "<TIME>",
+          "createdById": "11111111-1111-1111-1111-111111111111",
+          "decision": null,
+          "dependsOn": [],
+          "description": "",
+          "history": [
+            {
+              "at": "<TIME>",
+              "byId": "11111111-1111-1111-1111-111111111111",
+              "byKind": "human",
+              "byName": "Vertrag",
+              "questionId": "ARC-F0001",
+              "text": "Frage angelegt",
+              "type": "created"
+            }
+          ],
+          "id": "ARC-F0001",
+          "number": 1,
+          "occasion": null,
+          "optionCount": 0,
+          "originKind": "human",
+          "originName": "Vertrag",
+          "originSession": null,
+          "projectId": 1,
+          "projectKey": "ARC",
+          "ready": true,
+          "research": [],
+          "researched": false,
+          "rev": 1,
+          "state": "open",
+          "tags": [],
+          "ticketIds": [
+            "ARC-0001"
+          ],
+          "tickets": [
+            {
+              "boardId": 1,
+              "id": "ARC-0001",
+              "status": "backlog",
+              "title": "Login"
+            }
+          ],
+          "title": "Welcher Speicher?",
+          "updatedAt": "<TIME>",
+          "waitingOn": []
+        },
+        "message": "Frage ARC-F0001 wurde inzwischen geändert (Version 1, erwartet 9). Bitte neu lesen."
+      },
+      "status": 409
+    }
+  },
+  {
+    "name": "Frage verwerfen",
+    "request": {
+      "body": {
+        "reason": "doppelt",
+        "rev": 1
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/discard"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "verworfene Frage entscheiden",
+    "request": {
+      "body": {
+        "rev": 2,
+        "text": "SQLite"
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-state-invalid",
+        "message": "Die Frage ARC-F0001 ist nicht offen. Zuerst wieder öffnen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "verworfene Frage erneut verwerfen",
+    "request": {
+      "body": {
+        "reason": "nochmal",
+        "rev": 2
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/discard"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-state-invalid",
+        "message": "Die Frage ARC-F0001 ist nicht offen. Zuerst wieder öffnen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Frage wieder öffnen und entscheiden",
+    "request": {
+      "body": {
+        "rev": 2
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/reopen"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "Frage entscheiden",
+    "request": {
+      "body": {
+        "rev": 3,
+        "text": "SQLite"
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "entschiedene Frage erneut entscheiden",
+    "request": {
+      "body": {
+        "rev": 4,
+        "text": "Doch SQL Server"
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-state-invalid",
+        "message": "Die Frage ARC-F0001 ist nicht offen. Zuerst wieder öffnen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "entschiedene Frage verwerfen",
+    "request": {
+      "body": {
+        "reason": "doch nicht",
+        "rev": 4
+      },
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/discard"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-state-invalid",
+        "message": "Die Frage ARC-F0001 ist nicht offen. Zuerst wieder öffnen."
+      },
+      "status": 422
+    }
+  }
+]

@@ -1,0 +1,115 @@
+{
+  "title": "Frage bearbeiten, Tickets und Abhängigkeiten setzen",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    {
+      "name": "Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "compare": "status"
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "compare": "status"
+    },
+    {
+      "name": "Ticket Login anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Login" },
+      "compare": "status"
+    },
+    {
+      "name": "Ticket Export anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Export" },
+      "compare": "status"
+    },
+    {
+      "name": "Frage anlegen",
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions",
+      "body": { "title": "Welcher Speicher?", "description": "Erste Fassung.", "tags": ["speicher"], "occasion": "Board" }
+    },
+    {
+      "name": "Titel, Beschreibung und Tags ändern",
+      "method": "PATCH",
+      "path": "/api/db/questions/ARC-F0001",
+      "body": { "rev": 1, "title": "Welcher Speicher für das Board?", "description": "Zweite Fassung.", "tags": ["db", "speicher"] }
+    },
+    {
+      "name": "Anlass entfernen",
+      "method": "PATCH",
+      "path": "/api/db/questions/ARC-F0001",
+      "body": { "rev": 2, "occasion": null }
+    },
+    {
+      "name": "Änderung ohne Wirkung",
+      "method": "PATCH",
+      "path": "/api/db/questions/ARC-F0001",
+      "body": { "rev": 3, "title": "Welcher Speicher für das Board?" }
+    },
+    {
+      "name": "veraltete Version beim Ändern",
+      "method": "PATCH",
+      "path": "/api/db/questions/ARC-F0001",
+      "body": { "rev": 1, "title": "Alte Fassung" }
+    },
+    {
+      "name": "Tickets setzen",
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/tickets",
+      "body": { "rev": 3, "ticketIds": ["ARC-0002", "arc-0001", "ARC-0002"] }
+    },
+    { "name": "Ticket wartet auf die Frage", "method": "GET", "path": "/api/db/tickets/ARC-0001" },
+    {
+      "name": "Tickets unverändert setzen",
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/tickets",
+      "body": { "rev": 4, "ticketIds": ["arc-0001", "ARC-0002"] }
+    },
+    {
+      "name": "Tickets leeren",
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/tickets",
+      "body": { "rev": 4, "ticketIds": [] }
+    },
+    { "name": "Ticket wartet nicht mehr", "method": "GET", "path": "/api/db/tickets/ARC-0001" },
+    {
+      "name": "zweite Frage anlegen",
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions",
+      "body": { "title": "Wie heißt die Spalte?" }
+    },
+    {
+      "name": "Abhängigkeiten setzen",
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/depends",
+      "body": { "rev": 5, "dependsOn": ["arc-f0002", "ARC-0001", "arc-f0002"] }
+    },
+    {
+      "name": "Abhängigkeit auf sich selbst",
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/depends",
+      "body": { "rev": 6, "dependsOn": ["ARC-F0001"] }
+    },
+    {
+      "name": "Abhängigkeit im Kreis",
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0002/depends",
+      "body": { "rev": 1, "dependsOn": ["ARC-F0001"] }
+    },
+    {
+      "name": "Abhängigkeiten leeren",
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0001/depends",
+      "body": { "rev": 6, "dependsOn": [] }
+    },
+    { "name": "Frage nach allen Änderungen lesen", "method": "GET", "path": "/api/db/questions/ARC-F0001" }
+  ]
+}
