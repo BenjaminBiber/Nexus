@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "createdAt": "2026-10-27T20:04:01.771Z",
+  "machine": {
+    "os": "darwin",
+    "release": "25.6.0",
+    "arch": "arm64",
+    "cpu": "Apple M5",
+    "cpus": 10,
+    "memGb": 32,
+    "node": "v26.10.0"
+  },
+  "server": {
+    "cmd": "node packages/server/dist/main.js --port {port}",
+    "tickets": 500
+  },
+  "metrics": {
+    "serverColdStartMs": {
+      "median": 227.2,
+      "p95": 299.2,
+      "runs": 10
+    },
+    "boardFirstLoadMs": {
+      "median": 249.5,
+      "p95": 326.3,
+      "runs": 10
+    },
+    "boardLoadMs": {
+      "p50": 19,
+      "p95": 27.1,
+      "mean": 20.2,
+      "runs": 100
+    },
+    "serverRssIdleMb": {
+      "value": 178.2
+    }
+  }
+}
