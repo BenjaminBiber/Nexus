@@ -1,0 +1,399 @@
+[
+  {
+    "name": "Graph eines Tickets",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/graph?ticket=arc-2"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "criticalPath": [
+          "ARC-0001",
+          "ARC-0002"
+        ],
+        "cycleEdges": [],
+        "edges": [
+          {
+            "from": "ARC-0001",
+            "to": "ARC-0002"
+          }
+        ],
+        "hiddenDone": 0,
+        "hiddenWithoutEdges": 0,
+        "nodes": [
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "column": "backlog",
+            "external": false,
+            "id": "ARC-0001",
+            "spec": "docs/superpowers/plans/001-login.md",
+            "status": "backlog",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "column": "waiting",
+            "external": false,
+            "id": "ARC-0002",
+            "spec": "docs/superpowers/plans/001-login.md",
+            "status": "backlog",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "scope": {
+          "id": "ARC-0002",
+          "kind": "ticket"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Graph eines Boards",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/graph?board=1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "criticalPath": [
+          "ARC-0001",
+          "ARC-0002"
+        ],
+        "cycleEdges": [],
+        "edges": [
+          {
+            "from": "ARC-0001",
+            "to": "ARC-0002"
+          }
+        ],
+        "hiddenDone": 0,
+        "hiddenWithoutEdges": 1,
+        "nodes": [
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "column": "backlog",
+            "external": false,
+            "id": "ARC-0001",
+            "spec": "docs/superpowers/plans/001-login.md",
+            "status": "backlog",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "column": "waiting",
+            "external": false,
+            "id": "ARC-0002",
+            "spec": "docs/superpowers/plans/001-login.md",
+            "status": "backlog",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "scope": {
+          "boardId": 1,
+          "kind": "board"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Graph einer Spec",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/graph?project=ARC&spec=docs%2Fsuperpowers%2Fplans%2F001-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "criticalPath": [
+          "ARC-0001",
+          "ARC-0002"
+        ],
+        "cycleEdges": [],
+        "edges": [
+          {
+            "from": "ARC-0001",
+            "to": "ARC-0002"
+          }
+        ],
+        "hiddenDone": 0,
+        "hiddenWithoutEdges": 0,
+        "nodes": [
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "column": "backlog",
+            "external": false,
+            "id": "ARC-0001",
+            "spec": "docs/superpowers/plans/001-login.md",
+            "status": "backlog",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "column": "waiting",
+            "external": false,
+            "id": "ARC-0002",
+            "spec": "docs/superpowers/plans/001-login.md",
+            "status": "backlog",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "scope": {
+          "kind": "spec",
+          "project": "ARC",
+          "spec": "docs/superpowers/plans/001-login.md"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Fortschritt der Specs",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/spec-progress"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "blocked": 0,
+          "done": 0,
+          "inProgress": 0,
+          "notNeeded": 0,
+          "open": 1,
+          "spec": "docs/superpowers/plans/001-login.md",
+          "total": 2,
+          "waiting": 1
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Graph einer Spec ohne Erledigte",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/graph?project=ARC&spec=docs%2Fsuperpowers%2Fplans%2F001-login.md&done=0"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "criticalPath": [
+          "ARC-0002"
+        ],
+        "cycleEdges": [],
+        "edges": [],
+        "hiddenDone": 1,
+        "hiddenWithoutEdges": 0,
+        "nodes": [
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "column": "backlog",
+            "external": false,
+            "id": "ARC-0002",
+            "spec": "docs/superpowers/plans/001-login.md",
+            "status": "backlog",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "scope": {
+          "kind": "spec",
+          "project": "ARC",
+          "spec": "docs/superpowers/plans/001-login.md"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Graph einer Spec mit Erledigten",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/graph?project=ARC&spec=docs%2Fsuperpowers%2Fplans%2F001-login.md&done=1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "criticalPath": [
+          "ARC-0002"
+        ],
+        "cycleEdges": [],
+        "edges": [
+          {
+            "from": "ARC-0001",
+            "to": "ARC-0002"
+          }
+        ],
+        "hiddenDone": 0,
+        "hiddenWithoutEdges": 0,
+        "nodes": [
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "column": "done",
+            "external": false,
+            "id": "ARC-0001",
+            "spec": "docs/superpowers/plans/001-login.md",
+            "status": "done",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "column": "backlog",
+            "external": false,
+            "id": "ARC-0002",
+            "spec": "docs/superpowers/plans/001-login.md",
+            "status": "backlog",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "scope": {
+          "kind": "spec",
+          "project": "ARC",
+          "spec": "docs/superpowers/plans/001-login.md"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Fortschritt nach dem Abschluss",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/spec-progress"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "blocked": 0,
+          "done": 1,
+          "inProgress": 0,
+          "notNeeded": 0,
+          "open": 1,
+          "spec": "docs/superpowers/plans/001-login.md",
+          "total": 2,
+          "waiting": 0
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Graph ohne Umfang",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/graph"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Genau einen Umfang angeben: „ticket“, „board“ oder „project“ mit „spec“."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Graph mit zwei Umfängen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/graph?ticket=ARC-0001&board=1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Genau einen Umfang angeben: „ticket“, „board“ oder „project“ mit „spec“."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Spec ohne Namen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/graph?project=ARC"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Für eine Spec „project“ und „spec“ angeben."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Board ohne Nummer",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/graph?board=abc"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "id-invalid",
+        "message": "„abc“ ist keine gültige Board-Nummer."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekanntes Ticket",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/graph?ticket=ARC-0099"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-not-found",
+        "message": "Ticket ARC-0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "unbekanntes Board",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/graph?board=999"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 999 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Fortschritt eines unbekannten Boards",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/999/spec-progress"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 999 gibt es nicht."
+      },
+      "status": 404
+    }
+  }
+]

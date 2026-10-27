@@ -1,0 +1,613 @@
+[
+  {
+    "name": "ohne Projekt",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Parameter „project“ (Projekt-Key) fehlt."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekanntes Projekt",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=XYZ"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt XYZ gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Zeitraum je Tag",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=arc&from=2020-03-02&to=2020-03-08"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "abortReasons": [],
+        "backfilledRuns": 0,
+        "byProfile": [],
+        "configChangedAt": null,
+        "configurableAbortShare": null,
+        "filter": {
+          "boardId": null,
+          "from": "2020-03-02",
+          "kind": "work",
+          "project": "ARC",
+          "to": "2020-03-08"
+        },
+        "kind": "work",
+        "kpis": {
+          "aborted": 0,
+          "done": 0,
+          "escalationRate": null,
+          "finalFailures": 0,
+          "firstTryRate": null,
+          "runs": 0,
+          "solved": 0,
+          "subjects": 0,
+          "successRate": null
+        },
+        "ladder": {
+          "afterEscalation": null,
+          "final": null,
+          "finished": 0,
+          "firstTry": null
+        },
+        "runsSince": null,
+        "series": {
+          "points": [
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-02"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-03"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-04"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-05"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-06"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-07"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-08"
+            }
+          ],
+          "unit": "day"
+        },
+        "staleRuns": 0,
+        "usagePauses": 0
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zeitraum je Woche",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&from=2020-03-02&to=2020-05-03"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "abortReasons": [],
+        "backfilledRuns": 0,
+        "byProfile": [],
+        "configChangedAt": null,
+        "configurableAbortShare": null,
+        "filter": {
+          "boardId": null,
+          "from": "2020-03-02",
+          "kind": "work",
+          "project": "ARC",
+          "to": "2020-05-03"
+        },
+        "kind": "work",
+        "kpis": {
+          "aborted": 0,
+          "done": 0,
+          "escalationRate": null,
+          "finalFailures": 0,
+          "firstTryRate": null,
+          "runs": 0,
+          "solved": 0,
+          "subjects": 0,
+          "successRate": null
+        },
+        "ladder": {
+          "afterEscalation": null,
+          "final": null,
+          "finished": 0,
+          "firstTry": null
+        },
+        "runsSince": null,
+        "series": {
+          "points": [
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-02"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-09"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-16"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-23"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-30"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-04-06"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-04-13"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-04-20"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-04-27"
+            }
+          ],
+          "unit": "week"
+        },
+        "staleRuns": 0,
+        "usagePauses": 0
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Board als Filter",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&board=1&from=2020-03-02&to=2020-03-08"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "abortReasons": [],
+        "backfilledRuns": 0,
+        "byProfile": [],
+        "configChangedAt": null,
+        "configurableAbortShare": null,
+        "filter": {
+          "boardId": 1,
+          "from": "2020-03-02",
+          "kind": "work",
+          "project": "ARC",
+          "to": "2020-03-08"
+        },
+        "kind": "work",
+        "kpis": {
+          "aborted": 0,
+          "done": 0,
+          "escalationRate": null,
+          "finalFailures": 0,
+          "firstTryRate": null,
+          "runs": 0,
+          "solved": 0,
+          "subjects": 0,
+          "successRate": null
+        },
+        "ladder": {
+          "afterEscalation": null,
+          "final": null,
+          "finished": 0,
+          "firstTry": null
+        },
+        "runsSince": null,
+        "series": {
+          "points": [
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-02"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-03"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-04"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-05"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-06"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-07"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-08"
+            }
+          ],
+          "unit": "day"
+        },
+        "staleRuns": 0,
+        "usagePauses": 0
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Lauf-Art merge",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&kind=merge&from=2020-03-02&to=2020-03-08"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "abortReasons": [],
+        "backfilledRuns": 0,
+        "byProfile": [],
+        "configChangedAt": null,
+        "configurableAbortShare": null,
+        "filter": {
+          "boardId": null,
+          "from": "2020-03-02",
+          "kind": "merge",
+          "project": "ARC",
+          "to": "2020-03-08"
+        },
+        "kind": "merge",
+        "kpis": {
+          "aborted": 0,
+          "done": 0,
+          "escalationRate": null,
+          "finalFailures": 0,
+          "firstTryRate": null,
+          "runs": 0,
+          "solved": 0,
+          "subjects": 0,
+          "successRate": null
+        },
+        "ladder": {
+          "afterEscalation": null,
+          "final": null,
+          "finished": 0,
+          "firstTry": null
+        },
+        "runsSince": null,
+        "series": {
+          "points": [
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-02"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-03"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-04"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-05"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-06"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-07"
+            },
+            {
+              "aborted": 0,
+              "done": 0,
+              "other": 0,
+              "start": "2020-03-08"
+            }
+          ],
+          "unit": "day"
+        },
+        "staleRuns": 0,
+        "usagePauses": 0
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Standard-Zeitraum von acht Wochen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "abortReasons": [],
+        "backfilledRuns": 0,
+        "byProfile": [],
+        "configChangedAt": null,
+        "configurableAbortShare": null,
+        "filter": {
+          "boardId": null,
+          "from": "<DATE-55>",
+          "kind": "work",
+          "project": "ARC",
+          "to": "<DATE>"
+        },
+        "kind": "work",
+        "kpis": {
+          "aborted": 0,
+          "done": 0,
+          "escalationRate": null,
+          "finalFailures": 0,
+          "firstTryRate": null,
+          "runs": 0,
+          "solved": 0,
+          "subjects": 0,
+          "successRate": null
+        },
+        "ladder": {
+          "afterEscalation": null,
+          "final": null,
+          "finished": 0,
+          "firstTry": null
+        },
+        "runsSince": null,
+        "staleRuns": 0,
+        "usagePauses": 0
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "ab der neuesten Fassung der Einstellung",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&from=config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "abortReasons": [],
+        "backfilledRuns": 0,
+        "byProfile": [],
+        "configChangedAt": null,
+        "configurableAbortShare": null,
+        "filter": {
+          "boardId": null,
+          "from": "<DATE-55>",
+          "kind": "work",
+          "project": "ARC",
+          "to": "<DATE>"
+        },
+        "kind": "work",
+        "kpis": {
+          "aborted": 0,
+          "done": 0,
+          "escalationRate": null,
+          "finalFailures": 0,
+          "firstTryRate": null,
+          "runs": 0,
+          "solved": 0,
+          "subjects": 0,
+          "successRate": null
+        },
+        "ladder": {
+          "afterEscalation": null,
+          "final": null,
+          "finished": 0,
+          "firstTry": null
+        },
+        "runsSince": null,
+        "staleRuns": 0,
+        "usagePauses": 0
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Board eines anderen Projekts",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&board=2"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Board 2 gehört nicht zum Projekt ARC."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekanntes Board",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&board=999"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 999 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Board ohne Nummer",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&board=abc"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "id-invalid",
+        "message": "„abc“ ist keine gültige Board-Nummer."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Anfang nach Ende",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&from=2020-02-01&to=2020-01-01"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "„from“ liegt nach „to“."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Tag gibt es nicht",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&from=2020-02-30"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "„from“ muss ein Datum JJJJ-MM-TT sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Zeitraum zu lang",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&from=2019-01-01&to=2020-12-31"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Zeitraum ist zu lang (731 Tage, höchstens 366)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekannte Lauf-Art",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&kind=plan"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "„kind“ muss work, merge, research sein."
+      },
+      "status": 422
+    }
+  }
+]
