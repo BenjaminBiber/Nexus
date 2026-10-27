@@ -11,7 +11,8 @@ export default defineConfig({
   test: {
     // Eigenes HARNESS_HOME und unbenutzter Port je Testdatei; nie der echte ~/.harness oder Server
     setupFiles: ['./vitest.setup.ts'],
-    include: ['packages/*/tests/**/*.test.{ts,tsx}'],
+    // Dazu die Tests der Skripte (reines JavaScript, keine Paket-Importe – deshalb ohne Alias)
+    include: ['packages/*/tests/**/*.test.{ts,tsx}', 'scripts/**/tests/**/*.test.mjs'],
     // Prozessintensive Tests laufen getrennt und seriell (vitest.process.config.ts)
     exclude: [
       '**/node_modules/**',
