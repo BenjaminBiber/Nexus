@@ -1,0 +1,592 @@
+[
+  {
+    "file": "packages/server/src/routes/BoardConfigRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/board-config"
+  },
+  {
+    "file": "packages/server/src/routes/BoardConfigRoutes.ts",
+    "method": "PUT",
+    "pattern": "/api/board-config"
+  },
+  {
+    "file": "packages/server/src/routes/BoardConfigRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/board-config/test"
+  },
+  {
+    "file": "packages/server/src/routes/CustomizationRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/customizations"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/active"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/boards"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/boards"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "DELETE",
+    "pattern": "/api/db/boards/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "PATCH",
+    "pattern": "/api/db/boards/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/boards/:id/activate"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/boards/:id/branches"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/boards/:id/branches"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/boards/:id/view"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/pick-folder"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/projects"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/projects"
+  },
+  {
+    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "method": "PATCH",
+    "pattern": "/api/db/projects/:key"
+  },
+  {
+    "file": "packages/server/src/routes/DbGraphRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/boards/:id/spec-progress"
+  },
+  {
+    "file": "packages/server/src/routes/DbGraphRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/graph"
+  },
+  {
+    "file": "packages/server/src/routes/DbInboxRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/inbox"
+  },
+  {
+    "file": "packages/server/src/routes/DbInboxRoutes.ts",
+    "method": "DELETE",
+    "pattern": "/api/db/inbox/order"
+  },
+  {
+    "file": "packages/server/src/routes/DbInboxRoutes.ts",
+    "method": "PUT",
+    "pattern": "/api/db/inbox/order"
+  },
+  {
+    "file": "packages/server/src/routes/DbNoteRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/boards/:id/notes"
+  },
+  {
+    "file": "packages/server/src/routes/DbNoteRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/boards/:id/notes"
+  },
+  {
+    "file": "packages/server/src/routes/DbNoteRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/notes/:id/drop"
+  },
+  {
+    "file": "packages/server/src/routes/DbNoteRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/notes/:id/seen"
+  },
+  {
+    "file": "packages/server/src/routes/DbNoteRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/notes/:id/take"
+  },
+  {
+    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/projects/:key/questions"
+  },
+  {
+    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/projects/:key/questions"
+  },
+  {
+    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/questions/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
+    "method": "PATCH",
+    "pattern": "/api/db/questions/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/questions/:id/comments"
+  },
+  {
+    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/questions/:id/decision"
+  },
+  {
+    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
+    "method": "PUT",
+    "pattern": "/api/db/questions/:id/depends"
+  },
+  {
+    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/questions/:id/discard"
+  },
+  {
+    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/questions/:id/reopen"
+  },
+  {
+    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
+    "method": "PUT",
+    "pattern": "/api/db/questions/:id/tickets"
+  },
+  {
+    "file": "packages/server/src/routes/DbSearchRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/search"
+  },
+  {
+    "file": "packages/server/src/routes/DbStatsRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/stats/dispatch"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/boards/:id/import"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/boards/:id/tickets"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "DELETE",
+    "pattern": "/api/db/tickets/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/tickets/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "PATCH",
+    "pattern": "/api/db/tickets/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/tickets/:id/comments"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/tickets/:id/move"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/tickets/:id/steps"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "DELETE",
+    "pattern": "/api/db/tickets/:id/steps/:n"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "PATCH",
+    "pattern": "/api/db/tickets/:id/steps/:n"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/tickets/:id/steps/:n"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/db/tickets/:id/steps/:n/move"
+  },
+  {
+    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/db/tickets/:id/timeline"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/accept/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/dispatch/config"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "PUT",
+    "pattern": "/api/dispatch/config"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/disable"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/enable"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/dispatch/logs"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/dispatch/logs/:name"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/merge/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/pause"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/dispatch/plan/:ticketId"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/plan/:ticketId"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/prompts/preview"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/dispatch/research/:questionId"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/research/:questionId"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/resume"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/return/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/dispatch/review/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/dispatch/review/:id/file"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/run"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/dispatch/runs"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/dispatch/runs/:name"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/dispatch/status"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchSuggestionRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/dispatch/suggestions"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchSuggestionRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/suggestions/:id/apply"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchSuggestionRoutes.ts",
+    "method": "DELETE",
+    "pattern": "/api/dispatch/suggestions/:id/dismiss"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchSuggestionRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/suggestions/:id/dismiss"
+  },
+  {
+    "file": "packages/server/src/routes/DispatchSuggestionRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/dispatch/suggestions/analyze"
+  },
+  {
+    "file": "packages/server/src/routes/DocCommentsRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/docs/comments"
+  },
+  {
+    "file": "packages/server/src/routes/DocCommentsRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/projects/:pid/docs/comments"
+  },
+  {
+    "file": "packages/server/src/routes/DocCommentsRoutes.ts",
+    "method": "DELETE",
+    "pattern": "/api/projects/:pid/docs/comments/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DocCommentsRoutes.ts",
+    "method": "PATCH",
+    "pattern": "/api/projects/:pid/docs/comments/:id"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/docs"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/docs/file"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/projects/:pid/docs/open"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "DELETE",
+    "pattern": "/api/projects/:pid/docs/question-drafts"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/projects/:pid/docs/question-drafts"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/projects/:pid/docs/questions"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/projects/:pid/docs/revise"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/docs/search"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "PUT",
+    "pattern": "/api/projects/:pid/docs/section"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "DELETE",
+    "pattern": "/api/projects/:pid/docs/ticket-drafts"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/projects/:pid/docs/ticket-drafts"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "DELETE",
+    "pattern": "/api/projects/:pid/docs/ticket-drafts/saved"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/docs/ticket-drafts/saved"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "PUT",
+    "pattern": "/api/projects/:pid/docs/ticket-drafts/saved"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/docs/tickets"
+  },
+  {
+    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/projects/:pid/docs/tickets"
+  },
+  {
+    "file": "packages/server/src/routes/EventRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/events"
+  },
+  {
+    "file": "packages/server/src/routes/FavoriteRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/favorites"
+  },
+  {
+    "file": "packages/server/src/routes/FavoriteRoutes.ts",
+    "method": "DELETE",
+    "pattern": "/api/projects/:pid/favorites/:sid"
+  },
+  {
+    "file": "packages/server/src/routes/FavoriteRoutes.ts",
+    "method": "PUT",
+    "pattern": "/api/projects/:pid/favorites/:sid"
+  },
+  {
+    "file": "packages/server/src/routes/HealthRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/health"
+  },
+  {
+    "file": "packages/server/src/routes/HookRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/hook"
+  },
+  {
+    "file": "packages/server/src/routes/ProjectRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/projects"
+  },
+  {
+    "file": "packages/server/src/routes/ProjectRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/projects"
+  },
+  {
+    "file": "packages/server/src/routes/SessionRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/sessions"
+  },
+  {
+    "file": "packages/server/src/routes/SessionRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/projects/:pid/sessions/:sid/claim"
+  },
+  {
+    "file": "packages/server/src/routes/SettingsRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/settings"
+  },
+  {
+    "file": "packages/server/src/routes/SpecRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/spec-progress"
+  },
+  {
+    "file": "packages/server/src/routes/StaticRoutes.ts",
+    "method": "GET",
+    "pattern": "/"
+  },
+  {
+    "file": "packages/server/src/routes/UsageRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/claude-usage"
+  },
+  {
+    "file": "packages/server/src/routes/UserSettingsRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/user-settings"
+  },
+  {
+    "file": "packages/server/src/routes/UserSettingsRoutes.ts",
+    "method": "PUT",
+    "pattern": "/api/user-settings"
+  },
+  {
+    "file": "packages/server/src/routes/UserSettingsRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/user-settings/test-notification"
+  },
+  {
+    "file": "packages/server/src/routes/UserSettingsRoutes.ts",
+    "method": "POST",
+    "pattern": "/api/user-settings/test-ntfy"
+  },
+  {
+    "file": "packages/server/src/routes/WorkflowRoutes.ts",
+    "method": "GET",
+    "pattern": "/api/workflow"
+  }
+]

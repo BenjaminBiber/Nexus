@@ -1,0 +1,35 @@
+{
+  "title": "Projekte anmelden und auflisten",
+  "fixtures": {
+    "repos": [
+      { "name": "REPO1", "git": true, "harnessInit": true, "files": { "docs/a.md": "# A\n" } }
+    ]
+  },
+  "steps": [
+    {
+      "name": "anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" }
+    },
+    { "name": "erneut anmelden", "method": "POST", "path": "/api/projects", "body": { "path": "{{REPO1}}" } },
+    { "name": "relativer Pfad", "method": "POST", "path": "/api/projects", "body": { "path": "docs" } },
+    { "name": "ohne Pfad", "method": "POST", "path": "/api/projects", "body": {} },
+    { "name": "liste", "method": "GET", "path": "/api/projects" },
+    {
+      "name": "ohne Pflichtkopf",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "headers": { "x-harness": null }
+    },
+    {
+      "name": "fremde Herkunft",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "headers": { "origin": "https://example.invalid" }
+    }
+  ]
+}

@@ -17,6 +17,7 @@
     "build:plugin": "node packages/plugin/scripts/build-plugin.mjs",
     "setup": "node scripts/setup.mjs",
     "customize": "node scripts/customize.mjs",
+    "contract": "node contract/run.mjs",
     "test:unit": "vitest run",
     "test:process": "vitest run -c vitest.process.config.ts"
   },

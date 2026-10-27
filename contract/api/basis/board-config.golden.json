@@ -1,0 +1,105 @@
+[
+  {
+    "name": "ohne Konfiguration",
+    "request": {
+      "method": "GET",
+      "path": "/api/board-config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "activeBoard": null,
+        "configured": false,
+        "database": "AiHarness",
+        "dbFile": "<HOME>/board.db",
+        "encrypt": true,
+        "file": "<HOME>/board.yaml",
+        "hasPassword": false,
+        "port": 0,
+        "provider": "mssql",
+        "server": "",
+        "trustServerCertificate": true,
+        "user": "",
+        "userId": "<UUID>",
+        "userName": ""
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "SQLite speichern",
+    "request": {
+      "body": {
+        "dbFile": "<HOME>/board.db",
+        "provider": "sqlite",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag"
+      },
+      "method": "PUT",
+      "path": "/api/board-config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "activeBoard": null,
+        "configured": true,
+        "database": "",
+        "dbFile": "<HOME>/board.db",
+        "encrypt": true,
+        "file": "<HOME>/board.yaml",
+        "hasPassword": false,
+        "port": 0,
+        "provider": "sqlite",
+        "server": "",
+        "trustServerCertificate": true,
+        "user": "",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "danach lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/board-config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "activeBoard": null,
+        "configured": true,
+        "database": "",
+        "dbFile": "<HOME>/board.db",
+        "encrypt": true,
+        "file": "<HOME>/board.yaml",
+        "hasPassword": false,
+        "port": 0,
+        "provider": "sqlite",
+        "server": "",
+        "trustServerCertificate": true,
+        "user": "",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Verbindung prüfen",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/board-config/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "message": "Datei geöffnet, Schema passt (<HOME>/board.db).",
+        "ok": true
+      },
+      "status": 200
+    }
+  }
+]
