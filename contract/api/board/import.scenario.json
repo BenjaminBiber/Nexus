@@ -1,0 +1,75 @@
+{
+  "title": "Tickets von einem anderen Board desselben Projekts holen",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    { "name": "Projekt VTR", "method": "POST", "path": "/api/db/projects", "body": { "key": "VTR", "name": "Vertrag" }, "record": false },
+    { "name": "Projekt INC", "method": "POST", "path": "/api/db/projects", "body": { "key": "INC", "name": "Incidents" }, "record": false },
+    {
+      "name": "Ziel-Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "VTR", "name": "Sprint" },
+      "save": { "bid": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Quell-Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "VTR", "name": "Kollege" },
+      "save": { "bid2": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Board des anderen Projekts",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "INC", "name": "Störungen" },
+      "save": { "bid3": "json.id" },
+      "record": false
+    },
+    { "name": "Ticket 1 auf dem Quell-Board", "method": "POST", "path": "/api/db/boards/{{bid2}}/tickets", "body": { "title": "Erstes" }, "record": false },
+    {
+      "name": "Ticket 2 auf dem Quell-Board",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid2}}/tickets",
+      "body": { "title": "Zweites", "status": "planned" },
+      "record": false
+    },
+    { "name": "Ticket 3 auf dem Quell-Board", "method": "POST", "path": "/api/db/boards/{{bid2}}/tickets", "body": { "title": "Drittes" }, "record": false },
+    { "name": "Ticket auf dem Ziel-Board", "method": "POST", "path": "/api/db/boards/{{bid}}/tickets", "body": { "title": "Schon hier" }, "record": false },
+    { "name": "Ticket im anderen Projekt", "method": "POST", "path": "/api/db/boards/{{bid3}}/tickets", "body": { "title": "Fremd" }, "record": false },
+    {
+      "name": "ein fehlendes Ticket bricht alles ab",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/import",
+      "body": { "ticketIds": ["VTR-0001", "VTR-0099"] }
+    },
+    { "name": "nichts verschoben", "method": "GET", "path": "/api/db/tickets/VTR-0001" },
+    {
+      "name": "Tickets holen",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/import",
+      "body": { "ticketIds": ["VTR-0001", "vtr-2"] }
+    },
+    {
+      "name": "Ticket liegt schon auf dem Board",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/import",
+      "body": { "ticketIds": ["VTR-0003", "VTR-0004"] }
+    },
+    {
+      "name": "Ticket aus anderem Projekt",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/import",
+      "body": { "ticketIds": ["INC-0001"] }
+    },
+    { "name": "leere Liste", "method": "POST", "path": "/api/db/boards/{{bid}}/import", "body": { "ticketIds": [] } },
+    { "name": "ohne Liste", "method": "POST", "path": "/api/db/boards/{{bid}}/import", "body": {} },
+    { "name": "Liste mit einer Zahl", "method": "POST", "path": "/api/db/boards/{{bid}}/import", "body": { "ticketIds": ["VTR-0003", 7] } },
+    { "name": "Liste ist ein Text", "method": "POST", "path": "/api/db/boards/{{bid}}/import", "body": { "ticketIds": "VTR-0003" } },
+    { "name": "unbekanntes Board", "method": "POST", "path": "/api/db/boards/999/import", "body": { "ticketIds": ["VTR-0003"] } },
+    { "name": "keine Board-Nummer", "method": "POST", "path": "/api/db/boards/abc/import", "body": { "ticketIds": ["VTR-0003"] } },
+    { "name": "Verlauf nennt das Quell-Board", "method": "GET", "path": "/api/db/tickets/VTR-0001" }
+  ]
+}

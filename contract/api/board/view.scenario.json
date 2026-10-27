@@ -1,0 +1,116 @@
+{
+  "title": "Board-Ansicht mit allen Spalten, Abhängigkeiten und Labels",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "VTR", "name": "Vertrag" }, "record": false },
+    {
+      "name": "Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "VTR", "name": "Sprint" },
+      "save": { "bid": "json.id" },
+      "record": false
+    },
+    { "name": "leere Ansicht", "method": "GET", "path": "/api/db/boards/{{bid}}/view" },
+    {
+      "name": "Ticket im Backlog",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": {
+        "title": "Fundament",
+        "description": "Text der Beschreibung",
+        "acceptance": "Der Test ist grün.",
+        "priority": "high",
+        "labels": ["api", "ui"]
+      },
+      "record": false
+    },
+    {
+      "name": "Ticket mit offener Voraussetzung",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": { "title": "Aufbau", "dependsOn": ["VTR-0001"] },
+      "record": false
+    },
+    {
+      "name": "Ticket in Planung",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": { "title": "Planung", "status": "in_planning" },
+      "record": false
+    },
+    {
+      "name": "geplantes Ticket",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": { "title": "Geplant", "status": "planned", "needsPlanning": false },
+      "record": false
+    },
+    {
+      "name": "Ticket in Arbeit",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": { "title": "Läuft", "status": "in_progress" },
+      "record": false
+    },
+    {
+      "name": "blockiertes Ticket",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": { "title": "Blockiert", "status": "blocked" },
+      "record": false
+    },
+    {
+      "name": "Grund der Blockade",
+      "method": "PATCH",
+      "path": "/api/db/tickets/VTR-0006",
+      "body": { "rev": 1, "blockedReason": "Human Interaction: Freigabe fehlt" },
+      "record": false
+    },
+    {
+      "name": "erledigtes Ticket",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": { "title": "Erledigt", "status": "done", "acceptance": "Im Board sichtbar." },
+      "record": false
+    },
+    {
+      "name": "nicht mehr nötiges Ticket",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": { "title": "Nicht nötig", "status": "not_needed" },
+      "record": false
+    },
+    {
+      "name": "Kommentar für die Kommentarzahl",
+      "method": "POST",
+      "path": "/api/db/tickets/VTR-0001/comments",
+      "body": { "body": "Erster Blick" },
+      "record": false
+    },
+    {
+      "name": "Schritt für den Fortschritt",
+      "method": "POST",
+      "path": "/api/db/tickets/VTR-0004/steps",
+      "body": { "text": "Test schreiben" },
+      "record": false
+    },
+    {
+      "name": "zweiter Schritt",
+      "method": "POST",
+      "path": "/api/db/tickets/VTR-0004/steps",
+      "body": { "text": "Umsetzen" },
+      "record": false
+    },
+    {
+      "name": "erster Schritt abgehakt",
+      "method": "POST",
+      "path": "/api/db/tickets/VTR-0004/steps/1",
+      "body": { "done": true },
+      "record": false
+    },
+    { "name": "Ansicht mit allen Spalten", "method": "GET", "path": "/api/db/boards/{{bid}}/view" },
+    { "name": "unbekanntes Board", "method": "GET", "path": "/api/db/boards/999/view" },
+    { "name": "keine Board-Nummer", "method": "GET", "path": "/api/db/boards/abc/view" }
+  ]
+}
