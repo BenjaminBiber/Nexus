@@ -1,3 +1,5 @@
+import { BenchApi } from './BenchApi.mjs';
+
 // Spalten, auf die die Tickets verteilt werden; `null` heißt „bleibt im Backlog“.
 // Ein Board mit Tickets in allen Spalten misst realistischer als 500 Karten in einer einzigen Spalte.
 const COLUMNS = [null, 'planned', 'in_progress', 'blocked', 'done'];
@@ -12,6 +14,7 @@ const COMMENTS_PER_TICKET = 2;
 // Schreibende Anfragen brauchen `X-Harness: 1` und `application/json` (siehe RequestGuard im Server).
 export class BoardSeeder {
   constructor(url, { dbFile, userId, userName, log = () => {} }) {
+    this.api = new BenchApi(url);
     this.url = url;
     this.dbFile = dbFile;
     this.userId = userId;
@@ -19,7 +22,7 @@ export class BoardSeeder {
     this.log = log;
   }
 
-  // Richtet das Board ein und liefert die Nummer des Boards samt Zahl der angelegten Tickets
+  // Richtet das Board ein und liefert Nummer des Boards, Zahl der Tickets und das erste Ticket (für die SSE-Messung)
   async seed(count) {
     await this.send('PUT', '/api/board-config', {
       provider: 'sqlite',
@@ -30,13 +33,14 @@ export class BoardSeeder {
     await this.send('POST', '/api/db/projects', { key: 'BEN', name: 'Bench' });
     const board = await this.send('POST', '/api/db/boards', { project: 'BEN', name: 'Bench' });
     if (!Number.isInteger(board?.id)) throw new Error(`Das Board wurde ohne Nummer angelegt: ${JSON.stringify(board)}`);
-    await this.fill(board.id, count);
-    return { boardId: board.id, tickets: count };
+    const firstTicket = await this.fill(board.id, count);
+    return { boardId: board.id, tickets: count, firstTicket };
   }
 
-  // Legt `count` Tickets an, verteilt sie auf die Spalten und kommentiert einige davon
+  // Legt `count` Tickets an, verteilt sie auf die Spalten und kommentiert einige davon; liefert das erste Ticket
   async fill(boardId, count) {
     const every = Math.max(1, Math.floor(count / 10));
+    let first = null;
     for (let index = 0; index < count; index += 1) {
       const ticket = await this.send('POST', `/api/db/boards/${boardId}/tickets`, {
         title: `Bench-Ticket ${index + 1}: ${this.titleTail(index)}`,
@@ -55,8 +59,10 @@ export class BoardSeeder {
           await this.send('POST', `/api/db/tickets/${ticket.id}/comments`, { body: `Kommentar ${nr} des Messskripts zu ${ticket.id}.` });
         }
       }
+      if (!first) first = ticket.id;
       if ((index + 1) % every === 0 || index + 1 === count) this.log(`  ${index + 1}/${count} Tickets angelegt`);
     }
+    return first;
   }
 
   // Wechselnde Titelenden, damit Suche und Sortierung nicht auf identischen Texten arbeiten
@@ -67,14 +73,6 @@ export class BoardSeeder {
 
   // Schickt eine schreibende Anfrage und liefert die geparste Antwort; ab Status 400 ein Fehler mit Antworttext
   async send(method, path, body) {
-    const res = await fetch(`${this.url}${path}`, {
-      method,
-      headers: { 'content-type': 'application/json', 'x-harness': '1' },
-      body: JSON.stringify(body ?? {}),
-      signal: AbortSignal.timeout(30000),
-    });
-    const text = await res.text();
-    if (res.status >= 400) throw new Error(`${method} ${path} antwortet mit ${res.status}: ${text.slice(0, 300)}`);
-    return text ? JSON.parse(text) : null;
+    return this.api.send(method, path, body);
   }
 }
