@@ -1,0 +1,33 @@
+/* Meine Aufgaben: Liste wartender Einträge der eigenen Boards */
+.inbox-filters select { min-width: 180px; }
+.inbox-hint { margin: -8px 0 12px; font-size: 12px; }
+.inbox-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.inbox-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.inbox-row[draggable='true'] { cursor: grab; }
+/* Farbe wie die Spalte des Tickets: blockiert rot, wartet (Frage) orange, In Planung violett, Notiz wie Backlog */
+.inbox-row, .inbox-row-color { --inbox-color: var(--status-backlog); }
+.inbox-row { border-left: 3px solid var(--inbox-color); }
+:is(.inbox-row, .inbox-row-color):is(.kind-merge, .kind-setup, .kind-accept, .kind-blocked) { --inbox-color: var(--status-blocked); }
+:is(.inbox-row, .inbox-row-color).kind-question { --inbox-color: var(--status-waiting); }
+:is(.inbox-row, .inbox-row-color).kind-planning { --inbox-color: var(--status-in-planning); }
+.badge.inbox-badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--inbox-color); }
+.inbox-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-width: 0; }
+.inbox-title { color: var(--text); font-weight: 500; text-decoration: none; overflow-wrap: anywhere; }
+.inbox-title:hover { color: var(--accent); }
+.inbox-id { color: var(--muted); font-size: 12px; }
+.inbox-meta { font-size: 12px; }
+.inbox-detail { flex-basis: 100%; margin: 2px 0 0; color: var(--text-soft); font-size: 13px; overflow-wrap: anywhere; }
+.inbox-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.inbox-row.drop-target { box-shadow: 0 -3px 0 var(--accent); }
+/* Kachel auf dem Dashboard */
+.inbox-tile-head { display: flex; align-items: baseline; gap: 10px; }
+.inbox-tile-head h2 { margin: 0; }
+.inbox-tile-total { color: var(--muted); }
+.inbox-tile-link { margin-left: auto; font-size: 13px; }
+.inbox-tile-counts { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.inbox-tile-counts li { display: inline-flex; align-items: center; gap: 6px; }
+.inbox-tile-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.inbox-tile-list li { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding-left: 10px; border-left: 3px solid var(--inbox-color); }
+@media (max-width: 640px) {
+  .inbox-row { flex-direction: column; }
+}

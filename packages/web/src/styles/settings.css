@@ -1,0 +1,114 @@
+/* Einstellungen: Seitenkopf mit Speicherstand, Abschnitte, Zeilen, Info-Popover, Meldungen und Fußleiste */
+.settings-head { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.settings-head-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.settings-status-slot { flex: none; padding-top: 6px; }
+
+.save-status { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 12.5px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.save-status svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+.save-status.saved { color: var(--ok-fg); }
+.save-status.error { max-width: 360px; white-space: normal; color: var(--blocked-fg); }
+.settings-panel > .save-status { align-self: flex-end; }
+
+.settings-panel { display: flex; flex-direction: column; gap: 32px; }
+.settings-section { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.settings-section-head { display: flex; flex-direction: column; gap: 2px; }
+.settings-section-head p { margin: 0; max-width: 68ch; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.settings-section-title { display: flex; align-items: center; gap: 4px; }
+.settings-section-title h3 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
+
+.settings-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-panel); box-shadow: 0 1px 2px var(--shadow-faint); }
+.settings-card > * + * { border-top: 1px solid var(--line-soft); }
+.settings-card > .notice, .settings-card > .settings-card-body { margin: 0; padding: 14px 20px; }
+.settings-card > .notice { border-radius: 0; }
+.settings-card > .notice:first-child { border-radius: var(--radius-panel) var(--radius-panel) 0 0; }
+.settings-card > .notice:last-child { border-radius: 0 0 var(--radius-panel) var(--radius-panel); }
+
+.setting-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 32px; padding: 14px 20px; }
+.setting-row.wide { grid-template-columns: minmax(0, 1fr); }
+.setting-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.setting-title { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.setting-title label, .setting-label { font-size: 13.5px; font-weight: 500; color: var(--text); }
+.setting-hint { margin: 0; max-width: 60ch; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+.setting-control { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
+.setting-row.wide .setting-control { display: block; }
+.setting-control > input:not([type="checkbox"]), .setting-control > select { width: 240px; max-width: 100%; }
+.setting-control > input.short { width: 96px; }
+.setting-row.wide .setting-control > input, .setting-row.wide .setting-control > textarea, .setting-row.wide .setting-control > select { width: 100%; box-sizing: border-box; }
+.setting-control .provider-switch { margin: 0; }
+
+/* Schalter: Checkbox mit Schalter-Optik, Rolle und Tastatur bleiben die der Checkbox */
+.setting-control > input[type="checkbox"] {
+  appearance: none; position: relative; flex: none; width: 34px; height: 20px; min-height: 0; margin: 0; padding: 0;
+  border: 0; border-radius: 999px; background: var(--line-dashed); cursor: pointer; transition: background-color 0.16s ease-out;
+}
+.setting-control > input[type="checkbox"]::before {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--surface); box-shadow: 0 1px 2px var(--shadow-soft); transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.setting-control > input[type="checkbox"]:checked { background: var(--primary); }
+.setting-control > input[type="checkbox"]:checked::before { transform: translateX(14px); }
+.setting-control > input[type="checkbox"]:hover:not(:disabled) { background: var(--line-strong); }
+.setting-control > input[type="checkbox"]:checked:hover:not(:disabled) { background: var(--primary-hover); }
+.setting-control > input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.setting-control > input[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Info-Knopf und Popover */
+.info-tip { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 22px; height: 22px; min-height: 0; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; }
+.info-tip svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; }
+.info-tip:hover { color: var(--text); background: var(--line-soft); }
+.info-tip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.info-pop {
+  position: fixed; inset: auto; margin: 0; padding: 12px 14px; max-height: min(60vh, 420px); overflow-y: auto;
+  border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); color: var(--text-soft);
+  font-size: 13px; line-height: 1.55; box-shadow: 0 12px 32px var(--shadow-soft), 0 1px 2px var(--shadow-soft);
+  opacity: 1; transform: none; transition: opacity 0.16s ease-out, transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), overlay 0.16s allow-discrete, display 0.16s allow-discrete;
+}
+.info-pop:not(:popover-open) { opacity: 0; transform: translateY(-4px); }
+@starting-style { .info-pop:popover-open { opacity: 0; transform: translateY(-4px); } }
+.info-pop p { margin: 0; }
+.info-pop p + p, .info-pop p + ul, .info-pop ul + p { margin-top: 8px; }
+.info-pop ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.info-pop code { font-family: var(--font-mono); font-size: 12px; }
+
+/* Meldungen */
+.notice { margin: 0; padding: 10px 14px; border-radius: var(--radius-control); font-size: 13px; line-height: 1.5; }
+.notice.ok { background: var(--running-bg); color: var(--running-fg); font-weight: 500; }
+.notice.info { background: var(--accent-soft); color: var(--status-fg); }
+.notice.warn { background: var(--waiting-bg); color: var(--waiting-fg); }
+.notice.error { background: var(--blocked-bg); color: var(--blocked-fg); font-weight: 500; }
+.notice ul { margin: 6px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.notice code { font-family: var(--font-mono); font-size: 12px; }
+
+/* Fußleiste der Bereiche mit Speichern-Knopf */
+.settings-footer {
+  position: sticky; bottom: 16px; z-index: 2; display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin-top: 4px;
+  padding: 12px 12px 12px 20px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface);
+  box-shadow: 0 8px 24px var(--shadow-soft);
+}
+.settings-footer-state { flex: 1; min-width: 0; font-size: 13px; color: var(--muted); }
+.settings-footer-state .notice { padding: 6px 10px; }
+
+/* Bestehende Bausteine der Bereiche auf der Fläche */
+.settings-card .dispatch-table { padding: 0; }
+.settings-card .choice-group { padding: 0; }
+.settings-card .terms { padding: 16px 20px; }
+.settings-card .project-row, .settings-card .project-row:first-child { padding: 14px 20px; }
+.settings-card .project-name { flex: none; }
+.settings-card .project-name strong { font-size: 13.5px; font-weight: 500; color: var(--text); }
+.settings-card .project-path { flex: 1 1 280px; min-width: 0; text-align: right; }
+.settings-card .token-row { margin: 16px 20px; }
+.setting-control:empty { display: none; }
+.usage-consent { display: flex; flex-direction: column; gap: 14px; }
+.usage-consent-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.usage-consent-actions .option-row { flex: 1 1 320px; flex-wrap: nowrap; }
+
+@media (max-width: 640px) {
+  .setting-row { grid-template-columns: minmax(0, 1fr); }
+  .setting-control { justify-content: flex-start; }
+  .setting-control > input:not([type="checkbox"]), .setting-control > select { width: 100%; }
+  .choice-group { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .info-pop, .setting-control > input[type="checkbox"], .setting-control > input[type="checkbox"]::before { transition: none; }
+}

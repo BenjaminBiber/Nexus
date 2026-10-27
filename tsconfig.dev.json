@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": { "@harness/core": ["packages/core/src/index.ts"], "@harness/db": ["packages/db/src/index.ts"] }
+  }
+}

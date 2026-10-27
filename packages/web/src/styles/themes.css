@@ -1,0 +1,94 @@
+/* Schema „Signal“: Farbe zeigt Information. Farben nur über Variablen (variables.css).
+   Seitenleiste dunkel: Die Bedienelemente darin bekommen die --side-*-Werte als ihre üblichen Variablen. Board-Auswahl
+   und Dialoge, die im DOM in der Seitenleiste liegen, bleiben hell – deshalb nur die Elemente selbst, nicht die ganze Leiste. */
+[data-theme='signal'] :is(.shell-sidebar, .settings-nav) { border-right-color: var(--sidebar-bg); }
+[data-theme='signal'] :is(.shell-sidebar .global-search, .shell-sidebar .bp-field, .shell-sidebar .nav, .shell-sidebar .usage-dock, .settings-nav) {
+  color-scheme: dark;
+  --surface: var(--side-surface);
+  --nav-active-bg: var(--side-active);
+  --line: var(--side-line);
+  --line-soft: var(--side-hover);
+  --text: var(--side-text);
+  --text-soft: var(--side-text-soft);
+  --muted: var(--side-muted);
+  --idle-bg: var(--side-active);
+  --accent-soft: var(--side-accent-soft);
+  --accent: var(--side-usage-ok);
+  --primary: var(--side-text-soft);
+  --usage-ok: var(--side-usage-ok);
+  --usage-warn: var(--side-usage-warn);
+  --usage-crit: var(--side-usage-crit);
+  --shadow-soft: var(--side-shadow);
+  color: var(--text);
+}
+[data-theme='signal'] .settings-nav-title { color: var(--side-text); }
+
+/* Board: jede Spalte im Ton ihres Status (Farbe aus data-status, dbboard.css), der Kopf als kräftiger getöntes Band;
+   die Karten nehmen den Ton nur in ihrem Rahmen auf. Gesperrte Spalten behalten ihr Streifenmuster. */
+[data-theme='signal'] .db-column[data-status]:not(.locked) { background: color-mix(in srgb, var(--node-status) 7%, var(--bg)); }
+[data-theme='signal'] .db-column[data-status] .column-head { margin-bottom: 4px; background: color-mix(in srgb, var(--node-status) 18%, var(--bg)); }
+[data-theme='signal'] .db-column[data-status] .column-head h2 { color: color-mix(in srgb, var(--node-status) 45%, var(--text)); }
+[data-theme='signal'] .db-column[data-status] .db-card { border-color: color-mix(in srgb, var(--node-status) 28%, var(--line)); }
+[data-theme='signal'] .db-column[data-status] .db-card:hover { border-color: color-mix(in srgb, var(--node-status) 55%, var(--line)); }
+
+/* Schema „Pastell“ als Bastelpapier: Alles sieht aus wie aus Papier geschnitten und gerissen. Grund und Flächen tragen
+   ein Papierkorn (SVG-Rauschen ohne eigene Farbe, nur Deckkraft), die Seitenleiste ist ein Bogen Tonpapier mit gerissener
+   rechter Kante, die Spalten Tonpapier im Ton ihres Status, die Karten abgerissene Zettel mit Schatten.
+   Die Risskanten sind Masken (Streifen mit unregelmäßiger Kante, gekachelt); Farben nur über variables.css. */
+:root[data-theme='pastel'] {
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.33 0 0 0 0 0.25 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --paper-fibers: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.06' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.38 0 0 0 0 0.3 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  --torn-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='8' preserveAspectRatio='none'%3E%3Cpath fill='black' d='M0 8V3l5-1.5 4 2 5-1.5 4 2 6-3 5 2 4-.5 5 2 6-3 5 1.5 6-1 5 2 5-3 6 2.5 5-1.5 6 2 5-2.5 6 1.5 5-1 6 2.5 5-3 6 1.5 5-.5 6 1.5 5-3 6 2.5 5-1.5 6 2 5-2 7 1v5z'/%3E%3C/svg%3E");
+  --torn-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='8' preserveAspectRatio='none'%3E%3Cpath fill='black' d='M0 0v4l6 1.5 4-2 6 2 4-2.5 5 3 5-2 5 .5 4-2 6 3 5-1.5 5 1 6-2.5 5 3 5-2 6 1.5 5-2 6 2.5 5-1.5 5 1 6-2.5 5 3 6-2 5 .5 6-1.5 5 3 5-2.5 6 2 5-2 6 2.5 7-1.5V0z'/%3E%3C/svg%3E");
+  --torn-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='160' preserveAspectRatio='none'%3E%3Cpath fill='black' d='M0 0h6l2 5-1.5 5 2.5 4-2 6 1 5-2.5 5 2 6-1 4 2.5 5-2 6 1.5 5-2.5 5 2 6-1 5 2.5 4-2 6 1 5-2 6 2.5 5-1.5 5 2 6-2.5 5 1.5 4-1 6 2.5 5-2 5 1 6-2 5 2 5-1.5 6-1.5 4H0z'/%3E%3C/svg%3E");
+  --torn-right-cut: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='160' preserveAspectRatio='none'%3E%3Cpath fill='black' d='M10 0H6l2 5-1.5 5 2.5 4-2 6 1 5-2.5 5 2 6-1 4 2.5 5-2 6 1.5 5-2.5 5 2 6-1 5 2.5 4-2 6 1 5-2 6 2.5 5-1.5 5 2 6-2.5 5 1.5 4-1 6 2.5 5-2 5 1 6-2 5 2 5-1.5 6-1.5 4H10z'/%3E%3C/svg%3E");
+}
+[data-theme='pastel'] body { background: var(--paper-fibers), var(--paper-grain), var(--bg); }
+[data-theme='pastel'] :is(h1, .page-title, .settings-nav-title) { font-family: var(--paper-font-display); font-weight: 600; letter-spacing: 0; }
+
+/* Seitenleisten: Tonpapier, rechts gerissen. Die Navigation der Einstellungen wird selbst maskiert. Die Hauptleiste nicht:
+   Board-Auswahl und Dialoge liegen im DOM darin und würden mit abgeschnitten. Dort legt der Inhaltsbereich einen Streifen
+   Grund mit der Gegenform des Risses über die rechte Kante, samt etwas Schatten an der Kante. */
+[data-theme='pastel'] :is(.shell-sidebar, .settings-nav) { border-right: 0; background: var(--paper-fibers), var(--paper-grain), var(--sidebar-bg); }
+[data-theme='pastel'] .settings-nav { flex-basis: 228px; padding-right: 14px; mask: linear-gradient(black, black) left top / calc(100% - 10px) 100% no-repeat, var(--torn-right) right top / 10px 160px repeat-y; }
+[data-theme='pastel'] .shell-sidebar { padding-right: 18px; }
+[data-theme='pastel'] .usage-dock { margin-right: -18px; padding-right: 18px; background: transparent; }
+[data-theme='pastel'] .shell-content { position: relative; box-shadow: inset 6px 0 8px -6px var(--shadow-strong); }
+[data-theme='pastel'] .shell-content::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  left: -10px;
+  width: 10px;
+  pointer-events: none;
+  background: linear-gradient(to right, var(--shadow-strong), transparent 9px), var(--paper-fibers), var(--paper-grain), var(--bg);
+  background-attachment: scroll, fixed, fixed, fixed;
+  mask: var(--torn-right-cut) 0 0 / 10px 160px repeat-y;
+}
+
+/* Flächen: Papierbögen mit Korn und flachem Schatten */
+[data-theme='pastel'] :is(.panel, .settings-card, .choice, .sheet-head, .board-picker-pop, .usage-meter) { background-image: var(--paper-grain); box-shadow: 1px 2px 0 var(--shadow-mid); }
+[data-theme='pastel'] .nav a.active, [data-theme='pastel'] .goo-nav-blob { background-image: var(--paper-grain); }
+
+/* Spalten: Tonpapier im Ton ihres Status */
+[data-theme='pastel'] .db-column[data-status]:not(.locked) { background: var(--paper-grain), color-mix(in srgb, var(--node-status) 16%, var(--bg)); }
+[data-theme='pastel'] .db-column.locked { background: var(--paper-grain), repeating-linear-gradient(135deg, var(--column-locked-a) 0 8px, var(--column-locked-b) 8px 16px); }
+[data-theme='pastel'] .column-empty { border-color: color-mix(in srgb, var(--node-status, var(--line-dashed)) 40%, var(--line-dashed)); }
+
+/* Karten: abgerissene Zettel. Das Papier liegt auf ::before (mit Risskanten oben und unten), der Schatten auf der Karte
+   folgt so der gerissenen Form. Versetzte Masken, damit nicht jeder Zettel gleich gerissen ist. */
+[data-theme='pastel'] .card { position: relative; isolation: isolate; background: none; border: 0; border-radius: 0; padding-block: 16px; box-shadow: none; filter: drop-shadow(1px 2px 0 var(--shadow-mid)) drop-shadow(0 4px 6px var(--shadow-faint)); }
+[data-theme='pastel'] .card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--paper-grain), var(--surface);
+  mask: var(--torn-top) 0 0 / 160px 8px repeat-x, linear-gradient(black, black) center / 100% calc(100% - 14px) no-repeat, var(--torn-bottom) 0 100% / 160px 8px repeat-x;
+}
+[data-theme='pastel'] .card:nth-child(3n + 2)::before { mask-position: -57px 0, center, -101px 100%; }
+[data-theme='pastel'] .card:nth-child(3n)::before { mask-position: -113px 0, center, -38px 100%; }
+[data-theme='pastel'] .card:hover { filter: drop-shadow(2px 4px 0 var(--shadow-mid)) drop-shadow(0 8px 10px var(--shadow-soft)); }
+[data-theme='pastel'] .card.live { filter: drop-shadow(0 0 1px var(--accent)) drop-shadow(0 0 1px var(--accent)) drop-shadow(1px 2px 0 var(--shadow-mid)); }

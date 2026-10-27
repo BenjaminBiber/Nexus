@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+// Startskript des Plugins: macht `harness` in der Bash verfügbar und lädt das gebündelte CLI.
+import('../lib/cli.mjs');

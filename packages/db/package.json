@@ -1,0 +1,14 @@
+{
+  "name": "@harness/db",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@harness/core": "0.1.0",
+    "mssql": "^12.7.5"
+  },
+  "devDependencies": {
+    "@types/mssql": "^12.3.0"
+  }
+}

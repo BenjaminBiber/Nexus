@@ -1,0 +1,48 @@
+# Abhängigkeiten
+node_modules/
+
+# Build-Ausgaben
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Test- und Laufzeit-Temp
+.tmp-tests/
+.vite/
+.vitest/
+*.log
+npm-debug.log*
+
+# Umgebungsvariablen und Geheimnisse
+.env
+.env.*
+!.env.example
+
+# Lokale Claude-Code-Einstellungen
+.claude/settings.local.json
+.claude/worktrees/
+.claude/skills/
+.agents/
+
+# Anpassungen des Devs (Workflow, Skills, Output-Styles), siehe README „Anpassen“
+/custom/
+
+# Spec-Kit-Spezifikationen
+/specs/
+.specify/
+/docs/
+
+# Graphify-Ausgabe
+graphify-out/
+
+# Editor und Betriebssystem
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Office-Lock-Dateien
+~$*

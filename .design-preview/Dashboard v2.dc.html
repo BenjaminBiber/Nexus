@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f6f6f3;font-family:'Archivo',system-ui,sans-serif;color:#151514;-webkit-font-smoothing:antialiased}
+a{color:#3346c9;text-decoration:none}a:hover{color:#1f2c99;text-decoration:underline}
+button,select{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#f6f6f3">
+
+<div style="position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid #e5e4df">
+<div style="max-width:1440px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<div style="display:flex;align-items:baseline;gap:10px;margin-right:auto"><span style="font-size:20px;font-weight:700">Dashboard</span><span style="font-size:13px;color:#74736d">Projekt M4S</span></div>
+<select value="{{hdr.board}}" onChange="{{hdr.onBoard}}" style="height:32px;border:1px solid #dcdbd6;border-radius:6px;padding:0 8px;font-size:13px;color:#151514;background:#fff"><option value="all">Alle Boards</option><option value="M4S Core">M4S Core</option><option value="M4S Web">M4S Web</option></select>
+<div style="display:flex;gap:2px;padding:3px;background:#efeeea;border-radius:8px">
+<sc-for list="{{hdr.periods}}" as="p" hint-placeholder-count="4">
+<sc-if value="{{p.active}}"><button onClick="{{p.onClick}}" style="border:0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);border-radius:6px;padding:5px 11px;font-size:12.5px;font-weight:600;color:#151514;cursor:pointer">{{p.label}}</button></sc-if>
+<sc-if value="{{p.idle}}"><button onClick="{{p.onClick}}" style="border:0;background:transparent;border-radius:6px;padding:5px 11px;font-size:12.5px;font-weight:500;color:#5f5e58;cursor:pointer">{{p.label}}</button></sc-if>
+</sc-for>
+</div>
+<div style="position:relative">
+<button onClick="{{pill.toggle}}" style="height:32px;display:flex;align-items:center;gap:8px;border:1px solid #dcdbd6;background:#fff;border-radius:16px;padding:0 12px 0 10px;font-size:12.5px;font-weight:600;color:#151514;cursor:pointer" style-hover="background:#fafaf7"><span style="width:8px;height:8px;border-radius:50%;background:{{pill.dot}}"></span>{{pill.text}}</button>
+<sc-if value="{{pill.open}}" hint-placeholder-val="{{false}}">
+<div onClick="{{pill.toggle}}" style="position:fixed;inset:0;z-index:40"></div>
+<div style="position:absolute;right:0;top:40px;z-index:41;width:300px;background:#fff;border:1px solid #e5e4df;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.12);padding:14px 16px;display:flex;flex-direction:column;gap:2px">
+<div style="font-size:14px;font-weight:700;padding-bottom:6px">Dispatcher</div>
+<sc-for list="{{pill.rows}}" as="r" hint-placeholder-count="5"><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #f0efeb;font-size:13px"><span style="color:#74736d">{{r.l}}</span><span style="font-weight:600;text-align:right">{{r.v}}</span></div></sc-for>
+</div>
+</sc-if>
+</div>
+</div>
+</div>
+
+<div style="max-width:1440px;margin:0 auto;padding:28px 28px 64px;display:flex;flex-direction:column;gap:40px">
+
+<section style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-size:24px;font-weight:700;letter-spacing:-.01em">Was muss ich tun?</span><span style="font-size:13.5px;color:#74736d">Aktueller Stand · unabhängig vom Zeitraum</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px">
+<sc-for list="{{A.chips}}" as="c" hint-placeholder-count="8">
+<button onClick="{{c.onClick}}" style="display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;border:1px solid {{c.border}};background:{{c.bg}};border-radius:8px;cursor:pointer;text-align:left;opacity:{{c.op}}" style-hover="border-color:#b9b8b2"><span style="width:8px;height:8px;border-radius:50%;flex:none;background:{{c.color}}"></span><span style="flex:1;font-size:13px;font-weight:500;color:#151514;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{c.label}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#151514">{{c.count}}</span></button>
+</sc-for>
+</div>
+<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+<div style="flex:1 1 620px;min-width:0;background:#fff;border:1px solid #e5e4df;border-radius:10px;overflow:hidden">
+<div style="display:flex;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid #eeede9"><span style="font-size:15px;font-weight:700">Aufgaben</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#74736d">{{A.total}}</span><sc-if value="{{A.hasFilter}}" hint-placeholder-val="{{false}}"><button onClick="{{A.clearFilter}}" style="margin-left:4px;display:flex;align-items:center;gap:6px;border:0;background:#efeeea;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600;color:#151514;cursor:pointer">{{A.filterLabel}}<span style="color:#74736d">×</span></button></sc-if><span style="margin-left:auto;font-size:12px;color:#74736d">nach Dringlichkeit</span></div>
+<sc-for list="{{A.rows}}" as="r" hint-placeholder-count="8">
+<div onClick="{{r.open}}" style="display:grid;grid-template-columns:150px minmax(0,1fr) auto 128px;gap:14px;align-items:center;padding:9px 18px;border-top:1px solid #f0efeb;cursor:pointer" style-hover="background:#fafaf7">
+<span style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#3d3d39;min-width:0"><span style="width:8px;height:8px;border-radius:50%;flex:none;background:{{r.color}}"></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{r.kind}}</span></span>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<div style="display:flex;gap:8px;align-items:baseline;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#74736d;flex:none">{{r.id}}</span><span style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{r.title}}</span></div>
+<div style="display:flex;gap:10px;align-items:baseline;min-width:0;font-size:12.5px;color:#55544f"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{r.reason}}</span><sc-if value="{{r.rec}}" hint-placeholder-val="{{false}}"><span style="flex:none;color:#2c3aa8;font-weight:500">Empfohlen: {{r.rec}}</span></sc-if><sc-if value="{{r.seen}}" hint-placeholder-val="{{false}}"><span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#55544f;background:#efeeea;border-radius:4px;padding:0 5px">{{r.seen}}</span></sc-if><sc-if value="{{r.blocks}}" hint-placeholder-val="{{false}}"><span style="flex:none;color:#a2402c;font-weight:500">{{r.blocks}}</span></sc-if></div>
+</div>
+<span style="font-size:12px;white-space:nowrap;font-weight:{{r.waitW}};color:{{r.waitC}};background:{{r.waitBg}};border-radius:4px;padding:2px 7px">{{r.wait}}</span>
+<button onClick="{{r.act}}" style="height:30px;border:1px solid #dcdbd6;background:#fff;border-radius:6px;font-size:12.5px;font-weight:600;color:#151514;cursor:pointer" style-hover="background:#151514;color:#fff;border-color:#151514">{{r.action}}</button>
+</div>
+</sc-for>
+<sc-if value="{{A.empty}}" hint-placeholder-val="{{false}}"><div style="padding:36px 18px;text-align:center;font-size:14px;color:#55544f">Nichts zu tun – der Dispatcher kommt ohne dich weiter.</div></sc-if>
+<sc-if value="{{A.hasMore}}" hint-placeholder-val="{{true}}"><button onClick="{{A.toggleMore}}" style="width:100%;height:40px;border:0;border-top:1px solid #f0efeb;background:#fafaf8;font-size:13px;font-weight:600;color:#3346c9;cursor:pointer">{{A.moreLabel}}</button></sc-if>
+</div>
+<div style="flex:1 1 280px;max-width:100%;background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:13px 18px 6px">
+<div style="font-size:15px;font-weight:700;padding-bottom:4px">Dispatcher-Hindernisse</div>
+<sc-for list="{{A.obstacles}}" as="o" hint-placeholder-count="4">
+<a href="#" style="display:grid;grid-template-columns:44px minmax(0,1fr) 10px;gap:10px;align-items:center;padding:11px 0;border-top:1px solid #f0efeb;color:#151514;text-decoration:none" style-hover="color:#151514;text-decoration:none;background:#fafaf7">
+<span style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-.02em;text-align:right">{{o.n}}</span>
+<span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:13px;font-weight:600">{{o.l}}</span><span style="font-size:12px;color:#74736d">{{o.sub}}</span></span>
+<span style="color:#9a9993">›</span>
+</a>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-right:auto"><span style="font-size:24px;font-weight:700;letter-spacing:-.01em">Was kann ich optimieren?</span><span style="font-size:13.5px;color:#74736d">{{B.sub}}</span></div>
+<sc-if value="{{B.hasProf}}" hint-placeholder-val="{{false}}"><button onClick="{{B.clearProf}}" style="display:flex;align-items:center;gap:7px;height:30px;border:1px solid #c9cff3;background:#eef0fb;border-radius:15px;padding:0 12px;font-size:12.5px;font-weight:600;color:#1f2c99;cursor:pointer">Profil: <span style="font-family:'JetBrains Mono',monospace">{{B.prof}}</span><span>×</span></button></sc-if>
+<div style="display:flex;gap:2px;padding:3px;background:#efeeea;border-radius:8px">
+<sc-for list="{{B.kinds}}" as="p" hint-placeholder-count="4">
+<sc-if value="{{p.active}}"><button onClick="{{p.onClick}}" style="border:0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);border-radius:6px;padding:5px 11px;font-size:12.5px;font-weight:600;color:#151514;cursor:pointer">{{p.label}}</button></sc-if>
+<sc-if value="{{p.idle}}"><button onClick="{{p.onClick}}" style="border:0;background:transparent;border-radius:6px;padding:5px 11px;font-size:12.5px;font-weight:500;color:#5f5e58;cursor:pointer">{{p.label}}</button></sc-if>
+</sc-for>
+</div>
+</div>
+
+<sc-if value="{{B.low}}" hint-placeholder-val="{{false}}"><div style="background:#fdf3e3;border:1px solid #f1dcb5;border-radius:10px;padding:12px 16px;font-size:13.5px;color:#7a4708;font-weight:500">{{B.lowText}}</div></sc-if>
+
+<sc-if value="{{B.notLow}}" hint-placeholder-val="{{true}}">
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="4">
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:11.5px;font-weight:700;color:{{c.sevC}};background:{{c.sevBg}};border-radius:4px;padding:2px 7px">{{c.sev}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#55544f">{{c.subj}}</span></div>
+<div style="font-size:16px;font-weight:700;line-height:1.3">{{c.title}}</div>
+<div style="display:flex;flex-direction:column;gap:4px"><sc-for list="{{c.ev}}" as="e" hint-placeholder-count="2"><span style="font-size:13px;color:#3d3d39;line-height:1.4;text-wrap:pretty">{{e}}</span></sc-for></div>
+<sc-if value="{{c.hasDiff}}" hint-placeholder-val="{{true}}"><div style="display:flex;flex-direction:column;gap:2px;background:#f3f2ee;border-radius:6px;padding:8px 10px"><sc-for list="{{c.diff}}" as="d" hint-placeholder-count="1"><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px"><span style="color:#55544f">{{d.k}}: </span><span style="color:#b13a3e;text-decoration:line-through">{{d.a}}</span><span style="color:#74736d"> → </span><span style="color:#17804a;font-weight:600">{{d.b}}</span></span></sc-for></div></sc-if>
+<sc-if value="{{c.text}}" hint-placeholder-val="{{false}}"><div style="font-size:13px;color:#3d3d39;background:#f3f2ee;border-radius:6px;padding:8px 10px;line-height:1.4">{{c.text}}</div></sc-if>
+<div style="display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:4px"><span style="font-size:12px;color:#74736d;margin-right:auto">aus {{c.n}} Läufen</span><button onClick="{{c.open}}" style="height:28px;border:1px solid #dcdbd6;background:#fff;border-radius:6px;padding:0 10px;font-size:12px;font-weight:600;cursor:pointer">Einstellung öffnen</button><button onClick="{{c.hide}}" style="height:28px;border:0;background:transparent;padding:0 6px;font-size:12px;font-weight:500;color:#74736d;cursor:pointer">Ausblenden</button></div>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{B.noCards}}" hint-placeholder-val="{{false}}"><div style="font-size:13.5px;color:#55544f;padding:4px 2px">Keine Befunde im Zeitraum – Profile und Limits passen zu den Tickets.</div></sc-if>
+<sc-if value="{{B.foot}}" hint-placeholder-val="{{false}}"><div style="font-size:12.5px;color:#74736d;margin-top:-6px">{{B.foot}}</div></sc-if>
+</sc-if>
+
+<div style="display:flex;flex-direction:column;gap:16px;opacity:{{B.op}}">
+
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;overflow:hidden">
+<div style="display:flex;align-items:baseline;gap:10px;padding:13px 18px;border-bottom:1px solid #eeede9;flex-wrap:wrap"><span style="font-size:15px;font-weight:700">Profil-Matrix</span><span style="font-size:12.5px;color:#74736d">in Leiter-Reihenfolge · Zeile anklicken filtert die Diagramme darunter</span></div>
+<div style="overflow-x:auto">
+<div style="min-width:1140px">
+<div style="display:grid;grid-template-columns:14px minmax(150px,1.3fr) 104px 120px 76px 130px 150px 150px 84px 60px;gap:14px;padding:9px 18px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#74736d;font-weight:600;background:#fafaf8"><span></span><span>Profil</span><span>Läufe</span><span>Erfolg</span><span>Erstvers.</span><span>Abbrüche</span><span>Turn-Ausl.</span><span>Zeit-Ausl.</span><span>Eskal. weg</span><span>Frage</span></div>
+<sc-for list="{{mx.ladder}}" as="r" hint-placeholder-count="3">
+<div onClick="{{r.onClick}}" style="display:grid;grid-template-columns:14px minmax(150px,1.3fr) 104px 120px 76px 130px 150px 150px 84px 60px;gap:14px;padding:10px 18px;border-top:1px solid #f0efeb;align-items:center;cursor:pointer;background:{{r.rowBg}}" style-hover="background:#f7f7f4">
+<span title="{{r.ampTip}}" style="width:9px;height:9px;border-radius:50%;background:{{r.amp}}"></span>
+<div style="display:flex;flex-direction:column;gap:1px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600">{{r.name}}</span><span style="font-size:11.5px;color:#74736d">{{r.meta}}</span></div>
+<div style="display:flex;flex-direction:column;gap:1px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600">{{r.n}}</span><span style="font-size:11px;color:#74736d">{{r.split}}</span></div>
+<div style="display:flex;flex-direction:column;gap:4px;padding:3px 6px;margin:-3px -6px;border-radius:5px;background:{{r.okBg}}"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600">{{r.ok}}</span><div style="height:4px;background:#efeeea;border-radius:2px;overflow:hidden"><div style="height:100%;width:{{r.okW}}%;background:#1f9d55"></div></div></div>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px">{{r.first}}</span>
+<div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;height:8px;border-radius:2px;overflow:hidden;background:#efeeea"><sc-for list="{{r.ab}}" as="s" hint-placeholder-count="4"><div title="{{s.tip}}" style="width:{{s.w}}%;background:{{s.c}}"></div></sc-for></div><span style="font-size:11px;color:#74736d">{{r.abN}}</span></div>
+<div style="display:flex;flex-direction:column;gap:4px;padding:3px 6px;margin:-3px -6px;border-radius:5px;background:{{r.tu.bg}}"><div style="position:relative;height:10px"><div style="position:absolute;top:4px;left:0;right:0;height:2px;background:#efeeea"></div><div style="position:absolute;top:4px;height:2px;left:{{r.tu.wl}}%;width:{{r.tu.ww}}%;background:#9a9993"></div><div style="position:absolute;top:1px;height:8px;left:{{r.tu.bl}}%;width:{{r.tu.bw}}%;background:#c9c8c2;border-radius:1px"></div><div style="position:absolute;top:0;height:10px;width:2px;left:{{r.tu.m}}%;background:#151514"></div><div style="position:absolute;top:-2px;height:14px;width:1px;left:90.9%;background:#e5484d"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#55544f">{{r.tu.txt}}</span></div>
+<div style="display:flex;flex-direction:column;gap:4px;padding:3px 6px;margin:-3px -6px;border-radius:5px;background:{{r.du.bg}}"><div style="position:relative;height:10px"><div style="position:absolute;top:4px;left:0;right:0;height:2px;background:#efeeea"></div><div style="position:absolute;top:4px;height:2px;left:{{r.du.wl}}%;width:{{r.du.ww}}%;background:#9a9993"></div><div style="position:absolute;top:1px;height:8px;left:{{r.du.bl}}%;width:{{r.du.bw}}%;background:#c9c8c2;border-radius:1px"></div><div style="position:absolute;top:0;height:10px;width:2px;left:{{r.du.m}}%;background:#151514"></div><div style="position:absolute;top:-2px;height:14px;width:1px;left:90.9%;background:#e5484d"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#55544f">{{r.du.txt}}</span></div>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:{{r.escW}};color:{{r.escC}};padding:2px 6px;margin:-2px -6px;border-radius:5px;background:{{r.escBg}};justify-self:start">{{r.esc}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px">{{r.q}}</span>
+</div>
+</sc-for>
+<div style="height:2px;background:#e5e4df"></div>
+<sc-for list="{{mx.off}}" as="r" hint-placeholder-count="2">
+<div onClick="{{r.onClick}}" style="display:grid;grid-template-columns:14px minmax(150px,1.3fr) 104px 120px 76px 130px 150px 150px 84px 60px;gap:14px;padding:10px 18px;border-top:1px solid #f0efeb;align-items:center;cursor:pointer;background:{{r.rowBg}}" style-hover="background:#f7f7f4">
+<span title="{{r.ampTip}}" style="width:9px;height:9px;border-radius:50%;background:{{r.amp}}"></span>
+<div style="display:flex;flex-direction:column;gap:1px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600">{{r.name}}</span><span style="font-size:11.5px;color:#74736d">{{r.meta}} · nicht in Leiter</span></div>
+<div style="display:flex;flex-direction:column;gap:1px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600">{{r.n}}</span><span style="font-size:11px;color:#74736d">{{r.split}}</span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600">{{r.ok}}</span><div style="height:4px;background:#efeeea;border-radius:2px;overflow:hidden"><div style="height:100%;width:{{r.okW}}%;background:#1f9d55"></div></div></div>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px">{{r.first}}</span>
+<div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;height:8px;border-radius:2px;overflow:hidden;background:#efeeea"><sc-for list="{{r.ab}}" as="s" hint-placeholder-count="4"><div title="{{s.tip}}" style="width:{{s.w}}%;background:{{s.c}}"></div></sc-for></div><span style="font-size:11px;color:#74736d">{{r.abN}}</span></div>
+<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#55544f">{{r.tu.txt}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#55544f">{{r.du.txt}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px">{{r.esc}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px">{{r.q}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;gap:14px;flex-wrap:wrap;padding:10px 18px;border-top:1px solid #eeede9;font-size:11.5px;color:#74736d"><span>Abbrüche:</span><sc-for list="{{mx.legend}}" as="l" hint-placeholder-count="5"><span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:{{l.c}}"></span>{{l.l}}</span></sc-for><span style="margin-left:auto">Boxplot: Strich = Median · Kasten P25–P75 · Linie bis P90 · rot = Limit</span></div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px;align-items:start">
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-size:15px;font-weight:700;margin-right:auto">Limit-Auslastung je Profil</span>
+<div style="display:flex;gap:2px;padding:3px;background:#efeeea;border-radius:7px"><sc-for list="{{hist.modes}}" as="p" hint-placeholder-count="2">
+<sc-if value="{{p.active}}"><button onClick="{{p.onClick}}" style="border:0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);border-radius:5px;padding:4px 10px;font-size:12px;font-weight:600;color:#151514;cursor:pointer">{{p.label}}</button></sc-if>
+<sc-if value="{{p.idle}}"><button onClick="{{p.onClick}}" style="border:0;background:transparent;border-radius:5px;padding:4px 10px;font-size:12px;font-weight:500;color:#5f5e58;cursor:pointer">{{p.label}}</button></sc-if>
+</sc-for></div></div>
+<div style="display:flex;gap:14px;font-size:12px;color:#55544f;flex-wrap:wrap"><span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#1f9d55"></span>erfolgreich</span><span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#e5484d"></span>abgebrochen</span><span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#8f9ae0"></span>Frage / blockiert</span></div>
+<sc-for list="{{hist.rows}}" as="p" hint-placeholder-count="3">
+<div style="display:grid;grid-template-columns:112px minmax(0,1fr);gap:12px;align-items:end">
+<div style="display:flex;flex-direction:column;gap:2px;padding-bottom:2px"><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600">{{p.name}}</span><span style="font-size:11.5px;color:#74736d">{{p.n}}</span></div>
+<div style="display:flex;gap:2px;height:56px;align-items:stretch;border-bottom:1px solid #dcdbd6">
+<sc-for list="{{p.bins}}" as="b" hint-placeholder-count="11">
+<div title="{{b.tip}}" style="flex:1;display:flex;flex-direction:column-reverse;border-left:{{b.bl}};padding-left:{{b.pl}};margin-left:{{b.ml}}">
+<div style="height:{{b.ok}}%;background:#1f9d55"></div><div style="height:{{b.ab}}%;background:#e5484d"></div><div style="height:{{b.q}}%;background:#8f9ae0"></div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<div style="display:grid;grid-template-columns:112px minmax(0,1fr);gap:12px"><span></span><div style="display:flex;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a9993"><span style="flex:5">0 %</span><span style="flex:5">50 %</span><span style="flex:1;text-align:right;white-space:nowrap">100 % · Limit</span></div></div>
+<div style="font-size:12px;color:#74736d;line-height:1.45;text-wrap:pretty">Steht der Berg rechts am Limit, ist das Limit zu knapp. Liegt alles links, ist es zu großzügig. Die Spalte ganz rechts zählt Läufe am Limit. {{hist.limits}}<br>¹ Aus Kommentaren rekonstruierte Läufe ({{hist.recon}}) haben keine Turns und Limits und fehlen hier. In Erfolgs- und Eskalationsquoten zählen sie mit.</div>
+</div>
+
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:15px;font-weight:700;margin-right:auto">Eskalationsfluss entlang der Leiter</span><span style="font-size:12px;color:#55544f;font-family:'JetBrains Mono',monospace;min-height:16px">{{sk.info}}</span></div>
+<div style="display:flex;gap:14px;font-size:12px;color:#55544f;flex-wrap:wrap"><span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#1f9d55"></span>erfolgreich</span><span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#e8833a"></span>Eskalation</span><span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#e5484d"></span>endgültig gescheitert</span><span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#b9b8b2"></span>Frage / blockiert</span></div>
+<div style="width:100%">{{sk.svg}}</div>
+<div style="display:flex;gap:6px 18px;flex-wrap:wrap;padding-top:10px;border-top:1px solid #f0efeb;font-size:13px"><sc-for list="{{sk.line}}" as="k" hint-placeholder-count="4"><span><span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:{{k.c}}">{{k.v}}</span> {{k.l}}</span></sc-for></div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px;align-items:start">
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;overflow:hidden">
+<div style="display:flex;align-items:baseline;gap:10px;padding:13px 18px;border-bottom:1px solid #eeede9;flex-wrap:wrap"><span style="font-size:15px;font-weight:700">Profilwahl und Regeln</span><span style="font-size:12.5px;color:#74736d">aus dispatch.yaml</span></div>
+<div style="overflow-x:auto"><div style="min-width:560px">
+<div style="display:grid;grid-template-columns:minmax(150px,1.4fr) 92px 50px 96px 56px minmax(90px,1fr);gap:12px;padding:8px 18px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#74736d;font-weight:600;background:#fafaf8"><span>Quelle</span><span>Ziel</span><span style="text-align:right">Tickets</span><span>Erstvers.</span><span style="text-align:right">Eskal.</span><span>Endprofil</span></div>
+<sc-for list="{{rules}}" as="r" hint-placeholder-count="6">
+<div style="display:grid;grid-template-columns:minmax(150px,1.4fr) 92px 50px 96px 56px minmax(90px,1fr);gap:12px;padding:10px 18px;border-top:1px solid #f0efeb;align-items:center;opacity:{{r.op}};background:{{r.bg}}">
+<div style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-size:13px;font-weight:600">{{r.src}}</span><span style="font-size:11.5px;color:#74736d">{{r.cond}}</span></div>
+<span style="font-family:'JetBrains Mono',monospace;font-size:12px">{{r.target}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px;text-align:right">{{r.n}}</span>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;color:{{r.firstC}}">{{r.first}}</span><div style="height:4px;background:#efeeea;border-radius:2px;overflow:hidden"><div style="height:100%;width:{{r.firstW}}%;background:{{r.firstBar}}"></div></div></div>
+<span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;text-align:right">{{r.esc}}</span>
+<div style="display:flex;height:10px;border-radius:2px;overflow:hidden;background:#efeeea"><sc-for list="{{r.end}}" as="s" hint-placeholder-count="2"><div title="{{s.tip}}" style="width:{{s.w}}%;background:{{s.c}}"></div></sc-for></div>
+</div>
+</sc-for>
+</div></div>
+<div style="display:flex;gap:12px;flex-wrap:wrap;padding:10px 18px;border-top:1px solid #eeede9;font-size:11.5px;color:#74736d"><span>Endprofil:</span><sc-for list="{{profLegend}}" as="l" hint-placeholder-count="4"><span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:{{l.c}}"></span>{{l.l}}</span></sc-for></div>
+</div>
+
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-size:15px;font-weight:700;margin-right:auto">Abbruchgründe je Profil</span>
+<div style="display:flex;gap:2px;padding:3px;background:#efeeea;border-radius:7px"><sc-for list="{{ab.modes}}" as="p" hint-placeholder-count="2">
+<sc-if value="{{p.active}}"><button onClick="{{p.onClick}}" style="border:0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);border-radius:5px;padding:4px 10px;font-size:12px;font-weight:600;color:#151514;cursor:pointer">{{p.label}}</button></sc-if>
+<sc-if value="{{p.idle}}"><button onClick="{{p.onClick}}" style="border:0;background:transparent;border-radius:5px;padding:4px 10px;font-size:12px;font-weight:500;color:#5f5e58;cursor:pointer">{{p.label}}</button></sc-if>
+</sc-for></div></div>
+<sc-for list="{{ab.rows}}" as="r" hint-placeholder-count="3">
+<div style="display:grid;grid-template-columns:104px minmax(0,1fr) 30px;gap:10px;align-items:center">
+<span style="font-family:'JetBrains Mono',monospace;font-size:12.5px">{{r.name}}</span>
+<div style="display:flex;height:18px;gap:1px"><sc-for list="{{r.segs}}" as="s" hint-placeholder-count="4"><div onClick="{{s.onClick}}" title="{{s.tip}}" style="width:{{s.w}}%;background:{{s.c}};cursor:pointer;outline:{{s.ol}};outline-offset:1px" style-hover="filter:brightness(.9)"></div></sc-for></div>
+<span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;text-align:right">{{r.n}}</span>
+</div>
+</sc-for>
+<div style="display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:#55544f;padding-top:4px">
+<div style="display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center"><span style="color:#74736d;width:88px">per Konfig</span><sc-for list="{{ab.legCfg}}" as="l" hint-placeholder-count="3"><span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:{{l.c}}"></span>{{l.l}}</span></sc-for></div>
+<div style="display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center"><span style="color:#74736d;width:88px">im Lauf</span><sc-for list="{{ab.legRun}}" as="l" hint-placeholder-count="3"><span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:{{l.c}}"></span>{{l.l}}</span></sc-for></div>
+<div style="display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center"><span style="color:#74736d;width:88px">Infrastruktur</span><sc-for list="{{ab.legInfra}}" as="l" hint-placeholder-count="4"><span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:{{l.c}}"></span>{{l.l}}</span></sc-for></div>
+</div>
+<sc-if value="{{ab.hasSel}}" hint-placeholder-val="{{false}}">
+<div style="border:1px solid #e5e4df;border-radius:8px;overflow:hidden">
+<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:#fafaf8;font-size:13px;font-weight:600"><span style="width:8px;height:8px;border-radius:2px;background:{{ab.sel.c}}"></span>{{ab.sel.title}}<button onClick="{{ab.close}}" style="margin-left:auto;border:0;background:transparent;font-size:15px;color:#74736d;cursor:pointer">×</button></div>
+<sc-for list="{{ab.sel.runs}}" as="u" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:84px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:8px 12px;border-top:1px solid #f0efeb;font-size:12.5px"><span style="font-family:'JetBrains Mono',monospace;color:#55544f">{{u.id}} #{{u.a}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#3d3d39;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{u.text}}</span><a href="#" onClick="{{u.open}}" style="font-size:12px;font-weight:600">Ticket</a></div></sc-for>
+<sc-if value="{{ab.sel.more}}" hint-placeholder-val="{{false}}"><div style="padding:7px 12px;border-top:1px solid #f0efeb;font-size:12px;color:#74736d">{{ab.sel.more}}</div></sc-if>
+</div>
+</sc-if>
+</div>
+</div>
+
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:14px 18px 16px;display:flex;gap:20px;flex-wrap:wrap">
+<div style="flex:1 1 560px;min-width:0;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:15px;font-weight:700;margin-right:auto">Erstversuch-Quote über Zeit</span><span style="font-size:12px;color:#74736d">{{tr.res}}</span></div>
+<div style="display:flex;gap:14px;font-size:12px;color:#55544f;flex-wrap:wrap"><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:2px;background:#151514"></span>Erstversuch-Quote</span><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:0;border-top:2px dashed #e8833a"></span>Eskalationsquote</span><span style="display:flex;align-items:center;gap:6px"><span style="width:0;height:12px;border-left:1.5px dashed #3346c9"></span>Konfig-Änderung (Hover)</span><span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:10px;background:#eceae4"></span>gewählter Zeitraum</span></div>
+<div style="position:relative">{{tr.svg}}
+<sc-if value="{{tr.tip.show}}" hint-placeholder-val="{{false}}"><div style="position:absolute;top:4px;left:{{tr.tip.left}}%;transform:translateX({{tr.tip.tx}});background:#151514;color:#fff;border-radius:7px;padding:8px 10px;font-size:12px;display:flex;flex-direction:column;gap:3px;pointer-events:none;white-space:nowrap;z-index:3"><span style="font-weight:600">{{tr.tip.date}}</span><sc-for list="{{tr.tip.diff}}" as="d" hint-placeholder-count="1"><span style="font-family:'JetBrains Mono',monospace;color:#c9cff3">{{d}}</span></sc-for></div></sc-if>
+</div>
+</div>
+<div style="flex:1 1 240px;max-width:100%;background:#fafaf8;border:1px solid #eeede9;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:14px;align-self:stretch">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600">Seit letzter Änderung</span><span style="font-size:13px;font-weight:600">{{cmp.date}}</span><sc-for list="{{cmp.diff}}" as="d" hint-placeholder-count="1"><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#55544f">{{d}}</span></sc-for></div>
+<sc-for list="{{cmp.rows}}" as="c" hint-placeholder-count="2">
+<div style="display:flex;flex-direction:column;gap:3px;padding-top:12px;border-top:1px solid #eeede9"><span style="font-size:12.5px;color:#55544f">{{c.l}}</span><div style="display:flex;align-items:baseline;gap:8px;font-family:'JetBrains Mono',monospace"><span style="font-size:16px;color:#74736d">{{c.a}}</span><span style="color:#9a9993">→</span><span style="font-size:24px;font-weight:600;letter-spacing:-.02em;color:{{c.col}}">{{c.b}}</span></div><span style="font-size:11.5px;color:#74736d">{{c.n}}</span></div>
+</sc-for>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="4">
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600">{{t.l}}</span>
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:600;letter-spacing:-.02em;color:{{t.col}}">{{t.v}}</span><div style="display:flex;align-items:flex-end;gap:2px;height:26px;width:88px"><sc-for list="{{t.spark}}" as="s" hint-placeholder-count="8"><div style="flex:1;height:{{s.h}}%;background:{{s.c}};border-radius:1px"></div></sc-for></div></div>
+<span style="font-size:12px;color:#55544f;line-height:1.4;text-wrap:pretty">{{t.sub}}</span>
+</div>
+</sc-for>
+</div>
+
+</div>
+</section>
+</div>
+
+<sc-if value="{{panel.show}}" hint-placeholder-val="{{false}}">
+<div style="position:fixed;inset:0;z-index:50">
+<div onClick="{{panel.close}}" style="position:absolute;inset:0;background:rgba(20,20,18,.22)"></div>
+<div style="position:absolute;top:0;right:0;bottom:0;width:min(440px,100%);background:#fff;box-shadow:-12px 0 32px rgba(0,0,0,.12);overflow-y:auto">
+<div style="padding:24px 26px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:{{panel.color}}"></span>{{panel.kind}}<span style="font-family:'JetBrains Mono',monospace;color:#74736d;font-weight:500">{{panel.id}}</span></span><button onClick="{{panel.close}}" style="border:1px solid #e5e4df;background:#fff;border-radius:6px;width:30px;height:30px;font-size:16px;cursor:pointer;color:#55544f">×</button></div>
+<div style="font-size:19px;font-weight:700;line-height:1.3;text-wrap:pretty;margin-top:-8px">{{panel.title}}</div>
+<div style="display:flex;flex-direction:column;gap:1px;background:#eeede9;border:1px solid #eeede9;border-radius:8px;overflow:hidden">
+<sc-for list="{{panel.facts}}" as="f" hint-placeholder-count="3"><div style="background:#fff;padding:10px 12px;display:flex;justify-content:space-between;gap:12px;font-size:13px"><span style="color:#74736d;flex:none">{{f.l}}</span><span style="font-weight:600;text-align:right">{{f.v}}</span></div></sc-for>
+</div>
+<sc-if value="{{panel.hasRuns}}" hint-placeholder-val="{{false}}"><div style="display:flex;flex-direction:column"><span style="font-size:14px;font-weight:700;padding-bottom:6px">Läufe</span>
+<sc-for list="{{panel.runs}}" as="u" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:24px 8px 96px minmax(0,1fr) 56px;gap:10px;align-items:center;padding:9px 0;border-top:1px solid #f0efeb;font-size:12.5px"><span style="font-family:'JetBrains Mono',monospace;color:#9a9993">#{{u.n}}</span><span style="width:8px;height:8px;border-radius:50%;background:{{u.c}}"></span><span style="font-family:'JetBrains Mono',monospace">{{u.p}}</span><span>{{u.o}}</span><span style="font-family:'JetBrains Mono',monospace;text-align:right;color:#55544f">{{u.t}}</span></div></sc-for>
+</div></sc-if>
+<div style="display:flex;gap:8px"><button onClick="{{panel.act}}" style="flex:1;height:38px;border:0;border-radius:7px;background:#151514;color:#fff;font-size:14px;font-weight:600;cursor:pointer">{{panel.action}}</button><button style="flex:1;height:38px;border:1px solid #dcdbd6;border-radius:7px;background:#fff;color:#151514;font-size:14px;font-weight:600;cursor:pointer">Im Board öffnen</button></div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{toast.show}}" hint-placeholder-val="{{false}}"><div style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;background:#151514;color:#fff;border-radius:8px;padding:10px 14px;font-size:13px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 24px rgba(0,0,0,.2)"><span>{{toast.text}}</span><sc-if value="{{toast.canUndo}}" hint-placeholder-val="{{false}}"><button onClick="{{toast.undo}}" style="border:0;background:transparent;color:#9fb0ff;font-size:13px;font-weight:600;cursor:pointer">Rückgängig</button></sc-if></div></sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;dispatcher&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;läuft&quot;,&quot;pausiert&quot;,&quot;außerhalb Zeitfenster&quot;,&quot;ausgeschaltet&quot;],&quot;default&quot;:&quot;läuft&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Zustände&quot;},&quot;lowData&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Zustände&quot;},&quot;emptyInbox&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Zustände&quot;}}">
+const h = React.createElement;
+const DAY = 864e5;
+const TODAY = new Date(2026, 9, 22);
+const MON = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sep.', 'Okt.', 'Nov.', 'Dez.'];
+const dm = d => d.getDate() + '. ' + MON[d.getMonth()];
+const pc = v => v == null || isNaN(v) ? '–' : Math.round(v * 100) + ' %';
+const qt = (a, p) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); const i = (s.length - 1) * p, lo = Math.floor(i); return s[lo] + (s[Math.min(lo + 1, s.length - 1)] - s[lo]) * (i - lo); };
+const CHANGES = [
+  { d: new Date(2026, 8, 21), diff: ['Regel 1 neu: backend · ≥ 8 Dateien → sonnet-high'] },
+  { d: new Date(2026, 9, 1), diff: ['maxAttempts: 2 → 3'] },
+  { d: new Date(2026, 9, 12), diff: ['sonnet-high.maxTurns: 60 → 80', 'sonnet-high.timeoutMinutes: 45 → 60'] }
+];
+const CFG = CHANGES[2].d;
+const PROFILES = [
+  { id: 'sonnet-low', model: 'sonnet-4.5', effort: 'low', maxTurns: 40, timeout: 30, step: 0, color: '#b3bdf0', sp: .52, qp: .1, tr: [.6, .99], nr: [.4, .95], dr: [.25, .65] },
+  { id: 'sonnet-high', model: 'sonnet-4.5', effort: 'high', maxTurns: 80, timeout: 60, step: 1, color: '#6575d9', sp: .68, qp: .07, tr: [.35, .85], nr: [.3, .8], dr: [.3, .8] },
+  { id: 'opus-high', model: 'opus-5', effort: 'high', maxTurns: 150, timeout: 120, step: 2, color: '#232d8c', sp: .8, qp: .06, tr: [.08, .36], nr: [.08, .36], dr: [.08, .34] },
+  { id: 'opus-max', model: 'opus-5', effort: 'max', maxTurns: 200, timeout: 150, step: -1, color: '#8a5cc4', sp: .82, qp: .05, tr: [.1, .45], nr: [.1, .45], dr: [.1, .4] },
+  { id: 'recherche', model: 'opus-5', effort: 'medium', maxTurns: 60, timeout: 45, step: -1, color: '#b9b8b2', sp: .7, qp: .15, tr: [.3, .7], nr: [.3, .7], dr: [.3, .7] }
+];
+const PM = Object.fromEntries(PROFILES.map(p => [p.id, p]));
+const LADDER = ['sonnet-low', 'sonnet-high', 'opus-high'];
+const CATS = [
+  { k: 'turns', l: 'Schrittlimit', c: '#e5484d', g: 'cfg', m: 'turns' }, { k: 'timeout', l: 'Zeitlimit', c: '#e8833a', g: 'cfg', m: 'timeout' }, { k: 'context', l: 'Kontext voll', c: '#c2417a', g: 'cfg', m: 'context' },
+  { k: 'exit', l: 'Exit-Code', c: '#8f6ad1', g: 'run', m: 'err' }, { k: 'claude', l: 'Fehler von Claude', c: '#6a7fd6', g: 'run', m: 'err' }, { k: 'noout', l: 'Ohne Ausgang', c: '#4fa3b5', g: 'run', m: 'err' },
+  { k: 'usage', l: 'Nutzungslimit', c: '#a3a29c', g: 'infra', m: 'rest' }, { k: 'start', l: 'Start gescheitert', c: '#c4c3bd', g: 'infra', m: 'rest' }, { k: 'vanished', l: 'Worker verschwunden', c: '#86857f', g: 'infra', m: 'rest' }, { k: 'other', l: 'Sonstiges', c: '#dcdbd5', g: 'infra', m: 'rest' }
+];
+const CM = Object.fromEntries(CATS.map(c => [c.k, c]));
+const MINI = [{ k: 'turns', l: 'Schrittlimit', c: '#e5484d' }, { k: 'timeout', l: 'Zeitlimit', c: '#e8833a' }, { k: 'context', l: 'Kontext', c: '#c2417a' }, { k: 'err', l: 'Fehler', c: '#8f6ad1' }, { k: 'rest', l: 'sonstige', c: '#c4c3bd' }];
+const AW = {
+  'sonnet-low': [['turns', 45], ['timeout', 8], ['context', 4], ['exit', 12], ['claude', 8], ['noout', 6], ['usage', 8], ['vanished', 4], ['start', 3], ['other', 2]],
+  'sonnet-high': [['turns', 12], ['timeout', 10], ['context', 38], ['exit', 12], ['claude', 8], ['noout', 6], ['usage', 7], ['vanished', 4], ['start', 2], ['other', 1]],
+  'opus-high': [['turns', 2], ['timeout', 2], ['context', 8], ['exit', 28], ['claude', 22], ['noout', 10], ['usage', 14], ['vanished', 9], ['start', 3], ['other', 2]],
+  'opus-max': [['turns', 4], ['timeout', 4], ['context', 6], ['exit', 30], ['claude', 20], ['noout', 10], ['usage', 16], ['vanished', 6], ['start', 2], ['other', 2]],
+  'recherche': [['timeout', 12], ['exit', 30], ['claude', 28], ['noout', 18], ['usage', 12]]
+};
+const RTXT = {
+  turns: (m) => 'Schrittlimit erreicht (maxTurns ' + m + ') – zuletzt: Tests ausführen', timeout: (m, t) => 'Zeitlimit überschritten nach ' + t + ' min',
+  context: () => 'Claude: Prompt is too long (204731 tokens > 200000 maximum)', exit: () => 'claude beendet mit Exit-Code 1', claude: () => 'API-Fehler: overloaded_error (529)',
+  noout: () => 'Lauf beendet ohne Ergebnisdatei', usage: () => 'Nutzungslimit erreicht – Pause bis 14:30', start: () => 'Start gescheitert: git worktree add fehlgeschlagen',
+  vanished: () => 'Worker seit 25 min ohne Heartbeat (staleMinutes 20)', other: () => 'Abbruch durch Nutzer'
+};
+const RULES = [
+  { k: 'r1', src: 'Regel 1', cond: 'Label backend · ≥ 8 Dateien', target: 'sonnet-high', w: .18 },
+  { k: 'r2', src: 'Regel 2', cond: 'Label infra', target: 'sonnet-low', w: .2 },
+  { k: 'r3', src: 'Regel 3', cond: 'Label docs', target: 'sonnet-low', w: 0 },
+  { k: 'label', src: 'Label profil:', cond: 'profil:opus-max', target: 'opus-max', w: .06 },
+  { k: 'plan', src: 'Aufwand laut Plan', cond: 'Aufwand L oder XL', target: 'sonnet-high', w: .17 },
+  { k: 'default', src: 'Standardprofil', cond: 'kein anderer Treffer', target: 'sonnet-low', w: .39 }
+];
+const TITLES = ['Rate-Limit für Webhooks', 'Leere Zustände in Listen', 'Backup-Job für Staging', 'Pagination im Ticket-Endpoint', 'Tastaturkürzel im Board', 'Rechte für Gastnutzer', 'Export als CSV', 'Dark-Mode-Tokens', 'Log-Rotation', 'Suche nach Labels', 'Benachrichtigungs-Queue', 'Datumsauswahl lokalisieren', 'Soft-Delete für Projekte', 'Spaltenbreiten speichern', 'Idempotente Webhooks', 'Healthcheck-Endpunkt', 'Migration des ToDo-Moduls', 'Budgetprognose', 'Kundensicht und Modus Alle', 'Zeitbuchung im Dashboard', 'Vorlagen und Abschlusslogik', 'Anhänge und Links'];
+
+const DATA = (() => {
+  let s = 20261022; const r = () => (s = s * 16807 % 2147483647) / 2147483647;
+  const pick = w => { let x = r() * w.reduce((a, b) => a + b[1], 0); for (const [k, v] of w) { if ((x -= v) < 0) return k; } return w[0][0]; };
+  const bt = ([a, b]) => a + r() * (b - a);
+  const chains = []; let n = 0;
+  for (let d = 55; d >= 0; d--) {
+    const date = new Date(TODAY.getTime() - d * DAY); const cnt = 5 + Math.floor(r() * 4);
+    for (let j = 0; j < cnt; j++) {
+      n++;
+      const kind = pick([['work', .72], ['plan', .12], ['research', .1], ['merge', .06]]);
+      const board = r() < .62 ? 'M4S Core' : 'M4S Web';
+      let rule = kind === 'research' ? null : pick(RULES.map(x => [x.k, x.w]));
+      if (rule === 'r1' && date < CHANGES[0].d) rule = 'default';
+      let p = kind === 'research' ? 'recherche' : RULES.find(x => x.k === rule).target;
+      const maxAtt = date < CHANGES[1].d ? 2 : 3, before = date < CFG;
+      const id = 'AIH-' + String(100 + n).padStart(4, '0'), title = TITLES[n % TITLES.length];
+      const runs = [];
+      for (let a = 1; a <= maxAtt; a++) {
+        const P = PM[p];
+        let sp = P.sp; if (p === 'sonnet-low' && rule === 'r2') sp = .26; if (p === 'sonnet-high' && before) sp = .48;
+        const x = r();
+        const out = x < P.qp ? 'question' : x < P.qp + .03 ? 'blocked' : x < P.qp + .03 + sp ? 'ok' : 'abort';
+        let cat = null; if (out === 'abort') { cat = pick(AW[p]); if (p === 'sonnet-high' && before && r() < .4) cat = 'turns'; }
+        const mt = p === 'sonnet-high' && before ? 60 : P.maxTurns, to = p === 'sonnet-high' && before ? 45 : P.timeout;
+        let tu = out === 'ok' ? bt(P.tr) : bt(P.nr), du = bt(P.dr);
+        if (cat === 'turns') { tu = 1; du = Math.min(du, .95); }
+        if (cat === 'timeout') { du = 1; tu = Math.min(tu, .9); }
+        const recon = r() < .05;
+        runs.push({ id, title, date, kind, board, rule, profile: p, attempt: a, out, cat, tu: recon ? null : tu, du: recon ? null : du, recon, mt, to, text: cat ? RTXT[cat](mt, to) : null });
+        if (out !== 'abort') break;
+        if (a < maxAtt) { runs[runs.length - 1].esc = true; if (P.step >= 0 && P.step < 2) p = LADDER[P.step + 1]; }
+      }
+      const last = runs[runs.length - 1];
+      chains.push({ id, title, date, kind, board, rule, runs, final: last.out === 'abort', last });
+    }
+  }
+  return chains;
+})();
+
+const KINDS = [
+  { k: 'final', l: 'Endgültig gescheitert', c: '#e5484d', a: 'Neu starten', done: 'neu gestartet' },
+  { k: 'merge', l: 'Merge gescheitert', c: '#d9572b', a: 'Merge erneut', done: 'Merge erneut gestartet' },
+  { k: 'setup', l: 'Einrichtung gescheitert', c: '#c98a12', a: 'Neu starten', done: 'neu gestartet' },
+  { k: 'accept', l: 'Abnahme / Review', c: '#1f9d55', a: 'Freigeben', done: 'freigegeben' },
+  { k: 'question', l: 'Frage offen', c: '#3346c9', a: 'Antworten', done: 'beantwortet' },
+  { k: 'blocked', l: 'Blockiert', c: '#8a3fbf', a: 'Öffnen', done: 'geöffnet' },
+  { k: 'planning', l: 'In Planung', c: '#2a8fa0', a: 'Öffnen', done: 'geöffnet' },
+  { k: 'note', l: 'Notiz offen', c: '#9a9993', a: 'Übernehmen', done: 'übernommen' }
+];
+const KM = Object.fromEntries(KINDS.map(k => [k.k, k]));
+const INBOX = [
+  { k: 'final', id: 'AIH-0412', title: 'Rechte für Gastnutzer im Projekt-Endpoint', reason: '3 Versuche · zuletzt Schrittlimit (opus-high, 150 Turns)', h: 52, blocks: 3, runs: [['sonnet-low', 'Schrittlimit', '40/40'], ['sonnet-high', 'Kontext voll', '61/80'], ['opus-high', 'Schrittlimit', '150/150']] },
+  { k: 'final', id: 'AIH-0431', title: 'CSV-Export für Zeitbuchungen', reason: '3 Versuche · zuletzt Kontext voll', h: 9, runs: [['sonnet-low', 'Schrittlimit', '40/40'], ['sonnet-high', 'Kontext voll', '72/80'], ['opus-high', 'Kontext voll', '48/150']] },
+  { k: 'merge', id: 'AIH-0425', title: 'Pagination im Ticket-Endpoint', reason: 'Konflikt in src/api/tickets.ts (2 Hunks)', h: 5, blocks: 1, runs: [['sonnet-high', 'erfolgreich', '54/80']] },
+  { k: 'setup', id: 'AIH-0438', title: 'Healthcheck-Endpunkt', reason: 'worktreeSetup: npm ci – ENOSPC: no space left on device', h: 1.5 },
+  { k: 'accept', id: 'AIH-0419', title: 'Leere Zustände in Listen', reason: 'Erledigt mit sonnet-low im 1. Versuch', h: 30, blocks: 2, runs: [['sonnet-low', 'erfolgreich', '33/40']] },
+  { k: 'accept', id: 'AIH-0427', title: 'Tastaturkürzel im Board', reason: 'Erledigt mit sonnet-high nach Eskalation', h: 6, runs: [['sonnet-low', 'Schrittlimit', '40/40'], ['sonnet-high', 'erfolgreich', '58/80']] },
+  { k: 'accept', id: 'AIH-0433', title: 'Datumsauswahl lokalisieren', reason: 'Erledigt mit sonnet-low · Review angefordert', h: 2, runs: [['sonnet-low', 'erfolgreich', '36/40']] },
+  { k: 'question', id: 'Q-0057', title: 'Soft-Delete: Projekte nach 30 Tagen endgültig löschen?', reason: 'Recherche fertig · 3 Optionen', rec: 'O2 – Papierkorb, 30 Tage', h: 28, blocks: 2 },
+  { k: 'question', id: 'Q-0061', title: 'Webhook-Retries exponentiell oder fest?', reason: 'Agent wartet auf Entscheidung (AIH-0440)', h: 3 },
+  { k: 'blocked', id: 'AIH-0402', title: 'Backup-Job für Staging', reason: 'Zugangsdaten für den S3-Bucket fehlen', h: 96, blocks: 4 },
+  { k: 'blocked', id: 'AIH-0436', title: 'Log-Rotation auf dem Build-Server', reason: 'Wartet auf Freigabe durch Infra-Team', h: 14 },
+  { k: 'planning', id: 'AIH-0444', title: 'Benachrichtigungs-Queue', reason: 'Plan liegt vor, nicht freigegeben', h: 20 },
+  { k: 'planning', id: 'AIH-0446', title: 'Spaltenbreiten speichern', reason: 'Plan fehlt', h: 4 },
+  { k: 'note', id: 'N-0018', title: 'Task-V2-Tickets werden ohne Abhängigkeit auf ihr Vorgänger-Inkrement angelegt', reason: 'aus Lauf AIH-0421 #2', seen: 3, h: 70 },
+  { k: 'note', id: 'N-0021', title: 'Tests für Migrationsskripte laufen nicht im Worktree', reason: 'aus Lauf AIH-0436 #1', seen: 1, h: 8 }
+];
+const waitTxt = hh => hh < 1 ? 'seit ' + Math.round(hh * 60) + ' min' : hh < 24 ? 'seit ' + Math.round(hh) + ' Std.' : 'seit ' + Math.round(hh / 24) + (Math.round(hh / 24) === 1 ? ' Tag' : ' Tagen');
+const PERIODS = [['7', '7 T'], ['28', '4 W'], ['56', '8 W'], ['cfg', 'Seit Konfig-Änderung']];
+const fromOf = p => p === 'cfg' ? CFG : new Date(TODAY.getTime() - (Number(p) - 1) * DAY);
+const daysOf = p => Math.round((TODAY - fromOf(p)) / DAY) + 1;
+const RUNKINDS = [['work', 'Arbeit'], ['plan', 'Planung'], ['research', 'Recherche'], ['merge', 'Merge']];
+const SEV = [{ l: 'kritisch', c: '#b13a3e', bg: '#fdecec', dot: '#e5484d' }, { l: 'prüfen', c: '#8a5208', bg: '#fdf3e3', dot: '#e0a12b' }, { l: 'Hinweis', c: '#55544f', bg: '#efeeea', dot: '#9a9993' }];
+
+function box(vals) {
+  if (!vals.length) return { txt: '–', wl: 0, ww: 0, bl: 0, bw: 0, m: 0, bg: 'transparent', med: null, p90: null };
+  const sc = v => Math.min(v, 1.1) / 1.1 * 100;
+  const p10 = qt(vals, .1), p25 = qt(vals, .25), med = qt(vals, .5), p75 = qt(vals, .75), p90 = qt(vals, .9);
+  return { wl: sc(p10), ww: sc(p90) - sc(p10), bl: sc(p25), bw: Math.max(1, sc(p75) - sc(p25)), m: sc(med) - .5, txt: 'Md ' + pc(med) + ' · P90 ' + pc(p90), bg: med >= .85 || p90 >= .98 ? '#fdf0ef' : 'transparent', med, p90 };
+}
+
+class Component extends DCLogic {
+  state = { period: 'cfg', board: 'all', kind: 'work', prof: null, chip: null, more: false, done: [], panel: null, pill: false, toast: null, hidden: [], histMode: 'turns', abMode: 'abs', abSel: null, hl: null, cm: null };
+  set = p => this.setState(p);
+  toast(text, undo) { clearTimeout(this._t); this.setState({ toast: { text, undo } }); this._t = setTimeout(() => this.setState({ toast: null }), 4000); }
+  componentWillUnmount() { clearTimeout(this._t); }
+
+  stats(R) {
+    const ab = R.filter(r => r.out === 'abort'), ok = R.filter(r => r.out === 'ok');
+    const blk = R.filter(r => r.out === 'blocked'), qn = R.filter(r => r.out === 'question');
+    const first = R.filter(r => r.attempt === 1);
+    return { R, ab, ok, n: R.length, okRate: (ok.length + ab.length + blk.length) ? ok.length / (ok.length + ab.length + blk.length) : null, firstRate: first.length ? first.filter(r => r.out === 'ok').length / first.length : null, nFirst: first.length, escIn: R.length - first.length, esc: R.filter(r => r.esc).length, q: R.length ? qn.length / R.length : null, tu: R.filter(r => r.tu != null).map(r => r.tu), du: R.filter(r => r.du != null).map(r => r.du), tuOk: ok.filter(r => r.tu != null).map(r => r.tu), duOk: ok.filter(r => r.du != null).map(r => r.du) };
+  }
+
+  findings(runs, ruleRows) {
+    const F = [], few = [];
+    PROFILES.forEach(P => {
+      const R = runs.filter(r => r.profile === P.id); if (!R.length) return;
+      if (R.length < 10) { few.push(P.id + ' (' + R.length + ' Läufe)'); return; }
+      const S = this.stats(R), nab = S.ab.length || 1, subj = 'Profil ' + P.id;
+      const tShare = S.ab.filter(r => r.cat === 'turns').length / nab, tP75 = qt(S.tuOk, .75) || 0;
+      if (tShare >= .25 || tP75 >= .85) F.push({ key: P.id + 't', sev: tShare >= .25 && tP75 >= .85 ? 0 : 1, subj, title: 'Schrittlimit zu knapp', ev: [pc(tShare) + ' der Abbrüche = Schrittlimit', 'Erfolgreiche Läufe nutzen im Median ' + pc(qt(S.tuOk, .5)) + ' von maxTurns'], diff: [{ k: 'maxTurns', a: P.maxTurns, b: Math.round(P.maxTurns * 1.5) }], n: R.length });
+      const dShare = S.ab.filter(r => r.cat === 'timeout').length / nab, dP75 = qt(S.duOk, .75) || 0;
+      if (dShare >= .25 || dP75 >= .85) F.push({ key: P.id + 'd', sev: 1, subj, title: 'Zeitlimit zu knapp', ev: [pc(dShare) + ' der Abbrüche = Zeitlimit', 'P75 der Zeit-Auslastung: ' + pc(dP75)], diff: [{ k: 'timeoutMinutes', a: P.timeout, b: Math.round(P.timeout * 1.5) }], n: R.length });
+      const p95t = qt(S.tu, .95), p95d = qt(S.du, .95), lim = S.ab.filter(r => r.cat === 'turns' || r.cat === 'timeout').length;
+      if (p95t < .4 && p95d < .4 && lim <= 1) F.push({ key: P.id + 'g', sev: 2, subj, title: 'Limits großzügig', ev: ['95 % der Läufe nutzen höchstens ' + pc(p95t) + ' von maxTurns', '… und höchstens ' + pc(p95d) + ' des Zeitlimits', 'Niedrigere Limits erkennen hängende Läufe früher'], diff: [{ k: 'maxTurns', a: P.maxTurns, b: Math.ceil(P.maxTurns * p95t * 1.6 / 10) * 10 }, { k: 'timeoutMinutes', a: P.timeout, b: Math.ceil(P.timeout * p95d * 1.6 / 5) * 5 }], n: R.length });
+      if (P.step >= 0 && P.step < 2 && S.esc > S.ok.length) F.push({ key: P.id + 'e', sev: 1, subj, title: 'Eskaliert mehr, als es löst', ev: [S.esc + ' Eskalationen weg vom Profil', 'nur ' + S.ok.length + ' erfolgreiche Läufe'], diff: [{ k: 'Standardprofil', a: P.id, b: LADDER[P.step + 1] }], n: R.length });
+      const ctx = S.ab.filter(r => r.cat === 'context').length;
+      if (ctx >= 3) F.push({ key: P.id + 'c', sev: 1, subj, title: 'Kontext läuft voll', ev: [ctx + ' Abbrüche „Kontext voll“', pc(ctx / nab) + ' aller Abbrüche des Profils'], text: 'Modell mit größerem Kontext wählen oder Tickets kleiner schneiden.', n: R.length });
+      if (S.q >= .3) F.push({ key: P.id + 'q', sev: 2, subj, title: 'Viele Rückfragen', ev: [pc(S.q) + ' der Läufe enden mit einer Frage'], text: 'Planung schärfen: Akzeptanzkriterien und offene Punkte vor dem Start klären.', n: R.length });
+    });
+    ruleRows.forEach(r => { if (r.nRaw >= 10 && r.firstRaw < .5) F.push({ key: 'rule' + r.k, sev: 1, subj: r.src + ' · ' + r.cond, title: 'Regel leitet falsch', ev: ['Erstversuch-Quote ' + pc(r.firstRaw) + ' bei ' + r.nRaw + ' Tickets', pc(r.escRaw) + ' werden danach eskaliert'], diff: [{ k: r.src + ' → profil', a: r.target, b: LADDER[Math.min(2, PM[r.target].step + 1)] }], n: r.runs }); });
+    F.push({ key: 'setup', sev: 1, subj: 'Einstellung worktreeSetup', title: 'Einrichtung instabil', ev: ['17 % der Worktree-Einrichtungen scheitern', 'Häufigster Fehler: npm ci – ENOSPC'], text: 'worktreeSetup prüfen: Cache-Verzeichnis aufräumen oder npm ci --prefer-offline.', n: 53 });
+    return { F: F.filter(f => !this.state.hidden.includes(f.key)).sort((a, b) => a.sev - b.sev || b.n - a.n), few };
+  }
+
+  sankey(chains) {
+    const W = 760, H = 300, NW = 12, GAP = 14, TOP = 26, XS = [0, 200, 400, 610];
+    const nodes = {}, links = {};
+    const node = (k, col, label, type) => nodes[k] || (nodes[k] = { k, col, label, type, v: 0, ins: [], outs: [] });
+    chains.forEach(c => c.runs.forEach((r, i) => {
+      const nk = r.attempt + '|' + r.profile; node(nk, r.attempt - 1, r.profile, 'p').v++;
+      let tk, type;
+      if (r.out === 'ok') { tk = 'T|ok'; type = 'ok'; node(tk, 3, 'erfolgreich', 'ok'); }
+      else if (r.out !== 'abort') { tk = 'T|qb'; type = 'qb'; node(tk, 3, 'Frage / blockiert', 'qb'); }
+      else if (i < c.runs.length - 1) { const nx = c.runs[i + 1]; tk = nx.attempt + '|' + nx.profile; type = 'esc'; node(tk, nx.attempt - 1, nx.profile, 'p'); }
+      else { tk = 'T|final'; type = 'final'; node(tk, 3, 'endgültig gescheitert', 'final'); }
+      const lk = nk + '>' + tk; (links[lk] || (links[lk] = { s: nk, t: tk, type, v: 0 })).v++;
+    }));
+    Object.values(nodes).forEach(n => { if (n.col === 3) n.v = Object.values(links).filter(l => l.t === n.k).reduce((a, l) => a + l.v, 0); });
+    const order = n => n.type === 'p' ? LADDER.indexOf(n.label) < 0 ? 5 + PROFILES.findIndex(p => p.id === n.label) : LADDER.indexOf(n.label) : { ok: 0, qb: 1, final: 2 }[n.type];
+    const cols = [0, 1, 2, 3].map(c => Object.values(nodes).filter(n => n.col === c).sort((a, b) => order(a) - order(b)));
+    const maxN = Math.max(1, ...cols.map(c => c.length)), maxT = Math.max(1, ...cols.map(c => c.reduce((a, n) => a + n.v, 0)));
+    const k = (H - TOP - 4 - GAP * (maxN - 1)) / maxT;
+    cols.forEach(c => { let y = TOP; c.forEach(n => { n.x = XS[n.col]; n.y = y; n.h = Math.max(2, n.v * k); y += n.h + GAP; }); });
+    const L = Object.values(links);
+    L.forEach(l => { nodes[l.s].outs.push(l); nodes[l.t].ins.push(l); });
+    Object.values(nodes).forEach(n => {
+      let o = 0; n.outs.sort((a, b) => nodes[a.t].col - nodes[b.t].col || nodes[a.t].y - nodes[b.t].y).forEach(l => { l.sy = n.y + o; o += l.v * k; });
+      let i = 0; n.ins.sort((a, b) => nodes[a.s].y - nodes[b.s].y).forEach(l => { l.ty = n.y + i; i += l.v * k; });
+    });
+    const COL = { ok: '#1f9d55', esc: '#e8833a', final: '#e5484d', qb: '#b9b8b2' };
+    const NCOL = { p: '#3d3d39', ok: '#1f9d55', final: '#e5484d', qb: '#9a9993' };
+    const hl = this.state.hl;
+    const els = [];
+    const maxAtt = Math.max(1, ...chains.map(c => c.runs.length));
+    ['Versuch 1', 'Versuch 2', 'Versuch 3', 'Ausgang'].forEach((t, i) => { if (i < 3 && i >= maxAtt) return; els.push(h('text', { key: 'h' + i, x: XS[i], y: 12, fontSize: 11, fill: '#74736d', fontFamily: 'Archivo', fontWeight: 600, letterSpacing: '.04em' }, t.toUpperCase())); });
+    L.forEach((l, i) => {
+      const s = nodes[l.s], t = nodes[l.t], x0 = s.x + NW, x1 = t.x, xm = (x0 + x1) / 2, w = l.v * k;
+      const d = `M${x0},${l.sy} C${xm},${l.sy} ${xm},${l.ty} ${x1},${l.ty} L${x1},${l.ty + w} C${xm},${l.ty + w} ${xm},${l.sy + w} ${x0},${l.sy + w} Z`;
+      els.push(h('path', { key: 'l' + i, d, fill: COL[l.type], opacity: hl === i ? .75 : hl == null ? .38 : .16, style: { cursor: 'pointer', transition: 'opacity .15s' }, onMouseEnter: () => this.setState({ hl: i }), onMouseLeave: () => this.setState({ hl: null }) }));
+    });
+    Object.values(nodes).forEach(n => {
+      els.push(h('rect', { key: 'n' + n.k, x: n.x, y: n.y, width: NW, height: n.h, fill: NCOL[n.type], rx: 1.5 }));
+      els.push(h('text', { key: 't' + n.k, x: n.x + NW + 6, y: n.y + Math.min(n.h / 2, 12) + 4, fontSize: 12, fill: '#151514', fontFamily: n.type === 'p' ? 'JetBrains Mono' : 'Archivo', fontWeight: 600, style: { pointerEvents: 'none' } }, n.label + '  ', h('tspan', { fill: '#74736d', fontWeight: 400, fontFamily: 'JetBrains Mono' }, String(n.v))));
+    });
+    let info = 'Fluss anfahren für Details';
+    if (hl != null && L[hl]) { const l = L[hl], s = nodes[l.s], t = nodes[l.t]; info = s.label + ' (V' + (s.col + 1) + ') → ' + t.label + (t.col < 3 ? ' (V' + (t.col + 1) + ')' : '') + ': ' + l.v + ' Läufe · ' + pc(l.v / s.v); }
+    const N = chains.length || 1;
+    const line = [
+      { v: pc(chains.filter(c => c.runs[0].out === 'ok').length / N), l: 'im 1. Versuch gelöst', c: '#17804a' },
+      { v: pc(chains.filter(c => c.runs.length > 1 && c.last.out === 'ok').length / N), l: 'nach Eskalation', c: '#b8611c' },
+      { v: pc(chains.filter(c => c.final).length / N), l: 'endgültig gescheitert', c: '#c4383d' },
+      { v: pc(chains.filter(c => c.last.out === 'question' || c.last.out === 'blocked').length / N), l: 'Frage / blockiert', c: '#55544f' }
+    ];
+    return { svg: h('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', style: { display: 'block', overflow: 'visible' } }, els), info, line };
+  }
+
+  trend(chainsBase) {
+    const st = this.state, pd = daysOf(st.period), win = Math.max(pd, 28), daily = win <= 28;
+    const start = new Date(TODAY.getTime() - (win - 1) * DAY);
+    let C = chainsBase.filter(c => c.date >= start);
+    if (st.prof) C = C.filter(c => c.runs[0].profile === st.prof);
+    const B = [];
+    if (daily) for (let i = 0; i < win; i++) { const d = new Date(start.getTime() + i * DAY); B.push({ s: new Date(d.getTime() - 2 * DAY), e: d, lab: i % 7 === 0 ? dm(d) : '' }); }
+    else for (let i = 0; i < win / 7; i++) { const s = new Date(start.getTime() + i * 7 * DAY); B.push({ s, e: new Date(s.getTime() + 6 * DAY), lab: dm(s) }); }
+    B.forEach(b => { const X = C.filter(c => c.date >= b.s && c.date <= b.e); b.n = X.length; b.ft = X.length ? X.filter(c => c.runs[0].out === 'ok').length / X.length : null; b.es = X.length ? X.filter(c => c.runs.length > 1).length / X.length : null; });
+    const VW = 760, VH = 220, L = 38, R = 12, T = 14, Bt = 24;
+    const span = (B[B.length - 1].e - B[0].e) || 1;
+    const xd = d => L + Math.max(0, Math.min(1, (d - B[0].e) / span)) * (VW - L - R);
+    const y = v => T + (1 - v) * (VH - T - Bt);
+    const els = [];
+    if (pd < win) { const x0 = xd(fromOf(st.period)); els.push(h('rect', { key: 'sh', x: x0, y: T, width: VW - R - x0, height: VH - T - Bt, fill: '#eceae4', opacity: .7 })); }
+    [0, .5, 1].forEach(v => { els.push(h('line', { key: 'g' + v, x1: L, x2: VW - R, y1: y(v), y2: y(v), stroke: '#e5e4df' })); els.push(h('text', { key: 'gt' + v, x: L - 6, y: y(v) + 4, fontSize: 10.5, textAnchor: 'end', fill: '#9a9993', fontFamily: 'JetBrains Mono' }, Math.round(v * 100) + ' %')); });
+    B.forEach((b, i) => b.lab && els.push(h('text', { key: 'x' + i, x: xd(b.e), y: VH - 6, fontSize: 10.5, textAnchor: i === 0 ? 'start' : 'middle', fill: '#9a9993', fontFamily: 'JetBrains Mono' }, b.lab)));
+    const path = key => B.filter(b => b[key] != null).map((b, i) => (i ? 'L' : 'M') + xd(b.e).toFixed(1) + ',' + y(b[key]).toFixed(1)).join(' ');
+    CHANGES.forEach((c, i) => {
+      if (c.d < B[0].e) return; const x = xd(c.d);
+      els.push(h('line', { key: 'c' + i, x1: x, x2: x, y1: T, y2: VH - Bt, stroke: '#3346c9', strokeDasharray: '3 3', strokeWidth: st.cm === i ? 2 : 1.2 }));
+      els.push(h('circle', { key: 'cc' + i, cx: x, cy: T, r: 4, fill: '#3346c9' }));
+      els.push(h('rect', { key: 'ch' + i, x: x - 8, y: 0, width: 16, height: VH - Bt, fill: 'transparent', style: { cursor: 'pointer' }, onMouseEnter: () => this.setState({ cm: i }), onMouseLeave: () => this.setState({ cm: null }) }));
+    });
+    els.push(h('path', { key: 'es', d: path('es'), fill: 'none', stroke: '#e8833a', strokeWidth: 2, strokeDasharray: '5 4', style: { pointerEvents: 'none' } }));
+    els.push(h('path', { key: 'ft', d: path('ft'), fill: 'none', stroke: '#151514', strokeWidth: 2.2, style: { pointerEvents: 'none' } }));
+    B.forEach((b, i) => b.ft != null && !daily && els.push(h('circle', { key: 'p' + i, cx: xd(b.e), cy: y(b.ft), r: 3, fill: '#151514' })));
+    const cm = st.cm != null ? CHANGES[st.cm] : null, left = cm ? xd(cm.d) / VW * 100 : 0;
+    return {
+      svg: h('svg', { viewBox: `0 0 ${VW} ${VH}`, width: '100%', style: { display: 'block' } }, els),
+      res: daily ? 'je Tag (gleitend über 3 Tage) · letzte ' + win + ' Tage' : 'je Woche · letzte ' + win / 7 + ' Wochen',
+      tip: { show: !!cm, left, tx: left > 60 ? 'calc(-100% - 10px)' : '10px', date: cm ? 'Konfig geändert am ' + dm(cm.d) : '', diff: cm ? cm.diff : [] }
+    };
+  }
+
+  renderVals() {
+    const st = this.state, props = this.props;
+    const dstate = props.dispatcher ?? 'läuft';
+    const PILL = {
+      'läuft': { dot: '#1f9d55', text: 'Läuft · 2 / 3 aktiv', z: 'Läuft' },
+      'pausiert': { dot: '#e0a12b', text: 'Pausiert bis 14:30 · Nutzungslimit', z: 'Pausiert bis 14:30 (Nutzungslimit)' },
+      'außerhalb Zeitfenster': { dot: '#9a9993', text: 'Außerhalb Zeitfenster · ab 18:00', z: 'Außerhalb Zeitfenster' },
+      'ausgeschaltet': { dot: '#c9c8c2', text: 'Ausgeschaltet', z: 'Ausgeschaltet' }
+    }[dstate] || {};
+    const pill = { dot: PILL.dot, text: PILL.text, open: st.pill, toggle: () => this.set({ pill: !st.pill }), rows: [{ l: 'Zustand', v: PILL.z }, { l: 'Belegte Plätze', v: dstate === 'läuft' ? '2 / 3 Läufe aktiv' : '0 / 3 Läufe aktiv' }, { l: 'Warteschlange', v: '5 Tickets bereit' }, { l: 'Zeitfenster', v: 'Mo–Fr 18:00–07:00, Sa–So ganztägig' }, { l: 'Letzter Heartbeat', v: dstate === 'ausgeschaltet' ? 'vor 3 Std.' : 'vor 12 s' }] };
+    const hdr = { board: st.board, onBoard: e => this.set({ board: e.target.value, abSel: null }), periods: PERIODS.map(([k, label]) => ({ label, active: st.period === k, idle: st.period !== k, onClick: () => this.set({ period: k, abSel: null }) })) };
+
+    // A
+    const inbox = props.emptyInbox ? [] : INBOX.filter(i => !st.done.includes(i.id));
+    const ord = k => KINDS.findIndex(x => x.k === k);
+    const sorted = [...inbox].sort((a, b) => ord(a.k) - ord(b.k) || b.h - a.h);
+    const filtered = st.chip ? sorted.filter(i => i.k === st.chip) : sorted;
+    const shown = st.more ? filtered : filtered.slice(0, 8);
+    const doAct = (it, e) => { e && e.stopPropagation(); this.set({ done: [...st.done, it.id], panel: null }); this.toast(it.id + ' ' + KM[it.k].done, () => this.setState(s => ({ done: s.done.filter(x => x !== it.id), toast: null }))); };
+    const A = {
+      total: filtered.length,
+      chips: KINDS.map(k => { const n = inbox.filter(i => i.k === k.k).length, act = st.chip === k.k; return { label: k.l, count: n, color: n ? k.c : '#c9c8c2', op: n ? 1 : .5, bg: act ? '#f3f2ee' : '#fff', border: act ? '#151514' : '#e5e4df', onClick: () => n && this.set({ chip: act ? null : k.k, more: false }) }; }),
+      hasFilter: !!st.chip, filterLabel: st.chip ? KM[st.chip].l : '', clearFilter: () => this.set({ chip: null }),
+      rows: shown.map(it => ({ color: KM[it.k].c, kind: KM[it.k].l, id: it.id, title: it.title, reason: it.reason, rec: it.rec || false, seen: it.seen > 1 ? it.seen + '× gesehen' : false, blocks: it.blocks ? 'hält ' + it.blocks + ' Ticket' + (it.blocks > 1 ? 's' : '') + ' auf' : false, wait: waitTxt(it.h), waitW: it.h >= 24 ? 600 : 400, waitC: it.h >= 24 ? '#a2402c' : '#74736d', waitBg: it.h >= 24 ? '#fbeee9' : 'transparent', action: KM[it.k].a, act: e => doAct(it, e), open: () => this.set({ panel: it.id }) })),
+      empty: filtered.length === 0, hasMore: filtered.length > 8, moreLabel: st.more ? 'Weniger anzeigen' : 'Alle ' + filtered.length + ' anzeigen', toggleMore: () => this.set({ more: !st.more })
+    };
+
+    // B base filters
+    const from = fromOf(st.period);
+    const base = DATA.filter(c => (st.board === 'all' || c.board === st.board) && c.kind === st.kind);
+    let chains = base.filter(c => c.date >= from);
+    if (props.lowData) { const out = []; let n = 0; for (let i = chains.length - 1; i >= 0 && n < 7; i--) { if (n + chains[i].runs.length > 7) continue; out.unshift(chains[i]); n += chains[i].runs.length; } chains = out; }
+    const runs = chains.flatMap(c => c.runs);
+    const pr = st.prof;
+    const runsP = pr ? runs.filter(r => r.profile === pr) : runs;
+    const chainsP = pr ? chains.filter(c => c.runs.some(r => r.profile === pr)) : chains;
+    const low = runs.length < 10;
+    const usage = runs.filter(r => r.cat === 'usage').length, vanished = runs.filter(r => r.cat === 'vanished').length;
+    const um = usage * 38;
+    A.obstacles = [
+      { n: '4', l: 'Bereit, aber durch Abhängigkeit gesperrt', sub: 'gesperrt durch AIH-0402, AIH-0412' },
+      { n: '6', l: 'Ohne Opt-in-Label', sub: 'Label „dispatch“ fehlt' },
+      { n: String(usage), l: 'Nutzungslimit-Pausen', sub: usage ? 'zusammen ' + Math.floor(um / 60) + ' Std. ' + (um % 60) + ' min im Zeitraum' : 'keine im Zeitraum' },
+      { n: String(vanished), l: 'Hängende Läufe', sub: 'staleMinutes 20 überschritten · im Zeitraum' }
+    ];
+
+    // rules
+    const ruleRows = RULES.map(rl => {
+      let C = chains.filter(c => c.rule === rl.k); const nRaw = C.length;
+      const firstRaw = nRaw ? C.filter(c => c.runs[0].out === 'ok').length / nRaw : null, escRaw = nRaw ? C.filter(c => c.runs.length > 1).length / nRaw : null;
+      const okC = C.filter(c => c.last.out === 'ok');
+      const end = PROFILES.map(p => ({ p, n: okC.filter(c => c.last.profile === p.id).length })).filter(x => x.n).map(x => ({ w: x.n / okC.length * 100, c: x.p.color, tip: x.p.id + ': ' + x.n }));
+      return { k: rl.k, src: rl.src, cond: rl.cond, target: rl.target, nRaw, firstRaw, escRaw, runs: C.reduce((a, c) => a + c.runs.length, 0), n: nRaw ? String(nRaw) : '0 Treffer', first: pc(firstRaw), firstW: (firstRaw || 0) * 100, firstC: firstRaw != null && firstRaw < .5 ? '#b13a3e' : '#151514', firstBar: firstRaw != null && firstRaw < .5 ? '#e5484d' : '#1f9d55', esc: pc(escRaw), end, op: nRaw ? 1 : .45, bg: pr && rl.target === pr ? '#f4f5fd' : 'transparent' };
+    });
+
+    const { F, few } = this.findings(runs, ruleRows);
+    const worst = id => { const f = F.find(x => x.subj === 'Profil ' + id); return f ? { c: SEV[f.sev].dot, t: SEV[f.sev].l + ': ' + f.title } : { c: '#1f9d55', t: 'keine Befunde' }; };
+    const cards = low ? [] : F.slice(0, 4).map(f => ({ sev: SEV[f.sev].l, sevC: SEV[f.sev].c, sevBg: SEV[f.sev].bg, subj: f.subj, title: f.title, ev: f.ev, hasDiff: !!f.diff, diff: f.diff || [], text: f.text || false, n: f.n, open: () => this.toast('dispatch.yaml öffnet bei ' + f.subj.replace('Profil ', '') + (f.diff ? '.' + f.diff[0].k : '')), hide: () => this.set({ hidden: [...st.hidden, f.key] }) }));
+    const footParts = [];
+    if (F.length > 4) footParts.push('+ ' + (F.length - 4) + ' weitere Befunde mit geringerer Schwere');
+    if (few.length) footParts.push('Zu wenig Daten für eine Aussage: ' + few.join(', '));
+    const B = {
+      sub: (st.period === 'cfg' ? 'seit ' + dm(CFG) : 'letzte ' + daysOf(st.period) + ' Tage') + ' · ' + runs.length + ' Läufe · ' + chains.length + ' Tickets',
+      kinds: RUNKINDS.map(([k, label]) => ({ label, active: st.kind === k, idle: st.kind !== k, onClick: () => this.set({ kind: k, abSel: null, prof: null }) })),
+      hasProf: !!pr, prof: pr || '', clearProf: () => this.set({ prof: null, abSel: null }),
+      low, notLow: !low, lowText: 'Zu wenig Läufe für belastbare Aussagen (' + runs.length + ' von mindestens 10). Diagramme sind gedimmt, Befunde werden nicht abgeleitet.',
+      noCards: !low && cards.length === 0, foot: footParts.join(' · ') || false, op: low ? .42 : 1
+    };
+
+    // matrix
+    const mrow = P => {
+      const S = this.stats(runs.filter(r => r.profile === P.id)), w = worst(P.id), nab = S.ab.length;
+      const ab = MINI.map(m => { const n = S.ab.filter(r => CM[r.cat].m === m.k).length; return { w: nab ? n / nab * 100 : 0, c: m.c, tip: m.l + ': ' + n }; });
+      const escR = S.n ? S.esc / S.n : null, bad = escR != null && S.okRate != null && escR > S.okRate;
+      return { name: P.id, meta: P.model + ' · ' + P.effort + ' · ' + P.maxTurns + ' Turns · ' + P.timeout + ' min', n: String(S.n), split: S.n ? S.nFirst + ' Erst · ' + S.escIn + ' eskaliert' : 'keine Läufe', ok: pc(S.okRate), okW: (S.okRate || 0) * 100, okBg: S.okRate != null && S.okRate < .5 ? '#fdf0ef' : 'transparent', first: pc(S.firstRate), ab, abN: nab + ' Abbrüche', tu: box(S.tu), du: box(S.du), esc: pc(escR), escC: bad ? '#b13a3e' : '#151514', escW: bad ? 600 : 400, escBg: bad ? '#fdf0ef' : 'transparent', q: pc(S.q), amp: S.n ? w.c : '#dcdbd6', ampTip: w.t, rowBg: pr === P.id ? '#eef0fb' : 'transparent', onClick: () => this.set({ prof: pr === P.id ? null : P.id, abSel: null }) };
+    };
+    const mx = { ladder: PROFILES.filter(p => p.step >= 0).map(mrow), off: PROFILES.filter(p => p.step < 0).map(mrow), legend: MINI };
+
+    // hist
+    const hm = st.histMode;
+    const hist = {
+      modes: [['turns', 'Schritte'], ['time', 'Zeit']].map(([k, label]) => ({ label, active: hm === k, idle: hm !== k, onClick: () => this.set({ histMode: k }) })),
+      recon: runsP.filter(r => r.recon).length,
+      limits: PROFILES.filter(p => runsP.some(r => r.profile === p.id)).map(p => p.id + ': ' + (hm === 'turns' ? 'maxTurns ' + p.maxTurns : 'timeoutMinutes ' + p.timeout)).join(' · '),
+      rows: PROFILES.filter(p => runsP.some(r => r.profile === p.id && r.tu != null)).map(p => {
+        const R = runsP.filter(r => r.profile === p.id && r.tu != null);
+        const bins = Array.from({ length: 11 }, (_, i) => ({ ok: 0, ab: 0, q: 0, i }));
+        R.forEach(r => { const v = hm === 'turns' ? r.tu : r.du; const i = v >= .999 ? 10 : Math.min(9, Math.floor(v * 10)); const b = bins[i]; r.out === 'ok' ? b.ok++ : r.out === 'abort' ? b.ab++ : b.q++; });
+        const mxb = Math.max(1, ...bins.map(b => b.ok + b.ab + b.q));
+        const lim = hm === 'turns' ? 'maxTurns ' + p.maxTurns : p.timeout + ' min';
+        return { name: p.id, n: R.length + ' Läufe · ' + lim, bins: bins.map(b => ({ ok: b.ok / mxb * 100, ab: b.ab / mxb * 100, q: b.q / mxb * 100, bl: b.i === 10 ? '1.5px solid #e5484d' : 'none', pl: b.i === 10 ? '2px' : '0', ml: b.i === 10 ? '4px' : '0', tip: (b.i === 10 ? 'am Limit' : b.i * 10 + '–' + (b.i * 10 + 10) + ' %') + ': ' + b.ok + ' erfolgreich · ' + b.ab + ' abgebrochen · ' + b.q + ' Frage/blockiert' })) };
+      })
+    };
+
+    // aborts
+    const abRows = PROFILES.map(p => ({ p, R: runsP.filter(r => r.profile === p.id && r.out === 'abort') })).filter(x => x.R.length);
+    const abMax = Math.max(1, ...abRows.map(x => x.R.length));
+    const sel = st.abSel;
+    const ab = {
+      modes: [['abs', 'absolut'], ['share', 'Anteil']].map(([k, label]) => ({ label, active: st.abMode === k, idle: st.abMode !== k, onClick: () => this.set({ abMode: k }) })),
+      rows: abRows.map(({ p, R }) => ({ name: p.id, n: R.length, segs: CATS.map(c => ({ c, n: R.filter(r => r.cat === c.k).length })).filter(x => x.n).map(({ c, n }) => ({ w: st.abMode === 'abs' ? n / abMax * 100 : n / R.length * 100, c: c.c, tip: c.l + ': ' + n + ' (' + pc(n / R.length) + ')', ol: sel && sel.p === p.id && sel.c === c.k ? '2px solid #151514' : 'none', onClick: () => this.set({ abSel: sel && sel.p === p.id && sel.c === c.k ? null : { p: p.id, c: c.k } }) })) })),
+      legCfg: CATS.filter(c => c.g === 'cfg'), legRun: CATS.filter(c => c.g === 'run'), legInfra: CATS.filter(c => c.g === 'infra'),
+      hasSel: !!sel, close: () => this.set({ abSel: null })
+    };
+    if (sel) { const R = runsP.filter(r => r.profile === sel.p && r.cat === sel.c); ab.sel = { c: CM[sel.c].c, title: CM[sel.c].l + ' · ' + sel.p + ' · ' + R.length + ' Läufe', runs: R.slice(-6).reverse().map(r => ({ id: r.id, a: r.attempt, text: r.text, open: e => { e.preventDefault(); this.toast('Ticket ' + r.id + ' öffnet im Board'); } })), more: R.length > 6 ? '+ ' + (R.length - 6) + ' weitere Läufe' : false }; }
+    else ab.sel = { c: '', title: '', runs: [], more: false };
+
+    // compare
+    const before = base.filter(c => c.date < CFG && c.date >= new Date(CFG.getTime() - 28 * DAY)), after = base.filter(c => c.date >= CFG);
+    const fr = X => X.length ? X.filter(c => c.runs[0].out === 'ok').length / X.length : null, er = X => X.length ? X.filter(c => c.runs.length > 1).length / X.length : null;
+    const cmp = { date: dm(CFG) + ' 2026', diff: CHANGES[2].diff, rows: [
+      { l: 'Erstversuch-Quote', a: pc(fr(before)), b: pc(fr(after)), col: fr(after) >= fr(before) ? '#17804a' : '#b13a3e', n: before.length + ' Tickets davor (4 W) · ' + after.length + ' danach' },
+      { l: 'Eskalationsquote', a: pc(er(before)), b: pc(er(after)), col: er(after) <= er(before) ? '#17804a' : '#b13a3e', n: 'Anteil Tickets mit mind. einer Eskalation' }
+    ] };
+
+    const sp = (arr, c) => arr.map(v => ({ h: v * 100, c }));
+    const tiles = [
+      { l: 'Merge-Fehlerquote', v: '6 %', col: '#151514', sub: '3 von 48 Merge-Läufen gescheitert', spark: sp([.3, .5, .2, .4, .3, .6, .2, .3], '#c9c8c2') },
+      { l: 'Setup-Fehlerquote', v: '17 %', col: '#b8611c', sub: '9 von 53 Worktree-Einrichtungen · meist npm ci – ENOSPC', spark: sp([.2, .3, .3, .5, .6, .8, .9, 1], '#e8833a') },
+      { l: 'Rechte verweigert', v: '11', col: '#151514', sub: 'Läufe · meist Bash(docker compose) → allowedTools prüfen', spark: sp([.4, .3, .5, .4, .6, .5, .7, .6], '#c9c8c2') },
+      { l: 'Recherche-Erfolg', v: '78 %', col: '#151514', sub: '14 von 18 Empfehlungen übernommen', spark: sp([.6, .7, .65, .8, .7, .75, .8, .78], '#a9d9bb') }
+    ];
+
+    // panel
+    const it = INBOX.find(i => i.id === st.panel);
+    const panel = it ? {
+      show: true, close: () => this.set({ panel: null }), color: KM[it.k].c, kind: KM[it.k].l, id: it.id, title: it.title, action: KM[it.k].a, act: () => doAct(it),
+      facts: [{ l: 'Grund', v: it.reason }, { l: 'Wartet', v: waitTxt(it.h) }].concat(it.blocks ? [{ l: 'Hält auf', v: it.blocks + ' Tickets' }] : []).concat(it.rec ? [{ l: 'Empfehlung', v: it.rec }] : []).concat(it.seen > 1 ? [{ l: 'Gesehen', v: it.seen + '×' }] : []),
+      hasRuns: !!(it.runs && it.runs.length), runs: (it.runs || []).map((u, i) => ({ n: i + 1, p: u[0], o: u[1], t: u[2], c: u[1] === 'erfolgreich' ? '#1f9d55' : '#e5484d' }))
+    } : { show: false, runs: [], facts: [] };
+
+    const tr = this.trend(base);
+    const t = st.toast;
+    return {
+      hdr, pill, A, B, cards, mx, hist, sk: this.sankey(chainsP), rules: pr ? ruleRows.filter(r => r.target === pr) : ruleRows,
+      profLegend: PROFILES.map(p => ({ l: p.id, c: p.color })), ab, tr, cmp, tiles, panel,
+      toast: { show: !!t, text: t ? t.text : '', canUndo: !!(t && t.undo), undo: () => t && t.undo && t.undo() }
+    };
+  }
+}
+</script>
+</body>
+</html>

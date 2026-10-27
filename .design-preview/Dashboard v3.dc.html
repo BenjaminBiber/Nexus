@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f6f6f3;font-family:'Archivo',system-ui,sans-serif;color:#151514;-webkit-font-smoothing:antialiased}
+a{color:#3346c9;text-decoration:none}a:hover{color:#1f2c99;text-decoration:underline}
+button,select{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#f6f6f3">
+<div style="max-width:1440px;margin:0 auto;padding:24px 28px 48px;display:flex;flex-direction:column;gap:16px">
+
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<div style="display:flex;align-items:baseline;gap:10px;margin-right:auto"><span style="font-size:24px;font-weight:700;letter-spacing:-.01em">Dashboard</span><span style="font-size:13px;color:#74736d">Dispatcher · Projekt M4S</span></div>
+<select value="{{f.board}}" onChange="{{f.onBoard}}" style="height:32px;border:1px solid #dcdbd6;border-radius:6px;padding:0 8px;font-size:13px;color:#151514;background:#fff"><option value="all">Alle Boards</option><option value="M4S Core">M4S Core</option><option value="M4S Web">M4S Web</option></select>
+<div style="display:flex;gap:2px;padding:3px;background:#e9e8e3;border-radius:8px">
+<sc-for list="{{f.kinds}}" as="p" hint-placeholder-count="4">
+<sc-if value="{{p.active}}"><button onClick="{{p.onClick}}" style="border:0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);border-radius:6px;padding:5px 11px;font-size:12.5px;font-weight:600;color:#151514;cursor:pointer">{{p.label}}</button></sc-if>
+<sc-if value="{{p.idle}}"><button onClick="{{p.onClick}}" style="border:0;background:transparent;border-radius:6px;padding:5px 11px;font-size:12.5px;font-weight:500;color:#5f5e58;cursor:pointer">{{p.label}}</button></sc-if>
+</sc-for>
+</div>
+<div style="display:flex;gap:2px;padding:3px;background:#e9e8e3;border-radius:8px">
+<sc-for list="{{f.periods}}" as="p" hint-placeholder-count="4">
+<sc-if value="{{p.active}}"><button onClick="{{p.onClick}}" style="border:0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);border-radius:6px;padding:5px 11px;font-size:12.5px;font-weight:600;color:#151514;cursor:pointer">{{p.label}}</button></sc-if>
+<sc-if value="{{p.idle}}"><button onClick="{{p.onClick}}" style="border:0;background:transparent;border-radius:6px;padding:5px 11px;font-size:12.5px;font-weight:500;color:#5f5e58;cursor:pointer">{{p.label}}</button></sc-if>
+</sc-for>
+</div>
+<div style="height:32px;display:flex;align-items:center;gap:8px;border:1px solid #dcdbd6;background:#fff;border-radius:16px;padding:0 12px 0 10px;font-size:12.5px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:{{pill.dot}}"></span>{{pill.text}}</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="5">
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:4px">
+<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600">{{k.l}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:600;letter-spacing:-.02em;color:{{k.c}}">{{k.v}}</span>
+<span style="font-size:12.5px;color:#74736d">{{k.sub}}</span>
+</div>
+</sc-for>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch">
+
+<div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:16px 18px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px"><span style="font-size:15px;font-weight:700">{{ch.title}}</span><div style="display:flex;gap:14px;font-size:12px;color:#55544f"><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:#1f9d55"></span>erfolgreich</span><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:#e5484d"></span>abgebrochen</span><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:#c9c8c2"></span>Frage / blockiert</span></div></div>
+<div style="display:flex;gap:10px">
+<div style="display:flex;flex-direction:column;justify-content:space-between;height:200px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a9993;text-align:right;width:22px;margin-top:-6px"><span>{{ch.yMax}}</span><span>{{ch.yMid}}</span><span>0</span></div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+<div onMouseLeave="{{ch.leave}}" style="position:relative;height:200px;display:flex;gap:3px;border-bottom:1px solid #dcdbd6;background:linear-gradient(#efeeea,#efeeea) 0 0/100% 1px no-repeat,linear-gradient(#efeeea,#efeeea) 0 50%/100% 1px no-repeat">
+<sc-for list="{{ch.b}}" as="b" hint-placeholder-count="11">
+<div onMouseEnter="{{b.enter}}" style="flex:1;position:relative;display:flex;flex-direction:column-reverse;align-items:center;background:{{b.bg}}">
+<div style="width:70%;max-width:28px;height:{{b.ok}}%;background:#1f9d55"></div>
+<div style="width:70%;max-width:28px;height:{{b.ab}}%;background:#e5484d"></div>
+<div style="width:70%;max-width:28px;height:{{b.q}}%;background:#c9c8c2;border-radius:2px 2px 0 0"></div>
+<sc-if value="{{b.hover}}" hint-placeholder-val="{{false}}"><div style="position:absolute;bottom:100%;left:50%;transform:translate(-50%,-6px);background:#151514;color:#fff;border-radius:7px;padding:8px 10px;font-size:12px;white-space:nowrap;z-index:5;display:flex;flex-direction:column;gap:3px;pointer-events:none"><span style="font-weight:600">{{b.tip}}</span><span style="font-family:'JetBrains Mono',monospace;color:#7fdba5">{{b.nOk}} erfolgreich</span><span style="font-family:'JetBrains Mono',monospace;color:#ff9a9d">{{b.nAb}} abgebrochen</span><span style="font-family:'JetBrains Mono',monospace;color:#c9c8c2">{{b.nQ}} Frage / blockiert</span></div></sc-if>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:3px"><sc-for list="{{ch.b}}" as="b" hint-placeholder-count="11"><span style="flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a9993;white-space:nowrap">{{b.label}}</span></sc-for></div>
+</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:12px">
+<span style="font-size:15px;font-weight:700">Eskalation entlang der Leiter</span>
+<sc-for list="{{esc.rows}}" as="r" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:5px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600">{{r.name}}</span><span style="font-size:12px;color:#74736d">{{r.n}} Läufe</span></div>
+<div style="display:flex;height:8px;border-radius:2px;overflow:hidden;background:#efeeea"><div style="width:{{r.okW}}%;background:#1f9d55"></div><div style="width:{{r.escW}}%;background:#e8833a"></div><div style="width:{{r.finW}}%;background:#e5484d"></div></div>
+<span style="font-size:12px;color:#55544f">{{r.txt}}</span>
+</div>
+</sc-for>
+<div style="font-size:12.5px;color:#3d3d39;padding-top:10px;border-top:1px solid #f0efeb;line-height:1.5">{{esc.line}}</div>
+</div>
+
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:15px;font-weight:700">Häufigste Abbruchgründe</span>
+<sc-for list="{{reasons}}" as="r" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:minmax(90px,118px) minmax(0,1fr) 26px;gap:10px;align-items:center"><span style="font-size:13px">{{r.l}}</span><div style="height:6px;background:#efeeea;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{r.w}}%;background:{{r.c}}"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;text-align:right">{{r.n}}</span></div></sc-for>
+<span style="font-size:12px;color:#74736d;padding-top:8px;border-top:1px solid #f0efeb">{{reasonNote}}</span>
+</div>
+
+<div style="grid-column: 1/-1; background: #fff; border: 1px solid #e5e4df; border-radius: 10px; padding: 14px 18px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 4px 20px">
+<span style="grid-column:1/-1;font-size:15px;font-weight:700;padding-bottom:6px">Hindernisse</span>
+<sc-for list="{{obstacles}}" as="o" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:center;padding:9px 0;border-top:1px solid #f0efeb"><span style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;text-align:right">{{o.n}}</span><span style="display:flex;flex-direction:column;gap:1px"><span style="font-size:13px;font-weight:600">{{o.l}}</span><span style="font-size:12px;color:#74736d">{{o.sub}}</span></span></div></sc-for>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;min-width:0;contain:size;min-height:520px">
+<div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{tasks.groups}}" as="g" hint-placeholder-count="4">
+<div style="flex:none;background:#fff;border:1px solid #e5e4df;border-radius:10px;overflow:hidden">
+<button onClick="{{g.toggle}}" style="width:100%;display:flex;align-items:center;gap:10px;padding:13px 18px;border:0;background:{{g.bg}};cursor:pointer;text-align:left;opacity:{{g.op}}" style-hover="background:#f3f2ee"><sc-if value="{{g.showUrg}}" hint-placeholder-val="{{false}}"><span title="{{g.urgent}}" style="width:18px;height:18px;border-radius:50%;background:#e5484d;color:#fff;font-size:12px;font-weight:700;line-height:18px;text-align:center;flex:none">!</span></sc-if><span style="font-size:15px;font-weight:700;color:#151514">{{g.label}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;color:#151514;background:#efeeea;border-radius:10px;padding:1px 8px">{{g.count}}</span><span style="margin-left:auto;font-size:12px;color:#74736d;transform:rotate({{g.rot}});transition:transform .15s">▾</span></button>
+<sc-if value="{{g.open}}" hint-placeholder-val="{{true}}">
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+<div style="display:grid;grid-template-columns:{{r.cols}};gap:10px;align-items:center;padding:10px 18px;border-top:1px solid #f0efeb;background:{{r.rowBg}}" style-hover="filter:brightness(.98)">
+<sc-if value="{{r.hasIcon}}" hint-placeholder-val="{{false}}"><span style="width:18px;height:18px;border-radius:50%;background:{{r.urgBg}};color:{{r.urgC}};font-size:{{r.urgFs}};font-weight:700;line-height:18px;text-align:center">{{r.urg}}</span></sc-if>
+<span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:#3d3d39">{{r.id}}</span>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{r.title}}</span>
+<span style="font-size:12px;color:#74736d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{r.reason}}</span>
+</div>
+<button onClick="{{r.act}}" style="height:28px;padding:0 10px;border:1px solid #dcdbd6;background:#fff;border-radius:6px;font-size:12px;font-weight:600;color:#151514;cursor:pointer;white-space:nowrap" style-hover="background:#151514;color:#fff;border-color:#151514">{{r.action}}</button>
+</div>
+</sc-for>
+<sc-if value="{{g.none}}" hint-placeholder-val="{{false}}"><div style="padding:10px 18px 14px 46px;font-size:12.5px;color:#74736d">Nichts offen.</div></sc-if>
+</sc-if>
+</div>
+</sc-for>
+<sc-if value="{{tasks.empty}}" hint-placeholder-val="{{false}}"><div style="padding:40px 18px;text-align:center;font-size:14px;color:#55544f">Nichts zu tun – der Dispatcher kommt ohne dich weiter.</div></sc-if>
+</div>
+</div>
+
+</div>
+</div>
+
+<sc-if value="{{toast.show}}" hint-placeholder-val="{{false}}"><div style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;background:#151514;color:#fff;border-radius:8px;padding:10px 14px;font-size:13px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 24px rgba(0,0,0,.2)"><span>{{toast.text}}</span><button onClick="{{toast.undo}}" style="border:0;background:transparent;color:#9fb0ff;font-size:13px;font-weight:600;cursor:pointer">Rückgängig</button></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;dispatcher&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;läuft&quot;,&quot;pausiert&quot;,&quot;außerhalb Zeitfenster&quot;,&quot;ausgeschaltet&quot;],&quot;default&quot;:&quot;läuft&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Zustände&quot;},&quot;emptyInbox&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Zustände&quot;}}">
+const DAY = 864e5;
+const TODAY = new Date(2026, 9, 22);
+const CFG = new Date(2026, 9, 12), ATT3 = new Date(2026, 9, 1);
+const MON = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sep.', 'Okt.', 'Nov.', 'Dez.'];
+const dm = d => d.getDate() + '. ' + MON[d.getMonth()];
+const z2 = n => String(n).padStart(2, '0');
+const ddmm = d => z2(d.getDate()) + '.' + z2(d.getMonth() + 1) + '.';
+const pc = v => v == null || isNaN(v) ? '–' : Math.round(v * 100) + ' %';
+const LADDER = ['sonnet-low', 'sonnet-high', 'opus-high'];
+const PROF = {
+  'sonnet-low': { sp: .52, qp: .1, step: 0 }, 'sonnet-high': { sp: .68, qp: .07, step: 1 }, 'opus-high': { sp: .8, qp: .06, step: 2 },
+  'opus-max': { sp: .82, qp: .05, step: -1 }, 'recherche': { sp: .7, qp: .15, step: -1 }
+};
+const CATS = [
+  { k: 'turns', l: 'Schrittlimit', c: '#e5484d' }, { k: 'timeout', l: 'Zeitlimit', c: '#e8833a' }, { k: 'context', l: 'Kontext voll', c: '#c2417a' },
+  { k: 'exit', l: 'Exit-Code', c: '#8f6ad1' }, { k: 'claude', l: 'Fehler von Claude', c: '#6a7fd6' }, { k: 'noout', l: 'Ohne Ausgang', c: '#4fa3b5' },
+  { k: 'usage', l: 'Nutzungslimit', c: '#a3a29c' }, { k: 'start', l: 'Start gescheitert', c: '#a3a29c' }, { k: 'vanished', l: 'Worker verschwunden', c: '#a3a29c' }, { k: 'other', l: 'Sonstiges', c: '#a3a29c' }
+];
+const AW = {
+  'sonnet-low': [['turns', 45], ['timeout', 8], ['context', 4], ['exit', 12], ['claude', 8], ['noout', 6], ['usage', 8], ['vanished', 4], ['start', 3], ['other', 2]],
+  'sonnet-high': [['turns', 12], ['timeout', 10], ['context', 38], ['exit', 12], ['claude', 8], ['noout', 6], ['usage', 7], ['vanished', 4], ['start', 2], ['other', 1]],
+  'opus-high': [['turns', 2], ['timeout', 2], ['context', 8], ['exit', 28], ['claude', 22], ['noout', 10], ['usage', 14], ['vanished', 9], ['start', 3], ['other', 2]],
+  'opus-max': [['exit', 30], ['claude', 20], ['noout', 10], ['usage', 16], ['vanished', 6]],
+  'recherche': [['timeout', 12], ['exit', 30], ['claude', 28], ['noout', 18], ['usage', 12]]
+};
+const RULES = [['sonnet-high', .35], ['sonnet-low', .59], ['opus-max', .06]];
+const DATA = (() => {
+  let s = 20261022; const r = () => (s = s * 16807 % 2147483647) / 2147483647;
+  const pick = w => { let x = r() * w.reduce((a, b) => a + b[1], 0); for (const [k, v] of w) { if ((x -= v) < 0) return k; } return w[0][0]; };
+  const chains = [];
+  for (let d = 55; d >= 0; d--) {
+    const date = new Date(TODAY.getTime() - d * DAY), cnt = 5 + Math.floor(r() * 4);
+    for (let j = 0; j < cnt; j++) {
+      const kind = pick([['work', .72], ['plan', .12], ['research', .1], ['merge', .06]]);
+      const board = r() < .62 ? 'M4S Core' : 'M4S Web';
+      const infra = r() < .2;
+      let p = kind === 'research' ? 'recherche' : pick(RULES);
+      const maxAtt = date < ATT3 ? 2 : 3, runs = [];
+      for (let a = 1; a <= maxAtt; a++) {
+        const P = PROF[p]; let sp = P.sp;
+        if (p === 'sonnet-low' && infra) sp = .26; if (p === 'sonnet-high' && date < CFG) sp = .48;
+        const x = r(), out = x < P.qp ? 'question' : x < P.qp + .03 ? 'blocked' : x < P.qp + .03 + sp ? 'ok' : 'abort';
+        runs.push({ profile: p, attempt: a, out, cat: out === 'abort' ? pick(AW[p]) : null });
+        if (out !== 'abort') break;
+        if (a < maxAtt) { runs[runs.length - 1].esc = true; if (P.step >= 0 && P.step < 2) p = LADDER[P.step + 1]; }
+      }
+      chains.push({ date, kind, board, runs, last: runs[runs.length - 1], final: runs[runs.length - 1].out === 'abort' });
+    }
+  }
+  return chains;
+})();
+
+const KINDS = [
+  { k: 'final', l: 'Endgültig gescheitert', c: '#e5484d', a: 'Neu starten' }, { k: 'merge', l: 'Merge gescheitert', c: '#d9572b', a: 'Merge erneut' },
+  { k: 'setup', l: 'Einrichtung gescheitert', c: '#c98a12', a: 'Neu starten' }, { k: 'accept', l: 'Abnahme', c: '#1f9d55', a: 'Freigeben' },
+  { k: 'question', l: 'Frage offen', c: '#3346c9', a: 'Antworten' }, { k: 'blocked', l: 'Blockiert', c: '#8a3fbf', a: 'Öffnen' },
+  { k: 'planning', l: 'In Planung', c: '#2a8fa0', a: 'Öffnen' }, { k: 'note', l: 'Notiz offen', c: '#9a9993', a: 'Übernehmen' }
+];
+const KM = Object.fromEntries(KINDS.map(k => [k.k, k]));
+const INBOX = [
+  { k: 'final', id: 'AIH-0412', title: 'Rechte für Gastnutzer im Projekt-Endpoint', reason: '3 Versuche · zuletzt Schrittlimit · hält 3 Tickets auf', h: 52 },
+  { k: 'final', id: 'AIH-0431', title: 'CSV-Export für Zeitbuchungen', reason: '3 Versuche · zuletzt Kontext voll', h: 9 },
+  { k: 'merge', id: 'AIH-0425', title: 'Pagination im Ticket-Endpoint', reason: 'Konflikt in src/api/tickets.ts', h: 5 },
+  { k: 'setup', id: 'AIH-0438', title: 'Healthcheck-Endpunkt', reason: 'worktreeSetup: npm ci – ENOSPC', h: 1.5 },
+  { k: 'accept', id: 'AIH-0419', title: 'Leere Zustände in Listen', reason: 'Erledigt mit sonnet-low im 1. Versuch', h: 30 },
+  { k: 'accept', id: 'AIH-0427', title: 'Tastaturkürzel im Board', reason: 'Erledigt mit sonnet-high nach Eskalation', h: 6 },
+  { k: 'accept', id: 'AIH-0433', title: 'Datumsauswahl lokalisieren', reason: 'Review angefordert', h: 2 },
+  { k: 'question', id: 'Q-0057', title: 'Soft-Delete: Projekte nach 30 Tagen endgültig löschen?', reason: 'Empfohlen: O2 – Papierkorb, 30 Tage', h: 28 },
+  { k: 'question', id: 'Q-0061', title: 'Webhook-Retries exponentiell oder fest?', reason: 'Agent wartet auf Entscheidung', h: 3 },
+  { k: 'blocked', id: 'AIH-0402', title: 'Backup-Job für Staging', reason: 'Zugangsdaten für S3-Bucket fehlen · hält 4 Tickets auf', h: 96 },
+  { k: 'blocked', id: 'AIH-0436', title: 'Log-Rotation auf dem Build-Server', reason: 'Wartet auf Infra-Team', h: 14 },
+  { k: 'planning', id: 'AIH-0444', title: 'Benachrichtigungs-Queue', reason: 'Plan nicht freigegeben', h: 20 },
+  { k: 'planning', id: 'AIH-0446', title: 'Spaltenbreiten speichern', reason: 'Plan fehlt', h: 4 },
+  { k: 'note', id: 'N-0018', title: 'Task-V2-Tickets ohne Abhängigkeit auf Vorgänger-Inkrement', reason: '3× gesehen', h: 70 },
+  { k: 'note', id: 'N-0021', title: 'Tests für Migrationsskripte laufen nicht im Worktree', reason: 'aus Lauf AIH-0436 #1', h: 8 }
+];
+const waitTxt = hh => hh < 1 ? Math.round(hh * 60) + ' min' : hh < 24 ? Math.round(hh) + ' Std.' : Math.round(hh / 24) + (Math.round(hh / 24) === 1 ? ' Tag' : ' Tage');
+const PERIODS = [['7', '7 T'], ['28', '4 W'], ['56', '8 W'], ['cfg', 'Seit Konfig-Änderung']];
+const fromOf = p => p === 'cfg' ? CFG : new Date(TODAY.getTime() - (Number(p) - 1) * DAY);
+const RUNKINDS = [['work', 'Arbeit'], ['plan', 'Planung'], ['research', 'Recherche'], ['merge', 'Merge']];
+
+class Component extends DCLogic {
+  state = { period: '28', board: 'all', kind: 'work', chip: null, done: [], hover: -1, toast: null };
+  set = p => this.setState(p);
+  componentWillUnmount() { clearTimeout(this._t); }
+  renderVals() {
+    const st = this.state, props = this.props;
+    const from = fromOf(st.period);
+    const base = DATA.filter(c => (st.board === 'all' || c.board === st.board) && c.kind === st.kind);
+    const chains = base.filter(c => c.date >= from);
+    const runs = chains.flatMap(c => c.runs);
+    const nOk = runs.filter(r => r.out === 'ok').length, nAb = runs.filter(r => r.out === 'abort').length;
+    const N = chains.length || 1;
+    const first = chains.filter(c => c.runs[0].out === 'ok').length / N;
+    const escR = chains.filter(c => c.runs.length > 1).length / N;
+    const fin = chains.filter(c => c.final).length;
+
+    const ds = props.dispatcher ?? 'läuft';
+    const pill = { 'läuft': { dot: '#1f9d55', text: 'Läuft · 2 / 3 aktiv · 5 wartend' }, 'pausiert': { dot: '#e0a12b', text: 'Pausiert bis 14:30 · Nutzungslimit' }, 'außerhalb Zeitfenster': { dot: '#9a9993', text: 'Außerhalb Zeitfenster · ab 18:00' }, 'ausgeschaltet': { dot: '#c9c8c2', text: 'Ausgeschaltet' } }[ds] || {};
+
+    const f = {
+      board: st.board, onBoard: e => this.set({ board: e.target.value }),
+      periods: PERIODS.map(([k, label]) => ({ label, active: st.period === k, idle: st.period !== k, onClick: () => this.set({ period: k, hover: -1 }) })),
+      kinds: RUNKINDS.map(([k, label]) => ({ label, active: st.kind === k, idle: st.kind !== k, onClick: () => this.set({ kind: k }) }))
+    };
+    const kpis = [
+      { l: 'Läufe', v: String(runs.length), c: '#151514', sub: chains.length + ' Tickets im Zeitraum' },
+      { l: 'Erfolgsquote', v: pc(runs.length ? nOk / runs.length : null), c: '#151514', sub: nOk + ' erfolgreich · ' + nAb + ' abgebrochen' },
+      { l: 'Erstversuch-Quote', v: pc(first), c: '#17804a', sub: 'im 1. Lauf gelöst, ohne Eskalation' },
+      { l: 'Eskalationsquote', v: pc(escR), c: escR > .3 ? '#b8611c' : '#151514', sub: 'Tickets mit mind. einer Eskalation' },
+      { l: 'Endgültig gescheitert', v: String(fin), c: fin ? '#c4383d' : '#151514', sub: 'Versuche aufgebraucht' }
+    ];
+
+    // chart
+    const days = Math.round((TODAY - from) / DAY) + 1, weekly = days > 28;
+    const B = [];
+    if (weekly) for (let i = 0; i < days / 7; i++) { const s = new Date(from.getTime() + i * 7 * DAY), e = new Date(s.getTime() + 6 * DAY); B.push({ s, e, tip: ddmm(s) + '–' + ddmm(e), lab: ddmm(s) }); }
+    else for (let i = 0; i < days; i++) { const s = new Date(from.getTime() + i * DAY); B.push({ s, e: s, tip: dm(s), lab: days <= 14 || i % 4 === 0 ? ddmm(s) : '' }); }
+    B.forEach(b => { const R = chains.filter(c => c.date >= b.s && c.date <= b.e).flatMap(c => c.runs); b.o = R.filter(r => r.out === 'ok').length; b.a = R.filter(r => r.out === 'abort').length; b.q = R.length - b.o - b.a; });
+    const mx = Math.max(4, ...B.map(b => b.o + b.a + b.q)), yMax = Math.ceil(mx / 4) * 4;
+    const ch = {
+      title: weekly ? 'Läufe je Woche' : 'Läufe je Tag', yMax, yMid: yMax / 2, leave: () => this.set({ hover: -1 }),
+      b: B.map((b, i) => ({ ok: b.o / yMax * 100, ab: b.a / yMax * 100, q: b.q / yMax * 100, nOk: b.o, nAb: b.a, nQ: b.q, tip: b.tip, label: b.lab, hover: st.hover === i, bg: st.hover === i ? '#f3f2ee' : 'transparent', enter: () => this.set({ hover: i }) }))
+    };
+
+    // escalation
+    const esc = {
+      rows: LADDER.map(p => {
+        const R = runs.filter(r => r.profile === p), n = R.length || 1;
+        const ok = R.filter(r => r.out === 'ok').length, e = R.filter(r => r.esc).length, fi = R.filter(r => r.out === 'abort' && !r.esc).length;
+        const txt = p === 'opus-high' ? pc(ok / n) + ' gelöst · ' + pc(fi / n) + ' endgültig gescheitert' : pc(ok / n) + ' gelöst · ' + pc(e / n) + ' eskaliert weiter';
+        return { name: p, n: R.length, okW: ok / n * 100, escW: e / n * 100, finW: fi / n * 100, txt };
+      }),
+      line: pc(first) + ' im 1. Versuch gelöst · ' + pc(chains.filter(c => c.runs.length > 1 && c.last.out === 'ok').length / N) + ' nach Eskalation · ' + pc(fin / N) + ' endgültig gescheitert'
+    };
+
+    // reasons
+    const ab = runs.filter(r => r.out === 'abort');
+    const rc = CATS.map(c => ({ ...c, n: ab.filter(r => r.cat === c.k).length })).filter(c => c.n).sort((a, b) => b.n - a.n).slice(0, 5);
+    const rmax = Math.max(1, ...rc.map(r => r.n));
+    const reasons = rc.map(r => ({ l: r.l, n: r.n, w: r.n / rmax * 100, c: r.c }));
+    const cfgShare = ab.length ? ab.filter(r => ['turns', 'timeout', 'context'].includes(r.cat)).length / ab.length : 0;
+    const reasonNote = pc(cfgShare) + ' der Abbrüche liegen an Limits oder Kontext und lassen sich per Konfig beeinflussen.';
+
+    const usage = runs.filter(r => r.cat === 'usage').length, van = runs.filter(r => r.cat === 'vanished').length;
+    const obstacles = [
+      { n: '4', l: 'Durch Abhängigkeit gesperrt', sub: 'bereit, warten auf AIH-0402, AIH-0412' },
+      { n: '6', l: 'Ohne Opt-in-Label', sub: 'Label „dispatch“ fehlt' },
+      { n: String(usage), l: 'Nutzungslimit-Pausen', sub: 'im Zeitraum' },
+      { n: String(van), l: 'Hängende Läufe', sub: 'staleMinutes überschritten' }
+    ];
+
+    // tasks
+    const inbox = props.emptyInbox ? [] : INBOX.filter(i => !st.done.includes(i.id));
+    const ord = k => KINDS.findIndex(x => x.k === k);
+    const list = [...inbox].sort((a, b) => ord(a.k) - ord(b.k) || b.h - a.h).filter(i => !st.chip || i.k === st.chip);
+    const act = it => { clearTimeout(this._t); this.setState(s => ({ done: [...s.done, it.id], toast: { text: it.id + ' · ' + KM[it.k].a, id: it.id } })); this._t = setTimeout(() => this.set({ toast: null }), 4000); };
+    const GROUPS = [
+      { k: 'blocked', l: 'Blockierte', c: '#e5484d', kinds: ['final', 'merge', 'setup', 'blocked'] },
+      { k: 'question', l: 'Fragen', c: '#3346c9', kinds: ['question'] },
+      { k: 'accept', l: 'Freigaben', c: '#1f9d55', kinds: ['accept', 'planning'] },
+      { k: 'note', l: 'Notizen', c: '#9a9993', kinds: ['note'] }
+    ];
+    const closed = st.closed || [];
+    const tasks = {
+      total: list.length, empty: list.length === 0,
+      groups: GROUPS.map(g => {
+        const R = list.filter(i => g.kinds.includes(i.k)), open = !closed.includes(g.k), old = R.filter(i => i.h >= 24).length;
+        return { label: g.l, color: R.length ? g.c : '#c9c8c2', count: R.length, op: R.length ? 1 : .55, open, none: !R.length, rot: open ? '0deg' : '-90deg', showUrg: g.k === 'blocked' && !open && old > 0, bg: '#fff', urgent: old ? old + ' seit über 24 Std.' : false,
+          toggle: () => this.setState(s => { const c = s.closed || []; return { closed: c.includes(g.k) ? c.filter(x => x !== g.k) : [...c, g.k] }; }),
+          rows: R.map(it => ({ id: it.id, title: it.title, ...(g.k === 'blocked' ? { urg: it.h >= 24 ? '!' : '', urgBg: it.h >= 24 ? '#e5484d' : 'transparent', urgC: '#fff', urgFs: '12px', rowBg: it.h >= 24 ? '#fdf1f0' : '#fff' } : { urg: '', urgBg: 'transparent', urgC: '#fff', urgFs: '12px', rowBg: '#fff' }), hasIcon: g.k === 'blocked', cols: g.k === 'blocked' ? '18px 70px minmax(0,1fr) auto' : '70px minmax(0,1fr) auto', reason: 'seit ' + waitTxt(it.h) + ' · ' + it.reason, action: KM[it.k].a, act: () => act(it) })) };
+      }),
+      chips: KINDS.map(k => { const n = inbox.filter(i => i.k === k.k).length, a = st.chip === k.k; return { label: k.l, count: n, color: n ? k.c : '#c9c8c2', op: n ? 1 : .45, bg: a ? '#f3f2ee' : '#fff', border: a ? '#151514' : '#e5e4df', onClick: () => n && this.set({ chip: a ? null : k.k }) }; }),
+      rows: list.map(it => ({ color: KM[it.k].c, id: it.id, title: it.title, reason: KM[it.k].l + ' · ' + it.reason, wait: waitTxt(it.h), waitC: it.h >= 24 ? '#a2402c' : '#74736d', action: KM[it.k].a, act: () => act(it) }))
+    };
+    const t = st.toast;
+    return { f, pill, kpis, ch, esc, reasons, reasonNote, obstacles, tasks, toast: { show: !!t, text: t ? t.text : '', undo: () => t && this.setState(s => ({ done: s.done.filter(x => x !== t.id), toast: null })) } };
+  }
+}
+</script>
+</body>
+</html>

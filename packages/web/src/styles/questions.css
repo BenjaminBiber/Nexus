@@ -1,0 +1,79 @@
+/* Seite „Fragen“: eigene Farbzuordnung, getrennt von den Session-Zuständen (Text trägt immer die Bedeutung). */
+.questions-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin-bottom: 16px; }
+.questions-head h1 { margin: 0; font-size: 28px; }
+.quick-capture { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 8px 8px 8px 18px; margin-bottom: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-panel); box-shadow: 0 1px 2px var(--shadow-faint), 0 8px 24px var(--shadow-faint); }
+.quick-field { flex: 1; min-width: 260px; }
+.quick-field input { width: 100%; min-height: 44px; font-size: 15px; padding: 0; border: 0; box-shadow: none; background: transparent; }
+.quick-field input:focus { box-shadow: none; }
+.quick-error { flex-basis: 100%; }
+/* Zustandsreiter mit Zähler und Filterzeile darunter */
+.state-tabs { margin-top: 12px; }
+.state-tabs .tab { display: inline-flex; align-items: center; gap: 8px; margin-bottom: -1px; }
+.state-tabs .tab:hover { color: var(--text); }
+.tab-count { min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--idle-bg); color: var(--idle-fg); font-size: 11px; font-weight: 600; line-height: 20px; text-align: center; }
+.state-tabs .tab.on .tab-count { background: var(--chip-on-bg); color: var(--chip-on-fg); }
+.question-filters { margin: 12px 0 16px; gap: 8px; }
+.question-filters .search { flex: 1 1 260px; max-width: 420px; }
+.question-filters .search input { width: 100%; }
+.question-filters select { min-width: 130px; }
+.filter-divider { width: 1px; height: 24px; margin: 0 4px; background: var(--line); }
+.question-sort { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.question-list { margin-top: 12px; overflow-x: auto; }
+.question-list ul { list-style: none; margin: 0; padding: 0; }
+.question-head, .question-row { display: grid; grid-template-columns: 76px minmax(0, 1fr) 110px minmax(200px, 260px) 120px; gap: 16px; align-items: start; padding: 14px 20px; }
+.question-head { padding: 12px 20px; color: var(--muted); font-size: 12px; font-weight: 500; background: var(--surface-alt); border-bottom: 1px solid var(--line-soft); }
+.question-row { border-top: 1px solid var(--line-soft); }
+.question-row:hover { background: var(--surface-alt); }
+.question-row:first-child { border-top: 0; }
+.question-row.fresh { background: var(--unread-row-bg); box-shadow: inset 0 0 0 2px var(--accent); }
+.question-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 500; font-size: 14px; }
+.question-title a { color: var(--text); }
+.question-title a:hover { color: var(--accent); }
+.question-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.question-meta, .question-marks { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.qlink { display: inline-flex; gap: 4px; align-items: center; padding: 0 6px; border-radius: 6px; background: var(--idle-bg); font-size: 12px; text-decoration: none; color: inherit; }
+a.qlink:hover { background: var(--accent-soft); }
+.badge.q-ready { background: var(--answered-bg); color: var(--running-fg); }
+.badge.q-waiting { background: var(--waiting-bg); color: var(--waiting-fg); }
+.badge.q-researched { background: var(--orphan-bg); color: var(--orphan-fg); }
+.badge.q-new { background: var(--accent-soft); color: var(--accent-hover); }
+.badge.q-answered { background: var(--research-bg); color: var(--research-fg); }
+.badge.q-discarded { background: var(--idle-bg); color: var(--idle-fg); }
+@media (max-width: 800px) {
+  .question-head { display: none; }
+  .question-row { grid-template-columns: 1fr; gap: 6px; }
+}
+
+/* Recherchen und Optionen */
+.research { display: flex; flex-direction: column; gap: 12px; }
+.research-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.research-current, .research-request { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.research-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.option-label { margin-bottom: 4px; font-size: 12px; }
+.option-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; align-items: stretch; }
+.option-card { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid var(--line-input); border-radius: var(--radius-card); background: var(--surface); }
+.option-card.recommended { border-color: var(--text); box-shadow: 0 0 0 3px var(--line-soft); }
+.option-card.picked { background: var(--accent-soft); }
+.option-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.option-title { font-size: 15px; }
+.option-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.option-list li { display: flex; gap: 8px; align-items: flex-start; }
+.option-list .pro { color: var(--ok-fg); }
+.option-list .con { color: var(--blocked-fg); }
+.option-card > .btn { margin-top: auto; }
+.research-earlier { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
+.research-earlier summary { min-height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 16px; cursor: pointer; font-weight: 500; }
+.research-earlier-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Detailseite einer Frage */
+.question-detail-head { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.question-detail-head h1 { margin: 0; font-size: 28px; line-height: 1.25; }
+.question-detail-ident { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.question-detail-grid { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.question-detail-main { flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+.decision-form { padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.decision-form .field { display: flex; flex-direction: column; gap: 4px; }
+.decision-form input, .decision-form textarea { padding: 8px 12px; border: 1px solid var(--line-input); border-radius: var(--radius-control); font: inherit; }
+.decision-choice { padding: 12px 14px; background: var(--surface-alt); border-radius: var(--radius-control); }
+.decision-box { padding: 16px; display: flex; flex-direction: column; gap: 6px; background: var(--answered-bg); border-color: var(--answered-line); }
+.decision-box.discarded { background: var(--bg); border-color: var(--line-input); }

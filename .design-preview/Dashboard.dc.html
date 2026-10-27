@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#e4e3df;font-family:'Archivo',system-ui,sans-serif;color:#151514;-webkit-font-smoothing:antialiased}
+a{color:#3346c9;text-decoration:none}a:hover{color:#1f2c99;text-decoration:underline}
+button{font-family:inherit}
+</style>
+</helmet>
+<section style="padding:64px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:6px;max-width:900px">
+<div style="font-size:13px;font-weight:600;color:#74736d;letter-spacing:.06em;text-transform:uppercase">Runde 1</div>
+<div style="font-size:28px;font-weight:700;letter-spacing:-.01em">Dashboard überarbeitet – drei Richtungen, gleicher Stil</div>
+<div style="font-size:15px;color:#55544f;text-wrap:pretty">Alle drei sind voll klickbar: Filter, Zeitraum, Diagramm-Tooltips, Ticket-Detail. Banner entfernt, die beiden langen Listen sind zu einer Tabelle „Auffällige Tickets“ mit Tabs zusammengefasst.</div>
+</div>
+<div style="display:flex;gap:64px;align-items:flex-start;flex-wrap:wrap">
+
+<!-- ============ 1a ============ -->
+<div id="1a" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;background:#151514;color:#fff;padding:3px 8px;border-radius:5px">1a</span><span style="font-size:16px;font-weight:600">Aufgeräumt</span><span style="font-size:14px;color:#74736d">gleiche Struktur, klare Hierarchie, weniger Text</span></div>
+<div style="position:relative;width:1280px;background:#f6f6f3;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+<div style="padding:32px 36px 40px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:4px"><div style="font-size:26px;font-weight:700;letter-spacing:-.01em">Dashboard</div><div style="font-size:14px;color:#74736d">Dispatcher-Läufe · Projekt M4S</div></div>
+<div style="display:flex;gap:2px;padding:3px;background:#e9e8e3;border-radius:8px">
+<sc-for list="{{a.periods}}" as="p" hint-placeholder-count="4">
+<sc-if value="{{p.active}}"><button onClick="{{p.onClick}}" style="border:0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);border-radius:6px;padding:6px 12px;font-size:13px;font-weight:600;color:#151514;cursor:pointer">{{p.label}}</button></sc-if>
+<sc-if value="{{p.idle}}"><button onClick="{{p.onClick}}" style="border:0;background:transparent;border-radius:6px;padding:6px 12px;font-size:13px;font-weight:500;color:#5f5e58;cursor:pointer" style-hover="color:#151514">{{p.label}}</button></sc-if>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:#fff;border:1px solid #e5e4df;border-radius:10px">
+<select value="{{a.f.board}}" onChange="{{a.onBoard}}" style="height:32px;border:1px solid #dcdbd6;border-radius:6px;padding:0 8px;font:inherit;font-size:13px;color:#151514;background:#fff;min-width:160px"><option value="all">Alle Boards</option><option value="M4S Core">M4S Core</option><option value="M4S Web">M4S Web</option></select>
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#74736d"><input type="date" value="{{a.f.from}}" onChange="{{a.onFrom}}" style="height:32px;border:1px solid #dcdbd6;border-radius:6px;padding:0 8px;font:inherit;font-size:13px;color:#151514"><span>–</span><input type="date" value="{{a.f.to}}" onChange="{{a.onTo}}" style="height:32px;border:1px solid #dcdbd6;border-radius:6px;padding:0 8px;font:inherit;font-size:13px;color:#151514"></div>
+<input placeholder="Labels, z. B. backend, ui" value="{{a.f.labels}}" onChange="{{a.onLabels}}" style="height:32px;border:1px solid #dcdbd6;border-radius:6px;padding:0 10px;font:inherit;font-size:13px;color:#151514;width:220px">
+<span style="margin-left:auto;font-size:13px;color:#74736d"><span style="font-family:'JetBrains Mono',monospace;color:#151514;font-weight:600">{{a.count}}</span> Tickets im Filter</span>
+</div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:16px 20px 8px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px"><div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:15px;font-weight:700">Meine Aufgaben</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#74736d">{{openTasks}} offen</span></div><a href="#" style="font-size:13px;font-weight:600">Alle ansehen</a></div>
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="3">
+<div onClick="{{t.toggle}}" style="display:flex;gap:12px;align-items:center;padding:9px 0;border-top:1px solid #f0efeb;cursor:pointer">
+<span style="width:16px;height:16px;flex:none;border-radius:4px;border:1.5px solid {{t.boxBorder}};background:{{t.boxBg}};color:#fff;font-size:11px;line-height:14px;text-align:center">{{t.check}}</span>
+<span style="font-size:11px;font-weight:600;color:#5f5e58;background:#f0efeb;border-radius:4px;padding:2px 6px;flex:none">Notiz</span>
+<span style="font-size:14px;font-weight:500;color:{{t.color}};text-decoration:{{t.deco}}">{{t.text}}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px">
+<sc-for list="{{a.kpis}}" as="k" hint-placeholder-count="5">
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:6px">
+<div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600">{{k.label}}</div>
+<div style="display:flex;align-items:baseline;gap:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:600;letter-spacing:-.02em">{{k.value}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:15px;color:#74736d">{{k.unit}}</span></div>
+<div style="font-size:12.5px;color:#74736d;line-height:1.4">{{k.sub}}</div>
+</div>
+</sc-for>
+</div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:18px 20px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:15px;font-weight:700">{{a.ch.title}}</span><div style="display:flex;gap:16px;font-size:12.5px;color:#55544f"><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:#1f9d55"></span>Erledigte Tickets</span><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:#e5484d"></span>Abgebrochene Läufe</span></div></div>
+<div style="display:flex;gap:10px">
+<div style="display:flex;flex-direction:column;justify-content:space-between;height:180px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a9993;text-align:right;width:22px;margin-top:-6px;padding-bottom:0"><span>{{a.ch.yMax}}</span><span>{{a.ch.yMid}}</span><span>0</span></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px">
+<div onMouseLeave="{{a.ch.leave}}" style="position:relative;height:180px;display:flex;border-bottom:1px solid #dcdbd6;background:linear-gradient(#efeeea,#efeeea) 0 0/100% 1px no-repeat,linear-gradient(#efeeea,#efeeea) 0 50%/100% 1px no-repeat">
+<sc-for list="{{a.ch.b}}" as="b" hint-placeholder-count="8">
+<div onMouseEnter="{{b.enter}}" style="flex:1;position:relative;display:flex;align-items:flex-end;justify-content:center;gap:2px;background:{{b.bg}}">
+<div style="width:34%;max-width:16px;height:{{b.dh}}%;background:#1f9d55;border-radius:2px 2px 0 0"></div>
+<div style="width:34%;max-width:16px;height:{{b.ah}}%;background:#e5484d;border-radius:2px 2px 0 0"></div>
+<sc-if value="{{b.hover}}"><div style="position:absolute;bottom:100%;left:50%;transform:translate(-50%,-6px);background:#151514;color:#fff;border-radius:7px;padding:8px 10px;font-size:12px;white-space:nowrap;z-index:5;display:flex;flex-direction:column;gap:3px;pointer-events:none"><span style="font-weight:600">{{b.tip}}</span><span style="font-family:'JetBrains Mono',monospace;color:#7fdba5">{{b.done}} erledigt</span><span style="font-family:'JetBrains Mono',monospace;color:#ff9a9d">{{b.aborts}} Abbrüche</span></div></sc-if>
+</div>
+</sc-for>
+</div>
+<div style="display:flex"><sc-for list="{{a.ch.b}}" as="b" hint-placeholder-count="8"><span style="flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a9993">{{b.label}}</span></sc-for></div>
+</div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+<span style="font-size:15px;font-weight:700">Erfolgsquote je Profil</span>
+<sc-for list="{{a.prof}}" as="p" hint-placeholder-count="2"><div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between"><span style="font-family:'JetBrains Mono',monospace;font-size:13px">{{p.name}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600">{{p.rate}} %</span></div><div style="height:6px;background:#efeeea;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{p.pct}}%;background:#1f9d55"></div></div><span style="font-size:12px;color:#74736d">{{p.sub}}</span></div></sc-for>
+</div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+<span style="font-size:15px;font-weight:700">Erfolgsquote je Modell</span>
+<sc-for list="{{a.mod}}" as="p" hint-placeholder-count="2"><div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between"><span style="font-family:'JetBrains Mono',monospace;font-size:13px">{{p.name}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600">{{p.rate}} %</span></div><div style="height:6px;background:#efeeea;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{p.pct}}%;background:#1f9d55"></div></div><span style="font-size:12px;color:#74736d">{{p.sub}}</span></div></sc-for>
+</div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+<span style="font-size:15px;font-weight:700">Abbruchgründe</span>
+<sc-for list="{{a.reasons}}" as="r" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:110px 1fr 28px;align-items:center;gap:10px"><span style="font-size:13px">{{r.name}}</span><div style="height:6px;background:#efeeea;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{r.pct}}%;background:#e5484d"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;text-align:right">{{r.count}}</span></div></sc-for>
+</div>
+</div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid #eeede9"><span style="font-size:15px;font-weight:700">Auffällige Tickets</span>
+<div style="display:flex;gap:2px;padding:3px;background:#efeeea;border-radius:8px">
+<sc-for list="{{a.tabs}}" as="p" hint-placeholder-count="2">
+<sc-if value="{{p.active}}"><button onClick="{{p.onClick}}" style="border:0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);border-radius:6px;padding:5px 12px;font-size:13px;font-weight:600;color:#151514;cursor:pointer">{{p.label}}</button></sc-if>
+<sc-if value="{{p.idle}}"><button onClick="{{p.onClick}}" style="border:0;background:transparent;border-radius:6px;padding:5px 12px;font-size:13px;font-weight:500;color:#5f5e58;cursor:pointer">{{p.label}}</button></sc-if>
+</sc-for></div></div>
+<div style="display:grid;grid-template-columns:32px minmax(0,1fr) 90px 110px 100px 70px 104px;gap:12px;padding:9px 20px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600;background:#fafaf8"><span>#</span><span>Ticket</span><span>Profil</span><span>In Arbeit</span><span style="text-align:right">Kosten</span><span style="text-align:right">Vers.</span><span>Status</span></div>
+<sc-for list="{{a.rows}}" as="r" hint-placeholder-count="6">
+<div onClick="{{r.onClick}}" style="display:grid;grid-template-columns:32px minmax(0,1fr) 90px 110px 100px 70px 104px;gap:12px;padding:11px 20px;border-top:1px solid #f0efeb;align-items:center;cursor:pointer;font-size:13.5px" style-hover="background:#fafaf7">
+<span style="font-family:'JetBrains Mono',monospace;color:#9a9993;font-size:12px">{{r.rank}}</span>
+<div style="display:flex;gap:10px;align-items:baseline;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#74736d;flex:none">{{r.id}}</span><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{r.title}}</span></div>
+<span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#55544f">{{r.profile}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px">{{r.work}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px;text-align:right">{{r.cost}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px;text-align:right">{{r.attempts}}</span>
+<span style="font-size:12px;font-weight:600;color:{{r.stColor}};background:{{r.stBg}};border-radius:4px;padding:2px 8px;justify-self:start">{{r.status}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{a.hasSel}}">
+<div style="position:absolute;inset:0;z-index:20">
+<div onClick="{{a.close}}" style="position:absolute;inset:0;background:rgba(20,20,18,.2)"></div>
+<div style="position:absolute;top:0;right:0;bottom:0;width:440px;background:#fff;box-shadow:-12px 0 32px rgba(0,0,0,.1)">
+<div style="position:sticky;top:0;padding:26px 28px;display:flex;flex-direction:column;gap:22px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#74736d">{{a.sel.id}}</span><button onClick="{{a.close}}" style="border:1px solid #e5e4df;background:#fff;border-radius:6px;width:30px;height:30px;font-size:16px;cursor:pointer;color:#55544f">×</button></div>
+<div style="font-size:19px;font-weight:700;line-height:1.3;text-wrap:pretty;margin-top:-12px">{{a.sel.title}}</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:-8px"><span style="font-size:12px;font-weight:600;color:{{a.sel.stColor}};background:{{a.sel.stBg}};border-radius:4px;padding:3px 8px">{{a.sel.status}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#f0efeb;border-radius:4px;padding:3px 8px">{{a.sel.profile}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#f0efeb;border-radius:4px;padding:3px 8px">{{a.sel.model}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#f0efeb;border-radius:4px;padding:3px 8px">{{a.sel.labels}}</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#eeede9;border:1px solid #eeede9;border-radius:8px;overflow:hidden">
+<sc-for list="{{a.sel.stats}}" as="s"><div style="background:#fff;padding:12px 14px;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600">{{s.l}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600">{{s.v}}</span></div></sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:14px;font-weight:700">Läufe</span>
+<sc-for list="{{a.sel.runs}}" as="u"><div style="display:grid;grid-template-columns:28px 10px 1fr 70px 70px;gap:10px;align-items:center;padding:9px 0;border-top:1px solid #f0efeb;font-size:13px"><span style="font-family:'JetBrains Mono',monospace;color:#9a9993">#{{u.n}}</span><span style="width:8px;height:8px;border-radius:50%;background:{{u.color}}"></span><span>{{u.label}}</span><span style="font-family:'JetBrains Mono',monospace;text-align:right">{{u.dur}}</span><span style="font-family:'JetBrains Mono',monospace;text-align:right">{{u.cost}}</span></div></sc-for>
+</div>
+<div style="display:flex;gap:8px"><button style="flex:1;height:38px;border:0;border-radius:7px;background:#151514;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Im Board öffnen</button><button style="flex:1;height:38px;border:1px solid #dcdbd6;border-radius:7px;background:#fff;color:#151514;font-size:14px;font-weight:600;cursor:pointer">Erneut dispatchen</button></div>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+
+<!-- ============ 1b ============ -->
+<div id="1b" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;background:#151514;color:#fff;padding:3px 8px;border-radius:5px">1b</span><span style="font-size:16px;font-weight:600">Aufgaben zuerst</span><span style="font-size:14px;color:#74736d">„Jetzt zu tun“ vorne, Kennzahlen in der Seitenleiste</span></div>
+<div style="position:relative;width:1280px;background:#f6f6f3;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+<div style="padding:32px 36px 40px;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:4px"><div style="font-size:26px;font-weight:700;letter-spacing:-.01em">Dashboard</div><div style="font-size:14px;color:#74736d">Dispatcher-Läufe · Projekt M4S</div></div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:20px 22px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:18px;font-weight:700">Jetzt zu tun</span><a href="#" style="font-size:13px;font-weight:600">Alle {{openTasks}} Aufgaben</a></div>
+<div style="display:flex;flex-direction:column">
+<div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600;padding-bottom:6px">Notizen</div>
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="3">
+<div onClick="{{t.toggle}}" style="display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid #f0efeb;cursor:pointer">
+<span style="width:16px;height:16px;flex:none;border-radius:4px;border:1.5px solid {{t.boxBorder}};background:{{t.boxBg}};color:#fff;font-size:11px;line-height:14px;text-align:center">{{t.check}}</span>
+<span style="font-size:14px;font-weight:500;color:{{t.color}};text-decoration:{{t.deco}}">{{t.text}}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;justify-content:space-between;padding-bottom:6px"><span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600">Abgebrochen – prüfen</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#c4383d;font-weight:600">{{b.abortedCount}}</span></div>
+<sc-for list="{{b.aborted}}" as="r" hint-placeholder-count="4">
+<div onClick="{{r.onClick}}" style="display:grid;grid-template-columns:8px 78px minmax(0,1fr) 110px 72px 16px;gap:12px;align-items:center;padding:10px 0;border-top:1px solid #f0efeb;cursor:pointer;font-size:13.5px" style-hover="background:#fafaf7">
+<span style="width:8px;height:8px;border-radius:50%;background:#e5484d"></span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#74736d">{{r.id}}</span>
+<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{r.title}}</span>
+<span style="font-size:12.5px;color:#c4383d;font-weight:500">{{r.reason}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#74736d;text-align:right">{{r.date}}</span>
+<span style="color:#9a9993">›</span>
+</div>
+</sc-for>
+<sc-if value="{{b.noAborted}}"><div style="padding:12px 0;border-top:1px solid #f0efeb;font-size:13.5px;color:#74736d">Keine Abbrüche im Zeitraum.</div></sc-if>
+</div>
+</div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:18px 20px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:15px;font-weight:700">{{b.ch.title}}</span><div style="display:flex;gap:16px;font-size:12.5px;color:#55544f"><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:#1f9d55"></span>Erledigt</span><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:#e5484d"></span>Abbrüche</span></div></div>
+<div style="display:flex;gap:10px">
+<div style="display:flex;flex-direction:column;justify-content:space-between;height:160px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a9993;text-align:right;width:22px;margin-top:-6px"><span>{{b.ch.yMax}}</span><span>{{b.ch.yMid}}</span><span>0</span></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px">
+<div onMouseLeave="{{b.ch.leave}}" style="position:relative;height:160px;display:flex;border-bottom:1px solid #dcdbd6;background:linear-gradient(#efeeea,#efeeea) 0 0/100% 1px no-repeat,linear-gradient(#efeeea,#efeeea) 0 50%/100% 1px no-repeat">
+<sc-for list="{{b.ch.b}}" as="x" hint-placeholder-count="8">
+<div onMouseEnter="{{x.enter}}" style="flex:1;position:relative;display:flex;align-items:flex-end;justify-content:center;gap:2px;background:{{x.bg}}">
+<div style="width:34%;max-width:14px;height:{{x.dh}}%;background:#1f9d55;border-radius:2px 2px 0 0"></div>
+<div style="width:34%;max-width:14px;height:{{x.ah}}%;background:#e5484d;border-radius:2px 2px 0 0"></div>
+<sc-if value="{{x.hover}}"><div style="position:absolute;bottom:100%;left:50%;transform:translate(-50%,-6px);background:#151514;color:#fff;border-radius:7px;padding:8px 10px;font-size:12px;white-space:nowrap;z-index:5;display:flex;flex-direction:column;gap:3px;pointer-events:none"><span style="font-weight:600">{{x.tip}}</span><span style="font-family:'JetBrains Mono',monospace;color:#7fdba5">{{x.done}} erledigt</span><span style="font-family:'JetBrains Mono',monospace;color:#ff9a9d">{{x.aborts}} Abbrüche</span></div></sc-if>
+</div>
+</sc-for>
+</div>
+<div style="display:flex"><sc-for list="{{b.ch.b}}" as="x" hint-placeholder-count="8"><span style="flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a9993">{{x.label}}</span></sc-for></div>
+</div>
+</div>
+</div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid #eeede9"><span style="font-size:15px;font-weight:700">Auffällige Tickets</span>
+<div style="display:flex;gap:2px;padding:3px;background:#efeeea;border-radius:8px">
+<sc-for list="{{b.tabs}}" as="p" hint-placeholder-count="2">
+<sc-if value="{{p.active}}"><button onClick="{{p.onClick}}" style="border:0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);border-radius:6px;padding:5px 12px;font-size:13px;font-weight:600;color:#151514;cursor:pointer">{{p.label}}</button></sc-if>
+<sc-if value="{{p.idle}}"><button onClick="{{p.onClick}}" style="border:0;background:transparent;border-radius:6px;padding:5px 12px;font-size:13px;font-weight:500;color:#5f5e58;cursor:pointer">{{p.label}}</button></sc-if>
+</sc-for></div></div>
+<sc-for list="{{b.rows}}" as="r" hint-placeholder-count="6">
+<div onClick="{{r.onClick}}" style="display:grid;grid-template-columns:24px minmax(0,1fr) 96px 92px;gap:12px;padding:11px 20px;border-top:1px solid #f0efeb;align-items:center;cursor:pointer;font-size:13.5px" style-hover="background:#fafaf7">
+<span style="font-family:'JetBrains Mono',monospace;color:#9a9993;font-size:12px">{{r.rank}}</span>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{r.title}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#74736d">{{r.id}} · {{r.profile}} · {{r.attempts}} Versuche</span></div>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px;text-align:right">{{r.work}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px;text-align:right">{{r.cost}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px">
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding:3px;background:#efeeea;border-radius:8px">
+<sc-for list="{{b.periods}}" as="p" hint-placeholder-count="4">
+<sc-if value="{{p.active}}"><button onClick="{{p.onClick}}" style="border:0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);border-radius:6px;padding:6px 0;font-size:12px;font-weight:600;color:#151514;cursor:pointer">{{p.short}}</button></sc-if>
+<sc-if value="{{p.idle}}"><button onClick="{{p.onClick}}" style="border:0;background:transparent;border-radius:6px;padding:6px 0;font-size:12px;font-weight:500;color:#5f5e58;cursor:pointer">{{p.short}}</button></sc-if>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input type="date" value="{{b.f.from}}" onChange="{{b.onFrom}}" style="height:32px;border:1px solid #dcdbd6;border-radius:6px;padding:0 6px;font:inherit;font-size:12.5px;color:#151514;min-width:0"><input type="date" value="{{b.f.to}}" onChange="{{b.onTo}}" style="height:32px;border:1px solid #dcdbd6;border-radius:6px;padding:0 6px;font:inherit;font-size:12.5px;color:#151514;min-width:0"></div>
+<select value="{{b.f.board}}" onChange="{{b.onBoard}}" style="height:32px;border:1px solid #dcdbd6;border-radius:6px;padding:0 8px;font:inherit;font-size:13px;color:#151514;background:#fff"><option value="all">Alle Boards</option><option value="M4S Core">M4S Core</option><option value="M4S Web">M4S Web</option></select>
+<input placeholder="Labels, z. B. backend, ui" value="{{b.f.labels}}" onChange="{{b.onLabels}}" style="height:32px;border:1px solid #dcdbd6;border-radius:6px;padding:0 10px;font:inherit;font-size:13px;color:#151514">
+</div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:6px 18px">
+<sc-for list="{{b.kpis}}" as="k" hint-placeholder-count="5">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0efeb">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:13px;font-weight:600">{{k.label}}</span><span style="font-size:12px;color:#74736d">{{k.sub}}</span></div>
+<div style="display:flex;align-items:baseline;gap:4px;flex:none"><span style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-.02em">{{k.value}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#74736d">{{k.unit}}</span></div>
+</div>
+</sc-for>
+</div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+<span style="font-size:14px;font-weight:700">Erfolgsquote</span>
+<sc-for list="{{b.prof}}" as="p" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:110px 1fr 40px;gap:10px;align-items:center"><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px">{{p.name}}</span><div style="height:6px;background:#efeeea;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{p.pct}}%;background:#1f9d55"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;text-align:right">{{p.rate}}%</span></div></sc-for>
+<div style="height:1px;background:#f0efeb"></div>
+<sc-for list="{{b.mod}}" as="p" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:110px 1fr 40px;gap:10px;align-items:center"><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px">{{p.name}}</span><div style="height:6px;background:#efeeea;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{p.pct}}%;background:#1f9d55"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;text-align:right">{{p.rate}}%</span></div></sc-for>
+</div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+<span style="font-size:14px;font-weight:700">Abbruchgründe</span>
+<sc-for list="{{b.reasons}}" as="r" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:110px 1fr 28px;align-items:center;gap:10px"><span style="font-size:13px">{{r.name}}</span><div style="height:6px;background:#efeeea;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{r.pct}}%;background:#e5484d"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;text-align:right">{{r.count}}</span></div></sc-for>
+</div>
+</div>
+</div>
+<sc-if value="{{b.hasSel}}">
+<div style="position:absolute;inset:0;z-index:20">
+<div onClick="{{b.close}}" style="position:absolute;inset:0;background:rgba(20,20,18,.2)"></div>
+<div style="position:absolute;top:0;right:0;bottom:0;width:440px;background:#fff;box-shadow:-12px 0 32px rgba(0,0,0,.1)">
+<div style="position:sticky;top:0;padding:26px 28px;display:flex;flex-direction:column;gap:22px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#74736d">{{b.sel.id}}</span><button onClick="{{b.close}}" style="border:1px solid #e5e4df;background:#fff;border-radius:6px;width:30px;height:30px;font-size:16px;cursor:pointer;color:#55544f">×</button></div>
+<div style="font-size:19px;font-weight:700;line-height:1.3;text-wrap:pretty;margin-top:-12px">{{b.sel.title}}</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:-8px"><span style="font-size:12px;font-weight:600;color:{{b.sel.stColor}};background:{{b.sel.stBg}};border-radius:4px;padding:3px 8px">{{b.sel.status}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#f0efeb;border-radius:4px;padding:3px 8px">{{b.sel.profile}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#f0efeb;border-radius:4px;padding:3px 8px">{{b.sel.model}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#f0efeb;border-radius:4px;padding:3px 8px">{{b.sel.labels}}</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#eeede9;border:1px solid #eeede9;border-radius:8px;overflow:hidden">
+<sc-for list="{{b.sel.stats}}" as="s"><div style="background:#fff;padding:12px 14px;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600">{{s.l}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600">{{s.v}}</span></div></sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:14px;font-weight:700">Läufe</span>
+<sc-for list="{{b.sel.runs}}" as="u"><div style="display:grid;grid-template-columns:28px 10px 1fr 70px 70px;gap:10px;align-items:center;padding:9px 0;border-top:1px solid #f0efeb;font-size:13px"><span style="font-family:'JetBrains Mono',monospace;color:#9a9993">#{{u.n}}</span><span style="width:8px;height:8px;border-radius:50%;background:{{u.color}}"></span><span>{{u.label}}</span><span style="font-family:'JetBrains Mono',monospace;text-align:right">{{u.dur}}</span><span style="font-family:'JetBrains Mono',monospace;text-align:right">{{u.cost}}</span></div></sc-for>
+</div>
+<div style="display:flex;gap:8px"><button style="flex:1;height:38px;border:0;border-radius:7px;background:#151514;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Im Board öffnen</button><button style="flex:1;height:38px;border:1px solid #dcdbd6;border-radius:7px;background:#fff;color:#151514;font-size:14px;font-weight:600;cursor:pointer">Erneut dispatchen</button></div>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+
+<!-- ============ 1c ============ -->
+<div id="1c" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;background:#151514;color:#fff;padding:3px 8px;border-radius:5px">1c</span><span style="font-size:16px;font-weight:600">Kompakt</span><span style="font-size:14px;color:#74736d">alles auf einen Blick, Kennzahlen als Leiste</span></div>
+<div style="position:relative;width:1280px;background:#f6f6f3;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+<div style="display:flex;align-items:center;gap:10px;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e4df;flex-wrap:wrap">
+<div style="display:flex;align-items:baseline;gap:10px;margin-right:auto"><span style="font-size:20px;font-weight:700">Dashboard</span><span style="font-size:13px;color:#74736d">M4S · Dispatcher</span></div>
+<select value="{{c.f.board}}" onChange="{{c.onBoard}}" style="height:30px;border:1px solid #dcdbd6;border-radius:6px;padding:0 8px;font:inherit;font-size:12.5px;color:#151514;background:#fff"><option value="all">Alle Boards</option><option value="M4S Core">M4S Core</option><option value="M4S Web">M4S Web</option></select>
+<input placeholder="Labels" value="{{c.f.labels}}" onChange="{{c.onLabels}}" style="height:30px;border:1px solid #dcdbd6;border-radius:6px;padding:0 10px;font:inherit;font-size:12.5px;color:#151514;width:120px">
+<input type="date" value="{{c.f.from}}" onChange="{{c.onFrom}}" style="height:30px;border:1px solid #dcdbd6;border-radius:6px;padding:0 6px;font:inherit;font-size:12.5px;color:#151514">
+<input type="date" value="{{c.f.to}}" onChange="{{c.onTo}}" style="height:30px;border:1px solid #dcdbd6;border-radius:6px;padding:0 6px;font:inherit;font-size:12.5px;color:#151514">
+<div style="display:flex;gap:2px;padding:3px;background:#efeeea;border-radius:7px">
+<sc-for list="{{c.periods}}" as="p" hint-placeholder-count="4">
+<sc-if value="{{p.active}}"><button onClick="{{p.onClick}}" style="border:0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);border-radius:5px;padding:4px 9px;font-size:12px;font-weight:600;color:#151514;cursor:pointer">{{p.short}}</button></sc-if>
+<sc-if value="{{p.idle}}"><button onClick="{{p.onClick}}" style="border:0;background:transparent;border-radius:5px;padding:4px 9px;font-size:12px;font-weight:500;color:#5f5e58;cursor:pointer">{{p.short}}</button></sc-if>
+</sc-for>
+</div>
+</div>
+<div style="padding:20px 28px 32px;display:flex;flex-direction:column;gap:16px">
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:#fff;border:1px solid #e5e4df;border-radius:10px">
+<sc-for list="{{c.kpis}}" as="k" hint-placeholder-count="5">
+<div style="padding:14px 18px;display:flex;flex-direction:column;gap:4px;border-right:1px solid #f0efeb">
+<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600">{{k.label}}</span>
+<div style="display:flex;align-items:baseline;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:600;letter-spacing:-.02em">{{k.value}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#74736d">{{k.unit}}</span></div>
+<span style="font-size:12px;color:#74736d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{k.sub}}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:16px 18px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><span style="font-size:14px;font-weight:700">{{c.ch.title}}</span><div style="display:flex;gap:14px;font-size:12px;color:#55544f"><span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:2px;background:#1f9d55"></span>Erledigt</span><span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:2px;background:#e5484d"></span>Abbrüche</span></div></div>
+<div style="display:flex;gap:10px">
+<div style="display:flex;flex-direction:column;justify-content:space-between;height:150px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a9993;text-align:right;width:22px;margin-top:-6px"><span>{{c.ch.yMax}}</span><span>{{c.ch.yMid}}</span><span>0</span></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px">
+<div onMouseLeave="{{c.ch.leave}}" style="position:relative;height:150px;display:flex;border-bottom:1px solid #dcdbd6;background:linear-gradient(#efeeea,#efeeea) 0 0/100% 1px no-repeat,linear-gradient(#efeeea,#efeeea) 0 50%/100% 1px no-repeat">
+<sc-for list="{{c.ch.b}}" as="x" hint-placeholder-count="8">
+<div onMouseEnter="{{x.enter}}" style="flex:1;position:relative;display:flex;align-items:flex-end;justify-content:center;gap:2px;background:{{x.bg}}">
+<div style="width:34%;max-width:14px;height:{{x.dh}}%;background:#1f9d55;border-radius:2px 2px 0 0"></div>
+<div style="width:34%;max-width:14px;height:{{x.ah}}%;background:#e5484d;border-radius:2px 2px 0 0"></div>
+<sc-if value="{{x.hover}}"><div style="position:absolute;bottom:100%;left:50%;transform:translate(-50%,-6px);background:#151514;color:#fff;border-radius:7px;padding:8px 10px;font-size:12px;white-space:nowrap;z-index:5;display:flex;flex-direction:column;gap:3px;pointer-events:none"><span style="font-weight:600">{{x.tip}}</span><span style="font-family:'JetBrains Mono',monospace;color:#7fdba5">{{x.done}} erledigt</span><span style="font-family:'JetBrains Mono',monospace;color:#ff9a9d">{{x.aborts}} Abbrüche</span></div></sc-if>
+</div>
+</sc-for>
+</div>
+<div style="display:flex"><sc-for list="{{c.ch.b}}" as="x" hint-placeholder-count="8"><span style="flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a9993">{{x.label}}</span></sc-for></div>
+</div>
+</div>
+</div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid #eeede9"><span style="font-size:14px;font-weight:700">Auffällige Tickets</span>
+<div style="display:flex;gap:2px;padding:3px;background:#efeeea;border-radius:7px">
+<sc-for list="{{c.tabs}}" as="p" hint-placeholder-count="2">
+<sc-if value="{{p.active}}"><button onClick="{{p.onClick}}" style="border:0;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);border-radius:5px;padding:4px 10px;font-size:12px;font-weight:600;color:#151514;cursor:pointer">{{p.label}}</button></sc-if>
+<sc-if value="{{p.idle}}"><button onClick="{{p.onClick}}" style="border:0;background:transparent;border-radius:5px;padding:4px 10px;font-size:12px;font-weight:500;color:#5f5e58;cursor:pointer">{{p.label}}</button></sc-if>
+</sc-for></div></div>
+<sc-for list="{{c.rows}}" as="r" hint-placeholder-count="6">
+<div onClick="{{r.onClick}}" style="display:grid;grid-template-columns:78px minmax(0,1fr) 72px 84px 84px 10px;gap:12px;padding:8px 18px;border-top:1px solid #f0efeb;align-items:center;cursor:pointer;font-size:13px" style-hover="background:#fafaf7">
+<span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#74736d">{{r.id}}</span>
+<span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{r.title}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#55544f">{{r.profile}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;text-align:right">{{r.work}}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;text-align:right">{{r.cost}}</span>
+<span style="width:7px;height:7px;border-radius:50%;background:{{r.stColor}}"></span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:14px 16px 6px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:6px"><span style="font-size:14px;font-weight:700">Aufgaben <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#74736d;font-weight:500">{{openTasks}}</span></span><a href="#" style="font-size:12.5px;font-weight:600">Alle</a></div>
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="3">
+<div onClick="{{t.toggle}}" style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid #f0efeb;cursor:pointer">
+<span style="width:15px;height:15px;flex:none;margin-top:1px;border-radius:4px;border:1.5px solid {{t.boxBorder}};background:{{t.boxBg}};color:#fff;font-size:10px;line-height:13px;text-align:center">{{t.check}}</span>
+<span style="font-size:13px;font-weight:500;line-height:1.4;color:{{t.color}};text-decoration:{{t.deco}};text-wrap:pretty">{{t.text}}</span>
+</div>
+</sc-for>
+</div>
+<div style="background:#fff;border:1px solid #e5e4df;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600">Erfolg je Profil</span>
+<sc-for list="{{c.prof}}" as="p" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:100px 1fr 36px;gap:10px;align-items:center"><span style="font-family:'JetBrains Mono',monospace;font-size:12px">{{p.name}}</span><div style="height:5px;background:#efeeea;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{p.pct}}%;background:#1f9d55"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;text-align:right">{{p.rate}}%</span></div></sc-for>
+<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600;margin-top:6px">Erfolg je Modell</span>
+<sc-for list="{{c.mod}}" as="p" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:100px 1fr 36px;gap:10px;align-items:center"><span style="font-family:'JetBrains Mono',monospace;font-size:12px">{{p.name}}</span><div style="height:5px;background:#efeeea;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{p.pct}}%;background:#1f9d55"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;text-align:right">{{p.rate}}%</span></div></sc-for>
+<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600;margin-top:6px">Abbruchgründe</span>
+<sc-for list="{{c.reasons}}" as="r" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:100px 1fr 36px;gap:10px;align-items:center"><span style="font-size:12.5px">{{r.name}}</span><div style="height:5px;background:#efeeea;border-radius:3px;overflow:hidden"><div style="height:100%;width:{{r.pct}}%;background:#e5484d"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;text-align:right">{{r.count}}</span></div></sc-for>
+</div>
+</div>
+</div>
+</div>
+<sc-if value="{{c.hasSel}}">
+<div style="position:absolute;inset:0;z-index:20">
+<div onClick="{{c.close}}" style="position:absolute;inset:0;background:rgba(20,20,18,.2)"></div>
+<div style="position:absolute;top:0;right:0;bottom:0;width:420px;background:#fff;box-shadow:-12px 0 32px rgba(0,0,0,.1)">
+<div style="position:sticky;top:0;padding:24px 26px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#74736d">{{c.sel.id}}</span><button onClick="{{c.close}}" style="border:1px solid #e5e4df;background:#fff;border-radius:6px;width:30px;height:30px;font-size:16px;cursor:pointer;color:#55544f">×</button></div>
+<div style="font-size:18px;font-weight:700;line-height:1.3;text-wrap:pretty;margin-top:-10px">{{c.sel.title}}</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:-8px"><span style="font-size:12px;font-weight:600;color:{{c.sel.stColor}};background:{{c.sel.stBg}};border-radius:4px;padding:3px 8px">{{c.sel.status}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#f0efeb;border-radius:4px;padding:3px 8px">{{c.sel.profile}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#f0efeb;border-radius:4px;padding:3px 8px">{{c.sel.model}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#f0efeb;border-radius:4px;padding:3px 8px">{{c.sel.labels}}</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#eeede9;border:1px solid #eeede9;border-radius:8px;overflow:hidden">
+<sc-for list="{{c.sel.stats}}" as="s"><div style="background:#fff;padding:11px 13px;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#74736d;font-weight:600">{{s.l}}</span><span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600">{{s.v}}</span></div></sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:14px;font-weight:700">Läufe</span>
+<sc-for list="{{c.sel.runs}}" as="u"><div style="display:grid;grid-template-columns:28px 10px 1fr 70px 70px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #f0efeb;font-size:13px"><span style="font-family:'JetBrains Mono',monospace;color:#9a9993">#{{u.n}}</span><span style="width:8px;height:8px;border-radius:50%;background:{{u.color}}"></span><span>{{u.label}}</span><span style="font-family:'JetBrains Mono',monospace;text-align:right">{{u.dur}}</span><span style="font-family:'JetBrains Mono',monospace;text-align:right">{{u.cost}}</span></div></sc-for>
+</div>
+<div style="display:flex;gap:8px"><button style="flex:1;height:36px;border:0;border-radius:7px;background:#151514;color:#fff;font-size:13.5px;font-weight:600;cursor:pointer">Im Board öffnen</button><button style="flex:1;height:36px;border:1px solid #dcdbd6;border-radius:7px;background:#fff;color:#151514;font-size:13.5px;font-weight:600;cursor:pointer">Erneut dispatchen</button></div>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const DAY = 864e5;
+const TODAY = new Date(2026, 9, 22);
+const z2 = n => String(n).padStart(2, '0');
+const iso = d => d.getFullYear() + '-' + z2(d.getMonth() + 1) + '-' + z2(d.getDate());
+const parse = s => { const [y, m, d] = (s || '').split('-').map(Number); return y ? new Date(y, m - 1, d) : TODAY; };
+const nf = (n, d = 0) => (n || 0).toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
+const dur = h => h == null ? '–' : h < 1 ? nf(h * 60) + ' min' : h < 24 ? nf(h, 1) + ' h' : nf(h / 24, 1) + ' Tage';
+const ddmm = d => z2(d.getDate()) + '.' + z2(d.getMonth() + 1) + '.';
+const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+const kw = d => { const t = new Date(d); t.setDate(t.getDate() + 3 - (t.getDay() + 6) % 7); const w1 = new Date(t.getFullYear(), 0, 4); return 1 + Math.round(((t - w1) / DAY - 3 + (w1.getDay() + 6) % 7) / 7); };
+const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const TITLES = ['Task V2 · P1-I14: Migration und Ablösung des ToDo-Moduls', 'Task V2 · P1-I11: Ansichten und Budgetprognose', 'Task V2 · P1-I13: Kundensicht und Modus Alle', 'Task V2 · P1-I12: Reife (abschaltbar)', 'Task V2 · P1-I9: Dashboard und Zeitbuchung', 'Task V2 · P1-I8: Chat, Beobachten, Historie, Benachrichtigungen', 'Task V2 · P1-I10: Vorlagen und Abschlusslogik', 'Task V2 · P1-I7: Anhänge und Links', 'API: Rate-Limit für Webhooks', 'UI: Leere Zustände in Listen', 'Infra: Backup-Job für Staging', 'API: Pagination im Ticket-Endpoint', 'UI: Tastaturkürzel im Board', 'Backend: Rechte für Gastnutzer', 'Backend: Export als CSV', 'UI: Dark-Mode-Tokens', 'Infra: Log-Rotation', 'API: Suche nach Labels', 'Backend: Benachrichtigungs-Queue', 'UI: Datumsauswahl lokalisieren', 'Backend: Soft-Delete für Projekte', 'UI: Spaltenbreiten speichern', 'API: Idempotente Webhooks', 'Infra: Healthcheck-Endpunkt'];
+const LABELS = ['backend', 'ui', 'api', 'infra'];
+const REASONS = ['Exit-Code', 'Schrittlimit', 'Ohne Ausgang'];
+const DATA = (() => {
+  let s = 4242; const r = () => (s = s * 16807 % 2147483647) / 2147483647;
+  const out = [];
+  for (let i = 0; i < 64; i++) {
+    const age = Math.floor(Math.pow(r(), 1.4) * 84);
+    const date = new Date(TODAY.getTime() - age * DAY);
+    const profile = r() < .55 ? 'schwer' : 'standard';
+    const model = r() < .72 ? 'claude-opus-5' : 'opus (Alias)';
+    const p = (profile === 'schwer' ? .6 : .8) * (model === 'opus (Alias)' ? .55 : 1);
+    const attempts = 1 + Math.floor(r() * r() * 4);
+    const done = r() < p + .1;
+    const mult = profile === 'schwer' ? 1.6 : 1;
+    const runs = [];
+    for (let a = 0; a < attempts; a++) {
+      const ok = done && a === attempts - 1;
+      runs.push({ ok, reason: ok ? null : REASONS[r() < .6 ? 0 : r() < .6 ? 1 : 2], cost: (5 + r() * 28) * mult, h: .1 + r() * 2.5 });
+    }
+    const cost = runs.reduce((x, u) => x + u.cost, 0);
+    const workH = done ? runs.reduce((x, u) => x + u.h, 0) + r() * 14 * mult : null;
+    const planD = done ? workH / 24 + .3 + r() * 3 : null;
+    const l1 = LABELS[Math.floor(r() * 4)], l2 = LABELS[Math.floor(r() * 4)];
+    out.push({ id: 'M4S-' + String(1 + i).padStart(4, '0'), title: TITLES[i % TITLES.length], date, profile, model, done, runs, attempts, cost, tokens: cost * 1.36, workH, planD, labels: l1 === l2 || r() < .5 ? [l1] : [l1, l2], board: i % 3 === 0 ? 'M4S Web' : 'M4S Core' });
+  }
+  return out;
+})();
+const PERIODS = [['Letzte 7 Tage', '7 T', 7], ['4 Wochen', '4 W', 28], ['8 Wochen', '8 W', 56], ['12 Wochen', '12 W', 84]];
+const fromFor = n => iso(new Date(TODAY.getTime() - (n - 1) * DAY));
+const initV = () => ({ from: fromFor(56), to: iso(TODAY), board: 'all', labels: '', tab: 'slow', sel: null, hover: -1 });
+const STATUS = t => t.done ? { status: 'Erledigt', stColor: '#17804a', stBg: '#e6f4ec' } : { status: 'Abgebrochen', stColor: '#c4383d', stBg: '#fdecec' };
+
+class Component extends DCLogic {
+  state = {
+    a: initV(), b: initV(), c: initV(),
+    tasks: [
+      { text: 'Task V2: offene Fragen Q-01 bis Q-50 vor den betroffenen Inkrementen klären', done: false },
+      { text: 'Task V2: Befunde aus der Planung vor jedem Inkrement durchgehen und die Spezifikation korrigieren', done: false },
+      { text: 'Task-V2-Tickets werden ohne Abhängigkeit auf ihr Vorgänger-Inkrement angelegt und parallel dispatcht', done: false }
+    ]
+  };
+  up(vk, patch) { this.setState(s => ({ [vk]: { ...s[vk], ...patch } })); }
+  view(vk) {
+    const st = this.state[vk];
+    const from = parse(st.from), to = parse(st.to);
+    const q = st.labels.toLowerCase().split(/[\s,]+/).filter(Boolean);
+    const T = DATA.filter(t => t.date >= from && t.date <= to && (st.board === 'all' || t.board === st.board) && (!q.length || q.some(x => t.labels.some(l => l.includes(x)))));
+    const done = T.filter(t => t.done);
+    const runs = T.reduce((x, t) => x + t.attempts, 0);
+    const okRuns = done.length;
+    const noAbort = done.filter(t => t.attempts === 1).length;
+    const cost = T.reduce((x, t) => x + t.cost, 0), tokens = T.reduce((x, t) => x + t.tokens, 0);
+    const medW = median(done.map(t => t.workH)), medP = median(done.map(t => t.planD));
+    const avgA = done.length ? done.reduce((x, t) => x + t.attempts, 0) / done.length : 0;
+    const multi = done.filter(t => t.attempts > 1).length;
+    const [wv, wu] = medW == null ? ['–', ''] : dur(medW).split(' ');
+    const kpis = [
+      { label: 'Durchsatz', value: String(done.length), unit: '', sub: 'Tickets erledigt' },
+      { label: 'Erfolgsquote', value: runs ? nf(okRuns / runs * 100) : '–', unit: '%', sub: 'der Läufe · ' + (T.length ? nf(noAbort / T.length * 100) : 0) + ' % ohne Abbruch' },
+      { label: 'Durchlaufzeit', value: wv, unit: wu, sub: 'Median · Geplant → Erledigt ' + dur(medP == null ? null : medP * 24) },
+      { label: 'Versuche', value: done.length ? nf(avgA, 1) : '–', unit: '', sub: 'bis erledigt · ' + multi + ' mit Wiederholung' },
+      { label: 'Kosten', value: nf(cost, 2), unit: '$', sub: nf(tokens, 1) + ' Mio. Tokens · Listenpreis' }
+    ];
+    // chart
+    const days = Math.max(1, Math.round((to - from) / DAY) + 1);
+    const weekly = days > 31;
+    const B = [];
+    if (!weekly) {
+      for (let d = 0; d < days; d++) { const s0 = new Date(from.getTime() + d * DAY); B.push({ s: s0, e: s0, tip: WD[s0.getDay()] + ' ' + ddmm(s0), lab: ddmm(s0) }); }
+    } else {
+      let s0 = new Date(from.getTime() - ((from.getDay() + 6) % 7) * DAY);
+      while (s0 <= to) { const e = new Date(s0.getTime() + 6 * DAY); B.push({ s: s0, e, tip: 'KW ' + kw(s0) + ' · ' + ddmm(s0) + '–' + ddmm(e), lab: 'KW ' + kw(s0) }); s0 = new Date(s0.getTime() + 7 * DAY); }
+    }
+    B.forEach(b => { const inB = T.filter(t => t.date >= b.s && t.date <= b.e); b.done = inB.filter(t => t.done).length; b.aborts = inB.reduce((x, t) => x + t.runs.filter(u => !u.ok).length, 0); });
+    const mx = Math.max(4, ...B.map(b => Math.max(b.done, b.aborts)));
+    const yMax = Math.ceil(mx / 4) * 4;
+    const every = weekly ? 1 : Math.ceil(B.length / 10);
+    const ch = {
+      title: weekly ? 'Durchsatz je Woche' : 'Durchsatz je Tag', yMax, yMid: yMax / 2,
+      leave: () => this.up(vk, { hover: -1 }),
+      b: B.map((b, i) => ({ dh: b.done / yMax * 100, ah: b.aborts / yMax * 100, done: b.done, aborts: b.aborts, tip: b.tip, label: i % every === 0 ? b.lab : '', hover: st.hover === i, bg: st.hover === i ? '#f3f2ee' : 'transparent', enter: () => this.up(vk, { hover: i }) }))
+    };
+    const group = key => [...new Set(DATA.map(t => t[key]))].sort().map(name => {
+      const G = T.filter(t => t[key] === name), gd = G.filter(t => t.done), gr = G.reduce((x, t) => x + t.attempts, 0);
+      const rate = gr ? gd.length / gr * 100 : 0;
+      return { name, rate: nf(rate), pct: rate, sub: gr + ' Läufe · ' + gd.length + ' erledigt · ' + nf(G.reduce((x, t) => x + t.cost, 0), 0) + ' $ · Ø ' + dur(median(gd.map(t => t.workH))) };
+    });
+    const rc = REASONS.map(n => ({ name: n, count: T.reduce((x, t) => x + t.runs.filter(u => u.reason === n).length, 0) }));
+    const rmax = Math.max(1, ...rc.map(r => r.count));
+    const reasons = rc.map(r => ({ ...r, pct: r.count / rmax * 100 }));
+    const open = id => this.up(vk, { sel: id });
+    const list = st.tab === 'slow' ? [...done].sort((x, y) => y.workH - x.workH) : [...T].sort((x, y) => y.cost - x.cost);
+    const rows = list.slice(0, 6).map((t, i) => ({ rank: i + 1, id: t.id, title: t.title, profile: t.profile, work: dur(t.workH), cost: nf(t.cost, 2) + ' $', attempts: t.attempts, ...STATUS(t), onClick: () => open(t.id) }));
+    const abortedAll = T.filter(t => !t.done).sort((x, y) => y.date - x.date);
+    const aborted = abortedAll.slice(0, 4).map(t => ({ id: t.id, title: t.title, reason: t.runs[t.runs.length - 1].reason + ' · ' + t.attempts + '×', date: ddmm(t.date), onClick: () => open(t.id) }));
+    const s = DATA.find(t => t.id === st.sel);
+    const sel = s ? {
+      id: s.id, title: s.title, profile: s.profile, model: s.model, labels: s.labels.join(', '), ...STATUS(s),
+      stats: [{ l: 'In Arbeit → Erledigt', v: dur(s.workH) }, { l: 'Geplant → Erledigt', v: dur(s.planD == null ? null : s.planD * 24) }, { l: 'Kosten', v: nf(s.cost, 2) + ' $' }, { l: 'Tokens', v: nf(s.tokens, 1) + ' Mio.' }, { l: 'Versuche', v: String(s.attempts) }, { l: 'Zuletzt', v: ddmm(s.date) + s.date.getFullYear() }],
+      runs: s.runs.map((u, i) => ({ n: i + 1, label: u.ok ? 'Erfolgreich' : u.reason, color: u.ok ? '#1f9d55' : '#e5484d', dur: dur(u.h), cost: nf(u.cost, 2) + ' $' }))
+    } : null;
+    return {
+      f: st, count: T.length, kpis, ch, prof: group('profile'), mod: group('model'), reasons, rows,
+      aborted, abortedCount: abortedAll.length, noAborted: abortedAll.length === 0,
+      sel, hasSel: !!sel, close: () => this.up(vk, { sel: null }),
+      periods: PERIODS.map(([label, short, n]) => { const active = st.from === fromFor(n) && st.to === iso(TODAY); return { label, short, active, idle: !active, onClick: () => this.up(vk, { from: fromFor(n), to: iso(TODAY), hover: -1 }) }; }),
+      tabs: [['slow', 'Langsamste'], ['cost', 'Teuerste']].map(([k, label]) => ({ label, active: st.tab === k, idle: st.tab !== k, onClick: () => this.up(vk, { tab: k }) })),
+      onFrom: e => e.target.value && this.up(vk, { from: e.target.value, hover: -1 }),
+      onTo: e => e.target.value && this.up(vk, { to: e.target.value, hover: -1 }),
+      onBoard: e => this.up(vk, { board: e.target.value }),
+      onLabels: e => this.up(vk, { labels: e.target.value })
+    };
+  }
+  renderVals() {
+    const tasks = this.state.tasks.map((t, i) => ({
+      text: t.text, check: t.done ? '✓' : '', boxBg: t.done ? '#151514' : '#fff', boxBorder: t.done ? '#151514' : '#c9c8c2',
+      color: t.done ? '#9a9993' : '#151514', deco: t.done ? 'line-through' : 'none',
+      toggle: () => this.setState(s => ({ tasks: s.tasks.map((x, j) => j === i ? { ...x, done: !x.done } : x) }))
+    }));
+    return { a: this.view('a'), b: this.view('b'), c: this.view('c'), tasks, openTasks: 36 - this.state.tasks.filter(t => t.done).length };
+  }
+}
+</script>
+</body>
+</html>

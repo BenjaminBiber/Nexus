@@ -1,0 +1,10 @@
+{
+  "name": "ai-harness",
+  "displayName": "AI Harness",
+  "version": "0.1.0",
+  "description": "Kanban-Board, Ticket-Zuordnung und Session-Übersicht für parallele Claude-Sessions; speist Kommentare aus dem Board in die Session ein.",
+  "author": { "name": "User" },
+  "license": "MIT",
+  "defaultEnabled": false,
+  "keywords": ["kanban", "tickets", "sessions", "worktrees", "spec-kit"]
+}

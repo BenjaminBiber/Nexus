@@ -1,0 +1,482 @@
+/* Docs als Werkbank im Stil eines Code-Editors: Explorer links, Dokument in der Mitte, Werkzeuge rechts.
+   Die Breiten der Seitenspalten stehen als --docs-explorer-w und --docs-tools-w am Rahmen (gemerkt je Projekt). */
+
+.docs-workbench {
+  --docs-explorer-w: 340px;
+  --docs-tools-w: 300px;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--docs-explorer-w) 5px minmax(0, 1fr);
+  /* Die Werkbank füllt den Inhaltsbereich des Rahmens (.shell-main); scrollen tun die Spalten selbst */
+  height: 100%;
+  min-height: 0;
+  background: var(--surface);
+}
+
+/* Ziehgriff zwischen zwei Spalten */
+.docs-gutter {
+  cursor: col-resize;
+  border-left: 1px solid var(--line);
+  background: transparent;
+  touch-action: none;
+}
+
+.docs-gutter:hover,
+.docs-gutter:focus-visible {
+  background: var(--accent-soft);
+  outline: none;
+}
+
+/* Linke Spalte: Kopf mit Suche, darunter der scrollende Baum */
+.docs-explorer {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.docs-explorer-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.docs-explorer-head h1 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.docs-explorer-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.docs-explorer-count {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.docs-explorer-head .search input {
+  width: 100%;
+  padding-right: 34px;
+}
+
+/* Filter nach Art des Themas; kleinere Chips als die Filter der Seiten */
+.docs-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.docs-kinds .fchip {
+  min-height: 26px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* Board-Umschalter: Dropdown mit Mehrfachauswahl; die Liste legt sich über den Explorer */
+.docs-boards {
+  position: relative;
+}
+
+.page > .docs-boards {
+  max-width: 340px;
+  margin-bottom: 16px;
+}
+
+.docs-boards-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 8px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.docs-boards-trigger:hover {
+  background: var(--line-soft);
+}
+
+.docs-boards-trigger[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+.docs-boards-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docs-boards-caret {
+  flex: none;
+  color: var(--muted);
+  transition: transform 0.12s ease;
+}
+
+.docs-boards-caret.open {
+  transform: rotate(180deg);
+}
+
+.docs-boards-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+  overflow: auto;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 12px 32px var(--shadow-soft), 0 1px 2px var(--shadow-soft);
+}
+
+.docs-boards-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 0 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.docs-boards-option:hover {
+  background: var(--line-soft);
+}
+
+.docs-boards-option input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.docs-boards-option.is-all {
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 4px 4px 0 0;
+  margin-bottom: 2px;
+}
+
+.docs-boards-project {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.docs-explorer-tree {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 6px 0 24px;
+}
+
+/* Mittlere Spalte: Suchtreffer und Dokument, eigener Scroll */
+.docs-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 16px 48px;
+}
+
+/* Umschalter der Seitenspalten; nur im schmalen Fenster sichtbar */
+.docs-bar {
+  display: none;
+  gap: 8px;
+}
+
+/* Der Baum wie der Explorer von VS Code: kompakte Zeilen, Ordner mit Pfeil, Dateien mit Symbol, Hilfslinien unter offenen Ordnern */
+.doc-tree,
+.doc-tree-group {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Senkrechte Hilfslinie unter der Mitte des Ordnerpfeils (Lage als --doc-tree-guide, gesetzt in DocTree.tsx) */
+.doc-tree-group {
+  position: relative;
+}
+
+.doc-tree-group::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--doc-tree-guide, 0);
+  width: 1px;
+  background: var(--line);
+  pointer-events: none;
+}
+
+.doc-tree-item {
+  outline: none;
+}
+
+.doc-tree-item:focus-visible > .doc-tree-row {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.doc-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  margin: 0 6px;
+  padding-right: 8px;
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.3;
+  cursor: pointer;
+  user-select: none;
+}
+
+.doc-tree-row:hover {
+  background: var(--line-soft);
+}
+
+.doc-tree-row.on {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--accent-hover);
+}
+
+.doc-tree-chevron {
+  flex: none;
+  color: var(--muted);
+  transition: transform 0.12s ease;
+}
+
+.doc-tree-chevron.open {
+  transform: rotate(90deg);
+}
+
+/* Platz in Pfeilbreite vor Dateien, damit ihr Symbol unter dem Namen des Ordners darüber beginnt */
+.doc-tree-spacer {
+  flex: none;
+  width: 16px;
+}
+
+/* Dateisymbole: Specs und Docs blau, Pläne grün, Glossar violett, ADRs orange */
+.doc-tree-icon {
+  flex: none;
+  margin-right: 2px;
+}
+
+/* Claude erzeugt Tickets zu der Datei: Claude-Symbol pulsiert statt des Dateisymbols */
+.doc-tree-claude {
+  flex: none;
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  margin-right: 2px;
+  padding: 1px;
+  animation: agent-pulse 1.6s ease-in-out infinite;
+}
+.doc-tree-claude svg { width: 100%; height: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  .doc-tree-claude { animation: none; }
+}
+
+.doc-tree-icon.is-doc { color: #3b82c4; }
+.doc-tree-icon.is-plan { color: var(--ok); }
+.doc-tree-icon.is-glossary { color: #8b5cf6; }
+.doc-tree-icon.is-adr { color: var(--warn); }
+.doc-tree-icon.is-other { color: var(--muted); }
+
+:root[data-theme='dark'] .doc-tree-icon.is-doc { color: #6cb6e8; }
+:root[data-theme='dark'] .doc-tree-icon.is-glossary { color: #b197fc; }
+
+.doc-tree-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-tree-new {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+
+.doc-tree-label mark {
+  padding: 0;
+}
+
+.doc-tree-empty {
+  margin: 0;
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Stand der Tickets als Kreisdiagramm anstelle des Dateisymbols (Segmentfarben wie die Board-Spalten) */
+.spec-progress-pie {
+  flex: none;
+  margin-right: 2px;
+}
+.spec-progress-pie-ground { fill: var(--line-soft); }
+.spec-progress-pie circle[data-status] { stroke: var(--node-status); }
+
+/* Rechte Spalte: die Werkzeuge liegen im Layout des DocViewer (siehe DocViewer.tsx) */
+/* Darf in der Flex-Spalte von .docs-main nicht schrumpfen: sonst endet es nach einer Bildschirmhöhe,
+   und die klebende Werkzeugspalte scrollt mit dem Dokument weg */
+.docs-workbench .doc-layout {
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 0;
+  align-items: flex-start;
+  min-height: 100%;
+}
+
+.docs-workbench .doc-layout > .docs-gutter {
+  align-self: stretch;
+  min-height: 100%;
+}
+
+/* In der Werkbank ist das Dokument kein Kärtchen mehr, sondern die Fläche zwischen den Spalten */
+.docs-workbench .doc {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 32px 48px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.docs-workbench .doc-side {
+  flex: 0 0 var(--docs-tools-w);
+  position: sticky;
+  top: 0;
+  gap: 0;
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  padding-left: 12px;
+}
+
+/* Abschnitt der Werkzeugspalte */
+.doc-tool {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.doc-tool-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 30px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+}
+
+.doc-tool-title:hover {
+  color: var(--text);
+}
+
+.doc-tool-title svg {
+  flex: none;
+  transition: transform 0.12s ease;
+}
+
+.doc-tool.open > .doc-tool-title svg {
+  transform: rotate(90deg);
+}
+
+.doc-tool-body {
+  padding: 2px 0 12px;
+}
+
+.doc-side .toc {
+  position: static;
+  flex: none;
+}
+
+/* Ein Fenster für eine Spalte: Explorer und Werkzeuge legen sich auf Knopfdruck über das Dokument */
+@media (max-width: 1100px) {
+  /* Der Rahmen gibt seine Höhe hier nicht mehr vor (siehe base.css, .shell-content) */
+  .docs-workbench {
+    grid-template-columns: minmax(0, 1fr);
+    height: 100dvh;
+  }
+
+  .docs-bar {
+    display: flex;
+  }
+
+  .docs-workbench > .docs-gutter,
+  .docs-workbench .doc-layout > .docs-gutter {
+    display: none;
+  }
+
+  /* Die Werkzeugspalte hängt wie der Explorer am Rahmen der Werkbank, nicht am mitscrollenden Dokument */
+  .docs-workbench .doc-layout {
+    position: static;
+  }
+
+  .docs-workbench > .docs-explorer,
+  .docs-workbench .doc-side {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 5;
+    display: none;
+    width: min(85vw, 340px);
+    max-height: none;
+    background: var(--surface);
+    box-shadow: 0 8px 24px var(--shadow-strong);
+  }
+
+  .docs-workbench > .docs-explorer {
+    left: 0;
+    border-right: 1px solid var(--line);
+  }
+
+  .docs-workbench .doc-side {
+    right: 0;
+    flex: none;
+    border-left: 1px solid var(--line);
+  }
+
+  .docs-workbench[data-panel='explorer'] > .docs-explorer,
+  .docs-workbench[data-panel='tools'] .doc-side {
+    display: flex;
+  }
+}

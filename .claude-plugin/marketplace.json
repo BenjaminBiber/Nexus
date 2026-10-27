@@ -1,0 +1,15 @@
+{
+  "name": "ai-harness-local",
+  "description": "Lokaler Marktplatz des AI Harness: stellt das gebaute Plugin aus diesem Repository bereit",
+  "owner": {
+    "name": "AI Harness"
+  },
+  "plugins": [
+    {
+      "name": "ai-harness",
+      "source": "./packages/plugin/dist/ai-harness",
+      "defaultEnabled": false,
+      "description": "Tickets, Sessions und Board für parallele Claude-Code-Sessions (Hooks, Skills, harness-Befehl)"
+    }
+  ]
+}

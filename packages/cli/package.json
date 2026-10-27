@@ -1,0 +1,14 @@
+{
+  "name": "@harness/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "harness": "dist/main.js"
+  },
+  "dependencies": {
+    "@harness/core": "0.1.0",
+    "@harness/db": "0.1.0",
+    "commander": "^12.1.0",
+    "@harness/server": "0.1.0"
+  }
+}
