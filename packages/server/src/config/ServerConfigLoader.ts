@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { isSea } from 'node:sea';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { DEFAULT_SERVER_PORT, HarnessHome, HarnessError } from '@harness/core';
@@ -6,8 +7,12 @@ import type { ServerConfig } from './ServerConfig.js';
 
 export const DEFAULT_PORT = DEFAULT_SERVER_PORT;
 
-// Liest die Einstellungen aus Argumenten und Umgebung (--port, HARNESS_PORT, HARNESS_WEB_DIR, HARNESS_HOME).
+// Liest die Einstellungen aus Argumenten und Umgebung (--port, HARNESS_PORT, HARNESS_WEB_DIR, HARNESS_TOAST_DIR, HARNESS_HOME).
 export class ServerConfigLoader {
+  // sea: läuft der Server als gebündeltes Sidecar (Single Executable Application)? Dann liegen Oberfläche und
+  // Bilder neben dem Programm, denn es gibt keine Paketordner. Tests setzen den Wert selbst.
+  constructor(private readonly sea: boolean = isSea()) {}
+
   // Baut die Einstellungen; ungültige Ports ergeben einen verständlichen Fehler
   load(argv: string[], env: Record<string, string | undefined> = process.env): ServerConfig {
     return {
@@ -16,7 +21,7 @@ export class ServerConfigLoader {
       home: new HarnessHome(env),
       webDir: env.HARNESS_WEB_DIR ?? this.defaultWebDir(),
       version: this.version(),
-      toastDir: this.toastDir(),
+      toastDir: env.HARNESS_TOAST_DIR ?? this.toastDir(),
     };
   }
 
@@ -32,20 +37,25 @@ export class ServerConfigLoader {
     return port;
   }
 
-  // Gebaute Oberfläche neben dem Serverpaket (packages/web/dist)
+  // Gebaute Oberfläche: im Sidecar neben dem Programm, sonst neben dem Serverpaket (packages/web/dist)
   private defaultWebDir(): string {
+    if (this.sea) return join(dirname(process.execPath), 'web');
     return join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'web', 'dist');
   }
 
-  // Bilder der Windows-Benachrichtigung: im Plugin neben `lib/`, sonst im Serverpaket
+  // Bilder der Windows-Benachrichtigung: im Sidecar neben dem Programm, im Plugin neben `lib/`, sonst im Serverpaket
   private toastDir(): string {
+    if (this.sea) return join(dirname(process.execPath), 'toast');
     const here = dirname(fileURLToPath(import.meta.url));
     const candidates = [join(here, '..', 'toast'), join(here, '..', '..', 'assets', 'toast')];
     return candidates.find((dir) => existsSync(join(dir, 'logo-app.png'))) ?? candidates[1];
   }
 
-  // Version aus der package.json des Serverpakets, im gebündelten Plugin aus dessen Manifest
+  // Version: im Sidecar aus der beim Bündeln gesetzten Konstante (dort gibt es keine package.json),
+  // sonst aus der package.json des Serverpakets, im gebündelten Plugin aus dessen Manifest
   private version(): string {
+    const bundled = process.env.HARNESS_BUNDLED_VERSION;
+    if (bundled) return bundled;
     const here = dirname(fileURLToPath(import.meta.url));
     const candidates = [join(here, '..', '..', 'package.json'), join(here, '..', '.claude-plugin', 'plugin.json')];
     for (const file of candidates) {

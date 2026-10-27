@@ -80,4 +80,6 @@ async function main(): Promise<void> {
   }
 }
 
-await main();
+// Kein Top-Level-await: im gebündelten Sidecar ist das Ergebnis CommonJS, und das kennt keines.
+// Der Rückgabecode steht in process.exitCode, der Prozess endet also wie vorher
+void main();
