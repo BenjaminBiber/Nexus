@@ -81,7 +81,33 @@ describe('Normalizer', () => {
     });
   });
 
-  describe('5. UUIDs', () => {
+  describe('5. Datum relativ zu heute', () => {
+    it('ersetzt einen Tag im letzten Jahr durch seinen Abstand zu heute', () => {
+      expect(make().relativeDates('2026-09-02')).toBe('<DATE-55>');
+      expect(make().relativeDates('2026-10-26')).toBe('<DATE-1>');
+      expect(make().relativeDates('von 2026-09-02 bis 2026-09-09')).toBe('von <DATE-55> bis <DATE-48>');
+    });
+
+    it('lässt heute, die Zukunft und weiter zurückliegende Tage in Ruhe', () => {
+      // heute wird schon in Regel 4 zu <DATE>
+      expect(make().relativeDates(TODAY)).toBe(TODAY);
+      expect(make().relativeDates('2026-12-24')).toBe('2026-12-24');
+      expect(make().relativeDates('2020-03-02')).toBe('2020-03-02');
+    });
+
+    it('lässt feste Daten der Szenarien ab einem Jahr Abstand stehen', () => {
+      expect(make().relativeDates('2025-10-27')).toBe('<DATE-365>');
+      expect(make().relativeDates('2025-10-26')).toBe('<DATE-366>');
+      expect(make().relativeDates('2025-10-25')).toBe('2025-10-25');
+    });
+
+    it('greift nicht in längere Zahlenfolgen', () => {
+      expect(make().relativeDates('12026-09-02')).toBe('12026-09-02');
+      expect(make().relativeDates('2026-09-021')).toBe('2026-09-021');
+    });
+  });
+
+  describe('6. UUIDs', () => {
     it('ersetzt UUIDs', () => {
       expect(make().uuids('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11')).toBe('<UUID>');
     });
@@ -91,7 +117,7 @@ describe('Normalizer', () => {
     });
   });
 
-  describe('6. Git-Commits', () => {
+  describe('7. Git-Commits', () => {
     it('ersetzt lange und kurze Commits in sha, commit und head', () => {
       expect(make().shas('3f2a9b1c4d5e6f708192a3b4c5d6e7f809a1b2c3', 'sha')).toBe('<SHA>');
       expect(make().shas('3f2a9b1', 'commit')).toBe('<SHA>');
@@ -103,7 +129,7 @@ describe('Normalizer', () => {
     });
   });
 
-  describe('7. Zahlenfelder', () => {
+  describe('8. Zahlenfelder', () => {
     it('setzt Felder auf Ms und At sowie pid, port und durationMs auf 0', () => {
       const normalizer = make();
       expect(normalizer.number(15000, 'heartbeatMs')).toBe(0);

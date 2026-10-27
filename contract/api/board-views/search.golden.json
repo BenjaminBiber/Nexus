@@ -1,0 +1,595 @@
+[
+  {
+    "name": "Treffer in Titel, Text und Kommentar",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search?q=export"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "hits": [
+          {
+            "at": null,
+            "board": {
+              "id": 2,
+              "name": "Incidents"
+            },
+            "field": "title",
+            "id": "SV1-0001",
+            "kind": "ticket",
+            "matches": [
+              [
+                0,
+                6
+              ]
+            ],
+            "project": {
+              "id": 2,
+              "key": "SV1",
+              "name": "Service"
+            },
+            "snippet": "Export hängt",
+            "status": "backlog",
+            "ticketId": "SV1-0001",
+            "title": "Export hängt"
+          },
+          {
+            "at": null,
+            "board": {
+              "id": 1,
+              "name": "Sprint"
+            },
+            "field": "title",
+            "id": "ARC-0001",
+            "kind": "ticket",
+            "matches": [
+              [
+                0,
+                6
+              ]
+            ],
+            "project": {
+              "id": 1,
+              "key": "ARC",
+              "name": "Arches"
+            },
+            "snippet": "Export bauen",
+            "status": "backlog",
+            "ticketId": "ARC-0001",
+            "title": "Export bauen"
+          },
+          {
+            "at": "<TIME>",
+            "board": {
+              "id": 1,
+              "name": "Sprint"
+            },
+            "field": "comment",
+            "id": "ARC-0002",
+            "kind": "ticket",
+            "matches": [
+              [
+                4,
+                10
+              ]
+            ],
+            "project": {
+              "id": 1,
+              "key": "ARC",
+              "name": "Arches"
+            },
+            "snippet": "Der Export hängt auch hier.",
+            "status": "backlog",
+            "ticketId": "ARC-0002",
+            "title": "Ärger mit Umlauten"
+          },
+          {
+            "at": "<TIME>",
+            "board": {
+              "id": 1,
+              "name": "Sprint"
+            },
+            "field": "note",
+            "id": "1",
+            "kind": "note",
+            "matches": [
+              [
+                0,
+                6
+              ]
+            ],
+            "project": {
+              "id": 1,
+              "key": "ARC",
+              "name": "Arches"
+            },
+            "snippet": "Export später prüfen",
+            "status": "open",
+            "ticketId": null,
+            "title": "Export später prüfen"
+          }
+        ],
+        "query": "export",
+        "terms": [
+          "export"
+        ],
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Treffer mit Umlaut",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search?q=ärger"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "hits": [
+          {
+            "at": null,
+            "board": {
+              "id": 1,
+              "name": "Sprint"
+            },
+            "field": "title",
+            "id": "ARC-0002",
+            "kind": "ticket",
+            "matches": [
+              [
+                0,
+                5
+              ]
+            ],
+            "project": {
+              "id": 1,
+              "key": "ARC",
+              "name": "Arches"
+            },
+            "snippet": "Ärger mit Umlauten",
+            "status": "backlog",
+            "ticketId": "ARC-0002",
+            "title": "Ärger mit Umlauten"
+          }
+        ],
+        "query": "ärger",
+        "terms": [
+          "ärger"
+        ],
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Sonderzeichen zählen wörtlich",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search?q=50%25"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "hits": [
+          {
+            "at": null,
+            "board": {
+              "id": 1,
+              "name": "Sprint"
+            },
+            "field": "description",
+            "id": "ARC-0001",
+            "kind": "ticket",
+            "matches": [
+              [
+                17,
+                20
+              ]
+            ],
+            "project": {
+              "id": 1,
+              "key": "ARC",
+              "name": "Arches"
+            },
+            "snippet": "Der Export läuft 50% schneller.",
+            "status": "backlog",
+            "ticketId": "ARC-0001",
+            "title": "Export bauen"
+          }
+        ],
+        "query": "50%",
+        "terms": [
+          "50%"
+        ],
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "zwei Begriffe im selben Feld",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search?q=export%20hängt"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "hits": [
+          {
+            "at": null,
+            "board": {
+              "id": 2,
+              "name": "Incidents"
+            },
+            "field": "title",
+            "id": "SV1-0001",
+            "kind": "ticket",
+            "matches": [
+              [
+                0,
+                6
+              ],
+              [
+                7,
+                12
+              ]
+            ],
+            "project": {
+              "id": 2,
+              "key": "SV1",
+              "name": "Service"
+            },
+            "snippet": "Export hängt",
+            "status": "backlog",
+            "ticketId": "SV1-0001",
+            "title": "Export hängt"
+          },
+          {
+            "at": "<TIME>",
+            "board": {
+              "id": 1,
+              "name": "Sprint"
+            },
+            "field": "comment",
+            "id": "ARC-0002",
+            "kind": "ticket",
+            "matches": [
+              [
+                4,
+                10
+              ],
+              [
+                11,
+                16
+              ]
+            ],
+            "project": {
+              "id": 1,
+              "key": "ARC",
+              "name": "Arches"
+            },
+            "snippet": "Der Export hängt auch hier.",
+            "status": "backlog",
+            "ticketId": "ARC-0002",
+            "title": "Ärger mit Umlauten"
+          }
+        ],
+        "query": "export hängt",
+        "terms": [
+          "export",
+          "hängt"
+        ],
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "nur Notizen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search?q=export&kinds=note"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "hits": [
+          {
+            "at": "<TIME>",
+            "board": {
+              "id": 1,
+              "name": "Sprint"
+            },
+            "field": "note",
+            "id": "1",
+            "kind": "note",
+            "matches": [
+              [
+                0,
+                6
+              ]
+            ],
+            "project": {
+              "id": 1,
+              "key": "ARC",
+              "name": "Arches"
+            },
+            "snippet": "Export später prüfen",
+            "status": "open",
+            "ticketId": null,
+            "title": "Export später prüfen"
+          }
+        ],
+        "query": "export",
+        "terms": [
+          "export"
+        ],
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Tickets und Notizen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search?q=export&kinds=ticket,note"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "hits": [
+          {
+            "at": null,
+            "board": {
+              "id": 2,
+              "name": "Incidents"
+            },
+            "field": "title",
+            "id": "SV1-0001",
+            "kind": "ticket",
+            "matches": [
+              [
+                0,
+                6
+              ]
+            ],
+            "project": {
+              "id": 2,
+              "key": "SV1",
+              "name": "Service"
+            },
+            "snippet": "Export hängt",
+            "status": "backlog",
+            "ticketId": "SV1-0001",
+            "title": "Export hängt"
+          },
+          {
+            "at": null,
+            "board": {
+              "id": 1,
+              "name": "Sprint"
+            },
+            "field": "title",
+            "id": "ARC-0001",
+            "kind": "ticket",
+            "matches": [
+              [
+                0,
+                6
+              ]
+            ],
+            "project": {
+              "id": 1,
+              "key": "ARC",
+              "name": "Arches"
+            },
+            "snippet": "Export bauen",
+            "status": "backlog",
+            "ticketId": "ARC-0001",
+            "title": "Export bauen"
+          },
+          {
+            "at": "<TIME>",
+            "board": {
+              "id": 1,
+              "name": "Sprint"
+            },
+            "field": "comment",
+            "id": "ARC-0002",
+            "kind": "ticket",
+            "matches": [
+              [
+                4,
+                10
+              ]
+            ],
+            "project": {
+              "id": 1,
+              "key": "ARC",
+              "name": "Arches"
+            },
+            "snippet": "Der Export hängt auch hier.",
+            "status": "backlog",
+            "ticketId": "ARC-0002",
+            "title": "Ärger mit Umlauten"
+          },
+          {
+            "at": "<TIME>",
+            "board": {
+              "id": 1,
+              "name": "Sprint"
+            },
+            "field": "note",
+            "id": "1",
+            "kind": "note",
+            "matches": [
+              [
+                0,
+                6
+              ]
+            ],
+            "project": {
+              "id": 1,
+              "key": "ARC",
+              "name": "Arches"
+            },
+            "snippet": "Export später prüfen",
+            "status": "open",
+            "ticketId": null,
+            "title": "Export später prüfen"
+          }
+        ],
+        "query": "export",
+        "terms": [
+          "export"
+        ],
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "unbekannte Art",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search?q=export&kinds=quatsch"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "„quatsch“ ist keine Art (ticket, question, note)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "begrenzte Zahl",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search?q=export&limit=1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "hits": [
+          {
+            "at": null,
+            "board": {
+              "id": 2,
+              "name": "Incidents"
+            },
+            "field": "title",
+            "id": "SV1-0001",
+            "kind": "ticket",
+            "matches": [
+              [
+                0,
+                6
+              ]
+            ],
+            "project": {
+              "id": 2,
+              "key": "SV1",
+              "name": "Service"
+            },
+            "snippet": "Export hängt",
+            "status": "backlog",
+            "ticketId": "SV1-0001",
+            "title": "Export hängt"
+          }
+        ],
+        "query": "export",
+        "terms": [
+          "export"
+        ],
+        "truncated": true
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "ungültige Begrenzung",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search?q=export&limit=abc"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "„limit“ muss eine ganze Zahl ab 1 sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ohne Treffer",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search?q=zebra"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "hits": [],
+        "query": "zebra",
+        "terms": [
+          "zebra"
+        ],
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "zu kurze Suche",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search?q=e"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "query-short",
+        "message": "Bitte mindestens 2 Zeichen eingeben."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "leere Suche",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "query-short",
+        "message": "Bitte mindestens 2 Zeichen eingeben."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "zu viele Wörter",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/search?q=eins%20zwei%20drei%20vier%20fünf%20sechs"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "query-long",
+        "message": "Höchstens 5 Wörter."
+      },
+      "status": 422
+    }
+  }
+]
