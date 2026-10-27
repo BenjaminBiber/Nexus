@@ -1,0 +1,19 @@
+{
+  "title": "Board-Datenbank einstellen und prüfen",
+  "steps": [
+    { "name": "ohne Konfiguration", "method": "GET", "path": "/api/board-config" },
+    {
+      "name": "SQLite speichern",
+      "method": "PUT",
+      "path": "/api/board-config",
+      "body": {
+        "provider": "sqlite",
+        "dbFile": "{{HOME}}/board.db",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag"
+      }
+    },
+    { "name": "danach lesen", "method": "GET", "path": "/api/board-config" },
+    { "name": "Verbindung prüfen", "method": "POST", "path": "/api/board-config/test", "body": {} }
+  ]
+}

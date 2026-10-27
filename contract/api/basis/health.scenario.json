@@ -1,0 +1,6 @@
+{
+  "title": "Gesundheitsauskunft des Servers",
+  "steps": [
+    { "name": "health", "method": "GET", "path": "/api/health" }
+  ]
+}

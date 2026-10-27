@@ -1,0 +1,137 @@
+[
+  {
+    "name": "anmelden",
+    "request": {
+      "body": {
+        "path": "<REPO1>"
+      },
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "id": "<var:pid>",
+        "name": "Mein Projekt ä",
+        "path": "<REPO1>",
+        "reachable": true
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "erneut anmelden",
+    "request": {
+      "body": {
+        "path": "<REPO1>"
+      },
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "id": "<var:pid>",
+        "name": "Mein Projekt ä",
+        "path": "<REPO1>",
+        "reachable": true
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "relativer Pfad",
+    "request": {
+      "body": {
+        "path": "docs"
+      },
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "path-relative",
+        "message": "Der Pfad muss absolut sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ohne Pfad",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "path-missing",
+        "message": "Der Pfad des Projekts fehlt."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "liste",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "id": "<var:pid>",
+          "name": "Mein Projekt ä",
+          "path": "<REPO1>",
+          "reachable": true
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "ohne Pflichtkopf",
+    "request": {
+      "body": {
+        "path": "<REPO1>"
+      },
+      "headers": {
+        "x-harness": null
+      },
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "header-missing",
+        "message": "Schreibende Anfragen brauchen den Kopf X-Harness: 1 und den Inhaltstyp application/json."
+      },
+      "status": 403
+    }
+  },
+  {
+    "name": "fremde Herkunft",
+    "request": {
+      "body": {
+        "path": "<REPO1>"
+      },
+      "headers": {
+        "origin": "https://example.invalid"
+      },
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "origin-denied",
+        "message": "Anfragen von fremden Webseiten sind nicht erlaubt."
+      },
+      "status": 403
+    }
+  }
+]
