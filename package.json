@@ -15,6 +15,7 @@
     "dev:web": "npm run dev -w packages/web",
     "dev:server": "tsx packages/server/src/main.ts",
     "build:plugin": "node packages/plugin/scripts/build-plugin.mjs",
+    "build:sidecar": "node scripts/sidecar/build-sidecar.mjs",
     "setup": "node scripts/setup.mjs",
     "customize": "node scripts/customize.mjs",
     "test:unit": "vitest run",
