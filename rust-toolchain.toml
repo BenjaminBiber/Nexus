@@ -1,0 +1,5 @@
+# Feste Rust-Version für alle Entwickler und die CI, damit clippy mit -D warnings
+# nicht durch eine neue stabile Version rot wird. Anheben ist eine bewusste Änderung.
+[toolchain]
+channel = "1.99.1"
+components = ["rustfmt", "clippy"]

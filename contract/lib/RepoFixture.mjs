@@ -18,9 +18,9 @@ export class RepoFixture {
     this.home = options.home;
     this.claudeConfig = options.claudeConfig;
     this.cli = options.cli;
-    // Aufgelöster Pfad: Git meldet die Projektwurzel ohne Verknüpfungen (unter macOS /private/var statt /var).
-    // Nur so ist `{{REPO1}}` derselbe Text, den der Server als Projektwurzel führt – sonst fände ein Board,
-    // dessen Repo-Pfad auf `{{REPO1}}` zeigt, sein Projekt unter macOS nicht und die Golden-Dateien
+    // Aufgelöster Pfad: Git und die CLI melden die Projektwurzel ohne Verknüpfungen (unter macOS /private/var
+    // statt /var). Nur so ist `{{REPO1}}` derselbe Text, den der Server als Projektwurzel führt – sonst fände
+    // ein Board, dessen Repo-Pfad auf `{{REPO1}}` zeigt, sein Projekt unter macOS nicht und die Golden-Dateien
     // wären je Plattform verschieden.
     this.base = realpathSync(mkdtempSync(join(tmpdir(), 'harness-contract-repos-')));
   }
@@ -43,7 +43,10 @@ export class RepoFixture {
       for (const branch of repo.branches ?? []) this.branch(path, branch);
     }
     if (repo.harnessInit) this.harnessInit(path);
-    return path;
+    // Aufgelöster Pfad: Git meldet die Projektwurzel ohne Verknüpfungen (unter macOS `/private/var/…` statt
+    // `/var/…`). Nur so passt `{{REPO1}}` zu dem Pfad, den der Server selbst führt – etwa beim Repo-Pfad
+    // eines Boards. Der Normalisierer kennt beide Schreibweisen und schreibt in beiden Fällen `<REPO1>`.
+    return realpathSync(path);
   }
 
   // Legt einen Arbeitsbranch mit einem Commit an und wechselt zurück auf den Hauptbranch: der Branch steht damit vor

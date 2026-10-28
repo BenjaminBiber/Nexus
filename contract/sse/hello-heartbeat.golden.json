@@ -1,0 +1,140 @@
+[
+  {
+    "name": "Strom öffnen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/events"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Begrüßung",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Herzschlag",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Herzschlag wiederholt sich",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "zweiter Strom auf dasselbe Projekt",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/events"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Begrüßung des zweiten Stroms",
+    "request": {
+      "stream": "s2",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Strom eines unbekannten Projekts",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/00000000/events"
+    },
+    "response": {
+      "cacheControl": null,
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt 00000000 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "ersten Strom schließen",
+    "request": {
+      "stream": "s1"
+    },
+    "response": {
+      "closed": true
+    }
+  },
+  {
+    "name": "zweiter Strom läuft weiter",
+    "request": {
+      "stream": "s2",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "zweiten Strom schließen",
+    "request": {
+      "stream": "s2"
+    },
+    "response": {
+      "closed": true
+    }
+  }
+]

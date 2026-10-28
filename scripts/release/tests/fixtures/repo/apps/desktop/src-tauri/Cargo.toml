@@ -1,0 +1,9 @@
+[package]
+name = "fix-desktop"
+version = "0.1.0" # eigene Version, kein version.workspace
+description = "Fixture Desktop"
+edition = "2021"
+
+[dependencies]
+fix-core = { path = "../../../crates/core" }
+serde = { workspace = true }

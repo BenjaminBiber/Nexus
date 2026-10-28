@@ -1,0 +1,185 @@
+[
+  {
+    "name": "Strom mit dbBoard",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/events?dbBoard=1"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Strom ohne dbBoard",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/events"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Begrüßung mit dbBoard",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Begrüßung ohne dbBoard",
+    "request": {
+      "stream": "s2",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Takt abwarten",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Takt des Stroms ohne dbBoard abwarten",
+    "request": {
+      "stream": "s2",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Ticket anlegen",
+    "request": {
+      "body": {
+        "title": "Login"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "dbboard nach dem Anlegen",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "type": "dbboard"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "boardId": 1,
+          "type": "dbboard"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Strom ohne dbBoard bekommt nichts",
+    "request": {
+      "stream": "s2",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Ticket ändern",
+    "request": {
+      "body": {
+        "rev": 1,
+        "title": "Anmeldung"
+      },
+      "method": "PATCH",
+      "path": "/api/db/tickets/ARC-0001"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "dbboard nach dem Ändern",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "type": "dbboard"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "boardId": 1,
+          "type": "dbboard"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Strom mit dbBoard schließen",
+    "request": {
+      "stream": "s1"
+    },
+    "response": {
+      "closed": true
+    }
+  },
+  {
+    "name": "Strom ohne dbBoard schließen",
+    "request": {
+      "stream": "s2"
+    },
+    "response": {
+      "closed": true
+    }
+  }
+]

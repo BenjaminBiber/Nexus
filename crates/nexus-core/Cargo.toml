@@ -1,0 +1,17 @@
+[package]
+name = "nexus-core"
+description = "Fachkern von Nexus"
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+chrono = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+ts-rs = { workspace = true }
+
+[lints]
+workspace = true

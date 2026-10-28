@@ -1,0 +1,100 @@
+[
+  {
+    "name": "session-start",
+    "request": {
+      "args": [
+        "hook",
+        "session-start"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": {
+        "cwd": "<REPO1>",
+        "session_id": "s1",
+        "source": "startup"
+      }
+    },
+    "response": {
+      "code": 0,
+      "envFile": "export HARNESS_SESSION='s1'\n",
+      "json": {
+        "hookSpecificOutput": {
+          "additionalContext": "AI Harness: Diese Session arbeitet an ARC-0001 „Login bauen“.\nRegeln: Tickets änderst du nur über `harness board …`. Nutze `harness board show ARC-0001`, `harness board comment ARC-0001 \"…\" --author claude`, `harness board step ARC-0001 <nummer>` und zum Abschluss `harness board done ARC-0001 --acceptance \"…\"`. Begründe jede Änderung am Ticket mit einem Kommentar.\nAblauf im Harness: Neue Funktion planen: /superpowers:brainstorming → /superpowers:writing-plans; Ticket umsetzen: /ai-harness:harness-implement. Aus einem Superpowers-Plan legst du auf Wunsch je Task ein Ticket an und schreibst Plan, Handbuch und Diagramm mit `harness board plan-json <ID> --file payload.json --by claude` (setzt Geplant; Skill board, „Tickets aus einem Superpowers-Plan“). Tickets mit Planungsbedarf (etwa aus der Ticket-Auswahl der Docs-Seite) werden vor dem Umsetzen geplant: `harness --json board next-planning --claim claude` holt das nächste, `harness board plan-json <ID> --file payload.json --by claude` schreibt Plan, Handbuch und Diagramm. Abgeschlossen wird mit `harness board done`, gemergt wird von Hand.\nSchlage nach einem erledigten Schritt den nächsten vor. Halte nur an, wenn eine Entscheidung des Nutzers nötig ist (unklare Anforderung, rote Tests, Merge, Push); sonst mache mit dem nächsten bereiten Ticket derselben Spec bzw. desselben Plans weiter, nie mit dem einer anderen.\nSchnelle Aufgaben und Nebenaufgaben dürfen ohne den Ablauf (ohne Spec, Ticket und Worktree) erledigt werden, aber nur, wenn der Nutzer das ausdrücklich bestätigt: Wirkt eine Anfrage wie eine schnelle Aufgabe und hat der Nutzer nicht schon selbst „ohne Workflow“ gesagt, frage zuerst „Ohne Workflow direkt umsetzen?“ und arbeite erst nach einem klaren Ja so. Ohne diese Bestätigung folgst du dem Ablauf.\nStand: ARC-0001 ist In Arbeit. Vorschlag: nach der Umsetzung Review und Abschluss mit `harness board done` vorschlagen.\n\nNeue Kommentare zu ARC-0001:\n- <TIME>, Vertrag: Bitte Tastatur beachten",
+          "hookEventName": "SessionStart"
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "Sessions am Server",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "idle",
+          "endedAt": null,
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": null,
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "idle",
+          "subagents": [],
+          "ticketInfo": [
+            {
+              "id": "ARC-0001",
+              "status": "in_progress",
+              "title": "Login bauen"
+            }
+          ],
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "SE-001"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "session-start erneut: Kommentar gilt als gelesen",
+    "request": {
+      "args": [
+        "hook",
+        "session-start"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": {
+        "cwd": "<REPO1>",
+        "session_id": "s1",
+        "source": "resume"
+      }
+    },
+    "response": {
+      "code": 0,
+      "envFile": "export HARNESS_SESSION='s1'\nexport HARNESS_SESSION='s1'\n",
+      "json": {
+        "hookSpecificOutput": {
+          "additionalContext": "AI Harness: Diese Session arbeitet an ARC-0001 „Login bauen“.\nRegeln: Tickets änderst du nur über `harness board …`. Nutze `harness board show ARC-0001`, `harness board comment ARC-0001 \"…\" --author claude`, `harness board step ARC-0001 <nummer>` und zum Abschluss `harness board done ARC-0001 --acceptance \"…\"`. Begründe jede Änderung am Ticket mit einem Kommentar.\nAblauf im Harness: Neue Funktion planen: /superpowers:brainstorming → /superpowers:writing-plans; Ticket umsetzen: /ai-harness:harness-implement. Aus einem Superpowers-Plan legst du auf Wunsch je Task ein Ticket an und schreibst Plan, Handbuch und Diagramm mit `harness board plan-json <ID> --file payload.json --by claude` (setzt Geplant; Skill board, „Tickets aus einem Superpowers-Plan“). Tickets mit Planungsbedarf (etwa aus der Ticket-Auswahl der Docs-Seite) werden vor dem Umsetzen geplant: `harness --json board next-planning --claim claude` holt das nächste, `harness board plan-json <ID> --file payload.json --by claude` schreibt Plan, Handbuch und Diagramm. Abgeschlossen wird mit `harness board done`, gemergt wird von Hand.\nSchlage nach einem erledigten Schritt den nächsten vor. Halte nur an, wenn eine Entscheidung des Nutzers nötig ist (unklare Anforderung, rote Tests, Merge, Push); sonst mache mit dem nächsten bereiten Ticket derselben Spec bzw. desselben Plans weiter, nie mit dem einer anderen.\nSchnelle Aufgaben und Nebenaufgaben dürfen ohne den Ablauf (ohne Spec, Ticket und Worktree) erledigt werden, aber nur, wenn der Nutzer das ausdrücklich bestätigt: Wirkt eine Anfrage wie eine schnelle Aufgabe und hat der Nutzer nicht schon selbst „ohne Workflow“ gesagt, frage zuerst „Ohne Workflow direkt umsetzen?“ und arbeite erst nach einem klaren Ja so. Ohne diese Bestätigung folgst du dem Ablauf.\nStand: ARC-0001 ist In Arbeit. Vorschlag: nach der Umsetzung Review und Abschluss mit `harness board done` vorschlagen.",
+          "hookEventName": "SessionStart"
+        }
+      },
+      "stderr": ""
+    }
+  }
+]

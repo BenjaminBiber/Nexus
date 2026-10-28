@@ -2,6 +2,8 @@ import { realpathSync } from 'node:fs';
 
 // Zeitstempel mit Zone (`2026-10-27T18:05:00.123Z`, `…+02:00`)
 const ISO_TIME = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})/g;
+// Datum und Uhrzeit, deutsch (`27.10.2026, 18:05`): so gibt die CLI Kommentare und Verlauf aus
+const GERMAN_TIME = /(?<!\d)\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}(?::\d{2})?(?!\d)/g;
 const UUID = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g;
 // Datum `2026-09-02` für sich, nicht als Teil einer längeren Zahlenfolge
 const DATE = /(?<!\d)\d{4}-\d{2}-\d{2}(?!\d)/g;
@@ -117,9 +119,9 @@ export class Normalizer {
     return input.replace(new RegExp(`(127\\.0\\.0\\.1|localhost):${this.port}\\b`, 'g'), '$1:<PORT>');
   }
 
-  // 4. Zeitstempel → `<TIME>`, heutiges Datum → `<DATE>`
+  // 4. Zeitstempel → `<TIME>`, auch als deutsches Datum mit Uhrzeit; heutiges Datum → `<DATE>`
   times(input) {
-    const out = input.replace(ISO_TIME, '<TIME>');
+    const out = input.replace(ISO_TIME, '<TIME>').replace(GERMAN_TIME, '<TIME>');
     return out.split(this.today).join('<DATE>');
   }
 

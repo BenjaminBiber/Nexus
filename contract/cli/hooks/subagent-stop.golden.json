@@ -1,0 +1,151 @@
+[
+  {
+    "name": "subagent-stop",
+    "request": {
+      "args": [
+        "hook",
+        "subagent-stop"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": {
+        "agent_id": "a1",
+        "agent_type": "Explore",
+        "cwd": "<REPO1>",
+        "session_id": "s1"
+      }
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "Sessions am Server",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "running",
+          "endedAt": null,
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": null,
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "running",
+          "subagents": [
+            {
+              "endedAt": "<TIME>",
+              "id": "a1",
+              "startedAt": "<TIME>",
+              "state": "ended",
+              "type": "Explore"
+            }
+          ],
+          "ticketInfo": [
+            {
+              "id": "ARC-0001",
+              "status": "in_progress",
+              "title": "Login bauen"
+            }
+          ],
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "SE-001"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "subagent-stop ohne vorherigen Start",
+    "request": {
+      "args": [
+        "hook",
+        "subagent-stop"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": {
+        "agent_id": "a2",
+        "agent_type": "Plan",
+        "cwd": "<REPO1>",
+        "session_id": "s1"
+      }
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "Sessions am Server danach",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "running",
+          "endedAt": null,
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": null,
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "running",
+          "subagents": [
+            {
+              "endedAt": "<TIME>",
+              "id": "a1",
+              "startedAt": "<TIME>",
+              "state": "ended",
+              "type": "Explore"
+            },
+            {
+              "endedAt": "<TIME>",
+              "id": "a2",
+              "startedAt": "<TIME>",
+              "state": "ended",
+              "type": "Plan"
+            }
+          ],
+          "ticketInfo": [
+            {
+              "id": "ARC-0001",
+              "status": "in_progress",
+              "title": "Login bauen"
+            }
+          ],
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "SE-001"
+        }
+      ],
+      "status": 200
+    }
+  }
+]

@@ -1,0 +1,57 @@
+# Release von Hand starten: Version erhöhen, Tag setzen, Entwurfs-Release anlegen.
+# Teil 1 – die Jobs, die bauen und veröffentlichen, kommen in P6-4 und P6-5 dazu.
+# Die Logik steckt in scripts/release/*.sh, damit sie lesbar bleibt und sich lokal durchspielen lässt.
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Art der Änderungen
+        type: choice
+        options: [patch, minor, major]
+        required: true
+      dry_run:
+        description: Probelauf ohne Push und ohne Release
+        type: boolean
+        default: false
+# Immer nur ein Release zur Zeit, und keines abbrechen: ein halber Release-Lauf hinterlässt Tag ohne Artefakte
+concurrency: release
+permissions:
+  # Commit und Tag schreiben (der Push selbst läuft über RELEASE_TOKEN), CI-Läufe lesen
+  contents: write
+  actions: read
+jobs:
+  # Prüft Branch und CI, setzt die Version, committet, taggt und legt den Entwurf des Releases an
+  version:
+    name: Version und Entwurf
+    runs-on: ubuntu-latest
+    # „release“ trägt das RELEASE_TOKEN; über die Umgebung lässt sich der Start zusätzlich freigeben
+    environment: release
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+      release_id: ${{ steps.r.outputs.release_id }}
+    steps:
+      # Volle Historie samt Tags: bump.mjs rechnet die nächste Version aus dem höchsten Tag „v*“.
+      # Das Token muss RELEASE_TOKEN sein, sonst löst der Push keine weiteren Workflows aus
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+      - name: Branch und CI prüfen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/release/check-ci.sh "${{ github.ref }}" "${{ github.sha }}" "${{ inputs.dry_run }}"
+      - name: Version setzen
+        id: v
+        run: scripts/release/version-job.sh "${{ inputs.bump }}" "${{ inputs.dry_run }}"
+      - name: Entwurfs-Release
+        id: r
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/release/draft-release.sh "${{ steps.v.outputs.tag }}" "${{ steps.v.outputs.version }}"

@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { useApi } from '../api/ApiContext.js';
+import { usePlatform } from '../platform/PlatformContext.js';
 
 const TARGETS = [
   { target: 'explorer', label: 'Im Explorer zeigen', icon: 'folder_open' },
   { target: 'vscode', label: 'In VS Code öffnen', icon: 'code' },
 ] as const;
 
-// Knopf „Öffnen“ am Pfad des Dokuments: Menü mit Explorer (Datei markiert) und VS Code. Der Server startet das Programm
-// auf diesem Rechner; ein Fehler (z. B. VS Code nicht im PATH) steht unter dem Menü.
-export function DocOpenMenu({ pid, path, board }: { pid: string; path: string; board?: number }) {
-  const api = useApi();
+// Knopf „Öffnen“ am Pfad des Dokuments: Menü mit Explorer (Datei markiert) und VS Code. Im Browser startet der Server
+// das Programm, in der Desktop-App die Tauri-Plugins; dafür nennt `root` den Repo-Ordner des Dokuments.
+// Ein Fehler (z. B. VS Code nicht im PATH) steht unter dem Menü.
+export function DocOpenMenu({ pid, path, root, board }: { pid: string; path: string; root: string | null; board?: number }) {
+  const platform = usePlatform();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -34,7 +35,7 @@ export function DocOpenMenu({ pid, path, board }: { pid: string; path: string; b
     setOpen(false);
     setError(null);
     try {
-      await api.openDoc(pid, path, target, board);
+      await platform.openDoc({ pid, path, root, board, target });
     } catch (e) {
       setError((e as Error).message);
     }

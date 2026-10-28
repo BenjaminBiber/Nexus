@@ -1,0 +1,99 @@
+[
+  {
+    "name": "user-prompt mit neuem Kommentar",
+    "request": {
+      "args": [
+        "hook",
+        "user-prompt"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": {
+        "cwd": "<REPO1>",
+        "prompt": "Bitte den Login fertig machen",
+        "session_id": "s1"
+      }
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "hookSpecificOutput": {
+          "additionalContext": "Neue Kommentare zu ARC-0001:\n- <TIME>, Vertrag: Bitte Tastatur beachten",
+          "hookEventName": "UserPromptSubmit",
+          "sessionTitle": "SE-001: Bitte den Login fertig machen"
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "Sessions am Server",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "running",
+          "endedAt": null,
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": null,
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "running",
+          "subagents": [],
+          "ticketInfo": [
+            {
+              "id": "ARC-0001",
+              "status": "in_progress",
+              "title": "Login bauen"
+            }
+          ],
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "SE-001: Bitte den Login fertig machen"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "user-prompt ohne neuen Kommentar bleibt still",
+    "request": {
+      "args": [
+        "hook",
+        "user-prompt"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": {
+        "cwd": "<REPO1>",
+        "prompt": "weiter",
+        "session_id": "s1"
+      }
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "hookSpecificOutput": {
+          "hookEventName": "UserPromptSubmit",
+          "sessionTitle": "SE-001: weiter"
+        }
+      },
+      "stderr": ""
+    }
+  }
+]

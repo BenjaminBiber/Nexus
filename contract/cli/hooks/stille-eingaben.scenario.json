@@ -1,0 +1,71 @@
+{
+  "title": "Hooks bleiben bei unbrauchbarer Eingabe und unbekanntem Ereignis still",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt anlegen", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board anlegen", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Ticket in Arbeit anlegen", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Login bauen", "status": "in_progress" }, "record": false },
+    { "name": "Projekt am Server anmelden", "method": "POST", "path": "/api/projects", "body": { "path": "{{REPO1}}" }, "save": { "pid": "json.id" }, "record": false },
+    {
+      "name": "kaputtes JSON",
+      "kind": "cli",
+      "args": ["hook", "session-start"],
+      "cwd": "{{REPO1}}",
+      "stdin": "{kaputt",
+      "env": { "HARNESS_TICKET": "ARC-0001", "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    },
+    {
+      "name": "leere Eingabe",
+      "kind": "cli",
+      "args": ["hook", "session-start"],
+      "cwd": "{{REPO1}}",
+      "stdin": "",
+      "env": { "HARNESS_TICKET": "ARC-0001", "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    },
+    {
+      "name": "JSON ohne Objekt",
+      "kind": "cli",
+      "args": ["hook", "session-start"],
+      "cwd": "{{REPO1}}",
+      "stdin": "[]",
+      "env": { "HARNESS_TICKET": "ARC-0001", "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    },
+    {
+      "name": "JSON null",
+      "kind": "cli",
+      "args": ["hook", "session-start"],
+      "cwd": "{{REPO1}}",
+      "stdin": "null",
+      "env": { "HARNESS_TICKET": "ARC-0001", "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    },
+    {
+      "name": "ohne Sitzungskennung",
+      "kind": "cli",
+      "args": ["hook", "session-start"],
+      "cwd": "{{REPO1}}",
+      "stdin": { "cwd": "{{REPO1}}" },
+      "env": { "HARNESS_TICKET": "ARC-0001", "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    },
+    {
+      "name": "Sitzungskennung keine Zeichenkette",
+      "kind": "cli",
+      "args": ["hook", "session-start"],
+      "cwd": "{{REPO1}}",
+      "stdin": "{\"session_id\":5,\"cwd\":\".\"}",
+      "env": { "HARNESS_TICKET": "ARC-0001", "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    },
+    {
+      "name": "unbekanntes Ereignis",
+      "kind": "cli",
+      "args": ["hook", "quatsch"],
+      "cwd": "{{REPO1}}",
+      "stdin": { "session_id": "s1", "cwd": "{{REPO1}}" },
+      "env": { "HARNESS_TICKET": "ARC-0001", "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    },
+    { "name": "keine Session am Server", "method": "GET", "path": "/api/projects/{{pid}}/sessions" }
+  ]
+}

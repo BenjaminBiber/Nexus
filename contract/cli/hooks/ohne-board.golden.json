@@ -1,0 +1,106 @@
+[
+  {
+    "name": "session-start ohne Board-Konfiguration",
+    "request": {
+      "args": [
+        "hook",
+        "session-start"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000"
+      },
+      "stdin": {
+        "cwd": "<REPO1>",
+        "session_id": "s1"
+      }
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "Sessions am Server",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "idle",
+          "endedAt": null,
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": null,
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "idle",
+          "subagents": [],
+          "ticketInfo": [],
+          "tickets": [],
+          "title": "SE-001"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "session-start im nicht eingerichteten Repo",
+    "request": {
+      "args": [
+        "hook",
+        "session-start"
+      ],
+      "cwd": "<REPO2>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000"
+      },
+      "stdin": {
+        "cwd": "<REPO2>",
+        "session_id": "s2"
+      }
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "Sessions am Server danach",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "idle",
+          "endedAt": null,
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": null,
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "idle",
+          "subagents": [],
+          "ticketInfo": [],
+          "tickets": [],
+          "title": "SE-001"
+        }
+      ],
+      "status": 200
+    }
+  }
+]

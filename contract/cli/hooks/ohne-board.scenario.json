@@ -1,0 +1,30 @@
+{
+  "title": "Hook ohne board.yaml und ohne eingerichtetes Projekt: kein Kontext, Meldung nur mit Projekt",
+  "fixtures": {
+    "repos": [
+      { "name": "REPO1", "harnessInit": true },
+      { "name": "REPO2", "harnessInit": false }
+    ]
+  },
+  "steps": [
+    { "name": "Projekt am Server anmelden", "method": "POST", "path": "/api/projects", "body": { "path": "{{REPO1}}" }, "save": { "pid": "json.id" }, "record": false },
+    {
+      "name": "session-start ohne Board-Konfiguration",
+      "kind": "cli",
+      "args": ["hook", "session-start"],
+      "cwd": "{{REPO1}}",
+      "stdin": { "session_id": "s1", "cwd": "{{REPO1}}" },
+      "env": { "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    },
+    { "name": "Sessions am Server", "method": "GET", "path": "/api/projects/{{pid}}/sessions" },
+    {
+      "name": "session-start im nicht eingerichteten Repo",
+      "kind": "cli",
+      "args": ["hook", "session-start"],
+      "cwd": "{{REPO2}}",
+      "stdin": { "session_id": "s2", "cwd": "{{REPO2}}" },
+      "env": { "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    },
+    { "name": "Sessions am Server danach", "method": "GET", "path": "/api/projects/{{pid}}/sessions" }
+  ]
+}

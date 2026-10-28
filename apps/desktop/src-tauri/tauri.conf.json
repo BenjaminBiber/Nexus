@@ -3,7 +3,9 @@
   "productName": "Nexus",
   "identifier": "cc.biber.nexus",
   "build": {
-    "frontendDist": "../splash"
+    "frontendDist": "../splash",
+    "beforeBuildCommand": "npm run prepare-sidecar",
+    "beforeDevCommand": "npm run prepare-sidecar"
   },
   "app": {
     "windows": [
@@ -30,6 +32,12 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "externalBin": ["binaries/harness-sidecar"],
+    "resources": {
+      "../../../dist/sidecar/web/": "web/",
+      "../../../dist/sidecar/toast/": "toast/",
+      "../../../dist/sidecar/sql/": "sql/"
+    }
   }
 }

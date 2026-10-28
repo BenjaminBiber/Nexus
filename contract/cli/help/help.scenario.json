@@ -1,0 +1,747 @@
+{
+  "title": "Hilfetexte aller Befehle und die Fehlermeldungen von commander",
+  "steps": [
+    {
+      "name": "harness",
+      "kind": "cli",
+      "args": [
+        "--help"
+      ]
+    },
+    {
+      "name": "harness init",
+      "kind": "cli",
+      "args": [
+        "init",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board",
+      "kind": "cli",
+      "args": [
+        "board",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board project",
+      "kind": "cli",
+      "args": [
+        "board",
+        "project",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board project list",
+      "kind": "cli",
+      "args": [
+        "board",
+        "project",
+        "list",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board project create",
+      "kind": "cli",
+      "args": [
+        "board",
+        "project",
+        "create",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board project rename",
+      "kind": "cli",
+      "args": [
+        "board",
+        "project",
+        "rename",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board boards",
+      "kind": "cli",
+      "args": [
+        "board",
+        "boards",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board boards list",
+      "kind": "cli",
+      "args": [
+        "board",
+        "boards",
+        "list",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board boards create",
+      "kind": "cli",
+      "args": [
+        "board",
+        "boards",
+        "create",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board boards rename",
+      "kind": "cli",
+      "args": [
+        "board",
+        "boards",
+        "rename",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board boards use",
+      "kind": "cli",
+      "args": [
+        "board",
+        "boards",
+        "use",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board boards repo",
+      "kind": "cli",
+      "args": [
+        "board",
+        "boards",
+        "repo",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board boards delete",
+      "kind": "cli",
+      "args": [
+        "board",
+        "boards",
+        "delete",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board list",
+      "kind": "cli",
+      "args": [
+        "board",
+        "list",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board show",
+      "kind": "cli",
+      "args": [
+        "board",
+        "show",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board create",
+      "kind": "cli",
+      "args": [
+        "board",
+        "create",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board set",
+      "kind": "cli",
+      "args": [
+        "board",
+        "set",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board move",
+      "kind": "cli",
+      "args": [
+        "board",
+        "move",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board delete",
+      "kind": "cli",
+      "args": [
+        "board",
+        "delete",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board claim",
+      "kind": "cli",
+      "args": [
+        "board",
+        "claim",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board release",
+      "kind": "cli",
+      "args": [
+        "board",
+        "release",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board start",
+      "kind": "cli",
+      "args": [
+        "board",
+        "start",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board done",
+      "kind": "cli",
+      "args": [
+        "board",
+        "done",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board step",
+      "kind": "cli",
+      "args": [
+        "board",
+        "step",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board step done",
+      "kind": "cli",
+      "args": [
+        "board",
+        "step",
+        "done",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board step add",
+      "kind": "cli",
+      "args": [
+        "board",
+        "step",
+        "add",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board step edit",
+      "kind": "cli",
+      "args": [
+        "board",
+        "step",
+        "edit",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board step rm",
+      "kind": "cli",
+      "args": [
+        "board",
+        "step",
+        "rm",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board step move",
+      "kind": "cli",
+      "args": [
+        "board",
+        "step",
+        "move",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board plan",
+      "kind": "cli",
+      "args": [
+        "board",
+        "plan",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board plan-json",
+      "kind": "cli",
+      "args": [
+        "board",
+        "plan-json",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board next-planning",
+      "kind": "cli",
+      "args": [
+        "board",
+        "next-planning",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board comment",
+      "kind": "cli",
+      "args": [
+        "board",
+        "comment",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board note",
+      "kind": "cli",
+      "args": [
+        "board",
+        "note",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board note add",
+      "kind": "cli",
+      "args": [
+        "board",
+        "note",
+        "add",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board note seen",
+      "kind": "cli",
+      "args": [
+        "board",
+        "note",
+        "seen",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board note list",
+      "kind": "cli",
+      "args": [
+        "board",
+        "note",
+        "list",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board note show",
+      "kind": "cli",
+      "args": [
+        "board",
+        "note",
+        "show",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board note take",
+      "kind": "cli",
+      "args": [
+        "board",
+        "note",
+        "take",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board note drop",
+      "kind": "cli",
+      "args": [
+        "board",
+        "note",
+        "drop",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board inbox",
+      "kind": "cli",
+      "args": [
+        "board",
+        "inbox",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board question",
+      "kind": "cli",
+      "args": [
+        "board",
+        "question",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board question add",
+      "kind": "cli",
+      "args": [
+        "board",
+        "question",
+        "add",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board question research",
+      "kind": "cli",
+      "args": [
+        "board",
+        "question",
+        "research",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board question comment",
+      "kind": "cli",
+      "args": [
+        "board",
+        "question",
+        "comment",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board question list",
+      "kind": "cli",
+      "args": [
+        "board",
+        "question",
+        "list",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board question show",
+      "kind": "cli",
+      "args": [
+        "board",
+        "question",
+        "show",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board question answer",
+      "kind": "cli",
+      "args": [
+        "board",
+        "question",
+        "answer",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board question discard",
+      "kind": "cli",
+      "args": [
+        "board",
+        "question",
+        "discard",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board question reopen",
+      "kind": "cli",
+      "args": [
+        "board",
+        "question",
+        "reopen",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board question link",
+      "kind": "cli",
+      "args": [
+        "board",
+        "question",
+        "link",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board question depends",
+      "kind": "cli",
+      "args": [
+        "board",
+        "question",
+        "depends",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board question research-start",
+      "kind": "cli",
+      "args": [
+        "board",
+        "question",
+        "research-start",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board dispatch",
+      "kind": "cli",
+      "args": [
+        "board",
+        "dispatch",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board dispatch status",
+      "kind": "cli",
+      "args": [
+        "board",
+        "dispatch",
+        "status",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board dispatch run",
+      "kind": "cli",
+      "args": [
+        "board",
+        "dispatch",
+        "run",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board dispatch pause",
+      "kind": "cli",
+      "args": [
+        "board",
+        "dispatch",
+        "pause",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board dispatch resume",
+      "kind": "cli",
+      "args": [
+        "board",
+        "dispatch",
+        "resume",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board dispatch enable",
+      "kind": "cli",
+      "args": [
+        "board",
+        "dispatch",
+        "enable",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board dispatch disable",
+      "kind": "cli",
+      "args": [
+        "board",
+        "dispatch",
+        "disable",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board dispatch-runs",
+      "kind": "cli",
+      "args": [
+        "board",
+        "dispatch-runs",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board dispatch-runs backfill",
+      "kind": "cli",
+      "args": [
+        "board",
+        "dispatch-runs",
+        "backfill",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board merge",
+      "kind": "cli",
+      "args": [
+        "board",
+        "merge",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board accept",
+      "kind": "cli",
+      "args": [
+        "board",
+        "accept",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness board plan-start",
+      "kind": "cli",
+      "args": [
+        "board",
+        "plan-start",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness install",
+      "kind": "cli",
+      "args": [
+        "install",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness stop",
+      "kind": "cli",
+      "args": [
+        "stop",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness hook",
+      "kind": "cli",
+      "args": [
+        "hook",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness spec",
+      "kind": "cli",
+      "args": [
+        "spec",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness spec comments",
+      "kind": "cli",
+      "args": [
+        "spec",
+        "comments",
+        "--help"
+      ]
+    },
+    {
+      "name": "harness spec resolve",
+      "kind": "cli",
+      "args": [
+        "spec",
+        "resolve",
+        "--help"
+      ]
+    },
+    {
+      "name": "unbekannter Befehl",
+      "kind": "cli",
+      "args": [
+        "quatsch"
+      ]
+    },
+    {
+      "name": "unbekannter Befehl mit Vorschlag",
+      "kind": "cli",
+      "args": [
+        "bord"
+      ]
+    },
+    {
+      "name": "unbekannter Unterbefehl",
+      "kind": "cli",
+      "args": [
+        "board",
+        "quatsch"
+      ]
+    },
+    {
+      "name": "fehlendes Pflichtargument",
+      "kind": "cli",
+      "args": [
+        "board",
+        "show"
+      ]
+    },
+    {
+      "name": "unbekannte Option des Programms",
+      "kind": "cli",
+      "args": [
+        "--quatsch"
+      ]
+    },
+    {
+      "name": "unbekannte Option eines Befehls",
+      "kind": "cli",
+      "args": [
+        "board",
+        "list",
+        "--quatsch"
+      ]
+    },
+    {
+      "name": "Option ohne Wert",
+      "kind": "cli",
+      "args": [
+        "board",
+        "set",
+        "ARC-0001",
+        "--title"
+      ]
+    },
+    {
+      "name": "Hilfe über den Befehl help",
+      "kind": "cli",
+      "args": [
+        "help",
+        "board"
+      ]
+    }
+  ]
+}
