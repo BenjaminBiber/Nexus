@@ -30,6 +30,19 @@ DELETE FROM board.History; DELETE FROM board.Comments; DELETE FROM board.TicketL
 DELETE FROM board.TicketDependencies; DELETE FROM board.Notes; DELETE FROM board.Tickets;
 DELETE FROM board.Boards; DELETE FROM board.Projects; DELETE FROM board.Deletions; DELETE FROM board.Users;";
 
+/// Setzt die `IDENTITY`-Zähler aller Tabellen des Schemas `board` zurück, damit die nächste
+/// Zeile wieder die Id 1 bekommt. `DELETE` lässt die Zähler stehen; die Gegenprobe braucht
+/// aber auf beiden Seiten dieselben Ids, weil der Datensatz sie (als `projectId`, `boardId`,
+/// `noteById(1)` …) nennt.
+const RESEED_SQL: &str = "
+DECLARE @sql nvarchar(max) = N'';
+SELECT @sql = @sql + N'DBCC CHECKIDENT(''board.' + t.name + N''', RESEED, 0) WITH NO_INFOMSGS;'
+FROM sys.identity_columns c
+JOIN sys.tables t ON t.object_id = c.object_id
+JOIN sys.schemas s ON s.schema_id = t.schema_id
+WHERE s.name = 'board';
+EXEC sp_executesql @sql;";
+
 /// Die Konfig aus `HARNESS_TEST_DB` oder `None`, wenn die Variable fehlt.
 ///
 /// Zeigt die Variable auf eine Datenbank ohne die Endung `_Test`, bricht der Test ab: ein
@@ -120,12 +133,24 @@ pub async fn client(config: &BoardConfig) -> MssqlClient {
 
 /// Leert alle Tabellen des Schemas `board`
 pub async fn reset(config: &BoardConfig) {
+    batch(config, RESET_SQL, "Test-Datenbank leeren").await;
+}
+
+/// Leert alle Tabellen und setzt zusätzlich die `IDENTITY`-Zähler zurück; für die Gegenprobe,
+/// die auf beiden Seiten dieselben Ids erwartet
+pub async fn reset_with_identities(config: &BoardConfig) {
+    reset(config).await;
+    batch(config, RESEED_SQL, "IDENTITY-Zähler zurücksetzen").await;
+}
+
+/// Setzt einen Batch auf einer eigenen Verbindung ab und holt alle Ergebnismengen ab
+async fn batch(config: &BoardConfig, sql: &str, was: &str) {
     let mut client = client(config).await;
     client
-        .simple_query(RESET_SQL)
+        .simple_query(sql)
         .await
-        .expect("Test-Datenbank leeren")
+        .unwrap_or_else(|error| panic!("{was}: {error}"))
         .into_results()
         .await
-        .expect("Test-Datenbank leeren");
+        .unwrap_or_else(|error| panic!("{was}: {error}"));
 }
