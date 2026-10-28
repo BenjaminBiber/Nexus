@@ -6,12 +6,23 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+axum = { workspace = true }
+chrono = { workspace = true }
+futures = { workspace = true }
+http-body-util = { workspace = true }
+hyper = { workspace = true }
+hyper-util = { workspace = true }
 nexus-core = { workspace = true }
+nexus-db = { workspace = true }
+nexus-platform = { workspace = true }
+async-trait = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
 
 # Der Test-Ersatz nexus-fake-claude legt sich für einen Modus in eine eigene Prozessgruppe
 [target.'cfg(unix)'.dependencies]
@@ -24,6 +35,11 @@ tempfile = { workspace = true }
 [[bin]]
 name = "nexus-fake-claude"
 path = "src/bin/nexus_fake_claude.rs"
+
+# Entwicklungs-Binary: startet den Rust-Server mit --port, --upstream und --web-dir
+[[bin]]
+name = "nexus-server"
+path = "src/bin/nexus_server.rs"
 
 [lints]
 workspace = true

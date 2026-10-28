@@ -6,6 +6,7 @@ members = [
     "crates/nexus-core",
     "crates/nexus-db",
     "crates/nexus-server",
+    "crates/nexus-platform",
     "crates/nexus-cli",
     "apps/desktop/src-tauri",
 ]
@@ -35,7 +36,7 @@ serde_yaml_ng = "0.10"
 thiserror = "2"
 async-trait = "0.1"
 futures = "0.3"
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net", "fs", "process", "io-util"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net", "fs", "process", "io-util", "signal"] }
 regex = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 uuid = { version = "1", features = ["v4"] }
@@ -57,6 +58,15 @@ sysinfo = { version = "0.39", default-features = false, features = ["system"] }
 # Job-Objekte unter Windows (Prozessbaum beenden) mit sicherer Schnittstelle, damit der
 # Workspace ohne eigenes `unsafe` auskommt.
 win32job = "2"
+# HTTP-Schicht des Servers: axum als Router, tower-http für statische Dateien und Panik-Fang,
+# hyper samt hyper-util als Client des Reverse-Proxys zum Node-Server (Ströme ohne Puffern).
+axum = { version = "0.8", features = ["http1", "tokio", "json", "query"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["fs", "catch-panic"] }
+hyper = { version = "1", features = ["client", "http1"] }
+hyper-util = { version = "0.1", features = ["client-legacy", "http1", "tokio"] }
+http-body-util = "0.1"
 nexus-core = { path = "crates/nexus-core" }
 nexus-db = { path = "crates/nexus-db" }
 nexus-server = { path = "crates/nexus-server" }
+nexus-platform = { path = "crates/nexus-platform" }

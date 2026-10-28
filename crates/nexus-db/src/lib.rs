@@ -15,7 +15,8 @@ pub mod sql_chunks;
 pub mod sqlite;
 
 pub use factory::{
-    open_checked, open_checked_with, AnyBoardDatabase, BoardDatabaseFactory, OpenedBoard,
+    open_checked, open_checked_owned, open_checked_with, AnyBoardDatabase, BoardDatabaseFactory,
+    OpenedBoard,
 };
 pub use managed::{ConnectOptions, ManagedBoardDatabase, DEFAULT_CONNECTION_TIMEOUT_MS};
 pub use row_groups::RowGroups;

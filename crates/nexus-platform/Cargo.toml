@@ -1,0 +1,18 @@
+[package]
+name = "nexus-platform"
+description = "Systemfunktionen des Rechners: Ordnerdialog, Dateien öffnen, Systemmeldungen"
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+nexus-core = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+
+[lints]
+workspace = true

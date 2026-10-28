@@ -153,7 +153,37 @@ pub async fn open_checked(
     config: &BoardConfig,
     options: ConnectOptions,
 ) -> Result<OpenedBoard<AnyBoardDatabase>> {
-    open_checked_with(config, options, BoardDatabaseFactory::open).await
+    // Absichtlich nicht über `open_checked_with`: dessen Öffner ist ein asynchroner
+    // Abschluss, und dadurch hält der Compiler die Zukunft dieser Funktion an einer
+    // bekannten Grenze (rust-lang/rust#100013) nicht mehr für `'static` – genau das
+    // brauchen Aufrufer, die erst bei Bedarf aufbauen (siehe [`open_checked_owned`]).
+    let db = BoardDatabaseFactory::open(config, options).await?;
+    checked(db, config).await
+}
+
+/// Wie [`open_checked`], aber mit eigener Konfig und als fertig verpackte Zukunft.
+///
+/// Aufrufer, die den Aufbau erst bei Bedarf starten (die Board-Laufzeit des Servers) brauchen
+/// dafür eine `'static`-Zukunft. [`open_checked`] leiht die Konfig, und eine geliehene Konfig
+/// in einer `'static`-Zukunft führt an einer bekannten Grenze des Compilers
+/// (rust-lang/rust#100013) zu einem Fehler; diese Fassung nimmt sie deshalb mit.
+pub fn open_checked_owned(
+    config: BoardConfig,
+    options: ConnectOptions,
+) -> std::pin::Pin<
+    Box<dyn std::future::Future<Output = Result<OpenedBoard<AnyBoardDatabase>>> + Send + 'static>,
+> {
+    Box::pin(open_owned(config, options))
+}
+
+/// Der Aufbau mit eigener Konfig; eigene Funktion, damit die Zukunft schon an ihrer Signatur
+/// als `'static` erkennbar ist
+async fn open_owned(
+    config: BoardConfig,
+    options: ConnectOptions,
+) -> Result<OpenedBoard<AnyBoardDatabase>> {
+    let db = BoardDatabaseFactory::open(&config, options).await?;
+    checked(db, &config).await
 }
 
 /// Wie [`open_checked`], aber mit eigenem Öffner – damit Tests ohne echte Datenbank prüfen
@@ -168,50 +198,66 @@ where
     O: AsyncFnOnce(&BoardConfig, ConnectOptions) -> Result<D>,
 {
     let db = open(config, options).await?;
-    match prepare(&db, config).await {
-        Ok(missing_features) => Ok(OpenedBoard {
-            db,
-            missing_features,
-        }),
-        Err(error) => {
-            // Eine halb fertige Datenbank nicht offen lassen; der erste Fehler zählt
-            let _ = db.close().await;
-            Err(error)
+    checked(db, config).await
+}
+
+/// Bringt die geöffnete Datenbank in einen benutzbaren Stand; scheitert das, bleibt sie nicht
+/// offen liegen
+fn checked<'a, D: ManagedBoardDatabase + 'a>(
+    db: D,
+    config: &'a BoardConfig,
+) -> BoxFut<'a, Result<OpenedBoard<D>>> {
+    Box::pin(async move {
+        match prepare(&db, config).await {
+            Ok(missing_features) => Ok(OpenedBoard {
+                db,
+                missing_features,
+            }),
+            Err(error) => {
+                // Eine halb fertige Datenbank nicht offen lassen; der erste Fehler zählt
+                let _ = db.close().await;
+                Err(error)
+            }
         }
-    }
+    })
 }
 
 /// Prüft das Schema, spielt fehlende Erweiterungen ein und legt den eigenen Benutzer an;
 /// liefert die Erweiterungen, die danach weiter fehlen
-async fn prepare<D: ManagedBoardDatabase>(db: &D, config: &BoardConfig) -> Result<Vec<String>> {
-    let database = if config.provider == BoardProvider::Sqlite {
-        &config.file
-    } else {
-        &config.database
-    };
-    let mut missing = SchemaVersionGuard.check(
-        db.schema_version().await?,
-        database,
-        &db.schema_features().await?,
-        config.provider,
-    )?;
-    // Fehlende Erweiterungen sind additiv: erst selbst einspielen, und was danach bleibt,
-    // sperrt nur den Zugriff darauf
-    if !missing.is_empty() {
-        db.ensure_schema_features(&missing).await?;
-        missing = SchemaVersionGuard::missing(&db.schema_features().await?);
-        db.set_missing_features(missing.clone());
-    }
-    let user = BoardUser {
-        id: config.user_id.clone(),
-        name: config.user_name.clone(),
-    };
-    db.transaction(
-        move |u: &mut dyn BoardUnitOfWork| -> BoxFut<'_, Result<()>> {
-            let user = user.clone();
-            Box::pin(async move { u.users().upsert(&user).await })
-        },
-    )
-    .await?;
-    Ok(missing)
+fn prepare<'a, D: ManagedBoardDatabase>(
+    db: &'a D,
+    config: &'a BoardConfig,
+) -> BoxFut<'a, Result<Vec<String>>> {
+    Box::pin(async move {
+        let database = if config.provider == BoardProvider::Sqlite {
+            &config.file
+        } else {
+            &config.database
+        };
+        let mut missing = SchemaVersionGuard.check(
+            db.schema_version().await?,
+            database,
+            &db.schema_features().await?,
+            config.provider,
+        )?;
+        // Fehlende Erweiterungen sind additiv: erst selbst einspielen, und was danach bleibt,
+        // sperrt nur den Zugriff darauf
+        if !missing.is_empty() {
+            db.ensure_schema_features(&missing).await?;
+            missing = SchemaVersionGuard::missing(&db.schema_features().await?);
+            db.set_missing_features(missing.clone());
+        }
+        let user = BoardUser {
+            id: config.user_id.clone(),
+            name: config.user_name.clone(),
+        };
+        db.transaction(
+            move |u: &mut dyn BoardUnitOfWork| -> BoxFut<'_, Result<()>> {
+                let user = user.clone();
+                Box::pin(async move { u.users().upsert(&user).await })
+            },
+        )
+        .await?;
+        Ok(missing)
+    })
 }
