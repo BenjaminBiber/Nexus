@@ -246,6 +246,14 @@ pub fn init<R: Runtime>(app: &AppHandle<R>) {
     });
 }
 
+// Hat die App den Server selbst gestartet? Dann nimmt sie ihn beim Beenden mit.
+// Die Rückfrage beim Beenden sagt danach, was mit dem Server passiert.
+pub fn eigener_server<R: Runtime>(app: &AppHandle<R>) -> bool {
+    app.try_state::<ServerState>()
+        .and_then(|state| state.own.lock().ok().map(|slot| slot.is_some()))
+        .unwrap_or(false)
+}
+
 // Beendet den selbst gestarteten Server; einen fremden lässt die App laufen
 pub fn shutdown<R: Runtime>(app: &AppHandle<R>) {
     let Some(state) = app.try_state::<ServerState>() else {
