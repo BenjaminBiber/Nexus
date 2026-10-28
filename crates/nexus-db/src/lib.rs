@@ -20,9 +20,9 @@ pub use schema_version_guard::{
 };
 pub use sql_chunks::{SqlChunks, SQL_CHUNK_SIZE};
 
-// Die Verträge aus dem Fachkern; P2-4b ergänzt hier die In-Memory-Datenbank
-// (`pub use nexus_core::board::in_memory::InMemoryBoardDatabase;`).
+// Die Verträge aus dem Fachkern samt der Speicher-Datenbank für Tests.
 pub use nexus_core::board::database::*;
+pub use nexus_core::board::in_memory::InMemoryBoardDatabase;
 
 /// Name des Crates, wie er in Protokollen und Diagnoseausgaben erscheint.
 pub const CRATE_NAME: &str = "nexus-db";

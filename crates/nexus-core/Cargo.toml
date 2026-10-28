@@ -8,14 +8,36 @@ rust-version.workspace = true
 [dependencies]
 async-trait = { workspace = true }
 chrono = { workspace = true }
+getrandom = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_yaml_ng = { workspace = true }
+sha1_smol = { workspace = true }
 thiserror = { workspace = true }
+tokio = { workspace = true }
 ts-rs = { workspace = true }
 
+# Die Vertrags-Makros und die Fixtures für andere Crates; nur für Tests gedacht.
+[features]
+testing = []
+
+# Prüft, ob ein fremder Prozess noch läuft (verwaiste Sperrdatei), ohne eigenes `unsafe`
+[target.'cfg(unix)'.dependencies]
+nix = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+sysinfo = { workspace = true }
+
 [dev-dependencies]
+tempfile = { workspace = true }
 tokio = { workspace = true }
+
+# Die Verträge laufen gegen die Speicher-Datenbank; sie brauchen das Merkmal `testing`.
+[[test]]
+name = "in_memory_contract"
+path = "tests/in_memory_contract.rs"
+required-features = ["testing"]
 
 [lints]
 workspace = true

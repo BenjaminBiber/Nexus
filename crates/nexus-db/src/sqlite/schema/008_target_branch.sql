@@ -1,0 +1,2 @@
+
+ALTER TABLE Tickets ADD COLUMN TargetBranch TEXT NULL;
