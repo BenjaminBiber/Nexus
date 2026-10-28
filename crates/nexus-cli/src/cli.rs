@@ -42,6 +42,12 @@ pub struct Cli {
     pub command: Option<Commands>,
 }
 
+/// Beschreibung von `init` (wortgleich zu `InitCommand.ts`)
+const INIT_ABOUT: &str = "Richtet den Harness im aktuellen Git-Projekt ein (einmal pro Projekt, wiederholbar) und nennt das zugeordnete Board.";
+
+/// Beschreibung von `install` (wortgleich zu `InstallCommand.ts`)
+const INSTALL_ABOUT: &str = "Macht den Befehl harness im normalen Terminal verfügbar (Kopie unter ~/.harness, Eintrag im PATH des Benutzers).";
+
 /// Beschreibung von `board` auf der Hilfeseite; wortgleich zum TypeScript-Befehl
 const BOARD_ABOUT: &str = "Ohne Unterbefehl: startet bei Bedarf den Server und öffnet das Board. Mit Unterbefehl: Board-Datenbank bedienen.";
 
@@ -51,10 +57,19 @@ const BOARD_PORT_HELP: &str = "Port des Servers (Standard 4710 oder HARNESS_PORT
 /// Beispiele unter der Hilfe von `board`
 const BOARD_EXAMPLES: &str = "\nBeispiele:\n  harness board\n  harness board --port 4800 --no-open";
 
-/// Die Befehle des Programms. Die Fachbefehle folgen in P3-8 bis P3-18; `help` steht wie bei
-/// commander in jedem Befehl, der selbst nichts tut und Unterbefehle hat.
+/// Die Befehle des Programms. Die restlichen Fachbefehle folgen in P3-15 bis P3-18; `help` steht
+/// wie bei commander in jedem Befehl, der selbst nichts tut und Unterbefehle hat.
 #[derive(Debug, Subcommand)]
 pub enum Commands {
+    /// Projekt einrichten
+    #[command(
+        name = "init",
+        about = INIT_ABOUT,
+        after_help = "\nBeispiel:\n  harness init",
+        disable_help_flag = true
+    )]
+    Init,
+
     /// Ohne Unterbefehl: Server starten und das Board öffnen
     #[command(
         name = "board",
@@ -74,6 +89,18 @@ pub enum Commands {
         /// abgewiesen. Versteckt, damit die Hilfe wie heute aussieht.
         #[arg(hide = true, trailing_var_arg = true)]
         extra: Vec<String>,
+    },
+
+    /// `harness` im normalen Terminal verfügbar machen
+    #[command(
+        name = "install",
+        about = INSTALL_ABOUT,
+        after_help = "\nBeispiel:\n  harness install\n\nWiederholbar; aktualisiert die Kopie nach einem Plugin-Update.",
+        disable_help_flag = true
+    )]
+    Install {
+        #[arg(long = "no-path", help = "PATH nicht ändern, nur kopieren")]
+        no_path: bool,
     },
 
     /// Hilfe zu einem Befehl anzeigen
@@ -132,11 +159,13 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
             eprint!("{}", help::render(PROGRAM, root));
             Ok(1)
         }
+        Some(Commands::Init) => commands::init::run(&context),
         Some(Commands::Board {
             port,
             no_open,
             extra,
         }) => commands::board::open::run(&context, port.as_deref(), !no_open, &extra),
+        Some(Commands::Install { no_path }) => commands::install::run(&context, !no_path),
         Some(Commands::Help { befehl }) => help_command(root, befehl.as_deref()),
         #[cfg(debug_assertions)]
         Some(Commands::SelbsttestFehler { code, meldung }) => {

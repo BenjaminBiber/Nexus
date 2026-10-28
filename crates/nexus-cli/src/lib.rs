@@ -3,6 +3,7 @@
 //! einzeln testen.
 
 pub mod board;
+pub mod board_lookup;
 pub mod cli;
 pub mod commands;
 pub mod context;
