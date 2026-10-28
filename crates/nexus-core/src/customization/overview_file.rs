@@ -28,6 +28,17 @@ impl OverviewFile {
 
     /// Wie `read`, aber für eine ausdrücklich genannte Datei (`customize overview --file`)
     pub fn read_file(file: &Path) -> Option<CustomizationOverview> {
+        serde_json::from_value(Self::read_value_file(file)?).ok()
+    }
+
+    /// Wie `read`, aber als rohes JSON: `GET /api/customizations` gibt unbekannte Felder und
+    /// die Feldreihenfolge der Datei unverändert weiter, nur ohne `diff`.
+    pub fn read_value(&self) -> Option<Value> {
+        Self::read_value_file(&self.home.customizations_dir().join("overview.json"))
+    }
+
+    /// Die rohe Übersicht einer ausdrücklich genannten Datei
+    fn read_value_file(file: &Path) -> Option<Value> {
         let text = std::fs::read_to_string(file).ok()?;
         let parsed: Value = serde_json::from_str(&text).ok()?;
         // Die erwartete Form ist ein Objekt mit einer Liste `entries`; fehlende weitere
@@ -35,7 +46,7 @@ impl OverviewFile {
         if !parsed.is_object() || !parsed.get("entries").is_some_and(Value::is_array) {
             return None;
         }
-        serde_json::from_value(parsed).ok()
+        Some(parsed)
     }
 }
 

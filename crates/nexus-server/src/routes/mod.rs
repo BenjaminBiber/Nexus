@@ -7,6 +7,7 @@
 pub mod health;
 pub mod settings;
 pub mod static_files;
+pub mod workflow;
 
 use std::sync::Arc;
 
@@ -33,6 +34,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     }
     if state.config.proxy_groups.enabled(RouteGroup::Settings) {
         router = router.merge(settings::routes());
+    }
+    if state.config.proxy_groups.enabled(RouteGroup::Workflow) {
+        router = router.merge(workflow::routes());
     }
     router
         .fallback(proxy_or_static)
