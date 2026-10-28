@@ -2,17 +2,17 @@
 //! Datei (`MssqlUserRepository.ts` …).
 //!
 //! P2-11 hat nur die Gerüste angelegt: jeder Zugriff meldete `not-implemented`. Gefüllt sind
-//! sie von
+//! sie inzwischen alle, von
 //!
-//! * **P2-12** (fertig): [`user`], [`project`], [`board`], [`ticket`], [`ticket_step`],
+//! * **P2-12**: [`user`], [`project`], [`board`], [`ticket`], [`ticket_step`],
 //!   [`ticket_session`]
 //! * **P2-13**: [`comment`], [`note`], [`history`], [`deletion`], [`question`],
 //!   [`question_comment`], [`question_history`], [`question_research`]
 //! * **P2-14**: [`dispatch_run`], [`dispatch_stats`], [`search`]
 //!
-//! So können die drei Tickets parallel arbeiten, ohne sich in derselben Datei zu begegnen.
+//! So konnten die drei Tickets parallel arbeiten, ohne sich in derselben Datei zu begegnen.
 
-use nexus_core::{Error, HarnessError};
+use nexus_core::Error;
 
 use crate::mssql::runner::{MsRow, MsValue};
 
@@ -33,16 +33,6 @@ pub mod ticket;
 pub mod ticket_session;
 pub mod ticket_step;
 pub mod user;
-
-/// Fehler eines Zugriffs, den dieses Ticket noch nicht umsetzt; `ticket` nennt das Ticket des
-/// Migrationsplans, das ihn füllt
-pub(crate) fn not_implemented(access: &str, ticket: &str) -> Error {
-    HarnessError::new(
-        "not-implemented",
-        format!("Der Zugriff {access} auf SQL Server ist noch nicht umgesetzt ({ticket})."),
-    )
-    .into()
-}
 
 /// Parameter mit erzeugten Namen (IN-Listen, Statuslisten) in die Form, die der Runner nimmt.
 ///

@@ -3,10 +3,11 @@
 [workspace]
 resolver = "2"
 members = [
-  "crates/nexus-core",
-  "crates/nexus-db",
-  "crates/nexus-cli",
-  "apps/desktop/src-tauri",
+    "crates/nexus-core",
+    "crates/nexus-db",
+    "crates/nexus-server",
+    "crates/nexus-cli",
+    "apps/desktop/src-tauri",
 ]
 
 # Gemeinsame Angaben, die jedes Mitglied mit `*.workspace = true` erbt.
@@ -34,7 +35,7 @@ serde_yaml_ng = "0.10"
 thiserror = "2"
 async-trait = "0.1"
 futures = "0.3"
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net", "fs", "process"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net", "fs", "process", "io-util"] }
 regex = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 uuid = { version = "1", features = ["v4"] }
@@ -53,5 +54,9 @@ getrandom = "0.3"
 sha1_smol = "1"
 nix = { version = "0.31", default-features = false, features = ["signal"] }
 sysinfo = { version = "0.39", default-features = false, features = ["system"] }
+# Job-Objekte unter Windows (Prozessbaum beenden) mit sicherer Schnittstelle, damit der
+# Workspace ohne eigenes `unsafe` auskommt.
+win32job = "2"
 nexus-core = { path = "crates/nexus-core" }
 nexus-db = { path = "crates/nexus-db" }
+nexus-server = { path = "crates/nexus-server" }

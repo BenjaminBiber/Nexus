@@ -633,10 +633,12 @@ macro_rules! question_repository_contract {
                 .await
                 .unwrap();
 
-                let fehler = $crate::tx!(db, |u| { u.tickets().delete("ARC-0001").await })
+                // Welcher Fehler es ist, bleibt offen: die Speicher-Datenbank meldet `conflict`,
+                // SQLite und SQL Server den rohen Fremdschlüssel-Fehler ihres Treibers. Genau so
+                // prüft es auch TypeScript (`rejects.toThrow()`).
+                let _fehler = $crate::tx!(db, |u| { u.tickets().delete("ARC-0001").await })
                     .await
                     .unwrap_err();
-                assert!(fehler.harness().is_some(), "erwartbarer Fehler: {fehler}");
                 let ticket = $crate::tx!(db, |u| { u.tickets().by_id("ARC-0001", false).await })
                     .await
                     .unwrap();

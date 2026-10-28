@@ -8,10 +8,19 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use common::temp_sqlite::{SeedTicket, TempSqlite, TEST_NOW, TEST_USER_ID, TEST_USER_NAME};
+use common::temp_sqlite::{
+    SeedTicket, SeededBoard, TempSqlite, TEST_NOW, TEST_USER_ID, TEST_USER_NAME,
+};
 
-use nexus_core::board::database::BoardDatabase;
+use nexus_core::actors::AuthorKind;
+use nexus_core::board::basics::NoteState;
+use nexus_core::board::basics::{Priority, TicketStatus};
+use nexus_core::board::database::{BoardDatabase, NewComment, NewNote};
+use nexus_core::board::question_types::BoardQuestion;
+use nexus_core::board::types::Ticket;
 use nexus_core::board::BoardProvider;
+use nexus_core::questions::QuestionState;
+use nexus_core::tx;
 use nexus_db::sqlite::{error_map, SqliteBoardDatabase};
 use nexus_db::sqlite_params;
 use nexus_db::{ManagedBoardDatabase, SchemaVersionGuard};
@@ -493,6 +502,186 @@ async fn andert_den_question_marker_mit_den_fragen_eines_projekts() {
         m1
     );
     temp.dispose().await;
+}
+
+#[tokio::test]
+async fn andert_den_change_marker_auch_uber_die_repositories() {
+    let temp = TempSqlite::create().expect("Temp-Datei");
+    let board = temp.seed_board(None, "Sprint").await.expect("Board");
+    let marker = async || {
+        temp.db()
+            .change_marker(board.board_id)
+            .await
+            .expect("Marker")
+    };
+
+    let m0 = marker().await;
+    let ticket = marker_ticket(&board);
+    tx!(temp.db(), [ticket], |u| {
+        u.tickets().insert(&ticket).await
+    })
+    .await
+    .expect("Ticket anlegen");
+    let m1 = marker().await;
+    assert_ne!(m1, m0, "Insert über das Repository");
+
+    let geandert = Ticket {
+        title: "Neu".into(),
+        rev: 2,
+        ..marker_ticket(&board)
+    };
+    tx!(temp.db(), [geandert], |u| {
+        u.tickets().update(&geandert).await
+    })
+    .await
+    .expect("Ticket ändern");
+    let m2 = marker().await;
+    assert_ne!(m2, m1, "Update über das Repository");
+
+    let comment = NewComment {
+        ticket_id: "ARC-1".into(),
+        author_id: board.user_id.clone(),
+        author_name: TEST_USER_NAME.into(),
+        body: "Hallo".into(),
+        created_at: TEST_NOW.into(),
+        read_by_agent_at: None,
+    };
+    tx!(temp.db(), [comment], |u| {
+        u.comments().insert(&comment).await.map(|_| ())
+    })
+    .await
+    .expect("Kommentar anlegen");
+    let m3 = marker().await;
+    assert_ne!(m3, m2, "Kommentar über das Repository");
+
+    let note = NewNote {
+        board_id: board.board_id,
+        author_id: board.user_id.clone(),
+        author_name: TEST_USER_NAME.into(),
+        title: "Befund.".into(),
+        body: String::new(),
+        source: None,
+        labels: Vec::new(),
+        seen_count: 1,
+        seen_in: Vec::new(),
+        state: NoteState::Open,
+        ticket_id: None,
+        reason: None,
+        created_at: TEST_NOW.into(),
+    };
+    tx!(temp.db(), [note], |u| {
+        u.notes().insert(&note).await.map(|_| ())
+    })
+    .await
+    .expect("Notiz anlegen");
+    let m4 = marker().await;
+    assert_ne!(m4, m3, "Notiz über das Repository");
+
+    tx!(temp.db(), |u| { u.tickets().delete("ARC-1").await })
+        .await
+        .expect("Ticket löschen");
+    assert_ne!(marker().await, m4, "Delete über das Repository");
+    temp.dispose().await;
+}
+
+#[tokio::test]
+async fn andert_den_question_marker_auch_uber_die_repositories() {
+    let temp = TempSqlite::create().expect("Temp-Datei");
+    let project_id = temp.seed_project("ARC").await.expect("Projekt");
+    assert_eq!(
+        temp.db().question_marker(project_id).await.expect("Marker"),
+        "0:-"
+    );
+
+    let frage = marker_question(project_id);
+    tx!(temp.db(), [frage], |u| {
+        u.questions().insert(&frage).await
+    })
+    .await
+    .expect("Frage anlegen");
+    let m1 = temp.db().question_marker(project_id).await.expect("Marker");
+    assert_eq!(m1.split(':').next(), Some("1"), "{m1}");
+
+    let geandert = BoardQuestion {
+        title: "Neu".into(),
+        rev: 2,
+        ..marker_question(project_id)
+    };
+    tx!(temp.db(), [geandert], |u| {
+        u.questions().update(&geandert).await
+    })
+    .await
+    .expect("Frage ändern");
+    assert_ne!(
+        temp.db().question_marker(project_id).await.expect("Marker"),
+        m1
+    );
+    temp.dispose().await;
+}
+
+/// Das Ticket der beiden Marker-Tests über die Repositories
+fn marker_ticket(board: &SeededBoard) -> Ticket {
+    Ticket {
+        id: "ARC-1".into(),
+        project_id: board.project_id,
+        board_id: board.board_id,
+        number: 1,
+        title: "Titel".into(),
+        description: String::new(),
+        status: TicketStatus::Backlog,
+        priority: Priority::Normal,
+        labels: Vec::new(),
+        depends_on: Vec::new(),
+        sort_order: 0,
+        assignee: None,
+        needs_planning: true,
+        acceptance: String::new(),
+        plan: String::new(),
+        handbook: String::new(),
+        diagram: String::new(),
+        spec: None,
+        spec_task: None,
+        branch: None,
+        worktree: None,
+        target_branch: None,
+        touches: Vec::new(),
+        consumes: Vec::new(),
+        produces: Vec::new(),
+        blocked_reason: None,
+        planned_at: None,
+        planned_by: None,
+        planning_claim_by: None,
+        planning_claim_at: None,
+        created_at: TEST_NOW.into(),
+        created_by_id: TEST_USER_ID.into(),
+        created_by_name: TEST_USER_NAME.into(),
+        updated_at: TEST_NOW.into(),
+        rev: 1,
+    }
+}
+
+/// Die Frage des Marker-Tests über die Repositories
+fn marker_question(project_id: i32) -> BoardQuestion {
+    BoardQuestion {
+        id: "ARC-F0001".into(),
+        project_id,
+        number: 1,
+        title: "Frage".into(),
+        description: String::new(),
+        state: QuestionState::Open,
+        occasion: None,
+        origin_kind: AuthorKind::Human,
+        origin_name: TEST_USER_NAME.into(),
+        origin_session: None,
+        tags: Vec::new(),
+        ticket_ids: Vec::new(),
+        depends_on: Vec::new(),
+        decision: None,
+        created_at: TEST_NOW.into(),
+        created_by_id: TEST_USER_ID.into(),
+        updated_at: TEST_NOW.into(),
+        rev: 1,
+    }
 }
 
 #[tokio::test]

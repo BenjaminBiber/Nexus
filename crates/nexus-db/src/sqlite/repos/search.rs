@@ -20,7 +20,7 @@ use nexus_core::text::utf16_prefix;
 use nexus_core::Result;
 
 use super::dispatch_run::namen;
-use crate::sqlite::runner::{iso, Params, SqlValue};
+use crate::sqlite::runner::{iso, ParamName, Params, SqlValue};
 use crate::sqlite::unit_of_work::SqliteUnitOfWork;
 use crate::sqlite_params;
 
@@ -197,7 +197,7 @@ impl SqliteUnitOfWork<'_> {
         for (index, term) in terms.iter().enumerate() {
             let name = TERM_NAMES[index];
             params.push((
-                std::borrow::Cow::Borrowed(name),
+                ParamName::Borrowed(name),
                 SqlValue::Text(term.to_lowercase()),
             ));
             conditions.push(format!(

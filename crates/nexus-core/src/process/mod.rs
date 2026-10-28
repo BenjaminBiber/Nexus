@@ -1,7 +1,30 @@
-//! Prüft, ob ein Prozess mit einer bestimmten Nummer noch läuft. Das entspricht
-//! `process.kill(pid, 0)` in Node und entscheidet, ob eine Sperrdatei verwaist ist.
-//! Der Workspace verbietet `unsafe`, deshalb kommt der Systemaufruf aus einer
-//! Bibliothek mit sicherer Schnittstelle: unter Unix `nix`, unter Windows `sysinfo`.
+//! Fremde Prozesse: Läuft eine Prozessnummer noch (verwaiste Sperrdatei)? Und das
+//! Starten eines Programms samt allem, was es selbst startet, mit einem Abbruch, der
+//! den ganzen Baum erwischt (`process_group`).
+//! Der Workspace verbietet `unsafe`, deshalb kommen die Systemaufrufe aus Bibliotheken
+//! mit sicherer Schnittstelle: unter Unix `nix`, unter Windows `sysinfo` und `win32job`.
+
+pub mod process_group;
+
+pub use process_group::ProcessGroup;
+
+/// `CREATE_NO_WINDOW`: Kindprozesse unter Windows ohne Konsolenfenster starten.
+/// Ohne das Kennzeichen blitzt bei jedem Aufruf kurz ein schwarzes Fenster auf.
+#[cfg(windows)]
+pub const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+/// Startet den Befehl unter Windows ohne Konsolenfenster (sonst passiert nichts)
+pub fn hide_console(command: &mut std::process::Command) {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = command;
+    }
+}
 
 /// Läuft ein Prozess mit dieser Nummer? Gehört er jemand anderem, zählt er als laufend.
 #[cfg(unix)]
