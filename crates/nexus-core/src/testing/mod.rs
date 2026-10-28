@@ -8,8 +8,12 @@
 //! Crate braucht `tokio` (Merkmale `macros` und `rt-multi-thread`) als Dev-Abhängigkeit.
 
 pub mod board_contract;
+pub mod board_fixture;
 pub mod dispatch_run_contract;
 pub mod fixtures;
 pub mod question_contract;
+pub mod recording_unit;
 
+pub use board_fixture::BoardFixture;
 pub use fixtures::*;
+pub use recording_unit::RecordingUnit;
