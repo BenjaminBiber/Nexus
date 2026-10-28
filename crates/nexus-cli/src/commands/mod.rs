@@ -7,3 +7,4 @@ pub mod init;
 pub mod install;
 #[cfg(debug_assertions)]
 pub mod selbsttest;
+pub mod serve;

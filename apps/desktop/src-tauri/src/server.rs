@@ -1,6 +1,10 @@
-// Zugang zum Harness-Server: Port bestimmen, Health prüfen, bei Bedarf den gebündelten Sidecar starten,
+// Zugang zum Harness-Server: Port bestimmen, Health prüfen, bei Bedarf den gebündelten Server starten,
 // das Hauptfenster auf die Oberfläche schicken und den selbst gestarteten Server beim Beenden wieder stoppen.
 // Ein fremder Server auf demselben Port bleibt unangetastet.
+//
+// Gestartet wird der Rust-Server (`nexus serve`); er nimmt den Port an und hält den Node-Server als
+// eigenen Kindprozess dahinter. Beim Beenden genügt deshalb das Signal an `nexus serve` – es räumt
+// den Node-Server selbst ab.
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -13,7 +17,9 @@ use tauri_plugin_shell::ShellExt;
 
 // Port, auf dem CLI und Hooks den Server erwarten (DEFAULT_SERVER_PORT in packages/core)
 pub const DEFAULT_SERVER_PORT: u16 = 4710;
-// Name des Sidecars aus bundle.externalBin
+// Name des Rust-Servers aus bundle.externalBin; er nimmt den öffentlichen Port an
+const NEXUS: &str = "nexus";
+// Name des Node-Servers aus bundle.externalBin; er läuft als Kindprozess hinter dem Rust-Server
 const SIDECAR: &str = "harness-sidecar";
 // Daran erkennt sich der eigene Server in der Antwort von /api/health
 const HEALTH_NAME: &str = "ai-harness";
@@ -60,7 +66,7 @@ pub struct ServerInfo {
     pub port: u16,
 }
 
-// Findet den Harness-Server auf seinem festen Port oder startet ihn als Sidecar
+// Findet den Harness-Server auf seinem festen Port oder startet ihn als gebündeltes Programm
 pub struct ServerConnector {
     home: PathBuf,
     port: u16,
@@ -353,24 +359,30 @@ pub fn open_path<R: Runtime>(app: &AppHandle<R>, path: &str) {
     }
 }
 
-// Startet den gebündelten Sidecar und wartet, bis er antwortet
+// Startet den gebündelten Rust-Server samt Node-Server dahinter und wartet, bis er antwortet
 async fn start<R: Runtime>(
     app: &AppHandle<R>,
     connector: &ServerConnector,
 ) -> Result<(), ServerError> {
     let mut command = app
         .shell()
-        .sidecar(SIDECAR)
-        .map_err(|error| ServerError::StartFailed(format!("{SIDECAR}: {error}")))?
+        .sidecar(NEXUS)
+        .map_err(|error| ServerError::StartFailed(format!("{NEXUS}: {error}")))?
         .args(["serve", "--port", &connector.port().to_string()]);
+    // Den Node-Server gibt die App ausdrücklich mit; gefunden wird er wie jedes Sidecar neben dem
+    // Programm. Ohne Fund sucht `nexus serve` selbst und meldet sonst einen Fehler.
+    match node_sidecar() {
+        Some(path) => command = command.args(["--node-sidecar", &path.to_string_lossy()]),
+        None => log::warn!("{SIDECAR} liegt nicht neben dem Programm; nexus serve sucht selbst."),
+    }
     for (name, dir) in resource_dirs(app) {
         command = command.env(name, dir);
     }
     let (events, child) = command
         .spawn()
-        .map_err(|error| ServerError::StartFailed(format!("{SIDECAR}: {error}")))?;
+        .map_err(|error| ServerError::StartFailed(format!("{NEXUS}: {error}")))?;
     log::info!(
-        "Sidecar gestartet (pid {}) auf Port {}.",
+        "Server gestartet (pid {}) auf Port {}.",
         child.pid(),
         connector.port()
     );
@@ -388,8 +400,21 @@ async fn start<R: Runtime>(
     ))
 }
 
+// Pfad des Node-Servers, so wie Tauri Sidecars auflöst: die Datei aus bundle.externalBin liegt
+// ohne Zielsuffix neben dem Programm. `None`, wenn es sie dort nicht gibt.
+fn node_sidecar() -> Option<PathBuf> {
+    let exe = tauri::utils::platform::current_exe().ok()?;
+    let dir = exe.parent()?;
+    let file = dir.join(if cfg!(windows) {
+        format!("{SIDECAR}.exe")
+    } else {
+        SIDECAR.to_string()
+    });
+    file.is_file().then_some(file)
+}
+
 // Oberfläche, Benachrichtigungsbilder und SQL-Skripte liegen als Ressourcen neben der App;
-// findet die App sie nicht, sucht der Sidecar selbst neben seinem Programm
+// findet die App sie nicht, suchen die Server selbst neben ihrem Programm
 fn resource_dirs<R: Runtime>(app: &AppHandle<R>) -> Vec<(&'static str, PathBuf)> {
     let base = match app.path().resource_dir() {
         Ok(dir) => dir,
@@ -400,7 +425,7 @@ fn resource_dirs<R: Runtime>(app: &AppHandle<R>) -> Vec<(&'static str, PathBuf)>
     };
     if !base.join("web").is_dir() {
         log::warn!(
-            "In {} fehlt der Ordner web; der Sidecar sucht die Oberfläche selbst.",
+            "In {} fehlt der Ordner web; der Server sucht die Oberfläche selbst.",
             base.display()
         );
         return Vec::new();
@@ -412,15 +437,15 @@ fn resource_dirs<R: Runtime>(app: &AppHandle<R>) -> Vec<(&'static str, PathBuf)>
     ]
 }
 
-// Schreibt die Ausgabe des Sidecars ins Protokoll der App
+// Schreibt die Ausgabe des gestarteten Servers ins Protokoll der App
 async fn log_output(mut events: Receiver<CommandEvent>) {
     while let Some(event) = events.recv().await {
         match event {
-            CommandEvent::Stdout(line) => log::info!("Sidecar: {}", text(&line)),
-            CommandEvent::Stderr(line) => log::warn!("Sidecar: {}", text(&line)),
-            CommandEvent::Error(message) => log::warn!("Sidecar: {message}"),
+            CommandEvent::Stdout(line) => log::info!("Server: {}", text(&line)),
+            CommandEvent::Stderr(line) => log::warn!("Server: {}", text(&line)),
+            CommandEvent::Error(message) => log::warn!("Server: {message}"),
             CommandEvent::Terminated(ende) => log::info!(
-                "Sidecar beendet (Code {:?}, Signal {:?}).",
+                "Server beendet (Code {:?}, Signal {:?}).",
                 ende.code,
                 ende.signal
             ),
@@ -429,7 +454,7 @@ async fn log_output(mut events: Receiver<CommandEvent>) {
     }
 }
 
-// Eine Ausgabezeile des Sidecars als Text
+// Eine Ausgabezeile des gestarteten Servers als Text
 fn text(line: &[u8]) -> String {
     String::from_utf8_lossy(line).trim_end().to_string()
 }
@@ -789,6 +814,24 @@ mod tests {
             .map(|eintrag| eintrag["url"].as_str().unwrap())
             .collect();
         assert_eq!(adressen, ["http://*", "https://*", "vscode://*"]);
+    }
+
+    // Beide Programme werden mitgeliefert: der Rust-Server, den die App startet, und der Node-Server,
+    // den er als Kindprozess dahinter hält
+    #[test]
+    fn beide_server_sind_als_externalbin_eingetragen() {
+        let datei: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let bins: Vec<&str> = datei["bundle"]["externalBin"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|eintrag| eintrag.as_str().unwrap())
+            .collect();
+        assert_eq!(
+            bins,
+            [format!("binaries/{NEXUS}"), format!("binaries/{SIDECAR}")]
+        );
     }
 
     // Das Hauptfenster darf nicht gedrosselt werden, sonst schläft der Ereignisstrom im Hintergrund ein

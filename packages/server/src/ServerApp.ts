@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { ServerConfig } from './config/ServerConfig.js';
+import { ServerConfigLoader } from './config/ServerConfigLoader.js';
 import { ErrorMapper } from './errors/ErrorMapper.js';
 import { ProjectService } from './projects/ProjectService.js';
 import { DocRevisionService } from './docs/DocRevisionService.js';
@@ -91,7 +92,9 @@ export class ServerApp {
       new UserSettingsStore(config.home),
       new WindowsToastSender(),
       config.toastDir ?? '',
-      `http://${config.host}:${config.port}`,
+      // Hinter dem Rust-Server nimmt der Benutzer nur den öffentlichen Port wahr; Links in
+      // Meldungen müssen dorthin zeigen, nicht auf den internen Port dieses Prozesses
+      ServerConfigLoader.noticeBaseUrl(config),
       config.log,
       noticeTabs,
     );

@@ -15,9 +15,14 @@ const claudeResult = (result) => ({
 
 // Startet den TypeScript-Server im Vertragsmodus: echter Port, feste Attrappen statt Dialog, Explorer,
 // Claude-Aufrufen und Worker-Start. Aufruf: node contract/servers/ts-server.mjs --port <port>
+//
+// Mit HARNESS_SIDECAR=1 läuft er wie der echte Server als Sidecar hinter dem Rust-Server: Port 0 ist
+// erlaubt, der gewählte Port geht als Zeile auf stdout, es entsteht keine server.json (die gehört dem
+// Rust-Prozess), Links in Meldungen zeigen auf HARNESS_PUBLIC_PORT und ein Ende der stdin beendet ihn.
 async function main() {
   SqliteWarningFilter.install();
-  const port = portFrom(process.argv.slice(2));
+  const sidecar = process.env.HARNESS_SIDECAR === '1';
+  const port = portFrom(process.argv.slice(2), sidecar);
   const home = new HarnessHome(process.env);
   const poll = Number(process.env.CONTRACT_POLL_MS ?? 2500);
   const app = await ServerApp.create({
@@ -26,6 +31,8 @@ async function main() {
     home,
     webDir: join(REPO_ROOT, 'packages', 'web', 'dist'),
     version: 'contract',
+    sidecar,
+    publicPort: process.env.HARNESS_PUBLIC_PORT ? Number(process.env.HARNESS_PUBLIC_PORT) : undefined,
     heartbeatMs: Number(process.env.CONTRACT_HEARTBEAT_MS ?? 15000),
     dbPollMs: poll,
     docsPollMs: Number(process.env.CONTRACT_POLL_MS ?? 10000),
@@ -56,25 +63,32 @@ async function main() {
   }
   const actual = app.server.address().port;
   app.guard.allowPort(actual);
-  const info = new ServerInfoFile(home);
-  await info.write({ pid: process.pid, port: actual, startedAt: new Date().toISOString() });
-  console.log(`Vertragsserver auf http://127.0.0.1:${actual} (HARNESS_HOME=${home.dir})`);
+  const info = sidecar ? null : new ServerInfoFile(home);
+  await info?.write({ pid: process.pid, port: actual, startedAt: new Date().toISOString() });
+  // Als Sidecar gehört stdout dem Rust-Server davor: dort steht nur die Port-Zeile
+  if (sidecar) process.stdout.write(`HARNESS_SIDECAR_PORT=${actual}\n`);
+  else console.log(`Vertragsserver auf http://127.0.0.1:${actual} (HARNESS_HOME=${home.dir})`);
 
   const stop = async () => {
     await app.close();
-    await info.remove();
+    await info?.remove();
     process.exit(0);
   };
   process.on('SIGINT', stop);
   process.on('SIGTERM', stop);
+  if (sidecar) {
+    process.stdin.on('end', stop);
+    process.stdin.on('close', stop);
+    process.stdin.resume();
+  }
 }
 
-// Port aus `--port <port>`, sonst aus HARNESS_PORT
-function portFrom(args) {
+// Port aus `--port <port>`, sonst aus HARNESS_PORT; als Sidecar ist 0 erlaubt (freier Port)
+function portFrom(args, sidecar) {
   const at = args.indexOf('--port');
   const raw = at >= 0 ? args[at + 1] : process.env.HARNESS_PORT;
   const port = Number(raw);
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  if (!Number.isInteger(port) || port < (sidecar ? 0 : 1) || port > 65535) {
     throw new Error('Bitte den Port angeben: node contract/servers/ts-server.mjs --port <port>');
   }
   return port;

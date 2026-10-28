@@ -16,6 +16,13 @@ export interface ServerConfig {
   version: string;
   /** Ordner mit den Bildern der Windows-Benachrichtigung */
   toastDir?: string;
+  /**
+   * Läuft der Server als Sidecar hinter dem Rust-Server? Dann gehört `server.json` dem Rust-Prozess,
+   * der gewählte Port geht auf stdout und ein Ende der stdin beendet den Server.
+   */
+  sidecar?: boolean;
+  /** Öffentlicher Port des Rust-Servers; Links in Meldungen zeigen dorthin, nicht auf den internen Port */
+  publicPort?: number;
   /** Abstand der Herzschlag-Meldungen in Millisekunden (Standard 15000) */
   heartbeatMs?: number;
   /** Board-Laufzeit für /api/db (Standard: BoardRuntime aus ~/.harness/board.yaml); Tests setzen eine In-Memory-Laufzeit */

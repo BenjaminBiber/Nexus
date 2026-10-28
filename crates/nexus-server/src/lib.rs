@@ -18,6 +18,7 @@ pub mod log;
 pub mod projects;
 pub mod proxy;
 pub mod routes;
+pub mod sidecar;
 pub mod state;
 
 use std::net::SocketAddr;
@@ -75,16 +76,48 @@ pub async fn serve(
     let address = format!("{}:{}", config.host, config.port);
     let port = config.port;
     let state = AppState::new(config, board, platform)?;
-    let listener = TcpListener::bind(&address).await.map_err(|error| {
-        let busy = error.kind() == std::io::ErrorKind::AddrInUse;
-        let message = if busy {
-            format!("Port {port} ist belegt.")
-        } else {
-            format!("Start fehlgeschlagen: {error}")
-        };
-        state.log.write(&message);
-        HarnessError::new(if busy { "port-busy" } else { "start-failed" }, message)
-    })?;
+    let listener = TcpListener::bind(&address)
+        .await
+        .map_err(|error| bind_error(port, &error))
+        .inspect_err(|error| state.log.write(&error.to_string()))?;
+    serve_listening(state, listener).await
+}
+
+/// Öffnet den Port, bevor etwas anderes startet.
+///
+/// `nexus serve` bindet damit zuerst den öffentlichen Port: Ist er belegt, fällt das sofort auf
+/// und es bleibt kein Node-Prozess übrig.
+pub async fn bind(host: &str, port: u16) -> Result<TcpListener> {
+    TcpListener::bind(format!("{host}:{port}"))
+        .await
+        .map_err(|error| bind_error(port, &error).into())
+}
+
+/// Startet den Server auf einem schon gebundenen Port (`nexus serve` und die App)
+pub async fn serve_on(
+    listener: TcpListener,
+    config: ServerConfig,
+    board: BoardBackendFactory,
+    platform: Platform,
+) -> Result<ServerHandle> {
+    let state = AppState::new(config, board, platform)?;
+    serve_listening(state, listener).await
+}
+
+/// `port-busy`, wenn der Port belegt ist, sonst `start-failed` – wortgleich zu heute
+fn bind_error(port: u16, error: &std::io::Error) -> HarnessError {
+    let busy = error.kind() == std::io::ErrorKind::AddrInUse;
+    let message = if busy {
+        format!("Port {port} ist belegt.")
+    } else {
+        format!("Start fehlgeschlagen: {error}")
+    };
+    HarnessError::new(if busy { "port-busy" } else { "start-failed" }, message)
+}
+
+/// Der gemeinsame Teil von [`serve`] und [`serve_on`]: `server.json` schreiben, Routen bauen,
+/// Anfragen beantworten
+async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<ServerHandle> {
     // Bei Port 0 steht der wirkliche Port erst jetzt fest; der Schutz muss ihn kennen
     let local: SocketAddr = listener
         .local_addr()

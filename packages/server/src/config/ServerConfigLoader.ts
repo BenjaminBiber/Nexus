@@ -7,7 +7,8 @@ import type { ServerConfig } from './ServerConfig.js';
 
 export const DEFAULT_PORT = DEFAULT_SERVER_PORT;
 
-// Liest die Einstellungen aus Argumenten und Umgebung (--port, HARNESS_PORT, HARNESS_WEB_DIR, HARNESS_TOAST_DIR, HARNESS_HOME).
+// Liest die Einstellungen aus Argumenten und Umgebung (--port, HARNESS_PORT, HARNESS_WEB_DIR, HARNESS_TOAST_DIR,
+// HARNESS_HOME, HARNESS_SIDECAR, HARNESS_PUBLIC_PORT).
 export class ServerConfigLoader {
   // sea: läuft der Server als gebündeltes Sidecar (Single Executable Application)? Dann liegen Oberfläche und
   // Bilder neben dem Programm, denn es gibt keine Paketordner. Tests setzen den Wert selbst.
@@ -22,7 +23,15 @@ export class ServerConfigLoader {
       webDir: env.HARNESS_WEB_DIR ?? this.defaultWebDir(),
       version: this.version(),
       toastDir: env.HARNESS_TOAST_DIR ?? this.toastDir(),
+      sidecar: env.HARNESS_SIDECAR === '1',
+      publicPort: this.publicPort(env),
     };
+  }
+
+  // Basis-Adresse der Links in Meldungen (Windows-Toast, ntfy): hinter dem Rust-Server der
+  // öffentliche Port, sonst der eigene
+  static noticeBaseUrl(config: Pick<ServerConfig, 'host' | 'port' | 'publicPort'>): string {
+    return `http://${config.host}:${config.publicPort ?? config.port}`;
   }
 
   // Port aus --port, sonst HARNESS_PORT, sonst Standard
@@ -30,6 +39,18 @@ export class ServerConfigLoader {
     const index = argv.indexOf('--port');
     const raw = index >= 0 ? argv[index + 1] : env.HARNESS_PORT;
     if (raw === undefined) return DEFAULT_PORT;
+    return this.checked(raw);
+  }
+
+  // Öffentlicher Port des Rust-Servers aus HARNESS_PUBLIC_PORT; ohne Angabe gibt es keinen
+  private publicPort(env: Record<string, string | undefined>): number | undefined {
+    const raw = env.HARNESS_PUBLIC_PORT;
+    if (raw === undefined || raw === '') return undefined;
+    return this.checked(raw);
+  }
+
+  // Eine Portangabe als Zahl; ungültige ergeben einen verständlichen Fehler
+  private checked(raw: string): number {
     const port = Number(raw);
     if (!Number.isInteger(port) || port < 0 || port > 65535) {
       throw new HarnessError('port-invalid', `Der Port „${raw}“ ist ungültig. Erlaubt sind Zahlen von 0 bis 65535.`);

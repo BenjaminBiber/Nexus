@@ -23,18 +23,30 @@ async function main(): Promise<void> {
   }
   const port = (app.server.address() as { port: number }).port;
   app.guard.allowPort(port);
-  const info = new ServerInfoFile(config.home);
-  await info.write({ pid: process.pid, port, startedAt: new Date().toISOString() });
+  // Als Sidecar gehört `server.json` dem Rust-Server davor; dieser Prozess meldet nur seinen Port
+  const info = config.sidecar ? null : new ServerInfoFile(config.home);
+  await info?.write({ pid: process.pid, port, startedAt: new Date().toISOString() });
   log(`Server läuft auf http://${config.host}:${port}`);
 
   const stop = async () => {
     log('Server wird beendet.');
     await app.close();
-    await info.remove();
+    await info?.remove();
     process.exit(0);
   };
   process.on('SIGINT', stop);
   process.on('SIGTERM', stop);
+  if (config.sidecar) announcePort(port, stop);
+}
+
+// Sidecar-Modus: Der Rust-Server davor liest den gewählten Port von stdout. Solange seine Pipe auf
+// stdin offen ist, lebt er; endet sie, beendet sich dieser Prozess selbst (gilt auf allen Plattformen).
+function announcePort(port: number, stop: () => Promise<void>): void {
+  process.stdout.write(`HARNESS_SIDECAR_PORT=${port}\n`);
+  process.stdin.on('end', stop);
+  process.stdin.on('close', stop);
+  process.stdin.on('error', stop);
+  process.stdin.resume();
 }
 
 // Hängt eine Zeile an das Protokoll an; über 1 MB wird neu begonnen

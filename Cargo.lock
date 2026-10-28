@@ -2616,6 +2616,8 @@ dependencies = [
  "clap",
  "nexus-core",
  "nexus-db",
+ "nexus-platform",
+ "nexus-server",
  "predicates",
  "serde",
  "serde_json",
