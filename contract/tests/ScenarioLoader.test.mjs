@@ -89,6 +89,12 @@ describe('ScenarioLoader', () => {
     it('liefert für einen fehlenden Ordner eine leere Liste', () => {
       expect(loader.load(join(root, 'gibtsnicht'))).toEqual([]);
     });
+
+    it('nimmt die eigenen Felder einer anderen Schritt-Art als raw mit', () => {
+      const steps = [{ name: 'Attrappe', kind: 'httpStub', action: 'start', stub: 'NTFY', record: false }];
+      const scenario = loader.parse(write('stub', { title: 'Attrappe', steps }));
+      expect(scenario.steps[0]).toMatchObject({ kind: 'httpStub', record: false, raw: steps[0] });
+    });
   });
 
   describe('fehlerhafte Szenarien', () => {
@@ -106,6 +112,14 @@ describe('ScenarioLoader', () => {
 
     it('meldet unbekannte Felder in einem Schritt', () => {
       failsWith({ title: 'T', steps: [{ name: 'a', method: 'GET', path: '/api/health', pfad: '/x' }] }, /unbekannte Felder in steps\[0\]: pfad/);
+    });
+
+    it('meldet unbekannte Felder in einem Schritt einer anderen Art', () => {
+      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'httpStub', stub: 'NTFY', aktion: 'start' }] }, /unbekannte Felder in steps\[0\]: aktion/);
+    });
+
+    it('meldet eine unbekannte Schritt-Art', () => {
+      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'cli' }] }, /steps\[0\]\.kind muss eine bekannte Art sein \(http, httpStub\)/);
     });
 
     it('meldet leere Schritte', () => {

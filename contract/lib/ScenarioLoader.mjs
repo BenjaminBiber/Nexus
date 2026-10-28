@@ -1,10 +1,12 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { stepKinds } from './StepKinds.mjs';
 
 const SCENARIO_KEYS = new Set(['title', 'platforms', 'fixtures', 'steps']);
 const FIXTURE_KEYS = new Set(['repos', 'boardConfig', 'homeFiles']);
 const REPO_KEYS = new Set(['name', 'git', 'harnessInit', 'files']);
-const STEP_KEYS = new Set(['name', 'kind', 'method', 'path', 'body', 'headers', 'save', 'compare', 'ignore', 'record']);
+// Felder, die jede Schritt-Art hat; die Art nennt ihre eigenen in `keys`
+const STEP_KEYS = new Set(['name', 'kind', 'save', 'compare', 'ignore', 'record']);
 const PLATFORMS = new Set(['darwin', 'linux', 'win32']);
 const METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']);
 const COMPARE = new Set(['full', 'status', 'shape']);
@@ -161,10 +163,12 @@ export class ScenarioLoader {
   step(value, index, fail) {
     const where = ` in steps[${index}]`;
     if (value === null || typeof value !== 'object' || Array.isArray(value)) fail(`steps[${index}] muss ein Objekt sein.`);
-    this.unknown(value, STEP_KEYS, where, fail);
     if (typeof value.name !== 'string' || !value.name.trim()) fail(`steps[${index}].name fehlt oder ist leer.`);
     const kind = value.kind ?? 'http';
-    if (typeof kind !== 'string' || !kind.trim()) fail(`steps[${index}].kind muss ein Text sein.`);
+    if (typeof kind !== 'string' || !stepKinds[kind]) {
+      fail(`steps[${index}].kind muss eine bekannte Art sein (${Object.keys(stepKinds).sort().join(', ')}).`);
+    }
+    this.unknown(value, new Set([...STEP_KEYS, ...stepKinds[kind].keys]), where, fail);
     if (value.compare !== undefined && !COMPARE.has(value.compare)) {
       fail(`steps[${index}].compare erlaubt nur ${[...COMPARE].join(', ')}.`);
     }

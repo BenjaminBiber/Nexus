@@ -1,0 +1,12 @@
+{
+  "title": "Oberfläche ausliefern: Startseite, Seitenrückfall und fehlende Dateien",
+  "steps": [
+    { "name": "Startseite", "method": "GET", "path": "/", "compare": "shape" },
+    { "name": "Symbol der Oberfläche", "method": "GET", "path": "/favicon.svg", "compare": "shape" },
+    { "name": "Seite der Oberfläche", "method": "GET", "path": "/p/gibtsnicht/board", "compare": "shape" },
+    { "name": "Seite mit Suchteil", "method": "GET", "path": "/p/gibtsnicht/sessions?filter=offen", "compare": "shape" },
+    { "name": "Seite eines Dokuments", "method": "GET", "path": "/p/gibtsnicht/docs/plans/plan.md", "compare": "shape" },
+    { "name": "fehlende Datei unter assets", "method": "GET", "path": "/assets/gibtsnicht-1234.js" },
+    { "name": "unbekannte Adresse der API", "method": "GET", "path": "/api/gibtsnicht" }
+  ]
+}

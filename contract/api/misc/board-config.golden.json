@@ -1,0 +1,248 @@
+[
+  {
+    "name": "unbekannter Anbieter",
+    "request": {
+      "body": {
+        "provider": "oracle",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag"
+      },
+      "method": "PUT",
+      "path": "/api/board-config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-config-invalid",
+        "message": "provider in <HOME>/board.yaml ist ungültig (erlaubt: mssql, sqlite)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ohne Angaben",
+    "request": {
+      "body": {},
+      "method": "PUT",
+      "path": "/api/board-config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-config-invalid",
+        "message": "In <HOME>/board.yaml fehlen für SQL Server: server, database, user, password, userId, userName."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "SQLite ohne Benutzer",
+    "request": {
+      "body": {
+        "dbFile": "<HOME>/board.db",
+        "provider": "sqlite"
+      },
+      "method": "PUT",
+      "path": "/api/board-config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-config-invalid",
+        "message": "In <HOME>/board.yaml fehlen: userId, userName."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "userId ist keine GUID",
+    "request": {
+      "body": {
+        "dbFile": "<HOME>/board.db",
+        "provider": "sqlite",
+        "userId": "abc",
+        "userName": "Vertrag"
+      },
+      "method": "PUT",
+      "path": "/api/board-config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-config-invalid",
+        "message": "userId in <HOME>/board.yaml ist keine GUID."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "leerer Pfad der SQLite-Datei",
+    "request": {
+      "body": {
+        "dbFile": "",
+        "provider": "sqlite",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag"
+      },
+      "method": "PUT",
+      "path": "/api/board-config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-config-invalid",
+        "message": "file in <HOME>/board.yaml ist leer – Pfad der SQLite-Datei angeben oder die Zeile weglassen (Standard: <HOME>/board.db)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ungültiger Port für SQL Server",
+    "request": {
+      "body": {
+        "database": "AiHarness",
+        "password": "geheim",
+        "port": 0,
+        "provider": "mssql",
+        "server": "sql.example",
+        "user": "sa",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag"
+      },
+      "method": "PUT",
+      "path": "/api/board-config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-config-invalid",
+        "message": "port in <HOME>/board.yaml ist ungültig."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "nach den Fehlern unkonfiguriert",
+    "request": {
+      "method": "GET",
+      "path": "/api/board-config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "activeBoard": null,
+        "configured": false,
+        "database": "AiHarness",
+        "dbFile": "<HOME>/board.db",
+        "encrypt": true,
+        "file": "<HOME>/board.yaml",
+        "hasPassword": false,
+        "port": 0,
+        "provider": "mssql",
+        "server": "",
+        "trustServerCertificate": true,
+        "user": "",
+        "userId": "<UUID>",
+        "userName": ""
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Verbindung mit unbekanntem Anbieter prüfen",
+    "request": {
+      "body": {
+        "provider": "oracle",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag"
+      },
+      "method": "POST",
+      "path": "/api/board-config/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "message": "provider in <HOME>/board.yaml ist ungültig (erlaubt: mssql, sqlite).",
+        "ok": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Verbindung ohne Angaben prüfen",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/board-config/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "message": "In <HOME>/board.yaml fehlen für SQL Server: server, database, user, password, userId, userName.",
+        "ok": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "relativer Pfad gilt ab dem Home",
+    "request": {
+      "body": {
+        "activeBoard": 7,
+        "dbFile": "boards/vertrag.db",
+        "provider": "sqlite",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag"
+      },
+      "method": "PUT",
+      "path": "/api/board-config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "activeBoard": null,
+        "configured": true,
+        "database": "",
+        "dbFile": "<HOME>/boards/vertrag.db",
+        "encrypt": true,
+        "file": "<HOME>/board.yaml",
+        "hasPassword": false,
+        "port": 0,
+        "provider": "sqlite",
+        "server": "",
+        "trustServerCertificate": true,
+        "user": "",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "danach lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/board-config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "activeBoard": null,
+        "configured": true,
+        "database": "",
+        "dbFile": "<HOME>/boards/vertrag.db",
+        "encrypt": true,
+        "file": "<HOME>/board.yaml",
+        "hasPassword": false,
+        "port": 0,
+        "provider": "sqlite",
+        "server": "",
+        "trustServerCertificate": true,
+        "user": "",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag"
+      },
+      "status": 200
+    }
+  }
+]

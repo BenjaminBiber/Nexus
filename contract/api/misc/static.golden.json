@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Startseite",
+    "request": {
+      "method": "GET",
+      "path": "/"
+    },
+    "response": {
+      "contentType": "text/html",
+      "status": 200,
+      "text": "<string>"
+    }
+  },
+  {
+    "name": "Symbol der Oberfläche",
+    "request": {
+      "method": "GET",
+      "path": "/favicon.svg"
+    },
+    "response": {
+      "contentType": "image/svg+xml",
+      "status": 200,
+      "text": "<string>"
+    }
+  },
+  {
+    "name": "Seite der Oberfläche",
+    "request": {
+      "method": "GET",
+      "path": "/p/gibtsnicht/board"
+    },
+    "response": {
+      "contentType": "text/html",
+      "status": 200,
+      "text": "<string>"
+    }
+  },
+  {
+    "name": "Seite mit Suchteil",
+    "request": {
+      "method": "GET",
+      "path": "/p/gibtsnicht/sessions?filter=offen"
+    },
+    "response": {
+      "contentType": "text/html",
+      "status": 200,
+      "text": "<string>"
+    }
+  },
+  {
+    "name": "Seite eines Dokuments",
+    "request": {
+      "method": "GET",
+      "path": "/p/gibtsnicht/docs/plans/plan.md"
+    },
+    "response": {
+      "contentType": "text/html",
+      "status": 200,
+      "text": "<string>"
+    }
+  },
+  {
+    "name": "fehlende Datei unter assets",
+    "request": {
+      "method": "GET",
+      "path": "/assets/gibtsnicht-1234.js"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "not-found",
+        "message": "Diese Adresse gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "unbekannte Adresse der API",
+    "request": {
+      "method": "GET",
+      "path": "/api/gibtsnicht"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "not-found",
+        "message": "Diese Adresse gibt es nicht."
+      },
+      "status": 404
+    }
+  }
+]

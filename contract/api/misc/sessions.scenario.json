@@ -1,0 +1,111 @@
+{
+  "title": "Sitzungen eines Projekts auflisten und einem Ticket zuordnen",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "git": true, "harnessInit": true }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    {
+      "name": "Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "compare": "status"
+    },
+    {
+      "name": "Token des Projekts lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/settings",
+      "save": { "token": "json.token" },
+      "record": false
+    },
+    {
+      "name": "DB-Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "compare": "status"
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "compare": "status"
+    },
+    {
+      "name": "erstes Ticket anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Eins" },
+      "compare": "status"
+    },
+    {
+      "name": "zweites Ticket anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Zwei", "status": "planned" },
+      "compare": "status"
+    },
+
+    { "name": "ohne Sitzungen", "method": "GET", "path": "/api/projects/{{pid}}/sessions" },
+    {
+      "name": "Sitzung über den Hook anlegen",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": {
+        "project": "{{REPO1}}",
+        "event": { "kind": "session-start", "sessionId": "s1", "cwd": "{{REPO1}}", "title": "Vertrag prüfen", "model": "opus" }
+      },
+      "headers": { "x-harness-token": "{{token}}" },
+      "compare": "status"
+    },
+    { "name": "Sitzung ohne Ticket", "method": "GET", "path": "/api/projects/{{pid}}/sessions" },
+
+    {
+      "name": "Sitzung einem Ticket zuordnen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/sessions/s1/claim",
+      "body": { "ticket": "arc-1" }
+    },
+    { "name": "Sitzung mit Ticketangaben", "method": "GET", "path": "/api/projects/{{pid}}/sessions" },
+    {
+      "name": "Sitzung einem zweiten Ticket zuordnen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/sessions/s1/claim",
+      "body": { "ticket": "ARC-0002" }
+    },
+    {
+      "name": "Zuordnung ohne Ticket",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/sessions/s1/claim",
+      "body": {}
+    },
+    {
+      "name": "Zuordnung mit leerem Ticket",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/sessions/s1/claim",
+      "body": { "ticket": "   " }
+    },
+    {
+      "name": "Zuordnung an unbekannter Sitzung",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/sessions/gibtsnicht/claim",
+      "body": { "ticket": "ARC-0001" }
+    },
+    {
+      "name": "Zuordnung auf unbekanntes Ticket",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/sessions/s1/claim",
+      "body": { "ticket": "ARC-0099" }
+    },
+    { "name": "Sitzungen eines unbekannten Projekts", "method": "GET", "path": "/api/projects/gibtsnicht/sessions" },
+    {
+      "name": "Zuordnung in einem unbekannten Projekt",
+      "method": "POST",
+      "path": "/api/projects/gibtsnicht/sessions/s1/claim",
+      "body": { "ticket": "ARC-0001" }
+    }
+  ]
+}
