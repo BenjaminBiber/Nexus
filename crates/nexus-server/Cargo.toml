@@ -18,11 +18,14 @@ nexus-platform = { workspace = true }
 async-trait = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_yaml_ng = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true }
+# Vorschlags-GUID der noch nicht eingerichteten Board-Konfig
+uuid = { workspace = true }
 
 # Der Test-Ersatz nexus-fake-claude legt sich für einen Modus in eine eigene Prozessgruppe
 [target.'cfg(unix)'.dependencies]
