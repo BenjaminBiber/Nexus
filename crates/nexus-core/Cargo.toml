@@ -14,6 +14,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 serde_yaml_ng = { workspace = true }
 sha1_smol = { workspace = true }
+# Temporäre Ordner für den Vergleich der Basis und für die Typprüfung eines eigenen Workflows
+tempfile = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 ts-rs = { workspace = true }
