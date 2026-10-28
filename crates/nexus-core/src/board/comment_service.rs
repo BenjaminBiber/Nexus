@@ -6,7 +6,7 @@ use std::sync::Arc;
 use crate::board::basics::BoardActor;
 use crate::board::database::{BoardDatabase, NewComment};
 use crate::board::limits::BoardLimits;
-use crate::board::ticket_service::TicketService;
+use crate::board::ticket_service;
 use crate::board::types::{Comment, Ticket};
 use crate::clock::Clock;
 use crate::error::{HarnessError, Result};
@@ -70,7 +70,7 @@ impl<D: BoardDatabase> CommentService<D> {
         let actor = actor.clone();
         tx!(self.db, [ticket_id, text, clock, actor], |u| {
             BoardLimits::actor(&actor)?;
-            let ticket = TicketService::load(u, &ticket_id, None, true).await?;
+            let ticket = ticket_service::load(u, &ticket_id, None, true).await?;
             let at = clock.iso();
             u.tickets()
                 .update(&Ticket {
@@ -97,7 +97,7 @@ impl<D: BoardDatabase> CommentService<D> {
     pub async fn list(&self, ticket_id: &str) -> Result<Vec<Comment>> {
         let ticket_id = ticket_id.to_string();
         tx!(self.db, [ticket_id], |u| {
-            let ticket = TicketService::load(u, &ticket_id, None, false).await?;
+            let ticket = ticket_service::load(u, &ticket_id, None, false).await?;
             u.comments().list(&ticket.id).await
         })
         .await

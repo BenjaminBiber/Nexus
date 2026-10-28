@@ -202,6 +202,52 @@ targetBranch: string | null,
 touches: Array<string>, consumes: Array<string>, produces: Array<string>, blockedReason: string | null, plannedAt: string | null, plannedBy: string | null, planningClaimBy: string | null, planningClaimAt: string | null, createdAt: string, createdById: string, createdByName: string, updatedAt: string, rev: number, };
 
 /**
+ * Ein Ticket mit Kommentaren, Verlauf und Schritten
+ */
+export type TicketDetail = { comments: Array<Comment>, history: Array<HistoryEntry>, steps: Array<TicketStep>, column: BoardColumn, waiting: boolean, dependsOpen: Array<string>, 
+/**
+ * Erledigte (oder nicht mehr nötige) Voraussetzungen mit noch gesetztem Branch:
+ * noch nicht gemergt
+ */
+dependsUnmerged: Array<string>, dependents: Array<string>, 
+/**
+ * Abhängige, deren letzte offene Voraussetzung dieses Ticket ist (werden mit seinem
+ * Erledigt bereit)
+ */
+unlocks: Array<string>, 
+/**
+ * Offene Fragen, die dieses Ticket betreffen (sperren In Arbeit, Erledigt, claim und
+ * next-planning)
+ */
+waitingOnQuestions: Array<BoardOpenQuestion>, 
+/**
+ * Erledigte und alle Arbeitsschritte
+ */
+stepsDone: number, stepsTotal: number, 
+/**
+ * Verknüpfte Claude-Sessions in Reihenfolge der Verknüpfung
+ */
+sessions: Array<string>, id: string, projectId: number, boardId: number, number: number, title: string, description: string, status: TicketStatus, priority: Priority, labels: Array<string>, dependsOn: Array<string>, sortOrder: number, assignee: string | null, needsPlanning: boolean, acceptance: string, plan: string, handbook: string, diagram: string, 
+/**
+ * Spec-Dokument, aus dem das Ticket stammt (Pfad unter docs/superpowers);
+ * `spec_task` ist historisch und ungenutzt
+ */
+spec: string | null, specTask: string | null, 
+/**
+ * Branch und Worktree, in dem das Ticket umgesetzt wird (harness board start)
+ */
+branch: string | null, worktree: string | null, 
+/**
+ * Branch, in den das Ticket am Ende gemergt wird; null = Standardbranch des Projekts.
+ * Nur vor dem Start änderbar
+ */
+targetBranch: string | null, 
+/**
+ * Betroffene Bereiche (Pfade) sowie genutzte und gelieferte Schnittstellen
+ */
+touches: Array<string>, consumes: Array<string>, produces: Array<string>, blockedReason: string | null, plannedAt: string | null, plannedBy: string | null, planningClaimBy: string | null, planningClaimAt: string | null, createdAt: string, createdById: string, createdByName: string, updatedAt: string, rev: number, };
+
+/**
  * Spalten des Boards in der Reihenfolge der Anzeige
  */
 export type TicketStatus = "backlog" | "in_planning" | "planned" | "in_progress" | "blocked" | "done" | "not_needed";
@@ -214,6 +260,11 @@ export type TicketStep = { text: string, done: boolean,
  * Ausführliche Anleitung zum Schritt als Markdown (Code, Befehl, erwartetes Ergebnis)
  */
 detail?: string, };
+
+/**
+ * Kurzangaben eines Tickets für Sessions, Favoriten und Meldungen
+ */
+export type TicketSummary = { id: string, title: string, status: TicketStatus, boardId: number, };
 
 /**
  * Ein Ticket, wie die Oberfläche es zeigt: mit Spalte, Voraussetzungen, Abhängigen,

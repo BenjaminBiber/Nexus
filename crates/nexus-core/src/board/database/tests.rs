@@ -436,10 +436,10 @@ struct Dummy {
 }
 
 impl BoardDatabase for Dummy {
-    async fn transaction<'a, T, W>(&'a self, work: W) -> Result<T>
+    async fn transaction<T, W>(&self, work: W) -> Result<T>
     where
         T: Send + 'static,
-        W: TransactionWork<T> + 'a,
+        W: TransactionWork<T> + 'static,
     {
         let mut uow = DummyUnitOfWork::default();
         self.runs.fetch_add(1, Ordering::SeqCst);
