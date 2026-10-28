@@ -121,7 +121,17 @@ eingesetzt. Ein unbekannter Name ist ein Fehler.
 
 ### Schritte
 
-Jeder Schritt hat einen eindeutigen `name`. `kind` wählt die Art (Standard `http`).
+Jeder Schritt hat einen eindeutigen `name`. `kind` wählt die Art (Standard `http`), eine unbekannte Art ist
+ein Fehler. Diese Felder gelten für jede Art:
+
+| Feld | Bedeutung |
+| --- | --- |
+| `save` | Werte für späteren Gebrauch merken. |
+| `compare` | `full` (Standard), `status` oder `shape`. |
+| `ignore` | Felder, die vor dem Vergleich entfernt werden (`"json.a.b"`, relativ zur Antwort). |
+| `record` | `false` führt den Schritt aus, zeichnet ihn aber nicht auf (Vorbereitung). |
+
+Dazu die eigenen Felder der Art `http`:
 
 | Feld | Bedeutung |
 | --- | --- |
@@ -129,10 +139,6 @@ Jeder Schritt hat einen eindeutigen `name`. `kind` wählt die Art (Standard `htt
 | `path` | Pfad ab `/`, mit Abfrageteil erlaubt. |
 | `body` | Körper als JSON; bei `GET`/`HEAD` wird er nur aufgezeichnet, nicht gesendet. |
 | `headers` | Zusätzliche Köpfe. Wert `null` lässt einen Standardkopf weg (für Tests des Schutzes). |
-| `save` | Werte für späteren Gebrauch merken. |
-| `compare` | `full` (Standard), `status` oder `shape`. |
-| `ignore` | Felder, die vor dem Vergleich entfernt werden (`"json.a.b"`, relativ zur Antwort). |
-| `record` | `false` führt den Schritt aus, zeichnet ihn aber nicht auf (Vorbereitung). |
 
 Standardköpfe bei allem außer `GET`/`HEAD`: `x-harness: 1` und `content-type: application/json`.
 Der `Host`-Kopf ist immer `127.0.0.1:<port>`, weil die Anfragen an diese Adresse gehen (`localhost` würde der
@@ -146,6 +152,32 @@ Test der fremden Herkunft steht er im Szenario.
 - `shape`: Status und Inhaltstyp genau, der Körper nur als Schlüssel und JSON-Typen (`"<string>"`, `"<number>"`,
   `"<boolean>"`, `"<null>"`). Listen werden auf ihre verschiedenen Formen zusammengefasst, damit die Länge
   nichts ausmacht; ein Text-Körper wird zu `"<string>"`.
+
+### Schritt-Art `httpStub`: Attrappe eines fremden Dienstes
+
+Manche Routen rufen einen Dienst außerhalb des Rechners auf – `POST /api/user-settings/test-ntfy` schickt eine
+Push-Meldung an einen ntfy-Server. Diese Art startet dafür einen Mini-HTTP-Server auf einem freien Port, der
+jede Anfrage mit einem festen Status beantwortet und aufzeichnet, was ankam.
+
+| Feld | Bedeutung |
+| --- | --- |
+| `stub` | Name der Attrappe in Großbuchstaben (`NTFY`), Pflicht. |
+| `action` | `start` (Standard) startet sie, `requests` zeichnet die empfangenen Anfragen auf. |
+| `status` | Antwortstatus der Attrappe, Standard `200` (nur bei `start`). |
+
+```json
+{ "name": "Attrappe starten", "kind": "httpStub", "stub": "NTFY", "save": { "ntfyUrl": "json.url" } },
+{ "name": "einrichten", "method": "PUT", "path": "/api/user-settings",
+  "body": { "ntfy": true, "ntfyServer": "{{ntfyUrl}}", "ntfyTopic": "harness-vertrag" } },
+{ "name": "Push-Test", "method": "POST", "path": "/api/user-settings/test-ntfy", "body": {} },
+{ "name": "Anfrage an der Attrappe", "kind": "httpStub", "action": "requests", "stub": "NTFY" }
+```
+
+- `start` liefert die Adresse als `json.url`; mit `save` wird sie zur Variable und – weil sie den wechselnden
+  Port enthält – in der Golden-Datei zu `<var:name>`.
+- `requests` liefert je Anfrage Methode, Pfad, die Köpfe `content-type` und `authorization` und den Körper als
+  `json` oder `text`. Andere Köpfe hängen am HTTP-Client und gehören nicht zum Vertrag.
+- Die Attrappen leben nur in ihrem Szenario; der Runner beendet sie danach.
 
 ## Golden-Format (`*.golden.json`)
 
@@ -201,11 +233,16 @@ Jede Regel ist eine eigene Methode in `lib/Normalizer.mjs` und einzeln getestet
 node contract/lib/extract-routes.mjs
 ```
 
+Der Rückfall der Oberfläche hat kein Muster im Quellcode (`app.setNotFoundHandler`); er steht als `GET /*`
+in der Liste und deckt alles ab, was `StaticRoutes.ts` neben `/` beantwortet: Seiten der Oberfläche, Dateien
+unter `assets/` und unbekannte Adressen.
+
 `--coverage` liest die Golden-Dateien (es läuft kein Server), ordnet jeden aufgezeichneten Schritt über
-Methode und Pfad einem Muster zu (`:param` → ein Pfadabschnitt, Abfrageteil abgeschnitten) und gibt je
-Quelldatei eine Tabelle aus: `[x]` abgedeckt, `[ ]` offen. Schritte ohne passende Route stehen am Ende mit
-`?` – dann ist `routes.json` veraltet. Mit `--strict` endet der Lauf mit Exit 1, solange eine Route offen ist
-(gedacht für den Abschluss von Phase 0).
+Methode und Pfad einem Muster zu (`:param` → ein Pfadabschnitt, `*` → Rest des Pfades, Abfrageteil
+abgeschnitten) und gibt je Quelldatei eine Tabelle aus: `[x]` abgedeckt, `[ ]` offen. Ein Muster mit `*`
+zählt erst, wenn keine genauere Route passt. Schritte ohne passende Route stehen am Ende mit `?` – dann ist
+`routes.json` veraltet. Mit `--strict` endet der Lauf mit Exit 1, solange eine Route offen ist (gedacht für
+den Abschluss von Phase 0).
 
 ## Gegen einen fremden Server prüfen
 
@@ -230,7 +267,10 @@ contract/
 ├─ lib/
 │  ├─ ScenarioLoader.mjs      # liest *.scenario.json, prüft die Felder
 │  ├─ ScenarioRunner.mjs      # Home, Fixtures, Variablen, Schritte, Normalisierung
+│  ├─ StepKinds.mjs           # Registry der Schritt-Arten
 │  ├─ HttpStep.mjs            # Schritt-Art „http“
+│  ├─ HttpStubStep.mjs        # Schritt-Art „httpStub“
+│  ├─ HttpStub.mjs            # Mini-HTTP-Server der Attrappe
 │  ├─ ServerHandle.mjs        # Server starten/beenden oder --base nutzen
 │  ├─ Normalizer.mjs          # ersetzt die wechselnden Werte
 │  ├─ GoldenStore.mjs         # lesen, schreiben, vergleichen
@@ -245,7 +285,10 @@ contract/
 │  ├─ routes.json             # alle Routen des Servers
 │  ├─ basis/                  # Beispielszenarien
 │  ├─ board/                  # Board-Kern: Projekte, Boards, Tickets, Schritte (/api/db)
-│  └─ docs/                   # Szenarien der Docs-Seite (Baum, Datei, Suche, Entwürfe, Kommentare)
+│  ├─ board-views/            # Notizen, Suche, Statistik, Graph, Inbox
+│  ├─ docs/                   # Szenarien der Docs-Seite (Baum, Datei, Suche, Entwürfe, Kommentare)
+│  ├─ questions/              # Fragen-Routen
+│  └─ misc/                   # Sitzungen, Favoriten, Hook, Einstellungen, Usage, Workflow, Oberfläche
 └─ tests/                     # Einheitentests (vitest, siehe vitest.config.ts)
 ```
 
@@ -255,8 +298,10 @@ Ein neues Szenario ist eine Datei unter `contract/api/<gruppe>/`; die Golden-Dat
 `node contract/run.mjs --only <gruppe>/<name> --update`. Danach einmal ohne `--update` laufen lassen –
 `git status` darf nichts mehr zeigen.
 
-Eine neue Schritt-Art (geplant: Ereignisstrom, CLI-Aufrufe) ist ein eigenes Modul mit einer Klasse und einer
-Methode `run(step, context)`. `context` hält `base` (Adresse des Servers) und `variables`. Der Rückgabewert
-ist `{ request, response }`; `response` darf alles enthalten, was die Art aufzeichnet, und `save` sowie
-`ignore` greifen darauf zu (`json.…`, `headers.…`). Die Art meldet sich in der Registry `stepKinds` in
-`lib/ScenarioRunner.mjs` an; der Lader prüft dann nur die gemeinsamen Felder.
+Eine neue Schritt-Art (geplant: Ereignisstrom, CLI-Aufrufe) ist ein eigenes Modul mit einer Klasse, einer
+Methode `run(step, context)` und einem Getter `keys` mit ihren eigenen Feldern. `context` hält `base`
+(Adresse des Servers), `variables` und `stubs` (die laufenden Attrappen). Der Rückgabewert ist
+`{ request, response }`; `response` darf alles enthalten, was die Art aufzeichnet, und `save` sowie `ignore`
+greifen darauf zu (`json.…`, `headers.…`). Die Art meldet sich in der Registry `stepKinds` in
+`lib/StepKinds.mjs` an; der Lader prüft dann die gemeinsamen Felder und die aus `keys`. Außer `http` bekommt
+eine Art den Schritt unverändert als `step.raw` – sie prüft ihre eigenen Felder selbst.
