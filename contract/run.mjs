@@ -19,7 +19,7 @@ const HELP = `Vertragstest der HTTP-API.
 
   --update              Golden-Dateien neu aufzeichnen (nur geänderte werden geschrieben)
   --only <teilstring>   nur Szenarien, deren Pfad den Teilstring enthält
-  --suite <name>        Ordner unter contract/ (Standard: api)
+  --suite <name>        Ordner unter contract/ (Standard: alle, also api und sse)
   --server-cmd "<cmd>"  eigener Startbefehl, {port} wird ersetzt
   --base <url>          fremder, laufender Server (braucht --home und genau ein Szenario)
   --home <ordner>       HARNESS_HOME des fremden Servers
@@ -41,7 +41,8 @@ export class ContractRun {
   // Liest die Argumente; wirft bei unbekannten Optionen
   static parse(argv) {
     const options = {
-      update: false, only: null, suite: 'api', serverCmd: DEFAULT_SERVER_CMD, base: null, home: null,
+      // Ohne --suite laufen alle Ordner unter contract/ (api und sse)
+      update: false, only: null, suite: '', serverCmd: DEFAULT_SERVER_CMD, base: null, home: null,
       cliCmd: DEFAULT_CLI_CMD, coverage: false, strict: false, verbose: false, help: false,
     };
     const values = { '--only': 'only', '--suite': 'suite', '--server-cmd': 'serverCmd', '--base': 'base', '--home': 'home', '--cli-cmd': 'cliCmd' };
@@ -68,7 +69,7 @@ export class ContractRun {
     const scenarios = this.scenarios();
     if (this.options.coverage) return this.reportCoverage(scenarios);
     if (!scenarios.length) {
-      console.error(`Keine Szenarien gefunden (Suite ${this.options.suite}${this.options.only ? `, --only ${this.options.only}` : ''}).`);
+      console.error(`Keine Szenarien gefunden (Suite ${this.options.suite || 'alle'}${this.options.only ? `, --only ${this.options.only}` : ''}).`);
       return 1;
     }
     return this.runAll(scenarios);

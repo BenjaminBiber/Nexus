@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -39,7 +39,10 @@ export class RepoFixture {
       this.git(path, ['-c', 'user.name=Vertrag', '-c', 'user.email=vertrag@example.invalid', 'commit', '--allow-empty', '-q', '-m', 'init']);
     }
     if (repo.harnessInit) this.harnessInit(path);
-    return path;
+    // Aufgelöster Pfad: Git meldet die Projektwurzel ohne Verknüpfungen (unter macOS `/private/var/…` statt
+    // `/var/…`). Nur so passt `{{REPO1}}` zu dem Pfad, den der Server selbst führt – etwa beim Repo-Pfad
+    // eines Boards. Der Normalisierer kennt beide Schreibweisen und schreibt in beiden Fällen `<REPO1>`.
+    return realpathSync(path);
   }
 
   // Führt Git im Repo aus

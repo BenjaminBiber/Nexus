@@ -1,0 +1,59 @@
+{
+  "title": "Ereignisstrom: Änderungen am beobachteten Board als dbboard",
+  "env": { "CONTRACT_HEARTBEAT_MS": "400", "CONTRACT_POLL_MS": "200" },
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "repos": [{ "name": "REPO1", "harnessInit": true }]
+  },
+  "steps": [
+    {
+      "name": "Vorbereitung: Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Board-Projekt",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "board": "json.id" },
+      "record": false
+    },
+    { "name": "Strom mit dbBoard", "kind": "sseOpen", "as": "s1", "path": "/api/projects/{{pid}}/events?dbBoard={{board}}" },
+    { "name": "Strom ohne dbBoard", "kind": "sseOpen", "as": "s2", "path": "/api/projects/{{pid}}/events" },
+    { "name": "Begrüßung mit dbBoard", "kind": "sseExpect", "stream": "s1", "until": { "type": "hello" } },
+    { "name": "Begrüßung ohne dbBoard", "kind": "sseExpect", "stream": "s2", "until": { "type": "hello" } },
+    { "name": "Takt abwarten", "kind": "sseExpect", "stream": "s1", "until": { "comment": "ping" } },
+    { "name": "Takt des Stroms ohne dbBoard abwarten", "kind": "sseExpect", "stream": "s2", "until": { "comment": "ping" } },
+    {
+      "name": "Ticket anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/tickets",
+      "body": { "title": "Login" },
+      "save": { "rev": "json.rev" },
+      "compare": "status"
+    },
+    { "name": "dbboard nach dem Anlegen", "kind": "sseExpect", "stream": "s1", "until": { "type": "dbboard" }, "timeoutMs": 6000 },
+    { "name": "Strom ohne dbBoard bekommt nichts", "kind": "sseExpect", "stream": "s2", "until": { "comment": "ping" } },
+    {
+      "name": "Ticket ändern",
+      "method": "PATCH",
+      "path": "/api/db/tickets/ARC-0001",
+      "body": { "title": "Anmeldung", "rev": "{{rev}}" },
+      "compare": "status"
+    },
+    { "name": "dbboard nach dem Ändern", "kind": "sseExpect", "stream": "s1", "until": { "type": "dbboard" }, "timeoutMs": 6000 },
+    { "name": "Strom mit dbBoard schließen", "kind": "sseClose", "stream": "s1" },
+    { "name": "Strom ohne dbBoard schließen", "kind": "sseClose", "stream": "s2" }
+  ]
+}

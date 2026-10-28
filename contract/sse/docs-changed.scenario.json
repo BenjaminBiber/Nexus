@@ -1,0 +1,71 @@
+{
+  "title": "Ereignisstrom: geänderte Superpowers-Dokumente als docs-changed",
+  "env": { "CONTRACT_HEARTBEAT_MS": "400", "CONTRACT_POLL_MS": "200" },
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "repos": [
+      {
+        "name": "REPO1",
+        "harnessInit": true,
+        "files": { "docs/superpowers/specs/2020-03-02-vertrag-design.md": "# Vertrag\n\n## Ziel\n\nAlter Text.\n" }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Vorbereitung: Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Board-Projekt",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "board": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Repo des Boards eintragen",
+      "method": "PATCH",
+      "path": "/api/db/boards/{{board}}",
+      "body": { "repoPath": "{{REPO1}}" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Dokument lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/specs/2020-03-02-vertrag-design.md",
+      "save": { "hash": "json.hash" },
+      "record": false
+    },
+    { "name": "Strom öffnen", "kind": "sseOpen", "as": "s1", "path": "/api/projects/{{pid}}/events" },
+    { "name": "Begrüßung", "kind": "sseExpect", "stream": "s1", "until": { "type": "hello" } },
+    { "name": "Takt abwarten", "kind": "sseExpect", "stream": "s1", "until": { "comment": "ping" } },
+    {
+      "name": "Abschnitt schreiben",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/section",
+      "body": {
+        "path": "docs/superpowers/specs/2020-03-02-vertrag-design.md",
+        "startLine": 5,
+        "endLine": 5,
+        "content": "Neuer Text.",
+        "expectedHash": "{{hash}}"
+      },
+      "compare": "status"
+    },
+    { "name": "docs-changed nach dem Schreiben", "kind": "sseExpect", "stream": "s1", "until": { "type": "docs-changed" }, "timeoutMs": 6000 },
+    { "name": "Strom schließen", "kind": "sseClose", "stream": "s1" }
+  ]
+}

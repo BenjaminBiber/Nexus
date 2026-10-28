@@ -1,0 +1,33 @@
+{
+  "title": "Ereignisstrom: notice nur an Ströme mit ?notify=1",
+  "env": { "CONTRACT_HEARTBEAT_MS": "400" },
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true }]
+  },
+  "steps": [
+    {
+      "name": "Vorbereitung: Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "record": false
+    },
+    { "name": "Strom ohne notify", "kind": "sseOpen", "as": "schlicht", "path": "/api/projects/{{pid}}/events" },
+    { "name": "Strom mit notify", "kind": "sseOpen", "as": "tab1", "path": "/api/projects/{{pid}}/events?notify=1" },
+    { "name": "Begrüßung ohne notify", "kind": "sseExpect", "stream": "schlicht", "until": { "type": "hello" } },
+    { "name": "Begrüßung mit notify", "kind": "sseExpect", "stream": "tab1", "until": { "type": "hello" } },
+    { "name": "Takt des Stroms ohne notify abwarten", "kind": "sseExpect", "stream": "schlicht", "until": { "comment": "ping" } },
+    { "name": "Testmeldung auslösen", "method": "POST", "path": "/api/user-settings/test-notification", "body": {} },
+    { "name": "notice am Strom mit notify", "kind": "sseExpect", "stream": "tab1", "until": { "type": "notice" } },
+    { "name": "Strom ohne notify bekommt keine Meldung", "kind": "sseExpect", "stream": "schlicht", "until": { "comment": "ping" } },
+    { "name": "Strom mit notify schließen", "kind": "sseClose", "stream": "tab1" },
+    { "name": "neuer Strom mit notify", "kind": "sseOpen", "as": "tab2", "path": "/api/projects/{{pid}}/events?notify=1" },
+    { "name": "Begrüßung des neuen Stroms", "kind": "sseExpect", "stream": "tab2", "until": { "type": "hello" } },
+    { "name": "Testmeldung erneut auslösen", "method": "POST", "path": "/api/user-settings/test-notification", "body": {} },
+    { "name": "notice am neuen Strom", "kind": "sseExpect", "stream": "tab2", "until": { "type": "notice" } },
+    { "name": "Strom ohne notify bekommt weiterhin keine Meldung", "kind": "sseExpect", "stream": "schlicht", "until": { "comment": "ping" } },
+    { "name": "Strom ohne notify schließen", "kind": "sseClose", "stream": "schlicht" },
+    { "name": "neuen Strom schließen", "kind": "sseClose", "stream": "tab2" }
+  ]
+}

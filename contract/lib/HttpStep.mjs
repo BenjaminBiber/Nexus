@@ -1,5 +1,26 @@
+const METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']);
+
 // Schritt-Art `http`: eine Anfrage an den Server, aufgezeichnet als Anfrage und Antwort.
 export class HttpStep {
+  // Die Felder, die diese Art im Szenario kennt
+  get keys() {
+    return ['method', 'path', 'body', 'headers'];
+  }
+
+  // Prüft die Felder des Schritts
+  parse(value, index, fail) {
+    if (typeof value.method !== 'string' || !METHODS.has(value.method)) {
+      fail(`steps[${index}].method muss eine von ${[...METHODS].join(', ')} sein.`);
+    }
+    if (typeof value.path !== 'string' || !value.path.startsWith('/')) fail(`steps[${index}].path muss mit / beginnen.`);
+    const headers = value.headers ?? {};
+    if (headers === null || typeof headers !== 'object' || Array.isArray(headers)) fail(`steps[${index}].headers muss ein Objekt sein.`);
+    for (const [name, header] of Object.entries(headers)) {
+      if (header !== null && typeof header !== 'string') fail(`steps[${index}].headers["${name}"] muss ein Text oder null sein.`);
+    }
+    return { method: value.method, path: value.path, body: value.body, headers };
+  }
+
   // Führt den Schritt aus; `variables` setzt `{{NAME}}` ein, `base` ist die Adresse des Servers
   async run(step, context) {
     const path = context.variables.apply(step.path);

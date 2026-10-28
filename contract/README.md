@@ -5,6 +5,9 @@ später der Server in Rust. Dieser Ordner enthält das Werkzeug dafür: Es start
 `HARNESS_HOME`, spielt Anfragen aus Szenario-Dateien ab, ersetzt die je Lauf wechselnden Werte durch
 Platzhalter und vergleicht das Ergebnis mit einer Golden-Datei – oder zeichnet sie neu auf.
 
+Es gibt zwei Sammlungen von Szenarien: `api/` für einzelne Anfragen und `sse/` für den Ereignisstrom
+(Server-Sent Events) eines Projekts. Ohne `--suite` laufen beide.
+
 Alles hier ist plain Node (ESM, `.mjs`), ohne zusätzliche Abhängigkeiten und ohne eigenen Build-Schritt.
 Nur der geprüfte Server muss gebaut sein (`npm run build`).
 
@@ -15,15 +18,16 @@ npm run build                      # Voraussetzung: packages/*/dist und packages
 npm run contract                   # alles vergleichen (= node contract/run.mjs)
 node contract/run.mjs --update     # Golden-Dateien neu aufzeichnen
 node contract/run.mjs --only basis/projects
+node contract/run.mjs --only sse   # nur die Szenarien des Ereignisstroms
 node contract/run.mjs --coverage   # alle Routen mit abgedeckt/offen
-npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lader)
+npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lader, Ereignisstrom)
 ```
 
 | Option | Bedeutung |
 | --- | --- |
 | `--update` | Golden-Dateien neu schreiben; nur Dateien mit geändertem Inhalt werden angefasst. |
 | `--only <teilstring>` | Nur Szenarien, deren Pfad den Teilstring enthält (z. B. `basis/health`). |
-| `--suite <name>` | Ordner unter `contract/` mit den Szenarien (Standard `api`). |
+| `--suite <name>` | Ordner unter `contract/` mit den Szenarien (Standard: alle, also `api` und `sse`). |
 | `--server-cmd "<cmd {port}>"` | Eigener Startbefehl statt des TS-Servers; `{port}` wird ersetzt. Relative Pfade gelten ab der Projektwurzel. |
 | `--base <url> --home <ordner>` | Gegen einen schon laufenden Server prüfen (siehe unten). |
 | `--cli-cmd "<cmd>"` | Befehl der CLI für `harnessInit` (Standard `node packages/cli/dist/main.js`). |
@@ -88,9 +92,20 @@ bei `SIGTERM`/`SIGINT` sauber.
 }
 ```
 
-- `title` ist Pflicht, `platforms` und `fixtures` sind freiwillig. Ohne `platforms` läuft das Szenario überall.
+- `title` ist Pflicht, `platforms`, `env` und `fixtures` sind freiwillig. Ohne `platforms` läuft das Szenario
+  überall.
 - Unbekannte Felder sind ein Fehler – Tippfehler fallen so beim Laden auf, nicht erst im Vergleich.
+  Welche Felder ein Schritt haben darf, hängt von seiner `kind` ab (siehe „Schritte“).
 - Die Golden-Datei liegt daneben und heißt wie das Szenario: `projects.scenario.json` → `projects.golden.json`.
+
+### Umgebung
+
+`env` setzt Umgebungsvariablen des Servers für dieses Szenario, erlaubt sind nur die `CONTRACT_*` des
+Vertragsmodus. Szenarien mit Ereignisstrom drücken damit den Takt, damit sie in Sekunden fertig sind:
+
+```json
+"env": { "CONTRACT_HEARTBEAT_MS": "400", "CONTRACT_POLL_MS": "200" }
+```
 
 ### Fixtures
 
@@ -98,6 +113,8 @@ bei `SIGTERM`/`SIGINT` sauber.
   `git` (Standard `true`) legt ein Repo mit erstem Commit an, `files` schreibt Dateien (Pfade mit `/`),
   `harnessInit` führt `<cli> init` im Repo aus (nötig, damit sich das Projekt anmelden lässt).
   Der Ordner heißt `<temp>/<NAME>/Mein Projekt ä` – Leerzeichen und Umlaut gehören zum Test.
+  `{{REPO1}}` ist der aufgelöste Pfad (ohne Verknüpfungen), weil Git die Projektwurzel so meldet und der
+  Server ihn so führt – nur dann passt er etwa zum Repo-Pfad eines Boards.
 - `boardConfig: "sqlite"`: vor den Schritten `PUT /api/board-config` mit
   `{ provider: "sqlite", dbFile: "<HOME>/board.db", userId: "11111111-1111-1111-1111-111111111111", userName: "Vertrag" }`.
   Dieser Aufruf wird **nicht** aufgezeichnet.
@@ -118,7 +135,17 @@ eingesetzt. Ein unbekannter Name ist ein Fehler.
 
 ### Schritte
 
-Jeder Schritt hat einen eindeutigen `name`. `kind` wählt die Art (Standard `http`).
+Jeder Schritt hat einen eindeutigen `name`. `kind` wählt die Art (Standard `http`); bekannt sind `http`,
+`sseOpen`, `sseExpect` und `sseClose`. Diese Felder gelten für jede Art:
+
+| Feld | Bedeutung |
+| --- | --- |
+| `save` | Werte für späteren Gebrauch merken. |
+| `compare` | `full` (Standard), `status` oder `shape`. |
+| `ignore` | Felder, die vor dem Vergleich entfernt werden (`"json.a.b"`, relativ zur Antwort). |
+| `record` | `false` führt den Schritt aus, zeichnet ihn aber nicht auf (Vorbereitung). |
+
+Dazu die Felder der Art `http`:
 
 | Feld | Bedeutung |
 | --- | --- |
@@ -126,10 +153,6 @@ Jeder Schritt hat einen eindeutigen `name`. `kind` wählt die Art (Standard `htt
 | `path` | Pfad ab `/`, mit Abfrageteil erlaubt. |
 | `body` | Körper als JSON; bei `GET`/`HEAD` wird er nur aufgezeichnet, nicht gesendet. |
 | `headers` | Zusätzliche Köpfe. Wert `null` lässt einen Standardkopf weg (für Tests des Schutzes). |
-| `save` | Werte für späteren Gebrauch merken. |
-| `compare` | `full` (Standard), `status` oder `shape`. |
-| `ignore` | Felder, die vor dem Vergleich entfernt werden (`"json.a.b"`, relativ zur Antwort). |
-| `record` | `false` führt den Schritt aus, zeichnet ihn aber nicht auf (Vorbereitung). |
 
 Standardköpfe bei allem außer `GET`/`HEAD`: `x-harness: 1` und `content-type: application/json`.
 Der `Host`-Kopf ist immer `127.0.0.1:<port>`, weil die Anfragen an diese Adresse gehen (`localhost` würde der
@@ -143,6 +166,77 @@ Test der fremden Herkunft steht er im Szenario.
 - `shape`: Status und Inhaltstyp genau, der Körper nur als Schlüssel und JSON-Typen (`"<string>"`, `"<number>"`,
   `"<boolean>"`, `"<null>"`). Listen werden auf ihre verschiedenen Formen zusammengefasst, damit die Länge
   nichts ausmacht; ein Text-Körper wird zu `"<string>"`.
+
+## Ereignisstrom (`sseOpen`, `sseExpect`, `sseClose`)
+
+`GET /api/projects/:pid/events` liefert einen Ereignisstrom (Server-Sent Events): beim Verbinden
+`{"type":"hello"}`, danach Änderungsmeldungen (`sessions`, `dbboard`, `dbquestions`, `docs-changed`,
+`notice`) und im Takt `heartbeatMs` einen Herzschlag als Kommentarzeile `: ping`. Welche Meldungen ein Strom
+bekommt, hängt am Abfrageteil: `?dbBoard=<id>` für `dbboard`, `?dbProject=<id>` für `dbquestions`,
+`?notify=1` für `notice`.
+
+Drei Schritt-Arten halten das als Vertrag fest. Ein Strom lebt nur innerhalb seines Szenarios und heißt dort
+so, wie `as` ihn nennt:
+
+```json
+{ "name": "Strom öffnen", "kind": "sseOpen", "as": "s1",
+  "path": "/api/projects/{{pid}}/events?dbBoard={{board}}&notify=1" },
+{ "name": "Begrüßung", "kind": "sseExpect", "stream": "s1", "until": { "type": "hello" } },
+{ "name": "Ticket ändern", "method": "PATCH", "path": "/api/db/tickets/ARC-0001",
+  "body": { "title": "Anmeldung", "rev": "{{rev}}" }, "compare": "status" },
+{ "name": "dbboard", "kind": "sseExpect", "stream": "s1", "until": { "type": "dbboard" }, "timeoutMs": 6000 },
+{ "name": "Herzschlag", "kind": "sseExpect", "stream": "s1", "until": { "comment": "ping" } },
+{ "name": "Strom schließen", "kind": "sseClose", "stream": "s1" }
+```
+
+| Art | Felder | Aufgezeichnet |
+| --- | --- | --- |
+| `sseOpen` | `as` (Name), `path` | `request`: `method`, `path`; `response`: `status`, `contentType`, `cacheControl`. |
+| `sseExpect` | `stream`, `until`, `timeoutMs` (Standard 3000) | `request`: `stream`, `until`; `response`: `events`. |
+| `sseClose` | `stream` | `request`: `stream`; `response`: `closed`. |
+
+- `sseOpen` wartet nur auf die Köpfe der Antwort, nicht auf das erste Ereignis. Antwortet der Server nicht mit
+  `text/event-stream` – etwa 404 bei einem unbekannten Projekt –, ist das ein ganz normaler Eintrag mit Status
+  und Körper, und unter diesem Namen gibt es keinen Strom.
+- `sseExpect` gibt alle Ereignisse heraus, die seit dem letzten `sseExpect` **dieses** Stroms angekommen sind,
+  bis einschließlich des ersten Treffers von `until`. `until` wird als Teilobjekt verglichen: jedes genannte
+  Feld muss gleich sein, weitere Felder des Ereignisses spielen keine Rolle (`{ "type": "dbboard" }` passt auf
+  `{ "type": "dbboard", "boardId": 1 }`). Ohne Treffer innerhalb von `timeoutMs` scheitert der Schritt und
+  nennt alles, was bisher angekommen ist.
+- Herzschläge stehen als `{ "comment": "ping" }` im Strom. Wie viele davon ankommen, hängt am Takt, deshalb
+  zeichnet `sseExpect` sie **nur** auf, wenn `until` selbst ein Herzschlag ist; sonst fallen sie aus der Liste.
+- Aufeinanderfolgende gleiche Ereignisse werden zu einem zusammengefasst. Zwei Änderungen in einem Takt der
+  Abfrage melden `dbboard` einmal oder zweimal – beides ergibt dieselbe Golden-Datei.
+- `sseClose` bricht die Verbindung ab und gibt den Namen wieder frei. Am Ende jedes Szenarios werden alle noch
+  offenen Ströme abgebrochen; ein offener Strom hielte sonst `run.mjs` am Leben. Das Beenden des Servers ist
+  für einen Strom kein Fehler.
+
+Zwei Muster halten die Aufzeichnung unabhängig vom Takt:
+
+- **Takt abwarten.** Vor einem Auslöser ein `sseExpect` auf `{ "comment": "ping" }`: der Strom ist danach
+  leer, und die Beobachter des Servers (Board, Dokumente) hatten Zeit, ihren Ausgangswert zu lesen.
+- **Dass ein Strom nichts bekommt**, zeigt ein `sseExpect` auf den nächsten Herzschlag *nach* dem Auslöser.
+  Aufgezeichnet wird dann nur `{ "comment": "ping" }` – käme die Meldung doch an, stünde sie davor.
+
+Dass der Server einen Empfänger beim Schließen wirklich abmeldet, ist von außen nicht zu sehen (und in Rust
+nichts, was der Vertrag prüfen könnte). Die Szenarien prüfen stattdessen das, was man sieht: nach einem
+`sseClose` wird ein Ereignis ausgelöst, ein neuer Strom geöffnet – er bekommt seine Begrüßung, holt das
+Verpasste **nicht** nach und erhält die folgenden Ereignisse wieder.
+
+### Szenarien unter `sse/`
+
+| Szenario | Auslöser |
+| --- | --- |
+| `hello-heartbeat` | Verbinden: `hello`, Herzschlag, zweiter Strom auf dasselbe Projekt, 404 für ein unbekanntes Projekt. |
+| `sessions` | `POST /api/hook` mit dem Token aus `GET /api/projects/:pid/settings`; das zweite Projekt bekommt nichts. |
+| `notice` | `POST /api/user-settings/test-notification`; nur Ströme mit `?notify=1` bekommen `notice`. |
+| `dbboard` | Ticket anlegen und ändern; der Strom ohne `?dbBoard` bekommt nichts. |
+| `dbquestions` | Frage stellen; der Strom ohne `?dbProject` bekommt nichts. |
+| `docs-changed` | `PUT /api/projects/:pid/docs/section` im Repo des Boards. |
+
+Die Testmeldung geht nur an einen Strom mit `?notify=1`, solange einer offen ist; ohne einen solchen Strom
+würde der Server den Weg des Betriebssystems nehmen (Windows-Toast). Deshalb löst `notice` eine Testmeldung
+immer nur bei offenem Strom aus.
 
 ## Golden-Format (`*.golden.json`)
 
@@ -228,6 +322,10 @@ contract/
 │  ├─ ScenarioLoader.mjs      # liest *.scenario.json, prüft die Felder
 │  ├─ ScenarioRunner.mjs      # Home, Fixtures, Variablen, Schritte, Normalisierung
 │  ├─ HttpStep.mjs            # Schritt-Art „http“
+│  ├─ SseSteps.mjs            # Schritt-Arten „sseOpen“, „sseExpect“, „sseClose“
+│  ├─ SseStream.mjs           # eine offene Verbindung: liest mit, gibt bis zum Treffer heraus
+│  ├─ SseParser.mjs           # zerlegt den Textstrom in Ereignisse und Kommentare
+│  ├─ SseEvents.mjs           # Herzschläge, Zusammenfassen, until als Teilobjekt
 │  ├─ ServerHandle.mjs        # Server starten/beenden oder --base nutzen
 │  ├─ Normalizer.mjs          # ersetzt die wechselnden Werte
 │  ├─ GoldenStore.mjs         # lesen, schreiben, vergleichen
@@ -241,17 +339,23 @@ contract/
 ├─ api/
 │  ├─ routes.json             # alle Routen des Servers
 │  └─ basis/                  # Beispielszenarien
+├─ sse/                       # Szenarien des Ereignisstroms
 └─ tests/                     # Einheitentests (vitest, siehe vitest.config.ts)
 ```
 
 ## Neue Szenarien und neue Schritt-Arten
 
-Ein neues Szenario ist eine Datei unter `contract/api/<gruppe>/`; die Golden-Datei entsteht mit
-`node contract/run.mjs --only <gruppe>/<name> --update`. Danach einmal ohne `--update` laufen lassen –
-`git status` darf nichts mehr zeigen.
+Ein neues Szenario ist eine Datei unter `contract/api/<gruppe>/` (oder `contract/sse/`); die Golden-Datei
+entsteht mit `node contract/run.mjs --only <gruppe>/<name> --update`. Danach einmal ohne `--update` laufen
+lassen – `git status` darf nichts mehr zeigen.
 
-Eine neue Schritt-Art (geplant: Ereignisstrom, CLI-Aufrufe) ist ein eigenes Modul mit einer Klasse und einer
-Methode `run(step, context)`. `context` hält `base` (Adresse des Servers) und `variables`. Der Rückgabewert
-ist `{ request, response }`; `response` darf alles enthalten, was die Art aufzeichnet, und `save` sowie
-`ignore` greifen darauf zu (`json.…`, `headers.…`). Die Art meldet sich in der Registry `stepKinds` in
-`lib/ScenarioRunner.mjs` an; der Lader prüft dann nur die gemeinsamen Felder.
+Eine neue Schritt-Art (geplant: CLI-Aufrufe) ist ein eigenes Modul mit einer Klasse und drei Mitgliedern:
+
+- `keys`: die Felder, die diese Art im Szenario kennt (alles andere ist dort ein unbekanntes Feld),
+- `parse(value, index, fail)`: prüft diese Felder und liefert sie in der Form, die `run` erwartet,
+- `run(step, context)`: führt den Schritt aus. `context` hält `base` (Adresse des Servers), `variables` und
+  `streams` (die offenen Ereignisströme). Der Rückgabewert ist `{ request, response }`; `response` darf alles
+  enthalten, was die Art aufzeichnet, und `save` sowie `ignore` greifen darauf zu (`json.…`, `headers.…`).
+
+Die Art meldet sich in der Registry `stepKinds` in `lib/ScenarioRunner.mjs` an; der Lader prüft dann nur noch
+die gemeinsamen Felder (`name`, `kind`, `save`, `compare`, `ignore`, `record`).
