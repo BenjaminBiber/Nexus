@@ -41,8 +41,9 @@ function openLabel(count: number): string {
 }
 
 // Zeigt ein Dokument gerendert mit Inhaltsverzeichnis; fehlende Spec-Dateien erklären, welcher Schritt sie erzeugt.
-// `board` liest das Dokument aus dem Repo dieses Boards (Board-Umschalter der Docs-Seite), sonst aus dem Projektordner
-export function DocViewer({ pid, path, doc, term, board }: { pid: string; path: string; doc: DocFileDto | undefined; term: string; board?: number }) {
+// `board` liest das Dokument aus dem Repo dieses Boards (Board-Umschalter der Docs-Seite), sonst aus dem Projektordner;
+// `root` ist der Ordner dieses Repos und wird für das Öffnen in der Desktop-App gebraucht
+export function DocViewer({ pid, path, doc, term, root = null, board }: { pid: string; path: string; doc: DocFileDto | undefined; term: string; root?: string | null; board?: number }) {
   const missing = doc !== undefined && !doc.exists;
   const loaded = useDocContent(pid, missing ? null : path, board);
   const articleRef = useRef<HTMLElement>(null);
@@ -294,7 +295,7 @@ export function DocViewer({ pid, path, doc, term, board }: { pid: string; path: 
       >
         <div className="doc-head">
           <p className="muted mono doc-path">{path}{editable ? '' : ' · Dokument nur lesbar'}{openLabel(openCount)}</p>
-          <DocOpenMenu pid={pid} path={path} board={board} />
+          <DocOpenMenu pid={pid} path={path} root={root} board={board} />
         </div>
         <HighlightedMarkdown source={loaded.state.data.content} term={term} />
       </article>
