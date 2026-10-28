@@ -5,6 +5,7 @@
 //! und liefert sonst die Oberfläche bzw. 404 als JSON.
 
 pub mod health;
+pub mod settings;
 pub mod static_files;
 pub mod workflow;
 
@@ -30,6 +31,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     let mut router = Router::new();
     if state.config.proxy_groups.enabled(RouteGroup::Basis) {
         router = router.merge(health::routes());
+    }
+    if state.config.proxy_groups.enabled(RouteGroup::Settings) {
+        router = router.merge(settings::routes());
     }
     if state.config.proxy_groups.enabled(RouteGroup::Workflow) {
         router = router.merge(workflow::routes());

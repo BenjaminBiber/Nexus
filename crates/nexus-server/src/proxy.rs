@@ -8,7 +8,7 @@
 
 use axum::body::Body;
 use axum::extract::{Request, State};
-use axum::http::{header, HeaderMap, HeaderName, HeaderValue, StatusCode, Uri};
+use axum::http::{header, HeaderMap, HeaderName, HeaderValue, Method, StatusCode, Uri};
 use axum::response::{IntoResponse, Response};
 use futures::StreamExt;
 use http_body_util::BodyStream;
@@ -115,6 +115,48 @@ impl Upstream {
         });
         let body = Body::from_stream(frames.take_until(shutdown.clone().cancelled_owned()));
         Ok(Response::from_parts(parts, body))
+    }
+
+    /// Reicht eine schon beantwortete Anfrage am Upstream nach, ohne auf ihn zu warten.
+    ///
+    /// Gebraucht nach `PUT /api/board-config`: der Node-Server hält seine eigene
+    /// Board-Laufzeit (Dispatcher, noch nicht portierte Routen) und muss sie verwerfen. Die
+    /// Antwort zählt nicht, ein Fehlschlag steht nur im Protokoll. Der Aufruf endet
+    /// spätestens, wenn der Server beendet wird.
+    pub fn replay(
+        &self,
+        method: Method,
+        path: &str,
+        body: Vec<u8>,
+        log: crate::log::ServerLog,
+        shutdown: &CancellationToken,
+    ) {
+        let client = self.client.clone();
+        let authority = self.authority.clone();
+        let uri = format!("{}{path}", self.base);
+        let shutdown = shutdown.clone();
+        let label = format!("{method} {path}");
+        tokio::spawn(async move {
+            let request = Request::builder()
+                .method(method)
+                .uri(&uri)
+                .header(header::HOST, authority)
+                .header(header::CONTENT_TYPE, crate::error::JSON_CONTENT_TYPE)
+                // Der Schutz des Node-Servers verlangt den Pflichtkopf bei jedem Schreibzugriff
+                .header("x-harness", "1")
+                .body(Body::from(body));
+            let request = match request {
+                Ok(request) => request,
+                Err(error) => return log.write(&format!("Nachreichen von {label}: {error}")),
+            };
+            let sent = tokio::select! {
+                result = client.request(request) => result,
+                _ = shutdown.cancelled() => return,
+            };
+            if let Err(error) = sent {
+                log.write(&format!("Nachreichen von {label} fehlgeschlagen: {error}"));
+            }
+        });
     }
 
     /// Köpfe für den Upstream: Verbindungsköpfe weg, `host` und `origin` auf den Upstream –

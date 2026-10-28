@@ -2717,6 +2717,7 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_json",
+ "serde_yaml_ng",
  "tempfile",
  "thiserror 2.0.21",
  "tiberius",
@@ -2724,6 +2725,7 @@ dependencies = [
  "tokio-util",
  "tower",
  "tower-http",
+ "uuid",
 ]
 
 [[package]]

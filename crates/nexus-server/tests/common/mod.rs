@@ -197,6 +197,90 @@ impl TestServer {
     }
 }
 
+/// Legt ein eingerichtetes Testprojekt an, meldet es am Server an und liefert es samt ID
+impl TestServer {
+    pub fn add_project(&self) -> (TempRepo, String) {
+        let repo = TempRepo::new();
+        nexus_core::HarnessProject::init(repo.path()).expect("Projekt einrichten");
+        let added = nexus_core::registry::ProjectRegistry::new(self.home.clone())
+            .add(repo.path())
+            .expect("Projekt anmelden");
+        (repo, added.project.id)
+    }
+}
+
+/// Temporäres Git-Projekt für Tests (Ordnername mit Leerzeichen und Umlaut); entspricht
+/// `packages/core/tests/unit/helpers/TempRepo.ts`
+pub struct TempRepo {
+    _base: tempfile::TempDir,
+    path: PathBuf,
+}
+
+impl TempRepo {
+    /// Legt das Projekt mit einem ersten Commit an
+    pub fn new() -> Self {
+        let base = tempfile::Builder::new()
+            .prefix("nexus-srv-repo-")
+            .tempdir()
+            .expect("Ordner");
+        // Aufgelöster Pfad: unter Windows steht TEMP oft als 8.3-Kurzname, unter macOS zeigt
+        // /var auf /private/var – Git liefert Pfade immer aufgelöst zurück
+        let resolved = std::fs::canonicalize(base.path()).unwrap_or_else(|_| base.path().into());
+        let resolved = resolved
+            .to_string_lossy()
+            .strip_prefix(r"\\?\")
+            .map(PathBuf::from)
+            .unwrap_or(resolved);
+        let path = resolved.join("Mein Projekt ä");
+        std::fs::create_dir(&path).expect("Projektordner");
+        let repo = Self { _base: base, path };
+        repo.git(&["init", "-q"]);
+        repo.git(&[
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "commit",
+            "--allow-empty",
+            "-q",
+            "-m",
+            "init",
+        ]);
+        repo
+    }
+
+    /// Ordner des Projekts
+    pub fn path(&self) -> &std::path::Path {
+        &self.path
+    }
+
+    /// Löscht den Ordner des Projekts (das Projekt gilt danach als nicht erreichbar)
+    pub fn remove(&self) {
+        let _ = std::fs::remove_dir_all(&self.path);
+    }
+
+    /// Führt Git im Projekt aus
+    fn git(&self, args: &[&str]) {
+        let output = std::process::Command::new("git")
+            .args(args)
+            .current_dir(&self.path)
+            .output()
+            .expect("git");
+        assert!(
+            output.status.success(),
+            "git {}: {}",
+            args.join(" "),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+}
+
+impl Default for TempRepo {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Board-Laufzeit im Speicher: merkt sich nur, ob sie geschlossen wurde
 #[derive(Debug, Default)]
 pub struct MemoryBoardBackend {
