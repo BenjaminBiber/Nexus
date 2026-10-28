@@ -1,8 +1,8 @@
 import { useId, useState } from 'react';
-import { useApi } from '../../api/ApiContext.js';
 import type { DbBoardDto, DbBoardPatch, DbProjectDto } from '../../api/dbTypes.js';
 import { CommentIcon } from '../CommentIcon.js';
 import { DbModal } from './DbModal.js';
+import { usePlatform } from '../../platform/PlatformContext.js';
 
 // Dialog „Projekt bearbeiten“: Name ändern
 export function ProjectEditDialog({ project, busy, error, onSave, onClose }: {
@@ -62,7 +62,7 @@ export function BoardEditDialog({ board, busy, error, onSave, onClose }: {
   onSave: (patch: DbBoardPatch) => void;
   onClose: () => void;
 }) {
-  const api = useApi();
+  const platform = usePlatform();
   const titleId = useId();
   const [name, setName] = useState(board.name);
   const [repoPath, setRepoPath] = useState(board.repoPath ?? '');
@@ -76,7 +76,7 @@ export function BoardEditDialog({ board, busy, error, onSave, onClose }: {
     setPicking(true);
     setPickError(null);
     try {
-      const { path } = await api.pickDbFolder(trimmedPath || undefined);
+      const path = await platform.pickFolder(trimmedPath || undefined);
       if (path) setRepoPath(path);
     } catch (e) {
       setPickError((e as Error).message);

@@ -9,7 +9,11 @@ pub fn run() {
                 .level(log::LevelFilter::Info)
                 .build(),
         )
-        .plugin(tauri_plugin_shell::init());
+        .plugin(tauri_plugin_shell::init())
+        // Ordnerdialog der Oberfläche (Repo-Pfad eines Boards)
+        .plugin(tauri_plugin_dialog::init())
+        // Datei im Dateimanager zeigen, VS Code und den Standardbrowser öffnen
+        .plugin(tauri_plugin_opener::init());
     // Folge-Tickets hängen hier je Funktion genau eine Zeile an (tray::init, …)
     builder
         .on_page_load(server::on_page_load)

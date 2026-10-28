@@ -83,6 +83,10 @@ export function DocsPage() {
   const list = merged.docs;
   // Schlüssel der offenen Datei; ?board= mit dem Board des Ordners ist dieselbe Datei wie ohne
   const current = path === null ? null : docKey({ path, board: openBoard === home ? undefined : openBoard });
+  // Repo-Ordner der offenen Datei: der des Ordner-Boards, bei ?board= der des fremden Boards (für das Öffnen in der Desktop-App)
+  const openRoot = openBoard === undefined || openBoard === home
+    ? source?.root ?? null
+    : foreignLists.find((l) => l.boardId === openBoard)?.source?.root ?? null;
   // Dateien, zu denen Claude gerade Ticket-Entwürfe schreibt (im Baum pulsiert dort das Claude-Symbol)
   const { list: ticketJobs } = useDocTicketJobs();
   const jobKeyOf = (j: { path: string; board?: number }) => docKey({ path: j.path, board: j.board === home ? undefined : j.board });
@@ -245,6 +249,7 @@ export function DocsPage() {
               key={`${pid}:${current}`}
               pid={pid}
               path={path}
+              root={openRoot}
               board={openBoard}
               doc={list.find((d) => docKey(d) === current)}
               term={term}

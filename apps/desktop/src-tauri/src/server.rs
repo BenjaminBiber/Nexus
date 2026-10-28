@@ -675,4 +675,42 @@ mod tests {
         assert!(!passt("http://192.168.0.5:4710/"));
         assert!(!passt("https://example.com/"));
     }
+
+    // Ordnerauswahl und Öffnen sind freigegeben, aber nur diese Befehle; Adressen nur für Browser und VS Code
+    #[test]
+    fn capability_gibt_nur_dialog_und_opener_frei() {
+        let datei: serde_json::Value =
+            serde_json::from_str(include_str!("../capabilities/remote.json")).unwrap();
+        let rechte = datei["permissions"].as_array().unwrap();
+
+        let namen: Vec<&str> = rechte
+            .iter()
+            .map(|recht| {
+                recht
+                    .as_str()
+                    .unwrap_or_else(|| recht["identifier"].as_str().unwrap())
+            })
+            .collect();
+        assert_eq!(
+            namen,
+            [
+                "core:default",
+                "log:default",
+                "dialog:allow-open",
+                "opener:allow-reveal-item-in-dir",
+                "opener:allow-open-url",
+            ]
+        );
+
+        let adressen: Vec<&str> = rechte
+            .iter()
+            .find(|recht| recht["identifier"] == "opener:allow-open-url")
+            .unwrap()["allow"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|eintrag| eintrag["url"].as_str().unwrap())
+            .collect();
+        assert_eq!(adressen, ["http://*", "https://*", "vscode://*"]);
+    }
 }
