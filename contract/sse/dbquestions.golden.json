@@ -1,0 +1,154 @@
+[
+  {
+    "name": "Strom mit dbProject",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/events?dbProject=1"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Strom ohne dbProject",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/events"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Begrüßung mit dbProject",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Begrüßung ohne dbProject",
+    "request": {
+      "stream": "s2",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Takt abwarten",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Takt des Stroms ohne dbProject abwarten",
+    "request": {
+      "stream": "s2",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Frage stellen",
+    "request": {
+      "body": {
+        "title": "Welcher Speicher?"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "dbquestions nach dem Stellen",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "type": "dbquestions"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "projectId": 1,
+          "type": "dbquestions"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Strom ohne dbProject bekommt nichts",
+    "request": {
+      "stream": "s2",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Strom mit dbProject schließen",
+    "request": {
+      "stream": "s1"
+    },
+    "response": {
+      "closed": true
+    }
+  },
+  {
+    "name": "Strom ohne dbProject schließen",
+    "request": {
+      "stream": "s2"
+    },
+    "response": {
+      "closed": true
+    }
+  }
+]

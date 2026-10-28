@@ -1,0 +1,235 @@
+{
+  "title": "Optimierungs-Vorschläge lesen, ausblenden, übernehmen und analysieren",
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "homeFiles": {
+      "dispatch/runs/stats/ARC-0001-20261020-080000-work-aa01.json": {
+        "id": "ARC-0001-20261020-080000-work-aa01", "kind": "work", "subjectId": "ARC-0001", "projectId": 1, "boardId": 1,
+        "agent": "junior-ARC-0001", "attempt": 1, "profile": "standard", "escalatedFrom": null, "requestedModel": "opus",
+        "model": "claude-opus-5-5", "effort": "high", "startedAt": "{{NOW}}", "endedAt": "{{NOW}}", "durationMs": 5400000,
+        "numTurns": 40, "exitCode": 0, "timedOut": false, "outcome": "abort", "abortCategory": "max-turns",
+        "abortReason": "Maximale Zahl an Schritten (40) erreicht", "costUsd": 4.2, "inputTokens": 120000, "outputTokens": 48000,
+        "cacheReadTokens": 900000, "cacheWriteTokens": 60000, "modelUsage": "{\"claude-opus-5-5\":{\"costUsd\":4.2}}",
+        "source": "dispatcher", "maxTurns": 40, "timeoutMinutes": 60, "profileReason": "default", "ruleIndex": null,
+        "configHash": null, "deniedCount": 0, "deniedTools": null
+      },
+      "dispatch/runs/stats/ARC-0002-20261020-090000-work-aa02.json": {
+        "id": "ARC-0002-20261020-090000-work-aa02", "kind": "work", "subjectId": "ARC-0002", "projectId": 1, "boardId": 1,
+        "agent": "junior-ARC-0002", "attempt": 1, "profile": "standard", "escalatedFrom": null, "requestedModel": "opus",
+        "model": "claude-opus-5-5", "effort": "high", "startedAt": "{{NOW}}", "endedAt": "{{NOW}}", "durationMs": 5100000,
+        "numTurns": 40, "exitCode": 0, "timedOut": false, "outcome": "abort", "abortCategory": "max-turns",
+        "abortReason": "Maximale Zahl an Schritten (40) erreicht", "costUsd": 3.9, "inputTokens": 110000, "outputTokens": 44000,
+        "cacheReadTokens": 850000, "cacheWriteTokens": 55000, "modelUsage": "{\"claude-opus-5-5\":{\"costUsd\":3.9}}",
+        "source": "dispatcher", "maxTurns": 40, "timeoutMinutes": 60, "profileReason": "default", "ruleIndex": null,
+        "configHash": null, "deniedCount": 0, "deniedTools": null
+      },
+      "dispatch/runs/stats/ARC-0003-20261021-080000-work-aa03.json": {
+        "id": "ARC-0003-20261021-080000-work-aa03", "kind": "work", "subjectId": "ARC-0003", "projectId": 1, "boardId": 1,
+        "agent": "junior-ARC-0003", "attempt": 1, "profile": "standard", "escalatedFrom": null, "requestedModel": "opus",
+        "model": "claude-opus-5-5", "effort": "high", "startedAt": "{{NOW}}", "endedAt": "{{NOW}}", "durationMs": 3600000,
+        "numTurns": 26, "exitCode": null, "timedOut": true, "outcome": "abort", "abortCategory": "timeout",
+        "abortReason": "Zeitlimit von 60 min erreicht, Lauf abgebrochen", "costUsd": 2.8, "inputTokens": 90000, "outputTokens": 30000,
+        "cacheReadTokens": 700000, "cacheWriteTokens": 40000, "modelUsage": "{\"claude-opus-5-5\":{\"costUsd\":2.8}}",
+        "source": "dispatcher", "maxTurns": 40, "timeoutMinutes": 60, "profileReason": "default", "ruleIndex": null,
+        "configHash": null, "deniedCount": 1, "deniedTools": "Bash"
+      },
+      "dispatch/runs/stats/OTH-0001-20261021-090000-work-aa04.json": {
+        "id": "OTH-0001-20261021-090000-work-aa04", "kind": "work", "subjectId": "OTH-0001", "projectId": 2, "boardId": null,
+        "agent": "junior-OTH-0001", "attempt": 1, "profile": "standard", "escalatedFrom": null, "requestedModel": "opus",
+        "model": "claude-opus-5-5", "effort": "high", "startedAt": "{{NOW}}", "endedAt": "{{NOW}}", "durationMs": 3600000,
+        "numTurns": 24, "exitCode": null, "timedOut": true, "outcome": "abort", "abortCategory": "timeout",
+        "abortReason": "Zeitlimit von 60 min erreicht, Lauf abgebrochen", "costUsd": 2.6, "inputTokens": 85000, "outputTokens": 28000,
+        "cacheReadTokens": 680000, "cacheWriteTokens": 38000, "modelUsage": "{\"claude-opus-5-5\":{\"costUsd\":2.6}}",
+        "source": "dispatcher", "maxTurns": 40, "timeoutMinutes": 60, "profileReason": "default", "ruleIndex": null,
+        "configHash": null, "deniedCount": 0, "deniedTools": null
+      },
+      "dispatch/runs/stats/ARC-0004-20261022-080000-work-aa05.json": {
+        "id": "ARC-0004-20261022-080000-work-aa05", "kind": "work", "subjectId": "ARC-0004", "projectId": 1, "boardId": 1,
+        "agent": "junior-ARC-0004", "attempt": 1, "profile": "standard", "escalatedFrom": null, "requestedModel": "opus",
+        "model": "claude-opus-5-5", "effort": "high", "startedAt": "{{NOW}}", "endedAt": "{{NOW}}", "durationMs": 2700000,
+        "numTurns": 33, "exitCode": 1, "timedOut": false, "outcome": "abort", "abortCategory": "context",
+        "abortReason": "Kontext voll: Claude hat das Kontextfenster ausgereizt", "costUsd": 3.1, "inputTokens": 190000,
+        "outputTokens": 26000, "cacheReadTokens": 1200000, "cacheWriteTokens": 70000,
+        "modelUsage": "{\"claude-opus-5-5\":{\"costUsd\":3.1}}",
+        "source": "dispatcher", "maxTurns": 40, "timeoutMinutes": 60, "profileReason": "default", "ruleIndex": null,
+        "configHash": null, "deniedCount": 0, "deniedTools": null
+      },
+      "dispatch/runs/stats/OTH-0002-20261022-090000-work-aa06.json": {
+        "id": "OTH-0002-20261022-090000-work-aa06", "kind": "work", "subjectId": "OTH-0002", "projectId": 2, "boardId": null,
+        "agent": "junior-OTH-0002", "attempt": 1, "profile": "standard", "escalatedFrom": null, "requestedModel": "opus",
+        "model": "claude-opus-5-5", "effort": "high", "startedAt": "{{NOW}}", "endedAt": "{{NOW}}", "durationMs": 2400000,
+        "numTurns": 31, "exitCode": 1, "timedOut": false, "outcome": "abort", "abortCategory": "context",
+        "abortReason": "Kontext voll: Claude hat das Kontextfenster ausgereizt", "costUsd": 2.9, "inputTokens": 180000,
+        "outputTokens": 24000, "cacheReadTokens": 1150000, "cacheWriteTokens": 66000,
+        "modelUsage": "{\"claude-opus-5-5\":{\"costUsd\":2.9}}",
+        "source": "dispatcher", "maxTurns": 40, "timeoutMinutes": 60, "profileReason": "default", "ruleIndex": null,
+        "configHash": null, "deniedCount": 0, "deniedTools": null
+      },
+      "dispatch/runs/stats/ARC-0005-20261023-080000-work-aa07.json": {
+        "id": "ARC-0005-20261023-080000-work-aa07", "kind": "work", "subjectId": "ARC-0005", "projectId": 1, "boardId": 1,
+        "agent": "junior-ARC-0005", "attempt": 1, "profile": "standard", "escalatedFrom": null, "requestedModel": "opus",
+        "model": "claude-opus-5-5", "effort": "high", "startedAt": "{{NOW}}", "endedAt": "{{NOW}}", "durationMs": 900000,
+        "numTurns": 12, "exitCode": 0, "timedOut": false, "outcome": "done", "abortCategory": null, "abortReason": null,
+        "costUsd": 1.1, "inputTokens": 40000, "outputTokens": 12000, "cacheReadTokens": 300000, "cacheWriteTokens": 20000,
+        "modelUsage": "{\"claude-opus-5-5\":{\"costUsd\":1.1}}",
+        "source": "dispatcher", "maxTurns": 40, "timeoutMinutes": 60, "profileReason": "default", "ruleIndex": null,
+        "configHash": null, "deniedCount": 0, "deniedTools": null
+      },
+      "dispatch/runs/stats/ARC-0006-20261023-090000-work-aa08.json": {
+        "id": "ARC-0006-20261023-090000-work-aa08", "kind": "work", "subjectId": "ARC-0006", "projectId": 1, "boardId": 1,
+        "agent": "junior-ARC-0006", "attempt": 1, "profile": "standard", "escalatedFrom": null, "requestedModel": "opus",
+        "model": "claude-opus-5-5", "effort": "high", "startedAt": "{{NOW}}", "endedAt": "{{NOW}}", "durationMs": 1080000,
+        "numTurns": 14, "exitCode": 0, "timedOut": false, "outcome": "done", "abortCategory": null, "abortReason": null,
+        "costUsd": 1.3, "inputTokens": 44000, "outputTokens": 14000, "cacheReadTokens": 320000, "cacheWriteTokens": 22000,
+        "modelUsage": "{\"claude-opus-5-5\":{\"costUsd\":1.3}}",
+        "source": "dispatcher", "maxTurns": 40, "timeoutMinutes": 60, "profileReason": "default", "ruleIndex": null,
+        "configHash": null, "deniedCount": 0, "deniedTools": null
+      },
+      "dispatch/runs/stats/ARC-0001-20261024-080000-work-bb01.json": {
+        "id": "ARC-0001-20261024-080000-work-bb01", "kind": "work", "subjectId": "ARC-0001", "projectId": 1, "boardId": 1,
+        "agent": "junior-ARC-0001", "attempt": 2, "profile": "gross", "escalatedFrom": "standard", "requestedModel": "opus",
+        "model": "claude-opus-5-5", "effort": "max", "startedAt": "{{NOW}}", "endedAt": "{{NOW}}", "durationMs": 4500000,
+        "numTurns": 48, "exitCode": 0, "timedOut": false, "outcome": "done", "abortCategory": null, "abortReason": null,
+        "costUsd": 6.4, "inputTokens": 150000, "outputTokens": 60000, "cacheReadTokens": 1100000, "cacheWriteTokens": 80000,
+        "modelUsage": "{\"claude-opus-5-5\":{\"costUsd\":6.4}}",
+        "source": "dispatcher", "maxTurns": 80, "timeoutMinutes": 120, "profileReason": "default", "ruleIndex": null,
+        "configHash": null, "deniedCount": 0, "deniedTools": null
+      },
+      "dispatch/runs/stats/ARC-0002-20261024-090000-work-bb02.json": {
+        "id": "ARC-0002-20261024-090000-work-bb02", "kind": "work", "subjectId": "ARC-0002", "projectId": 1, "boardId": 1,
+        "agent": "junior-ARC-0002", "attempt": 2, "profile": "gross", "escalatedFrom": "standard", "requestedModel": "opus",
+        "model": "claude-opus-5-5", "effort": "max", "startedAt": "{{NOW}}", "endedAt": "{{NOW}}", "durationMs": 4800000,
+        "numTurns": 52, "exitCode": 0, "timedOut": false, "outcome": "done", "abortCategory": null, "abortReason": null,
+        "costUsd": 6.9, "inputTokens": 160000, "outputTokens": 64000, "cacheReadTokens": 1150000, "cacheWriteTokens": 84000,
+        "modelUsage": "{\"claude-opus-5-5\":{\"costUsd\":6.9}}",
+        "source": "dispatcher", "maxTurns": 80, "timeoutMinutes": 120, "profileReason": "default", "ruleIndex": null,
+        "configHash": null, "deniedCount": 0, "deniedTools": null
+      },
+      "dispatch/runs/stats/ARC-0003-20261025-080000-work-bb03.json": {
+        "id": "ARC-0003-20261025-080000-work-bb03", "kind": "work", "subjectId": "ARC-0003", "projectId": 1, "boardId": 1,
+        "agent": "junior-ARC-0003", "attempt": 2, "profile": "gross", "escalatedFrom": "standard", "requestedModel": "opus",
+        "model": "claude-opus-5-5", "effort": "max", "startedAt": "{{NOW}}", "endedAt": "{{NOW}}", "durationMs": 5700000,
+        "numTurns": 61, "exitCode": 0, "timedOut": false, "outcome": "done", "abortCategory": null, "abortReason": null,
+        "costUsd": 7.6, "inputTokens": 170000, "outputTokens": 70000, "cacheReadTokens": 1250000, "cacheWriteTokens": 90000,
+        "modelUsage": "{\"claude-opus-5-5\":{\"costUsd\":7.6}}",
+        "source": "dispatcher", "maxTurns": 80, "timeoutMinutes": 120, "profileReason": "default", "ruleIndex": null,
+        "configHash": null, "deniedCount": 0, "deniedTools": null
+      },
+      "dispatch/runs/stats/OTH-0001-20261025-090000-work-bb04.json": {
+        "id": "OTH-0001-20261025-090000-work-bb04", "kind": "work", "subjectId": "OTH-0001", "projectId": 2, "boardId": null,
+        "agent": "junior-OTH-0001", "attempt": 2, "profile": "gross", "escalatedFrom": "standard", "requestedModel": "opus",
+        "model": "claude-opus-5-5", "effort": "max", "startedAt": "{{NOW}}", "endedAt": "{{NOW}}", "durationMs": 4200000,
+        "numTurns": 44, "exitCode": 0, "timedOut": false, "outcome": "review", "abortCategory": null, "abortReason": null,
+        "costUsd": 5.8, "inputTokens": 140000, "outputTokens": 56000, "cacheReadTokens": 1050000, "cacheWriteTokens": 76000,
+        "modelUsage": "{\"claude-opus-5-5\":{\"costUsd\":5.8}}",
+        "source": "dispatcher", "maxTurns": 80, "timeoutMinutes": 120, "profileReason": "default", "ruleIndex": null,
+        "configHash": null, "deniedCount": 0, "deniedTools": null
+      }
+    }
+  },
+  "steps": [
+    { "name": "Vorschläge ohne Einstellung und ohne Läufe", "method": "GET", "path": "/api/dispatch/suggestions" },
+
+    {
+      "name": "Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "compare": "status"
+    },
+    {
+      "name": "zweites Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "OTH", "name": "Andere" },
+      "compare": "status"
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "compare": "status"
+    },
+    {
+      "name": "Einstellung mit Leiter, Regel und ungenutztem Profil speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": {
+        "enabled": true,
+        "wip": 1,
+        "optInLabel": "auto",
+        "maxAttempts": 3,
+        "profiles": {
+          "klein": { "model": "sonnet", "effort": "high", "maxTurns": 20, "timeoutMinutes": 30 },
+          "standard": { "model": "opus", "effort": "high", "maxTurns": 40, "timeoutMinutes": 60 },
+          "gross": { "model": "opus", "effort": "max", "maxTurns": 80, "timeoutMinutes": 120 },
+          "alt": { "model": "sonnet", "effort": "high", "maxTurns": 10, "timeoutMinutes": 15 }
+        },
+        "defaultProfile": "standard",
+        "escalation": ["standard", "gross"],
+        "rules": [{ "when": { "labels": ["klein"] }, "profile": "klein" }],
+        "research": { "auto": false, "wip": 1, "maxPerDay": 10 },
+        "planning": { "auto": false, "wip": 1 }
+      },
+      "compare": "status"
+    },
+    {
+      "name": "vorgemerkte Läufe mit einem Durchlauf in die Auswertung schreiben",
+      "method": "POST",
+      "path": "/api/dispatch/run",
+      "body": {},
+      "compare": "status"
+    },
+
+    {
+      "name": "Vorschläge aus den Läufen lesen",
+      "method": "GET",
+      "path": "/api/dispatch/suggestions",
+      "save": { "hash": "json.configHash", "umlenken": "json.suggestions.0.id", "schritte": "json.suggestions.1.id", "hinweis": "json.suggestions.4.id" }
+    },
+    { "name": "Vorschlag ausblenden", "method": "POST", "path": "/api/dispatch/suggestions/{{schritte}}/dismiss", "body": {} },
+    { "name": "Vorschlag wieder einblenden", "method": "DELETE", "path": "/api/dispatch/suggestions/{{schritte}}/dismiss", "body": {} },
+    { "name": "Vorschlag mit kaputter ID ausblenden", "method": "POST", "path": "/api/dispatch/suggestions/kaputt!/dismiss", "body": {} },
+
+    { "name": "Analyse von Claude starten (Vertragsmodus antwortet mit leerer Liste)", "method": "POST", "path": "/api/dispatch/suggestions/analyze", "body": {} },
+
+    {
+      "name": "Übernehmen mit veralteter Einstellung",
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/{{umlenken}}/apply",
+      "body": { "configHash": "veraltet" }
+    },
+    {
+      "name": "Übernehmen ohne Hash der Einstellung",
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/{{umlenken}}/apply",
+      "body": {}
+    },
+    {
+      "name": "unbekannten Vorschlag übernehmen",
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/0000000000000000/apply",
+      "body": { "configHash": "{{hash}}" }
+    },
+    {
+      "name": "Vorschlag mit kaputter ID übernehmen",
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/kaputt!/apply",
+      "body": { "configHash": "{{hash}}" }
+    },
+    {
+      "name": "Hinweis ohne Änderung übernehmen",
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/{{hinweis}}/apply",
+      "body": { "configHash": "{{hash}}" }
+    },
+    {
+      "name": "Vorschlag übernehmen (Vorlagen der Prompts stehen im Vertrag der Einstellung)",
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/{{umlenken}}/apply",
+      "body": { "configHash": "{{hash}}" },
+      "ignore": ["json.view.promptInfo"]
+    }
+  ]
+}

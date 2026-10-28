@@ -62,8 +62,14 @@ describe('ScenarioLoader', () => {
     it('ohne platforms und fixtures gilt: überall, ohne Vorbereitung', () => {
       const scenario = loader.parse(write('health', { title: 'Health', steps: [{ name: 'health', method: 'GET', path: '/api/health' }] }));
       expect(scenario.platforms).toEqual([]);
-      expect(scenario.fixtures).toEqual({ repos: [], boardConfig: null });
+      expect(scenario.fixtures).toEqual({ repos: [], boardConfig: null, homeFiles: {} });
       expect(ScenarioLoader.runsHere(scenario, 'win32')).toBe(true);
+    });
+
+    it('übernimmt homeFiles als Text und als JSON-Wert', () => {
+      const homeFiles = { 'dispatch-logs/a.log': 'eine Zeile\n', 'dispatch/runs/r1.json': { id: 'r1', pid: null }, 'dispatch/liste.json': [1, 2] };
+      const scenario = loader.parse(write('home', { title: 'Home', fixtures: { homeFiles }, steps: GOOD.steps }));
+      expect(scenario.fixtures.homeFiles).toEqual(homeFiles);
     });
 
     it('platforms grenzt das Betriebssystem ein', () => {
@@ -82,6 +88,27 @@ describe('ScenarioLoader', () => {
 
     it('liefert für einen fehlenden Ordner eine leere Liste', () => {
       expect(loader.load(join(root, 'gibtsnicht'))).toEqual([]);
+    });
+
+    it('liest die Schritte eines Ereignisstroms mit den Feldern ihrer Art', () => {
+      const steps = [
+        { name: 'öffnen', kind: 'sseOpen', as: 's1', path: '/api/projects/x/events?notify=1' },
+        { name: 'hello', kind: 'sseExpect', stream: 's1', until: { type: 'hello' } },
+        { name: 'schließen', kind: 'sseClose', stream: 's1' },
+      ];
+      const scenario = loader.parse(write('strom', { title: 'Strom', steps }));
+      expect(scenario.steps[0]).toMatchObject({ kind: 'sseOpen', as: 's1', path: '/api/projects/x/events?notify=1' });
+      expect(scenario.steps[1]).toMatchObject({ kind: 'sseExpect', stream: 's1', until: { type: 'hello' }, timeoutMs: 3000 });
+      expect(scenario.steps[2]).toMatchObject({ kind: 'sseClose', stream: 's1' });
+    });
+
+    it('nimmt die CONTRACT-Variablen des Szenarios', () => {
+      const scenario = loader.parse(write('takt', { title: 'Takt', env: { CONTRACT_HEARTBEAT_MS: '300' }, steps: GOOD.steps }));
+      expect(scenario.env).toEqual({ CONTRACT_HEARTBEAT_MS: '300' });
+    });
+
+    it('ohne env bleibt die Umgebung leer', () => {
+      expect(loader.parse(write('projects', GOOD)).env).toEqual({});
     });
 
     it('nimmt die eigenen Felder einer anderen Schritt-Art als raw mit', () => {
@@ -113,7 +140,9 @@ describe('ScenarioLoader', () => {
     });
 
     it('meldet eine unbekannte Schritt-Art', () => {
-      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'cli' }] }, /steps\[0\]\.kind muss eine bekannte Art sein \(http, httpStub\)/);
+      const alle = /steps\[0\]\.kind muss eine bekannte Art sein \(http, httpStub, sseClose, sseExpect, sseOpen\)/;
+      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'cli' }] }, alle);
+      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'sseWarten', stream: 's1' }] }, alle);
     });
 
     it('meldet leere Schritte', () => {
@@ -157,8 +186,43 @@ describe('ScenarioLoader', () => {
       failsWith({ title: 'T', fixtures: { boardConfig: 'mssql' }, steps: GOOD.steps }, /fixtures\.boardConfig erlaubt nur sqlite/);
     });
 
+    it('meldet einen absoluten Pfad in homeFiles', () => {
+      failsWith({ title: 'T', fixtures: { homeFiles: { '/etc/passwd': 'x' } }, steps: GOOD.steps }, /homeFiles\["\/etc\/passwd"\]: der Pfad muss relativ/);
+    });
+
+    it('meldet einen Pfad in homeFiles, der aus dem Home hinausführt', () => {
+      failsWith({ title: 'T', fixtures: { homeFiles: { 'dispatch/../../x': 'x' } }, steps: GOOD.steps }, /ohne „\.\.“/);
+    });
+
+    it('meldet einen Pfad in homeFiles mit umgekehrtem Schrägstrich', () => {
+      failsWith({ title: 'T', fixtures: { homeFiles: { 'dispatch\\state.json': 'x' } }, steps: GOOD.steps }, /mit \/ getrennt/);
+    });
+
+    it('meldet einen Inhalt in homeFiles, der kein Text und kein JSON-Wert ist', () => {
+      failsWith({ title: 'T', fixtures: { homeFiles: { 'dispatch/state.json': 7 } }, steps: GOOD.steps }, /muss ein Text oder ein JSON-Wert/);
+    });
+
     it('meldet ein unbekanntes Betriebssystem', () => {
       failsWith({ title: 'T', platforms: ['macos'], steps: GOOD.steps }, /platforms muss eine Liste/);
+    });
+
+    it('meldet ein Feld, das es bei dieser Art nicht gibt', () => {
+      failsWith(
+        { title: 'T', steps: [{ name: 'a', kind: 'sseOpen', as: 's1', path: '/api/events', method: 'GET' }] },
+        /unbekannte Felder in steps\[0\]: method/,
+      );
+    });
+
+    it('meldet ein Feld eines Ereignisstroms an einem HTTP-Schritt', () => {
+      failsWith({ title: 'T', steps: [{ name: 'a', method: 'GET', path: '/api/health', stream: 's1' }] }, /unbekannte Felder in steps\[0\]: stream/);
+    });
+
+    it('meldet eine Umgebungsvariable außerhalb von CONTRACT_', () => {
+      failsWith({ title: 'T', env: { PATH: '/bin' }, steps: GOOD.steps }, /env\["PATH"\]: ein Szenario darf nur CONTRACT_\*-Variablen setzen/);
+    });
+
+    it('meldet eine Umgebungsvariable, die kein Text ist', () => {
+      failsWith({ title: 'T', env: { CONTRACT_HEARTBEAT_MS: 300 }, steps: GOOD.steps }, /env\["CONTRACT_HEARTBEAT_MS"\] muss ein Text sein/);
     });
 
     it('meldet einen Kopf, der kein Text und nicht null ist', () => {

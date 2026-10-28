@@ -1,0 +1,13 @@
+{
+  "name": "@fix/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "fix": "dist/main.js"
+  },
+  "dependencies": {
+    "@fix/core": "0.1.0",
+    "@fix/web": "^0.1.0",
+    "commander": "^12.1.0"
+  }
+}

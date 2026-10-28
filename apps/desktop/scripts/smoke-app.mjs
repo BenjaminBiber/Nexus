@@ -13,7 +13,10 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
-const APP = join(ROOT, 'apps/desktop/src-tauri/target/debug', process.platform === 'win32' ? 'nexus-desktop.exe' : 'nexus-desktop');
+const APP_NAME = process.platform === 'win32' ? 'nexus-desktop.exe' : 'nexus-desktop';
+// Die App liegt im gemeinsamen target/ des Cargo-Workspace; wer src-tauri einzeln baut, findet sie daneben
+const APP_ORTE = [join(ROOT, 'target/debug', APP_NAME), join(ROOT, 'apps/desktop/src-tauri/target/debug', APP_NAME)];
+const APP = APP_ORTE.find((ort) => existsSync(ort)) ?? APP_ORTE[0];
 const SERVER_ENTRY = join(ROOT, 'packages/server/dist/main.js');
 // Die App öffnet ein Fenster und startet ein Sidecar von über 100 MB; beim ersten Lauf dauert das
 const START_MS = 60000;

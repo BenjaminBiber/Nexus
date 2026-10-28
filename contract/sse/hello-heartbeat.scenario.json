@@ -1,0 +1,27 @@
+{
+  "title": "Ereignisstrom verbinden: hello, Herzschlag und unbekanntes Projekt",
+  "env": { "CONTRACT_HEARTBEAT_MS": "400" },
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true }]
+  },
+  "steps": [
+    {
+      "name": "Vorbereitung: Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "record": false
+    },
+    { "name": "Strom öffnen", "kind": "sseOpen", "as": "s1", "path": "/api/projects/{{pid}}/events" },
+    { "name": "Begrüßung", "kind": "sseExpect", "stream": "s1", "until": { "type": "hello" } },
+    { "name": "Herzschlag", "kind": "sseExpect", "stream": "s1", "until": { "comment": "ping" } },
+    { "name": "Herzschlag wiederholt sich", "kind": "sseExpect", "stream": "s1", "until": { "comment": "ping" } },
+    { "name": "zweiter Strom auf dasselbe Projekt", "kind": "sseOpen", "as": "s2", "path": "/api/projects/{{pid}}/events" },
+    { "name": "Begrüßung des zweiten Stroms", "kind": "sseExpect", "stream": "s2", "until": { "type": "hello" } },
+    { "name": "Strom eines unbekannten Projekts", "kind": "sseOpen", "as": "fremd", "path": "/api/projects/00000000/events" },
+    { "name": "ersten Strom schließen", "kind": "sseClose", "stream": "s1" },
+    { "name": "zweiter Strom läuft weiter", "kind": "sseExpect", "stream": "s2", "until": { "comment": "ping" } },
+    { "name": "zweiten Strom schließen", "kind": "sseClose", "stream": "s2" }
+  ]
+}

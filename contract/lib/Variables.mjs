@@ -1,4 +1,6 @@
 const PLACEHOLDER = /\{\{([A-Za-z][A-Za-z0-9_]*)\}\}/g;
+// Geschützter Platzhalter: `{{!agent}}` wird zu `{{agent}}` und nicht eingesetzt (Prompt-Vorlagen des Dispatchers)
+const PROTECTED = /\{\{!([A-Za-z][A-Za-z0-9_]*)\}\}/g;
 
 // Die Werte, die ein Szenario in Pfade, Körper und Köpfe einsetzen kann (`{{REPO1}}`, `{{HOME}}`, `{{PORT}}`, `save`).
 export class Variables {
@@ -22,7 +24,7 @@ export class Variables {
     if (typeof input === 'string') {
       const single = input.match(/^\{\{([A-Za-z][A-Za-z0-9_]*)\}\}$/);
       if (single) return this.lookup(single[1]);
-      return input.replace(PLACEHOLDER, (_match, name) => String(this.lookup(name)));
+      return Variables.unprotect(input.replace(PLACEHOLDER, (_match, name) => String(this.lookup(name))));
     }
     if (Array.isArray(input)) return input.map((entry) => this.apply(entry));
     if (input !== null && typeof input === 'object') {
@@ -31,6 +33,12 @@ export class Variables {
       return out;
     }
     return input;
+  }
+
+  // Macht aus geschützten Platzhaltern (`{{!agent}}`) wieder gewöhnliche (`{{agent}}`); erst nach dem Einsetzen,
+  // damit eine Prompt-Vorlage im Körper ihre eigenen Platzhalter behält
+  static unprotect(input) {
+    return input.replace(PROTECTED, '{{$1}}');
   }
 
   // Liefert einen Wert; ein unbekannter Name ist ein Fehler im Szenario

@@ -1,0 +1,73 @@
+{
+  "title": "Ereignisstrom: Hooks melden Sessions, nur im betroffenen Projekt",
+  "env": { "CONTRACT_HEARTBEAT_MS": "400" },
+  "fixtures": {
+    "repos": [
+      { "name": "REPO1", "harnessInit": true },
+      { "name": "REPO2", "harnessInit": true }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Vorbereitung: erstes Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid1": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: zweites Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO2}}" },
+      "save": { "pid2": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Token des ersten Projekts",
+      "method": "GET",
+      "path": "/api/projects/{{pid1}}/settings",
+      "save": { "token1": "json.token" },
+      "record": false
+    },
+    { "name": "Strom des ersten Projekts", "kind": "sseOpen", "as": "s1", "path": "/api/projects/{{pid1}}/events" },
+    { "name": "Strom des zweiten Projekts", "kind": "sseOpen", "as": "s2", "path": "/api/projects/{{pid2}}/events" },
+    { "name": "Begrüßung des ersten Stroms", "kind": "sseExpect", "stream": "s1", "until": { "type": "hello" } },
+    { "name": "Begrüßung des zweiten Stroms", "kind": "sseExpect", "stream": "s2", "until": { "type": "hello" } },
+    { "name": "Takt des zweiten Stroms abwarten", "kind": "sseExpect", "stream": "s2", "until": { "comment": "ping" } },
+    {
+      "name": "Hook: Session beginnt im ersten Projekt",
+      "method": "POST",
+      "path": "/api/hook",
+      "headers": { "x-harness-token": "{{token1}}" },
+      "body": {
+        "project": "{{REPO1}}",
+        "event": { "kind": "session-start", "sessionId": "sitzung-1", "cwd": "{{REPO1}}", "title": "Vertrag prüfen" }
+      }
+    },
+    { "name": "sessions am ersten Strom", "kind": "sseExpect", "stream": "s1", "until": { "type": "sessions" } },
+    { "name": "zweites Projekt bekommt nichts", "kind": "sseExpect", "stream": "s2", "until": { "comment": "ping" } },
+    { "name": "ersten Strom schließen", "kind": "sseClose", "stream": "s1" },
+    {
+      "name": "Hook bei geschlossenem Strom",
+      "method": "POST",
+      "path": "/api/hook",
+      "headers": { "x-harness-token": "{{token1}}" },
+      "body": { "project": "{{REPO1}}", "event": { "kind": "user-prompt", "sessionId": "sitzung-1", "cwd": "{{REPO1}}" } }
+    },
+    { "name": "neuen Strom des ersten Projekts öffnen", "kind": "sseOpen", "as": "s3", "path": "/api/projects/{{pid1}}/events" },
+    { "name": "Begrüßung des neuen Stroms", "kind": "sseExpect", "stream": "s3", "until": { "type": "hello" } },
+    { "name": "nichts Verpasstes wird nachgeholt", "kind": "sseExpect", "stream": "s3", "until": { "comment": "ping" } },
+    {
+      "name": "Hook: Session endet",
+      "method": "POST",
+      "path": "/api/hook",
+      "headers": { "x-harness-token": "{{token1}}" },
+      "body": { "project": "{{REPO1}}", "event": { "kind": "session-end", "sessionId": "sitzung-1", "cwd": "{{REPO1}}" } }
+    },
+    { "name": "sessions am neuen Strom", "kind": "sseExpect", "stream": "s3", "until": { "type": "sessions" } },
+    { "name": "zweiten Strom schließen", "kind": "sseClose", "stream": "s2" },
+    { "name": "neuen Strom schließen", "kind": "sseClose", "stream": "s3" }
+  ]
+}
