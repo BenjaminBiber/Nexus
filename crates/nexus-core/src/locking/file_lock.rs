@@ -392,6 +392,21 @@ mod tests {
     }
 
     #[test]
+    fn sperrt_und_gibt_frei_in_einem_ordner_mit_sonderzeichen() {
+        let base = tempfile::Builder::new()
+            .prefix("harness-win-")
+            .tempdir()
+            .unwrap();
+        let dir = base.path().join("Mein Ordner ä ö ü ß");
+        fs::create_dir(&dir).unwrap();
+        let lock = FileLock::new(dir.join("ä.lock"), FileLockOptions::default());
+
+        lock.with_lock(|| Ok(())).unwrap();
+
+        assert_eq!(fs::read_dir(&dir).unwrap().count(), 0);
+    }
+
+    #[test]
     fn gibt_die_sperre_auch_bei_einem_fehler_in_der_aktion_frei() {
         let (_dir, path) = temp_lock("harness-lock-");
         let lock = FileLock::new(&path, FileLockOptions::default());

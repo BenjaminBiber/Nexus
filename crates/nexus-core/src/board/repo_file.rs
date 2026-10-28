@@ -154,7 +154,29 @@ mod tests {
         file.write(&entries).unwrap();
 
         assert_eq!(file.file(), dir.path().join("board-repos.yaml"));
+        // Der Pfad steht unverändert in der Datei, auch mit Rückschrägstrichen
+        let text = fs::read_to_string(dir.path().join("board-repos.yaml")).unwrap();
+        assert!(text.contains("C:\\Projects\\Arches"), "{text}");
         assert_eq!(file.read().unwrap(), entries);
+    }
+
+    #[test]
+    fn schreibt_die_zuordnung_in_dem_yaml_das_typescript_auch_schreibt() {
+        let (dir, file) = file();
+
+        file.write(&BoardRepoEntries::from([
+            (7, Some("C:\\Projects\\Arches ä".to_string())),
+            (8, None),
+        ]))
+        .unwrap();
+
+        // TypeScript schreibt dieselbe Zuordnung als `"7": C:\Projects\Arches ä` – die
+        // Schlüssel stehen dort in Anführungszeichen, weil JavaScript nur Text als
+        // Schlüssel kennt. Beide Schreibweisen bedeuten dasselbe und werden gelesen.
+        assert_eq!(
+            fs::read_to_string(dir.path().join("board-repos.yaml")).unwrap(),
+            "7: C:\\Projects\\Arches ä\n8: null\n"
+        );
     }
 
     #[test]
