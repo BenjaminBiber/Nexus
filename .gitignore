@@ -7,9 +7,12 @@ build/
 coverage/
 *.tsbuildinfo
 
-# Rust: gemeinsames target/ des Cargo-Workspace und die bei jedem Tauri-Build neu erzeugten Schemas
+# Rust: gemeinsames target/ des Cargo-Workspace, ein einzeln gebautes target/ der Desktop-App,
+# die bei jedem Tauri-Build neu erzeugten Schemas und das kopierte Sidecar
 /target/
+apps/desktop/src-tauri/target/
 apps/desktop/src-tauri/gen/schemas/
+apps/desktop/src-tauri/binaries/
 
 # Test- und Laufzeit-Temp
 .tmp-tests/

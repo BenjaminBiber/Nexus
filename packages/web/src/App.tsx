@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { AppShell } from './components/AppShell.js';
 import { DashboardPage } from './pages/DashboardPage.js';
@@ -13,6 +14,7 @@ import { RootPage } from './pages/RootPage.js';
 import { DocQuestionJobsProvider } from './hooks/docQuestionJobs.js';
 import { DocTicketJobsProvider } from './hooks/docTicketJobs.js';
 import { ThemeSync } from './theme/ThemeSync.js';
+import { usePlatform } from './platform/PlatformContext.js';
 
 // Alle Adressen der Oberfläche; Seiten unter /p/:pid teilen sich den Rahmen. ThemeSync setzt das Farbschema.
 // Board und Fragen kommen aus der Board-Datenbank; das Ticket-Panel liegt unter board/t/:id.
@@ -23,6 +25,7 @@ export function App() {
     <DocTicketJobsProvider>
       <DocQuestionJobsProvider>
         <ThemeSync />
+        <ExternalLinks />
         <Routes>
           <Route path="/" element={<RootPage />} />
           <Route path="/p/:pid" element={<AppShell />}>
@@ -41,6 +44,34 @@ export function App() {
       </DocQuestionJobsProvider>
     </DocTicketJobsProvider>
   );
+}
+
+// In der Desktop-App öffnen Links auf fremde Adressen den Standardbrowser, statt das App-Fenster wegzunavigieren.
+// Im Browser bleibt jeder Klick, wie er ist.
+function ExternalLinks() {
+  const platform = usePlatform();
+  useEffect(() => {
+    if (platform.kind !== 'tauri') return;
+    const onClick = (event: MouseEvent) => {
+      // Mittel- und Sondertasten öffnen schon von sich aus einen eigenen Tab bzw. ein Menü
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = (event.target as Element | null)?.closest?.('a[href]');
+      const href = anchor?.getAttribute('href');
+      if (!href) return;
+      let url: URL;
+      try {
+        url = new URL(href, window.location.href);
+      } catch {
+        return;
+      }
+      if (url.origin === window.location.origin) return;
+      event.preventDefault();
+      void platform.openExternal(url.href);
+    };
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, [platform]);
+  return null;
 }
 
 // Leitet zum Board des Projekts weiter

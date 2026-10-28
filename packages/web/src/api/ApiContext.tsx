@@ -10,7 +10,12 @@ export function ApiProvider({ api, children }: { api: ApiClient; children: React
 
 // Liefert den ApiClient der nächsten Provider-Ebene
 export function useApi(): ApiClient {
-  const api = useContext(Context);
+  const api = useApiOrNull();
   if (!api) throw new Error('ApiProvider fehlt');
   return api;
+}
+
+// Wie useApi, aber ohne Provider null statt Fehler (für Teile, die auch ohne Server auskommen)
+export function useApiOrNull(): ApiClient | null {
+  return useContext(Context);
 }
