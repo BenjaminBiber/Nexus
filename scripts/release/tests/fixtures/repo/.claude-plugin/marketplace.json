@@ -1,0 +1,16 @@
+{
+  "name": "fixture-local",
+  "description": "Marktplatz des Fixture-Repos",
+  "plugins": [
+    {
+      "name": "fremdes-plugin",
+      "version": "9.9.9",
+      "source": "./fremd"
+    },
+    {
+      "name": "fix-harness",
+      "source": "./packages/plugin/dist/fix-harness",
+      "defaultEnabled": false
+    }
+  ]
+}

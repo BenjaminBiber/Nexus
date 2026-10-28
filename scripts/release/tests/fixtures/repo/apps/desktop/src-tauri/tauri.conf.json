@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Fixture",
+  "version": "0.1.0",
+  "identifier": "cc.example.fixture",
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Fixture"
+      }
+    ]
+  }
+}
