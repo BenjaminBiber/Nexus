@@ -2,7 +2,7 @@ const METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']);
 
 // Schritt-Art `http`: eine Anfrage an den Server, aufgezeichnet als Anfrage und Antwort.
 export class HttpStep {
-  // Die Felder, die diese Art im Szenario kennt
+  // Eigene Felder der Art; der Lader meldet damit Tippfehler im Szenario
   get keys() {
     return ['method', 'path', 'body', 'headers'];
   }

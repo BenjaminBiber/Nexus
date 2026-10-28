@@ -1,0 +1,22 @@
+{
+  "title": "Auslastung der Claude-Limits: abgeschaltet und ohne Anmeldung",
+  "steps": [
+    { "name": "abgeschaltet", "method": "GET", "path": "/api/claude-usage" },
+    {
+      "name": "Nutzungslimits einschalten",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "claudeUsage": true },
+      "compare": "status"
+    },
+    { "name": "ohne Anmeldung", "method": "GET", "path": "/api/claude-usage" },
+    {
+      "name": "Nutzungslimits wieder abschalten",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "claudeUsage": false },
+      "compare": "status"
+    },
+    { "name": "danach wieder abgeschaltet", "method": "GET", "path": "/api/claude-usage" }
+  ]
+}

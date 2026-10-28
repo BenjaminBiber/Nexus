@@ -1,0 +1,142 @@
+{
+  "title": "Kommentare an einem Dokument anlegen, ändern, erledigen und löschen",
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "repos": [
+      {
+        "name": "REPO1",
+        "git": true,
+        "harnessInit": true,
+        "files": {
+          "docs/superpowers/specs/2020-03-02-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
+          "docs/notes/readme.md": "Notizen, nicht freigegeben.\n",
+          "geheim.md": "geheim\n"
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Kommentare ohne Board lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
+    },
+    {
+      "name": "DB-Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "boardId": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Repo-Pfad des Boards setzen",
+      "method": "PATCH",
+      "path": "/api/db/boards/{{boardId}}",
+      "body": { "repoPath": "{{REPO1}}" },
+      "record": false
+    },
+    {
+      "name": "Kommentare eines Dokuments ohne Kommentare",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
+    },
+    {
+      "name": "Kommentar anlegen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md",
+      "body": {
+        "text": "Bitte den Speicher benennen.",
+        "quote": "Welcher Speicher hält die Schlüssel?",
+        "heading": "Offene Fragen",
+        "lines": [14, 16]
+      },
+      "save": { "cid": "json.id" }
+    },
+    {
+      "name": "Kommentar mit unbrauchbaren Zeilen anlegen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md",
+      "body": { "text": "Gilt für das ganze Ziel.", "quote": "Anmeldung ohne Kennwort", "lines": [1, 2, 3] },
+      "save": { "cid2": "json.id" }
+    },
+    {
+      "name": "Kommentare lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
+    },
+    {
+      "name": "Kommentar erledigen",
+      "method": "PATCH",
+      "path": "/api/projects/{{pid}}/docs/comments/{{cid}}?path=docs/superpowers/specs/2020-03-02-login.md",
+      "body": { "status": "resolved", "resolution": "Der Schlüsselbund des Systems." }
+    },
+    {
+      "name": "Kommentartext ändern",
+      "method": "PATCH",
+      "path": "/api/projects/{{pid}}/docs/comments/{{cid2}}?path=docs/superpowers/specs/2020-03-02-login.md",
+      "body": { "text": "Gilt für den ganzen Abschnitt Ziel." }
+    },
+    {
+      "name": "Änderung ohne Feld",
+      "method": "PATCH",
+      "path": "/api/projects/{{pid}}/docs/comments/{{cid2}}?path=docs/superpowers/specs/2020-03-02-login.md",
+      "body": {}
+    },
+    {
+      "name": "Unbekannten Kommentar ändern",
+      "method": "PATCH",
+      "path": "/api/projects/{{pid}}/docs/comments/K-00000000?path=docs/superpowers/specs/2020-03-02-login.md",
+      "body": { "text": "x" }
+    },
+    {
+      "name": "Kommentar ohne Text anlegen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md",
+      "body": { "text": "   ", "quote": "Anmeldung ohne Kennwort", "heading": null, "lines": null }
+    },
+    {
+      "name": "Kommentare einer nicht freigegebenen Datei lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/notes/readme.md"
+    },
+    {
+      "name": "Kommentar außerhalb des Repos anlegen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/comments?path=../geheim.md",
+      "body": { "text": "Geht nicht.", "quote": "geheim", "heading": null, "lines": null }
+    },
+    {
+      "name": "Kommentar löschen",
+      "method": "DELETE",
+      "path": "/api/projects/{{pid}}/docs/comments/{{cid}}?path=docs/superpowers/specs/2020-03-02-login.md",
+      "body": {}
+    },
+    {
+      "name": "Unbekannten Kommentar löschen",
+      "method": "DELETE",
+      "path": "/api/projects/{{pid}}/docs/comments/K-00000000?path=docs/superpowers/specs/2020-03-02-login.md",
+      "body": {}
+    },
+    {
+      "name": "Kommentare nach dem Löschen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
+    }
+  ]
+}

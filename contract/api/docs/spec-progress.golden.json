@@ -1,0 +1,64 @@
+[
+  {
+    "name": "Fortschritt ohne Board zum Ordner",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/spec-progress"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "Fortschritt ohne Tickets",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/spec-progress"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "Fortschritt mit Tickets",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/spec-progress"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "blocked": 0,
+          "done": 0,
+          "inProgress": 0,
+          "notNeeded": 0,
+          "open": 1,
+          "spec": "docs/superpowers/specs/2020-03-02-login.md",
+          "total": 2,
+          "waiting": 1
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Fortschritt eines unbekannten Projekts",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/gibtsnicht/spec-progress"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  }
+]

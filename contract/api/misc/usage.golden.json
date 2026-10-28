@@ -1,0 +1,85 @@
+[
+  {
+    "name": "abgeschaltet",
+    "request": {
+      "method": "GET",
+      "path": "/api/claude-usage"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "available": false,
+        "fetchedAt": null,
+        "fiveHour": null,
+        "plan": null,
+        "reason": "disabled",
+        "sevenDay": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Nutzungslimits einschalten",
+    "request": {
+      "body": {
+        "claudeUsage": true
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "ohne Anmeldung",
+    "request": {
+      "method": "GET",
+      "path": "/api/claude-usage"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "available": false,
+        "fetchedAt": null,
+        "fiveHour": null,
+        "plan": null,
+        "reason": "no-login",
+        "sevenDay": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Nutzungslimits wieder abschalten",
+    "request": {
+      "body": {
+        "claudeUsage": false
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "danach wieder abgeschaltet",
+    "request": {
+      "method": "GET",
+      "path": "/api/claude-usage"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "available": false,
+        "fetchedAt": null,
+        "fiveHour": null,
+        "plan": null,
+        "reason": "disabled",
+        "sevenDay": null
+      },
+      "status": 200
+    }
+  }
+]

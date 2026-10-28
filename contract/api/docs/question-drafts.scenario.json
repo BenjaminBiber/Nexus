@@ -1,0 +1,124 @@
+{
+  "title": "Offene Fragen eines Dokuments herauslesen und als Board-Fragen anlegen",
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "repos": [
+      {
+        "name": "REPO1",
+        "git": true,
+        "harnessInit": true,
+        "files": {
+          "docs/superpowers/specs/2020-03-02-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
+          "geheim.md": "geheim\n"
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "record": false
+    },
+    {
+      "name": "DB-Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "boardId": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Repo-Pfad des Boards setzen",
+      "method": "PATCH",
+      "path": "/api/db/boards/{{boardId}}",
+      "body": { "repoPath": "{{REPO1}}" },
+      "record": false
+    },
+    {
+      "name": "Fragen-Entwürfe erzeugen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/question-drafts",
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md" }
+    },
+    {
+      "name": "Fragen-Entwürfe zu einer nicht freigegebenen Datei erzeugen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/question-drafts",
+      "body": { "path": "../geheim.md" }
+    },
+    {
+      "name": "Erzeugung abbrechen, ohne dass eine läuft",
+      "method": "DELETE",
+      "path": "/api/projects/{{pid}}/docs/question-drafts",
+      "body": {}
+    },
+    {
+      "name": "Ticket zur Überschrift anlegen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/tickets",
+      "body": {
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
+        "drafts": [
+          {
+            "title": "Schlüsselspeicher wählen",
+            "description": "Entscheiden, wo die Passkeys liegen.",
+            "acceptance": "Die Wahl steht in der Spec.",
+            "steps": [],
+            "dependsOn": [],
+            "labels": [],
+            "source": { "heading": "Offene Fragen", "startLine": 14, "endLine": 16 }
+          }
+        ]
+      },
+      "record": false
+    },
+    {
+      "name": "Fragen anlegen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/questions",
+      "body": {
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
+        "drafts": [
+          {
+            "title": "Welcher Speicher hält die Schlüssel?",
+            "description": "Das Dokument lässt den Speicher offen.",
+            "source": { "heading": "Offene Fragen", "startLine": 14, "endLine": 16 },
+            "answer": "  Der Schlüsselbund des Systems.  "
+          },
+          {
+            "title": "Wie viele Geräte darf eine Person anmelden?",
+            "description": "Im Ziel steht keine Zahl.",
+            "source": { "heading": "Ziel", "startLine": 10, "endLine": 12 }
+          },
+          { "title": "   ", "description": "Ohne Titel." }
+        ]
+      }
+    },
+    {
+      "name": "Fragen ohne Entwürfe anlegen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/questions",
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md", "drafts": [] }
+    },
+    {
+      "name": "Fragen zu einer nicht freigegebenen Datei anlegen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/questions",
+      "body": {
+        "path": "../geheim.md",
+        "drafts": [{ "title": "Welcher Speicher?", "description": "x", "source": { "heading": "Ziel", "startLine": 1, "endLine": 1 } }]
+      }
+    }
+  ]
+}

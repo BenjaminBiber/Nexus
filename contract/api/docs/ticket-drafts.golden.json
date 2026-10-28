@@ -1,0 +1,755 @@
+[
+  {
+    "name": "Gespeicherte Entwürfe ohne Erzeugung",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "result": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Entwürfe zu einer markierten Stelle erzeugen",
+    "request": {
+      "body": {
+        "note": "Bitte klein schneiden.",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
+        "selections": [
+          {
+            "endLine": 12,
+            "heading": "Ziel",
+            "quote": "Anmeldung ohne Kennwort auf allen drei Plattformen.",
+            "startLine": 10
+          }
+        ]
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "analysis-failed",
+        "message": "Die Antwort enthält keinen brauchbaren Entwurf."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Entwürfe zum ganzen Dokument erzeugen",
+    "request": {
+      "body": {
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
+        "whole": true
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "analysis-failed",
+        "message": "Die Antwort enthält keinen brauchbaren Entwurf."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Entwürfe ohne markierte Stelle erzeugen",
+    "request": {
+      "body": {
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "invalid-input",
+        "message": "Bitte mindestens eine Stelle markieren."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Entwürfe zu einer nicht freigegebenen Datei erzeugen",
+    "request": {
+      "body": {
+        "path": "../geheim.md",
+        "selections": [
+          {
+            "endLine": 1,
+            "heading": "Ziel",
+            "quote": "geheim",
+            "startLine": 1
+          }
+        ]
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Erzeugung abbrechen, ohne dass eine läuft",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "cancelled": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Entwürfe speichern",
+    "request": {
+      "body": {
+        "drafts": [
+          {
+            "acceptance": "Die Wahl steht in der Spec.",
+            "dependsOn": [],
+            "description": "Entscheiden, wo die Passkeys liegen.",
+            "labels": [
+              "server"
+            ],
+            "source": {
+              "endLine": 16,
+              "heading": "Offene Fragen",
+              "startLine": 14
+            },
+            "steps": [
+              "Varianten sammeln",
+              "Entscheiden"
+            ],
+            "title": "Schlüsselspeicher wählen"
+          },
+          {
+            "acceptance": "Die Maske zeigt nur den Passkey-Knopf.",
+            "dependsOn": [
+              0
+            ],
+            "description": "Maske ohne Kennwortfeld.",
+            "labels": [
+              "web"
+            ],
+            "source": {
+              "endLine": 12,
+              "heading": "Ziel",
+              "startLine": 10
+            },
+            "steps": [
+              "Test schreiben",
+              "Umsetzen"
+            ],
+            "title": "Oberfläche der Anmeldung bauen"
+          }
+        ],
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "result": {
+          "at": "<TIME>",
+          "costUsd": null,
+          "drafts": [
+            {
+              "acceptance": "Die Wahl steht in der Spec.",
+              "dependsOn": [],
+              "description": "Entscheiden, wo die Passkeys liegen.",
+              "labels": [
+                "server"
+              ],
+              "source": {
+                "endLine": 16,
+                "heading": "Offene Fragen",
+                "startLine": 14
+              },
+              "steps": [
+                "Varianten sammeln",
+                "Entscheiden"
+              ],
+              "title": "Schlüsselspeicher wählen"
+            },
+            {
+              "acceptance": "Die Maske zeigt nur den Passkey-Knopf.",
+              "dependsOn": [
+                0
+              ],
+              "description": "Maske ohne Kennwortfeld.",
+              "labels": [
+                "web"
+              ],
+              "source": {
+                "endLine": 12,
+                "heading": "Ziel",
+                "startLine": 10
+              },
+              "steps": [
+                "Test schreiben",
+                "Umsetzen"
+              ],
+              "title": "Oberfläche der Anmeldung bauen"
+            }
+          ],
+          "dropped": []
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Gespeicherte Entwürfe lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "result": {
+          "at": "<TIME>",
+          "costUsd": null,
+          "drafts": [
+            {
+              "acceptance": "Die Wahl steht in der Spec.",
+              "dependsOn": [],
+              "description": "Entscheiden, wo die Passkeys liegen.",
+              "labels": [
+                "server"
+              ],
+              "source": {
+                "endLine": 16,
+                "heading": "Offene Fragen",
+                "startLine": 14
+              },
+              "steps": [
+                "Varianten sammeln",
+                "Entscheiden"
+              ],
+              "title": "Schlüsselspeicher wählen"
+            },
+            {
+              "acceptance": "Die Maske zeigt nur den Passkey-Knopf.",
+              "dependsOn": [
+                0
+              ],
+              "description": "Maske ohne Kennwortfeld.",
+              "labels": [
+                "web"
+              ],
+              "source": {
+                "endLine": 12,
+                "heading": "Ziel",
+                "startLine": 10
+              },
+              "steps": [
+                "Test schreiben",
+                "Umsetzen"
+              ],
+              "title": "Oberfläche der Anmeldung bauen"
+            }
+          ],
+          "dropped": []
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Liste mit gespeicherten Entwürfen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "docs": [
+          {
+            "date": "2020-03-03",
+            "exists": true,
+            "group": "plan",
+            "kind": "plan",
+            "mtimeMs": 0,
+            "path": "docs/superpowers/plans/2020-03-03-login.md",
+            "title": "Plan Anmeldung",
+            "topic": "login"
+          },
+          {
+            "date": "2020-03-02",
+            "exists": true,
+            "group": "spec",
+            "hasDrafts": true,
+            "kind": "spec",
+            "mtimeMs": 0,
+            "path": "docs/superpowers/specs/2020-03-02-login.md",
+            "title": "Anmeldung über Passkeys",
+            "topic": "login"
+          }
+        ],
+        "source": {
+          "boardId": 1,
+          "boardName": "Sprint",
+          "reason": null,
+          "root": "<REPO1>"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Gespeicherte Entwürfe zu einer nicht freigegebenen Datei",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=../geheim.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Entwürfe ohne Liste speichern",
+    "request": {
+      "body": {
+        "drafts": "keine Liste",
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "invalid-input",
+        "message": "Entwürfe fehlen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Gespeicherte Entwürfe verwerfen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "ok": true
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Gespeicherte Entwürfe nach dem Verwerfen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "result": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Entwürfe erneut speichern",
+    "request": {
+      "body": {
+        "drafts": [
+          {
+            "acceptance": "Die Wahl steht in der Spec.",
+            "dependsOn": [],
+            "description": "Entscheiden, wo die Passkeys liegen.",
+            "labels": [
+              "server"
+            ],
+            "source": {
+              "endLine": 16,
+              "heading": "Offene Fragen",
+              "startLine": 14
+            },
+            "steps": [
+              "Varianten sammeln",
+              "Entscheiden"
+            ],
+            "title": "Schlüsselspeicher wählen"
+          },
+          {
+            "acceptance": "Die Maske zeigt nur den Passkey-Knopf.",
+            "dependsOn": [
+              0
+            ],
+            "description": "Maske ohne Kennwortfeld.",
+            "labels": [
+              "web"
+            ],
+            "source": {
+              "endLine": 12,
+              "heading": "Ziel",
+              "startLine": 10
+            },
+            "steps": [
+              "Test schreiben",
+              "Umsetzen"
+            ],
+            "title": "Oberfläche der Anmeldung bauen"
+          }
+        ],
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "result": {
+          "at": "<TIME>",
+          "costUsd": null,
+          "drafts": [
+            {
+              "acceptance": "Die Wahl steht in der Spec.",
+              "dependsOn": [],
+              "description": "Entscheiden, wo die Passkeys liegen.",
+              "labels": [
+                "server"
+              ],
+              "source": {
+                "endLine": 16,
+                "heading": "Offene Fragen",
+                "startLine": 14
+              },
+              "steps": [
+                "Varianten sammeln",
+                "Entscheiden"
+              ],
+              "title": "Schlüsselspeicher wählen"
+            },
+            {
+              "acceptance": "Die Maske zeigt nur den Passkey-Knopf.",
+              "dependsOn": [
+                0
+              ],
+              "description": "Maske ohne Kennwortfeld.",
+              "labels": [
+                "web"
+              ],
+              "source": {
+                "endLine": 12,
+                "heading": "Ziel",
+                "startLine": 10
+              },
+              "steps": [
+                "Test schreiben",
+                "Umsetzen"
+              ],
+              "title": "Oberfläche der Anmeldung bauen"
+            }
+          ],
+          "dropped": []
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Tickets des Dokuments vor dem Anlegen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/tickets?path=docs/superpowers/specs/2020-03-02-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "Tickets aus den gespeicherten Entwürfen anlegen",
+    "request": {
+      "body": {
+        "drafts": [
+          {
+            "acceptance": "Die Wahl steht in der Spec.",
+            "dependsOn": [],
+            "description": "Entscheiden, wo die Passkeys liegen.",
+            "labels": [
+              "server"
+            ],
+            "source": {
+              "endLine": 16,
+              "heading": "Offene Fragen",
+              "startLine": 14
+            },
+            "steps": [
+              "Varianten sammeln",
+              "Entscheiden"
+            ],
+            "title": "Schlüsselspeicher wählen"
+          },
+          {
+            "acceptance": "Die Maske zeigt nur den Passkey-Knopf.",
+            "dependsOn": [
+              0
+            ],
+            "description": "Maske ohne Kennwortfeld.",
+            "labels": [
+              "web"
+            ],
+            "source": {
+              "endLine": 12,
+              "heading": "Ziel",
+              "startLine": 10
+            },
+            "steps": [
+              "Test schreiben",
+              "Umsetzen"
+            ],
+            "title": "Oberfläche der Anmeldung bauen"
+          }
+        ],
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/tickets"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "created": [
+          {
+            "id": "ARC-0001",
+            "index": 0
+          },
+          {
+            "id": "ARC-0002",
+            "index": 1
+          }
+        ],
+        "skipped": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Gespeicherte Entwürfe nach dem Anlegen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "result": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Tickets des Dokuments",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/tickets?path=docs/superpowers/specs/2020-03-02-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "column": "waiting",
+          "endLine": 12,
+          "heading": "Ziel",
+          "id": "ARC-0002",
+          "startLine": 10,
+          "status": "backlog",
+          "title": "Oberfläche der Anmeldung bauen"
+        },
+        {
+          "column": "backlog",
+          "endLine": 16,
+          "heading": "Offene Fragen",
+          "id": "ARC-0001",
+          "startLine": 14,
+          "status": "backlog",
+          "title": "Schlüsselspeicher wählen"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Tickets eines anderen Dokuments",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/tickets?path=docs/superpowers/plans/2020-03-03-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "Dublette und unbrauchbarer Entwurf",
+    "request": {
+      "body": {
+        "drafts": [
+          {
+            "acceptance": "Wird übersprungen.",
+            "dependsOn": [],
+            "description": "Noch einmal derselbe Titel.",
+            "labels": [],
+            "source": {
+              "endLine": 16,
+              "heading": "Offene Fragen",
+              "startLine": 14
+            },
+            "steps": [],
+            "title": "Schlüsselspeicher wählen"
+          },
+          {
+            "acceptance": "Wird übersprungen.",
+            "dependsOn": [],
+            "description": "Ohne Titel.",
+            "labels": [],
+            "source": {
+              "endLine": 12,
+              "heading": "Ziel",
+              "startLine": 10
+            },
+            "steps": [],
+            "title": ""
+          }
+        ],
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/tickets"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "created": [],
+        "skipped": [
+          {
+            "existingId": "ARC-0001",
+            "index": 0,
+            "reason": "ticket-duplicate"
+          },
+          {
+            "index": 1,
+            "reason": "draft-invalid"
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Tickets ohne Entwürfe anlegen",
+    "request": {
+      "body": {
+        "drafts": [],
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/tickets"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "invalid-input",
+        "message": "Bitte mindestens einen Entwurf übergeben."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Tickets zu einer nicht freigegebenen Datei anlegen",
+    "request": {
+      "body": {
+        "drafts": [
+          {
+            "acceptance": "Die Wahl steht in der Spec.",
+            "dependsOn": [],
+            "description": "Entscheiden, wo die Passkeys liegen.",
+            "labels": [
+              "server"
+            ],
+            "source": {
+              "endLine": 16,
+              "heading": "Offene Fragen",
+              "startLine": 14
+            },
+            "steps": [
+              "Varianten sammeln",
+              "Entscheiden"
+            ],
+            "title": "Schlüsselspeicher wählen"
+          },
+          {
+            "acceptance": "Die Maske zeigt nur den Passkey-Knopf.",
+            "dependsOn": [
+              0
+            ],
+            "description": "Maske ohne Kennwortfeld.",
+            "labels": [
+              "web"
+            ],
+            "source": {
+              "endLine": 12,
+              "heading": "Ziel",
+              "startLine": 10
+            },
+            "steps": [
+              "Test schreiben",
+              "Umsetzen"
+            ],
+            "title": "Oberfläche der Anmeldung bauen"
+          }
+        ],
+        "path": "../geheim.md"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/tickets"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  }
+]

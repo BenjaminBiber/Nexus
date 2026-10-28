@@ -1,0 +1,39 @@
+{
+  "title": "Zeitleiste eines Tickets aus Verlauf, Kommentaren und Schritten",
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "repos": [{ "name": "REPO1", "git": true, "files": { "docs/a.md": "# A\n" } }]
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "VTR", "name": "Vertrag" }, "record": false },
+    {
+      "name": "Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "VTR", "name": "Sprint" },
+      "save": { "bid": "json.id" },
+      "record": false
+    },
+    { "name": "Ticket", "method": "POST", "path": "/api/db/boards/{{bid}}/tickets", "body": { "title": "Login bauen" }, "record": false },
+    { "name": "Zeitleiste nach dem Anlegen", "method": "GET", "path": "/api/db/tickets/VTR-0001/timeline" },
+    {
+      "name": "Ticket ändern",
+      "method": "PATCH",
+      "path": "/api/db/tickets/VTR-0001",
+      "body": { "rev": 1, "title": "Login bauen und prüfen", "assignee": "claude" },
+      "record": false
+    },
+    { "name": "erster Kommentar", "method": "POST", "path": "/api/db/tickets/VTR-0001/comments", "body": { "body": "Erster Blick" }, "record": false },
+    { "name": "in Planung", "method": "POST", "path": "/api/db/tickets/VTR-0001/move", "body": { "status": "in_planning" }, "record": false },
+    { "name": "Schritt anlegen", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps", "body": { "text": "Test schreiben" }, "record": false },
+    { "name": "Schritt abhaken", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps/1", "body": { "done": true }, "record": false },
+    { "name": "in Arbeit", "method": "POST", "path": "/api/db/tickets/VTR-0001/move", "body": { "status": "in_progress" }, "record": false },
+    { "name": "zweiter Kommentar", "method": "POST", "path": "/api/db/tickets/VTR-0001/comments", "body": { "body": "Zweiter Blick" }, "record": false },
+    { "name": "Zeitleiste ohne Repo auf diesem Rechner", "method": "GET", "path": "/api/db/tickets/VTR-0001/timeline" },
+    { "name": "Repo-Pfad des Boards setzen", "method": "PATCH", "path": "/api/db/boards/{{bid}}", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Zeitleiste mit Repo, aber ohne Ticket-Branch", "method": "GET", "path": "/api/db/tickets/VTR-0001/timeline" },
+    { "name": "Zeitleiste mit kurzer ID", "method": "GET", "path": "/api/db/tickets/vtr-1/timeline" },
+    { "name": "Zeitleiste eines unbekannten Tickets", "method": "GET", "path": "/api/db/tickets/VTR-0099/timeline" },
+    { "name": "keine Ticket-ID", "method": "GET", "path": "/api/db/tickets/quatsch/timeline" }
+  ]
+}

@@ -1,0 +1,285 @@
+[
+  {
+    "name": "Testmeldung",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/user-settings/test-notification"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "Push-Test ohne Thema",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/user-settings/test-ntfy"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "error": "Für ntfy ist kein Thema eingetragen.",
+        "ok": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Attrappe starten",
+    "request": {
+      "action": "start",
+      "status": 200,
+      "stub": "NTFY"
+    },
+    "response": {
+      "json": {
+        "url": "<var:ntfyUrl>"
+      }
+    }
+  },
+  {
+    "name": "Push auf die Attrappe einrichten",
+    "request": {
+      "body": {
+        "ntfy": true,
+        "ntfyServer": "<var:ntfyUrl>",
+        "ntfyToken": "tk_vertrag",
+        "ntfyTopic": "harness-vertrag"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": false,
+        "compactCards": false,
+        "heroImages": false,
+        "hideInPlanning": false,
+        "hideNotNeeded": false,
+        "notifications": "off",
+        "ntfy": true,
+        "ntfyServer": "<var:ntfyUrl>",
+        "ntfyToken": "tk_vertrag",
+        "ntfyTopic": "harness-vertrag",
+        "theme": "system"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Push-Test",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/user-settings/test-ntfy"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "error": null,
+        "ok": true
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Anfrage an der Attrappe",
+    "request": {
+      "action": "requests",
+      "stub": "NTFY"
+    },
+    "response": {
+      "json": [
+        {
+          "headers": {
+            "authorization": "Bearer tk_vertrag",
+            "content-type": "application/json"
+          },
+          "json": {
+            "message": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung des Harness",
+            "priority": 4,
+            "tags": [
+              "raising_hand"
+            ],
+            "title": "Session braucht deine Antwort",
+            "topic": "harness-vertrag"
+          },
+          "method": "POST",
+          "path": "/"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Attrappe mit Fehler starten",
+    "request": {
+      "action": "start",
+      "status": 500,
+      "stub": "NTFY_FEHLER"
+    },
+    "response": {
+      "json": {
+        "url": "<var:fehlerUrl>"
+      }
+    }
+  },
+  {
+    "name": "Push auf die Attrappe mit Fehler umstellen",
+    "request": {
+      "body": {
+        "ntfyServer": "<var:fehlerUrl>"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": false,
+        "compactCards": false,
+        "heroImages": false,
+        "hideInPlanning": false,
+        "hideNotNeeded": false,
+        "notifications": "off",
+        "ntfy": true,
+        "ntfyServer": "<var:fehlerUrl>",
+        "ntfyToken": "tk_vertrag",
+        "ntfyTopic": "harness-vertrag",
+        "theme": "system"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Push-Test mit Fehler",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/user-settings/test-ntfy"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "error": "ntfy antwortete mit 500.",
+        "ok": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Anfrage an der Attrappe mit Fehler",
+    "request": {
+      "action": "requests",
+      "stub": "NTFY_FEHLER"
+    },
+    "response": {
+      "json": [
+        {
+          "headers": {
+            "authorization": "Bearer tk_vertrag",
+            "content-type": "application/json"
+          },
+          "json": {
+            "message": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung des Harness",
+            "priority": 4,
+            "tags": [
+              "raising_hand"
+            ],
+            "title": "Session braucht deine Antwort",
+            "topic": "harness-vertrag"
+          },
+          "method": "POST",
+          "path": "/"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Push abschalten, Thema bleibt",
+    "request": {
+      "body": {
+        "ntfy": false
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": false,
+        "compactCards": false,
+        "heroImages": false,
+        "hideInPlanning": false,
+        "hideNotNeeded": false,
+        "notifications": "off",
+        "ntfy": false,
+        "ntfyServer": "<var:fehlerUrl>",
+        "ntfyToken": "tk_vertrag",
+        "ntfyTopic": "harness-vertrag",
+        "theme": "system"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Push-Test trotz abgeschaltetem Push",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/user-settings/test-ntfy"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "error": "ntfy antwortete mit 500.",
+        "ok": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Push auf einen Port ohne Dienst umstellen",
+    "request": {
+      "body": {
+        "ntfyServer": "http://127.0.0.1:9"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": false,
+        "compactCards": false,
+        "heroImages": false,
+        "hideInPlanning": false,
+        "hideNotNeeded": false,
+        "notifications": "off",
+        "ntfy": false,
+        "ntfyServer": "http://127.0.0.1:9",
+        "ntfyToken": "tk_vertrag",
+        "ntfyTopic": "harness-vertrag",
+        "theme": "system"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Push-Test ohne erreichbaren Server",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/user-settings/test-ntfy"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "ok": false
+      },
+      "status": 200
+    }
+  }
+]

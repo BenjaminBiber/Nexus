@@ -1,11 +1,11 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-import { stepKinds } from './ScenarioRunner.mjs';
+import { stepKinds } from './StepKinds.mjs';
 
 const SCENARIO_KEYS = new Set(['title', 'platforms', 'env', 'fixtures', 'steps']);
 const FIXTURE_KEYS = new Set(['repos', 'boardConfig']);
 const REPO_KEYS = new Set(['name', 'git', 'harnessInit', 'files']);
-// Felder, die jeder Schritt hat; die Felder der Art nennt sie selbst in `keys`
+// Felder, die jede Schritt-Art hat; die Art nennt ihre eigenen in `keys`
 const STEP_KEYS = new Set(['name', 'kind', 'save', 'compare', 'ignore', 'record']);
 const PLATFORMS = new Set(['darwin', 'linux', 'win32']);
 // Umgebungsvariablen, die ein Szenario setzen darf: nur der Vertragsmodus des Servers
@@ -164,7 +164,7 @@ export class ScenarioLoader {
     if (typeof value.name !== 'string' || !value.name.trim()) fail(`steps[${index}].name fehlt oder ist leer.`);
     const kind = value.kind ?? 'http';
     if (typeof kind !== 'string' || !this.kinds[kind]) {
-      fail(`steps[${index}].kind erlaubt nur ${Object.keys(this.kinds).join(', ')}.`);
+      fail(`steps[${index}].kind muss eine bekannte Art sein (${Object.keys(this.kinds).sort().join(', ')}).`);
     }
     this.unknown(value, new Set([...STEP_KEYS, ...this.kinds[kind].keys]), where, fail);
     if (value.compare !== undefined && !COMPARE.has(value.compare)) {
@@ -189,8 +189,11 @@ export class ScenarioLoader {
       record: value.record ?? true,
       save,
     };
-    // Die Art prüft ihre eigenen Felder und liefert sie in der Form, die ihr `run` erwartet
-    return { ...step, ...this.kinds[kind].parse(value, index, fail) };
+    // Arten mit `parse` prüfen ihre eigenen Felder und liefern sie in der Form, die ihr `run` erwartet;
+    // die anderen bekommen den Schritt als `raw` und prüfen ihn selbst beim Ausführen
+    const own = this.kinds[kind];
+    if (typeof own.parse !== 'function') return { ...step, raw: value };
+    return { ...step, ...own.parse(value, index, fail) };
   }
 
   // Gibt es den Ordner?

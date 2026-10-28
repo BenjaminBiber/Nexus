@@ -560,6 +560,11 @@
     "pattern": "/"
   },
   {
+    "file": "packages/server/src/routes/StaticRoutes.ts",
+    "method": "GET",
+    "pattern": "/*"
+  },
+  {
     "file": "packages/server/src/routes/UsageRoutes.ts",
     "method": "GET",
     "pattern": "/api/claude-usage"

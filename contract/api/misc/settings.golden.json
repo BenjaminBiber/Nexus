@@ -1,0 +1,435 @@
+[
+  {
+    "name": "Projekt anmelden",
+    "request": {
+      "body": {
+        "path": "<REPO1>"
+      },
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Einstellungen des Projekts",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "project": {
+          "id": "<var:pid>",
+          "name": "Mein Projekt ä",
+          "path": "<REPO1>"
+        },
+        "token": "<var:token>"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Einstellungen eines unbekannten Projekts",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/gibtsnicht/settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "benutzerweite Standardwerte",
+    "request": {
+      "method": "GET",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": false,
+        "compactCards": false,
+        "heroImages": false,
+        "hideInPlanning": false,
+        "hideNotNeeded": false,
+        "notifications": "off",
+        "ntfy": false,
+        "ntfyServer": "https://ntfy.sh",
+        "ntfyToken": "",
+        "ntfyTopic": "",
+        "theme": "system"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "alle Felder setzen",
+    "request": {
+      "body": {
+        "claudeUsage": true,
+        "compactCards": true,
+        "heroImages": true,
+        "hideInPlanning": true,
+        "hideNotNeeded": true,
+        "notifications": "windows",
+        "ntfy": true,
+        "ntfyServer": "  https://push.example  ",
+        "ntfyToken": " tk_vertrag ",
+        "ntfyTopic": "harness-vertrag",
+        "theme": "dark"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": true,
+        "compactCards": true,
+        "heroImages": true,
+        "hideInPlanning": true,
+        "hideNotNeeded": true,
+        "notifications": "windows",
+        "ntfy": true,
+        "ntfyServer": "https://push.example",
+        "ntfyToken": "tk_vertrag",
+        "ntfyTopic": "harness-vertrag",
+        "theme": "dark"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "gespeicherte Werte lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": true,
+        "compactCards": true,
+        "heroImages": true,
+        "hideInPlanning": true,
+        "hideNotNeeded": true,
+        "notifications": "windows",
+        "ntfy": true,
+        "ntfyServer": "https://push.example",
+        "ntfyToken": "tk_vertrag",
+        "ntfyTopic": "harness-vertrag",
+        "theme": "dark"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "nur ein Feld ändern",
+    "request": {
+      "body": {
+        "theme": "win95"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": true,
+        "compactCards": true,
+        "heroImages": true,
+        "hideInPlanning": true,
+        "hideNotNeeded": true,
+        "notifications": "windows",
+        "ntfy": true,
+        "ntfyServer": "https://push.example",
+        "ntfyToken": "tk_vertrag",
+        "ntfyTopic": "harness-vertrag",
+        "theme": "win95"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "leerer Körper ändert nichts",
+    "request": {
+      "body": {},
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": true,
+        "compactCards": true,
+        "heroImages": true,
+        "hideInPlanning": true,
+        "hideNotNeeded": true,
+        "notifications": "windows",
+        "ntfy": true,
+        "ntfyServer": "https://push.example",
+        "ntfyToken": "tk_vertrag",
+        "ntfyTopic": "harness-vertrag",
+        "theme": "win95"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Thema der Push-Meldungen leeren",
+    "request": {
+      "body": {
+        "ntfyTopic": ""
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": true,
+        "compactCards": true,
+        "heroImages": true,
+        "hideInPlanning": true,
+        "hideNotNeeded": true,
+        "notifications": "windows",
+        "ntfy": true,
+        "ntfyServer": "https://push.example",
+        "ntfyToken": "tk_vertrag",
+        "ntfyTopic": "",
+        "theme": "win95"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "unbekannte Art der Meldung",
+    "request": {
+      "body": {
+        "notifications": "telegram"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "notifications muss off, browser oder windows sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekanntes Farbschema",
+    "request": {
+      "body": {
+        "theme": "lila"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "theme muss system, light, dark, signal, pastel oder win95 sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Hero-Bilder ohne Wahrheitswert",
+    "request": {
+      "body": {
+        "heroImages": "ja"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "heroImages muss true oder false sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "kompakte Kacheln ohne Wahrheitswert",
+    "request": {
+      "body": {
+        "compactCards": "ja"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "compactCards muss true oder false sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Nutzungslimits ohne Wahrheitswert",
+    "request": {
+      "body": {
+        "claudeUsage": 1
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "claudeUsage muss true oder false sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ausgeblendete Spalten ohne Wahrheitswert",
+    "request": {
+      "body": {
+        "hideNotNeeded": "nein"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "hideNotNeeded muss true oder false sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Spalte In Planung ohne Wahrheitswert",
+    "request": {
+      "body": {
+        "hideInPlanning": "nein"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "hideInPlanning muss true oder false sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Push ohne Wahrheitswert",
+    "request": {
+      "body": {
+        "ntfy": "an"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "ntfy muss true oder false sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Server der Push-Meldungen ohne http",
+    "request": {
+      "body": {
+        "ntfyServer": "ntfy.sh"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "ntfyServer muss eine http- oder https-Adresse sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Thema der Push-Meldungen mit Leerzeichen",
+    "request": {
+      "body": {
+        "ntfyTopic": "mein thema"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "ntfyTopic darf nur Buchstaben, Ziffern, - und _ enthalten (höchstens 64 Zeichen)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Token der Push-Meldungen ist kein Text",
+    "request": {
+      "body": {
+        "ntfyToken": 42
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "ntfyToken muss ein Text sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "nach den Fehlern unverändert",
+    "request": {
+      "method": "GET",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": true,
+        "compactCards": true,
+        "heroImages": true,
+        "hideInPlanning": true,
+        "hideNotNeeded": true,
+        "notifications": "windows",
+        "ntfy": true,
+        "ntfyServer": "https://push.example",
+        "ntfyToken": "tk_vertrag",
+        "ntfyTopic": "",
+        "theme": "win95"
+      },
+      "status": 200
+    }
+  }
+]

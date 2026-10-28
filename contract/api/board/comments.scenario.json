@@ -1,0 +1,28 @@
+{
+  "title": "Kommentare an ein Ticket hängen",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "VTR", "name": "Vertrag" }, "record": false },
+    {
+      "name": "Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "VTR", "name": "Sprint" },
+      "save": { "bid": "json.id" },
+      "record": false
+    },
+    { "name": "Ticket", "method": "POST", "path": "/api/db/boards/{{bid}}/tickets", "body": { "title": "Login bauen" }, "record": false },
+    { "name": "Kommentar anhängen", "method": "POST", "path": "/api/db/tickets/VTR-0001/comments", "body": { "body": "Erster Blick" } },
+    {
+      "name": "zweiter Kommentar mit kurzer ID",
+      "method": "POST",
+      "path": "/api/db/tickets/vtr-1/comments",
+      "body": { "body": "Zweiter Blick\nmit zwei Zeilen" }
+    },
+    { "name": "leerer Kommentar", "method": "POST", "path": "/api/db/tickets/VTR-0001/comments", "body": { "body": " " } },
+    { "name": "ohne Text", "method": "POST", "path": "/api/db/tickets/VTR-0001/comments", "body": {} },
+    { "name": "Text keine Zeichenkette", "method": "POST", "path": "/api/db/tickets/VTR-0001/comments", "body": { "body": 5 } },
+    { "name": "unbekanntes Ticket", "method": "POST", "path": "/api/db/tickets/VTR-0099/comments", "body": { "body": "Hallo" } },
+    { "name": "keine Ticket-ID", "method": "POST", "path": "/api/db/tickets/quatsch/comments", "body": { "body": "Hallo" } }
+  ]
+}

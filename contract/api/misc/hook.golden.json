@@ -1,0 +1,637 @@
+[
+  {
+    "name": "Projekt anmelden",
+    "request": {
+      "body": {
+        "path": "<REPO1>"
+      },
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "zweites Projekt anmelden",
+    "request": {
+      "body": {
+        "path": "<REPO2>"
+      },
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Token des Projekts lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "project": {
+          "id": "<var:pid>",
+          "name": "Mein Projekt ä",
+          "path": "<REPO1>"
+        },
+        "token": "<var:token>"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "session-start",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "session-start",
+          "model": "opus",
+          "sessionId": "s1",
+          "source": "startup",
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "Vertrag prüfen"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "Sitzung nach dem Start",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "idle",
+          "endedAt": null,
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": "opus",
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "idle",
+          "subagents": [],
+          "ticketInfo": [
+            {
+              "id": "ARC-0001",
+              "status": "backlog",
+              "title": "(unbekannt)"
+            }
+          ],
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "Vertrag prüfen"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "user-prompt",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "user-prompt",
+          "sessionId": "s1"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "notification",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "notification",
+          "notificationType": "permission_prompt",
+          "sessionId": "s1"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "Sitzung wartet",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "waiting",
+          "endedAt": null,
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": "opus",
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "waiting",
+          "subagents": [],
+          "ticketInfo": [
+            {
+              "id": "ARC-0001",
+              "status": "backlog",
+              "title": "(unbekannt)"
+            }
+          ],
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "Vertrag prüfen"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "subagent-start",
+    "request": {
+      "body": {
+        "event": {
+          "agentId": "a1",
+          "agentType": "Explore",
+          "cwd": "<REPO1>",
+          "kind": "subagent-start",
+          "sessionId": "s1"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "subagent-stop",
+    "request": {
+      "body": {
+        "event": {
+          "agentId": "a1",
+          "agentType": "Explore",
+          "cwd": "<REPO1>",
+          "kind": "subagent-stop",
+          "sessionId": "s1"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "stop",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "stop",
+          "sessionId": "s1"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "session-end",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "session-end",
+          "sessionId": "s1"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "Sitzung nach dem Ende",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "ended",
+          "endedAt": "<TIME>",
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": false,
+          "model": "opus",
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "ended",
+          "subagents": [
+            {
+              "endedAt": "<TIME>",
+              "id": "a1",
+              "startedAt": "<TIME>",
+              "state": "ended",
+              "type": "Explore"
+            }
+          ],
+          "ticketInfo": [
+            {
+              "id": "ARC-0001",
+              "status": "backlog",
+              "title": "(unbekannt)"
+            }
+          ],
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "Vertrag prüfen"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "falsches Token",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "user-prompt",
+          "sessionId": "s1"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "falsch"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "token-invalid",
+        "message": "Das Token des Projekts fehlt oder ist falsch."
+      },
+      "status": 403
+    }
+  },
+  {
+    "name": "ohne Token",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "user-prompt",
+          "sessionId": "s1"
+        },
+        "project": "<REPO1>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "token-invalid",
+        "message": "Das Token des Projekts fehlt oder ist falsch."
+      },
+      "status": 403
+    }
+  },
+  {
+    "name": "Token eines anderen Projekts",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO2>",
+          "kind": "session-start",
+          "sessionId": "s2"
+        },
+        "project": "<REPO2>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "token-invalid",
+        "message": "Das Token des Projekts fehlt oder ist falsch."
+      },
+      "status": 403
+    }
+  },
+  {
+    "name": "Ereignis ohne Angaben",
+    "request": {
+      "body": {
+        "event": {},
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "event-invalid",
+        "message": "Das Ereignis ist ungültig (kind und sessionId sind Pflicht)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekannte Ereignisart",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "quatsch",
+          "sessionId": "s1"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "event-invalid",
+        "message": "Das Ereignis ist ungültig (kind und sessionId sind Pflicht)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Ereignis ohne Sitzung",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "stop"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "event-invalid",
+        "message": "Das Ereignis ist ungültig (kind und sessionId sind Pflicht)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ohne Pfad des Projekts",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "stop",
+          "sessionId": "s1"
+        }
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "path-missing",
+        "message": "Der Pfad des Projekts fehlt oder ist nicht absolut."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "relativer Pfad des Projekts",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "stop",
+          "sessionId": "s1"
+        },
+        "project": "projekt"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "path-missing",
+        "message": "Der Pfad des Projekts fehlt oder ist nicht absolut."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "eingerichtetes, aber nicht angemeldetes Projekt",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO3>",
+          "kind": "stop",
+          "sessionId": "s1"
+        },
+        "project": "<REPO3>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found"
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "nicht eingerichtetes Projekt",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO4>",
+          "kind": "stop",
+          "sessionId": "s1"
+        },
+        "project": "<REPO4>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "not-initialized",
+        "message": "Dieses Projekt ist nicht eingerichtet. Bitte zuerst `harness init` ausführen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Sitzungen bleiben unverändert",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "ended",
+          "endedAt": "<TIME>",
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": false,
+          "model": "opus",
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "ended",
+          "subagents": [
+            {
+              "endedAt": "<TIME>",
+              "id": "a1",
+              "startedAt": "<TIME>",
+              "state": "ended",
+              "type": "Explore"
+            }
+          ],
+          "ticketInfo": [
+            {
+              "id": "ARC-0001",
+              "status": "backlog",
+              "title": "(unbekannt)"
+            }
+          ],
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "Vertrag prüfen"
+        }
+      ],
+      "status": 200
+    }
+  }
+]

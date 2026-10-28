@@ -1,21 +1,11 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { HttpStep } from './HttpStep.mjs';
 import { Normalizer } from './Normalizer.mjs';
 import { RepoFixture } from './RepoFixture.mjs';
 import { ServerHandle } from './ServerHandle.mjs';
-import { SseCloseStep, SseExpectStep, SseOpenStep } from './SseSteps.mjs';
+import { stepKinds } from './StepKinds.mjs';
 import { Variables } from './Variables.mjs';
-
-// Bekannte Schritt-Arten; neue Arten (CLI-Aufrufe) kommen als eigenes Modul hinzu und melden sich hier an.
-// Jede Art liefert `{ request, response }`, nennt ihre eigenen Felder in `keys` und prüft sie in `parse`.
-export const stepKinds = {
-  http: new HttpStep(),
-  sseOpen: new SseOpenStep(),
-  sseExpect: new SseExpectStep(),
-  sseClose: new SseCloseStep(),
-};
 
 // Feste GUID des Vertrags-Benutzers in der Board-Konfiguration
 const CONTRACT_USER_ID = '11111111-1111-1111-1111-111111111111';
@@ -42,6 +32,8 @@ export class ScenarioRunner {
     const fixture = new RepoFixture({ home, claudeConfig, cli: this.cli });
     // Offene Ereignisströme der Schritt-Art `sseOpen`, nach Namen; sie leben nur in diesem Szenario
     const streams = new Map();
+    // Attrappen fremder Dienste der Schritt-Art `httpStub`, nach Namen; sie leben nur in diesem Szenario
+    const stubs = new Map();
     let server = null;
     try {
       const repos = fixture.create(scenario.fixtures.repos);
@@ -58,12 +50,13 @@ export class ScenarioRunner {
         saved,
       });
       if (scenario.fixtures.boardConfig === 'sqlite') await this.writeBoardConfig(server.base, home);
-      return await this.steps(scenario, { base: server.base, variables, normalizer, saved, streams });
+      return await this.steps(scenario, { base: server.base, variables, normalizer, saved, streams, stubs });
     } finally {
       // Erst die Ströme abbrechen: ein offener Strom hält den Prozess, und das Ende des Servers
       // soll nicht als Fehler eines Schritts ankommen
       for (const stream of streams.values()) stream.close();
       if (server) await server.stop();
+      for (const stub of stubs.values()) await stub.close();
       fixture.dispose();
       rmSync(claudeConfig, { recursive: true, force: true });
       // Ein von außen übergebenes Home gehört dem Aufrufer

@@ -1,0 +1,446 @@
+[
+  {
+    "name": "ein fehlendes Ticket bricht alles ab",
+    "request": {
+      "body": {
+        "ticketIds": [
+          "VTR-0001",
+          "VTR-0099"
+        ]
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/import"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-not-found",
+        "message": "Ticket VTR-0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "nichts verschoben",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/VTR-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 2,
+        "branch": null,
+        "column": "backlog",
+        "comments": [],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "status",
+            "from": null,
+            "note": "angelegt",
+            "ticketId": "VTR-0001",
+            "to": "backlog"
+          }
+        ],
+        "id": "VTR-0001",
+        "labels": [],
+        "needsPlanning": true,
+        "number": 1,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 1,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "backlog",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Erstes",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Tickets holen",
+    "request": {
+      "body": {
+        "ticketIds": [
+          "VTR-0001",
+          "vtr-2"
+        ]
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/import"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "moved": [
+          {
+            "acceptance": "",
+            "assignee": null,
+            "blockedReason": null,
+            "boardId": 1,
+            "branch": null,
+            "column": "backlog",
+            "consumes": [],
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "createdByName": "Vertrag",
+            "dependents": [],
+            "dependsOn": [],
+            "dependsOpen": [],
+            "dependsUnmerged": [],
+            "description": "",
+            "diagram": "",
+            "handbook": "",
+            "id": "VTR-0001",
+            "labels": [],
+            "needsPlanning": true,
+            "number": 1,
+            "plan": "",
+            "plannedAt": null,
+            "plannedBy": null,
+            "planningClaimAt": null,
+            "planningClaimBy": null,
+            "priority": "normal",
+            "produces": [],
+            "projectId": 1,
+            "rev": 2,
+            "sessions": [],
+            "sortOrder": 1,
+            "spec": null,
+            "specTask": null,
+            "status": "backlog",
+            "stepsDone": 0,
+            "stepsTotal": 0,
+            "targetBranch": null,
+            "title": "Erstes",
+            "touches": [],
+            "unlocks": [],
+            "updatedAt": "<TIME>",
+            "waiting": false,
+            "waitingOnQuestions": [],
+            "worktree": null
+          },
+          {
+            "acceptance": "",
+            "assignee": null,
+            "blockedReason": null,
+            "boardId": 1,
+            "branch": null,
+            "column": "planned",
+            "consumes": [],
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "createdByName": "Vertrag",
+            "dependents": [],
+            "dependsOn": [],
+            "dependsOpen": [],
+            "dependsUnmerged": [],
+            "description": "",
+            "diagram": "",
+            "handbook": "",
+            "id": "VTR-0002",
+            "labels": [],
+            "needsPlanning": true,
+            "number": 2,
+            "plan": "",
+            "plannedAt": null,
+            "plannedBy": null,
+            "planningClaimAt": null,
+            "planningClaimBy": null,
+            "priority": "normal",
+            "produces": [],
+            "projectId": 1,
+            "rev": 2,
+            "sessions": [],
+            "sortOrder": 0,
+            "spec": null,
+            "specTask": null,
+            "status": "planned",
+            "stepsDone": 0,
+            "stepsTotal": 0,
+            "targetBranch": null,
+            "title": "Zweites",
+            "touches": [],
+            "unlocks": [],
+            "updatedAt": "<TIME>",
+            "waiting": false,
+            "waitingOnQuestions": [],
+            "worktree": null
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Ticket liegt schon auf dem Board",
+    "request": {
+      "body": {
+        "ticketIds": [
+          "VTR-0003",
+          "VTR-0004"
+        ]
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/import"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-already-on-board",
+        "message": "VTR-0004 liegt schon auf Board Sprint."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Ticket aus anderem Projekt",
+    "request": {
+      "body": {
+        "ticketIds": [
+          "INC-0001"
+        ]
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/import"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-other-project",
+        "message": "INC-0001 gehört zu einem anderen Projekt. Tickets wechseln nur zwischen Boards desselben Projekts."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "leere Liste",
+    "request": {
+      "body": {
+        "ticketIds": []
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/import"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „ticketIds“ muss eine Liste mit 1 bis 200 Einträgen sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ohne Liste",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/boards/1/import"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „ticketIds“ muss eine Liste mit 1 bis 200 Einträgen sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Liste mit einer Zahl",
+    "request": {
+      "body": {
+        "ticketIds": [
+          "VTR-0003",
+          7
+        ]
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/import"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „ticketIds“ muss eine Liste von Texten sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Liste ist ein Text",
+    "request": {
+      "body": {
+        "ticketIds": "VTR-0003"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/import"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „ticketIds“ muss eine Liste von Texten sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekanntes Board",
+    "request": {
+      "body": {
+        "ticketIds": [
+          "VTR-0003"
+        ]
+      },
+      "method": "POST",
+      "path": "/api/db/boards/999/import"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 999 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "keine Board-Nummer",
+    "request": {
+      "body": {
+        "ticketIds": [
+          "VTR-0003"
+        ]
+      },
+      "method": "POST",
+      "path": "/api/db/boards/abc/import"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "id-invalid",
+        "message": "„abc“ ist keine gültige Board-Nummer."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Verlauf nennt das Quell-Board",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/VTR-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "backlog",
+        "comments": [],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "status",
+            "from": null,
+            "note": "angelegt",
+            "ticketId": "VTR-0001",
+            "to": "backlog"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "boardId",
+            "from": "2",
+            "note": "von Board Kollege geholt",
+            "ticketId": "VTR-0001",
+            "to": "1"
+          }
+        ],
+        "id": "VTR-0001",
+        "labels": [],
+        "needsPlanning": true,
+        "number": 1,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 2,
+        "sessions": [],
+        "sortOrder": 1,
+        "spec": null,
+        "specTask": null,
+        "status": "backlog",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Erstes",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "status": 200
+    }
+  }
+]

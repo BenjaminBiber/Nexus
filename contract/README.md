@@ -113,8 +113,9 @@ Vertragsmodus. Szenarien mit Ereignisstrom drücken damit den Takt, damit sie in
   `git` (Standard `true`) legt ein Repo mit erstem Commit an, `files` schreibt Dateien (Pfade mit `/`),
   `harnessInit` führt `<cli> init` im Repo aus (nötig, damit sich das Projekt anmelden lässt).
   Der Ordner heißt `<temp>/<NAME>/Mein Projekt ä` – Leerzeichen und Umlaut gehören zum Test.
-  `{{REPO1}}` ist der aufgelöste Pfad (ohne Verknüpfungen), weil Git die Projektwurzel so meldet und der
-  Server ihn so führt – nur dann passt er etwa zum Repo-Pfad eines Boards.
+  `{{REPO1}}` ist der aufgelöste Pfad (unter macOS `/private/var/…`, nicht `/var/…`), also genau der Text, den
+  der Server als Projektwurzel führt. Nur so findet ein Board, dessen `repoPath` auf `{{REPO1}}` zeigt, sein
+  Projekt wieder – der Vergleich in `RepoBoardResolver` ist ein reiner Textvergleich.
 - `boardConfig: "sqlite"`: vor den Schritten `PUT /api/board-config` mit
   `{ provider: "sqlite", dbFile: "<HOME>/board.db", userId: "11111111-1111-1111-1111-111111111111", userName: "Vertrag" }`.
   Dieser Aufruf wird **nicht** aufgezeichnet.
@@ -136,7 +137,8 @@ eingesetzt. Ein unbekannter Name ist ein Fehler.
 ### Schritte
 
 Jeder Schritt hat einen eindeutigen `name`. `kind` wählt die Art (Standard `http`); bekannt sind `http`,
-`sseOpen`, `sseExpect` und `sseClose`. Diese Felder gelten für jede Art:
+`httpStub`, `sseOpen`, `sseExpect` und `sseClose`, eine unbekannte Art ist ein Fehler. Diese Felder gelten
+für jede Art:
 
 | Feld | Bedeutung |
 | --- | --- |
@@ -145,7 +147,7 @@ Jeder Schritt hat einen eindeutigen `name`. `kind` wählt die Art (Standard `htt
 | `ignore` | Felder, die vor dem Vergleich entfernt werden (`"json.a.b"`, relativ zur Antwort). |
 | `record` | `false` führt den Schritt aus, zeichnet ihn aber nicht auf (Vorbereitung). |
 
-Dazu die Felder der Art `http`:
+Dazu die eigenen Felder der Art `http`:
 
 | Feld | Bedeutung |
 | --- | --- |
@@ -166,6 +168,32 @@ Test der fremden Herkunft steht er im Szenario.
 - `shape`: Status und Inhaltstyp genau, der Körper nur als Schlüssel und JSON-Typen (`"<string>"`, `"<number>"`,
   `"<boolean>"`, `"<null>"`). Listen werden auf ihre verschiedenen Formen zusammengefasst, damit die Länge
   nichts ausmacht; ein Text-Körper wird zu `"<string>"`.
+
+### Schritt-Art `httpStub`: Attrappe eines fremden Dienstes
+
+Manche Routen rufen einen Dienst außerhalb des Rechners auf – `POST /api/user-settings/test-ntfy` schickt eine
+Push-Meldung an einen ntfy-Server. Diese Art startet dafür einen Mini-HTTP-Server auf einem freien Port, der
+jede Anfrage mit einem festen Status beantwortet und aufzeichnet, was ankam.
+
+| Feld | Bedeutung |
+| --- | --- |
+| `stub` | Name der Attrappe in Großbuchstaben (`NTFY`), Pflicht. |
+| `action` | `start` (Standard) startet sie, `requests` zeichnet die empfangenen Anfragen auf. |
+| `status` | Antwortstatus der Attrappe, Standard `200` (nur bei `start`). |
+
+```json
+{ "name": "Attrappe starten", "kind": "httpStub", "stub": "NTFY", "save": { "ntfyUrl": "json.url" } },
+{ "name": "einrichten", "method": "PUT", "path": "/api/user-settings",
+  "body": { "ntfy": true, "ntfyServer": "{{ntfyUrl}}", "ntfyTopic": "harness-vertrag" } },
+{ "name": "Push-Test", "method": "POST", "path": "/api/user-settings/test-ntfy", "body": {} },
+{ "name": "Anfrage an der Attrappe", "kind": "httpStub", "action": "requests", "stub": "NTFY" }
+```
+
+- `start` liefert die Adresse als `json.url`; mit `save` wird sie zur Variable und – weil sie den wechselnden
+  Port enthält – in der Golden-Datei zu `<var:name>`.
+- `requests` liefert je Anfrage Methode, Pfad, die Köpfe `content-type` und `authorization` und den Körper als
+  `json` oder `text`. Andere Köpfe hängen am HTTP-Client und gehören nicht zum Vertrag.
+- Die Attrappen leben nur in ihrem Szenario; der Runner beendet sie danach.
 
 ## Ereignisstrom (`sseOpen`, `sseExpect`, `sseClose`)
 
@@ -292,11 +320,16 @@ Jede Regel ist eine eigene Methode in `lib/Normalizer.mjs` und einzeln getestet
 node contract/lib/extract-routes.mjs
 ```
 
+Der Rückfall der Oberfläche hat kein Muster im Quellcode (`app.setNotFoundHandler`); er steht als `GET /*`
+in der Liste und deckt alles ab, was `StaticRoutes.ts` neben `/` beantwortet: Seiten der Oberfläche, Dateien
+unter `assets/` und unbekannte Adressen.
+
 `--coverage` liest die Golden-Dateien (es läuft kein Server), ordnet jeden aufgezeichneten Schritt über
-Methode und Pfad einem Muster zu (`:param` → ein Pfadabschnitt, Abfrageteil abgeschnitten) und gibt je
-Quelldatei eine Tabelle aus: `[x]` abgedeckt, `[ ]` offen. Schritte ohne passende Route stehen am Ende mit
-`?` – dann ist `routes.json` veraltet. Mit `--strict` endet der Lauf mit Exit 1, solange eine Route offen ist
-(gedacht für den Abschluss von Phase 0).
+Methode und Pfad einem Muster zu (`:param` → ein Pfadabschnitt, `*` → Rest des Pfades, Abfrageteil
+abgeschnitten) und gibt je Quelldatei eine Tabelle aus: `[x]` abgedeckt, `[ ]` offen. Ein Muster mit `*`
+zählt erst, wenn keine genauere Route passt. Schritte ohne passende Route stehen am Ende mit `?` – dann ist
+`routes.json` veraltet. Mit `--strict` endet der Lauf mit Exit 1, solange eine Route offen ist (gedacht für
+den Abschluss von Phase 0).
 
 ## Gegen einen fremden Server prüfen
 
@@ -321,7 +354,10 @@ contract/
 ├─ lib/
 │  ├─ ScenarioLoader.mjs      # liest *.scenario.json, prüft die Felder
 │  ├─ ScenarioRunner.mjs      # Home, Fixtures, Variablen, Schritte, Normalisierung
+│  ├─ StepKinds.mjs           # Registry der Schritt-Arten
 │  ├─ HttpStep.mjs            # Schritt-Art „http“
+│  ├─ HttpStubStep.mjs        # Schritt-Art „httpStub“
+│  ├─ HttpStub.mjs            # Mini-HTTP-Server der Attrappe
 │  ├─ SseSteps.mjs            # Schritt-Arten „sseOpen“, „sseExpect“, „sseClose“
 │  ├─ SseStream.mjs           # eine offene Verbindung: liest mit, gibt bis zum Treffer heraus
 │  ├─ SseParser.mjs           # zerlegt den Textstrom in Ereignisse und Kommentare
@@ -338,7 +374,12 @@ contract/
 │  └─ ts-server.mjs           # TS-Server im Vertragsmodus
 ├─ api/
 │  ├─ routes.json             # alle Routen des Servers
-│  └─ basis/                  # Beispielszenarien
+│  ├─ basis/                  # Beispielszenarien
+│  ├─ board/                  # Board-Kern: Projekte, Boards, Tickets, Schritte (/api/db)
+│  ├─ board-views/            # Notizen, Suche, Statistik, Graph, Inbox
+│  ├─ docs/                   # Szenarien der Docs-Seite (Baum, Datei, Suche, Entwürfe, Kommentare)
+│  ├─ questions/              # Fragen-Routen
+│  └─ misc/                   # Sitzungen, Favoriten, Hook, Einstellungen, Usage, Workflow, Oberfläche
 ├─ sse/                       # Szenarien des Ereignisstroms
 └─ tests/                     # Einheitentests (vitest, siehe vitest.config.ts)
 ```
@@ -349,13 +390,16 @@ Ein neues Szenario ist eine Datei unter `contract/api/<gruppe>/` (oder `contract
 entsteht mit `node contract/run.mjs --only <gruppe>/<name> --update`. Danach einmal ohne `--update` laufen
 lassen – `git status` darf nichts mehr zeigen.
 
-Eine neue Schritt-Art (geplant: CLI-Aufrufe) ist ein eigenes Modul mit einer Klasse und drei Mitgliedern:
+Eine neue Schritt-Art (geplant: CLI-Aufrufe) ist ein eigenes Modul mit einer Klasse und diesen Mitgliedern:
 
 - `keys`: die Felder, die diese Art im Szenario kennt (alles andere ist dort ein unbekanntes Feld),
-- `parse(value, index, fail)`: prüft diese Felder und liefert sie in der Form, die `run` erwartet,
-- `run(step, context)`: führt den Schritt aus. `context` hält `base` (Adresse des Servers), `variables` und
-  `streams` (die offenen Ereignisströme). Der Rückgabewert ist `{ request, response }`; `response` darf alles
-  enthalten, was die Art aufzeichnet, und `save` sowie `ignore` greifen darauf zu (`json.…`, `headers.…`).
+- `parse(value, index, fail)` (freiwillig): prüft diese Felder schon beim Lesen des Szenarios und liefert sie
+  in der Form, die `run` erwartet. Ohne `parse` bekommt die Art den Schritt unverändert als `step.raw` und
+  prüft ihre eigenen Felder selbst beim Ausführen (so arbeitet `httpStub`),
+- `run(step, context)`: führt den Schritt aus. `context` hält `base` (Adresse des Servers), `variables`,
+  `streams` (die offenen Ereignisströme) und `stubs` (die laufenden Attrappen). Der Rückgabewert ist
+  `{ request, response }`; `response` darf alles enthalten, was die Art aufzeichnet, und `save` sowie `ignore`
+  greifen darauf zu (`json.…`, `headers.…`).
 
-Die Art meldet sich in der Registry `stepKinds` in `lib/ScenarioRunner.mjs` an; der Lader prüft dann nur noch
-die gemeinsamen Felder (`name`, `kind`, `save`, `compare`, `ignore`, `record`).
+Die Art meldet sich in der Registry `stepKinds` in `lib/StepKinds.mjs` an; der Lader prüft dann die
+gemeinsamen Felder (`name`, `kind`, `save`, `compare`, `ignore`, `record`) und die aus `keys`.

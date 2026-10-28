@@ -104,6 +104,12 @@ describe('ScenarioLoader', () => {
     it('ohne env bleibt die Umgebung leer', () => {
       expect(loader.parse(write('projects', GOOD)).env).toEqual({});
     });
+
+    it('nimmt die eigenen Felder einer anderen Schritt-Art als raw mit', () => {
+      const steps = [{ name: 'Attrappe', kind: 'httpStub', action: 'start', stub: 'NTFY', record: false }];
+      const scenario = loader.parse(write('stub', { title: 'Attrappe', steps }));
+      expect(scenario.steps[0]).toMatchObject({ kind: 'httpStub', record: false, raw: steps[0] });
+    });
   });
 
   describe('fehlerhafte Szenarien', () => {
@@ -121,6 +127,16 @@ describe('ScenarioLoader', () => {
 
     it('meldet unbekannte Felder in einem Schritt', () => {
       failsWith({ title: 'T', steps: [{ name: 'a', method: 'GET', path: '/api/health', pfad: '/x' }] }, /unbekannte Felder in steps\[0\]: pfad/);
+    });
+
+    it('meldet unbekannte Felder in einem Schritt einer anderen Art', () => {
+      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'httpStub', stub: 'NTFY', aktion: 'start' }] }, /unbekannte Felder in steps\[0\]: aktion/);
+    });
+
+    it('meldet eine unbekannte Schritt-Art', () => {
+      const alle = /steps\[0\]\.kind muss eine bekannte Art sein \(http, httpStub, sseClose, sseExpect, sseOpen\)/;
+      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'cli' }] }, alle);
+      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'sseWarten', stream: 's1' }] }, alle);
     });
 
     it('meldet leere Schritte', () => {
@@ -166,10 +182,6 @@ describe('ScenarioLoader', () => {
 
     it('meldet ein unbekanntes Betriebssystem', () => {
       failsWith({ title: 'T', platforms: ['macos'], steps: GOOD.steps }, /platforms muss eine Liste/);
-    });
-
-    it('meldet eine unbekannte Schritt-Art', () => {
-      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'sseWarten', stream: 's1' }] }, /steps\[0\]\.kind erlaubt nur http, sseOpen, sseExpect, sseClose/);
     });
 
     it('meldet ein Feld, das es bei dieser Art nicht gibt', () => {
