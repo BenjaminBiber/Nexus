@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "prepare-sidecar": "npm run build --prefix ../.. && npm run build:sidecar --prefix ../.. && node scripts/copy-sidecar.mjs",
+    "smoke": "node scripts/smoke-app.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"
