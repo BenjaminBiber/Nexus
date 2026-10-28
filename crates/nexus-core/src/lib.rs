@@ -14,6 +14,8 @@ pub mod questions;
 pub mod registry;
 pub mod sessions;
 pub mod settings;
+#[cfg(feature = "testing")]
+pub mod testing;
 pub mod text;
 
 mod process;

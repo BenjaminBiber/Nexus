@@ -481,6 +481,23 @@ pub trait BoardDatabase: Send + Sync {
 /// Schreibt `db.transaction(|u| Box::pin(async move { … }))` kürzer als `tx!(db, |u| { … })`.
 ///
 /// Der Rumpf darf `u` benutzen und muss `Result<T>` liefern; `?` funktioniert wie gewohnt.
+///
+/// Weil die Arbeit `Fn` ist und die Lebensdauer `'u` höherrangig gebunden, darf der Rumpf nur
+/// Werte benutzen, die er selbst herstellt oder die ewig leben. Alles andere wird vorher
+/// geklont – dafür gibt es die zweite Form `tx!(db, [wert, …], |u| { … })`: sie klont die
+/// genannten Werte bei jedem Aufruf der Arbeit und gibt dem Rumpf die Kopien unter demselben
+/// Namen.
+///
+/// ```
+/// # use nexus_core::board::database::{BoardDatabase, BoardUnitOfWork};
+/// # use nexus_core::board::in_memory::InMemoryBoardDatabase;
+/// # use nexus_core::board::types::BoardUser;
+/// # tokio::runtime::Runtime::new().unwrap().block_on(async {
+/// let db = InMemoryBoardDatabase::new();
+/// let user = BoardUser { id: "u-1".into(), name: "Florian".into() };
+/// nexus_core::tx!(db, [user], |u| { u.users().upsert(&user).await }).await.unwrap();
+/// # });
+/// ```
 #[macro_export]
 macro_rules! tx {
     ($db:expr, |$uow:ident| $body:block) => {
@@ -490,6 +507,17 @@ macro_rules! tx {
             },
         )
     };
+    ($db:expr, [$($wert:ident),+ $(,)?], |$uow:ident| $body:block) => {{
+        // Einmal für die Arbeit kopieren – der Aufrufer behält seine Werte …
+        $(let $wert = ::std::clone::Clone::clone(&$wert);)+
+        $db.transaction(
+            move |$uow: &mut dyn $crate::board::database::BoardUnitOfWork| {
+                // … und einmal je Aufruf, weil die Arbeit mehrfach laufen darf
+                $(let $wert = ::std::clone::Clone::clone(&$wert);)+
+                ::std::boxed::Box::pin(async move { $body })
+            },
+        )
+    }};
 }
 
 #[cfg(test)]
