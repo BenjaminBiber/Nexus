@@ -1,0 +1,360 @@
+[
+  {
+    "name": "Projekt anmelden",
+    "request": {
+      "body": {
+        "path": "<REPO1>"
+      },
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "DB-Projekt anlegen",
+    "request": {
+      "body": {
+        "key": "ARC",
+        "name": "Arches"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Board anlegen",
+    "request": {
+      "body": {
+        "name": "Sprint",
+        "project": "ARC"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "erstes Ticket anlegen",
+    "request": {
+      "body": {
+        "title": "Eins"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "zweites Ticket anlegen",
+    "request": {
+      "body": {
+        "status": "planned",
+        "title": "Zwei"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "ohne Sitzungen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "Sitzung über den Hook anlegen",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "session-start",
+          "model": "opus",
+          "sessionId": "s1",
+          "title": "Vertrag prüfen"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "status": 204
+    }
+  },
+  {
+    "name": "Sitzung ohne Ticket",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "idle",
+          "endedAt": null,
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": "opus",
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "idle",
+          "subagents": [],
+          "ticketInfo": [],
+          "tickets": [],
+          "title": "Vertrag prüfen"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Sitzung einem Ticket zuordnen",
+    "request": {
+      "body": {
+        "ticket": "arc-1"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/sessions/s1/claim"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "cwd": "<REPO1>",
+        "displayState": "idle",
+        "endedAt": null,
+        "id": "s1",
+        "lastEventAt": "<TIME>",
+        "listening": true,
+        "model": "opus",
+        "projectId": "<var:pid>",
+        "runtimeMs": 0,
+        "startedAt": "<TIME>",
+        "state": "idle",
+        "subagents": [],
+        "ticketInfo": [
+          {
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Eins"
+          }
+        ],
+        "tickets": [
+          "ARC-0001"
+        ],
+        "title": "Vertrag prüfen"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Sitzung mit Ticketangaben",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "idle",
+          "endedAt": null,
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": "opus",
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "idle",
+          "subagents": [],
+          "ticketInfo": [
+            {
+              "id": "ARC-0001",
+              "status": "backlog",
+              "title": "Eins"
+            }
+          ],
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "Vertrag prüfen"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Sitzung einem zweiten Ticket zuordnen",
+    "request": {
+      "body": {
+        "ticket": "ARC-0002"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/sessions/s1/claim"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "cwd": "<REPO1>",
+        "displayState": "idle",
+        "endedAt": null,
+        "id": "s1",
+        "lastEventAt": "<TIME>",
+        "listening": true,
+        "model": "opus",
+        "projectId": "<var:pid>",
+        "runtimeMs": 0,
+        "startedAt": "<TIME>",
+        "state": "idle",
+        "subagents": [],
+        "ticketInfo": [
+          {
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "(unbekannt)"
+          },
+          {
+            "id": "ARC-0002",
+            "status": "planned",
+            "title": "Zwei"
+          }
+        ],
+        "tickets": [
+          "ARC-0001",
+          "ARC-0002"
+        ],
+        "title": "Vertrag prüfen"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zuordnung ohne Ticket",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/sessions/s1/claim"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-missing",
+        "message": "Bitte das Ticket angeben (Feld ticket)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Zuordnung mit leerem Ticket",
+    "request": {
+      "body": {
+        "ticket": "   "
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/sessions/s1/claim"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-missing",
+        "message": "Bitte das Ticket angeben (Feld ticket)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Zuordnung an unbekannter Sitzung",
+    "request": {
+      "body": {
+        "ticket": "ARC-0001"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/sessions/gibtsnicht/claim"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "session-not-found",
+        "message": "Session gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Zuordnung auf unbekanntes Ticket",
+    "request": {
+      "body": {
+        "ticket": "ARC-0099"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/sessions/s1/claim"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-not-found",
+        "message": "Ticket ARC-0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Sitzungen eines unbekannten Projekts",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/gibtsnicht/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Zuordnung in einem unbekannten Projekt",
+    "request": {
+      "body": {
+        "ticket": "ARC-0001"
+      },
+      "method": "POST",
+      "path": "/api/projects/gibtsnicht/sessions/s1/claim"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  }
+]

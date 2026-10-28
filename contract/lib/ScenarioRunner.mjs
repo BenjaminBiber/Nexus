@@ -1,16 +1,11 @@
 import { mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { CliStep } from './CliStep.mjs';
-import { HttpStep } from './HttpStep.mjs';
 import { Normalizer } from './Normalizer.mjs';
 import { RepoFixture } from './RepoFixture.mjs';
 import { ServerHandle } from './ServerHandle.mjs';
+import { stepKinds } from './StepKinds.mjs';
 import { Variables } from './Variables.mjs';
-
-// Bekannte Schritt-Arten; eine neue Art (geplant: Ereignisstrom) kommt als eigenes Modul hinzu und
-// meldet sich hier und in ScenarioLoader.mjs an. Jede Art liefert `{ request, response }`.
-export const stepKinds = { http: new HttpStep(), cli: new CliStep() };
 
 // Umgebungsdatei der Session (CLAUDE_ENV_FILE) für die Fixture `claudeEnvFile`
 const ENV_FILE = 'claude-env.sh';
@@ -38,6 +33,8 @@ export class ScenarioRunner {
     const claudeConfig = ScenarioRunner.tempDir('harness-contract-claude-');
     const port = own ? await ServerHandle.freePort() : ScenarioRunner.portOf(this.base);
     const fixture = new RepoFixture({ home, claudeConfig, cli: this.cli });
+    // Attrappen fremder Dienste der Schritt-Art `httpStub`, nach Namen; sie leben nur in diesem Szenario
+    const stubs = new Map();
     let server = null;
     try {
       const repos = fixture.create(scenario.fixtures.repos);
@@ -59,6 +56,7 @@ export class ScenarioRunner {
         variables,
         normalizer,
         saved,
+        stubs,
         // Für CLI-Schritte: Programm und die Umgebung, in der es läuft
         cli: this.cli,
         home,
@@ -69,6 +67,7 @@ export class ScenarioRunner {
       return await this.steps(scenario, context);
     } finally {
       if (server) await server.stop();
+      for (const stub of stubs.values()) await stub.close();
       fixture.dispose();
       rmSync(claudeConfig, { recursive: true, force: true });
       // Ein von außen übergebenes Home gehört dem Aufrufer

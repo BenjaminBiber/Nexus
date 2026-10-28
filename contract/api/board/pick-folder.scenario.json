@@ -1,0 +1,8 @@
+{
+  "title": "Ordnerwahl auf dem Rechner des Servers",
+  "steps": [
+    { "name": "Ordnerwahl ohne Startordner", "method": "POST", "path": "/api/db/pick-folder", "body": {} },
+    { "name": "Ordnerwahl mit Startordner", "method": "POST", "path": "/api/db/pick-folder", "body": { "start": " C:/Repos " } },
+    { "name": "Startordner keine Zeichenkette", "method": "POST", "path": "/api/db/pick-folder", "body": { "start": 5 } }
+  ]
+}

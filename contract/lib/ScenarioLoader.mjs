@@ -1,15 +1,12 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { stepKinds } from './StepKinds.mjs';
 
 const SCENARIO_KEYS = new Set(['title', 'platforms', 'fixtures', 'steps']);
 const FIXTURE_KEYS = new Set(['repos', 'boardConfig', 'claudeEnvFile']);
 const REPO_KEYS = new Set(['name', 'git', 'harnessInit', 'files']);
-const COMMON_STEP_KEYS = ['name', 'kind', 'save', 'compare', 'ignore', 'record'];
-// Felder je Schritt-Art; eine neue Art steht hier und in der Registry `stepKinds` von ScenarioRunner.mjs
-const STEP_KEYS = {
-  http: new Set([...COMMON_STEP_KEYS, 'method', 'path', 'body', 'headers']),
-  cli: new Set([...COMMON_STEP_KEYS, 'args', 'cwd', 'stdin', 'env']),
-};
+// Felder, die jede Schritt-Art hat; die Art nennt ihre eigenen in `keys`
+const STEP_KEYS = new Set(['name', 'kind', 'save', 'compare', 'ignore', 'record']);
 const PLATFORMS = new Set(['darwin', 'linux', 'win32']);
 const METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']);
 const COMPARE = new Set(['full', 'status', 'shape']);
@@ -151,8 +148,10 @@ export class ScenarioLoader {
     if (value === null || typeof value !== 'object' || Array.isArray(value)) fail(`steps[${index}] muss ein Objekt sein.`);
     if (typeof value.name !== 'string' || !value.name.trim()) fail(`steps[${index}].name fehlt oder ist leer.`);
     const kind = value.kind ?? 'http';
-    if (typeof kind !== 'string' || !STEP_KEYS[kind]) fail(`steps[${index}].kind erlaubt nur ${Object.keys(STEP_KEYS).join(', ')}.`);
-    this.unknown(value, STEP_KEYS[kind], where, fail);
+    if (typeof kind !== 'string' || !stepKinds[kind]) {
+      fail(`steps[${index}].kind muss eine bekannte Art sein (${Object.keys(stepKinds).sort().join(', ')}).`);
+    }
+    this.unknown(value, new Set([...STEP_KEYS, ...stepKinds[kind].keys]), where, fail);
     if (value.compare !== undefined && !COMPARE.has(value.compare)) {
       fail(`steps[${index}].compare erlaubt nur ${[...COMPARE].join(', ')}.`);
     }
@@ -175,8 +174,10 @@ export class ScenarioLoader {
       record: value.record ?? true,
       save,
     };
+    if (kind === 'http') return { ...step, ...this.httpStep(value, index, fail) };
     if (kind === 'cli') return { ...step, ...this.cliStep(value, index, fail) };
-    return { ...step, ...this.httpStep(value, index, fail) };
+    // Jede weitere Art prüft ihre eigenen Felder selbst und bekommt sie als `raw`
+    return { ...step, raw: value };
   }
 
   // Felder eines HTTP-Schritts

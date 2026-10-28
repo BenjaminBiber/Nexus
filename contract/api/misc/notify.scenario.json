@@ -1,0 +1,55 @@
+{
+  "title": "Testmeldung und Push-Meldung über ntfy gegen eine Attrappe",
+  "steps": [
+    {
+      "name": "Testmeldung",
+      "method": "POST",
+      "path": "/api/user-settings/test-notification",
+      "body": {},
+      "compare": "status"
+    },
+    { "name": "Push-Test ohne Thema", "method": "POST", "path": "/api/user-settings/test-ntfy", "body": {} },
+
+    { "name": "Attrappe starten", "kind": "httpStub", "stub": "NTFY", "save": { "ntfyUrl": "json.url" } },
+    {
+      "name": "Push auf die Attrappe einrichten",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "ntfy": true, "ntfyServer": "{{ntfyUrl}}", "ntfyTopic": "harness-vertrag", "ntfyToken": "tk_vertrag" }
+    },
+    { "name": "Push-Test", "method": "POST", "path": "/api/user-settings/test-ntfy", "body": {} },
+    { "name": "Anfrage an der Attrappe", "kind": "httpStub", "action": "requests", "stub": "NTFY" },
+
+    { "name": "Attrappe mit Fehler starten", "kind": "httpStub", "stub": "NTFY_FEHLER", "status": 500, "save": { "fehlerUrl": "json.url" } },
+    {
+      "name": "Push auf die Attrappe mit Fehler umstellen",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "ntfyServer": "{{fehlerUrl}}" }
+    },
+    { "name": "Push-Test mit Fehler", "method": "POST", "path": "/api/user-settings/test-ntfy", "body": {} },
+    { "name": "Anfrage an der Attrappe mit Fehler", "kind": "httpStub", "action": "requests", "stub": "NTFY_FEHLER" },
+
+    {
+      "name": "Push abschalten, Thema bleibt",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "ntfy": false }
+    },
+    { "name": "Push-Test trotz abgeschaltetem Push", "method": "POST", "path": "/api/user-settings/test-ntfy", "body": {} },
+
+    {
+      "name": "Push auf einen Port ohne Dienst umstellen",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "ntfyServer": "http://127.0.0.1:9" }
+    },
+    {
+      "name": "Push-Test ohne erreichbaren Server",
+      "method": "POST",
+      "path": "/api/user-settings/test-ntfy",
+      "body": {},
+      "ignore": ["json.error"]
+    }
+  ]
+}

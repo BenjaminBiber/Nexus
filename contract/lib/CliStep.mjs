@@ -8,6 +8,11 @@ const TIMEOUT_MS = 120000;
 // Schritt-Art `cli`: ruft die CLI als eigenen Prozess auf (Argumente, Arbeitsordner, Standardeingabe,
 // Umgebung) und zeichnet Rückgabecode, stdout und stderr auf.
 export class CliStep {
+  // Eigene Felder der Art; der Lader meldet damit Tippfehler im Szenario
+  get keys() {
+    return ['args', 'cwd', 'stdin', 'env'];
+  }
+
   // Führt den Schritt aus; `context.cli` ist das Programm als Liste, `context.home`/`port`/`claudeConfig`
   // die Umgebung des Szenarios und `context.envFile` die Datei der Fixture `claudeEnvFile`
   async run(step, context) {
