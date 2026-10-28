@@ -1,5 +1,5 @@
 # Release von Hand starten: Version erhöhen, Tag setzen, Entwurfs-Release anlegen.
-# Teil 1 – die Jobs, die bauen und veröffentlichen, kommen in P6-4 und P6-5 dazu.
+# Teil 1 und 2 – der Job, der den Entwurf veröffentlicht, kommt in P6-5 dazu.
 # Die Logik steckt in scripts/release/*.sh, damit sie lesbar bleibt und sich lokal durchspielen lässt.
 name: Release
 on:
@@ -55,3 +55,67 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: scripts/release/draft-release.sh "${{ steps.v.outputs.tag }}" "${{ steps.v.outputs.version }}"
+
+  # Baut je Plattform die Installer, hängt sie an den Entwurf und legt ein CLI-Archiv dazu
+  build:
+    name: Installer (${{ matrix.target }})
+    needs: version
+    # Noch ohne Secrets; P6-6 (Signatur) und P6-7 (Updater) lesen sie später aus dieser Umgebung
+    environment: release
+    strategy:
+      # Jede Plattform läuft zu Ende, damit ein Fehler auf einer die anderen nicht verdeckt
+      fail-fast: false
+      matrix:
+        include:
+          # x64-macOS baut nativ: das Sidecar ist eine Node-SEA und braucht das Node der Zielarchitektur
+          - { runner: macos-14, target: aarch64-apple-darwin, bundles: 'app,dmg' }
+          - { runner: macos-15-intel, target: x86_64-apple-darwin, bundles: 'app,dmg' }
+          - { runner: windows-latest, target: x86_64-pc-windows-msvc, bundles: 'nsis' }
+          - { runner: ubuntu-22.04, target: x86_64-unknown-linux-gnu, bundles: 'appimage,deb,rpm' }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      # Gebaut wird das Tag aus dem Job „version“, nicht der Stand des Branches
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
+      # Version absichtlich wie in rust-toolchain.toml; beim Anheben beide Stellen ändern
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.99.1'
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      # Node von nodejs.org: nur damit lässt sich eine Single Executable Application bauen
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: npm
+      # Nur Linux braucht die Systembibliotheken von Tauri; rpm ist für das .rpm-Paket nötig
+      - name: Systempakete für Tauri installieren
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev patchelf rpm
+      - run: npm ci
+      - run: npm run build
+      # Sidecar für genau dieses Ziel; der Tauri-Build selbst ruft es über beforeBuildCommand erneut auf
+      - run: npm run build:sidecar -- --target ${{ matrix.target }}
+      # Baut die App und lädt dmg, NSIS-Installer, AppImage, deb und rpm an den Entwurf des Releases
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          projectPath: apps/desktop
+          releaseId: ${{ needs.version.outputs.release_id }}
+          args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
+          includeUpdaterJson: false
+      # CLI und Plugin für den Betrieb ohne App
+      - name: CLI-Archiv
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          file=$(node scripts/release/cli-archive.mjs --version "${{ needs.version.outputs.version }}" --target "${{ matrix.target }}")
+          gh release upload "${{ needs.version.outputs.tag }}" "$file" --clobber
