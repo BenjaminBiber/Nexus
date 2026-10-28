@@ -26,7 +26,7 @@ node contract/run.mjs --suite cli             # Hooks und Hilfetexte
 node contract/run.mjs --suite cli --only cli/hooks
 node contract/lib/gen-help-scenarios.mjs      # Szenario der Hilfetexte neu erzeugen
 npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lader, Variablen,
-                                   # Home-Dateien, Strom, CLI-Schritt, Generator)
+                                   # Home-Dateien, Strom, CLI-Schritt, Commit, Home-Datei, Generator)
 ```
 
 | Option | Bedeutung |
@@ -68,7 +68,9 @@ Beim TypeScript-Server macht das `contract/servers/ts-server.mjs`.
 - Kein Takt des Dispatchers von selbst, und es wird **nie** ein Prozess gestartet: der Starter des Workers
   liefert immer `null`. `POST /api/dispatch/run` löst den Durchlauf trotzdem aus – ein bereites Ticket wird
   gewählt und als Lauf vermerkt (`GET /api/dispatch/status` zeigt ihn mit `state: "running"`), nur arbeitet
-  niemand daran. Der Lauf endet deshalb nie; der Zustand bleibt über alle weiteren Anfragen gleich.
+  niemand daran. Der Lauf endet von selbst nie; der Zustand bleibt über alle weiteren Anfragen gleich. Ein
+  Szenario kann das Ergebnis des Workers aber selbst hinlegen (Schritt-Art `homeFile`) – dann wertet der nächste
+  Durchlauf den Lauf aus wie jeden anderen.
 - Kein Ordnerdialog (`POST /api/db/pick-folder` antwortet mit `{ "path": null }`), kein Öffnen von Dateien im
   Explorer oder in VS Code.
 - Keine Meldungen über neue Fragen (Abfrage aus).
@@ -125,6 +127,18 @@ Vertragsmodus. Szenarien mit Ereignisstrom drücken damit den Takt, damit sie in
   `git` (Standard `true`) legt ein Repo mit erstem Commit an, `files` schreibt Dateien (Pfade mit `/`),
   `harnessInit` führt `<cli> init` im Repo aus (nötig, damit sich das Projekt anmelden lässt).
   Der Ordner heißt `<temp>/<NAME>/Mein Projekt ä` – Leerzeichen und Umlaut gehören zum Test.
+  `branches` legt Arbeitsbranches an, die vor dem Hauptbranch `main` stehen – je Branch `name` (nicht `main`),
+  `files` und `message` (Standard `Arbeit auf <name>`); danach steht das Repo wieder auf `main`.
+  Damit bekommt ein Szenario einen Zielbranch (`release/1`) oder einen fremden Stand, gegen den gemergt wird.
+
+  ```json
+  { "name": "REPO1", "files": { "src/a.ts": "alt\n" },
+    "branches": [{ "name": "release/1", "message": "1.0", "files": { "src/a.ts": "release\n" } }] }
+  ```
+
+  Jeder Commit eines Szenarios – der der Fixtures ebenso wie der Merge-Commit des geprüften Servers – bekommt
+  dieselbe Identität, dasselbe Datum und dieselben Git-Einstellungen (`lib/GitIdentity.mjs`). Deshalb sind die
+  Commit-Kennungen über Läufe und Rechner hinweg gleich und stehen im Klartext in den Golden-Dateien.
   `{{REPO1}}` ist der aufgelöste Pfad (unter macOS `/private/var/…`, nicht `/var/…`), also genau der Text, den
   der Server als Projektwurzel führt. Nur so findet ein Board, dessen `repoPath` auf `{{REPO1}}` zeigt, sein
   Projekt wieder – der Vergleich in `RepoBoardResolver` ist ein reiner Textvergleich.
@@ -169,8 +183,8 @@ Texte durch, die selbst Platzhalter enthalten – etwa die Vorlagen der Prompts 
 ### Schritte
 
 Jeder Schritt hat einen eindeutigen `name`. `kind` wählt die Art (Standard `http`); bekannt sind `http`,
-`cli`, `httpStub`, `sseOpen`, `sseExpect` und `sseClose`, eine unbekannte Art ist ein Fehler. Diese Felder
-gelten für jede Art:
+`cli`, `httpStub`, `sseOpen`, `sseExpect`, `sseClose`, `commit` und `homeFile`, eine unbekannte Art ist ein
+Fehler. Diese Felder gelten für jede Art:
 
 | Feld | Bedeutung |
 | --- | --- |
@@ -262,6 +276,49 @@ jede Anfrage mit einem festen Status beantwortet und aufzeichnet, was ankam.
 - `requests` liefert je Anfrage Methode, Pfad, die Köpfe `content-type` und `authorization` und den Körper als
   `json` oder `text`. Andere Köpfe hängen am HTTP-Client und gehören nicht zum Vertrag.
 - Die Attrappen leben nur in ihrem Szenario; der Runner beendet sie danach.
+
+### Schritt-Art `commit`: Arbeit im Repo
+
+Der Vertragsmodus startet nie einen Worker. Der Branch, den der Dispatcher für ein Ticket anlegt, bliebe deshalb
+leer – und ohne Änderungen hätten Review (Dateiliste, Patch) und Merge (Merge-Commit, Konflikt) nichts zu zeigen.
+Diese Art schreibt und löscht Dateien in einem Ordner der Fixture-Repos und committet sie, so wie es der Agent
+getan hätte. Committet wird nur innerhalb der Fixture-Repos.
+
+| Feld | Bedeutung |
+| --- | --- |
+| `cwd` | Ordner des Commits, Pflicht; auch ein Worktree (`{{REPO1}}-worktrees/BEN-0001`). |
+| `files` | Neue oder geänderte Dateien als Pfad → Text (Pfade mit `/`). |
+| `remove` | Zu löschende Dateien; mit `files` zusammen ergibt das eine Umbenennung. |
+| `message` | Commit-Nachricht, Pflicht. |
+
+```json
+{ "name": "Arbeit des Agenten", "kind": "commit", "cwd": "{{REPO1}}-worktrees/BEN-0001",
+  "files": { "src/preis.ts": "neu\n" }, "remove": ["src/alt.ts"], "message": "BEN-0001: Rabatt" }
+```
+
+Aufgenommen werden nur die genannten Pfade – ein frischer Worktree enthält auch Dateien, die der Harness beim
+Anlegen hineinschreibt (Plugin-Einstellung, Rules), und die gehören nicht in den Commit. Die Antwort nennt
+`branch` und `commit` (kurze Kennung); beide sind wegen der festen Identität über Läufe hinweg gleich.
+
+### Schritt-Art `homeFile`: Datei im Home während des Laufs
+
+Die Fixture `homeFiles` legt Dateien vor dem Start des Servers an. Diese Art schreibt eine Datei, während das
+Szenario läuft – für die, deren Name erst im Lauf feststeht. Der Hauptfall ist das Ergebnis eines Workers
+(`dispatch/runs/<Lauf>.result.json`): die Lauf-ID vergibt erst `POST /api/dispatch/run`, und mit dem Ergebnis
+daneben wertet der nächste Durchlauf den Lauf aus, als wäre der Worker fertig geworden. So kommt ein Szenario an
+die Zustände nach einem beendeten Lauf (Freigabe vor dem Merge, Merge, Abbruch), ohne je einen Worker zu starten.
+
+| Feld | Bedeutung |
+| --- | --- |
+| `path` | Pfad relativ zum Home, mit `/` getrennt und ohne `..`; Pflicht. |
+| `content` | Inhalt: ein Text kommt wie er ist, jeder andere JSON-Wert als JSON. Pflicht. |
+
+```json
+{ "name": "Durchlauf", "method": "POST", "path": "/api/dispatch/run", "body": {},
+  "save": { "lauf": "json.runs.0.id" } },
+{ "name": "Ergebnis des Workers", "kind": "homeFile", "path": "dispatch/runs/{{lauf}}.result.json",
+  "content": { "code": 0, "timedOut": false, "endedAt": "2020-03-02T08:45:00.000Z", "output": "…" } }
+```
 
 ## Ereignisstrom (`sseOpen`, `sseExpect`, `sseClose`)
 
@@ -498,6 +555,8 @@ contract/
 │  ├─ SseStream.mjs           # eine offene Verbindung: liest mit, gibt bis zum Treffer heraus
 │  ├─ SseParser.mjs           # zerlegt den Textstrom in Ereignisse und Kommentare
 │  ├─ SseEvents.mjs           # Herzschläge, Zusammenfassen, until als Teilobjekt
+│  ├─ CommitStep.mjs          # Schritt-Art „commit“
+│  ├─ HomeFileStep.mjs        # Schritt-Art „homeFile“
 │  ├─ ServerHandle.mjs        # Server starten/beenden oder --base nutzen
 │  ├─ Normalizer.mjs          # ersetzt die wechselnden Werte
 │  ├─ GoldenStore.mjs         # lesen, schreiben, vergleichen
@@ -505,6 +564,7 @@ contract/
 │  ├─ Variables.mjs           # {{NAME}} und save
 │  ├─ Coverage.mjs            # routes.json gegen die aufgezeichneten Schritte
 │  ├─ RepoFixture.mjs         # temporäre Git-Repos
+│  ├─ GitIdentity.mjs         # feste Identität, festes Datum und feste Einstellungen für jeden Commit
 │  ├─ HomeFiles.mjs           # Fixture-Dateien im HARNESS_HOME
 │  ├─ extract-routes.mjs      # erzeugt api/routes.json
 │  └─ gen-help-scenarios.mjs  # erzeugt cli/help/help.scenario.json
@@ -518,6 +578,7 @@ contract/
 │  ├─ docs/                   # Szenarien der Docs-Seite (Baum, Datei, Suche, Entwürfe, Kommentare)
 │  ├─ questions/              # Fragen-Routen
 │  ├─ dispatch/               # Dispatcher: Einstellung, Steuerung, Läufe, Vorschläge
+│  ├─ dispatch-review/        # Dispatcher: Review, Zurückgeben, Abnehmen, Mergen, Planung, Recherche
 │  └─ misc/                   # Sitzungen, Favoriten, Hook, Einstellungen, Usage, Workflow, Oberfläche
 ├─ sse/                       # Szenarien des Ereignisstroms
 ├─ cli/
@@ -537,10 +598,11 @@ Eine neue Schritt-Art ist ein eigenes Modul mit einer Klasse und diesen Mitglied
 - `keys`: die Felder, die diese Art im Szenario kennt (alles andere ist dort ein unbekanntes Feld),
 - `parse(value, index, fail)` (freiwillig): prüft diese Felder schon beim Lesen des Szenarios und liefert sie
   in der Form, die `run` erwartet. Ohne `parse` bekommt die Art den Schritt unverändert als `step.raw` und
-  prüft ihre eigenen Felder selbst beim Ausführen (so arbeitet `httpStub`),
+  prüft ihre eigenen Felder selbst beim Ausführen (so arbeiten `httpStub`, `commit` und `homeFile`),
 - `run(step, context)`: führt den Schritt aus. `context` hält `base` (Adresse des Servers), `variables`,
-  `streams` (die offenen Ereignisströme) und `stubs` (die laufenden Attrappen), für CLI-Aufrufe zusätzlich
-  `cli` (das Programm als Liste), `home`, `claudeConfig`, `port` und `envFile`. Der Rückgabewert ist
+  `streams` (die offenen Ereignisströme), `stubs` (die laufenden Attrappen), `home` (das `HARNESS_HOME` des
+  Laufs) und `reposDir` (der Ordner der Fixture-Repos), für CLI-Aufrufe zusätzlich `cli` (das Programm als
+  Liste), `claudeConfig`, `port` und `envFile`. Der Rückgabewert ist
   `{ request, response }`; `response` darf alles enthalten, was die Art aufzeichnet, und `save` sowie `ignore`
   greifen darauf zu (`json.…`, `headers.…`).
 

@@ -1,0 +1,80 @@
+{
+  "title": "Recherche zu einer Frage von Hand: starten, Zustand lesen und Fehlerfälle",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "files": { "README.md": "# Bestellung\n" } }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "BEN", "name": "Bestellung" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "BEN", "name": "Sprint" }, "record": false },
+    { "name": "Repo-Pfad des Boards", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Board aktivieren", "method": "POST", "path": "/api/db/boards/1/activate", "body": {}, "record": false },
+    {
+      "name": "offene Frage",
+      "method": "POST",
+      "path": "/api/db/projects/BEN/questions",
+      "body": { "title": "Gilt der Rabatt auch auf Versandkosten?", "description": "Die Preisliste nennt beides getrennt." },
+      "record": false
+    },
+    {
+      "name": "zweite Frage, die entschieden wird",
+      "method": "POST",
+      "path": "/api/db/projects/BEN/questions",
+      "body": { "title": "Welche Währung gilt im Ausland?" },
+      "record": false
+    },
+    {
+      "name": "zweite Frage entscheiden",
+      "method": "POST",
+      "path": "/api/db/questions/BEN-F0002/decision",
+      "body": { "rev": 1, "text": "Immer Euro.", "reason": "Alle Preise liegen in Euro vor." },
+      "record": false
+    },
+    {
+      "name": "dritte Frage für die Fehlerfälle",
+      "method": "POST",
+      "path": "/api/db/projects/BEN/questions",
+      "body": { "title": "Wer pflegt die Preisliste?" },
+      "record": false
+    },
+
+    { "name": "Zustand vor der Recherche", "method": "GET", "path": "/api/dispatch/research/BEN-F0001" },
+    { "name": "Zustand mit klein geschriebener Fragenummer", "method": "GET", "path": "/api/dispatch/research/ben-f1" },
+    { "name": "Zustand einer unbekannten Frage – die Abfrage geht nicht an die Datenbank", "method": "GET", "path": "/api/dispatch/research/BEN-F0099" },
+    { "name": "Zustand zu etwas, das keine Fragenummer ist", "method": "GET", "path": "/api/dispatch/research/BEN-0001" },
+
+    { "name": "Recherche einer unbekannten Frage starten", "method": "POST", "path": "/api/dispatch/research/BEN-F0099", "body": {} },
+    { "name": "Recherche für ein unbekanntes Board starten", "method": "POST", "path": "/api/dispatch/research/BEN-F0001", "body": { "boardId": 99 } },
+    { "name": "Recherche einer entschiedenen Frage starten", "method": "POST", "path": "/api/dispatch/research/BEN-F0002", "body": {} },
+
+    {
+      "name": "Recherche starten – der Worker wird nie wirklich gestartet",
+      "method": "POST",
+      "path": "/api/dispatch/research/BEN-F0001",
+      "body": {},
+      "save": { "lauf": "json.started.id" }
+    },
+    { "name": "Zustand nach dem Start", "method": "GET", "path": "/api/dispatch/research/BEN-F0001" },
+    { "name": "Recherche ein zweites Mal starten", "method": "POST", "path": "/api/dispatch/research/BEN-F0001", "body": {} },
+
+    {
+      "name": "Dispatcher pausieren (die Meldung nennt die Uhrzeit des Endes und bleibt deshalb außen vor)",
+      "method": "POST",
+      "path": "/api/dispatch/pause",
+      "body": { "minutes": 30 },
+      "record": false
+    },
+    {
+      "name": "Recherche während der Pause starten",
+      "method": "POST",
+      "path": "/api/dispatch/research/BEN-F0003",
+      "body": {},
+      "ignore": ["json.message"]
+    },
+    { "name": "Zustand während der Pause", "method": "GET", "path": "/api/dispatch/research/BEN-F0001" },
+    { "name": "Pause aufheben", "method": "POST", "path": "/api/dispatch/resume", "body": {}, "record": false },
+
+    { "name": "Repo-Pfad des Boards entfernen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": null }, "record": false },
+    { "name": "Recherche ohne Repo-Pfad am Board starten", "method": "POST", "path": "/api/dispatch/research/BEN-F0003", "body": {} }
+  ]
+}

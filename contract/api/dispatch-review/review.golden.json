@@ -1,0 +1,356 @@
+[
+  {
+    "name": "Review des Tickets",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "available": true,
+        "base": "719b810b09c571e95b569eab261ad762ac44282d",
+        "branch": "ticket/BEN-0001-rabatt-einbauen",
+        "files": [
+          {
+            "additions": 0,
+            "binary": false,
+            "deletions": 0,
+            "oldPath": "docs/notiz.md",
+            "path": "docs/hinweis.md",
+            "status": "R"
+          },
+          {
+            "additions": 0,
+            "binary": false,
+            "deletions": 1,
+            "path": "src/alt.ts",
+            "status": "D"
+          },
+          {
+            "additions": 1,
+            "binary": false,
+            "deletions": 1,
+            "path": "src/preis.ts",
+            "status": "M"
+          },
+          {
+            "additions": 1,
+            "binary": false,
+            "deletions": 0,
+            "path": "src/rabatt.ts",
+            "status": "A"
+          }
+        ],
+        "reason": null,
+        "runLog": "<var:lauf>.log",
+        "target": "main",
+        "tests": [
+          {
+            "command": "npx vitest run",
+            "ok": true,
+            "output": "Test Files  2 passed (2)\nTests  7 passed (7)"
+          },
+          {
+            "command": "npm run lint",
+            "ok": false,
+            "output": "1 problem (1 error, 0 warnings)"
+          }
+        ],
+        "testsAt": "<TIME>",
+        "ticketId": "BEN-0001"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Review mit klein geschriebener Ticket-ID",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/ben-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "available": true,
+        "base": "719b810b09c571e95b569eab261ad762ac44282d",
+        "branch": "ticket/BEN-0001-rabatt-einbauen",
+        "files": [
+          {
+            "additions": 0,
+            "binary": false,
+            "deletions": 0,
+            "oldPath": "docs/notiz.md",
+            "path": "docs/hinweis.md",
+            "status": "R"
+          },
+          {
+            "additions": 0,
+            "binary": false,
+            "deletions": 1,
+            "path": "src/alt.ts",
+            "status": "D"
+          },
+          {
+            "additions": 1,
+            "binary": false,
+            "deletions": 1,
+            "path": "src/preis.ts",
+            "status": "M"
+          },
+          {
+            "additions": 1,
+            "binary": false,
+            "deletions": 0,
+            "path": "src/rabatt.ts",
+            "status": "A"
+          }
+        ],
+        "reason": null,
+        "runLog": "<var:lauf>.log",
+        "target": "main",
+        "tests": [
+          {
+            "command": "npx vitest run",
+            "ok": true,
+            "output": "Test Files  2 passed (2)\nTests  7 passed (7)"
+          },
+          {
+            "command": "npm run lint",
+            "ok": false,
+            "output": "1 problem (1 error, 0 warnings)"
+          }
+        ],
+        "testsAt": "<TIME>",
+        "ticketId": "BEN-0001"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Patch einer geänderten Datei",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001/file?path=src/preis.ts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "patch": "diff --git a/src/preis.ts b/src/preis.ts\nindex 1956080..52b70e1 100644\n--- a/src/preis.ts\n+++ b/src/preis.ts\n@@ -1,3 +1,3 @@\n export function preis(netto: number): number {\n-  return netto;\n+  return netto * (1 - RABATT);\n }\n",
+        "path": "src/preis.ts",
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Patch einer neuen Datei",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001/file?path=src/rabatt.ts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "patch": "diff --git a/src/rabatt.ts b/src/rabatt.ts\nnew file mode 100644\nindex 0000000..c113dbc\n--- /dev/null\n+++ b/src/rabatt.ts\n@@ -0,0 +1 @@\n+export const RABATT = 0.1;\n",
+        "path": "src/rabatt.ts",
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Patch einer gelöschten Datei",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001/file?path=src/alt.ts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "patch": "diff --git a/src/alt.ts b/src/alt.ts\ndeleted file mode 100644\nindex 7300af1..0000000\n--- a/src/alt.ts\n+++ /dev/null\n@@ -1 +0,0 @@\n-export const ALT = true;\n",
+        "path": "src/alt.ts",
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Patch einer umbenannten Datei",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001/file?path=docs/hinweis.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "patch": "diff --git a/docs/notiz.md b/docs/hinweis.md\nsimilarity index 100%\nrename from docs/notiz.md\nrename to docs/hinweis.md\n",
+        "path": "docs/hinweis.md",
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Patch einer Datei außerhalb der Liste",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001/file?path=README.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "review-file-unknown",
+        "message": "Die Datei „README.md“ gehört nicht zu den Änderungen des Branches ticket/BEN-0001-rabatt-einbauen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Patch ohne Datei",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001/file"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "path (Datei aus der Liste) fehlt."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Patch mit leerem Pfad",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001/file?path="
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "path (Datei aus der Liste) fehlt."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Review eines Tickets ohne Branch",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0002"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "available": false,
+        "base": null,
+        "branch": null,
+        "files": [],
+        "reason": "Am Ticket ist kein Branch eingetragen.",
+        "runLog": null,
+        "target": null,
+        "tests": [],
+        "testsAt": null,
+        "ticketId": "BEN-0002"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Patch zu einem Ticket ohne Branch",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0002/file?path=src/preis.ts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "review-not-available",
+        "message": "Am Ticket ist kein Branch eingetragen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Review eines unbekannten Tickets",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0099"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-not-found",
+        "message": "Ticket BEN-0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Patch zu einem unbekannten Ticket",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0099/file?path=src/preis.ts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-not-found",
+        "message": "Ticket BEN-0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Review ohne Repo-Pfad am Board",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "available": false,
+        "base": null,
+        "branch": "ticket/BEN-0001-rabatt-einbauen",
+        "files": [],
+        "reason": "Das Board gehört einem anderen Benutzer oder hat keinen Repo-Pfad – der Diff ist nur auf dem Rechner des Dispatchers sichtbar.",
+        "runLog": "<var:lauf>.log",
+        "target": null,
+        "tests": [
+          {
+            "command": "npx vitest run",
+            "ok": true,
+            "output": "Test Files  2 passed (2)\nTests  7 passed (7)"
+          },
+          {
+            "command": "npm run lint",
+            "ok": false,
+            "output": "1 problem (1 error, 0 warnings)"
+          }
+        ],
+        "testsAt": "<TIME>",
+        "ticketId": "BEN-0001"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Patch ohne Repo-Pfad am Board",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001/file?path=src/preis.ts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "review-not-available",
+        "message": "Das Board gehört einem anderen Benutzer oder hat keinen Repo-Pfad – der Diff ist nur auf dem Rechner des Dispatchers sichtbar."
+      },
+      "status": 422
+    }
+  }
+]

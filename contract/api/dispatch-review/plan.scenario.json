@@ -1,0 +1,94 @@
+{
+  "title": "Planung eines Tickets von Hand: starten, Zustand lesen und Fehlerfälle",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "files": { "README.md": "# Bestellung\n" } }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "BEN", "name": "Bestellung" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "BEN", "name": "Sprint" }, "record": false },
+    { "name": "Repo-Pfad des Boards", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Board aktivieren", "method": "POST", "path": "/api/db/boards/1/activate", "body": {}, "record": false },
+    {
+      "name": "Ticket mit Planungsbedarf",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Rabatt einbauen", "acceptance": "Der Preis sinkt um den Rabatt.", "needsPlanning": true },
+      "record": false
+    },
+    {
+      "name": "zweites Ticket, das schon erledigt ist",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Versand prüfen", "acceptance": "Die Versandkosten stimmen.", "needsPlanning": true },
+      "record": false
+    },
+    {
+      "name": "zweites Ticket erledigen",
+      "method": "POST",
+      "path": "/api/db/tickets/BEN-0002/move",
+      "body": { "status": "done", "acceptance": "Die Versandkosten stimmen." },
+      "record": false
+    },
+    {
+      "name": "drittes Ticket, das auf eine Frage wartet",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Gutschein einlösen", "acceptance": "Der Gutschein zieht vom Preis ab.", "needsPlanning": true },
+      "record": false
+    },
+    {
+      "name": "offene Frage am dritten Ticket",
+      "method": "POST",
+      "path": "/api/db/projects/BEN/questions",
+      "body": { "title": "Gilt der Gutschein auch auf Versandkosten?", "ticketIds": ["BEN-0003"] },
+      "record": false
+    },
+    {
+      "name": "viertes Ticket mit Planungsbedarf",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Preis runden", "acceptance": "Der Preis ist auf zwei Stellen gerundet.", "needsPlanning": true },
+      "record": false
+    },
+
+    { "name": "Zustand vor der Planung", "method": "GET", "path": "/api/dispatch/plan/BEN-0001" },
+    { "name": "Zustand mit klein geschriebener Ticket-ID", "method": "GET", "path": "/api/dispatch/plan/ben-0001" },
+    { "name": "Zustand eines unbekannten Tickets – die Abfrage geht nicht an die Datenbank", "method": "GET", "path": "/api/dispatch/plan/BEN-0099" },
+
+    { "name": "Planung eines unbekannten Tickets starten", "method": "POST", "path": "/api/dispatch/plan/BEN-0099", "body": {} },
+    { "name": "Planung für ein unbekanntes Board starten", "method": "POST", "path": "/api/dispatch/plan/BEN-0001", "body": { "boardId": 99 } },
+    { "name": "Planung eines erledigten Tickets starten", "method": "POST", "path": "/api/dispatch/plan/BEN-0002", "body": {} },
+    { "name": "Planung eines Tickets starten, das auf eine Frage wartet", "method": "POST", "path": "/api/dispatch/plan/BEN-0003", "body": {} },
+
+    {
+      "name": "Planung starten – der Worker wird nie wirklich gestartet",
+      "method": "POST",
+      "path": "/api/dispatch/plan/BEN-0001",
+      "body": {},
+      "save": { "lauf": "json.started.id" }
+    },
+    { "name": "Zustand nach dem Start", "method": "GET", "path": "/api/dispatch/plan/BEN-0001" },
+    { "name": "Planung ein zweites Mal starten", "method": "POST", "path": "/api/dispatch/plan/BEN-0001", "body": {} },
+
+    {
+      "name": "Dispatcher pausieren (die Meldung nennt die Uhrzeit des Endes und bleibt deshalb außen vor)",
+      "method": "POST",
+      "path": "/api/dispatch/pause",
+      "body": { "minutes": 30 },
+      "record": false
+    },
+    {
+      "name": "Planung während der Pause starten",
+      "method": "POST",
+      "path": "/api/dispatch/plan/BEN-0004",
+      "body": {},
+      "ignore": ["json.message"]
+    },
+    { "name": "Zustand während der Pause", "method": "GET", "path": "/api/dispatch/plan/BEN-0001" },
+    { "name": "Pause aufheben", "method": "POST", "path": "/api/dispatch/resume", "body": {}, "record": false },
+
+    { "name": "Repo-Pfad des Boards entfernen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": null }, "record": false },
+    { "name": "Planung ohne Repo-Pfad am Board starten", "method": "POST", "path": "/api/dispatch/plan/BEN-0004", "body": {} }
+  ]
+}
