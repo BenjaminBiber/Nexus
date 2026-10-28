@@ -42,10 +42,40 @@ pub struct Cli {
     pub command: Option<Commands>,
 }
 
+/// Beschreibung von `board` auf der Hilfeseite; wortgleich zum TypeScript-Befehl
+const BOARD_ABOUT: &str = "Ohne Unterbefehl: startet bei Bedarf den Server und öffnet das Board. Mit Unterbefehl: Board-Datenbank bedienen.";
+
+/// Hilfe der Option `--port`; die Zahl ist `DEFAULT_SERVER_PORT` aus dem Fachkern
+const BOARD_PORT_HELP: &str = "Port des Servers (Standard 4710 oder HARNESS_PORT)";
+
+/// Beispiele unter der Hilfe von `board`
+const BOARD_EXAMPLES: &str = "\nBeispiele:\n  harness board\n  harness board --port 4800 --no-open";
+
 /// Die Befehle des Programms. Die Fachbefehle folgen in P3-8 bis P3-18; `help` steht wie bei
 /// commander in jedem Befehl, der selbst nichts tut und Unterbefehle hat.
 #[derive(Debug, Subcommand)]
 pub enum Commands {
+    /// Ohne Unterbefehl: Server starten und das Board öffnen
+    #[command(
+        name = "board",
+        about = BOARD_ABOUT,
+        after_help = BOARD_EXAMPLES,
+        disable_help_flag = true
+    )]
+    Board {
+        #[arg(long, value_name = "nummer", help = BOARD_PORT_HELP)]
+        port: Option<String>,
+        #[arg(
+            long = "no-open",
+            help = "Browser nicht öffnen, nur die Adresse ausgeben"
+        )]
+        no_open: bool,
+        /// Wörter, die kein registrierter Unterbefehl sind; sie werden mit `command-unknown`
+        /// abgewiesen. Versteckt, damit die Hilfe wie heute aussieht.
+        #[arg(hide = true, trailing_var_arg = true)]
+        extra: Vec<String>,
+    },
+
     /// Hilfe zu einem Befehl anzeigen
     #[command(
         name = "help",
@@ -102,6 +132,11 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
             eprint!("{}", help::render(PROGRAM, root));
             Ok(1)
         }
+        Some(Commands::Board {
+            port,
+            no_open,
+            extra,
+        }) => commands::board::open::run(&context, port.as_deref(), !no_open, &extra),
         Some(Commands::Help { befehl }) => help_command(root, befehl.as_deref()),
         #[cfg(debug_assertions)]
         Some(Commands::SelbsttestFehler { code, meldung }) => {
