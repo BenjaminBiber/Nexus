@@ -21,6 +21,34 @@ pub fn utf16_prefix(value: &str, max: usize) -> &str {
     value
 }
 
+/// Ausschnitt ab `start` mit höchstens `len` UTF-16-Einheiten, wie JavaScript
+/// `value.slice(start, start + len)`; ein Zeichen, das nur halb hineinpasst
+/// (halbes Surrogatpaar), entfällt an beiden Enden
+pub fn utf16_slice(value: &str, start: usize, len: usize) -> &str {
+    let mut used = 0;
+    let mut from: Option<usize> = None;
+    let mut to = value.len();
+    for (index, zeichen) in value.char_indices() {
+        if from.is_none() && used >= start {
+            from = Some(index);
+        }
+        let breite = zeichen.len_utf16();
+        if from.is_some() && used + breite > start + len {
+            to = index;
+            break;
+        }
+        used += breite;
+    }
+    let from = from.unwrap_or(value.len());
+    &value[from..to.max(from)]
+}
+
+/// Position des ersten Vorkommens in UTF-16-Einheiten, wie JavaScript `value.indexOf(needle)`;
+/// `None` statt -1, wenn der Text nicht vorkommt
+pub fn utf16_index_of(value: &str, needle: &str) -> Option<usize> {
+    value.find(needle).map(|byte| utf16_len(&value[..byte]))
+}
+
 /// Zählt erlaubte Werte in Meldungen auf, wie JavaScript `array.join(', ')`
 pub fn join_names(names: impl IntoIterator<Item = &'static str>) -> String {
     names.into_iter().collect::<Vec<_>>().join(", ")
@@ -53,6 +81,28 @@ mod tests {
         assert_eq!(utf16_prefix("abc", 10), "abc");
         assert_eq!(utf16_prefix("", 3), "");
         assert_eq!(utf16_prefix("ä🙂b", 3), "ä🙂");
+    }
+
+    #[test]
+    fn schneidet_ausschnitte_in_utf16_einheiten() {
+        assert_eq!(utf16_slice("abcdef", 2, 3), "cde");
+        assert_eq!(utf16_slice("abcdef", 4, 10), "ef");
+        assert_eq!(utf16_slice("abcdef", 10, 3), "");
+        assert_eq!(utf16_slice("abcdef", 0, 0), "");
+        // „🙂“ belegt zwei Einheiten: das Fenster [1, 3) deckt seine zweite Hälfte und „a“ ab,
+        // die Hälfte entfällt – an beiden Enden
+        assert_eq!(utf16_slice("🙂ab", 1, 2), "a");
+        assert_eq!(utf16_slice("a🙂b", 0, 2), "a");
+        assert_eq!(utf16_slice("🙂ab", 0, 3), "🙂a");
+    }
+
+    #[test]
+    fn findet_die_fundstelle_in_utf16_einheiten() {
+        assert_eq!(utf16_index_of("abcdef", "cd"), Some(2));
+        assert_eq!(utf16_index_of("abc", "x"), None);
+        // vor der Fundstelle steht ein Emoji: zwei UTF-16-Einheiten, vier Bytes
+        assert_eq!(utf16_index_of("🙂abc", "abc"), Some(2));
+        assert_eq!(utf16_index_of("", ""), Some(0));
     }
 
     #[test]
