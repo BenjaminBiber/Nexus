@@ -17,11 +17,13 @@ const CONTRACT_USER_ID = '11111111-1111-1111-1111-111111111111';
 
 // Führt ein Szenario aus: frisches Home, Fixture-Repos, Server, Schritte, Normalisierung.
 export class ScenarioRunner {
-  // `serverCmd`: Startbefehl mit `{port}`, `base`/`homeDir`: fremder Server, `cli`: Befehl der CLI als Liste
+  // `serverCmd`: Startbefehl mit `{port}`, `base`/`homeDir`: fremder Server, `cli`: Befehl der CLI als Liste,
+  // `initCli`: eigener Befehl nur für die Fixture `harnessInit` (ohne Angabe derselbe wie `cli`)
   constructor(options) {
     this.cwd = options.cwd;
     this.serverCmd = options.serverCmd;
     this.cli = options.cli;
+    this.initCli = options.initCli ?? options.cli;
     this.base = options.base ?? null;
     this.homeDir = options.homeDir ?? null;
     this.verbose = options.verbose ?? false;
@@ -34,7 +36,7 @@ export class ScenarioRunner {
     const home = this.homeDir ?? ScenarioRunner.tempDir('harness-contract-home-');
     const claudeConfig = ScenarioRunner.tempDir('harness-contract-claude-');
     const port = own ? await ServerHandle.freePort() : ScenarioRunner.portOf(this.base);
-    const fixture = new RepoFixture({ home, claudeConfig, cli: this.cli });
+    const fixture = new RepoFixture({ home, claudeConfig, cli: this.initCli });
     // Offene Ereignisströme der Schritt-Art `sseOpen`, nach Namen; sie leben nur in diesem Szenario
     const streams = new Map();
     // Attrappen fremder Dienste der Schritt-Art `httpStub`, nach Namen; sie leben nur in diesem Szenario

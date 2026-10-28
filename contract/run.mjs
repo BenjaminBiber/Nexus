@@ -20,12 +20,16 @@ const HELP = `Vertragstest von HTTP-API, CLI und Hooks.
 
   --update              Golden-Dateien neu aufzeichnen (nur geänderte werden geschrieben)
   --only <teilstring>   nur Szenarien, deren Pfad den Teilstring enthält
+  --step <teilstrings>  nur Schritte, deren Name einen der Teilstrings enthält (kommagetrennt);
+                        verglichen wird dann nur mit diesen Einträgen der Golden-Datei
   --suite <name>        Ordner unter contract/ (Standard: alle, also api und sse)
   --server-cmd "<cmd>"  eigener Startbefehl, {port} wird ersetzt
   --base <url>          fremder, laufender Server (braucht --home und genau ein Szenario)
   --home <ordner>       HARNESS_HOME des fremden Servers
   --cli-cmd "<cmd>"     Befehl der CLI für harnessInit und die cli-Schritte, auch als JSON-Array
                         (Standard: ${DEFAULT_CLI_CMD})
+  --init-cmd "<cmd>"    eigener Befehl nur für die Fixture harnessInit (Standard: --cli-cmd);
+                        nötig, solange die geprüfte CLI noch kein init kennt
   --coverage            Routen aus contract/api/routes.json mit abgedeckt/offen auflisten
   --strict              mit --coverage: Exit 1, wenn eine Route offen ist
   --verbose             Ausgabe des Servers mitschreiben
@@ -45,9 +49,9 @@ export class ContractRun {
     const options = {
       // Ohne --suite laufen alle Ordner unter contract/ (api und sse)
       update: false, only: null, suite: '', serverCmd: DEFAULT_SERVER_CMD, base: null, home: null,
-      cliCmd: DEFAULT_CLI_CMD, coverage: false, strict: false, verbose: false, help: false,
+      cliCmd: DEFAULT_CLI_CMD, initCmd: null, step: null, coverage: false, strict: false, verbose: false, help: false,
     };
-    const values = { '--only': 'only', '--suite': 'suite', '--server-cmd': 'serverCmd', '--base': 'base', '--home': 'home', '--cli-cmd': 'cliCmd' };
+    const values = { '--only': 'only', '--suite': 'suite', '--server-cmd': 'serverCmd', '--base': 'base', '--home': 'home', '--cli-cmd': 'cliCmd', '--init-cmd': 'initCmd', '--step': 'step' };
     const flags = { '--update': 'update', '--coverage': 'coverage', '--strict': 'strict', '--verbose': 'verbose', '--help': 'help', '-h': 'help' };
     for (let i = 0; i < argv.length; i += 1) {
       const arg = argv[i];
@@ -91,6 +95,9 @@ export class ContractRun {
       cwd: REPO_ROOT,
       serverCmd: this.options.serverCmd,
       cli: ServerHandle.resolve(CliStep.command(this.options.cliCmd), REPO_ROOT),
+      initCli: this.options.initCmd === null
+        ? null
+        : ServerHandle.resolve(CliStep.command(this.options.initCmd), REPO_ROOT),
       base: this.options.base,
       homeDir: this.options.home,
       verbose: this.options.verbose,
@@ -103,7 +110,7 @@ export class ContractRun {
       const at = Date.now();
       let entries;
       try {
-        entries = await runner.run(scenario);
+        entries = await runner.run(this.chosen(scenario));
       } catch (error) {
         failed += 1;
         console.log(`  FEHLER ${scenario.name}`);
@@ -126,9 +133,27 @@ export class ContractRun {
     return failed ? 1 : 0;
   }
 
+  // Das Szenario mit den Schritten, die `--step` ausgewählt hat (ohne die Option: unverändert).
+  // So lässt sich eine Teilmenge der Befehle prüfen, solange die anderen noch nicht portiert sind.
+  chosen(scenario) {
+    const parts = this.stepFilters();
+    if (!parts) return scenario;
+    return { ...scenario, steps: scenario.steps.filter((step) => parts.some((part) => step.name.includes(part))) };
+  }
+
+  // Die Teilstrings aus `--step`, oder null ohne die Option
+  stepFilters() {
+    if (this.options.step === null) return null;
+    const parts = this.options.step.split(',').map((part) => part.trim()).filter(Boolean);
+    return parts.length ? parts : null;
+  }
+
   // Schreibt die Golden-Datei (--update) oder vergleicht sie; liefert die Abweichungen
   settle(scenario, entries) {
     this.written = false;
+    if (this.options.update && this.stepFilters()) {
+      return ['--update und --step gehen nicht zusammen: die Golden-Datei würde auf die gewählten Schritte zusammenschrumpfen.'];
+    }
     if (this.options.update) {
       this.written = this.golden.write(scenario.golden, entries);
       return [];
@@ -142,6 +167,9 @@ export class ContractRun {
     if (expected === null) {
       return [`Es gibt noch keine Golden-Datei (${this.relative(scenario.golden)}). Mit \`node contract/run.mjs --update\` aufzeichnen.`];
     }
+    // Mit `--step` wurden nur einzelne Schritte ausgeführt; verglichen wird dann nur mit ihren Einträgen
+    const parts = this.stepFilters();
+    if (parts) expected = expected.filter((entry) => parts.some((part) => entry.name.includes(part)));
     return GoldenStore.compare(expected, entries);
   }
 

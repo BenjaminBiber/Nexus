@@ -10,6 +10,7 @@ pub mod customization;
 pub mod dispatch;
 pub mod error;
 pub mod git;
+pub mod install;
 pub mod locking;
 pub mod process;
 pub mod project;

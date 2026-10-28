@@ -68,6 +68,31 @@ const EXPECT_HELP: &str =
     "nur ändern, wenn der Schritt an dieser Nummer noch diesen Text hat (sonst Konflikt)";
 const TARGET_BRANCH_HELP: &str = "Zielbranch, in den der Dispatcher mergt (fehlt er, wird er angelegt; ohne: ausgecheckter Branch des Hauptordners)";
 
+/// Der Befehl aus dem echten Befehlsbaum von `nexus` (nicht nachgebaut)
+fn aus_dem_baum(name: &str) -> Command {
+    let mut root = <nexus_cli::cli::Cli as clap::CommandFactory>::command();
+    root.build();
+    root.find_subcommand(name)
+        .unwrap_or_else(|| panic!("Befehl „{name}“ fehlt im Befehlsbaum"))
+        .clone()
+}
+
+#[test]
+fn hilfe_von_init_wie_aufgezeichnet() {
+    assert_eq!(
+        gerendert("harness init", aus_dem_baum("init")),
+        golden("harness init")
+    );
+}
+
+#[test]
+fn hilfe_von_install_wie_aufgezeichnet() {
+    assert_eq!(
+        gerendert("harness install", aus_dem_baum("install")),
+        golden("harness install")
+    );
+}
+
 #[test]
 fn hilfe_eines_blattbefehls_ohne_optionen() {
     let hook = befehl("hook")

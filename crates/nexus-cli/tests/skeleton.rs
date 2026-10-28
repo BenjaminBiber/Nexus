@@ -51,12 +51,16 @@ fn die_hauptseite_hat_den_aufrufkopf_und_deutsche_uberschriften() {
     );
     assert!(lauf.stdout.contains("Optionen:"), "{}", lauf.stdout);
     assert!(lauf.stdout.contains("Befehle:"), "{}", lauf.stdout);
-    // Die Spaltenbreite richtet sich nach dem längsten Eintrag; geprüft wird nur der Text
-    // (das genaue Layout vergleicht tests/help_layout.rs mit der Golden-Datei)
+    // Die Spaltenbreite richtet sich nach dem längsten Begriff und wächst mit jedem Befehl;
+    // geprüft wird deshalb nur, dass Begriff und Beschreibung in einer Zeile stehen
+    let hilfe_zeile = lauf
+        .stdout
+        .lines()
+        .find(|line| line.trim_start().starts_with("-h, --help"))
+        .unwrap_or_else(|| panic!("{}", lauf.stdout));
     assert!(
-        lauf.stdout.contains("-h, --help") && lauf.stdout.contains("Hilfe anzeigen"),
-        "{}",
-        lauf.stdout
+        hilfe_zeile.starts_with("  -h, --help  ") && hilfe_zeile.ends_with("Hilfe anzeigen"),
+        "{hilfe_zeile}"
     );
     for englisch in [
         "Usage:",

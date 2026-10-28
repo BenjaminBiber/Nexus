@@ -12,12 +12,16 @@ use crate::board::comment_service::CommentService;
 use crate::board::database::BoardDatabase;
 use crate::board::dependency_graph_service::DependencyGraphService;
 use crate::board::in_memory::InMemoryBoardDatabase;
+use crate::board::note_service::NoteService;
 use crate::board::project_service::ProjectService;
+use crate::board::question_types::BoardQuestion;
 use crate::board::repo_paths::{BoardRepoPaths, MemoryBoardRepoStore};
+use crate::board::ticket_service::TicketService;
 use crate::board::types::Ticket;
 use crate::board::view_service::BoardViewService;
 use crate::clock::Clock;
-use crate::testing::fixtures::{ticket_fixture, user, NOW, USER_ID};
+use crate::questions::QuestionState;
+use crate::testing::fixtures::{question_fixture, ticket_fixture, user, NOW, USER_ID};
 
 /// Die Dienste des Boards auf einer Datenbank im Speicher.
 pub struct BoardFixture {
@@ -31,7 +35,9 @@ pub struct BoardFixture {
     pub repo_paths: BoardRepoPaths,
     pub projects: ProjectService<InMemoryBoardDatabase>,
     pub boards: BoardService<InMemoryBoardDatabase>,
+    pub tickets: TicketService<InMemoryBoardDatabase>,
     pub comments: CommentService<InMemoryBoardDatabase>,
+    pub notes: NoteService<InMemoryBoardDatabase>,
     pub views: BoardViewService<InMemoryBoardDatabase>,
     pub graph: DependencyGraphService<InMemoryBoardDatabase>,
     /// Das Board „Sprint“ des Projekts ARC
@@ -59,7 +65,9 @@ impl BoardFixture {
             },
             projects: ProjectService::new(db.clone(), clock.clone()),
             boards: BoardService::new(db.clone(), clock.clone(), repo_paths.clone()),
+            tickets: TicketService::new(db.clone(), clock.clone()),
             comments: CommentService::new(db.clone(), clock.clone()),
+            notes: NoteService::new(db.clone(), clock.clone()),
             views: BoardViewService::new(db.clone(), clock.clone()),
             graph: DependencyGraphService::new(db.clone(), clock.clone()),
             repo_store,
@@ -110,13 +118,56 @@ impl BoardFixture {
         )
     }
 
-    /// Legt ein Ticket unmittelbar über die Repositories an. `TicketService::create` bringt
-    /// erst Teil 2 des Tickets P3-2; hier zählt nur, dass das Ticket in der Datenbank steht.
+    /// Legt ein Ticket unmittelbar über die Repositories an – für Tests, die nur einen Bestand
+    /// brauchen und nicht die Regeln von [`TicketService::create`]
     pub async fn insert_ticket(&self, ticket: &Ticket) {
         let ticket = ticket.clone();
         crate::tx!(self.db, [ticket], |u| { u.tickets().insert(&ticket).await })
             .await
             .expect("Ticket anlegen geht immer");
+    }
+
+    /// Legt eine offene Frage zu diesen Tickets unmittelbar über die Repositories an und liefert
+    /// ihre ID. `BoardQuestionService` bringt erst P3-3; die abgeleitete Sperre hängt allein an
+    /// der Zeile in `board.Questions`.
+    pub async fn open_question(&self, number: i32, title: &str, ticket_ids: &[&str]) -> String {
+        let question = BoardQuestion {
+            title: title.to_string(),
+            ticket_ids: ticket_ids.iter().map(|id| id.to_string()).collect(),
+            ..question_fixture(
+                &format!("ARC-F{number:04}"),
+                self.project_id().await,
+                number,
+            )
+        };
+        crate::tx!(self.db, [question], |u| {
+            u.questions().insert(&question).await
+        })
+        .await
+        .expect("Frage anlegen geht immer");
+        format!("ARC-F{number:04}")
+    }
+
+    /// Beantwortet eine Frage unmittelbar über die Repositories (das Gegenstück zu
+    /// `BoardQuestionService::answer` aus P3-3): danach sperrt sie ihre Tickets nicht mehr
+    pub async fn answer_question(&self, id: &str) {
+        let id = id.to_string();
+        crate::tx!(self.db, [id], |u| {
+            let question = u
+                .questions()
+                .by_id(&id, true)
+                .await?
+                .expect("die Frage wurde angelegt");
+            u.questions()
+                .update(&BoardQuestion {
+                    state: QuestionState::Answered,
+                    rev: question.rev + 1,
+                    ..question
+                })
+                .await
+        })
+        .await
+        .expect("Frage beantworten geht immer");
     }
 
     /// Stellt die Uhr um Minuten vor

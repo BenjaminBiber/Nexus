@@ -17,6 +17,16 @@
 ///     || async { nexus_core::board::in_memory::InMemoryBoardDatabase::new() }
 /// );
 /// ```
+///
+/// Nach `lock` dürfen Attribute folgen; sie stehen dann an jedem einzelnen Fall. So bekommen
+/// die Verträge gegen SQL Server ihr `#[ignore]`, weil sie nur mit `HARNESS_TEST_DB` laufen:
+///
+/// ```ignore
+/// nexus_core::board_database_contract!(
+///     mssql, create, reset, lock,
+///     #[ignore = "braucht HARNESS_TEST_DB"]
+/// );
+/// ```
 #[macro_export]
 macro_rules! board_database_contract {
     ($name:ident, $create:expr) => {
@@ -26,6 +36,9 @@ macro_rules! board_database_contract {
         $crate::board_database_contract!($name, $create, $reset, || async {});
     };
     ($name:ident, $create:expr, $reset:expr, $lock:expr) => {
+        $crate::board_database_contract!($name, $create, $reset, $lock,);
+    };
+    ($name:ident, $create:expr, $reset:expr, $lock:expr, $(#[$attr:meta])*) => {
         mod $name {
             #![allow(unused_imports)]
 
@@ -50,6 +63,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn aktualisiert_den_namen_eines_benutzers() {
                 let (db, _guard) = setup().await;
                 $crate::tx!(db, |u| { u.users().upsert(&user_named("Flo")).await })
@@ -63,6 +77,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn vergibt_ticketnummern_pro_projekt_fortlaufend() {
                 let (db, _guard) = setup().await;
                 let project_id = seed_board(&db).await.project_id;
@@ -82,6 +97,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn speichert_tickets_mit_labels_und_abhangigkeiten_in_ihrer_reihenfolge() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -154,6 +170,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn lehnt_ein_update_mit_veralteter_version_als_conflict_ab() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -202,6 +219,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn rollt_bei_einem_fehler_die_ganze_transaktion_zuruck() {
                 let (db, _guard) = setup().await;
                 let project_id = seed_board(&db).await.project_id;
@@ -224,6 +242,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn entfernt_verweise_auf_ein_ticket_und_loscht_es() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -265,6 +284,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn liefert_die_hochste_sortorder_einer_spalte() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -300,6 +320,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn zahlt_offene_tickets_je_board_ohne_erledigte_und_nicht_mehr_notige() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -348,6 +369,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn liefert_ohne_texte_dieselben_tickets_mit_labels_und_voraussetzungen() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -422,6 +444,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn speichert_kommentare_verlauf_notizen_und_loschungen() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -529,6 +552,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn loscht_ein_board_samt_notizen() {
                 let (db, _guard) = setup().await;
                 let board_id = seed_board(&db).await.board_id;
@@ -554,6 +578,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn andert_den_kennwert_bei_tickets_kommentaren_notizen_und_loschungen() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -633,6 +658,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn lasst_den_kennwert_bei_einer_zuruckgerollten_transaktion_unverandert() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -654,6 +680,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn zahlt_die_kommentare_je_ticket_eines_boards() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -682,6 +709,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn speichert_spec_aufgabe_branch_worktree_zielbranch_und_die_listen_am_ticket() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -743,6 +771,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn speichert_schritte_in_reihenfolge_hakt_ab_ersetzt_sie_und_zahlt_den_fortschritt(
             ) {
                 let (db, _guard) = setup().await;
@@ -854,6 +883,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn verknupft_sessions_genau_einmal_und_andert_den_kennwert() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -926,6 +956,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn liefert_kommentare_ohne_lesemarke_und_setzt_sie() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;
@@ -998,6 +1029,7 @@ macro_rules! board_database_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn loscht_schritte_und_sessions_mit_dem_ticket() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;

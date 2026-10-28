@@ -1,6 +1,9 @@
-//! Die Befehle der Kommandozeile. Die übrigen Fachbefehle (`init`, `board …`, `hook`, `spec …`)
-//! kommen in P3-8 bis P3-18 dazu.
+//! Die Befehle der Kommandozeile. Die weiteren Fachbefehle (die Unterbefehle von `board`,
+//! `hook`, `spec …`) kommen in den übrigen Tickets der Phase 3 dazu.
 
+pub mod board;
 pub mod customize;
+pub mod init;
+pub mod install;
 #[cfg(debug_assertions)]
 pub mod selbsttest;

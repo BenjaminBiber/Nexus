@@ -214,10 +214,10 @@ impl SqliteBoardDatabase {
 
 impl BoardDatabase for SqliteBoardDatabase {
     /// Jede fachliche Aktion in genau einer Transaktion; jeder Fehler rollt alles zurück
-    async fn transaction<'a, T, W>(&'a self, work: W) -> Result<T>
+    async fn transaction<T, W>(&self, work: W) -> Result<T>
     where
         T: Send + 'static,
-        W: TransactionWork<T> + 'a,
+        W: TransactionWork<T> + 'static,
     {
         let _queue = self.queue.lock().await;
         let mut guard = self.conn.lock().await;

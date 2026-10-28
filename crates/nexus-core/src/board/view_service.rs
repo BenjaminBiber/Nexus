@@ -15,7 +15,7 @@ use crate::board::board_service::BoardService;
 use crate::board::database::{BoardDatabase, TicketFilter};
 use crate::board::question_types::BoardOpenQuestion;
 use crate::board::ticket_ordering::{BoardColumn, COLUMN_ORDER};
-use crate::board::ticket_service::{TicketService, TicketView};
+use crate::board::ticket_service::{self, TicketView};
 use crate::clock::Clock;
 use crate::error::Result;
 use crate::tx;
@@ -184,8 +184,8 @@ impl<D: BoardDatabase> BoardViewService<D> {
                     ..TicketFilter::default()
                 })
                 .await?;
-            let mut views = TicketService::views(u, tickets).await?;
-            TicketService::sort_views(&mut views);
+            let mut views = ticket_service::views(u, tickets).await?;
+            ticket_service::sort_views(&mut views);
             let counts = u.comments().count_by_board(board_id).await?;
             let cards: Vec<BoardCard> = views
                 .into_iter()

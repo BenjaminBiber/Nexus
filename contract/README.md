@@ -25,6 +25,10 @@ node contract/run.mjs --coverage   # alle Routen mit abgedeckt/offen
 node contract/run.mjs --suite cli             # Hooks, board-Befehle und Hilfetexte
 node contract/run.mjs --suite cli --only cli/hooks
 node contract/run.mjs --suite cli --only cli/board   # alle board-Unterbefehle
+node contract/run.mjs --suite cli --only cli/board/boards-projects \
+  --cli-cmd target/debug/nexus --init-cmd "node packages/cli/dist/main.js" \
+  --step "board --no-open,board mit unbekanntem Unterbefehl,board mit kaputtem Port"
+                                   # nur die schon portierten board-Fälle gegen das Rust-Binary
 node contract/lib/gen-help-scenarios.mjs      # Szenario der Hilfetexte neu erzeugen
 npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lader, Variablen,
                                    # Home-Dateien, Strom, CLI-Schritt, Commit, Home-Datei, Generator)
@@ -34,10 +38,12 @@ npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lad
 | --- | --- |
 | `--update` | Golden-Dateien neu schreiben; nur Dateien mit geändertem Inhalt werden angefasst. |
 | `--only <teilstring>` | Nur Szenarien, deren Pfad den Teilstring enthält (z. B. `basis/health`). |
+| `--step <teilstrings>` | Nur Schritte, deren Name einen der kommagetrennten Teilstrings enthält; verglichen wird dann nur mit diesen Einträgen der Golden-Datei. Gedacht für eine Umsetzung, die erst einen Teil der Befehle kennt. Geht nicht mit `--update` zusammen. |
 | `--suite <name>` | Ordner unter `contract/` mit den Szenarien (Standard: alle, also `api`, `sse` und `cli`). |
 | `--server-cmd "<cmd {port}>"` | Eigener Startbefehl statt des TS-Servers; `{port}` wird ersetzt. Relative Pfade gelten ab der Projektwurzel. |
 | `--base <url> --home <ordner>` | Gegen einen schon laufenden Server prüfen (siehe unten). |
 | `--cli-cmd "<cmd>"` | Befehl der CLI für `harnessInit` und die `cli`-Schritte (Standard `node packages/cli/dist/main.js`). Auch als JSON-Array: `'["node","/Mein Ordner/main.js"]'` – der sichere Weg für Pfade mit Leerzeichen. Relative Pfade gelten ab der Projektwurzel. |
+| `--init-cmd "<cmd>"` | Eigener Befehl nur für die Fixture `harnessInit` (Standard: `--cli-cmd`). Nötig, solange die geprüfte CLI noch kein `init` kennt. |
 | `--coverage` | Routen aus `api/routes.json` auflisten, Exit 0. |
 | `--strict` | Zusammen mit `--coverage`: Exit 1, wenn eine Route offen ist. |
 | `--verbose` | Ausgabe des gestarteten Servers mitschreiben. |
