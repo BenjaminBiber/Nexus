@@ -1,0 +1,520 @@
+[
+  {
+    "name": "Plan lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/file?path=docs/superpowers/plans/2026-10-02-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "content": "# Plan Anmeldung\n\n## Aufgaben\n\n- [x] Entwurf schreiben\n- [ ] Schlüsselspeicher wählen\n- [ ] Oberfläche bauen\n\n## Risiken\n\nÄltere Geräte können keine Passkeys.\n",
+        "hash": "<var:planHash>",
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "sections": [
+          {
+            "endLine": 12,
+            "heading": "Plan Anmeldung",
+            "level": 1,
+            "startLine": 1
+          },
+          {
+            "endLine": 8,
+            "heading": "Aufgaben",
+            "level": 2,
+            "startLine": 3
+          },
+          {
+            "endLine": 12,
+            "heading": "Risiken",
+            "level": 2,
+            "startLine": 9
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Abschnitt ersetzen",
+    "request": {
+      "body": {
+        "content": "## Risiken\n\nÄltere Geräte brauchen einen Ausweg.",
+        "endLine": 11,
+        "expectedHash": "<var:planHash>",
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "startLine": 9
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/section"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "hash": "<var:planHash2>",
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "sections": [
+          {
+            "endLine": 12,
+            "heading": "Plan Anmeldung",
+            "level": 1,
+            "startLine": 1
+          },
+          {
+            "endLine": 8,
+            "heading": "Aufgaben",
+            "level": 2,
+            "startLine": 3
+          },
+          {
+            "endLine": 12,
+            "heading": "Risiken",
+            "level": 2,
+            "startLine": 9
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Plan nach dem Schreiben lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/file?path=docs/superpowers/plans/2026-10-02-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "content": "# Plan Anmeldung\n\n## Aufgaben\n\n- [x] Entwurf schreiben\n- [ ] Schlüsselspeicher wählen\n- [ ] Oberfläche bauen\n\n## Risiken\n\nÄltere Geräte brauchen einen Ausweg.\n",
+        "hash": "<var:planHash2>",
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "sections": [
+          {
+            "endLine": 12,
+            "heading": "Plan Anmeldung",
+            "level": 1,
+            "startLine": 1
+          },
+          {
+            "endLine": 8,
+            "heading": "Aufgaben",
+            "level": 2,
+            "startLine": 3
+          },
+          {
+            "endLine": 12,
+            "heading": "Risiken",
+            "level": 2,
+            "startLine": 9
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Abschnitt leeren",
+    "request": {
+      "body": {
+        "content": "",
+        "endLine": 11,
+        "expectedHash": "<var:planHash2>",
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "startLine": 11
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/section"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "hash": "<var:planHash3>",
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "sections": [
+          {
+            "endLine": 12,
+            "heading": "Plan Anmeldung",
+            "level": 1,
+            "startLine": 1
+          },
+          {
+            "endLine": 8,
+            "heading": "Aufgaben",
+            "level": 2,
+            "startLine": 3
+          },
+          {
+            "endLine": 12,
+            "heading": "Risiken",
+            "level": 2,
+            "startLine": 9
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Schreiben mit veraltetem Hash",
+    "request": {
+      "body": {
+        "content": "## Risiken",
+        "endLine": 11,
+        "expectedHash": "<var:planHash>",
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "startLine": 9
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/section"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-changed",
+        "details": {
+          "hash": "<var:planHash3>"
+        },
+        "message": "Das Dokument wurde zwischenzeitlich geändert. Lade es neu und wiederhole die Änderung."
+      },
+      "status": 409
+    }
+  },
+  {
+    "name": "Schreiben ab Zeile 0",
+    "request": {
+      "body": {
+        "content": "x",
+        "endLine": 2,
+        "expectedHash": "<var:planHash3>",
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "startLine": 0
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/section"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-range-invalid",
+        "message": "Anfang und Ende müssen ganze Zeilennummern ab 1 sein, das Ende nicht vor dem Anfang."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Schreiben mit Ende vor dem Anfang",
+    "request": {
+      "body": {
+        "content": "x",
+        "endLine": 4,
+        "expectedHash": "<var:planHash3>",
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "startLine": 5
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/section"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-range-invalid",
+        "message": "Anfang und Ende müssen ganze Zeilennummern ab 1 sein, das Ende nicht vor dem Anfang."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Schreiben hinter dem Dokumentende",
+    "request": {
+      "body": {
+        "content": "x",
+        "endLine": 99,
+        "expectedHash": "<var:planHash3>",
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "startLine": 1
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/section"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-range-invalid",
+        "message": "Zeilenbereich 1–99 liegt nicht im Dokument (1–12). Lies das Dokument neu und nimm die Zeilen daraus."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Schreiben ohne Pflichtfelder",
+    "request": {
+      "body": {},
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/section"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "request-invalid",
+        "message": "Zum Schreiben braucht es Pfad, Hash und Inhalt."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Glossar schreiben",
+    "request": {
+      "body": {
+        "content": "# Neues Glossar",
+        "endLine": 1,
+        "expectedHash": "<var:glossarHash>",
+        "path": "GLOSSARY.md",
+        "startLine": 1
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/section"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-writable",
+        "message": "Glossar und ADRs lassen sich hier nicht bearbeiten."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Nicht freigegebene Datei schreiben",
+    "request": {
+      "body": {
+        "content": "x",
+        "endLine": 1,
+        "expectedHash": "egal",
+        "path": "../geheim.md",
+        "startLine": 1
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/section"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Bereich umschreiben lassen",
+    "request": {
+      "body": {
+        "endLine": 12,
+        "expectedHash": "<var:specHash>",
+        "instruction": "Kürzer fassen.",
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "startLine": 12
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/revise"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "endLine": 12,
+        "hash": "<var:specHash>",
+        "original": "Anmeldung ohne Kennwort auf allen drei Plattformen.",
+        "proposal": "Ersatztext",
+        "startLine": 12
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Umschreiben mit veraltetem Hash",
+    "request": {
+      "body": {
+        "endLine": 12,
+        "expectedHash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "instruction": "Kürzer fassen.",
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "startLine": 12
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/revise"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-changed",
+        "details": {
+          "hash": "<var:specHash>"
+        },
+        "message": "Das Dokument wurde zwischenzeitlich geändert. Lade es neu und wiederhole die Änderung."
+      },
+      "status": 409
+    }
+  },
+  {
+    "name": "Umschreiben hinter dem Dokumentende",
+    "request": {
+      "body": {
+        "endLine": 99,
+        "expectedHash": "<var:specHash>",
+        "instruction": "Kürzer fassen.",
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "startLine": 1
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/revise"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-range-invalid",
+        "message": "Zeilenbereich 1–99 liegt nicht im Dokument (1–17). Lies das Dokument neu und nimm die Zeilen daraus."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Umschreiben ab Zeile 0",
+    "request": {
+      "body": {
+        "endLine": 2,
+        "expectedHash": "<var:specHash>",
+        "instruction": "Kürzer fassen.",
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "startLine": 0
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/revise"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-range-invalid",
+        "message": "Anfang und Ende müssen ganze Zeilennummern ab 1 sein, das Ende nicht vor dem Anfang."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Umschreiben ohne Anweisung",
+    "request": {
+      "body": {
+        "endLine": 12,
+        "expectedHash": "<var:specHash>",
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "startLine": 12
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/revise"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "request-invalid",
+        "message": "Zum Umschreiben braucht es Pfad, Hash und eine Anweisung."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Nicht freigegebene Datei umschreiben",
+    "request": {
+      "body": {
+        "endLine": 1,
+        "expectedHash": "<var:specHash>",
+        "instruction": "Kürzer fassen.",
+        "path": "../geheim.md",
+        "startLine": 1
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/revise"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Im Explorer öffnen",
+    "request": {
+      "body": {
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "target": "explorer"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/open"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "ok": true
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "In VS Code öffnen",
+    "request": {
+      "body": {
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "target": "vscode"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/open"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "ok": true
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Mit unbekanntem Ziel öffnen",
+    "request": {
+      "body": {
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "target": "notepad"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/open"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "request-invalid",
+        "message": "Ziel muss „explorer“ oder „vscode“ sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Nicht freigegebene Datei öffnen",
+    "request": {
+      "body": {
+        "path": "../geheim.md",
+        "target": "explorer"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/open"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  }
+]

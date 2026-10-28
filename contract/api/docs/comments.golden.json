@@ -1,0 +1,331 @@
+[
+  {
+    "name": "Kommentare ohne Board lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Zu diesem Projekt gibt es keine Dokumente."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Kommentare eines Dokuments ohne Kommentare",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "Kommentar anlegen",
+    "request": {
+      "body": {
+        "heading": "Offene Fragen",
+        "lines": [
+          14,
+          16
+        ],
+        "quote": "Welcher Speicher hält die Schlüssel?",
+        "text": "Bitte den Speicher benennen."
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "heading": "Offene Fragen",
+        "id": "<var:cid>",
+        "lines": [
+          14,
+          16
+        ],
+        "quote": "Welcher Speicher hält die Schlüssel?",
+        "resolution": null,
+        "status": "open",
+        "text": "Bitte den Speicher benennen."
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Kommentar mit unbrauchbaren Zeilen anlegen",
+    "request": {
+      "body": {
+        "lines": [
+          1,
+          2,
+          3
+        ],
+        "quote": "Anmeldung ohne Kennwort",
+        "text": "Gilt für das ganze Ziel."
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "heading": null,
+        "id": "<var:cid2>",
+        "lines": null,
+        "quote": "Anmeldung ohne Kennwort",
+        "resolution": null,
+        "status": "open",
+        "text": "Gilt für das ganze Ziel."
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Kommentare lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "createdAt": "<TIME>",
+          "heading": "Offene Fragen",
+          "id": "<var:cid>",
+          "lines": [
+            14,
+            16
+          ],
+          "quote": "Welcher Speicher hält die Schlüssel?",
+          "resolution": null,
+          "status": "open",
+          "text": "Bitte den Speicher benennen."
+        },
+        {
+          "createdAt": "<TIME>",
+          "heading": null,
+          "id": "<var:cid2>",
+          "lines": null,
+          "quote": "Anmeldung ohne Kennwort",
+          "resolution": null,
+          "status": "open",
+          "text": "Gilt für das ganze Ziel."
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Kommentar erledigen",
+    "request": {
+      "body": {
+        "resolution": "Der Schlüsselbund des Systems.",
+        "status": "resolved"
+      },
+      "method": "PATCH",
+      "path": "/api/projects/<var:pid>/docs/comments/<var:cid>?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "heading": "Offene Fragen",
+        "id": "<var:cid>",
+        "lines": [
+          14,
+          16
+        ],
+        "quote": "Welcher Speicher hält die Schlüssel?",
+        "resolution": "Der Schlüsselbund des Systems.",
+        "status": "resolved",
+        "text": "Bitte den Speicher benennen."
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Kommentartext ändern",
+    "request": {
+      "body": {
+        "text": "Gilt für den ganzen Abschnitt Ziel."
+      },
+      "method": "PATCH",
+      "path": "/api/projects/<var:pid>/docs/comments/<var:cid2>?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "heading": null,
+        "id": "<var:cid2>",
+        "lines": null,
+        "quote": "Anmeldung ohne Kennwort",
+        "resolution": null,
+        "status": "open",
+        "text": "Gilt für den ganzen Abschnitt Ziel."
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Änderung ohne Feld",
+    "request": {
+      "body": {},
+      "method": "PATCH",
+      "path": "/api/projects/<var:pid>/docs/comments/<var:cid2>?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "heading": null,
+        "id": "<var:cid2>",
+        "lines": null,
+        "quote": "Anmeldung ohne Kennwort",
+        "resolution": null,
+        "status": "open",
+        "text": "Gilt für den ganzen Abschnitt Ziel."
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Unbekannten Kommentar ändern",
+    "request": {
+      "body": {
+        "text": "x"
+      },
+      "method": "PATCH",
+      "path": "/api/projects/<var:pid>/docs/comments/K-00000000?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "comment-not-found",
+        "message": "Kommentar K-00000000 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Kommentar ohne Text anlegen",
+    "request": {
+      "body": {
+        "heading": null,
+        "lines": null,
+        "quote": "Anmeldung ohne Kennwort",
+        "text": "   "
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "comment-invalid",
+        "message": "Ein Kommentar braucht einen Text und eine markierte Stelle."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Kommentare einer nicht freigegebenen Datei lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/notes/readme.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Kommentar außerhalb des Repos anlegen",
+    "request": {
+      "body": {
+        "heading": null,
+        "lines": null,
+        "quote": "geheim",
+        "text": "Geht nicht."
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/comments?path=../geheim.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Kommentar löschen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/projects/<var:pid>/docs/comments/<var:cid>?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "ok": true
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Unbekannten Kommentar löschen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/projects/<var:pid>/docs/comments/K-00000000?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "comment-not-found",
+        "message": "Kommentar K-00000000 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Kommentare nach dem Löschen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "createdAt": "<TIME>",
+          "heading": null,
+          "id": "<var:cid2>",
+          "lines": null,
+          "quote": "Anmeldung ohne Kennwort",
+          "resolution": null,
+          "status": "open",
+          "text": "Gilt für den ganzen Abschnitt Ziel."
+        }
+      ],
+      "status": 200
+    }
+  }
+]

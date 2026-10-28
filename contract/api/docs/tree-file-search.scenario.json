@@ -1,0 +1,69 @@
+{
+  "title": "Dokumente auflisten, lesen und durchsuchen",
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "repos": [
+      {
+        "name": "REPO1",
+        "git": true,
+        "harnessInit": true,
+        "files": {
+          "docs/superpowers/specs/2026-10-01-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
+          "docs/superpowers/plans/2026-10-02-login.md": "# Plan Anmeldung\n\n## Aufgaben\n\n- [x] Entwurf schreiben\n- [ ] Schlüsselspeicher wählen\n- [ ] Oberfläche bauen\n\n## Risiken\n\nÄltere Geräte können keine Passkeys.\n",
+          "GLOSSARY.md": "# Glossar\n\n**Passkey**: Schlüsselpaar statt Kennwort.\n",
+          "docs/adr/0001-speicher.md": "# Speicher der Schlüssel\n\nDie Schlüssel liegen im Schlüsselbund des Systems.\n",
+          "docs/notes/readme.md": "Notizen, nicht freigegeben.\n",
+          "geheim.md": "geheim\n"
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "record": false
+    },
+    { "name": "Liste ohne Board", "method": "GET", "path": "/api/projects/{{pid}}/docs" },
+    {
+      "name": "DB-Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "boardId": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Repo-Pfad des Boards setzen",
+      "method": "PATCH",
+      "path": "/api/db/boards/{{boardId}}",
+      "body": { "repoPath": "{{REPO1}}" },
+      "record": false
+    },
+    { "name": "Liste", "method": "GET", "path": "/api/projects/{{pid}}/docs" },
+    { "name": "Liste über den Board-Umschalter", "method": "GET", "path": "/api/projects/{{pid}}/docs?board={{boardId}}" },
+    { "name": "Liste zu einem unbekannten Board", "method": "GET", "path": "/api/projects/{{pid}}/docs?board=999" },
+    { "name": "Spec lesen", "method": "GET", "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/specs/2026-10-01-login.md" },
+    { "name": "Plan lesen", "method": "GET", "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/plans/2026-10-02-login.md" },
+    { "name": "Glossar lesen", "method": "GET", "path": "/api/projects/{{pid}}/docs/file?path=GLOSSARY.md" },
+    { "name": "ADR lesen", "method": "GET", "path": "/api/projects/{{pid}}/docs/file?path=docs/adr/0001-speicher.md" },
+    { "name": "Lesen ohne Pfad", "method": "GET", "path": "/api/projects/{{pid}}/docs/file" },
+    { "name": "Nicht freigegebene Datei lesen", "method": "GET", "path": "/api/projects/{{pid}}/docs/file?path=docs/notes/readme.md" },
+    { "name": "Ausbruch aus dem Repo", "method": "GET", "path": "/api/projects/{{pid}}/docs/file?path=../geheim.md" },
+    { "name": "Freigegebene, aber fehlende Datei lesen", "method": "GET", "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/specs/2026-01-01-fehlt.md" },
+    { "name": "Suche", "method": "GET", "path": "/api/projects/{{pid}}/docs/search?q=speicher" },
+    { "name": "Suche nach Nicht-Freigegebenem", "method": "GET", "path": "/api/projects/{{pid}}/docs/search?q=geheim" },
+    { "name": "Suche mit einem Zeichen", "method": "GET", "path": "/api/projects/{{pid}}/docs/search?q=a" },
+    { "name": "Suche ohne q", "method": "GET", "path": "/api/projects/{{pid}}/docs/search" }
+  ]
+}

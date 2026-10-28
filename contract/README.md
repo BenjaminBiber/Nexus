@@ -98,6 +98,9 @@ bei `SIGTERM`/`SIGINT` sauber.
   `git` (Standard `true`) legt ein Repo mit erstem Commit an, `files` schreibt Dateien (Pfade mit `/`),
   `harnessInit` führt `<cli> init` im Repo aus (nötig, damit sich das Projekt anmelden lässt).
   Der Ordner heißt `<temp>/<NAME>/Mein Projekt ä` – Leerzeichen und Umlaut gehören zum Test.
+  `{{REPO1}}` ist der aufgelöste Pfad (unter macOS `/private/var/…`, nicht `/var/…`), also genau der Text, den
+  der Server als Projektwurzel führt. Nur so findet ein Board, dessen `repoPath` auf `{{REPO1}}` zeigt, sein
+  Projekt wieder – der Vergleich in `RepoBoardResolver` ist ein reiner Textvergleich.
 - `boardConfig: "sqlite"`: vor den Schritten `PUT /api/board-config` mit
   `{ provider: "sqlite", dbFile: "<HOME>/board.db", userId: "11111111-1111-1111-1111-111111111111", userName: "Vertrag" }`.
   Dieser Aufruf wird **nicht** aufgezeichnet.
@@ -236,7 +239,8 @@ contract/
 │  └─ ts-server.mjs           # TS-Server im Vertragsmodus
 ├─ api/
 │  ├─ routes.json             # alle Routen des Servers
-│  └─ basis/                  # Beispielszenarien
+│  ├─ basis/                  # Beispielszenarien
+│  └─ docs/                   # Szenarien der Docs-Seite (Baum, Datei, Suche, Entwürfe, Kommentare)
 └─ tests/                     # Einheitentests (vitest, siehe vitest.config.ts)
 ```
 

@@ -1,0 +1,414 @@
+[
+  {
+    "name": "Liste ohne Board",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "docs": [],
+        "source": {
+          "boardId": null,
+          "boardName": null,
+          "reason": "no-board",
+          "root": null
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Liste",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "docs": [
+          {
+            "date": "2026-10-02",
+            "exists": true,
+            "group": "plan",
+            "kind": "plan",
+            "mtimeMs": 0,
+            "path": "docs/superpowers/plans/2026-10-02-login.md",
+            "title": "Plan Anmeldung",
+            "topic": "login"
+          },
+          {
+            "date": "2026-10-01",
+            "exists": true,
+            "group": "spec",
+            "kind": "spec",
+            "mtimeMs": 0,
+            "path": "docs/superpowers/specs/2026-10-01-login.md",
+            "title": "Anmeldung über Passkeys",
+            "topic": "login"
+          },
+          {
+            "date": null,
+            "exists": true,
+            "group": "glossary",
+            "kind": null,
+            "mtimeMs": 0,
+            "path": "GLOSSARY.md",
+            "title": "Glossar",
+            "topic": null
+          },
+          {
+            "date": null,
+            "exists": true,
+            "group": "adr",
+            "kind": null,
+            "mtimeMs": 0,
+            "path": "docs/adr/0001-speicher.md",
+            "title": "0001-speicher",
+            "topic": null
+          }
+        ],
+        "source": {
+          "boardId": 1,
+          "boardName": "Sprint",
+          "reason": null,
+          "root": "<REPO1>"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Liste über den Board-Umschalter",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs?board=1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "docs": [
+          {
+            "date": "2026-10-02",
+            "exists": true,
+            "group": "plan",
+            "kind": "plan",
+            "mtimeMs": 0,
+            "path": "docs/superpowers/plans/2026-10-02-login.md",
+            "title": "Plan Anmeldung",
+            "topic": "login"
+          },
+          {
+            "date": "2026-10-01",
+            "exists": true,
+            "group": "spec",
+            "kind": "spec",
+            "mtimeMs": 0,
+            "path": "docs/superpowers/specs/2026-10-01-login.md",
+            "title": "Anmeldung über Passkeys",
+            "topic": "login"
+          },
+          {
+            "date": null,
+            "exists": true,
+            "group": "glossary",
+            "kind": null,
+            "mtimeMs": 0,
+            "path": "GLOSSARY.md",
+            "title": "Glossar",
+            "topic": null
+          },
+          {
+            "date": null,
+            "exists": true,
+            "group": "adr",
+            "kind": null,
+            "mtimeMs": 0,
+            "path": "docs/adr/0001-speicher.md",
+            "title": "0001-speicher",
+            "topic": null
+          }
+        ],
+        "source": {
+          "boardId": 1,
+          "boardName": "Sprint",
+          "reason": null,
+          "root": "<REPO1>"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Liste zu einem unbekannten Board",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs?board=999"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "docs": [],
+        "source": {
+          "boardId": null,
+          "boardName": null,
+          "reason": "no-board",
+          "root": null
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Spec lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/file?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "content": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
+        "hash": "900015e5be92387939f28f7416f336cf898754e186df609189d624c246060866",
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "sections": [
+          {
+            "endLine": 17,
+            "heading": "Anmeldung über Passkeys",
+            "level": 1,
+            "startLine": 6
+          },
+          {
+            "endLine": 13,
+            "heading": "Ziel",
+            "level": 2,
+            "startLine": 10
+          },
+          {
+            "endLine": 17,
+            "heading": "Offene Fragen",
+            "level": 2,
+            "startLine": 14
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Plan lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/file?path=docs/superpowers/plans/2026-10-02-login.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "content": "# Plan Anmeldung\n\n## Aufgaben\n\n- [x] Entwurf schreiben\n- [ ] Schlüsselspeicher wählen\n- [ ] Oberfläche bauen\n\n## Risiken\n\nÄltere Geräte können keine Passkeys.\n",
+        "hash": "350085220b457df8327b03fe4e1551abafbf4897709fc8fbb486f23c77d47eb1",
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "sections": [
+          {
+            "endLine": 12,
+            "heading": "Plan Anmeldung",
+            "level": 1,
+            "startLine": 1
+          },
+          {
+            "endLine": 8,
+            "heading": "Aufgaben",
+            "level": 2,
+            "startLine": 3
+          },
+          {
+            "endLine": 12,
+            "heading": "Risiken",
+            "level": 2,
+            "startLine": 9
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Glossar lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/file?path=GLOSSARY.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "content": "# Glossar\n\n**Passkey**: Schlüsselpaar statt Kennwort.\n",
+        "hash": "541efc5a5bc2158f0cc1f4b15bd1383a40ca6f0ae328927a3d2eef14811cd46e",
+        "path": "GLOSSARY.md",
+        "sections": [
+          {
+            "endLine": 4,
+            "heading": "Glossar",
+            "level": 1,
+            "startLine": 1
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "ADR lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/file?path=docs/adr/0001-speicher.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "content": "# Speicher der Schlüssel\n\nDie Schlüssel liegen im Schlüsselbund des Systems.\n",
+        "hash": "eafe44d4d889c45ee39d8a5ad106ec269031a8a1eb7f54c10af820ca3c122fff",
+        "path": "docs/adr/0001-speicher.md",
+        "sections": [
+          {
+            "endLine": 4,
+            "heading": "Speicher der Schlüssel",
+            "level": 1,
+            "startLine": 1
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Lesen ohne Pfad",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/file"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Nicht freigegebene Datei lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/file?path=docs/notes/readme.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Ausbruch aus dem Repo",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/file?path=../geheim.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Freigegebene, aber fehlende Datei lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/file?path=docs/superpowers/specs/2026-01-01-fehlt.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Die Datei docs/superpowers/specs/2026-01-01-fehlt.md existiert noch nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Suche",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/search?q=speicher"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "excerpt": "- [ ] Schlüsselspeicher wählen",
+          "line": 6,
+          "path": "docs/superpowers/plans/2026-10-02-login.md"
+        },
+        {
+          "excerpt": "Welcher Speicher hält die Schlüssel? Noch zu klären.",
+          "line": 16,
+          "path": "docs/superpowers/specs/2026-10-01-login.md"
+        },
+        {
+          "excerpt": "# Speicher der Schlüssel",
+          "line": 1,
+          "path": "docs/adr/0001-speicher.md"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Suche nach Nicht-Freigegebenem",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/search?q=geheim"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "Suche mit einem Zeichen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/search?q=a"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "query-short",
+        "message": "Bitte mindestens zwei Zeichen eingeben."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Suche ohne q",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/docs/search"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "query-short",
+        "message": "Bitte mindestens zwei Zeichen eingeben."
+      },
+      "status": 422
+    }
+  }
+]

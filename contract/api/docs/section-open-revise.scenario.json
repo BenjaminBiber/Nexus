@@ -1,0 +1,263 @@
+{
+  "title": "Abschnitt schreiben, Dokument öffnen und einen Bereich umschreiben lassen",
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "repos": [
+      {
+        "name": "REPO1",
+        "git": true,
+        "harnessInit": true,
+        "files": {
+          "docs/superpowers/specs/2026-10-01-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
+          "docs/superpowers/plans/2026-10-02-login.md": "# Plan Anmeldung\n\n## Aufgaben\n\n- [x] Entwurf schreiben\n- [ ] Schlüsselspeicher wählen\n- [ ] Oberfläche bauen\n\n## Risiken\n\nÄltere Geräte können keine Passkeys.\n",
+          "GLOSSARY.md": "# Glossar\n\n**Passkey**: Schlüsselpaar statt Kennwort.\n",
+          "geheim.md": "geheim\n"
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "record": false
+    },
+    {
+      "name": "DB-Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "boardId": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Repo-Pfad des Boards setzen",
+      "method": "PATCH",
+      "path": "/api/db/boards/{{boardId}}",
+      "body": { "repoPath": "{{REPO1}}" },
+      "record": false
+    },
+    {
+      "name": "Plan lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/plans/2026-10-02-login.md",
+      "save": { "planHash": "json.hash" }
+    },
+    {
+      "name": "Abschnitt ersetzen",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/section",
+      "body": {
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "startLine": 9,
+        "endLine": 11,
+        "content": "## Risiken\n\nÄltere Geräte brauchen einen Ausweg.",
+        "expectedHash": "{{planHash}}"
+      },
+      "save": { "planHash2": "json.hash" }
+    },
+    {
+      "name": "Plan nach dem Schreiben lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/plans/2026-10-02-login.md"
+    },
+    {
+      "name": "Abschnitt leeren",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/section",
+      "body": {
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "startLine": 11,
+        "endLine": 11,
+        "content": "",
+        "expectedHash": "{{planHash2}}"
+      },
+      "save": { "planHash3": "json.hash" }
+    },
+    {
+      "name": "Schreiben mit veraltetem Hash",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/section",
+      "body": {
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "startLine": 9,
+        "endLine": 11,
+        "content": "## Risiken",
+        "expectedHash": "{{planHash}}"
+      }
+    },
+    {
+      "name": "Schreiben ab Zeile 0",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/section",
+      "body": {
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "startLine": 0,
+        "endLine": 2,
+        "content": "x",
+        "expectedHash": "{{planHash3}}"
+      }
+    },
+    {
+      "name": "Schreiben mit Ende vor dem Anfang",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/section",
+      "body": {
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "startLine": 5,
+        "endLine": 4,
+        "content": "x",
+        "expectedHash": "{{planHash3}}"
+      }
+    },
+    {
+      "name": "Schreiben hinter dem Dokumentende",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/section",
+      "body": {
+        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "startLine": 1,
+        "endLine": 99,
+        "content": "x",
+        "expectedHash": "{{planHash3}}"
+      }
+    },
+    {
+      "name": "Schreiben ohne Pflichtfelder",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/section",
+      "body": {}
+    },
+    {
+      "name": "Glossar lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/file?path=GLOSSARY.md",
+      "save": { "glossarHash": "json.hash" },
+      "record": false
+    },
+    {
+      "name": "Glossar schreiben",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/section",
+      "body": {
+        "path": "GLOSSARY.md",
+        "startLine": 1,
+        "endLine": 1,
+        "content": "# Neues Glossar",
+        "expectedHash": "{{glossarHash}}"
+      }
+    },
+    {
+      "name": "Nicht freigegebene Datei schreiben",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/section",
+      "body": { "path": "../geheim.md", "startLine": 1, "endLine": 1, "content": "x", "expectedHash": "egal" }
+    },
+    {
+      "name": "Spec lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/specs/2026-10-01-login.md",
+      "save": { "specHash": "json.hash" },
+      "record": false
+    },
+    {
+      "name": "Bereich umschreiben lassen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/revise",
+      "body": {
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "startLine": 12,
+        "endLine": 12,
+        "instruction": "Kürzer fassen.",
+        "expectedHash": "{{specHash}}"
+      }
+    },
+    {
+      "name": "Umschreiben mit veraltetem Hash",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/revise",
+      "body": {
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "startLine": 12,
+        "endLine": 12,
+        "instruction": "Kürzer fassen.",
+        "expectedHash": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "name": "Umschreiben hinter dem Dokumentende",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/revise",
+      "body": {
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "startLine": 1,
+        "endLine": 99,
+        "instruction": "Kürzer fassen.",
+        "expectedHash": "{{specHash}}"
+      }
+    },
+    {
+      "name": "Umschreiben ab Zeile 0",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/revise",
+      "body": {
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "startLine": 0,
+        "endLine": 2,
+        "instruction": "Kürzer fassen.",
+        "expectedHash": "{{specHash}}"
+      }
+    },
+    {
+      "name": "Umschreiben ohne Anweisung",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/revise",
+      "body": {
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "startLine": 12,
+        "endLine": 12,
+        "expectedHash": "{{specHash}}"
+      }
+    },
+    {
+      "name": "Nicht freigegebene Datei umschreiben",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/revise",
+      "body": { "path": "../geheim.md", "startLine": 1, "endLine": 1, "instruction": "Kürzer fassen.", "expectedHash": "{{specHash}}" }
+    },
+    {
+      "name": "Im Explorer öffnen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/open",
+      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "target": "explorer" }
+    },
+    {
+      "name": "In VS Code öffnen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/open",
+      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "target": "vscode" }
+    },
+    {
+      "name": "Mit unbekanntem Ziel öffnen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/open",
+      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "target": "notepad" }
+    },
+    {
+      "name": "Nicht freigegebene Datei öffnen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/open",
+      "body": { "path": "../geheim.md", "target": "explorer" }
+    }
+  ]
+}

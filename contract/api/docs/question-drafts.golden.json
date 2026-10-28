@@ -1,0 +1,162 @@
+[
+  {
+    "name": "Fragen-Entwürfe erzeugen",
+    "request": {
+      "body": {
+        "path": "docs/superpowers/specs/2026-10-01-login.md"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/question-drafts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "at": "<TIME>",
+        "costUsd": 0,
+        "drafts": [],
+        "dropped": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Fragen-Entwürfe zu einer nicht freigegebenen Datei erzeugen",
+    "request": {
+      "body": {
+        "path": "../geheim.md"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/question-drafts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Erzeugung abbrechen, ohne dass eine läuft",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/projects/<var:pid>/docs/question-drafts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "cancelled": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Fragen anlegen",
+    "request": {
+      "body": {
+        "drafts": [
+          {
+            "answer": "  Der Schlüsselbund des Systems.  ",
+            "description": "Das Dokument lässt den Speicher offen.",
+            "source": {
+              "endLine": 16,
+              "heading": "Offene Fragen",
+              "startLine": 14
+            },
+            "title": "Welcher Speicher hält die Schlüssel?"
+          },
+          {
+            "description": "Im Ziel steht keine Zahl.",
+            "source": {
+              "endLine": 12,
+              "heading": "Ziel",
+              "startLine": 10
+            },
+            "title": "Wie viele Geräte darf eine Person anmelden?"
+          },
+          {
+            "description": "Ohne Titel.",
+            "title": "   "
+          }
+        ],
+        "path": "docs/superpowers/specs/2026-10-01-login.md"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "created": [
+          {
+            "answered": true,
+            "id": "ARC-F0001",
+            "index": 0
+          },
+          {
+            "answered": false,
+            "id": "ARC-F0002",
+            "index": 1
+          }
+        ],
+        "skipped": [
+          {
+            "index": 2,
+            "reason": "draft-invalid"
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Fragen ohne Entwürfe anlegen",
+    "request": {
+      "body": {
+        "drafts": [],
+        "path": "docs/superpowers/specs/2026-10-01-login.md"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "invalid-input",
+        "message": "Bitte mindestens eine Frage übergeben."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Fragen zu einer nicht freigegebenen Datei anlegen",
+    "request": {
+      "body": {
+        "drafts": [
+          {
+            "description": "x",
+            "source": {
+              "endLine": 1,
+              "heading": "Ziel",
+              "startLine": 1
+            },
+            "title": "Welcher Speicher?"
+          }
+        ],
+        "path": "../geheim.md"
+      },
+      "method": "POST",
+      "path": "/api/projects/<var:pid>/docs/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "doc-not-found",
+        "message": "Diese Datei gibt es nicht oder sie ist nicht freigegeben."
+      },
+      "status": 404
+    }
+  }
+]

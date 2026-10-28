@@ -1,0 +1,223 @@
+{
+  "title": "Ticket-Entwürfe erzeugen, speichern und als Tickets anlegen",
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "repos": [
+      {
+        "name": "REPO1",
+        "git": true,
+        "harnessInit": true,
+        "files": {
+          "docs/superpowers/specs/2026-10-01-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
+          "docs/superpowers/plans/2026-10-02-login.md": "# Plan Anmeldung\n\n## Aufgaben\n\n- [x] Entwurf schreiben\n- [ ] Schlüsselspeicher wählen\n- [ ] Oberfläche bauen\n\n## Risiken\n\nÄltere Geräte können keine Passkeys.\n",
+          "geheim.md": "geheim\n"
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "record": false
+    },
+    {
+      "name": "DB-Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "boardId": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Repo-Pfad des Boards setzen",
+      "method": "PATCH",
+      "path": "/api/db/boards/{{boardId}}",
+      "body": { "repoPath": "{{REPO1}}" },
+      "record": false
+    },
+    {
+      "name": "Gespeicherte Entwürfe ohne Erzeugung",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    {
+      "name": "Entwürfe zu einer markierten Stelle erzeugen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts",
+      "body": {
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "selections": [
+          { "heading": "Ziel", "startLine": 10, "endLine": 12, "quote": "Anmeldung ohne Kennwort auf allen drei Plattformen." }
+        ],
+        "note": "Bitte klein schneiden."
+      }
+    },
+    {
+      "name": "Entwürfe zum ganzen Dokument erzeugen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts",
+      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "whole": true }
+    },
+    {
+      "name": "Entwürfe ohne markierte Stelle erzeugen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts",
+      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md" }
+    },
+    {
+      "name": "Entwürfe zu einer nicht freigegebenen Datei erzeugen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts",
+      "body": {
+        "path": "../geheim.md",
+        "selections": [{ "heading": "Ziel", "startLine": 1, "endLine": 1, "quote": "geheim" }]
+      }
+    },
+    {
+      "name": "Erzeugung abbrechen, ohne dass eine läuft",
+      "method": "DELETE",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts",
+      "body": {}
+    },
+    {
+      "name": "Entwürfe speichern",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved",
+      "body": {
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "drafts": [
+          {
+            "title": "Schlüsselspeicher wählen",
+            "description": "Entscheiden, wo die Passkeys liegen.",
+            "acceptance": "Die Wahl steht in der Spec.",
+            "steps": ["Varianten sammeln", "Entscheiden"],
+            "dependsOn": [],
+            "labels": ["server"],
+            "source": { "heading": "Offene Fragen", "startLine": 14, "endLine": 16 }
+          },
+          {
+            "title": "Oberfläche der Anmeldung bauen",
+            "description": "Maske ohne Kennwortfeld.",
+            "acceptance": "Die Maske zeigt nur den Passkey-Knopf.",
+            "steps": ["Test schreiben", "Umsetzen"],
+            "dependsOn": [0],
+            "labels": ["web"],
+            "source": { "heading": "Ziel", "startLine": 10, "endLine": 12 }
+          }
+        ]
+      },
+      "save": { "entwuerfe": "json.result.drafts" }
+    },
+    {
+      "name": "Gespeicherte Entwürfe lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    { "name": "Liste mit gespeicherten Entwürfen", "method": "GET", "path": "/api/projects/{{pid}}/docs" },
+    {
+      "name": "Gespeicherte Entwürfe zu einer nicht freigegebenen Datei",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=../geheim.md"
+    },
+    {
+      "name": "Entwürfe ohne Liste speichern",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved",
+      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "drafts": "keine Liste" }
+    },
+    {
+      "name": "Gespeicherte Entwürfe verwerfen",
+      "method": "DELETE",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md",
+      "body": {}
+    },
+    {
+      "name": "Gespeicherte Entwürfe nach dem Verwerfen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    {
+      "name": "Entwürfe erneut speichern",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved",
+      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "drafts": "{{entwuerfe}}" }
+    },
+    {
+      "name": "Tickets des Dokuments vor dem Anlegen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/tickets?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    {
+      "name": "Tickets aus den gespeicherten Entwürfen anlegen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/tickets",
+      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "drafts": "{{entwuerfe}}" }
+    },
+    {
+      "name": "Gespeicherte Entwürfe nach dem Anlegen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    {
+      "name": "Tickets des Dokuments",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/tickets?path=docs/superpowers/specs/2026-10-01-login.md"
+    },
+    {
+      "name": "Tickets eines anderen Dokuments",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/docs/tickets?path=docs/superpowers/plans/2026-10-02-login.md"
+    },
+    {
+      "name": "Dublette und unbrauchbarer Entwurf",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/tickets",
+      "body": {
+        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "drafts": [
+          {
+            "title": "Schlüsselspeicher wählen",
+            "description": "Noch einmal derselbe Titel.",
+            "acceptance": "Wird übersprungen.",
+            "steps": [],
+            "dependsOn": [],
+            "labels": [],
+            "source": { "heading": "Offene Fragen", "startLine": 14, "endLine": 16 }
+          },
+          {
+            "title": "",
+            "description": "Ohne Titel.",
+            "acceptance": "Wird übersprungen.",
+            "steps": [],
+            "dependsOn": [],
+            "labels": [],
+            "source": { "heading": "Ziel", "startLine": 10, "endLine": 12 }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Tickets ohne Entwürfe anlegen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/tickets",
+      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "drafts": [] }
+    },
+    {
+      "name": "Tickets zu einer nicht freigegebenen Datei anlegen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/tickets",
+      "body": { "path": "../geheim.md", "drafts": "{{entwuerfe}}" }
+    }
+  ]
+}
