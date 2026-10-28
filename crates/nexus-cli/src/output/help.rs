@@ -65,14 +65,18 @@ fn usage(path: &str, cmd: &Command) -> String {
     if cmd.get_subcommands().next().is_some() {
         parts.push("[command]".to_string());
     }
-    parts.extend(cmd.get_positionals().map(argument_term));
+    parts.extend(positionals(cmd).map(argument_term));
     format!("{path} {}", parts.join(" "))
+}
+
+/// Sichtbare Argumente eines Befehls; versteckte zählen weder in der Aufrufzeile noch in der Liste
+fn positionals(cmd: &Command) -> impl Iterator<Item = &Arg> {
+    cmd.get_positionals().filter(|arg| !arg.is_hide_set())
 }
 
 /// Argumente nur dann auflisten, wenn mindestens eines beschrieben ist (wie commander)
 fn argument_items(cmd: &Command) -> Vec<Item> {
-    let items: Vec<Item> = cmd
-        .get_positionals()
+    let items: Vec<Item> = positionals(cmd)
         .map(|arg| (argument_term(arg), text_of(arg.get_help())))
         .collect();
     if items.iter().any(|(_, help)| !help.is_empty()) {
@@ -140,7 +144,7 @@ fn command_term(cmd: &Command) -> String {
     if cmd.get_arguments().any(|arg| !arg.is_positional()) {
         term.push_str(" [options]");
     }
-    let args: Vec<String> = cmd.get_positionals().map(argument_term).collect();
+    let args: Vec<String> = positionals(cmd).map(argument_term).collect();
     if !args.is_empty() {
         term.push(' ');
         term.push_str(&args.join(" "));

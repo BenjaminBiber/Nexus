@@ -1,5 +1,7 @@
-//! Die Befehle der Kommandozeile. Die Fachbefehle (`init`, `board …`, `hook`, `spec …`) kommen
-//! in P3-8 bis P3-18 dazu; bis dahin steht hier nur der Selbsttest des Gerüsts.
+//! Die Befehle der Kommandozeile. Die weiteren Fachbefehle (`init`, die Unterbefehle von
+//! `board`, `hook`, `spec …`) kommen in den übrigen Tickets der Phase 3 dazu.
+
+pub mod board;
 
 #[cfg(debug_assertions)]
 pub mod selbsttest;
