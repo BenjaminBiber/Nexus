@@ -6,6 +6,7 @@ members = [
     "crates/nexus-core",
     "crates/nexus-db",
     "crates/nexus-server",
+    "crates/nexus-cli",
     "apps/desktop/src-tauri",
 ]
 
@@ -23,6 +24,11 @@ unsafe_code = "forbid"
 # Versionen aller Abhängigkeiten stehen nur hier; die Mitglieder nennen mit
 # `{ workspace = true }` nur noch, was sie wirklich brauchen.
 [workspace.dependencies]
+# Die Kommandozeile baut ihren Befehlsbaum mit clap, rendert Hilfe und Fehler aber selbst
+# (deutsches commander-Layout): deshalb ohne Farben und ohne clap-eigenen Zeilenumbruch.
+clap = { version = "4", default-features = false, features = ["std", "derive", "help", "usage", "error-context", "suggestions"] }
+assert_cmd = "2"
+predicates = "3"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml_ng = "0.10"
