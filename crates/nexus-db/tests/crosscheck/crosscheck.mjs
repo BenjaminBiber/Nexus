@@ -2,11 +2,15 @@
 // dataset.json über die Repositories von packages/db an und liest ihn wieder aus.
 //
 // Aufruf (immer mit Node >= 22.13, wegen node:sqlite):
-//   node sqlite-crosscheck.mjs seed  <datei>
-//   node sqlite-crosscheck.mjs dump  <datei>
-//   node sqlite-crosscheck.mjs init  <datei>
-//   node sqlite-crosscheck.mjs burst <datei> <anzahl> <präfix>
-//   node sqlite-crosscheck.mjs bump  <datei> <ticketId> <erwartete rev>
+//   node crosscheck.mjs seed  <datei>
+//   node crosscheck.mjs dump  <datei>
+//   node crosscheck.mjs init  <datei>
+//   node crosscheck.mjs burst <datei> <anzahl> <präfix>
+//   node crosscheck.mjs bump  <datei> <ticketId> <erwartete rev>
+//
+// Mit --provider mssql arbeiten seed und dump auf dem SQL Server aus HARNESS_TEST_DB; die
+// Datei wird dann nicht gebraucht (als Ziel „-“ übergeben). burst und bump gehören zur
+// SQLite-Gegenprobe (zwei Prozesse auf einer Datei) und gibt es nur für sqlite.
 //
 // Nur stdout trägt das Ergebnis (kanonisches JSON, Schlüssel sortiert); Warnungen von Node
 // („ExperimentalWarning“) gehen nach stderr. Das Skript arbeitet ausschließlich über die
@@ -18,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 const DIST = fileURLToPath(new URL('../../../../packages/db/dist/index.js', import.meta.url));
 const DATASET = fileURLToPath(new URL('dataset.json', import.meta.url));
 
-const { SqliteBoardDatabase } = await import(DIST);
+const { BoardDatabaseFactory } = await import(DIST);
 const data = JSON.parse(readFileSync(DATASET, 'utf8'));
 
 // Projekt und Board, mit denen init, burst und bump arbeiten
@@ -214,8 +218,47 @@ async function bump(db, id, rev) {
   }
 }
 
-const [command, file, ...rest] = process.argv.slice(2);
-const db = await SqliteBoardDatabase.open(file);
+// Schalter --provider <anbieter> (oder --provider=<anbieter>) aus den Argumenten lösen
+function parseArgs(argv) {
+  let provider = 'sqlite';
+  const positional = [];
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--provider') provider = argv[++i];
+    else if (argv[i].startsWith('--provider=')) provider = argv[i].slice('--provider='.length);
+    else positional.push(argv[i]);
+  }
+  return { provider, positional };
+}
+
+// Konfig des Anbieters: sqlite nutzt nur file, mssql nur die Verbindungsdaten.
+// Die Zugangsdaten stehen in HARNESS_TEST_DB – wie in tests/helpers/TestDb.ts, samt dem
+// Schutz, dass die Datenbank auf _Test endet.
+function configFor(provider, ziel) {
+  const basis = {
+    provider, file: ziel,
+    server: '', port: 1433, database: '', user: '', password: '', encrypt: true, trustServerCertificate: true,
+    userId: data.users[0].id, userName: data.users[0].name, activeBoard: null,
+  };
+  if (provider === 'sqlite') return basis;
+  const raw = process.env.HARNESS_TEST_DB;
+  if (!raw) throw new Error('HARNESS_TEST_DB fehlt – der Anbieter mssql braucht eine Test-Datenbank.');
+  const zugang = JSON.parse(raw);
+  if (!zugang.database?.endsWith('_Test')) throw new Error('HARNESS_TEST_DB muss auf eine Datenbank mit Endung _Test zeigen.');
+  return {
+    ...basis, file: '',
+    server: zugang.server, port: zugang.port ?? 1433, database: zugang.database,
+    user: zugang.user, password: zugang.password,
+    encrypt: zugang.encrypt ?? true, trustServerCertificate: zugang.trustServerCertificate ?? true,
+  };
+}
+
+const { provider, positional } = parseArgs(process.argv.slice(2));
+const [command, ziel, ...rest] = positional;
+if (provider !== 'sqlite' && provider !== 'mssql') throw new Error(`Unbekannter Anbieter ${provider}`);
+if (provider === 'mssql' && (command === 'burst' || command === 'bump')) {
+  throw new Error(`${command} gibt es nur für sqlite (zwei Prozesse auf einer Datei).`);
+}
+const db = await BoardDatabaseFactory.open(configFor(provider, ziel));
 let ausgabe;
 try {
   if (command === 'seed') {

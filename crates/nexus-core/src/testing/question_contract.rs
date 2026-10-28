@@ -20,6 +20,9 @@ macro_rules! question_repository_contract {
         $crate::question_repository_contract!($name, $create, $reset, || async {});
     };
     ($name:ident, $create:expr, $reset:expr, $lock:expr) => {
+        $crate::question_repository_contract!($name, $create, $reset, $lock,);
+    };
+    ($name:ident, $create:expr, $reset:expr, $lock:expr, $(#[$attr:meta])*) => {
         mod $name {
             #![allow(unused_imports)]
 
@@ -60,6 +63,7 @@ macro_rules! question_repository_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn vergibt_fragenummern_je_projekt_fortlaufend_unabhangig_von_ticketnummern() {
                 let (db, _guard) = setup().await;
                 let project_id = seed_questions(&db).await.project_id;
@@ -82,6 +86,7 @@ macro_rules! question_repository_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn speichert_eine_frage_mit_tags_tickets_abhangigkeiten_und_entscheidung() {
                 let (db, _guard) = setup().await;
                 let project_id = seed_questions(&db).await.project_id;
@@ -145,6 +150,7 @@ macro_rules! question_repository_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn lehnt_ein_update_mit_veralteter_version_als_conflict_ab() {
                 let (db, _guard) = setup().await;
                 let project_id = seed_questions(&db).await.project_id;
@@ -192,6 +198,7 @@ macro_rules! question_repository_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn filtert_nach_projekt_ids_betroffenen_tickets_und_zustanden() {
                 let (db, _guard) = setup().await;
                 let project_id = seed_questions(&db).await.project_id;
@@ -290,6 +297,7 @@ macro_rules! question_repository_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn speichert_recherchen_mit_optionen_kommentare_und_verlauf_in_reihenfolge() {
                 let (db, _guard) = setup().await;
                 let project_id = seed_questions(&db).await.project_id;
@@ -453,6 +461,7 @@ macro_rules! question_repository_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn entfernt_bezuge_auf_ein_ticket_und_liefert_die_betroffenen_fragen() {
                 let (db, _guard) = setup().await;
                 let project_id = seed_questions(&db).await.project_id;
@@ -548,6 +557,7 @@ macro_rules! question_repository_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn andert_den_fragen_kennwert_und_den_board_kennwert_nur_bei_verknupften_tickets()
             {
                 let (db, _guard) = setup().await;
@@ -619,6 +629,7 @@ macro_rules! question_repository_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn verweigert_das_loschen_eines_tickets_mit_verknupfter_frage() {
                 let (db, _guard) = setup().await;
                 let project_id = seed_questions(&db).await.project_id;

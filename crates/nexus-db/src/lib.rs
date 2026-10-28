@@ -6,6 +6,7 @@
 //! alles über `nexus_db::…` beziehen können. Umgekehrt darf `nexus-core` nie von `nexus-db`
 //! abhängen – sonst entstünde ein Zyklus, sobald die Dienste des Fachkerns den Trait brauchen.
 
+pub mod factory;
 pub mod managed;
 pub mod mssql;
 pub mod row_groups;
@@ -13,6 +14,9 @@ pub mod schema_version_guard;
 pub mod sql_chunks;
 pub mod sqlite;
 
+pub use factory::{
+    open_checked, open_checked_with, AnyBoardDatabase, BoardDatabaseFactory, OpenedBoard,
+};
 pub use managed::{ConnectOptions, ManagedBoardDatabase, DEFAULT_CONNECTION_TIMEOUT_MS};
 pub use row_groups::RowGroups;
 pub use schema_version_guard::{
