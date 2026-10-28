@@ -351,14 +351,55 @@ async fn gibt_den_handelnden_der_laufzeit_weiter() {
     assert_eq!(backend.actor(None).name, "Vertrag");
 }
 
+/// Eine gültige Konfig, wie die Oberfläche sie an `PUT /api/board-config` schickt
+const BOARD_CONFIG_INPUT: &str = r#"{"server":"127.0.0.1","port":1,"database":"AiHarness","user":"harness","password":"geheim","encrypt":false,"trustServerCertificate":true,"userId":"11111111-1111-1111-1111-111111111111","userName":"Florian"}"#;
+
 #[tokio::test]
-#[ignore = "Die Route PUT /api/board-config kommt mit der Routengruppe db-boards (P4-3)"]
 async fn baut_im_server_nach_dem_speichern_der_board_konfig_neu_auf() {
-    unimplemented!("mit PUT /api/board-config in P4-3");
+    let calls = Arc::new(AtomicUsize::new(0));
+    let counted = calls.clone();
+    let server = common::TestServer::with(common::TestServerOptions {
+        board: Some(factory(move || -> BoardBackendFuture {
+            counted.fetch_add(1, Ordering::SeqCst);
+            Box::pin(async { Ok(MemoryBoardBackend::new("neu") as Arc<dyn BoardBackend>) })
+        })),
+        ..Default::default()
+    });
+
+    server.state.board.get().await.unwrap();
+    assert_eq!(
+        server
+            .put("/api/board-config", BOARD_CONFIG_INPUT)
+            .await
+            .status,
+        200
+    );
+    server.state.board.get().await.unwrap();
+
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
 }
 
 #[tokio::test]
-#[ignore = "Die Route PUT /api/board-config kommt mit der Routengruppe db-boards (P4-3)"]
 async fn schliesst_im_server_die_alte_laufzeit_nach_dem_speichern_der_board_konfig() {
-    unimplemented!("mit PUT /api/board-config in P4-3");
+    let backend = MemoryBoardBackend::new("alt");
+    let geteilt = backend.clone();
+    let server = common::TestServer::with(common::TestServerOptions {
+        board: Some(factory(move || -> BoardBackendFuture {
+            let backend = geteilt.clone();
+            Box::pin(async move { Ok(backend as Arc<dyn BoardBackend>) })
+        })),
+        ..Default::default()
+    });
+
+    server.state.board.get().await.unwrap();
+    assert!(!backend.closed());
+    assert_eq!(
+        server
+            .put("/api/board-config", BOARD_CONFIG_INPUT)
+            .await
+            .status,
+        200
+    );
+
+    assert!(backend.closed());
 }
