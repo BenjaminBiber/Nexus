@@ -14,8 +14,10 @@ export class RepoFixture {
     this.home = options.home;
     this.claudeConfig = options.claudeConfig;
     this.cli = options.cli;
-    // Aufgelöst, weil Git und die CLI den Pfad aufgelöst melden (macOS: /var → /private/var); sonst findet
-    // ein Board über `repoPath: "{{REPO1}}"` sein Repo nicht
+    // Aufgelöster Pfad: Git und die CLI melden die Projektwurzel ohne Verknüpfungen (unter macOS /private/var
+    // statt /var). Nur so ist `{{REPO1}}` derselbe Text, den der Server als Projektwurzel führt – sonst fände
+    // ein Board, dessen Repo-Pfad auf `{{REPO1}}` zeigt, sein Projekt unter macOS nicht und die Golden-Dateien
+    // wären je Plattform verschieden.
     this.base = realpathSync(mkdtempSync(join(tmpdir(), 'harness-contract-repos-')));
   }
 
