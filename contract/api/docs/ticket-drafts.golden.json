@@ -3,7 +3,7 @@
     "name": "Gespeicherte Entwürfe ohne Erzeugung",
     "request": {
       "method": "GET",
-      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -18,7 +18,7 @@
     "request": {
       "body": {
         "note": "Bitte klein schneiden.",
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "selections": [
           {
             "endLine": 12,
@@ -44,7 +44,7 @@
     "name": "Entwürfe zum ganzen Dokument erzeugen",
     "request": {
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "whole": true
       },
       "method": "POST",
@@ -63,7 +63,7 @@
     "name": "Entwürfe ohne markierte Stelle erzeugen",
     "request": {
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md"
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
       },
       "method": "POST",
       "path": "/api/projects/<var:pid>/docs/ticket-drafts"
@@ -162,7 +162,7 @@
             "title": "Oberfläche der Anmeldung bauen"
           }
         ],
-        "path": "docs/superpowers/specs/2026-10-01-login.md"
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
       },
       "method": "PUT",
       "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved"
@@ -223,7 +223,7 @@
     "name": "Gespeicherte Entwürfe lesen",
     "request": {
       "method": "GET",
-      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -288,23 +288,23 @@
       "json": {
         "docs": [
           {
-            "date": "2026-10-02",
+            "date": "2020-03-03",
             "exists": true,
             "group": "plan",
             "kind": "plan",
             "mtimeMs": 0,
-            "path": "docs/superpowers/plans/2026-10-02-login.md",
+            "path": "docs/superpowers/plans/2020-03-03-login.md",
             "title": "Plan Anmeldung",
             "topic": "login"
           },
           {
-            "date": "2026-10-01",
+            "date": "2020-03-02",
             "exists": true,
             "group": "spec",
             "hasDrafts": true,
             "kind": "spec",
             "mtimeMs": 0,
-            "path": "docs/superpowers/specs/2026-10-01-login.md",
+            "path": "docs/superpowers/specs/2020-03-02-login.md",
             "title": "Anmeldung über Passkeys",
             "topic": "login"
           }
@@ -339,7 +339,7 @@
     "request": {
       "body": {
         "drafts": "keine Liste",
-        "path": "docs/superpowers/specs/2026-10-01-login.md"
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
       },
       "method": "PUT",
       "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved"
@@ -358,7 +358,7 @@
     "request": {
       "body": {},
       "method": "DELETE",
-      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -372,7 +372,7 @@
     "name": "Gespeicherte Entwürfe nach dem Verwerfen",
     "request": {
       "method": "GET",
-      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -426,7 +426,7 @@
             "title": "Oberfläche der Anmeldung bauen"
           }
         ],
-        "path": "docs/superpowers/specs/2026-10-01-login.md"
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
       },
       "method": "PUT",
       "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved"
@@ -487,7 +487,7 @@
     "name": "Tickets des Dokuments vor dem Anlegen",
     "request": {
       "method": "GET",
-      "path": "/api/projects/<var:pid>/docs/tickets?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/tickets?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -539,7 +539,7 @@
             "title": "Oberfläche der Anmeldung bauen"
           }
         ],
-        "path": "docs/superpowers/specs/2026-10-01-login.md"
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
       },
       "method": "POST",
       "path": "/api/projects/<var:pid>/docs/tickets"
@@ -566,7 +566,7 @@
     "name": "Gespeicherte Entwürfe nach dem Anlegen",
     "request": {
       "method": "GET",
-      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -580,7 +580,7 @@
     "name": "Tickets des Dokuments",
     "request": {
       "method": "GET",
-      "path": "/api/projects/<var:pid>/docs/tickets?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/tickets?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -611,7 +611,7 @@
     "name": "Tickets eines anderen Dokuments",
     "request": {
       "method": "GET",
-      "path": "/api/projects/<var:pid>/docs/tickets?path=docs/superpowers/plans/2026-10-02-login.md"
+      "path": "/api/projects/<var:pid>/docs/tickets?path=docs/superpowers/plans/2020-03-03-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -651,7 +651,7 @@
             "title": ""
           }
         ],
-        "path": "docs/superpowers/specs/2026-10-01-login.md"
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
       },
       "method": "POST",
       "path": "/api/projects/<var:pid>/docs/tickets"
@@ -680,7 +680,7 @@
     "request": {
       "body": {
         "drafts": [],
-        "path": "docs/superpowers/specs/2026-10-01-login.md"
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
       },
       "method": "POST",
       "path": "/api/projects/<var:pid>/docs/tickets"

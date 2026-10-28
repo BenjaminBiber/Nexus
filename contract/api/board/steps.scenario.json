@@ -1,0 +1,68 @@
+{
+  "title": "Arbeitsschritte anlegen, abhaken, ändern, verschieben und löschen",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "VTR", "name": "Vertrag" }, "record": false },
+    {
+      "name": "Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "VTR", "name": "Sprint" },
+      "save": { "bid": "json.id" },
+      "record": false
+    },
+    { "name": "Ticket", "method": "POST", "path": "/api/db/boards/{{bid}}/tickets", "body": { "title": "Login bauen" }, "record": false },
+    {
+      "name": "Schritt anlegen",
+      "method": "POST",
+      "path": "/api/db/tickets/VTR-0001/steps",
+      "body": { "text": "Test schreiben", "detail": "Erwartet: rot" }
+    },
+    { "name": "zweiten Schritt anhängen", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps", "body": { "text": "Umsetzen" } },
+    { "name": "Schritt an Position 1 einfügen", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps", "body": { "text": "Lesen", "at": 1 } },
+    { "name": "Schritt abhaken", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps/2", "body": { "done": true } },
+    { "name": "Haken zurücknehmen", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps/2", "body": { "done": false } },
+    {
+      "name": "Schritt ändern",
+      "method": "PATCH",
+      "path": "/api/db/tickets/VTR-0001/steps/2",
+      "body": { "text": "Test zuerst", "detail": "Erwartet: erst rot, dann grün" }
+    },
+    { "name": "Anleitung entfernen", "method": "PATCH", "path": "/api/db/tickets/VTR-0001/steps/2", "body": { "detail": null } },
+    { "name": "Schritt nach vorn verschieben", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps/2/move", "body": { "to": 1 } },
+    { "name": "abhaken ohne done", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps/1", "body": {} },
+    { "name": "done ist kein Schalter", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps/1", "body": { "done": "ja" } },
+    { "name": "Schrittnummer 0", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps/0", "body": { "done": true } },
+    { "name": "Schrittnummer mit Komma", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps/1.5", "body": { "done": true } },
+    { "name": "Schrittnummer ist Text", "method": "PATCH", "path": "/api/db/tickets/VTR-0001/steps/x", "body": { "text": "X" } },
+    { "name": "unbekannten Schritt abhaken", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps/9", "body": { "done": true } },
+    { "name": "Schritt ohne Text anlegen", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps", "body": {} },
+    { "name": "Schritt mit leerem Text", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps", "body": { "text": " " } },
+    { "name": "Position gibt es nicht", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps", "body": { "text": "Zu weit", "at": 9 } },
+    { "name": "ändern ohne Änderung", "method": "PATCH", "path": "/api/db/tickets/VTR-0001/steps/1", "body": {} },
+    { "name": "unbekannten Schritt ändern", "method": "PATCH", "path": "/api/db/tickets/VTR-0001/steps/9", "body": { "text": "X" } },
+    { "name": "unbekannten Schritt löschen", "method": "DELETE", "path": "/api/db/tickets/VTR-0001/steps/9", "body": {} },
+    { "name": "verschieben ohne Ziel", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps/1/move", "body": {} },
+    { "name": "Ziel gibt es nicht", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps/1/move", "body": { "to": 9 } },
+    { "name": "Schritt an unbekanntem Ticket", "method": "POST", "path": "/api/db/tickets/VTR-0099/steps", "body": { "text": "X" } },
+    {
+      "name": "Schritt steht inzwischen anders da",
+      "method": "POST",
+      "path": "/api/db/tickets/VTR-0001/steps/1",
+      "body": { "done": true, "expectText": "Lesen" }
+    },
+    {
+      "name": "veraltete Version beim Ändern",
+      "method": "PATCH",
+      "path": "/api/db/tickets/VTR-0001/steps/1",
+      "body": { "text": "X", "rev": 1 }
+    },
+    {
+      "name": "löschen mit Text und Version",
+      "method": "DELETE",
+      "path": "/api/db/tickets/VTR-0001/steps/3",
+      "body": { "expectText": "Umsetzen", "rev": 9 }
+    },
+    { "name": "Ticket am Ende lesen", "method": "GET", "path": "/api/db/tickets/VTR-0001" }
+  ]
+}

@@ -1,0 +1,172 @@
+{
+  "title": "Fehlerfälle der Fragen-Routen: unbekannte IDs, fehlende Felder, unerlaubte Übergänge",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    {
+      "name": "Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "compare": "status"
+    },
+    {
+      "name": "zweites Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "BEN", "name": "Bento" },
+      "compare": "status"
+    },
+    {
+      "name": "Board im ersten Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "compare": "status"
+    },
+    {
+      "name": "Board im zweiten Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "BEN", "name": "Sprint" },
+      "compare": "status"
+    },
+    {
+      "name": "Ticket im ersten Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Login" },
+      "compare": "status"
+    },
+    {
+      "name": "Ticket im zweiten Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/2/tickets",
+      "body": { "title": "Fremd" },
+      "compare": "status"
+    },
+    {
+      "name": "Frage anlegen",
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions",
+      "body": { "title": "Welcher Speicher?", "ticketIds": ["ARC-0001"] },
+      "compare": "status"
+    },
+
+    { "name": "Fragen eines unbekannten Projekts auflisten", "method": "GET", "path": "/api/db/projects/XXX/questions" },
+    { "name": "unbekannte Frage lesen", "method": "GET", "path": "/api/db/questions/ARC-F0099" },
+    { "name": "keine Fragenummer lesen", "method": "GET", "path": "/api/db/questions/kaputt" },
+    { "name": "Filter mit unbekanntem Zustand", "method": "GET", "path": "/api/db/projects/ARC/questions?state=quatsch" },
+    { "name": "Filter Ticket doppelt angegeben", "method": "GET", "path": "/api/db/projects/ARC/questions?ticket=ARC-0001&ticket=ARC-0002" },
+    { "name": "Filter Zustand doppelt angegeben", "method": "GET", "path": "/api/db/projects/ARC/questions?state=open&state=all" },
+
+    { "name": "Frage ohne Titel stellen", "method": "POST", "path": "/api/db/projects/ARC/questions", "body": {} },
+    { "name": "Frage mit leerem Titel stellen", "method": "POST", "path": "/api/db/projects/ARC/questions", "body": { "title": "   " } },
+    {
+      "name": "Frage mit unbekanntem Ticket stellen",
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions",
+      "body": { "title": "Mit Ticket", "ticketIds": ["ARC-0099"] }
+    },
+    {
+      "name": "Frage mit Ticket eines anderen Projekts stellen",
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions",
+      "body": { "title": "Mit fremdem Ticket", "ticketIds": ["BEN-0001"] }
+    },
+    {
+      "name": "Frage mit unbekannter Abhängigkeit stellen",
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions",
+      "body": { "title": "Mit Abhängigkeit", "dependsOn": ["ARC-F0099"] }
+    },
+    {
+      "name": "Frage mit ungültigem Verweis stellen",
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions",
+      "body": { "title": "Mit Verweis", "dependsOn": ["quatsch"] }
+    },
+
+    { "name": "ändern ohne Version", "method": "PATCH", "path": "/api/db/questions/ARC-F0001", "body": { "title": "Neu" } },
+    { "name": "ändern ohne Änderung", "method": "PATCH", "path": "/api/db/questions/ARC-F0001", "body": { "rev": 1 } },
+    { "name": "Tickets ohne Liste setzen", "method": "PUT", "path": "/api/db/questions/ARC-F0001/tickets", "body": { "rev": 1 } },
+    { "name": "Abhängigkeiten ohne Liste setzen", "method": "PUT", "path": "/api/db/questions/ARC-F0001/depends", "body": { "rev": 1 } },
+    {
+      "name": "Tickets einer unbekannten Frage setzen",
+      "method": "PUT",
+      "path": "/api/db/questions/ARC-F0099/tickets",
+      "body": { "rev": 1, "ticketIds": [] }
+    },
+    { "name": "Kommentar ohne Text", "method": "POST", "path": "/api/db/questions/ARC-F0001/comments", "body": {} },
+    { "name": "leerer Kommentar", "method": "POST", "path": "/api/db/questions/ARC-F0001/comments", "body": { "body": "   " } },
+    { "name": "Kommentar an unbekannter Frage", "method": "POST", "path": "/api/db/questions/ARC-F0099/comments", "body": { "body": "Hallo" } },
+
+    { "name": "entscheiden ohne Option und ohne Text", "method": "POST", "path": "/api/db/questions/ARC-F0001/decision", "body": { "rev": 1 } },
+    {
+      "name": "entscheiden mit Option und Text",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision",
+      "body": { "rev": 1, "option": "O1", "text": "SQLite" }
+    },
+    {
+      "name": "unbekannte Option wählen",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision",
+      "body": { "rev": 1, "option": "O1" }
+    },
+    { "name": "entscheiden an unbekannter Frage", "method": "POST", "path": "/api/db/questions/ARC-F0099/decision", "body": { "rev": 1, "text": "SQLite" } },
+    { "name": "verwerfen ohne Begründung", "method": "POST", "path": "/api/db/questions/ARC-F0001/discard", "body": { "rev": 1 } },
+    { "name": "offene Frage wieder öffnen", "method": "POST", "path": "/api/db/questions/ARC-F0001/reopen", "body": { "rev": 1 } },
+    {
+      "name": "entscheiden mit veralteter Version",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision",
+      "body": { "rev": 9, "text": "SQLite" }
+    },
+
+    {
+      "name": "Frage verwerfen",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/discard",
+      "body": { "rev": 1, "reason": "doppelt" },
+      "compare": "status"
+    },
+    {
+      "name": "verworfene Frage entscheiden",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision",
+      "body": { "rev": 2, "text": "SQLite" }
+    },
+    {
+      "name": "verworfene Frage erneut verwerfen",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/discard",
+      "body": { "rev": 2, "reason": "nochmal" }
+    },
+    {
+      "name": "Frage wieder öffnen und entscheiden",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/reopen",
+      "body": { "rev": 2 },
+      "compare": "status"
+    },
+    {
+      "name": "Frage entscheiden",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision",
+      "body": { "rev": 3, "text": "SQLite" },
+      "compare": "status"
+    },
+    {
+      "name": "entschiedene Frage erneut entscheiden",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/decision",
+      "body": { "rev": 4, "text": "Doch SQL Server" }
+    },
+    {
+      "name": "entschiedene Frage verwerfen",
+      "method": "POST",
+      "path": "/api/db/questions/ARC-F0001/discard",
+      "body": { "rev": 4, "reason": "doch nicht" }
+    }
+  ]
+}

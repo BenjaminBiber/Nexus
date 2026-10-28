@@ -3,7 +3,7 @@
     "name": "Fragen-Entwürfe erzeugen",
     "request": {
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md"
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
       },
       "method": "POST",
       "path": "/api/projects/<var:pid>/docs/question-drafts"
@@ -81,7 +81,7 @@
             "title": "   "
           }
         ],
-        "path": "docs/superpowers/specs/2026-10-01-login.md"
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
       },
       "method": "POST",
       "path": "/api/projects/<var:pid>/docs/questions"
@@ -116,7 +116,7 @@
     "request": {
       "body": {
         "drafts": [],
-        "path": "docs/superpowers/specs/2026-10-01-login.md"
+        "path": "docs/superpowers/specs/2020-03-02-login.md"
       },
       "method": "POST",
       "path": "/api/projects/<var:pid>/docs/questions"

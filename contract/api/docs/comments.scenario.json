@@ -8,7 +8,7 @@
         "git": true,
         "harnessInit": true,
         "files": {
-          "docs/superpowers/specs/2026-10-01-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
+          "docs/superpowers/specs/2020-03-02-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
           "docs/notes/readme.md": "Notizen, nicht freigegeben.\n",
           "geheim.md": "geheim\n"
         }
@@ -27,7 +27,7 @@
     {
       "name": "Kommentare ohne Board lesen",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     {
       "name": "DB-Projekt anlegen",
@@ -54,12 +54,12 @@
     {
       "name": "Kommentare eines Dokuments ohne Kommentare",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     {
       "name": "Kommentar anlegen",
       "method": "POST",
-      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md",
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md",
       "body": {
         "text": "Bitte den Speicher benennen.",
         "quote": "Welcher Speicher hält die Schlüssel?",
@@ -71,43 +71,43 @@
     {
       "name": "Kommentar mit unbrauchbaren Zeilen anlegen",
       "method": "POST",
-      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md",
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md",
       "body": { "text": "Gilt für das ganze Ziel.", "quote": "Anmeldung ohne Kennwort", "lines": [1, 2, 3] },
       "save": { "cid2": "json.id" }
     },
     {
       "name": "Kommentare lesen",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     {
       "name": "Kommentar erledigen",
       "method": "PATCH",
-      "path": "/api/projects/{{pid}}/docs/comments/{{cid}}?path=docs/superpowers/specs/2026-10-01-login.md",
+      "path": "/api/projects/{{pid}}/docs/comments/{{cid}}?path=docs/superpowers/specs/2020-03-02-login.md",
       "body": { "status": "resolved", "resolution": "Der Schlüsselbund des Systems." }
     },
     {
       "name": "Kommentartext ändern",
       "method": "PATCH",
-      "path": "/api/projects/{{pid}}/docs/comments/{{cid2}}?path=docs/superpowers/specs/2026-10-01-login.md",
+      "path": "/api/projects/{{pid}}/docs/comments/{{cid2}}?path=docs/superpowers/specs/2020-03-02-login.md",
       "body": { "text": "Gilt für den ganzen Abschnitt Ziel." }
     },
     {
       "name": "Änderung ohne Feld",
       "method": "PATCH",
-      "path": "/api/projects/{{pid}}/docs/comments/{{cid2}}?path=docs/superpowers/specs/2026-10-01-login.md",
+      "path": "/api/projects/{{pid}}/docs/comments/{{cid2}}?path=docs/superpowers/specs/2020-03-02-login.md",
       "body": {}
     },
     {
       "name": "Unbekannten Kommentar ändern",
       "method": "PATCH",
-      "path": "/api/projects/{{pid}}/docs/comments/K-00000000?path=docs/superpowers/specs/2026-10-01-login.md",
+      "path": "/api/projects/{{pid}}/docs/comments/K-00000000?path=docs/superpowers/specs/2020-03-02-login.md",
       "body": { "text": "x" }
     },
     {
       "name": "Kommentar ohne Text anlegen",
       "method": "POST",
-      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md",
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md",
       "body": { "text": "   ", "quote": "Anmeldung ohne Kennwort", "heading": null, "lines": null }
     },
     {
@@ -124,19 +124,19 @@
     {
       "name": "Kommentar löschen",
       "method": "DELETE",
-      "path": "/api/projects/{{pid}}/docs/comments/{{cid}}?path=docs/superpowers/specs/2026-10-01-login.md",
+      "path": "/api/projects/{{pid}}/docs/comments/{{cid}}?path=docs/superpowers/specs/2020-03-02-login.md",
       "body": {}
     },
     {
       "name": "Unbekannten Kommentar löschen",
       "method": "DELETE",
-      "path": "/api/projects/{{pid}}/docs/comments/K-00000000?path=docs/superpowers/specs/2026-10-01-login.md",
+      "path": "/api/projects/{{pid}}/docs/comments/K-00000000?path=docs/superpowers/specs/2020-03-02-login.md",
       "body": {}
     },
     {
       "name": "Kommentare nach dem Löschen",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/{{pid}}/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
     }
   ]
 }

@@ -1,0 +1,76 @@
+{
+  "title": "Fragen stellen, einzeln lesen und mit Filtern auflisten",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    {
+      "name": "Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "compare": "status"
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "compare": "status"
+    },
+    {
+      "name": "Ticket Login anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Login" },
+      "compare": "status"
+    },
+    {
+      "name": "Ticket Export anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Export" },
+      "compare": "status"
+    },
+    {
+      "name": "Frage mit allen Angaben stellen",
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions",
+      "body": {
+        "title": "Welcher Speicher?",
+        "description": "SQLite oder SQL Server als Standard.",
+        "tags": ["speicher", "Speicher", " entscheidung "],
+        "occasion": "Board",
+        "ticketIds": ["ARC-0001"]
+      }
+    },
+    {
+      "name": "Frage nur mit Titel stellen",
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions",
+      "body": { "title": "Welches Format für den Export?" }
+    },
+    {
+      "name": "Frage mit Ticket in Kleinschreibung stellen",
+      "method": "POST",
+      "path": "/api/db/projects/arc/questions",
+      "body": { "title": "Export auch als CSV?", "tags": ["export"], "ticketIds": ["arc-0002", "ARC-0002", " "] }
+    },
+    {
+      "name": "Frage mit Abhängigkeit stellen",
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions",
+      "body": { "title": "Wie heißt die Spalte?", "occasion": "  ", "dependsOn": ["arc-f0001", "ARC-0001"] }
+    },
+    { "name": "Liste ohne Filter", "method": "GET", "path": "/api/db/projects/ARC/questions" },
+    { "name": "Liste mit Schlüssel in Kleinschreibung", "method": "GET", "path": "/api/db/projects/arc/questions" },
+    { "name": "Filter Zustand offen", "method": "GET", "path": "/api/db/projects/ARC/questions?state=open" },
+    { "name": "Filter Zustand entschieden", "method": "GET", "path": "/api/db/projects/ARC/questions?state=answered" },
+    { "name": "Filter Zustand alle", "method": "GET", "path": "/api/db/projects/ARC/questions?state=all" },
+    { "name": "Filter Ticket", "method": "GET", "path": "/api/db/projects/ARC/questions?ticket=arc-0002" },
+    { "name": "Filter Tag", "method": "GET", "path": "/api/db/projects/ARC/questions?tag=speicher" },
+    { "name": "Filter Text", "method": "GET", "path": "/api/db/projects/ARC/questions?q=EXPORT" },
+    { "name": "Filter Ticket und Text zusammen", "method": "GET", "path": "/api/db/projects/ARC/questions?ticket=ARC-0002&q=csv" },
+    { "name": "Filter Text ohne Treffer", "method": "GET", "path": "/api/db/projects/ARC/questions?q=unbekannt" },
+    { "name": "Einzelne Frage lesen", "method": "GET", "path": "/api/db/questions/ARC-F0001" },
+    { "name": "Frage in Kleinschreibung lesen", "method": "GET", "path": "/api/db/questions/arc-f0004" }
+  ]
+}

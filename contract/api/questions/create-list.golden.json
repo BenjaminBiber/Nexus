@@ -1,0 +1,1410 @@
+[
+  {
+    "name": "Projekt anlegen",
+    "request": {
+      "body": {
+        "key": "ARC",
+        "name": "Arches"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Board anlegen",
+    "request": {
+      "body": {
+        "name": "Sprint",
+        "project": "ARC"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Ticket Login anlegen",
+    "request": {
+      "body": {
+        "title": "Login"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Ticket Export anlegen",
+    "request": {
+      "body": {
+        "title": "Export"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Frage mit allen Angaben stellen",
+    "request": {
+      "body": {
+        "description": "SQLite oder SQL Server als Standard.",
+        "occasion": "Board",
+        "tags": [
+          "speicher",
+          "Speicher",
+          " entscheidung "
+        ],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "title": "Welcher Speicher?"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "SQLite oder SQL Server als Standard.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 1,
+        "state": "open",
+        "tags": [
+          "speicher",
+          "entscheidung"
+        ],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Frage nur mit Titel stellen",
+    "request": {
+      "body": {
+        "title": "Welches Format für den Export?"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0002",
+            "text": "Frage angelegt",
+            "type": "created"
+          }
+        ],
+        "id": "ARC-F0002",
+        "number": 2,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 1,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [],
+        "tickets": [],
+        "title": "Welches Format für den Export?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Frage mit Ticket in Kleinschreibung stellen",
+    "request": {
+      "body": {
+        "tags": [
+          "export"
+        ],
+        "ticketIds": [
+          "arc-0002",
+          "ARC-0002",
+          " "
+        ],
+        "title": "Export auch als CSV?"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/arc/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0003",
+            "text": "Frage angelegt",
+            "type": "created"
+          }
+        ],
+        "id": "ARC-F0003",
+        "number": 3,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 1,
+        "state": "open",
+        "tags": [
+          "export"
+        ],
+        "ticketIds": [
+          "ARC-0002"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0002",
+            "status": "backlog",
+            "title": "Export"
+          }
+        ],
+        "title": "Export auch als CSV?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Frage mit Abhängigkeit stellen",
+    "request": {
+      "body": {
+        "dependsOn": [
+          "arc-f0001",
+          "ARC-0001"
+        ],
+        "occasion": "  ",
+        "title": "Wie heißt die Spalte?"
+      },
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [
+          "ARC-F0001",
+          "ARC-0001"
+        ],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0004",
+            "text": "Frage angelegt",
+            "type": "created"
+          }
+        ],
+        "id": "ARC-F0004",
+        "number": 4,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [],
+        "researched": false,
+        "rev": 1,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [],
+        "tickets": [],
+        "title": "Wie heißt die Spalte?",
+        "updatedAt": "<TIME>",
+        "waitingOn": [
+          {
+            "id": "ARC-F0001",
+            "state": "open"
+          },
+          {
+            "id": "ARC-0001",
+            "state": "backlog"
+          }
+        ]
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Liste ohne Filter",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "answered": 0,
+          "discarded": 0,
+          "mine": 4,
+          "open": 4
+        },
+        "questions": [
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "SQLite oder SQL Server als Standard.",
+            "id": "ARC-F0001",
+            "mine": true,
+            "number": 1,
+            "occasion": "Board",
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [
+              "speicher",
+              "entscheidung"
+            ],
+            "ticketIds": [
+              "ARC-0001"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0001",
+                "status": "backlog",
+                "title": "Login"
+              }
+            ],
+            "title": "Welcher Speicher?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0002",
+            "mine": true,
+            "number": 2,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [],
+            "ticketIds": [],
+            "tickets": [],
+            "title": "Welches Format für den Export?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0003",
+            "mine": true,
+            "number": 3,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [
+              "export"
+            ],
+            "ticketIds": [
+              "ARC-0002"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0002",
+                "status": "backlog",
+                "title": "Export"
+              }
+            ],
+            "title": "Export auch als CSV?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [
+              "ARC-F0001",
+              "ARC-0001"
+            ],
+            "description": "",
+            "id": "ARC-F0004",
+            "mine": true,
+            "number": 4,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": false,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [],
+            "ticketIds": [],
+            "tickets": [],
+            "title": "Wie heißt die Spalte?",
+            "updatedAt": "<TIME>",
+            "waitingOn": [
+              {
+                "id": "ARC-F0001",
+                "state": "open"
+              },
+              {
+                "id": "ARC-0001",
+                "state": "backlog"
+              }
+            ]
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Liste mit Schlüssel in Kleinschreibung",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/arc/questions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "answered": 0,
+          "discarded": 0,
+          "mine": 4,
+          "open": 4
+        },
+        "questions": [
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "SQLite oder SQL Server als Standard.",
+            "id": "ARC-F0001",
+            "mine": true,
+            "number": 1,
+            "occasion": "Board",
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [
+              "speicher",
+              "entscheidung"
+            ],
+            "ticketIds": [
+              "ARC-0001"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0001",
+                "status": "backlog",
+                "title": "Login"
+              }
+            ],
+            "title": "Welcher Speicher?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0002",
+            "mine": true,
+            "number": 2,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [],
+            "ticketIds": [],
+            "tickets": [],
+            "title": "Welches Format für den Export?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0003",
+            "mine": true,
+            "number": 3,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [
+              "export"
+            ],
+            "ticketIds": [
+              "ARC-0002"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0002",
+                "status": "backlog",
+                "title": "Export"
+              }
+            ],
+            "title": "Export auch als CSV?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [
+              "ARC-F0001",
+              "ARC-0001"
+            ],
+            "description": "",
+            "id": "ARC-F0004",
+            "mine": true,
+            "number": 4,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": false,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [],
+            "ticketIds": [],
+            "tickets": [],
+            "title": "Wie heißt die Spalte?",
+            "updatedAt": "<TIME>",
+            "waitingOn": [
+              {
+                "id": "ARC-F0001",
+                "state": "open"
+              },
+              {
+                "id": "ARC-0001",
+                "state": "backlog"
+              }
+            ]
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Filter Zustand offen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions?state=open"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "answered": 0,
+          "discarded": 0,
+          "mine": 4,
+          "open": 4
+        },
+        "questions": [
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "SQLite oder SQL Server als Standard.",
+            "id": "ARC-F0001",
+            "mine": true,
+            "number": 1,
+            "occasion": "Board",
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [
+              "speicher",
+              "entscheidung"
+            ],
+            "ticketIds": [
+              "ARC-0001"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0001",
+                "status": "backlog",
+                "title": "Login"
+              }
+            ],
+            "title": "Welcher Speicher?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0002",
+            "mine": true,
+            "number": 2,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [],
+            "ticketIds": [],
+            "tickets": [],
+            "title": "Welches Format für den Export?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0003",
+            "mine": true,
+            "number": 3,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [
+              "export"
+            ],
+            "ticketIds": [
+              "ARC-0002"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0002",
+                "status": "backlog",
+                "title": "Export"
+              }
+            ],
+            "title": "Export auch als CSV?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [
+              "ARC-F0001",
+              "ARC-0001"
+            ],
+            "description": "",
+            "id": "ARC-F0004",
+            "mine": true,
+            "number": 4,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": false,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [],
+            "ticketIds": [],
+            "tickets": [],
+            "title": "Wie heißt die Spalte?",
+            "updatedAt": "<TIME>",
+            "waitingOn": [
+              {
+                "id": "ARC-F0001",
+                "state": "open"
+              },
+              {
+                "id": "ARC-0001",
+                "state": "backlog"
+              }
+            ]
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Filter Zustand entschieden",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions?state=answered"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "answered": 0,
+          "discarded": 0,
+          "mine": 4,
+          "open": 4
+        },
+        "questions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Filter Zustand alle",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions?state=all"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "answered": 0,
+          "discarded": 0,
+          "mine": 4,
+          "open": 4
+        },
+        "questions": [
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "SQLite oder SQL Server als Standard.",
+            "id": "ARC-F0001",
+            "mine": true,
+            "number": 1,
+            "occasion": "Board",
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [
+              "speicher",
+              "entscheidung"
+            ],
+            "ticketIds": [
+              "ARC-0001"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0001",
+                "status": "backlog",
+                "title": "Login"
+              }
+            ],
+            "title": "Welcher Speicher?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0002",
+            "mine": true,
+            "number": 2,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [],
+            "ticketIds": [],
+            "tickets": [],
+            "title": "Welches Format für den Export?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0003",
+            "mine": true,
+            "number": 3,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [
+              "export"
+            ],
+            "ticketIds": [
+              "ARC-0002"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0002",
+                "status": "backlog",
+                "title": "Export"
+              }
+            ],
+            "title": "Export auch als CSV?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [
+              "ARC-F0001",
+              "ARC-0001"
+            ],
+            "description": "",
+            "id": "ARC-F0004",
+            "mine": true,
+            "number": 4,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": false,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [],
+            "ticketIds": [],
+            "tickets": [],
+            "title": "Wie heißt die Spalte?",
+            "updatedAt": "<TIME>",
+            "waitingOn": [
+              {
+                "id": "ARC-F0001",
+                "state": "open"
+              },
+              {
+                "id": "ARC-0001",
+                "state": "backlog"
+              }
+            ]
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Filter Ticket",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions?ticket=arc-0002"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "answered": 0,
+          "discarded": 0,
+          "mine": 4,
+          "open": 4
+        },
+        "questions": [
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0003",
+            "mine": true,
+            "number": 3,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [
+              "export"
+            ],
+            "ticketIds": [
+              "ARC-0002"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0002",
+                "status": "backlog",
+                "title": "Export"
+              }
+            ],
+            "title": "Export auch als CSV?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Filter Tag",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions?tag=speicher"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "answered": 0,
+          "discarded": 0,
+          "mine": 4,
+          "open": 4
+        },
+        "questions": [
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "SQLite oder SQL Server als Standard.",
+            "id": "ARC-F0001",
+            "mine": true,
+            "number": 1,
+            "occasion": "Board",
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [
+              "speicher",
+              "entscheidung"
+            ],
+            "ticketIds": [
+              "ARC-0001"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0001",
+                "status": "backlog",
+                "title": "Login"
+              }
+            ],
+            "title": "Welcher Speicher?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Filter Text",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions?q=EXPORT"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "answered": 0,
+          "discarded": 0,
+          "mine": 4,
+          "open": 4
+        },
+        "questions": [
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0002",
+            "mine": true,
+            "number": 2,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [],
+            "ticketIds": [],
+            "tickets": [],
+            "title": "Welches Format für den Export?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0003",
+            "mine": true,
+            "number": 3,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [
+              "export"
+            ],
+            "ticketIds": [
+              "ARC-0002"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0002",
+                "status": "backlog",
+                "title": "Export"
+              }
+            ],
+            "title": "Export auch als CSV?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Filter Ticket und Text zusammen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions?ticket=ARC-0002&q=csv"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "answered": 0,
+          "discarded": 0,
+          "mine": 4,
+          "open": 4
+        },
+        "questions": [
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "",
+            "id": "ARC-F0003",
+            "mine": true,
+            "number": 3,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "human",
+            "originName": "Vertrag",
+            "originSession": null,
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": false,
+            "rev": 1,
+            "state": "open",
+            "tags": [
+              "export"
+            ],
+            "ticketIds": [
+              "ARC-0002"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0002",
+                "status": "backlog",
+                "title": "Export"
+              }
+            ],
+            "title": "Export auch als CSV?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Filter Text ohne Treffer",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects/ARC/questions?q=unbekannt"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "answered": 0,
+          "discarded": 0,
+          "mine": 4,
+          "open": 4
+        },
+        "questions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Einzelne Frage lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/questions/ARC-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "SQLite oder SQL Server als Standard.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Board",
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [],
+        "researched": false,
+        "rev": 1,
+        "state": "open",
+        "tags": [
+          "speicher",
+          "entscheidung"
+        ],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Frage in Kleinschreibung lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/questions/arc-f0004"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [
+          "ARC-F0001",
+          "ARC-0001"
+        ],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Vertrag",
+            "questionId": "ARC-F0004",
+            "text": "Frage angelegt",
+            "type": "created"
+          }
+        ],
+        "id": "ARC-F0004",
+        "number": 4,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "human",
+        "originName": "Vertrag",
+        "originSession": null,
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [],
+        "researched": false,
+        "rev": 1,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [],
+        "tickets": [],
+        "title": "Wie heißt die Spalte?",
+        "updatedAt": "<TIME>",
+        "waitingOn": [
+          {
+            "id": "ARC-F0001",
+            "state": "open"
+          },
+          {
+            "id": "ARC-0001",
+            "state": "backlog"
+          }
+        ]
+      },
+      "status": 200
+    }
+  }
+]

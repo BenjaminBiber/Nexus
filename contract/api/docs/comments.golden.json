@@ -3,7 +3,7 @@
     "name": "Kommentare ohne Board lesen",
     "request": {
       "method": "GET",
-      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -18,7 +18,7 @@
     "name": "Kommentare eines Dokuments ohne Kommentare",
     "request": {
       "method": "GET",
-      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -39,7 +39,7 @@
         "text": "Bitte den Speicher benennen."
       },
       "method": "POST",
-      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -72,7 +72,7 @@
         "text": "Gilt für das ganze Ziel."
       },
       "method": "POST",
-      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -93,7 +93,7 @@
     "name": "Kommentare lesen",
     "request": {
       "method": "GET",
-      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -133,7 +133,7 @@
         "status": "resolved"
       },
       "method": "PATCH",
-      "path": "/api/projects/<var:pid>/docs/comments/<var:cid>?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments/<var:cid>?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -160,7 +160,7 @@
         "text": "Gilt für den ganzen Abschnitt Ziel."
       },
       "method": "PATCH",
-      "path": "/api/projects/<var:pid>/docs/comments/<var:cid2>?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments/<var:cid2>?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -182,7 +182,7 @@
     "request": {
       "body": {},
       "method": "PATCH",
-      "path": "/api/projects/<var:pid>/docs/comments/<var:cid2>?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments/<var:cid2>?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -206,7 +206,7 @@
         "text": "x"
       },
       "method": "PATCH",
-      "path": "/api/projects/<var:pid>/docs/comments/K-00000000?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments/K-00000000?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -227,7 +227,7 @@
         "text": "   "
       },
       "method": "POST",
-      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -279,7 +279,7 @@
     "request": {
       "body": {},
       "method": "DELETE",
-      "path": "/api/projects/<var:pid>/docs/comments/<var:cid>?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments/<var:cid>?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -294,7 +294,7 @@
     "request": {
       "body": {},
       "method": "DELETE",
-      "path": "/api/projects/<var:pid>/docs/comments/K-00000000?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments/K-00000000?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",
@@ -309,7 +309,7 @@
     "name": "Kommentare nach dem Löschen",
     "request": {
       "method": "GET",
-      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/<var:pid>/docs/comments?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     "response": {
       "contentType": "application/json",

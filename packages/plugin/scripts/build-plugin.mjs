@@ -1,16 +1,13 @@
 // Baut das eigenständige Plugin: bündelt CLI und Server mit esbuild, kopiert die Oberfläche und das Manifest.
 // Voraussetzung: `npm run build` (erzeugt packages/*/dist). Ergebnis: packages/plugin/dist/ai-harness/
-import { build } from 'esbuild';
 import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { bundleForNode } from '../../../scripts/nodeBundle.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 // Zielordner: Vorgabe im Repo, für Testläufe über HARNESS_PLUGIN_OUT auf einen eigenen Ordner umstellbar
 const OUT = process.env.HARNESS_PLUGIN_OUT ? resolve(process.env.HARNESS_PLUGIN_OUT) : join(ROOT, 'packages/plugin/dist/ai-harness');
-
-// Hilfsfunktion `require` für gebündelte CommonJS-Abhängigkeiten (z. B. Fastify) im ESM-Ergebnis
-const BANNER = "import { createRequire as __createRequire } from 'node:module';\nconst require = __createRequire(import.meta.url);";
 
 // Prüft, ob alle Eingaben gebaut sind
 function assertInputs() {
@@ -24,16 +21,7 @@ function assertInputs() {
 
 // Bündelt eine Programmdatei zu einer einzelnen ESM-Datei
 async function bundle(entry, outfile) {
-  await build({
-    entryPoints: [join(ROOT, entry)],
-    outfile: join(OUT, outfile),
-    bundle: true,
-    platform: 'node',
-    format: 'esm',
-    target: 'node22',
-    banner: { js: BANNER },
-    logLevel: 'warning',
-  });
+  await bundleForNode({ entry: join(ROOT, entry), outfile: join(OUT, outfile) });
 }
 
 assertInputs();

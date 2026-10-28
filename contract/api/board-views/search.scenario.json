@@ -1,0 +1,84 @@
+{
+  "title": "Suche über Projekte, Boards, Kommentare und Notizen",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    {
+      "name": "Vorbereitung: erstes Projekt",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: zweites Projekt",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "SV1", "name": "Service" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: erstes Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "board": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: zweites Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "SV1", "name": "Incidents" },
+      "save": { "second": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Ticket mit Export im Titel",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/tickets",
+      "body": { "title": "Export bauen", "description": "Der Export läuft 50% schneller." },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Ticket mit Umlaut",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/tickets",
+      "body": { "title": "Ärger mit Umlauten", "description": "Die Suche findet Ärger nicht." },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Kommentar mit Export",
+      "method": "POST",
+      "path": "/api/db/tickets/ARC-0002/comments",
+      "body": { "body": "Der Export hängt auch hier." },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Notiz mit Export",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/notes",
+      "body": { "title": "Export später prüfen" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Ticket im zweiten Projekt",
+      "method": "POST",
+      "path": "/api/db/boards/{{second}}/tickets",
+      "body": { "title": "Export hängt" },
+      "record": false
+    },
+    { "name": "Treffer in Titel, Text und Kommentar", "method": "GET", "path": "/api/db/search?q=export" },
+    { "name": "Treffer mit Umlaut", "method": "GET", "path": "/api/db/search?q=ärger" },
+    { "name": "Sonderzeichen zählen wörtlich", "method": "GET", "path": "/api/db/search?q=50%25" },
+    { "name": "zwei Begriffe im selben Feld", "method": "GET", "path": "/api/db/search?q=export%20hängt" },
+    { "name": "nur Notizen", "method": "GET", "path": "/api/db/search?q=export&kinds=note" },
+    { "name": "Tickets und Notizen", "method": "GET", "path": "/api/db/search?q=export&kinds=ticket,note" },
+    { "name": "unbekannte Art", "method": "GET", "path": "/api/db/search?q=export&kinds=quatsch" },
+    { "name": "begrenzte Zahl", "method": "GET", "path": "/api/db/search?q=export&limit=1" },
+    { "name": "ungültige Begrenzung", "method": "GET", "path": "/api/db/search?q=export&limit=abc" },
+    { "name": "ohne Treffer", "method": "GET", "path": "/api/db/search?q=zebra" },
+    { "name": "zu kurze Suche", "method": "GET", "path": "/api/db/search?q=e" },
+    { "name": "leere Suche", "method": "GET", "path": "/api/db/search" },
+    { "name": "zu viele Wörter", "method": "GET", "path": "/api/db/search?q=eins%20zwei%20drei%20vier%20fünf%20sechs" }
+  ]
+}

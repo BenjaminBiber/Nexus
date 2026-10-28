@@ -8,8 +8,8 @@
         "git": true,
         "harnessInit": true,
         "files": {
-          "docs/superpowers/specs/2026-10-01-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
-          "docs/superpowers/plans/2026-10-02-login.md": "# Plan Anmeldung\n\n## Aufgaben\n\n- [x] Entwurf schreiben\n- [ ] Schlüsselspeicher wählen\n- [ ] Oberfläche bauen\n\n## Risiken\n\nÄltere Geräte können keine Passkeys.\n",
+          "docs/superpowers/specs/2020-03-02-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
+          "docs/superpowers/plans/2020-03-03-login.md": "# Plan Anmeldung\n\n## Aufgaben\n\n- [x] Entwurf schreiben\n- [ ] Schlüsselspeicher wählen\n- [ ] Oberfläche bauen\n\n## Risiken\n\nÄltere Geräte können keine Passkeys.\n",
           "GLOSSARY.md": "# Glossar\n\n**Passkey**: Schlüsselpaar statt Kennwort.\n",
           "geheim.md": "geheim\n"
         }
@@ -50,7 +50,7 @@
     {
       "name": "Plan lesen",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/plans/2026-10-02-login.md",
+      "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/plans/2020-03-03-login.md",
       "save": { "planHash": "json.hash" }
     },
     {
@@ -58,7 +58,7 @@
       "method": "PUT",
       "path": "/api/projects/{{pid}}/docs/section",
       "body": {
-        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "path": "docs/superpowers/plans/2020-03-03-login.md",
         "startLine": 9,
         "endLine": 11,
         "content": "## Risiken\n\nÄltere Geräte brauchen einen Ausweg.",
@@ -69,14 +69,14 @@
     {
       "name": "Plan nach dem Schreiben lesen",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/plans/2026-10-02-login.md"
+      "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/plans/2020-03-03-login.md"
     },
     {
       "name": "Abschnitt leeren",
       "method": "PUT",
       "path": "/api/projects/{{pid}}/docs/section",
       "body": {
-        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "path": "docs/superpowers/plans/2020-03-03-login.md",
         "startLine": 11,
         "endLine": 11,
         "content": "",
@@ -89,7 +89,7 @@
       "method": "PUT",
       "path": "/api/projects/{{pid}}/docs/section",
       "body": {
-        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "path": "docs/superpowers/plans/2020-03-03-login.md",
         "startLine": 9,
         "endLine": 11,
         "content": "## Risiken",
@@ -101,7 +101,7 @@
       "method": "PUT",
       "path": "/api/projects/{{pid}}/docs/section",
       "body": {
-        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "path": "docs/superpowers/plans/2020-03-03-login.md",
         "startLine": 0,
         "endLine": 2,
         "content": "x",
@@ -113,7 +113,7 @@
       "method": "PUT",
       "path": "/api/projects/{{pid}}/docs/section",
       "body": {
-        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "path": "docs/superpowers/plans/2020-03-03-login.md",
         "startLine": 5,
         "endLine": 4,
         "content": "x",
@@ -125,7 +125,7 @@
       "method": "PUT",
       "path": "/api/projects/{{pid}}/docs/section",
       "body": {
-        "path": "docs/superpowers/plans/2026-10-02-login.md",
+        "path": "docs/superpowers/plans/2020-03-03-login.md",
         "startLine": 1,
         "endLine": 99,
         "content": "x",
@@ -166,7 +166,7 @@
     {
       "name": "Spec lesen",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/specs/2026-10-01-login.md",
+      "path": "/api/projects/{{pid}}/docs/file?path=docs/superpowers/specs/2020-03-02-login.md",
       "save": { "specHash": "json.hash" },
       "record": false
     },
@@ -175,7 +175,7 @@
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/revise",
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "startLine": 12,
         "endLine": 12,
         "instruction": "Kürzer fassen.",
@@ -187,7 +187,7 @@
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/revise",
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "startLine": 12,
         "endLine": 12,
         "instruction": "Kürzer fassen.",
@@ -199,7 +199,7 @@
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/revise",
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "startLine": 1,
         "endLine": 99,
         "instruction": "Kürzer fassen.",
@@ -211,7 +211,7 @@
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/revise",
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "startLine": 0,
         "endLine": 2,
         "instruction": "Kürzer fassen.",
@@ -223,7 +223,7 @@
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/revise",
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "startLine": 12,
         "endLine": 12,
         "expectedHash": "{{specHash}}"
@@ -239,19 +239,19 @@
       "name": "Im Explorer öffnen",
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/open",
-      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "target": "explorer" }
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md", "target": "explorer" }
     },
     {
       "name": "In VS Code öffnen",
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/open",
-      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "target": "vscode" }
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md", "target": "vscode" }
     },
     {
       "name": "Mit unbekanntem Ziel öffnen",
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/open",
-      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "target": "notepad" }
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md", "target": "notepad" }
     },
     {
       "name": "Nicht freigegebene Datei öffnen",

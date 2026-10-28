@@ -1,0 +1,269 @@
+[
+  {
+    "name": "Kommentar anhängen",
+    "request": {
+      "body": {
+        "body": "Erster Blick"
+      },
+      "method": "POST",
+      "path": "/api/db/tickets/VTR-0001/comments"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "backlog",
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "Vertrag",
+            "body": "Erster Blick",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "readByAgentAt": null,
+            "ticketId": "VTR-0001"
+          }
+        ],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "status",
+            "from": null,
+            "note": "angelegt",
+            "ticketId": "VTR-0001",
+            "to": "backlog"
+          }
+        ],
+        "id": "VTR-0001",
+        "labels": [],
+        "needsPlanning": true,
+        "number": 1,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 2,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "backlog",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Login bauen",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "zweiter Kommentar mit kurzer ID",
+    "request": {
+      "body": {
+        "body": "Zweiter Blick\nmit zwei Zeilen"
+      },
+      "method": "POST",
+      "path": "/api/db/tickets/vtr-1/comments"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "backlog",
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "Vertrag",
+            "body": "Erster Blick",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "readByAgentAt": null,
+            "ticketId": "VTR-0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "Vertrag",
+            "body": "Zweiter Blick\nmit zwei Zeilen",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "readByAgentAt": null,
+            "ticketId": "VTR-0001"
+          }
+        ],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "status",
+            "from": null,
+            "note": "angelegt",
+            "ticketId": "VTR-0001",
+            "to": "backlog"
+          }
+        ],
+        "id": "VTR-0001",
+        "labels": [],
+        "needsPlanning": true,
+        "number": 1,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 3,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "backlog",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Login bauen",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "leerer Kommentar",
+    "request": {
+      "body": {
+        "body": " "
+      },
+      "method": "POST",
+      "path": "/api/db/tickets/VTR-0001/comments"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "comment-empty",
+        "message": "Der Kommentar darf nicht leer sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ohne Text",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/tickets/VTR-0001/comments"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „body“ fehlt oder ist kein Text."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Text keine Zeichenkette",
+    "request": {
+      "body": {
+        "body": 5
+      },
+      "method": "POST",
+      "path": "/api/db/tickets/VTR-0001/comments"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „body“ fehlt oder ist kein Text."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekanntes Ticket",
+    "request": {
+      "body": {
+        "body": "Hallo"
+      },
+      "method": "POST",
+      "path": "/api/db/tickets/VTR-0099/comments"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-not-found",
+        "message": "Ticket VTR-0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "keine Ticket-ID",
+    "request": {
+      "body": {
+        "body": "Hallo"
+      },
+      "method": "POST",
+      "path": "/api/db/tickets/quatsch/comments"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-id-invalid",
+        "message": "„quatsch“ ist keine Ticket-ID (erwartet z. B. ARC-0042)."
+      },
+      "status": 422
+    }
+  }
+]

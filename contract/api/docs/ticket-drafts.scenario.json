@@ -8,8 +8,8 @@
         "git": true,
         "harnessInit": true,
         "files": {
-          "docs/superpowers/specs/2026-10-01-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
-          "docs/superpowers/plans/2026-10-02-login.md": "# Plan Anmeldung\n\n## Aufgaben\n\n- [x] Entwurf schreiben\n- [ ] Schlüsselspeicher wählen\n- [ ] Oberfläche bauen\n\n## Risiken\n\nÄltere Geräte können keine Passkeys.\n",
+          "docs/superpowers/specs/2020-03-02-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
+          "docs/superpowers/plans/2020-03-03-login.md": "# Plan Anmeldung\n\n## Aufgaben\n\n- [x] Entwurf schreiben\n- [ ] Schlüsselspeicher wählen\n- [ ] Oberfläche bauen\n\n## Risiken\n\nÄltere Geräte können keine Passkeys.\n",
           "geheim.md": "geheim\n"
         }
       }
@@ -49,14 +49,14 @@
     {
       "name": "Gespeicherte Entwürfe ohne Erzeugung",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     {
       "name": "Entwürfe zu einer markierten Stelle erzeugen",
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/ticket-drafts",
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "selections": [
           { "heading": "Ziel", "startLine": 10, "endLine": 12, "quote": "Anmeldung ohne Kennwort auf allen drei Plattformen." }
         ],
@@ -67,13 +67,13 @@
       "name": "Entwürfe zum ganzen Dokument erzeugen",
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/ticket-drafts",
-      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "whole": true }
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md", "whole": true }
     },
     {
       "name": "Entwürfe ohne markierte Stelle erzeugen",
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/ticket-drafts",
-      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md" }
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md" }
     },
     {
       "name": "Entwürfe zu einer nicht freigegebenen Datei erzeugen",
@@ -95,7 +95,7 @@
       "method": "PUT",
       "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved",
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "drafts": [
           {
             "title": "Schlüsselspeicher wählen",
@@ -122,7 +122,7 @@
     {
       "name": "Gespeicherte Entwürfe lesen",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     { "name": "Liste mit gespeicherten Entwürfen", "method": "GET", "path": "/api/projects/{{pid}}/docs" },
     {
@@ -134,57 +134,57 @@
       "name": "Entwürfe ohne Liste speichern",
       "method": "PUT",
       "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved",
-      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "drafts": "keine Liste" }
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md", "drafts": "keine Liste" }
     },
     {
       "name": "Gespeicherte Entwürfe verwerfen",
       "method": "DELETE",
-      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md",
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md",
       "body": {}
     },
     {
       "name": "Gespeicherte Entwürfe nach dem Verwerfen",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     {
       "name": "Entwürfe erneut speichern",
       "method": "PUT",
       "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved",
-      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "drafts": "{{entwuerfe}}" }
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md", "drafts": "{{entwuerfe}}" }
     },
     {
       "name": "Tickets des Dokuments vor dem Anlegen",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/tickets?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/{{pid}}/docs/tickets?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     {
       "name": "Tickets aus den gespeicherten Entwürfen anlegen",
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/tickets",
-      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "drafts": "{{entwuerfe}}" }
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md", "drafts": "{{entwuerfe}}" }
     },
     {
       "name": "Gespeicherte Entwürfe nach dem Anlegen",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/{{pid}}/docs/ticket-drafts/saved?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     {
       "name": "Tickets des Dokuments",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/tickets?path=docs/superpowers/specs/2026-10-01-login.md"
+      "path": "/api/projects/{{pid}}/docs/tickets?path=docs/superpowers/specs/2020-03-02-login.md"
     },
     {
       "name": "Tickets eines anderen Dokuments",
       "method": "GET",
-      "path": "/api/projects/{{pid}}/docs/tickets?path=docs/superpowers/plans/2026-10-02-login.md"
+      "path": "/api/projects/{{pid}}/docs/tickets?path=docs/superpowers/plans/2020-03-03-login.md"
     },
     {
       "name": "Dublette und unbrauchbarer Entwurf",
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/tickets",
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "drafts": [
           {
             "title": "Schlüsselspeicher wählen",
@@ -211,7 +211,7 @@
       "name": "Tickets ohne Entwürfe anlegen",
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/tickets",
-      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "drafts": [] }
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md", "drafts": [] }
     },
     {
       "name": "Tickets zu einer nicht freigegebenen Datei anlegen",

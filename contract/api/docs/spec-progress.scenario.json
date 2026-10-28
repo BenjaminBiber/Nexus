@@ -8,7 +8,7 @@
         "git": true,
         "harnessInit": true,
         "files": {
-          "docs/superpowers/specs/2026-10-01-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n"
+          "docs/superpowers/specs/2020-03-02-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n"
         }
       }
     ]
@@ -51,7 +51,7 @@
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/tickets",
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "drafts": [
           {
             "title": "Schlüsselspeicher wählen",

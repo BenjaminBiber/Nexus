@@ -8,7 +8,7 @@
         "git": true,
         "harnessInit": true,
         "files": {
-          "docs/superpowers/specs/2026-10-01-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
+          "docs/superpowers/specs/2020-03-02-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n",
           "geheim.md": "geheim\n"
         }
       }
@@ -49,7 +49,7 @@
       "name": "Fragen-Entwürfe erzeugen",
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/question-drafts",
-      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md" }
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md" }
     },
     {
       "name": "Fragen-Entwürfe zu einer nicht freigegebenen Datei erzeugen",
@@ -68,7 +68,7 @@
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/tickets",
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "drafts": [
           {
             "title": "Schlüsselspeicher wählen",
@@ -88,7 +88,7 @@
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/questions",
       "body": {
-        "path": "docs/superpowers/specs/2026-10-01-login.md",
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
         "drafts": [
           {
             "title": "Welcher Speicher hält die Schlüssel?",
@@ -109,7 +109,7 @@
       "name": "Fragen ohne Entwürfe anlegen",
       "method": "POST",
       "path": "/api/projects/{{pid}}/docs/questions",
-      "body": { "path": "docs/superpowers/specs/2026-10-01-login.md", "drafts": [] }
+      "body": { "path": "docs/superpowers/specs/2020-03-02-login.md", "drafts": [] }
     },
     {
       "name": "Fragen zu einer nicht freigegebenen Datei anlegen",

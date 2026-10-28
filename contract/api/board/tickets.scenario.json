@@ -1,0 +1,91 @@
+{
+  "title": "Tickets anlegen, lesen, ändern, verschieben und löschen",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "VTR", "name": "Vertrag" }, "record": false },
+    {
+      "name": "Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "VTR", "name": "Sprint" },
+      "save": { "bid": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Ticket anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": {
+        "title": "Login bauen",
+        "description": "Anmeldung mit Kennwort",
+        "acceptance": "Die Anmeldung geht.",
+        "priority": "high",
+        "labels": ["ui", "api"],
+        "needsPlanning": false,
+        "targetBranch": " release/1 "
+      }
+    },
+    { "name": "Ticket lesen", "method": "GET", "path": "/api/db/tickets/VTR-0001" },
+    { "name": "Ticket mit kurzer ID lesen", "method": "GET", "path": "/api/db/tickets/vtr-1" },
+    {
+      "name": "zweites Ticket mit Voraussetzung",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": { "title": "Login prüfen", "dependsOn": ["VTR-0001"] }
+    },
+    {
+      "name": "Ticket ändern",
+      "method": "PATCH",
+      "path": "/api/db/tickets/VTR-0001",
+      "body": { "rev": 1, "title": "Login bauen und prüfen", "plan": "# Plan", "assignee": "claude", "labels": ["ui"] }
+    },
+    { "name": "veraltete Version", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "rev": 1, "title": "Alt" } },
+    { "name": "ohne Version", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "title": "Ohne Version" } },
+    { "name": "ohne Änderung", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "rev": 2 } },
+    { "name": "ungültiger Status", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "rev": 2, "status": "quatsch" } },
+    { "name": "Wartet ist kein Status", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "rev": 2, "status": "wartet" } },
+    { "name": "ungültige Priorität", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "rev": 2, "priority": "sofort" } },
+    { "name": "Branch lässt sich nicht setzen", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "rev": 2, "branch": "anderer" } },
+    { "name": "Voraussetzung im Kreis", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "rev": 2, "dependsOn": ["VTR-0002"] } },
+    { "name": "unbekannte Voraussetzung", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "rev": 2, "dependsOn": ["VTR-0099"] } },
+    { "name": "Labels keine Liste", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "rev": 2, "labels": "ui" } },
+    { "name": "Version keine ganze Zahl", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "rev": 1.5, "title": "Halb" } },
+    { "name": "Zuweisung leeren", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "rev": 2, "assignee": null } },
+    { "name": "Zielbranch ungültig", "method": "PATCH", "path": "/api/db/tickets/VTR-0001", "body": { "rev": 3, "targetBranch": "ticket/x" } },
+    {
+      "name": "Titel eines offenen Tickets schon vergeben",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": { "title": " login bauen und prüfen " }
+    },
+    { "name": "in Planung verschieben", "method": "POST", "path": "/api/db/tickets/VTR-0001/move", "body": { "status": "in_planning" } },
+    { "name": "verschieben mit deutschem Alias", "method": "POST", "path": "/api/db/tickets/VTR-0001/move", "body": { "status": "In Arbeit", "rev": 4 } },
+    { "name": "verschieben ohne Status", "method": "POST", "path": "/api/db/tickets/VTR-0001/move", "body": {} },
+    { "name": "verschieben mit veralteter Version", "method": "POST", "path": "/api/db/tickets/VTR-0001/move", "body": { "status": "backlog", "rev": 1 } },
+    { "name": "Erledigt ohne Abnahme", "method": "POST", "path": "/api/db/tickets/VTR-0002/move", "body": { "status": "done" } },
+    { "name": "Erledigt mit offener Voraussetzung", "method": "POST", "path": "/api/db/tickets/VTR-0002/move", "body": { "status": "done", "acceptance": "geht" } },
+    { "name": "erledigt verschieben", "method": "POST", "path": "/api/db/tickets/VTR-0001/move", "body": { "status": "done", "rev": 5 } },
+    { "name": "nicht mehr nötig verschieben", "method": "POST", "path": "/api/db/tickets/VTR-0002/move", "body": { "status": "not_needed" } },
+    {
+      "name": "Titel eines erledigten Tickets ist wieder frei",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": { "title": "Login bauen und prüfen" }
+    },
+    { "name": "leerer Titel", "method": "POST", "path": "/api/db/boards/{{bid}}/tickets", "body": { "title": " " } },
+    { "name": "ohne Titel", "method": "POST", "path": "/api/db/boards/{{bid}}/tickets", "body": {} },
+    {
+      "name": "Zielbranch beim Anlegen ungültig",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid}}/tickets",
+      "body": { "title": "Falscher Zielbranch", "targetBranch": "a b" }
+    },
+    { "name": "Ticket auf unbekanntem Board", "method": "POST", "path": "/api/db/boards/999/tickets", "body": { "title": "Fremd" } },
+    { "name": "keine Board-Nummer", "method": "POST", "path": "/api/db/boards/abc/tickets", "body": { "title": "Fremd" } },
+    { "name": "Ticket löschen", "method": "DELETE", "path": "/api/db/tickets/VTR-0002", "body": {} },
+    { "name": "gelöschtes Ticket lesen", "method": "GET", "path": "/api/db/tickets/VTR-0002" },
+    { "name": "unbekanntes Ticket löschen", "method": "DELETE", "path": "/api/db/tickets/VTR-0099", "body": {} },
+    { "name": "keine Ticket-ID", "method": "GET", "path": "/api/db/tickets/quatsch" },
+    { "name": "Ticket am Ende lesen", "method": "GET", "path": "/api/db/tickets/VTR-0001" }
+  ]
+}

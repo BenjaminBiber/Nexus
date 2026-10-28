@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REQUIRED_SCHEMA_FEATURES, SchemaVersionGuard } from './SchemaVersionGuard.js';
 
@@ -35,15 +36,31 @@ export class MssqlSchemaRunner {
     return applied;
   }
 
-  // Skripttext aus packages/db/sql; aus dist/ wie aus src/ liegt der Ordner eine Ebene höher
+  // Skripttext aus packages/db/sql; aus dist/ wie aus src/ liegt der Ordner eine Ebene höher.
+  // HARNESS_SQL_DIR überschreibt ihn, im gebündelten Sidecar liegt er neben dem Programm.
   private read(feature: string): string | null {
-    try {
-      const text = readFileSync(fileURLToPath(new URL(`../sql/${SchemaVersionGuard.script(feature)}`, import.meta.url)), 'utf8');
-      // Die Skripte enden mit genau einem GO; mssql führt immer einen einzelnen Batch aus und kennt GO nicht
-      return text.replace(/^\s*GO\s*$/m, '');
-    } catch {
-      return null;
+    const name = SchemaVersionGuard.script(feature);
+    for (const file of this.candidates(name)) {
+      try {
+        const text = readFileSync(file, 'utf8');
+        // Die Skripte enden mit genau einem GO; mssql führt immer einen einzelnen Batch aus und kennt GO nicht
+        return text.replace(/^\s*GO\s*$/m, '');
+      } catch {
+        /* nächster Kandidat */
+      }
     }
+    return null;
+  }
+
+  // Mögliche Orte des Skripts in der Reihenfolge ihrer Vorrangigkeit: eingestellter Ordner,
+  // Ordner `sql` neben dem Programm (Sidecar), Paketordner
+  private candidates(name: string): string[] {
+    const configured = process.env.HARNESS_SQL_DIR;
+    return [
+      ...(configured ? [join(configured, name)] : []),
+      join(dirname(process.execPath), 'sql', name),
+      fileURLToPath(new URL(`../sql/${name}`, import.meta.url)),
+    ];
   }
 
   // true, wenn die Erweiterung danach eingespielt ist

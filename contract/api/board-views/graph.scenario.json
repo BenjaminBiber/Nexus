@@ -1,0 +1,112 @@
+{
+  "title": "Abhängigkeitsgraph und Fortschritt je Spec",
+  "fixtures": {
+    "repos": [
+      {
+        "name": "REPO1",
+        "git": true,
+        "harnessInit": true,
+        "files": {
+          "docs/superpowers/plans/001-login.md": "# Anmeldung\n\n## Task 1: Anmeldung\n\nFormular und Prüfung.\n\n## Task 2: Abmeldung\n\nSitzung beenden.\n"
+        }
+      }
+    ],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    {
+      "name": "Vorbereitung: Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id", "root": "json.path" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: DB-Projekt",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "board": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Repo-Pfad des Boards",
+      "method": "PATCH",
+      "path": "/api/db/boards/{{board}}",
+      "body": { "repoPath": "{{root}}" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Tickets aus dem Plan",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/tickets",
+      "body": {
+        "path": "docs/superpowers/plans/001-login.md",
+        "drafts": [
+          {
+            "title": "Anmeldung bauen",
+            "description": "Formular und Prüfung.",
+            "acceptance": "Anmeldung funktioniert.",
+            "source": { "heading": "Task 1: Anmeldung", "startLine": 3, "endLine": 5 }
+          },
+          {
+            "title": "Abmeldung bauen",
+            "description": "Sitzung beenden.",
+            "acceptance": "Abmeldung funktioniert.",
+            "dependsOn": [0],
+            "source": { "heading": "Task 2: Abmeldung", "startLine": 7, "endLine": 9 }
+          }
+        ]
+      },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Ticket ohne Spec",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/tickets",
+      "body": { "title": "Allein ohne Abhängigkeit" },
+      "record": false
+    },
+    { "name": "Graph eines Tickets", "method": "GET", "path": "/api/db/graph?ticket=arc-2" },
+    { "name": "Graph eines Boards", "method": "GET", "path": "/api/db/graph?board={{board}}" },
+    {
+      "name": "Graph einer Spec",
+      "method": "GET",
+      "path": "/api/db/graph?project=ARC&spec=docs%2Fsuperpowers%2Fplans%2F001-login.md"
+    },
+    { "name": "Fortschritt der Specs", "method": "GET", "path": "/api/db/boards/{{board}}/spec-progress" },
+    {
+      "name": "Vorbereitung: erstes Ticket abschließen",
+      "method": "POST",
+      "path": "/api/db/tickets/ARC-0001/move",
+      "body": { "status": "done", "acceptance": "Anmeldung läuft." },
+      "record": false
+    },
+    {
+      "name": "Graph einer Spec ohne Erledigte",
+      "method": "GET",
+      "path": "/api/db/graph?project=ARC&spec=docs%2Fsuperpowers%2Fplans%2F001-login.md&done=0"
+    },
+    {
+      "name": "Graph einer Spec mit Erledigten",
+      "method": "GET",
+      "path": "/api/db/graph?project=ARC&spec=docs%2Fsuperpowers%2Fplans%2F001-login.md&done=1"
+    },
+    { "name": "Fortschritt nach dem Abschluss", "method": "GET", "path": "/api/db/boards/{{board}}/spec-progress" },
+    { "name": "Graph ohne Umfang", "method": "GET", "path": "/api/db/graph" },
+    { "name": "Graph mit zwei Umfängen", "method": "GET", "path": "/api/db/graph?ticket=ARC-0001&board={{board}}" },
+    { "name": "Spec ohne Namen", "method": "GET", "path": "/api/db/graph?project=ARC" },
+    { "name": "Board ohne Nummer", "method": "GET", "path": "/api/db/graph?board=abc" },
+    { "name": "unbekanntes Ticket", "method": "GET", "path": "/api/db/graph?ticket=ARC-0099" },
+    { "name": "unbekanntes Board", "method": "GET", "path": "/api/db/graph?board=999" },
+    { "name": "Fortschritt eines unbekannten Boards", "method": "GET", "path": "/api/db/boards/999/spec-progress" }
+  ]
+}
