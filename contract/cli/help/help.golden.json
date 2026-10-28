@@ -1,0 +1,1304 @@
+[
+  {
+    "name": "harness",
+    "request": {
+      "args": [
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness [options] [command]\n\nAI Harness: Board, Specs, Worktrees und Sessions für parallele Claude-Sessions\n\nOptionen:\n  --json             Ausgabe als JSON\n  --dir <pfad>       Projektordner (Standard: aktuelles Verzeichnis)\n  -h, --help         Hilfe anzeigen\n\nBefehle:\n  init               Richtet den Harness im aktuellen Git-Projekt ein (einmal\n                     pro Projekt, wiederholbar) und nennt das zugeordnete\n                     Board.\n  board [options]    Ohne Unterbefehl: startet bei Bedarf den Server und öffnet\n                     das Board. Mit Unterbefehl: Board-Datenbank bedienen.\n  install [options]  Macht den Befehl harness im normalen Terminal verfügbar\n                     (Kopie unter ~/.harness, Eintrag im PATH des Benutzers).\n  stop [options]     Beendet den laufenden Harness-Server (nach einem Update,\n                     damit die neue Version startet).\n  hook <ereignis>    Wird von Claude Code aufgerufen (session-start,\n                     user-prompt, notification, stop, subagent-start,\n                     subagent-stop, session-end); liest die Hook-Meldung von\n                     der Standardeingabe.\n  spec               Kommentare zu Spec- und Plan-Dokumenten abarbeiten\n  help [befehl]      Hilfe zu einem Befehl anzeigen"
+    }
+  },
+  {
+    "name": "harness init",
+    "request": {
+      "args": [
+        "init",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness init [options]\n\nRichtet den Harness im aktuellen Git-Projekt ein (einmal pro Projekt,\nwiederholbar) und nennt das zugeordnete Board.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness init"
+    }
+  },
+  {
+    "name": "harness board",
+    "request": {
+      "args": [
+        "board",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board [options] [command]\n\nOhne Unterbefehl: startet bei Bedarf den Server und öffnet das Board. Mit\nUnterbefehl: Board-Datenbank bedienen.\n\nOptionen:\n  --port <nummer>                Port des Servers (Standard 4710 oder\n                                 HARNESS_PORT)\n  --no-open                      Browser nicht öffnen, nur die Adresse ausgeben\n  -h, --help                     Hilfe anzeigen\n\nBefehle:\n  project                        Projekte des Boards verwalten (Projekt →\n                                 Boards → Tickets).\n  boards                         Boards anlegen, auflisten, umschalten und\n                                 löschen.\n  list [options]                 Listet Tickets je Spalte (Wartet ist\n                                 abgeleitet). --md für Agenten, --json\n                                 vollständig.\n  show [options] <id>            Zeigt ein Ticket mit Texten, Voraussetzungen\n                                 und Kommentaren (kompakt; --history,\n                                 --all-comments für alles).\n  create [options] <titel>       Legt ein Ticket auf dem Board dieses Repos an,\n                                 sonst auf dem aktiven Board (Standard:\n                                 Backlog, normal, braucht Planung).\n  set [options] <id>             Ändert Felder eines Tickets. Texte nur ins\n                                 Feld – Status, Planungsbedarf und Zuweisung\n                                 bleiben, wenn nicht angegeben.\n  move [options] <id> <status>   Verschiebt in eine Spalte. Erledigt braucht\n                                 eine Abnahme; In Arbeit/Erledigt keine offene\n                                 Voraussetzung.\n  delete [options] <id>          Löscht ein Ticket endgültig (wird\n                                 protokolliert). Nur auf ausdrückliche\n                                 Anweisung.\n  claim [options] <id>           Übernimmt ein Ticket für einen Agenten\n                                 (Standard: In Arbeit). Bereits zugewiesen\n                                 (auch an denselben Namen) → Exit 1, außer mit\n                                 --force. Innerhalb einer Session wird sie mit\n                                 dem Ticket verknüpft.\n  release [options] <id>         Gibt ein Ticket frei; der Status ändert sich\n                                 nur mit --status.\n  start [options] <id>           Startet ein Ticket: eigener Branch\n                                 ticket/<ID>-<Kurztitel> (vom Zielbranch des\n                                 Tickets, sonst vom ausgecheckten Branch) und\n                                 Worktree neben dem Projekt, Status In Arbeit\n                                 (Sperren gelten). Mit --join tritt es\n                                 stattdessen einem offenen Worktree derselben\n                                 Spec bei, wenn sich die Bereiche nicht\n                                 überschneiden. Nur für Tickets des Boards, das\n                                 diesem Repo zugeordnet ist. Warnt, wenn das\n                                 Spec-Dokument des Tickets nicht (vollständig)\n                                 committet ist.\n  done [options] <id>            Setzt das Ticket auf Erledigt (Abnahme nötig)\n                                 und meldet, ob der Worktree zum Merge bereit\n                                 ist. Es wird nichts gemergt. Nur für Tickets\n                                 des Boards dieses Repos.\n  step [options] <id> <nummer>   Hakt einen Schritt des Tickets ab (Nummer ab\n                                 1, siehe „harness board show“). Unterbefehle\n                                 legen Schritte an, bearbeiten, löschen und\n                                 verschieben sie.\n  plan [options] <id>            Planungslauf: schreibt Plan/Handbuch/Diagramm,\n                                 setzt Geplant und löscht den Planungsbedarf.\n  plan-json [options] <id>       Planungslauf aus JSON {plan, handbook,\n                                 diagram, acceptance?, status?, by?} in einem\n                                 Aufruf.\n  next-planning [options]        Nächstes Ticket mit Planungsbedarf; mit\n                                 --claim für 15 Minuten beansprucht.\n                                 Überspringt In Planung.\n  comment [options] <id> [text]  Hängt einen Kommentar an (Zwischenstand,\n                                 Nachweis, Begründung).\n  note                           Notizen: Befunde über etwas anderes als das\n                                 laufende Ticket.\n  inbox [options]                Meine Aufgaben: wartende Tickets, offene\n                                 Fragen und Notizen der eigenen Boards.\n  question                       Fragen auf der Board-Datenbank: fragen,\n                                 recherchieren, entscheiden (entscheiden nur\n                                 Menschen).\n  dispatch                       Dispatcher: übernimmt bereite Tickets (Label\n                                 auto) der eigenen Boards und lässt sie von\n                                 claude -p umsetzen. Einstellungen in der\n                                 Oberfläche oder ~/.harness/dispatch.yaml.\n  dispatch-runs                  Läufe des Dispatchers für die Auswertung\n                                 (Dashboard).\n  merge <id>                     Stößt den Merge eines erledigten Tickets eines\n                                 eigenen Boards erneut an (nach „Blockiert:\n                                 Merge: …“), erlaubt dabei wieder eine\n                                 Merge-Session und nennt das Ergebnis (gemergt,\n                                 blockiert mit Grund, wartet, Merge-Session).\n  accept [options] <id>          Nimmt ein Ticket ab, das mit Grund „Human\n                                 Interaction: …“ blockiert ist (nur ein Mensch,\n                                 nie ein Agent): setzt Erledigt (Abnahme-Text\n                                 nötig), leert den Grund, vermerkt es im\n                                 Verlauf und stößt auf einem eigenen Board den\n                                 Merge an wie „harness board merge“. Nennt das\n                                 Ergebnis.\n  plan-start <id>                Lässt ein Ticket eines eigenen Boards sofort\n                                 von einer Claude-Session planen (claude -p,\n                                 nur lesend, eigener losgelöster Worktree; wie\n                                 „Planen“ im Ticket). Der Plan landet über\n                                 plan-json am Ticket; fehlt eine Entscheidung,\n                                 entsteht eine Frage. Läuft über den lokalen\n                                 Server, unabhängig davon, ob der Dispatcher\n                                 eingeschaltet ist.\n\nBeispiele:\n  harness board\n  harness board --port 4800 --no-open"
+    }
+  },
+  {
+    "name": "harness board project",
+    "request": {
+      "args": [
+        "board",
+        "project",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board project [options] [command]\n\nProjekte des Boards verwalten (Projekt → Boards → Tickets).\n\nOptionen:\n  -h, --help           Hilfe anzeigen\n\nBefehle:\n  list                 Listet alle Projekte mit Key und Namen.\n  create <key> <name>  Legt ein Projekt an. Der Key (2–6 Zeichen) wird Präfix\n                       der Ticket-IDs.\n  rename <key> <name>  Benennt ein Projekt um (der Key bleibt).\n  help [befehl]        Hilfe zu einem Befehl anzeigen"
+    }
+  },
+  {
+    "name": "harness board project list",
+    "request": {
+      "args": [
+        "board",
+        "project",
+        "list",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board project list [options]\n\nListet alle Projekte mit Key und Namen.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board project list"
+    }
+  },
+  {
+    "name": "harness board project create",
+    "request": {
+      "args": [
+        "board",
+        "project",
+        "create",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board project create [options] <key> <name>\n\nLegt ein Projekt an. Der Key (2–6 Zeichen) wird Präfix der Ticket-IDs.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board project create ARC \"Arches\""
+    }
+  },
+  {
+    "name": "harness board project rename",
+    "request": {
+      "args": [
+        "board",
+        "project",
+        "rename",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board project rename [options] <key> <name>\n\nBenennt ein Projekt um (der Key bleibt).\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board project rename ARC \"Arches Shop\""
+    }
+  },
+  {
+    "name": "harness board boards",
+    "request": {
+      "args": [
+        "board",
+        "boards",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board boards [options] [command]\n\nBoards anlegen, auflisten, umschalten und löschen.\n\nOptionen:\n  -h, --help                         Hilfe anzeigen\n\nBefehle:\n  list [options]                     Listet Boards mit Projekt, Besitzer,\n                                     offenen Tickets und deinem Repo-Pfad; * =\n                                     aktives Board.\n  create [options] <projekt> <name>  Legt ein eigenes Board im Projekt an.\n  rename <id> <name>                 Benennt ein Board um.\n  use <id>                           Setzt das aktive Board dieses Rechners\n                                     (Standard für alle Ticketbefehle).\n  repo [options] <id> [pfad]         Setzt deinen Repo-Pfad des Boards – nur\n                                     für dich auf diesem Rechner\n                                     (~/.harness/board-repos.yaml), nicht in\n                                     der gemeinsamen DB; ohne Pfad zeigt er\n                                     ihn.\n  delete [options] <id>              Löscht ein Board. Mit offenen Tickets nur\n                                     mit --delete-open (löscht dann alles).\n  help [befehl]                      Hilfe zu einem Befehl anzeigen"
+    }
+  },
+  {
+    "name": "harness board boards list",
+    "request": {
+      "args": [
+        "board",
+        "boards",
+        "list",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board boards list [options]\n\nListet Boards mit Projekt, Besitzer, offenen Tickets und deinem Repo-Pfad; * =\naktives Board.\n\nOptionen:\n  --project <key>  nur Boards dieses Projekts\n  --mine           nur eigene Boards\n  -h, --help       Hilfe anzeigen\n\nBeispiele:\n  harness board boards list\n  harness board boards list --project ARC --mine"
+    }
+  },
+  {
+    "name": "harness board boards create",
+    "request": {
+      "args": [
+        "board",
+        "boards",
+        "create",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board boards create [options] <projekt> <name>\n\nLegt ein eigenes Board im Projekt an.\n\nOptionen:\n  --use       danach als aktives Board setzen\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board boards create ARC \"Sprint 12\" --use"
+    }
+  },
+  {
+    "name": "harness board boards rename",
+    "request": {
+      "args": [
+        "board",
+        "boards",
+        "rename",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board boards rename [options] <id> <name>\n\nBenennt ein Board um.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board boards rename 7 \"Sprint 13\""
+    }
+  },
+  {
+    "name": "harness board boards use",
+    "request": {
+      "args": [
+        "board",
+        "boards",
+        "use",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board boards use [options] <id>\n\nSetzt das aktive Board dieses Rechners (Standard für alle Ticketbefehle).\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board boards use 7"
+    }
+  },
+  {
+    "name": "harness board boards repo",
+    "request": {
+      "args": [
+        "board",
+        "boards",
+        "repo",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board boards repo [options] <id> [pfad]\n\nSetzt deinen Repo-Pfad des Boards – nur für dich auf diesem Rechner\n(~/.harness/board-repos.yaml), nicht in der gemeinsamen DB; ohne Pfad zeigt er\nihn.\n\nOptionen:\n  --clear     eigenen Repo-Pfad entfernen\n  -h, --help  Hilfe anzeigen\n\nBeispiele:\n  harness board boards repo 7 C:\\Projects\\Arches\\Shopsystem\n  harness board boards repo 7\n  harness board boards repo 7 --clear"
+    }
+  },
+  {
+    "name": "harness board boards delete",
+    "request": {
+      "args": [
+        "board",
+        "boards",
+        "delete",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board boards delete [options] <id>\n\nLöscht ein Board. Mit offenen Tickets nur mit --delete-open (löscht dann\nalles).\n\nOptionen:\n  --delete-open  auch offene Tickets endgültig löschen\n  --by <name>    Name im Löschprotokoll\n  -h, --help     Hilfe anzeigen\n\nBeispiele:\n  harness board boards delete 7\n  harness board boards delete 7 --delete-open"
+    }
+  },
+  {
+    "name": "harness board list",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board list [options]\n\nListet Tickets je Spalte (Wartet ist abgeleitet). --md für Agenten, --json\nvollständig.\n\nOptionen:\n  --board <id|all>    Board (Standard: Board dieses Repos, sonst aktives Board)\n  --status <spalten>  nur diese Spalten, kommagetrennt (auch „wartet“)\n  --needs-planning    nur Tickets mit Planungsbedarf\n  --assignee <name>   nur Tickets dieses Agenten\n  --label <label>     nur Tickets mit diesem Label\n  --q <text>          Suchtext in ID, Titel und Beschreibung\n  --md                Ausgabe als Markdown\n  -h, --help          Hilfe anzeigen\n\nBeispiele:\n  harness board list --md\n  harness board list --status geplant,wartet --q login"
+    }
+  },
+  {
+    "name": "harness board show",
+    "request": {
+      "args": [
+        "board",
+        "show",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board show [options] <id>\n\nZeigt ein Ticket mit Texten, Voraussetzungen und Kommentaren (kompakt;\n--history, --all-comments für alles).\n\nOptionen:\n  --field <feld>  nur ein Feld roh ausgeben (title, description, plan,\n                  handbook, diagram, acceptance, status, blockedReason)\n  --history       Verlauf vollständig ausgeben\n  --all-comments  auch ältere Kommentare von Agenten ausgeben\n  -h, --help      Hilfe anzeigen\n\nBeispiele:\n  harness board show ARC-0007\n  harness board show ARC-0007 --all-comments --history\n  harness board show ARC-0007 --field plan"
+    }
+  },
+  {
+    "name": "harness board create",
+    "request": {
+      "args": [
+        "board",
+        "create",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board create [options] <titel>\n\nLegt ein Ticket auf dem Board dieses Repos an, sonst auf dem aktiven Board\n(Standard: Backlog, normal, braucht Planung).\n\nOptionen:\n  --desc <text>              Beschreibung\n  --desc-file <datei>        Beschreibung aus Datei („-“ = Standardeingabe)\n  --status <status>          Startspalte\n  --priority <prio>          low, normal, high oder urgent\n  --label <label>            Label (wiederholbar oder kommagetrennt)\n  --planned                  braucht keine Planung\n  --acceptance <text>        Abnahme: woran man sieht, dass es fertig ist\n  --acceptance-file <datei>  Abnahme aus Datei\n  --depends-on <ids>         Voraussetzungen, kommagetrennt\n  --step <text>              Arbeitsschritt (wiederholbar, in dieser\n                             Reihenfolge; Kommas bleiben erhalten)\n  --target-branch <name>     Zielbranch, in den der Dispatcher mergt (fehlt er,\n                             wird er angelegt; ohne: ausgecheckter Branch des\n                             Hauptordners)\n  --board <id>               Board (Standard: Board dieses Repos, sonst aktives\n                             Board)\n  --force                    trotz offenem Ticket mit gleichem Titel anlegen;\n                             Sperren für Voraussetzungen und „nicht mehr nötig“\n                             übergehen\n  --by <name>                wer anlegt (z. B. claude)\n  -h, --help                 Hilfe anzeigen\n\nBeispiele:\n  harness board create \"Login bauen\" --desc \"Kontext\" --priority high --label backend --by claude\n  harness board create \"Export bauen\" --step \"Test schreiben\" --step \"Umsetzen\""
+    }
+  },
+  {
+    "name": "harness board set",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board set [options] <id>\n\nÄndert Felder eines Tickets. Texte nur ins Feld – Status, Planungsbedarf und\nZuweisung bleiben, wenn nicht angegeben.\n\nOptionen:\n  --title <text>                 Titel\n  --desc <text>                  Beschreibung\n  --desc-file <datei>            Beschreibung aus Datei\n  --plan <text>                  Plan\n  --plan-file <datei>            Plan aus Datei\n  --handbook <text>              Handbuch\n  --handbook-file <datei>        Handbuch aus Datei\n  --diagram <text>               Mermaid-Diagramm\n  --diagram-file <datei>         Diagramm aus Datei\n  --status <status>              Status (gleiche Sperren wie move)\n  --priority <prio>              low, normal, high oder urgent\n  --assignee <name>              Zuweisung; „none“ entfernt sie\n  --label <label>                ersetzt die Labels (wiederholbar)\n  --blocked-reason <text>        Grund für Blockiert\n  --acceptance <text>            Abnahme\n  --acceptance-file <datei>      Abnahme aus Datei\n  --needs-planning <true|false>  Planungsbedarf\n  --depends-on <ids>             Voraussetzungen ersetzen; „none“ leert\n  --depends-on-add <id>          Voraussetzung ergänzen (wiederholbar)\n  --depends-on-rm <id>           Voraussetzung entfernen (wiederholbar)\n  --target-branch <name>         Zielbranch, in den der Dispatcher mergt (fehlt\n                                 er, wird er angelegt; ohne: ausgecheckter\n                                 Branch des Hauptordners); „none“ entfernt ihn\n                                 (nur vor dem Start)\n  --to-board <id>                auf ein anderes Board desselben Projekts\n                                 verschieben\n  --clear-branch                 Branch und Worktree am Ticket leeren (z. B.\n                                 wenn sie zu einem anderen oder aufgeräumten\n                                 Worktree gehören); Branch und Ordner selbst\n                                 bleiben\n  --rev <n>                      nur schreiben, wenn das Ticket noch diese\n                                 Version hat\n  --force                        Sperren für Voraussetzungen und „nicht mehr\n                                 nötig“ übergehen\n  --by <name>                    wer ändert\n  -h, --help                     Hilfe anzeigen\n\nBeispiele:\n  harness board set ARC-0007 --priority high --by claude\n  harness board set ARC-0007 --plan-file plan.md\n  harness board set ARC-0007 --status blockiert --blocked-reason \"Zugang fehlt\"\n  harness board set ARC-0007 --clear-branch"
+    }
+  },
+  {
+    "name": "harness board move",
+    "request": {
+      "args": [
+        "board",
+        "move",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board move [options] <id> <status>\n\nVerschiebt in eine Spalte. Erledigt braucht eine Abnahme; In Arbeit/Erledigt\nkeine offene Voraussetzung.\n\nOptionen:\n  --acceptance <text>  Abnahme im selben Schritt setzen\n  --rev <n>            erwartete Version\n  --force              Sperren für Voraussetzungen und „nicht mehr nötig“\n                       übergehen\n  --by <name>          wer verschiebt\n  -h, --help           Hilfe anzeigen\n\nBeispiele:\n  harness board move ARC-0007 erledigt --acceptance \"Test deckt den Fall ab\" --by claude\n  harness board move ARC-0007 geplant"
+    }
+  },
+  {
+    "name": "harness board delete",
+    "request": {
+      "args": [
+        "board",
+        "delete",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board delete [options] <id>\n\nLöscht ein Ticket endgültig (wird protokolliert). Nur auf ausdrückliche\nAnweisung.\n\nOptionen:\n  --by <name>  wer löscht\n  -h, --help   Hilfe anzeigen\n\nBeispiel:\n  harness board delete ARC-0007"
+    }
+  },
+  {
+    "name": "harness board claim",
+    "request": {
+      "args": [
+        "board",
+        "claim",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board claim [options] <id>\n\nÜbernimmt ein Ticket für einen Agenten (Standard: In Arbeit). Bereits\nzugewiesen (auch an denselben Namen) → Exit 1, außer mit --force. Innerhalb\neiner Session wird sie mit dem Ticket verknüpft.\n\nOptionen:\n  --agent <name>     Name des Agenten, z. B. claude\n  --status <status>  Zielstatus (Standard: in_progress)\n  --force            bestehende Zuweisung und offene Voraussetzungen übergehen\n  -h, --help         Hilfe anzeigen\n\nBeispiel:\n  harness board claim ARC-0007 --agent claude"
+    }
+  },
+  {
+    "name": "harness board release",
+    "request": {
+      "args": [
+        "board",
+        "release",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board release [options] <id>\n\nGibt ein Ticket frei; der Status ändert sich nur mit --status.\n\nOptionen:\n  --status <status>  neuer Status\n  --by <name>        wer freigibt\n  -h, --help         Hilfe anzeigen\n\nBeispiel:\n  harness board release ARC-0007 --status geplant"
+    }
+  },
+  {
+    "name": "harness board start",
+    "request": {
+      "args": [
+        "board",
+        "start",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board start [options] <id>\n\nStartet ein Ticket: eigener Branch ticket/<ID>-<Kurztitel> (vom Zielbranch des\nTickets, sonst vom ausgecheckten Branch) und Worktree neben dem Projekt, Status\nIn Arbeit (Sperren gelten). Mit --join tritt es stattdessen einem offenen\nWorktree derselben Spec bei, wenn sich die Bereiche nicht überschneiden. Nur\nfür Tickets des Boards, das diesem Repo zugeordnet ist. Warnt, wenn das\nSpec-Dokument des Tickets nicht (vollständig) committet ist.\n\nOptionen:\n  --in <id>    dem Worktree dieses Tickets beitreten (bei Überschneidung\n               entsteht ein eigener)\n  --join       einem offenen Worktree derselben Spec ohne Überschneidung\n               beitreten (früheres Verhalten)\n  --force      offene Voraussetzungen und Fragen übergehen (nur auf\n               ausdrückliche Anweisung)\n  --by <name>  wer startet (z. B. claude)\n  -h, --help   Hilfe anzeigen\n\nBeispiele:\n  harness board start ARC-0007 --by claude\n  harness board start ARC-0008 --in ARC-0007\n  harness board start ARC-0009 --join"
+    }
+  },
+  {
+    "name": "harness board done",
+    "request": {
+      "args": [
+        "board",
+        "done",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board done [options] <id>\n\nSetzt das Ticket auf Erledigt (Abnahme nötig) und meldet, ob der Worktree zum\nMerge bereit ist. Es wird nichts gemergt. Nur für Tickets des Boards dieses\nRepos.\n\nOptionen:\n  --acceptance <text>        Abnahme: woran man sieht, dass es fertig ist\n                             (falls noch keine eingetragen ist)\n  --acceptance-file <datei>  Abnahme aus Datei („-“ = Standardeingabe)\n  --force                    offene Voraussetzungen und Fragen übergehen (nur\n                             auf ausdrückliche Anweisung)\n  --by <name>                wer abschließt\n  -h, --help                 Hilfe anzeigen\n\nBeispiel:\n  harness board done ARC-0007 --acceptance \"Tests grün, Review erledigt\" --by claude"
+    }
+  },
+  {
+    "name": "harness board step",
+    "request": {
+      "args": [
+        "board",
+        "step",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board step [options] [command] <id> <nummer>\n\nHakt einen Schritt des Tickets ab (Nummer ab 1, siehe „harness board show“).\nUnterbefehle legen Schritte an, bearbeiten, löschen und verschieben sie.\n\nOptionen:\n  --undo                            nimmt den Haken zurück\n  --by <name>                       wer abhakt\n  --rev <n>                         nur ändern, wenn das Ticket noch diese\n                                    Version hat (sonst Konflikt)\n  --expect <text>                   nur ändern, wenn der Schritt an dieser\n                                    Nummer noch diesen Text hat (sonst\n                                    Konflikt)\n  -h, --help                        Hilfe anzeigen\n\nBefehle:\n  done [options] <id> <nummer>      Hakt einen Schritt ab (gleich wie „harness\n                                    board step <id> <nummer>“).\n  add [options] <id> <text>         Hängt einen Schritt an (oder fügt ihn mit\n                                    --at an dieser Nummer ein); optional mit\n                                    Anleitung.\n  edit [options] <id> <nummer>      Ändert Text und/oder Anleitung eines\n                                    Schritts; der Haken bleibt. Leere Anleitung\n                                    („“) entfernt sie.\n  rm [options] <id> <nummer>        Löscht einen Schritt; die folgenden rücken\n                                    eine Nummer nach vorn.\n  move [options] <id> <von> <nach>  Verschiebt einen Schritt auf eine andere\n                                    Nummer (samt Haken und Anleitung).\n\nBeispiele:\n  harness board step ARC-0007 2 --by claude\n  harness board step ARC-0007 2 --undo\n  harness board step add ARC-0007 \"Test schreiben\" --detail \"Erwartet: rot\"\n  harness board step done ARC-0007 2"
+    }
+  },
+  {
+    "name": "harness board step done",
+    "request": {
+      "args": [
+        "board",
+        "step",
+        "done",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board step done [options] <id> <nummer>\n\nHakt einen Schritt ab (gleich wie „harness board step <id> <nummer>“).\n\nOptionen:\n  --undo           nimmt den Haken zurück\n  --by <name>      wer abhakt\n  --rev <n>        nur ändern, wenn das Ticket noch diese Version hat (sonst\n                   Konflikt)\n  --expect <text>  nur ändern, wenn der Schritt an dieser Nummer noch diesen\n                   Text hat (sonst Konflikt)\n  -h, --help       Hilfe anzeigen\n\nBeispiele:\n  harness board step done ARC-0007 2 --by claude\n  harness board step done ARC-0007 2 --undo\n  harness board step done ARC-0007 2 --expect \"Test schreiben\""
+    }
+  },
+  {
+    "name": "harness board step add",
+    "request": {
+      "args": [
+        "board",
+        "step",
+        "add",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board step add [options] <id> <text>\n\nHängt einen Schritt an (oder fügt ihn mit --at an dieser Nummer ein); optional\nmit Anleitung.\n\nOptionen:\n  --detail <text>        Anleitung zum Schritt (Markdown: Befehl, erwartetes\n                         Ergebnis)\n  --detail-file <datei>  Anleitung aus Datei („-“ = Standardeingabe)\n  --at <n>               an dieser Nummer einfügen (ab 1; Standard: ans Ende)\n  --by <name>            wer anlegt (z. B. claude)\n  -h, --help             Hilfe anzeigen\n\nBeispiele:\n  harness board step add ARC-0007 \"Test schreiben\" --detail \"npm test – erwartet: rot\" --by claude\n  harness board step add ARC-0007 \"Migration prüfen\" --at 2"
+    }
+  },
+  {
+    "name": "harness board step edit",
+    "request": {
+      "args": [
+        "board",
+        "step",
+        "edit",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board step edit [options] <id> <nummer>\n\nÄndert Text und/oder Anleitung eines Schritts; der Haken bleibt. Leere\nAnleitung („“) entfernt sie.\n\nOptionen:\n  --text <text>          neuer Text\n  --detail <text>        neue Anleitung\n  --detail-file <datei>  Anleitung aus Datei („-“ = Standardeingabe)\n  --by <name>            wer ändert\n  --rev <n>              nur ändern, wenn das Ticket noch diese Version hat\n                         (sonst Konflikt)\n  --expect <text>        nur ändern, wenn der Schritt an dieser Nummer noch\n                         diesen Text hat (sonst Konflikt)\n  -h, --help             Hilfe anzeigen\n\nBeispiele:\n  harness board step edit ARC-0007 2 --text \"Test für Login schreiben\"\n  harness board step edit ARC-0007 2 --detail \"\"\n  harness board step edit ARC-0007 2 --text \"Neu\" --expect \"Alt\" --rev 5"
+    }
+  },
+  {
+    "name": "harness board step rm",
+    "request": {
+      "args": [
+        "board",
+        "step",
+        "rm",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board step rm [options] <id> <nummer>\n\nLöscht einen Schritt; die folgenden rücken eine Nummer nach vorn.\n\nOptionen:\n  --by <name>      wer löscht\n  --rev <n>        nur ändern, wenn das Ticket noch diese Version hat (sonst\n                   Konflikt)\n  --expect <text>  nur ändern, wenn der Schritt an dieser Nummer noch diesen\n                   Text hat (sonst Konflikt)\n  -h, --help       Hilfe anzeigen\n\nBeispiele:\n  harness board step rm ARC-0007 3\n  harness board step rm ARC-0007 3 --expect \"Alter Schritt\""
+    }
+  },
+  {
+    "name": "harness board step move",
+    "request": {
+      "args": [
+        "board",
+        "step",
+        "move",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board step move [options] <id> <von> <nach>\n\nVerschiebt einen Schritt auf eine andere Nummer (samt Haken und Anleitung).\n\nOptionen:\n  --by <name>      wer verschiebt\n  --rev <n>        nur ändern, wenn das Ticket noch diese Version hat (sonst\n                   Konflikt)\n  --expect <text>  nur verschieben, wenn der Schritt an Nummer <von> noch\n                   diesen Text hat (sonst Konflikt)\n  -h, --help       Hilfe anzeigen\n\nBeispiele:\n  harness board step move ARC-0007 4 1\n  harness board step move ARC-0007 4 1 --expect \"Committen\""
+    }
+  },
+  {
+    "name": "harness board plan",
+    "request": {
+      "args": [
+        "board",
+        "plan",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board plan [options] <id>\n\nPlanungslauf: schreibt Plan/Handbuch/Diagramm, setzt Geplant und löscht den\nPlanungsbedarf.\n\nOptionen:\n  --plan <text>            Plan\n  --plan-file <datei>      Plan aus Datei („-“ = Standardeingabe)\n  --handbook <text>        Handbuch\n  --handbook-file <datei>  Handbuch aus Datei\n  --diagram <text>         Mermaid ohne Code-Fence\n  --diagram-file <datei>   Diagramm aus Datei\n  --status <status>        Zielstatus (Standard: planned)\n  --by <name>              wer plant (Standard: Anzeigename)\n  -h, --help               Hilfe anzeigen\n\nBeispiel:\n  harness board plan ARC-0007 --plan-file plan.md --handbook-file hb.md --by claude"
+    }
+  },
+  {
+    "name": "harness board plan-json",
+    "request": {
+      "args": [
+        "board",
+        "plan-json",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board plan-json [options] <id>\n\nPlanungslauf aus JSON {plan, handbook, diagram, acceptance?, status?, by?} in\neinem Aufruf.\n\nOptionen:\n  --file <datei>     JSON-Datei („-“ = Standardeingabe)\n  --status <status>  Zielstatus, falls nicht im JSON\n  --by <name>        wer plant, falls nicht im JSON\n  -h, --help         Hilfe anzeigen\n\nBeispiel:\n  harness board plan-json ARC-0007 --file payload.json --by claude"
+    }
+  },
+  {
+    "name": "harness board next-planning",
+    "request": {
+      "args": [
+        "board",
+        "next-planning",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board next-planning [options]\n\nNächstes Ticket mit Planungsbedarf; mit --claim für 15 Minuten beansprucht.\nÜberspringt In Planung.\n\nOptionen:\n  --claim <agent>   Ticket für diesen Agenten beanspruchen\n  --board <id|all>  Board (Standard: Board dieses Repos, sonst aktives Board)\n  -h, --help        Hilfe anzeigen\n\nBeispiel:\n  harness --json board next-planning --claim claude"
+    }
+  },
+  {
+    "name": "harness board comment",
+    "request": {
+      "args": [
+        "board",
+        "comment",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board comment [options] <id> [text]\n\nHängt einen Kommentar an (Zwischenstand, Nachweis, Begründung).\n\nOptionen:\n  --body-file <datei>  Text aus Datei („-“ = Standardeingabe)\n  --author <name>      wer kommentiert (z. B. claude)\n  -h, --help           Hilfe anzeigen\n\nBeispiel:\n  harness board comment ARC-0007 \"Schritt 2 von 4 fertig\" --author claude"
+    }
+  },
+  {
+    "name": "harness board note",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board note [options] [command]\n\nNotizen: Befunde über etwas anderes als das laufende Ticket.\n\nOptionen:\n  -h, --help             Hilfe anzeigen\n\nBefehle:\n  add [options] <titel>  Hält einen Befund fest, der nicht zum laufenden Ticket\n                         gehört. Gibt es ihn schon, wird abgelehnt.\n  seen [options] <id>    Derselbe Befund ist erneut aufgefallen: zählt die\n                         offene Notiz hoch statt einer neuen.\n  list [options]         Listet Notizen; ohne --state nur offene.\n  show <id>              Zeigt eine Notiz vollständig.\n  take [options] <id>    Macht aus einer offenen Notiz ein Ticket (Titel der\n                         Notiz = Titel, Details = Beschreibung, Labels gehen\n                         mit).\n  drop [options] <id>    Verwirft eine Notiz mit Grund (wird nie gelöscht).\n  help [befehl]          Hilfe zu einem Befehl anzeigen"
+    }
+  },
+  {
+    "name": "harness board note add",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "add",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board note add [options] <titel>\n\nHält einen Befund fest, der nicht zum laufenden Ticket gehört. Gibt es ihn\nschon, wird abgelehnt.\n\nOptionen:\n  --details <text>  wo, woran man es sieht, vermutete Ursache, Vorschlag\n  --from <id>       Ticket, bei dem es aufgefallen ist\n  --label <label>   Label (wiederholbar)\n  --author <name>   wer notiert (z. B. claude)\n  --board <id>      Board (Standard: Board des --from-Tickets, sonst Board\n                    dieses Repos, sonst aktives Board)\n  --force           auch anlegen, wenn eine ähnliche Notiz existiert\n  -h, --help        Hilfe anzeigen\n\nDer Titel ist ein Satz, der ohne Kontext verständlich ist: was ist kaputt oder fehlt – ohne Ticket-ID.\nDie Herkunft steht in --from; „unabhängig von <Ticket>“ gehört nicht in den Text.\n\nBeispiel:\n  harness board note add \"Cache der Board-Ansicht läuft nie ab\" --details \"BoardViewService.ts: ohne TTL; nach Ticketwechsel bleibt die alte Spalte stehen. Vorschlag: changeMarker prüfen.\" --from ARC-0009 --label cache --author claude"
+    }
+  },
+  {
+    "name": "harness board note seen",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "seen",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board note seen [options] <id>\n\nDerselbe Befund ist erneut aufgefallen: zählt die offene Notiz hoch statt einer\nneuen.\n\nOptionen:\n  --from <id>  Ticket, bei dem es erneut aufgefallen ist\n  -h, --help   Hilfe anzeigen\n\nBeispiel:\n  harness board note seen 12 --from ARC-0014"
+    }
+  },
+  {
+    "name": "harness board note list",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "list",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board note list [options]\n\nListet Notizen; ohne --state nur offene.\n\nOptionen:\n  --state <stand>  offen, uebernommen, verworfen oder alle\n  --from <id>      nur Notizen aus diesem Ticket\n  --md             Ausgabe als Markdown\n  --board <id>     Board (Standard: Board dieses Repos, sonst aktives Board)\n  -h, --help       Hilfe anzeigen\n\nBeispiele:\n  harness board note list --md\n  harness board note list --state alle"
+    }
+  },
+  {
+    "name": "harness board note show",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "show",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board note show [options] <id>\n\nZeigt eine Notiz vollständig.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board note show 12"
+    }
+  },
+  {
+    "name": "harness board note take",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "take",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board note take [options] <id>\n\nMacht aus einer offenen Notiz ein Ticket (Titel der Notiz = Titel, Details =\nBeschreibung, Labels gehen mit).\n\nOptionen:\n  --title <text>     anderer Titel\n  --status <status>  Startspalte (Standard: Backlog)\n  --priority <prio>  low, normal, high oder urgent\n  --label <label>    Labels ersetzen (wiederholbar)\n  --by <name>        wer übernimmt\n  -h, --help         Hilfe anzeigen\n\nBeispiel:\n  harness board note take 12 --priority high"
+    }
+  },
+  {
+    "name": "harness board note drop",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "drop",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board note drop [options] <id>\n\nVerwirft eine Notiz mit Grund (wird nie gelöscht).\n\nOptionen:\n  --reason <text>  warum daraus nichts wird (Pflicht)\n  -h, --help       Hilfe anzeigen\n\nBeispiel:\n  harness board note drop 12 --reason \"erledigt sich mit ARC-0020\""
+    }
+  },
+  {
+    "name": "harness board inbox",
+    "request": {
+      "args": [
+        "board",
+        "inbox",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board inbox [options]\n\nMeine Aufgaben: wartende Tickets, offene Fragen und Notizen der eigenen Boards.\n\nOptionen:\n  --board <id>    nur dieses eigene Board (Standard: alle eigenen Boards)\n  --kind <arten>  nur diese Arten, kommagetrennt (merge, setup, question,\n                  accept, blocked, planning, note)\n  --md            Ausgabe als Markdown\n  -h, --help      Hilfe anzeigen\n\nBeispiele:\n  harness board inbox --md\n  harness board inbox --kind merge,accept"
+    }
+  },
+  {
+    "name": "harness board question",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board question [options] [command]\n\nFragen auf der Board-Datenbank: fragen, recherchieren, entscheiden (entscheiden\nnur Menschen).\n\nOptionen:\n  -h, --help                     Hilfe anzeigen\n\nBefehle:\n  add [options] <titel>          Stellt eine Frage; betroffene Tickets warten,\n                                 bis sie entschieden ist.\n  research [options] <id>        Ergänzt eine Recherche mit Kontext und\n                                 Optionen; frühere Recherchen bleiben erhalten.\n  comment [options] <id> <text>  Hängt einen Kommentar an eine Frage\n                                 (Rückfrage, Zwischenstand, Hinweis).\n  list [options]                 Listet Fragen eines Projekts (bereite zuerst,\n                                 älteste zuerst); ohne --state nur offene.\n  show <id>                      Zeigt eine Frage mit Beschreibung, Tickets,\n                                 Recherchen, Entscheidung, Kommentaren und\n                                 Verlauf.\n  answer [options] <id>          Beantwortet eine Frage mit einer Option der\n                                 neuesten Recherche oder eigenem Text;\n                                 Begründung freiwillig. Nur Menschen.\n  discard [options] <id>         Verwirft eine Frage mit Begründung. Nur\n                                 Menschen.\n  reopen [options] <id>          Öffnet eine beantwortete oder verworfene Frage\n                                 wieder. Nur Menschen.\n  link [options] <id>            Fügt betroffene Tickets hinzu oder entfernt\n                                 sie.\n  depends [options] <id>         Fügt Abhängigkeiten (Fragen oder Tickets)\n                                 hinzu oder entfernt sie; Kreise werden\n                                 abgelehnt.\n  research-start <id>            Lässt eine offene Frage sofort von einer\n                                 Claude-Session (claude -p, nur lesend, eigener\n                                 losgelöster Worktree) recherchieren; das\n                                 Ergebnis landet als Recherche an der Frage.\n                                 Läuft über den lokalen Server, unabhängig\n                                 davon, ob der Dispatcher eingeschaltet ist.\n  help [befehl]                  Hilfe zu einem Befehl anzeigen"
+    }
+  },
+  {
+    "name": "harness board question add",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "add",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board question add [options] <titel>\n\nStellt eine Frage; betroffene Tickets warten, bis sie entschieden ist.\n\nOptionen:\n  --description <text>  Beschreibung (Markdown, auch Mermaid)\n  --ticket <id>         betroffenes Ticket (wiederholbar)\n  --depends <id>        Frage oder Ticket, von dem die Klärung abhängt\n                        (wiederholbar)\n  --tag <tag>           Tag (wiederholbar)\n  --occasion <text>     Anlass, z. B. „Planung ARC-0007“\n  --project <key>       Board-Projekt (Standard: Projekt des Boards dieses\n                        Repos, sonst des aktiven Boards)\n  --kind <art>          Art des Autors: human, session oder subagent (Standard:\n                        session innerhalb einer Session, sonst human)\n  --author <name>       Name des Autors (Standard: Name aus board.yaml)\n  --session <kennung>   Kennung der Session (Standard: Umgebungsvariable\n                        HARNESS_SESSION)\n  -h, --help            Hilfe anzeigen\n\nBeispiel:\n  harness board question add \"Welcher Speicher?\" --ticket ARC-0007 --occasion \"Planung ARC-0007\" --kind session --author claude"
+    }
+  },
+  {
+    "name": "harness board question research",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "research",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board question research [options] <id>\n\nErgänzt eine Recherche mit Kontext und Optionen; frühere Recherchen bleiben\nerhalten.\n\nOptionen:\n  --from <datei>       JSON-Datei mit context und options, „-“ liest die\n                       Standardeingabe\n  --context <text>     Nur Kontext als Text (ohne Optionen)\n  --kind <art>         Art des Autors: human, session oder subagent (Standard:\n                       session innerhalb einer Session, sonst human)\n  --author <name>      Name des Autors (Standard: Name aus board.yaml)\n  --session <kennung>  Kennung der Session (Standard: Umgebungsvariable\n                       HARNESS_SESSION)\n  -h, --help           Hilfe anzeigen\n\nDatei: {\"context\": \"…\", \"options\": [{\"title\": \"…\", \"text\": \"…\", \"pros\": [\"…\"], \"cons\": [\"…\"], \"recommended\": true}]}\nBeispiel:\n  harness board question research ARC-F0001 --from recherche.json --kind session --author claude"
+    }
+  },
+  {
+    "name": "harness board question comment",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "comment",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board question comment [options] <id> <text>\n\nHängt einen Kommentar an eine Frage (Rückfrage, Zwischenstand, Hinweis).\n\nOptionen:\n  --kind <art>         Art des Autors: human, session oder subagent (Standard:\n                       session innerhalb einer Session, sonst human)\n  --author <name>      Name des Autors (Standard: Name aus board.yaml)\n  --session <kennung>  Kennung der Session (Standard: Umgebungsvariable\n                       HARNESS_SESSION)\n  -h, --help           Hilfe anzeigen\n\nBeispiel:\n  harness board question comment ARC-F0001 \"Neuer Befund: …\" --kind session --author claude"
+    }
+  },
+  {
+    "name": "harness board question list",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "list",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board question list [options]\n\nListet Fragen eines Projekts (bereite zuerst, älteste zuerst); ohne --state nur\noffene.\n\nOptionen:\n  --state <zustand>  offen, beantwortet, verworfen oder alle\n  --ticket <id>      nur Fragen, die dieses Ticket betreffen\n  --project <key>    Board-Projekt (Standard: Projekt des Boards dieses Repos,\n                     sonst des aktiven Boards)\n  --md               Ausgabe als Markdown\n  -h, --help         Hilfe anzeigen\n\nBeispiele:\n  harness board question list --md\n  harness board question list --state alle --ticket ARC-0007"
+    }
+  },
+  {
+    "name": "harness board question show",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "show",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board question show [options] <id>\n\nZeigt eine Frage mit Beschreibung, Tickets, Recherchen, Entscheidung,\nKommentaren und Verlauf.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board question show ARC-F0001"
+    }
+  },
+  {
+    "name": "harness board question answer",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "answer",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board question answer [options] <id>\n\nBeantwortet eine Frage mit einer Option der neuesten Recherche oder eigenem\nText; Begründung freiwillig. Nur Menschen.\n\nOptionen:\n  --option <nummer>  gewählte Option der neuesten Recherche, z. B. O2\n  --text <text>      eigene Antwort statt einer Option\n  --reason <text>    Begründung der Entscheidung (freiwillig)\n  --author <name>    Name des Entscheidenden (Standard: Name aus board.yaml)\n  -h, --help         Hilfe anzeigen\n\nBeispiel:\n  harness board question answer ARC-F0001 --option O2 --reason \"Passt zum Betrieb\""
+    }
+  },
+  {
+    "name": "harness board question discard",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "discard",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board question discard [options] <id>\n\nVerwirft eine Frage mit Begründung. Nur Menschen.\n\nOptionen:\n  --reason <text>  Begründung (Pflicht)\n  --author <name>  Name des Entscheidenden (Standard: Name aus board.yaml)\n  -h, --help       Hilfe anzeigen\n\nBeispiel:\n  harness board question discard ARC-F0001 --reason \"erledigt sich mit ARC-F0002\""
+    }
+  },
+  {
+    "name": "harness board question reopen",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "reopen",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board question reopen [options] <id>\n\nÖffnet eine beantwortete oder verworfene Frage wieder. Nur Menschen.\n\nOptionen:\n  --reason <text>  Grund (optional)\n  --author <name>  Name (Standard: Name aus board.yaml)\n  -h, --help       Hilfe anzeigen\n\nBeispiel:\n  harness board question reopen ARC-F0001 --reason \"neue Lage\""
+    }
+  },
+  {
+    "name": "harness board question link",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "link",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board question link [options] <id>\n\nFügt betroffene Tickets hinzu oder entfernt sie.\n\nOptionen:\n  --add <ticket>       Ticket hinzufügen (wiederholbar) (default: [])\n  --remove <ticket>    Ticket entfernen (wiederholbar) (default: [])\n  --kind <art>         Art des Autors: human, session oder subagent (Standard:\n                       session innerhalb einer Session, sonst human)\n  --author <name>      Name des Autors (Standard: Name aus board.yaml)\n  --session <kennung>  Kennung der Session (Standard: Umgebungsvariable\n                       HARNESS_SESSION)\n  -h, --help           Hilfe anzeigen\n\nBeispiel:\n  harness board question link ARC-F0001 --add ARC-0008 --remove ARC-0007"
+    }
+  },
+  {
+    "name": "harness board question depends",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "depends",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board question depends [options] <id>\n\nFügt Abhängigkeiten (Fragen oder Tickets) hinzu oder entfernt sie; Kreise\nwerden abgelehnt.\n\nOptionen:\n  --add <id>           Frage oder Ticket hinzufügen (wiederholbar) (default:\n                       [])\n  --remove <id>        Abhängigkeit entfernen (wiederholbar) (default: [])\n  --kind <art>         Art des Autors: human, session oder subagent (Standard:\n                       session innerhalb einer Session, sonst human)\n  --author <name>      Name des Autors (Standard: Name aus board.yaml)\n  --session <kennung>  Kennung der Session (Standard: Umgebungsvariable\n                       HARNESS_SESSION)\n  -h, --help           Hilfe anzeigen\n\nBeispiel:\n  harness board question depends ARC-F0002 --add ARC-F0001"
+    }
+  },
+  {
+    "name": "harness board question research-start",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "research-start",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board question research-start [options] <id>\n\nLässt eine offene Frage sofort von einer Claude-Session (claude -p, nur lesend,\neigener losgelöster Worktree) recherchieren; das Ergebnis landet als Recherche\nan der Frage. Läuft über den lokalen Server, unabhängig davon, ob der\nDispatcher eingeschaltet ist.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board question research-start ARC-F0007"
+    }
+  },
+  {
+    "name": "harness board dispatch",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board dispatch [options] [command]\n\nDispatcher: übernimmt bereite Tickets (Label auto) der eigenen Boards und lässt\nsie von claude -p umsetzen. Einstellungen in der Oberfläche oder\n~/.harness/dispatch.yaml.\n\nOptionen:\n  -h, --help        Hilfe anzeigen\n\nBefehle:\n  status [options]  Zeigt Zustand, laufende Worker, Merges und warum\n                    Geplant-Tickets (noch) nicht bereit sind. Ändert nichts.\n  run [options]     Führt sofort einen Durchlauf aus (sonst jede Minute).\n  pause [options]   Startet für eine Weile nichts Neues (laufende Worker laufen\n                    weiter).\n  resume            Hebt eine Pause auf.\n  enable            Schaltet den Dispatcher ein.\n  disable           Schaltet den Dispatcher aus (laufende Worker laufen zu\n                    Ende).\n  help [befehl]     Hilfe zu einem Befehl anzeigen"
+    }
+  },
+  {
+    "name": "harness board dispatch status",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "status",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board dispatch status [options]\n\nZeigt Zustand, laufende Worker, Merges und warum Geplant-Tickets (noch) nicht\nbereit sind. Ändert nichts.\n\nOptionen:\n  --board <id>  Board für die Bereitschaft (Standard: aktives Board)\n  -h, --help    Hilfe anzeigen\n\nBeispiel:\n  harness board dispatch status --board 3"
+    }
+  },
+  {
+    "name": "harness board dispatch run",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "run",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board dispatch run [options]\n\nFührt sofort einen Durchlauf aus (sonst jede Minute).\n\nOptionen:\n  --board <id>  Board für die anschließende Übersicht\n  -h, --help    Hilfe anzeigen\n\nBeispiel:\n  harness board dispatch run"
+    }
+  },
+  {
+    "name": "harness board dispatch pause",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "pause",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board dispatch pause [options]\n\nStartet für eine Weile nichts Neues (laufende Worker laufen weiter).\n\nOptionen:\n  --minutes <n>  Dauer in Minuten (1 bis 1440) (default: \"60\")\n  -h, --help     Hilfe anzeigen\n\nBeispiel:\n  harness board dispatch pause --minutes 30"
+    }
+  },
+  {
+    "name": "harness board dispatch resume",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "resume",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board dispatch resume [options]\n\nHebt eine Pause auf.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board dispatch resume"
+    }
+  },
+  {
+    "name": "harness board dispatch enable",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "enable",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board dispatch enable [options]\n\nSchaltet den Dispatcher ein.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board dispatch enable"
+    }
+  },
+  {
+    "name": "harness board dispatch disable",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "disable",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board dispatch disable [options]\n\nSchaltet den Dispatcher aus (laufende Worker laufen zu Ende).\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board dispatch disable"
+    }
+  },
+  {
+    "name": "harness board dispatch-runs",
+    "request": {
+      "args": [
+        "board",
+        "dispatch-runs",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board dispatch-runs [options] [command]\n\nLäufe des Dispatchers für die Auswertung (Dashboard).\n\nOptionen:\n  -h, --help          Hilfe anzeigen\n\nBefehle:\n  backfill [options]  Trägt Läufe aus den [dispatch]-Kommentaren nach (Profil,\n                      Modell-Alias, Effort, Versuch, Eskalation, Abbruchgrund;\n                      ohne Kosten). Schon nachgetragene Läufe bleiben\n                      unverändert – beliebig oft ausführbar.\n  help [befehl]       Hilfe zu einem Befehl anzeigen"
+    }
+  },
+  {
+    "name": "harness board dispatch-runs backfill",
+    "request": {
+      "args": [
+        "board",
+        "dispatch-runs",
+        "backfill",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board dispatch-runs backfill [options]\n\nTrägt Läufe aus den [dispatch]-Kommentaren nach (Profil, Modell-Alias, Effort,\nVersuch, Eskalation, Abbruchgrund; ohne Kosten). Schon nachgetragene Läufe\nbleiben unverändert – beliebig oft ausführbar.\n\nOptionen:\n  --project <key>  Projekt (Standard: Projekt des Boards dieses Repos, sonst\n                   des aktiven Boards)\n  --dry-run        nur zählen, nichts schreiben\n  -h, --help       Hilfe anzeigen\n\nBeispiele:\n  harness board dispatch-runs backfill --project ARC --dry-run\n  harness board dispatch-runs backfill"
+    }
+  },
+  {
+    "name": "harness board merge",
+    "request": {
+      "args": [
+        "board",
+        "merge",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board merge [options] <id>\n\nStößt den Merge eines erledigten Tickets eines eigenen Boards erneut an (nach\n„Blockiert: Merge: …“), erlaubt dabei wieder eine Merge-Session und nennt das\nErgebnis (gemergt, blockiert mit Grund, wartet, Merge-Session).\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board merge ARC-0009"
+    }
+  },
+  {
+    "name": "harness board accept",
+    "request": {
+      "args": [
+        "board",
+        "accept",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board accept [options] <id>\n\nNimmt ein Ticket ab, das mit Grund „Human Interaction: …“ blockiert ist (nur\nein Mensch, nie ein Agent): setzt Erledigt (Abnahme-Text nötig), leert den\nGrund, vermerkt es im Verlauf und stößt auf einem eigenen Board den Merge an\nwie „harness board merge“. Nennt das Ergebnis.\n\nOptionen:\n  --by <name>  wer abnimmt (Standard: Git-Benutzername)\n  -h, --help   Hilfe anzeigen\n\nBeispiel:\n  harness board accept ARC-0009 --by Florian"
+    }
+  },
+  {
+    "name": "harness board plan-start",
+    "request": {
+      "args": [
+        "board",
+        "plan-start",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board plan-start [options] <id>\n\nLässt ein Ticket eines eigenen Boards sofort von einer Claude-Session planen\n(claude -p, nur lesend, eigener losgelöster Worktree; wie „Planen“ im Ticket).\nDer Plan landet über plan-json am Ticket; fehlt eine Entscheidung, entsteht\neine Frage. Läuft über den lokalen Server, unabhängig davon, ob der Dispatcher\neingeschaltet ist.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness board plan-start ARC-0007"
+    }
+  },
+  {
+    "name": "harness install",
+    "request": {
+      "args": [
+        "install",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness install [options]\n\nMacht den Befehl harness im normalen Terminal verfügbar (Kopie unter\n~/.harness, Eintrag im PATH des Benutzers).\n\nOptionen:\n  --no-path   PATH nicht ändern, nur kopieren\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness install\n\nWiederholbar; aktualisiert die Kopie nach einem Plugin-Update."
+    }
+  },
+  {
+    "name": "harness stop",
+    "request": {
+      "args": [
+        "stop",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness stop [options]\n\nBeendet den laufenden Harness-Server (nach einem Update, damit die neue Version\nstartet).\n\nOptionen:\n  --restart   Startet den Server auf demselben Port neu, wenn er lief\n  -h, --help  Hilfe anzeigen\n\nBeispiele:\n  harness stop\n  harness stop --restart\n\nDas Board startet mit `harness board` wieder."
+    }
+  },
+  {
+    "name": "harness hook",
+    "request": {
+      "args": [
+        "hook",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness hook [options] <ereignis>\n\nWird von Claude Code aufgerufen (session-start, user-prompt, notification,\nstop, subagent-start, subagent-stop, session-end); liest die Hook-Meldung von\nder Standardeingabe.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  echo '{\"session_id\":\"abc\",\"cwd\":\".\"}' | harness hook session-start"
+    }
+  },
+  {
+    "name": "harness spec",
+    "request": {
+      "args": [
+        "spec",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness spec [options] [command]\n\nKommentare zu Spec- und Plan-Dokumenten abarbeiten\n\nOptionen:\n  -h, --help                     Hilfe anzeigen\n\nBefehle:\n  comments [dokument]            Listet offene Kommentare zu Spec- und\n                                 Plan-Dokumenten, Glossar und ADRs (optional\n                                 eines Dokuments oder Themas).\n  resolve <kommentar> <antwort>  Markiert einen Kommentar als erledigt und\n                                 speichert eine kurze Antwort.\n  help [befehl]                  Hilfe zu einem Befehl anzeigen"
+    }
+  },
+  {
+    "name": "harness spec comments",
+    "request": {
+      "args": [
+        "spec",
+        "comments",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness spec comments [options] [dokument]\n\nListet offene Kommentare zu Spec- und Plan-Dokumenten, Glossar und ADRs\n(optional eines Dokuments oder Themas).\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiele:\n  harness spec comments\n  harness spec comments spec-docs-rework\n  harness spec comments docs/superpowers/specs/<DATE-6>-spec-docs-rework-design.md"
+    }
+  },
+  {
+    "name": "harness spec resolve",
+    "request": {
+      "args": [
+        "spec",
+        "resolve",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness spec resolve [options] <kommentar> <antwort>\n\nMarkiert einen Kommentar als erledigt und speichert eine kurze Antwort.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  harness spec resolve K-1a2b3c4d \"Ziel in Abschnitt 2 präzisiert\""
+    }
+  },
+  {
+    "name": "unbekannter Befehl",
+    "request": {
+      "args": [
+        "quatsch"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Fehler: Unbekannter Befehl 'quatsch'.",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "unbekannter Befehl mit Vorschlag",
+    "request": {
+      "args": [
+        "bord"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Fehler: Unbekannter Befehl 'bord'.\n(Meinten Sie board?)",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "unbekannter Unterbefehl",
+    "request": {
+      "args": [
+        "board",
+        "quatsch"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Unbekannter Befehl „board quatsch“. Hilfe: harness board --help [command-unknown]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "fehlendes Pflichtargument",
+    "request": {
+      "args": [
+        "board",
+        "show"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Fehler: Das Pflichtargument 'id' fehlt.",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "unbekannte Option des Programms",
+    "request": {
+      "args": [
+        "--quatsch"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Fehler: Unbekannte Option '--quatsch'.",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "unbekannte Option eines Befehls",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--quatsch"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Fehler: Unbekannte Option '--quatsch'.",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "Option ohne Wert",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0001",
+        "--title"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Fehler: Zur Option '--title <text>' fehlt ein Wert.",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "Hilfe über den Befehl help",
+    "request": {
+      "args": [
+        "help",
+        "board"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: harness board [options] [command]\n\nOhne Unterbefehl: startet bei Bedarf den Server und öffnet das Board. Mit\nUnterbefehl: Board-Datenbank bedienen.\n\nOptionen:\n  --port <nummer>                Port des Servers (Standard 4710 oder\n                                 HARNESS_PORT)\n  --no-open                      Browser nicht öffnen, nur die Adresse ausgeben\n  -h, --help                     Hilfe anzeigen\n\nBefehle:\n  project                        Projekte des Boards verwalten (Projekt →\n                                 Boards → Tickets).\n  boards                         Boards anlegen, auflisten, umschalten und\n                                 löschen.\n  list [options]                 Listet Tickets je Spalte (Wartet ist\n                                 abgeleitet). --md für Agenten, --json\n                                 vollständig.\n  show [options] <id>            Zeigt ein Ticket mit Texten, Voraussetzungen\n                                 und Kommentaren (kompakt; --history,\n                                 --all-comments für alles).\n  create [options] <titel>       Legt ein Ticket auf dem Board dieses Repos an,\n                                 sonst auf dem aktiven Board (Standard:\n                                 Backlog, normal, braucht Planung).\n  set [options] <id>             Ändert Felder eines Tickets. Texte nur ins\n                                 Feld – Status, Planungsbedarf und Zuweisung\n                                 bleiben, wenn nicht angegeben.\n  move [options] <id> <status>   Verschiebt in eine Spalte. Erledigt braucht\n                                 eine Abnahme; In Arbeit/Erledigt keine offene\n                                 Voraussetzung.\n  delete [options] <id>          Löscht ein Ticket endgültig (wird\n                                 protokolliert). Nur auf ausdrückliche\n                                 Anweisung.\n  claim [options] <id>           Übernimmt ein Ticket für einen Agenten\n                                 (Standard: In Arbeit). Bereits zugewiesen\n                                 (auch an denselben Namen) → Exit 1, außer mit\n                                 --force. Innerhalb einer Session wird sie mit\n                                 dem Ticket verknüpft.\n  release [options] <id>         Gibt ein Ticket frei; der Status ändert sich\n                                 nur mit --status.\n  start [options] <id>           Startet ein Ticket: eigener Branch\n                                 ticket/<ID>-<Kurztitel> (vom Zielbranch des\n                                 Tickets, sonst vom ausgecheckten Branch) und\n                                 Worktree neben dem Projekt, Status In Arbeit\n                                 (Sperren gelten). Mit --join tritt es\n                                 stattdessen einem offenen Worktree derselben\n                                 Spec bei, wenn sich die Bereiche nicht\n                                 überschneiden. Nur für Tickets des Boards, das\n                                 diesem Repo zugeordnet ist. Warnt, wenn das\n                                 Spec-Dokument des Tickets nicht (vollständig)\n                                 committet ist.\n  done [options] <id>            Setzt das Ticket auf Erledigt (Abnahme nötig)\n                                 und meldet, ob der Worktree zum Merge bereit\n                                 ist. Es wird nichts gemergt. Nur für Tickets\n                                 des Boards dieses Repos.\n  step [options] <id> <nummer>   Hakt einen Schritt des Tickets ab (Nummer ab\n                                 1, siehe „harness board show“). Unterbefehle\n                                 legen Schritte an, bearbeiten, löschen und\n                                 verschieben sie.\n  plan [options] <id>            Planungslauf: schreibt Plan/Handbuch/Diagramm,\n                                 setzt Geplant und löscht den Planungsbedarf.\n  plan-json [options] <id>       Planungslauf aus JSON {plan, handbook,\n                                 diagram, acceptance?, status?, by?} in einem\n                                 Aufruf.\n  next-planning [options]        Nächstes Ticket mit Planungsbedarf; mit\n                                 --claim für 15 Minuten beansprucht.\n                                 Überspringt In Planung.\n  comment [options] <id> [text]  Hängt einen Kommentar an (Zwischenstand,\n                                 Nachweis, Begründung).\n  note                           Notizen: Befunde über etwas anderes als das\n                                 laufende Ticket.\n  inbox [options]                Meine Aufgaben: wartende Tickets, offene\n                                 Fragen und Notizen der eigenen Boards.\n  question                       Fragen auf der Board-Datenbank: fragen,\n                                 recherchieren, entscheiden (entscheiden nur\n                                 Menschen).\n  dispatch                       Dispatcher: übernimmt bereite Tickets (Label\n                                 auto) der eigenen Boards und lässt sie von\n                                 claude -p umsetzen. Einstellungen in der\n                                 Oberfläche oder ~/.harness/dispatch.yaml.\n  dispatch-runs                  Läufe des Dispatchers für die Auswertung\n                                 (Dashboard).\n  merge <id>                     Stößt den Merge eines erledigten Tickets eines\n                                 eigenen Boards erneut an (nach „Blockiert:\n                                 Merge: …“), erlaubt dabei wieder eine\n                                 Merge-Session und nennt das Ergebnis (gemergt,\n                                 blockiert mit Grund, wartet, Merge-Session).\n  accept [options] <id>          Nimmt ein Ticket ab, das mit Grund „Human\n                                 Interaction: …“ blockiert ist (nur ein Mensch,\n                                 nie ein Agent): setzt Erledigt (Abnahme-Text\n                                 nötig), leert den Grund, vermerkt es im\n                                 Verlauf und stößt auf einem eigenen Board den\n                                 Merge an wie „harness board merge“. Nennt das\n                                 Ergebnis.\n  plan-start <id>                Lässt ein Ticket eines eigenen Boards sofort\n                                 von einer Claude-Session planen (claude -p,\n                                 nur lesend, eigener losgelöster Worktree; wie\n                                 „Planen“ im Ticket). Der Plan landet über\n                                 plan-json am Ticket; fehlt eine Entscheidung,\n                                 entsteht eine Frage. Läuft über den lokalen\n                                 Server, unabhängig davon, ob der Dispatcher\n                                 eingeschaltet ist.\n\nBeispiele:\n  harness board\n  harness board --port 4800 --no-open"
+    }
+  }
+]

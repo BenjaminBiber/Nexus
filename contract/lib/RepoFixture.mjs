@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -14,7 +14,9 @@ export class RepoFixture {
     this.home = options.home;
     this.claudeConfig = options.claudeConfig;
     this.cli = options.cli;
-    this.base = mkdtempSync(join(tmpdir(), 'harness-contract-repos-'));
+    // Aufgelöst, weil Git und die CLI den Pfad aufgelöst melden (macOS: /var → /private/var); sonst findet
+    // ein Board über `repoPath: "{{REPO1}}"` sein Repo nicht
+    this.base = realpathSync(mkdtempSync(join(tmpdir(), 'harness-contract-repos-')));
   }
 
   // Legt alle Repos an und liefert Name → Pfad

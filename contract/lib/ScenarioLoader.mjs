@@ -2,9 +2,14 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 const SCENARIO_KEYS = new Set(['title', 'platforms', 'fixtures', 'steps']);
-const FIXTURE_KEYS = new Set(['repos', 'boardConfig']);
+const FIXTURE_KEYS = new Set(['repos', 'boardConfig', 'claudeEnvFile']);
 const REPO_KEYS = new Set(['name', 'git', 'harnessInit', 'files']);
-const STEP_KEYS = new Set(['name', 'kind', 'method', 'path', 'body', 'headers', 'save', 'compare', 'ignore', 'record']);
+const COMMON_STEP_KEYS = ['name', 'kind', 'save', 'compare', 'ignore', 'record'];
+// Felder je Schritt-Art; eine neue Art steht hier und in der Registry `stepKinds` von ScenarioRunner.mjs
+const STEP_KEYS = {
+  http: new Set([...COMMON_STEP_KEYS, 'method', 'path', 'body', 'headers']),
+  cli: new Set([...COMMON_STEP_KEYS, 'args', 'cwd', 'stdin', 'env']),
+};
 const PLATFORMS = new Set(['darwin', 'linux', 'win32']);
 const METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']);
 const COMPARE = new Set(['full', 'status', 'shape']);
@@ -86,14 +91,15 @@ export class ScenarioLoader {
     return [...value];
   }
 
-  // Vorbereitungen vor den Schritten: Repos und Board-Konfiguration
+  // Vorbereitungen vor den Schritten: Repos, Board-Konfiguration und Umgebungsdatei der Session
   fixtures(value, fail) {
-    if (value === undefined) return { repos: [], boardConfig: null };
+    if (value === undefined) return { repos: [], boardConfig: null, claudeEnvFile: false };
     if (value === null || typeof value !== 'object' || Array.isArray(value)) fail('fixtures muss ein Objekt sein.');
     this.unknown(value, FIXTURE_KEYS, ' in fixtures', fail);
     if (value.boardConfig !== undefined && !BOARD_CONFIGS.has(value.boardConfig)) {
       fail(`fixtures.boardConfig erlaubt nur ${[...BOARD_CONFIGS].join(', ')}.`);
     }
+    if (value.claudeEnvFile !== undefined && typeof value.claudeEnvFile !== 'boolean') fail('fixtures.claudeEnvFile muss true oder false sein.');
     if (value.repos !== undefined && !Array.isArray(value.repos)) fail('fixtures.repos muss eine Liste sein.');
     const repos = (value.repos ?? []).map((repo, index) => this.repo(repo, index, fail));
     const names = new Set();
@@ -101,7 +107,7 @@ export class ScenarioLoader {
       if (names.has(repo.name)) fail(`fixtures.repos enthält den Namen ${repo.name} zweimal.`);
       names.add(repo.name);
     }
-    return { repos, boardConfig: value.boardConfig ?? null };
+    return { repos, boardConfig: value.boardConfig ?? null, claudeEnvFile: value.claudeEnvFile ?? false };
   }
 
   // Ein Repo der Fixtures
@@ -143,10 +149,10 @@ export class ScenarioLoader {
   step(value, index, fail) {
     const where = ` in steps[${index}]`;
     if (value === null || typeof value !== 'object' || Array.isArray(value)) fail(`steps[${index}] muss ein Objekt sein.`);
-    this.unknown(value, STEP_KEYS, where, fail);
     if (typeof value.name !== 'string' || !value.name.trim()) fail(`steps[${index}].name fehlt oder ist leer.`);
     const kind = value.kind ?? 'http';
-    if (typeof kind !== 'string' || !kind.trim()) fail(`steps[${index}].kind muss ein Text sein.`);
+    if (typeof kind !== 'string' || !STEP_KEYS[kind]) fail(`steps[${index}].kind erlaubt nur ${Object.keys(STEP_KEYS).join(', ')}.`);
+    this.unknown(value, STEP_KEYS[kind], where, fail);
     if (value.compare !== undefined && !COMPARE.has(value.compare)) {
       fail(`steps[${index}].compare erlaubt nur ${[...COMPARE].join(', ')}.`);
     }
@@ -169,8 +175,8 @@ export class ScenarioLoader {
       record: value.record ?? true,
       save,
     };
-    if (kind === 'http') return { ...step, ...this.httpStep(value, index, fail) };
-    return { ...step, raw: value };
+    if (kind === 'cli') return { ...step, ...this.cliStep(value, index, fail) };
+    return { ...step, ...this.httpStep(value, index, fail) };
   }
 
   // Felder eines HTTP-Schritts
@@ -185,6 +191,23 @@ export class ScenarioLoader {
       if (header !== null && typeof header !== 'string') fail(`steps[${index}].headers["${name}"] muss ein Text oder null sein.`);
     }
     return { method: value.method, path: value.path, body: value.body, headers };
+  }
+
+  // Felder eines CLI-Schritts: Argumente des Programms, Arbeitsordner, Standardeingabe und Umgebung
+  cliStep(value, index, fail) {
+    if (!Array.isArray(value.args) || value.args.length === 0 || value.args.some((arg) => typeof arg !== 'string')) {
+      fail(`steps[${index}].args muss eine nicht leere Liste aus Texten sein.`);
+    }
+    if (value.cwd !== undefined && (typeof value.cwd !== 'string' || !value.cwd)) fail(`steps[${index}].cwd muss ein Text sein.`);
+    if (value.stdin !== undefined && (typeof value.stdin !== 'string' && (value.stdin === null || typeof value.stdin !== 'object' || Array.isArray(value.stdin)))) {
+      fail(`steps[${index}].stdin muss ein Objekt (als JSON) oder ein Text (roh) sein.`);
+    }
+    const env = value.env ?? {};
+    if (env === null || typeof env !== 'object' || Array.isArray(env)) fail(`steps[${index}].env muss ein Objekt sein.`);
+    for (const [name, entry] of Object.entries(env)) {
+      if (typeof entry !== 'string') fail(`steps[${index}].env["${name}"] muss ein Text sein.`);
+    }
+    return { args: [...value.args], cwd: value.cwd, stdin: value.stdin, env };
   }
 
   // Gibt es den Ordner?

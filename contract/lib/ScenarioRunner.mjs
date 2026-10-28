@@ -1,15 +1,19 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { CliStep } from './CliStep.mjs';
 import { HttpStep } from './HttpStep.mjs';
 import { Normalizer } from './Normalizer.mjs';
 import { RepoFixture } from './RepoFixture.mjs';
 import { ServerHandle } from './ServerHandle.mjs';
 import { Variables } from './Variables.mjs';
 
-// Bekannte Schritt-Arten; neue Arten (Ereignisstrom, CLI-Aufrufe) kommen als eigenes Modul hinzu und
-// melden sich hier an. Jede Art liefert `{ request, response }`.
-export const stepKinds = { http: new HttpStep() };
+// Bekannte Schritt-Arten; eine neue Art (geplant: Ereignisstrom) kommt als eigenes Modul hinzu und
+// meldet sich hier und in ScenarioLoader.mjs an. Jede Art liefert `{ request, response }`.
+export const stepKinds = { http: new HttpStep(), cli: new CliStep() };
+
+// Umgebungsdatei der Session (CLAUDE_ENV_FILE) für die Fixture `claudeEnvFile`
+const ENV_FILE = 'claude-env.sh';
 
 // Feste GUID des Vertrags-Benutzers in der Board-Konfiguration
 const CONTRACT_USER_ID = '11111111-1111-1111-1111-111111111111';
@@ -30,8 +34,8 @@ export class ScenarioRunner {
   // Führt das Szenario aus und liefert die Einträge für die Golden-Datei
   async run(scenario) {
     const own = this.base === null;
-    const home = this.homeDir ?? mkdtempSync(join(tmpdir(), 'harness-contract-home-'));
-    const claudeConfig = mkdtempSync(join(tmpdir(), 'harness-contract-claude-'));
+    const home = this.homeDir ?? ScenarioRunner.tempDir('harness-contract-home-');
+    const claudeConfig = ScenarioRunner.tempDir('harness-contract-claude-');
     const port = own ? await ServerHandle.freePort() : ScenarioRunner.portOf(this.base);
     const fixture = new RepoFixture({ home, claudeConfig, cli: this.cli });
     let server = null;
@@ -50,7 +54,19 @@ export class ScenarioRunner {
         saved,
       });
       if (scenario.fixtures.boardConfig === 'sqlite') await this.writeBoardConfig(server.base, home);
-      return await this.steps(scenario, { base: server.base, variables, normalizer, saved });
+      const context = {
+        base: server.base,
+        variables,
+        normalizer,
+        saved,
+        // Für CLI-Schritte: Programm und die Umgebung, in der es läuft
+        cli: this.cli,
+        home,
+        claudeConfig,
+        port,
+        envFile: scenario.fixtures.claudeEnvFile ? join(claudeConfig, ENV_FILE) : null,
+      };
+      return await this.steps(scenario, context);
     } finally {
       if (server) await server.stop();
       fixture.dispose();
@@ -58,6 +74,12 @@ export class ScenarioRunner {
       // Ein von außen übergebenes Home gehört dem Aufrufer
       if (own) rmSync(home, { recursive: true, force: true });
     }
+  }
+
+  // Temporärer Ordner mit aufgelöstem Pfad: Git und die CLI melden ihn aufgelöst (macOS: /var → /private/var),
+  // und die Szenarien setzen ihn über `{{HOME}}` wieder ein
+  static tempDir(prefix) {
+    return realpathSync(mkdtempSync(join(tmpdir(), prefix)));
   }
 
   // Port einer Adresse (`--base`); ohne Angabe der Standardport des Schemas
