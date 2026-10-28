@@ -74,16 +74,13 @@ impl<D: BoardDatabase> ProjectService<D> {
     /// Projekt zum Key innerhalb einer Transaktion oder Fehler (`get` in TypeScript)
     pub async fn require_in(u: &mut dyn BoardUnitOfWork, key: &str) -> Result<Project> {
         let normalized = TicketIds::normalize_key(key)?;
-        u.projects()
-            .by_key(&normalized)
-            .await?
-            .ok_or_else(|| {
-                HarnessError::new(
-                    "project-not-found",
-                    format!("Projekt {} gibt es nicht.", key.to_uppercase()),
-                )
-                .into()
-            })
+        u.projects().by_key(&normalized).await?.ok_or_else(|| {
+            HarnessError::new(
+                "project-not-found",
+                format!("Projekt {} gibt es nicht.", key.to_uppercase()),
+            )
+            .into()
+        })
     }
 
     /// Name ohne Leerraum am Rand; leer oder zu lang ist nicht erlaubt
@@ -98,5 +95,91 @@ impl<D: BoardDatabase> ProjectService<D> {
         }
         BoardLimits::text(title, MAX_PROJECT_NAME_LENGTH, "Der Projektname")?;
         Ok(title.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::testing::BoardFixture;
+
+    #[tokio::test]
+    async fn legt_ein_projekt_mit_normalisiertem_key_an_und_listet_es() {
+        let f = BoardFixture::create().await;
+
+        let project = f
+            .projects
+            .create("inc", "Incidents", &f.actor)
+            .await
+            .unwrap();
+
+        assert_eq!(project.key, "INC");
+        assert_eq!(project.name, "Incidents");
+        assert_eq!(project.next_ticket_number, 1);
+        assert_eq!(project.created_by, f.actor.user_id);
+        assert_eq!(
+            f.projects
+                .list()
+                .await
+                .unwrap()
+                .iter()
+                .map(|project| project.key.as_str())
+                .collect::<Vec<_>>(),
+            ["ARC", "INC"]
+        );
+    }
+
+    #[tokio::test]
+    async fn lehnt_einen_doppelten_key_ab() {
+        let f = BoardFixture::create().await;
+
+        let error = f
+            .projects
+            .create("ARC", "Nochmal", &f.actor)
+            .await
+            .unwrap_err();
+
+        assert_eq!(error.code(), Some("project-exists"));
+    }
+
+    #[tokio::test]
+    async fn lehnt_einen_leeren_namen_ab() {
+        let f = BoardFixture::create().await;
+
+        let error = f.projects.create("TLS", "  ", &f.actor).await.unwrap_err();
+
+        assert_eq!(error.code(), Some("project-name-empty"));
+    }
+
+    #[tokio::test]
+    async fn benennt_um_und_meldet_unbekannte_projekte() {
+        let f = BoardFixture::create().await;
+
+        assert_eq!(
+            f.projects.rename("arc", "Arches Shop").await.unwrap().name,
+            "Arches Shop"
+        );
+        assert_eq!(
+            f.projects.rename("XYZ", "n").await.unwrap_err().code(),
+            Some("project-not-found")
+        );
+    }
+
+    #[tokio::test]
+    async fn lehnt_zu_lange_projektnamen_ab() {
+        let f = BoardFixture::create().await;
+        let zu_lang = "n".repeat(201);
+
+        assert_eq!(
+            f.projects
+                .create("INC", &zu_lang, &f.actor)
+                .await
+                .unwrap_err()
+                .code(),
+            Some("value-too-long")
+        );
+        assert_eq!(
+            f.projects.rename("ARC", &zu_lang).await.unwrap_err().code(),
+            Some("value-too-long")
+        );
     }
 }

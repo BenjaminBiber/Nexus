@@ -66,7 +66,11 @@ impl MemoryBoardRepoStore {
 
 impl BoardRepoStore for MemoryBoardRepoStore {
     fn read(&self) -> Result<BoardRepoEntries> {
-        Ok(self.entries.lock().expect("Zuordnung ist nicht vergiftet").clone())
+        Ok(self
+            .entries
+            .lock()
+            .expect("Zuordnung ist nicht vergiftet")
+            .clone())
     }
 
     fn write(&self, entries: &BoardRepoEntries) -> Result<()> {
@@ -205,7 +209,8 @@ impl BoardRepoPaths {
             target.set_repo_source(source);
             return;
         }
-        let legacy = self.user_id.as_deref() == Some(target.owner_id()) && target.repo_path().is_some();
+        let legacy =
+            self.user_id.as_deref() == Some(target.owner_id()) && target.repo_path().is_some();
         if legacy {
             target.set_repo_source(Some(BoardRepoSource::Legacy));
             return;
@@ -317,6 +322,9 @@ mod tests {
 
     #[test]
     fn eine_leere_liste_liest_die_zuordnung_nicht() {
-        assert!(BoardRepoPaths::memory().apply(Vec::new()).unwrap().is_empty());
+        assert!(BoardRepoPaths::memory()
+            .apply(Vec::new())
+            .unwrap()
+            .is_empty());
     }
 }

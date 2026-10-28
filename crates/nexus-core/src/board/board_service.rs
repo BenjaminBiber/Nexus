@@ -211,7 +211,10 @@ impl<D: BoardDatabase> BoardService<D> {
         repo_root: &str,
         me: &RepoBoardOwner,
     ) -> Result<Option<BoardWithRepo>> {
-        let boards = tx!(self.db, |u| { u.boards().list(&BoardFilter::default()).await }).await?;
+        let boards = tx!(self.db, |u| {
+            u.boards().list(&BoardFilter::default()).await
+        })
+        .await?;
         Ok(self
             .repos
             .pick(self.repo_paths.apply(boards)?, repo_root, me))
@@ -373,5 +376,316 @@ impl<D: BoardDatabase> BoardService<D> {
         }
         BoardLimits::text(title, MAX_BOARD_NAME_LENGTH, "Der Boardname")?;
         Ok(title.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::board::basics::TicketStatus;
+    use crate::board::database::{BoardDatabase, NewBoard};
+    use crate::board::repo_paths::{BoardRepoSource, BoardRepoStore};
+    use crate::board::types::{Board, BoardUser};
+    use crate::testing::{BoardFixture, USER_ID, USER_NAME};
+    use crate::tx;
+
+    use super::BoardListFilter;
+
+    const OTHER: &str = "22222222-2222-2222-2222-222222222222";
+
+    /// Legt ein Ticket direkt in der Datenbank an (`TicketService` bringt erst Teil 2)
+    async fn add_ticket(
+        f: &BoardFixture,
+        number: i32,
+        status: TicketStatus,
+        depends_on: &[&str],
+        board_id: i32,
+    ) {
+        let ticket = crate::board::types::Ticket {
+            board_id,
+            status,
+            depends_on: depends_on.iter().map(|id| id.to_string()).collect(),
+            ..f.new_ticket(number).await
+        };
+        f.insert_ticket(&ticket).await;
+    }
+
+    /// Ein Ticket des Standardboards
+    async fn add(f: &BoardFixture, number: i32, status: TicketStatus) {
+        add_ticket(f, number, status, &[], f.board_id).await;
+    }
+
+    /// Der Repo-Pfad des Boards, wie er in der gemeinsamen Datenbank steht
+    async fn repo_path_in_db(f: &BoardFixture, id: i32) -> Option<String> {
+        tx!(f.db, |u| { u.boards().by_id(id).await })
+            .await
+            .unwrap()
+            .and_then(|board| board.repo_path)
+    }
+
+    #[tokio::test]
+    async fn listet_boards_mit_projekt_besitzer_und_offenen_tickets() {
+        let f = BoardFixture::create().await;
+        add(&f, 1, TicketStatus::Backlog).await;
+        add(&f, 2, TicketStatus::Done).await;
+
+        let list = f
+            .boards
+            .list(&BoardListFilter {
+                project_key: Some("arc".into()),
+                ..BoardListFilter::default()
+            })
+            .await
+            .unwrap();
+
+        let summary = &list[0];
+        assert_eq!(summary.board.id, f.board_id);
+        assert_eq!(summary.board.name, "Sprint");
+        assert_eq!(summary.project_key, "ARC");
+        assert_eq!(summary.board.owner_id, USER_ID);
+        assert_eq!(summary.owner_name, USER_NAME);
+        assert_eq!(summary.open_tickets, 1);
+        assert_eq!(summary.board.repo_path, None);
+        assert!(f
+            .boards
+            .list(&BoardListFilter {
+                owner_id: Some(OTHER.into()),
+                ..BoardListFilter::default()
+            })
+            .await
+            .unwrap()
+            .is_empty());
+    }
+
+    #[tokio::test]
+    async fn meldet_ein_unbekanntes_projekt_beim_anlegen() {
+        let f = BoardFixture::create().await;
+
+        let error = f.boards.create("XYZ", "B", &f.actor).await.unwrap_err();
+
+        assert_eq!(error.code(), Some("project-not-found"));
+    }
+
+    #[tokio::test]
+    async fn benennt_um_und_setzt_den_repo_pfad() {
+        let f = BoardFixture::create().await;
+
+        assert_eq!(
+            f.boards.rename(f.board_id, "Sprint 2").await.unwrap().name,
+            "Sprint 2"
+        );
+        assert_eq!(
+            f.boards
+                .set_repo_path(f.board_id, Some("C:\\Projects\\Arches"))
+                .await
+                .unwrap()
+                .repo_path
+                .as_deref(),
+            Some("C:\\Projects\\Arches")
+        );
+        assert_eq!(
+            f.boards
+                .set_repo_path(f.board_id, Some(" "))
+                .await
+                .unwrap()
+                .repo_path,
+            None
+        );
+        assert_eq!(
+            f.boards.rename(999, "x").await.unwrap_err().code(),
+            Some("board-not-found")
+        );
+    }
+
+    #[tokio::test]
+    async fn schreibt_den_repo_pfad_lokal_statt_in_die_gemeinsame_db() {
+        let f = BoardFixture::create().await;
+
+        let set = f
+            .boards
+            .set_repo_path(f.board_id, Some("C:\\Projects\\Arches"))
+            .await
+            .unwrap();
+
+        assert_eq!(set.repo_path.as_deref(), Some("C:\\Projects\\Arches"));
+        assert_eq!(set.repo_source, Some(BoardRepoSource::Local));
+        assert_eq!(repo_path_in_db(&f, f.board_id).await, None);
+        assert_eq!(
+            f.repo_store.read().unwrap(),
+            crate::board::repo_file::BoardRepoEntries::from([(
+                i64::from(f.board_id),
+                Some("C:\\Projects\\Arches".to_string())
+            )])
+        );
+        assert_eq!(
+            f.boards
+                .require(f.board_id)
+                .await
+                .unwrap()
+                .repo_path
+                .as_deref(),
+            Some("C:\\Projects\\Arches")
+        );
+        assert_eq!(
+            f.boards
+                .rename(f.board_id, "Neu")
+                .await
+                .unwrap()
+                .repo_path
+                .as_deref(),
+            Some("C:\\Projects\\Arches")
+        );
+        assert_eq!(repo_path_in_db(&f, f.board_id).await, None);
+        assert_eq!(
+            f.boards
+                .set_repo_path(999, Some("C:/x"))
+                .await
+                .unwrap_err()
+                .code(),
+            Some("board-not-found")
+        );
+    }
+
+    #[tokio::test]
+    async fn nimmt_den_db_wert_nur_bei_eigenen_boards_als_altbestand_nie_bei_fremden() {
+        let f = BoardFixture::create().await;
+        let project_id = f.project_id().await;
+        let board_id = f.board_id;
+        let foreign = tx!(f.db, |u| {
+            u.users()
+                .upsert(&BoardUser {
+                    id: OTHER.into(),
+                    name: "Kollege".into(),
+                })
+                .await?;
+            let own = u.boards().by_id(board_id).await?.unwrap();
+            u.boards()
+                .update(&Board {
+                    repo_path: Some("C:/alt".into()),
+                    ..own
+                })
+                .await?;
+            u.boards()
+                .insert(&NewBoard {
+                    project_id,
+                    owner_id: OTHER.into(),
+                    name: "Fremd".into(),
+                    repo_path: Some("D:/kollege".into()),
+                    created_at: "2026-10-13T10:00:00.000Z".into(),
+                })
+                .await
+        })
+        .await
+        .unwrap();
+
+        let list = f.boards.list(&BoardListFilter::default()).await.unwrap();
+        let own = list.iter().find(|b| b.board.id == f.board_id).unwrap();
+        assert_eq!(own.board.repo_path.as_deref(), Some("C:/alt"));
+        assert_eq!(own.repo_source, Some(BoardRepoSource::Legacy));
+        let other = list.iter().find(|b| b.board.id == foreign.id).unwrap();
+        assert_eq!(other.board.repo_path, None);
+        assert_eq!(other.repo_source, None);
+        assert_eq!(f.boards.require(foreign.id).await.unwrap().repo_path, None);
+
+        let owned = f.boards.owned(USER_ID).await.unwrap();
+        assert_eq!(owned.len(), 1);
+        assert_eq!(owned[0].id, f.board_id);
+        assert_eq!(owned[0].repo_path.as_deref(), Some("C:/alt"));
+
+        // Umbenennen lässt den DB-Wert stehen
+        f.boards.rename(f.board_id, "Neu").await.unwrap();
+        assert_eq!(
+            repo_path_in_db(&f, f.board_id).await.as_deref(),
+            Some("C:/alt")
+        );
+        f.boards.set_repo_path(f.board_id, None).await.unwrap();
+        assert_eq!(f.boards.require(f.board_id).await.unwrap().repo_path, None);
+    }
+
+    #[tokio::test]
+    async fn verweigert_das_loschen_mit_offenen_tickets_und_nennt_sie() {
+        let f = BoardFixture::create().await;
+        add(&f, 1, TicketStatus::Backlog).await;
+
+        let error = f
+            .boards
+            .delete(f.board_id, false, &f.actor)
+            .await
+            .unwrap_err();
+
+        assert_eq!(error.code(), Some("board-has-open-tickets"));
+        assert!(error.to_string().contains("ARC-0001"));
+    }
+
+    #[tokio::test]
+    async fn loscht_ein_board_mit_erledigten_tickets_und_protokolliert_jede_loschung() {
+        let f = BoardFixture::create().await;
+        add(&f, 1, TicketStatus::Done).await;
+        add(&f, 2, TicketStatus::NotNeeded).await;
+
+        let result = f.boards.delete(f.board_id, false, &f.actor).await.unwrap();
+
+        assert_eq!(result.deleted_tickets, ["ARC-0001", "ARC-0002"]);
+        assert!(f
+            .boards
+            .list(&BoardListFilter::default())
+            .await
+            .unwrap()
+            .is_empty());
+        let deletions = tx!(f.db, |u| { u.deletions().list().await }).await.unwrap();
+        assert_eq!(
+            deletions
+                .iter()
+                .map(|deletion| deletion.ticket_id.as_str())
+                .collect::<Vec<_>>(),
+            ["ARC-0001", "ARC-0002"]
+        );
+    }
+
+    #[tokio::test]
+    async fn loscht_mit_delete_open_alles_und_entfernt_verweise_samt_verlauf() {
+        let f = BoardFixture::create().await;
+        let other = f.boards.create("ARC", "Anderes", &f.actor).await.unwrap();
+        add(&f, 1, TicketStatus::Backlog).await;
+        add_ticket(&f, 2, TicketStatus::Backlog, &["ARC-0001"], other.id).await;
+
+        f.boards.delete(f.board_id, true, &f.actor).await.unwrap();
+
+        let kept = tx!(f.db, |u| { u.tickets().by_id("ARC-0002", false).await })
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(kept.depends_on.is_empty());
+        assert_eq!(kept.rev, 2);
+        let history = tx!(f.db, |u| { u.history().list("ARC-0002").await })
+            .await
+            .unwrap();
+        assert_eq!(history.len(), 1);
+        assert_eq!(history[0].field, "dependsOn");
+        assert_eq!(history[0].from.as_deref(), Some(r#"["ARC-0001"]"#));
+        assert_eq!(history[0].to.as_deref(), Some("[]"));
+        assert_eq!(history[0].note.as_deref(), Some("Voraussetzung gelöscht"));
+    }
+
+    #[tokio::test]
+    async fn lehnt_zu_lange_boardnamen_ab() {
+        let f = BoardFixture::create().await;
+        let zu_lang = "n".repeat(201);
+
+        assert_eq!(
+            f.boards
+                .create("ARC", &zu_lang, &f.actor)
+                .await
+                .unwrap_err()
+                .code(),
+            Some("value-too-long")
+        );
+        assert_eq!(
+            f.boards
+                .rename(f.board_id, &zu_lang)
+                .await
+                .unwrap_err()
+                .code(),
+            Some("value-too-long")
+        );
     }
 }

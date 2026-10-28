@@ -4,7 +4,9 @@
 
 use crate::board::basics::BoardActor;
 use crate::board::database::BoardUnitOfWork;
-use crate::board::question_types::{BoardQuestion, BoardQuestionHistoryEntry, BoardQuestionHistoryType};
+use crate::board::question_types::{
+    BoardQuestion, BoardQuestionHistoryEntry, BoardQuestionHistoryType,
+};
 use crate::error::{Error, Result};
 
 /// Das Nötigste eines Tickets für den Verlauf der Fragen (`Pick<Ticket, 'id' | 'title'>`)
@@ -55,7 +57,10 @@ impl QuestionTicketCleanup {
                     by_name: actor.name.clone(),
                     by_kind: None,
                     entry_type: BoardQuestionHistoryType::TicketDeleted,
-                    text: format!("Ticket {} „{}“ gelöscht, Bezug entfernt.", ticket.id, ticket.title),
+                    text: format!(
+                        "Ticket {} „{}“ gelöscht, Bezug entfernt.",
+                        ticket.id, ticket.title
+                    ),
                 }])
                 .await?;
         }

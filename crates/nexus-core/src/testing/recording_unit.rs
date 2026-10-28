@@ -14,9 +14,7 @@ use crate::board::database::{
     ProjectRepository, TicketRepository, TicketSessionRepository, TicketStepRepository,
     UserRepository,
 };
-use crate::board::question_types::{
-    BoardQuestion, BoardQuestionHistoryEntry,
-};
+use crate::board::question_types::{BoardQuestion, BoardQuestionHistoryEntry};
 use crate::error::Result;
 use crate::testing::fixtures::question_fixture;
 

@@ -130,7 +130,9 @@ impl TicketOrdering {
         ticket: impl Fn(&T) -> &Ticket,
         waiting_ids: &HashSet<String>,
     ) {
-        items.sort_by(|a, b| Self::key(ticket(a), waiting_ids).cmp(&Self::key(ticket(b), waiting_ids)));
+        items.sort_by(|a, b| {
+            Self::key(ticket(a), waiting_ids).cmp(&Self::key(ticket(b), waiting_ids))
+        });
     }
 
     /// Schlüssel der Sortierung; die ID entscheidet zuletzt, damit die Reihenfolge eindeutig
@@ -182,14 +184,8 @@ mod tests {
     #[test]
     fn ordnet_wartende_tickets_der_spalte_wartet_zu() {
         let ticket = t(1, TicketStatus::Planned, Priority::Normal);
-        assert_eq!(
-            TicketOrdering::column(&ticket, true),
-            BoardColumn::Waiting
-        );
-        assert_eq!(
-            TicketOrdering::column(&ticket, false),
-            BoardColumn::Planned
-        );
+        assert_eq!(TicketOrdering::column(&ticket, true), BoardColumn::Waiting);
+        assert_eq!(TicketOrdering::column(&ticket, false), BoardColumn::Planned);
     }
 
     #[test]
@@ -210,10 +206,7 @@ mod tests {
         assert_eq!(COLUMN_ORDER.map(|column| column.label())[1], "Wartet");
         assert_eq!(BoardColumn::NotNeeded.label(), "Nicht mehr nötig");
         assert_eq!(BoardColumn::Waiting.status(), None);
-        assert_eq!(
-            BoardColumn::Done.status(),
-            Some(TicketStatus::Done)
-        );
+        assert_eq!(BoardColumn::Done.status(), Some(TicketStatus::Done));
         assert_eq!(
             serde_json::to_string(&BoardColumn::InPlanning).unwrap(),
             r#""in_planning""#

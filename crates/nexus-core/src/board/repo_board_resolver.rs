@@ -66,9 +66,9 @@ impl RepoBoardResolver {
             })
             .collect();
         hits.sort_by_key(|board| board.id);
-        let own = hits.iter().position(|board| {
-            board.owner_id == me.user_id && Some(board.id) == me.active_board
-        });
+        let own = hits
+            .iter()
+            .position(|board| board.owner_id == me.user_id && Some(board.id) == me.active_board);
         let index = own
             .or_else(|| hits.iter().position(|board| board.owner_id == me.user_id))
             .or(if hits.is_empty() { None } else { Some(0) })?;
@@ -135,11 +135,13 @@ mod tests {
         let linux = RepoBoardResolver::for_windows(false);
 
         assert_eq!(
-            win.pick(boards(), "C:/Repo", &me(ME, Some(4))).map(|b| b.id),
+            win.pick(boards(), "C:/Repo", &me(ME, Some(4)))
+                .map(|b| b.id),
             Some(4)
         );
         assert_eq!(
-            win.pick(boards(), "C:/Repo", &me(ME, Some(9))).map(|b| b.id),
+            win.pick(boards(), "C:/Repo", &me(ME, Some(9)))
+                .map(|b| b.id),
             Some(3)
         );
         assert_eq!(
@@ -159,5 +161,113 @@ mod tests {
                 &me(ME, None)
             )
             .is_none());
+    }
+}
+
+#[cfg(test)]
+mod dienst_tests {
+    use super::RepoBoardOwner;
+    use crate::board::database::{BoardDatabase, NewBoard};
+    use crate::board::types::BoardUser;
+    use crate::testing::BoardFixture;
+    use crate::tx;
+
+    const OTHER: &str = "22222222-2222-2222-2222-222222222222";
+
+    /// Wer fragt: der Benutzer der Umgebung ohne aktives Board
+    fn me(f: &BoardFixture) -> RepoBoardOwner {
+        RepoBoardOwner {
+            user_id: f.actor.user_id.clone(),
+            active_board: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn findet_das_board_uber_den_dienst_und_meldet_ein_fehlendes_verstandlich() {
+        let f = BoardFixture::create().await;
+        f.boards
+            .set_repo_path(f.board_id, Some("C:\\Projects\\Demo"))
+            .await
+            .unwrap();
+
+        assert_eq!(
+            f.boards
+                .for_repo("C:/Projects/Demo", &me(&f))
+                .await
+                .unwrap()
+                .map(|board| board.id),
+            Some(f.board_id)
+        );
+        assert!(f
+            .boards
+            .for_repo("C:/Nirgends", &me(&f))
+            .await
+            .unwrap()
+            .is_none());
+        let error = f
+            .boards
+            .require_for_repo("C:/Nirgends", &me(&f))
+            .await
+            .unwrap_err();
+        assert_eq!(error.code(), Some("board-repo-unknown"));
+        assert!(error.to_string().contains("harness board boards repo"));
+    }
+
+    #[tokio::test]
+    async fn ordnet_uber_den_eigenen_lokalen_pfad_zu_nie_uber_den_db_wert_eines_fremden_boards() {
+        let f = BoardFixture::create().await;
+        let project_id = f.project_id().await;
+        let foreign = tx!(f.db, |u| {
+            u.users()
+                .upsert(&BoardUser {
+                    id: OTHER.into(),
+                    name: "Kollege".into(),
+                })
+                .await?;
+            u.boards()
+                .insert(&NewBoard {
+                    project_id,
+                    owner_id: OTHER.into(),
+                    name: "Fremd".into(),
+                    repo_path: Some("C:/Projects/Demo".into()),
+                    created_at: String::new(),
+                })
+                .await
+        })
+        .await
+        .unwrap();
+
+        assert!(f
+            .boards
+            .for_repo("C:/Projects/Demo", &me(&f))
+            .await
+            .unwrap()
+            .is_none());
+
+        f.boards
+            .set_repo_path(foreign.id, Some("C:/Projects/Demo"))
+            .await
+            .unwrap();
+        assert_eq!(
+            f.boards
+                .for_repo("C:/Projects/Demo", &me(&f))
+                .await
+                .unwrap()
+                .map(|board| board.id),
+            Some(foreign.id)
+        );
+
+        f.boards
+            .set_repo_path(f.board_id, Some("C:/Projects/Demo"))
+            .await
+            .unwrap();
+        assert_eq!(
+            f.boards
+                .for_repo("C:/Projects/Demo", &me(&f))
+                .await
+                .unwrap()
+                .map(|board| board.id),
+            Some(f.board_id)
+        );
     }
 }

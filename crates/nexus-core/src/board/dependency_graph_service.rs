@@ -220,3 +220,176 @@ impl<D: BoardDatabase> DependencyGraphService<D> {
         .await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::board::types::Ticket;
+    use crate::testing::BoardFixture;
+
+    /// Board „Sprint“ mit A ← B, Board „Zweites“ mit C ← B; B und C gehören zur Spec 001-login.
+    /// Die Tickets kommen unmittelbar aus den Repositories, weil `TicketService::create` erst
+    /// Teil 2 des Tickets P3-2 bringt.
+    async fn setup() -> (BoardFixture, i32) {
+        let f = BoardFixture::create().await;
+        let second = f
+            .boards
+            .create("ARC", "Zweites", &f.actor)
+            .await
+            .unwrap()
+            .id;
+        f.insert_ticket(&Ticket {
+            title: "A".into(),
+            ..f.new_ticket(1).await
+        })
+        .await;
+        f.insert_ticket(&Ticket {
+            title: "B".into(),
+            depends_on: vec!["ARC-0001".into()],
+            spec: Some("001-login".into()),
+            ..f.new_ticket(2).await
+        })
+        .await;
+        f.insert_ticket(&Ticket {
+            title: "C".into(),
+            board_id: second,
+            depends_on: vec!["ARC-0002".into()],
+            spec: Some("001-login".into()),
+            ..f.new_ticket(3).await
+        })
+        .await;
+        f.insert_ticket(&Ticket {
+            title: "Allein".into(),
+            ..f.new_ticket(4).await
+        })
+        .await;
+        (f, second)
+    }
+
+    #[tokio::test]
+    async fn liefert_den_graph_eines_tickets_uber_boards_mit_board_namen() {
+        let (f, second) = setup().await;
+
+        let g = f
+            .graph
+            .build(&GraphRequest::Ticket { id: "arc-2".into() }, None)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            g.scope,
+            GraphRequest::Ticket {
+                id: "ARC-0002".into()
+            }
+        );
+        assert_eq!(
+            g.nodes
+                .iter()
+                .map(|node| (node.node.id.as_str(), node.board_name.as_str()))
+                .collect::<Vec<_>>(),
+            [
+                ("ARC-0001", "Sprint"),
+                ("ARC-0002", "Sprint"),
+                ("ARC-0003", "Zweites"),
+            ]
+        );
+        assert_eq!(g.nodes[2].node.board_id, second);
+        assert_eq!(g.critical_path, ["ARC-0001", "ARC-0002"]);
+    }
+
+    #[tokio::test]
+    async fn lost_den_projekt_key_der_spec_auf_und_zahlt_kantenlose_board_tickets() {
+        let (f, _second) = setup().await;
+
+        let spec = f
+            .graph
+            .build(
+                &GraphRequest::Spec {
+                    project: "arc".into(),
+                    spec: "001-login".into(),
+                },
+                None,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(
+            spec.scope,
+            GraphRequest::Spec {
+                project: "ARC".into(),
+                spec: "001-login".into()
+            }
+        );
+        assert_eq!(
+            spec.nodes
+                .iter()
+                .map(|node| (node.node.id.as_str(), node.node.external))
+                .collect::<Vec<_>>(),
+            [("ARC-0001", true), ("ARC-0002", false), ("ARC-0003", false),]
+        );
+
+        let board = f
+            .graph
+            .build(
+                &GraphRequest::Board {
+                    board_id: f.board_id,
+                },
+                None,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(board.hidden_without_edges, 1);
+        assert_eq!(
+            board
+                .nodes
+                .iter()
+                .map(|node| node.node.id.as_str())
+                .collect::<Vec<_>>(),
+            ["ARC-0001", "ARC-0002", "ARC-0003"]
+        );
+    }
+
+    #[tokio::test]
+    async fn meldet_unbekannte_tickets_projekte_und_boards() {
+        let (f, _second) = setup().await;
+
+        for (request, code) in [
+            (
+                GraphRequest::Ticket {
+                    id: "ARC-0099".into(),
+                },
+                "ticket-not-found",
+            ),
+            (
+                GraphRequest::Spec {
+                    project: "XYZ".into(),
+                    spec: "x".into(),
+                },
+                "project-not-found",
+            ),
+            (GraphRequest::Board { board_id: 999 }, "board-not-found"),
+        ] {
+            let error = f.graph.build(&request, None).await.unwrap_err();
+            assert_eq!(error.code(), Some(code), "{request:?} müsste {code} melden");
+        }
+    }
+
+    #[tokio::test]
+    async fn zahlt_den_fortschritt_der_specs_eines_boards_projektweit() {
+        let (f, second) = setup().await;
+        let expected = [SpecProgressCount {
+            spec: "001-login".into(),
+            total: 2,
+            waiting: 2,
+            ..SpecProgressCount::default()
+        }];
+
+        assert_eq!(f.graph.for_board(f.board_id).await.unwrap(), expected);
+        assert_eq!(f.graph.for_board(second).await.unwrap(), expected);
+        assert_eq!(
+            f.graph.for_project(f.project_id().await).await.unwrap(),
+            expected
+        );
+    }
+}

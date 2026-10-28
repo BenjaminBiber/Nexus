@@ -45,10 +45,12 @@ impl SpecProgress {
             let Some(spec) = ticket.spec.as_ref().filter(|spec| !spec.is_empty()) else {
                 continue;
             };
-            let count = result.entry(spec.clone()).or_insert_with(|| SpecProgressCount {
-                spec: spec.clone(),
-                ..SpecProgressCount::default()
-            });
+            let count = result
+                .entry(spec.clone())
+                .or_insert_with(|| SpecProgressCount {
+                    spec: spec.clone(),
+                    ..SpecProgressCount::default()
+                });
             if ticket.status == TicketStatus::NotNeeded {
                 count.not_needed += 1;
                 continue;

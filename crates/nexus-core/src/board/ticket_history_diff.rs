@@ -52,11 +52,7 @@ impl TicketHistoryDiff {
                 text(before.priority.as_str()),
                 text(after.priority.as_str()),
             ),
-            (
-                "assignee",
-                before.assignee.clone(),
-                after.assignee.clone(),
-            ),
+            ("assignee", before.assignee.clone(), after.assignee.clone()),
             (
                 "needsPlanning",
                 text(flag(before.needs_planning)),
@@ -94,11 +90,7 @@ impl TicketHistoryDiff {
                 after.spec_task.clone(),
             ),
             ("branch", before.branch.clone(), after.branch.clone()),
-            (
-                "worktree",
-                before.worktree.clone(),
-                after.worktree.clone(),
-            ),
+            ("worktree", before.worktree.clone(), after.worktree.clone()),
             (
                 "targetBranch",
                 before.target_branch.clone(),

@@ -213,3 +213,143 @@ impl<D: BoardDatabase> BoardViewService<D> {
         .await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::board::basics::{Priority, TicketStatus};
+    use crate::board::ticket_ordering::BoardColumn;
+    use crate::board::types::Ticket;
+    use crate::testing::BoardFixture;
+
+    /// Die vier Tickets des TypeScript-Tests, direkt über die Repositories angelegt
+    async fn seed(f: &BoardFixture) {
+        let a = f.new_ticket(1).await;
+        f.insert_ticket(&a).await;
+        f.insert_ticket(&Ticket {
+            title: "Dringend".into(),
+            priority: Priority::Urgent,
+            ..f.new_ticket(2).await
+        })
+        .await;
+        f.insert_ticket(&Ticket {
+            title: "Wartet".into(),
+            depends_on: vec!["ARC-0001".into()],
+            ..f.new_ticket(3).await
+        })
+        .await;
+        f.insert_ticket(&Ticket {
+            title: "Läuft".into(),
+            status: TicketStatus::InProgress,
+            ..f.new_ticket(4).await
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    async fn liefert_alle_spalten_in_fester_reihenfolge_mit_sortierten_tickets_und_kommentarzahl() {
+        let f = BoardFixture::create().await;
+        seed(&f).await;
+        f.comments
+            .add("ARC-0001", "Hallo", &f.actor, false)
+            .await
+            .unwrap();
+
+        let view = f.views.get(f.board_id).await.unwrap();
+
+        assert_eq!(view.board_id, f.board_id);
+        assert_eq!(
+            view.columns
+                .iter()
+                .map(|column| (column.id.as_str(), column.title.as_str()))
+                .collect::<Vec<_>>(),
+            [
+                ("backlog", "Backlog"),
+                ("waiting", "Wartet"),
+                ("in_planning", "In Planung"),
+                ("planned", "Geplant"),
+                ("in_progress", "In Arbeit"),
+                ("blocked", "Blockiert"),
+                ("done", "Erledigt"),
+                ("not_needed", "Nicht mehr nötig"),
+            ]
+        );
+        assert_eq!(
+            view.columns[0]
+                .tickets
+                .iter()
+                .map(|card| (card.id.as_str(), card.comment_count))
+                .collect::<Vec<_>>(),
+            [("ARC-0002", 0), ("ARC-0001", 1)]
+        );
+        assert_eq!(view.columns[1].tickets.len(), 1);
+        let waiting = &view.columns[1].tickets[0];
+        assert_eq!(waiting.id, "ARC-0003");
+        assert!(waiting.waiting);
+        assert_eq!(waiting.column, BoardColumn::Waiting);
+        assert_eq!(waiting.depends_open, ["ARC-0001"]);
+        assert_eq!(waiting.comment_count, 0);
+        assert_eq!(
+            view.columns[4]
+                .tickets
+                .iter()
+                .map(|card| card.id.as_str())
+                .collect::<Vec<_>>(),
+            ["ARC-0004"]
+        );
+        assert!(view.columns[2].tickets.is_empty());
+    }
+
+    #[tokio::test]
+    async fn sendet_statt_der_langen_texte_nur_ob_sie_vorhanden_sind() {
+        let f = BoardFixture::create().await;
+        f.insert_ticket(&Ticket {
+            title: "Mit Text".into(),
+            description: "Lang".into(),
+            acceptance: "Geht".into(),
+            ..f.new_ticket(1).await
+        })
+        .await;
+
+        let view = f.views.get(f.board_id).await.unwrap();
+        let card = view
+            .columns
+            .iter()
+            .flat_map(|column| column.tickets.iter())
+            .next()
+            .unwrap();
+
+        assert!(card.has_description);
+        assert!(card.has_acceptance);
+        assert!(!card.has_plan);
+        assert!(!card.has_handbook);
+        assert!(!card.has_diagram);
+        // Die langen Texte selbst stehen nicht in der Karte
+        let json = serde_json::to_value(card).unwrap();
+        for feld in ["description", "acceptance", "plan", "handbook", "diagram"] {
+            assert!(
+                json.get(feld).is_none(),
+                "{feld} gehört nicht auf die Karte"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn zeigt_nur_tickets_des_boards_und_meldet_ein_unbekanntes_board() {
+        let f = BoardFixture::create().await;
+        let other = f.boards.create("ARC", "Anderes", &f.actor).await.unwrap();
+        f.insert_ticket(&Ticket {
+            title: "Fremd".into(),
+            board_id: other.id,
+            ..f.new_ticket(1).await
+        })
+        .await;
+
+        let view = f.views.get(f.board_id).await.unwrap();
+
+        assert!(view.columns.iter().all(|column| column.tickets.is_empty()));
+        assert_eq!(
+            f.views.get(999).await.unwrap_err().code(),
+            Some("board-not-found")
+        );
+    }
+}

@@ -183,17 +183,23 @@ mod tests {
 
     #[test]
     fn lehnt_selbstbezug_ab() {
-        let error =
-            DependencyRules::validate("ARC-0001", &list(&["ARC-0001"]), &graph(&[("ARC-0001", &[])]))
-                .unwrap_err();
+        let error = DependencyRules::validate(
+            "ARC-0001",
+            &list(&["ARC-0001"]),
+            &graph(&[("ARC-0001", &[])]),
+        )
+        .unwrap_err();
         assert_eq!(error.code(), Some("dependency-self"));
     }
 
     #[test]
     fn lehnt_unbekannte_ids_ab() {
-        let error =
-            DependencyRules::validate("ARC-0001", &list(&["ARC-0099"]), &graph(&[("ARC-0001", &[])]))
-                .unwrap_err();
+        let error = DependencyRules::validate(
+            "ARC-0001",
+            &list(&["ARC-0099"]),
+            &graph(&[("ARC-0001", &[])]),
+        )
+        .unwrap_err();
         assert_eq!(error.code(), Some("dependency-unknown"));
     }
 

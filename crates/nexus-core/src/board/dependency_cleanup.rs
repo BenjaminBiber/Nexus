@@ -28,11 +28,10 @@ impl DependencyCleanup {
             }
             // remove_dependency_on hat den Verweis schon entfernt; „before“ stellt den alten
             // Stand für den Verlauf her
-            let current = u
-                .tickets()
-                .by_id(ticket_id, true)
-                .await?
-                .ok_or_else(|| Error::unexpected_message(format!("Ticket {ticket_id} fehlt")))?;
+            let current =
+                u.tickets().by_id(ticket_id, true).await?.ok_or_else(|| {
+                    Error::unexpected_message(format!("Ticket {ticket_id} fehlt"))
+                })?;
             let mut before = current.clone();
             before.depends_on.push(removed_id.to_string());
             let after = Ticket {

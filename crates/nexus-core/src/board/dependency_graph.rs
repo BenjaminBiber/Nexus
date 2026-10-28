@@ -157,7 +157,10 @@ impl DependencyGraph {
                 .iter()
                 .flat_map(|edge| [edge.from.as_str(), edge.to.as_str()])
                 .collect();
-            isolated = visible.iter().filter(|id| !linked.contains(id.as_str())).count();
+            isolated = visible
+                .iter()
+                .filter(|id| !linked.contains(id.as_str()))
+                .count();
             visible.retain(|id| linked.contains(id.as_str()));
         }
 
@@ -251,8 +254,10 @@ impl DependencyGraph {
         let open = |id: &str| !CLOSED.contains(&by_id[id].status);
         let mut preds: HashMap<&str, Vec<&str>> = HashMap::new();
         let mut succs: HashMap<&str, Vec<&str>> = HashMap::new();
-        let mut indegree: HashMap<&str, usize> =
-            tickets.iter().map(|ticket| (ticket.id.as_str(), 0)).collect();
+        let mut indegree: HashMap<&str, usize> = tickets
+            .iter()
+            .map(|ticket| (ticket.id.as_str(), 0))
+            .collect();
         for edge in edges {
             let (from, to) = (edge.from.as_str(), edge.to.as_str());
             if !by_id.contains_key(from) || !by_id.contains_key(to) {
@@ -334,8 +339,7 @@ impl DependencyGraph {
         let mut result: Vec<String> = tickets
             .iter()
             .filter(|ticket| {
-                ticket.depends_on.iter().any(|dep| dep == id)
-                    && UNLOCKABLE.contains(&ticket.status)
+                ticket.depends_on.iter().any(|dep| dep == id) && UNLOCKABLE.contains(&ticket.status)
             })
             .filter(|ticket| {
                 let open = DependencyRules::open_dependencies(ticket, by_id);
@@ -495,10 +499,7 @@ mod tests {
             GraphOptions::default(),
         );
 
-        assert_eq!(
-            ids(&g),
-            ["ARC-0001", "ARC-0002", "ARC-0003", "ARC-0004"]
-        );
+        assert_eq!(ids(&g), ["ARC-0001", "ARC-0002", "ARC-0003", "ARC-0004"]);
         assert_eq!(
             g.edges,
             [
@@ -548,10 +549,7 @@ mod tests {
             GraphOptions::default(),
         );
 
-        assert_eq!(
-            ids(&g),
-            ["ARC-0001", "ARC-0002", "ARC-0003", "ARC-0004"]
-        );
+        assert_eq!(ids(&g), ["ARC-0001", "ARC-0002", "ARC-0003", "ARC-0004"]);
         let mut external: Vec<&str> = g
             .nodes
             .iter()

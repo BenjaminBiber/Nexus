@@ -14,9 +14,10 @@ use crate::board::dependency_graph_service::DependencyGraphService;
 use crate::board::in_memory::InMemoryBoardDatabase;
 use crate::board::project_service::ProjectService;
 use crate::board::repo_paths::{BoardRepoPaths, MemoryBoardRepoStore};
+use crate::board::types::Ticket;
 use crate::board::view_service::BoardViewService;
 use crate::clock::Clock;
-use crate::testing::fixtures::{user, NOW, USER_ID};
+use crate::testing::fixtures::{ticket_fixture, user, NOW, USER_ID};
 
 /// Die Dienste des Boards auf einer Datenbank im Speicher.
 pub struct BoardFixture {
@@ -87,6 +88,35 @@ impl BoardFixture {
             .expect("Board anlegen geht immer")
             .id;
         fixture
+    }
+
+    /// Die ID des Projekts ARC
+    pub async fn project_id(&self) -> i32 {
+        crate::tx!(self.db, |u| { u.projects().by_key("ARC").await })
+            .await
+            .expect("Projekte lesen geht immer")
+            .expect("Projekt ARC gehört zum Grundbestand")
+            .id
+    }
+
+    /// Eine Vorlage für ein Ticket des Boards „Sprint“; Abweichungen setzt der Aufrufer mit
+    /// der Struktur-Aktualisierung
+    pub async fn new_ticket(&self, number: i32) -> Ticket {
+        ticket_fixture(
+            &format!("ARC-{number:04}"),
+            self.project_id().await,
+            self.board_id,
+            number,
+        )
+    }
+
+    /// Legt ein Ticket unmittelbar über die Repositories an. `TicketService::create` bringt
+    /// erst Teil 2 des Tickets P3-2; hier zählt nur, dass das Ticket in der Datenbank steht.
+    pub async fn insert_ticket(&self, ticket: &Ticket) {
+        let ticket = ticket.clone();
+        crate::tx!(self.db, [ticket], |u| { u.tickets().insert(&ticket).await })
+            .await
+            .expect("Ticket anlegen geht immer");
     }
 
     /// Stellt die Uhr um Minuten vor
