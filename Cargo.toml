@@ -1,0 +1,39 @@
+# Cargo-Workspace von Nexus: Fachkern, Datenzugriff und die Tauri-Desktop-App teilen sich
+# ein Cargo.lock und ein target/. Neue Rust-Crates werden hier als Mitglied eingetragen.
+[workspace]
+resolver = "2"
+members = ["crates/nexus-core", "crates/nexus-db", "apps/desktop/src-tauri"]
+
+# Gemeinsame Angaben, die jedes Mitglied mit `*.workspace = true` erbt.
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+rust-version = "1.99"
+
+# Gemeinsame Lints für die Nexus-Crates; die Desktop-App bleibt davon unberührt,
+# weil Tauri dort eigene Anforderungen mitbringt.
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+# Versionen aller Abhängigkeiten stehen nur hier; die Mitglieder nennen mit
+# `{ workspace = true }` nur noch, was sie wirklich brauchen.
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+async-trait = "0.1"
+futures = "0.3"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net", "fs", "process"] }
+regex = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+uuid = { version = "1", features = ["v4"] }
+ts-rs = "12"
+rusqlite = { version = "0.41", features = ["bundled", "functions"] }
+# bb8-tiberius 0.16 verlangt tiberius 0.12 und bb8 0.9; die drei Versionen gehören zusammen.
+tiberius = { version = "0.12", default-features = false, features = ["rustls", "tds73", "chrono"] }
+bb8 = "0.9"
+bb8-tiberius = "0.16"
+tokio-util = { version = "0.7", features = ["compat"] }
+tempfile = "3"
+nexus-core = { path = "crates/nexus-core" }
+nexus-db = { path = "crates/nexus-db" }

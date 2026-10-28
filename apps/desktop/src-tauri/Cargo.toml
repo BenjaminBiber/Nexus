@@ -1,8 +1,10 @@
+# Mitglied des Cargo-Workspace im Wurzelordner; Version und Edition kommen von dort.
 [package]
 name = "nexus-desktop"
-version = "0.1.0"
 description = "Nexus Desktop"
-edition = "2021"
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
 
 # Die Bibliothek trägt den Einstieg, damit das Binary auf allen Plattformen gleich bleibt.
 [lib]
