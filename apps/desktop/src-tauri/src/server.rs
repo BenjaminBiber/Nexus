@@ -199,11 +199,15 @@ struct OwnServer {
     home: PathBuf,
 }
 
-// Was die App beim Beenden wieder aufräumen muss und was die Startseite noch zeigen soll
+// Was die App beim Beenden wieder aufräumen muss, was die Startseite noch zeigen soll und
+// welcher Deep-Link noch auf den Server wartet
 #[derive(Default)]
 pub struct ServerState {
     own: Mutex<Option<OwnServer>>,
     message: Mutex<Option<String>>,
+    // Pfad eines Deep-Links, der kam, bevor das Fenster die Oberfläche geladen hatte
+    pending: Mutex<Option<String>>,
+    ready: std::sync::atomic::AtomicBool,
 }
 
 impl ServerState {
@@ -230,6 +234,18 @@ impl ServerState {
     // Die gemerkte Meldung, falls es eine gibt
     fn message(&self) -> Option<String> {
         self.message.lock().ok().and_then(|slot| slot.clone())
+    }
+
+    // Merkt den Pfad eines Deep-Links, bis die Oberfläche erreichbar ist
+    fn merke_pfad(&self, path: &str) {
+        if let Ok(mut slot) = self.pending.lock() {
+            *slot = Some(path.to_string());
+        }
+    }
+
+    // Gibt den ausstehenden Pfad heraus und vergisst ihn
+    fn nimm_pfad(&self) -> Option<String> {
+        self.pending.lock().ok().and_then(|mut slot| slot.take())
     }
 }
 
@@ -299,7 +315,42 @@ async fn connect<R: Runtime>(app: &AppHandle<R>) -> Result<(), ServerError> {
         PortState::Free => start(app, &connector).await?,
         PortState::Foreign => return Err(ServerError::PortForeign(connector.port())),
     }
-    navigate(app, &connector.url())
+    // Ab hier nimmt die Oberfläche Deep-Links selbst an; ein vorher gemerkter Pfad kommt jetzt dran
+    let pfad = match app.try_state::<ServerState>() {
+        Some(state) => {
+            state
+                .ready
+                .store(true, std::sync::atomic::Ordering::Relaxed);
+            state.nimm_pfad()
+        }
+        None => None,
+    };
+    navigate(app, &url_mit_pfad(&connector.url(), pfad.as_deref()))
+}
+
+// Adresse der Oberfläche mit einem Pfad dahinter; ohne Pfad bleibt es die Startadresse
+pub fn url_mit_pfad(base: &str, path: Option<&str>) -> String {
+    match path {
+        Some(path) => format!("{}{}", base.trim_end_matches('/'), path),
+        None => base.to_string(),
+    }
+}
+
+// Schickt das Fenster auf einen Pfad der Oberfläche. Läuft der Server noch nicht, wird der Pfad
+// gemerkt und nach dem ersten Laden angewendet.
+pub fn open_path<R: Runtime>(app: &AppHandle<R>, path: &str) {
+    let Some(state) = app.try_state::<ServerState>() else {
+        return;
+    };
+    if !state.ready.load(std::sync::atomic::Ordering::Relaxed) {
+        log::info!("Der Server ist noch nicht bereit; {path} wird gemerkt.");
+        state.merke_pfad(path);
+        return;
+    }
+    let url = url_mit_pfad(&crate::tray::basis_url(), Some(path));
+    if let Err(error) = navigate(app, &url) {
+        log::warn!("{url} ließ sich nicht öffnen: {error}");
+    }
 }
 
 // Startet den gebündelten Sidecar und wartet, bis er antwortet
@@ -640,6 +691,23 @@ mod tests {
         .unwrap();
         assert_eq!(connector.url(), "http://127.0.0.1:4812/");
         assert_eq!(connector.home(), Path::new("/tmp/eigener-ordner"));
+    }
+
+    // Ein Deep-Link hängt seinen Pfad an die Adresse der Oberfläche, ohne doppelten Schrägstrich
+    #[test]
+    fn adresse_mit_pfad() {
+        assert_eq!(
+            url_mit_pfad("http://127.0.0.1:4710/", Some("/open/ticket/ARC-0042")),
+            "http://127.0.0.1:4710/open/ticket/ARC-0042"
+        );
+        assert_eq!(
+            url_mit_pfad("http://127.0.0.1:4710", Some("/open/question/ARC-F0001")),
+            "http://127.0.0.1:4710/open/question/ARC-F0001"
+        );
+        assert_eq!(
+            url_mit_pfad("http://127.0.0.1:4710/", None),
+            "http://127.0.0.1:4710/"
+        );
     }
 
     // Die Meldung darf die Seite nicht zerschießen, auch wenn sie Anführungszeichen enthält
