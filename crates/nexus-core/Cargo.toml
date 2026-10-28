@@ -6,10 +6,23 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+getrandom = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_yaml_ng = { workspace = true }
+sha1_smol = { workspace = true }
 thiserror = { workspace = true }
+
+# Prüft, ob ein fremder Prozess noch läuft (verwaiste Sperrdatei), ohne eigenes `unsafe`
+[target.'cfg(unix)'.dependencies]
+nix = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+sysinfo = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
 
 [lints]
 workspace = true
