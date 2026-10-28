@@ -3,7 +3,7 @@ import { join, relative, sep } from 'node:path';
 import { stepKinds } from './StepKinds.mjs';
 
 const SCENARIO_KEYS = new Set(['title', 'platforms', 'env', 'fixtures', 'steps']);
-const FIXTURE_KEYS = new Set(['repos', 'boardConfig', 'homeFiles']);
+const FIXTURE_KEYS = new Set(['repos', 'boardConfig', 'claudeEnvFile', 'homeFiles']);
 const REPO_KEYS = new Set(['name', 'git', 'harnessInit', 'files']);
 // Felder, die jede Schritt-Art hat; die Art nennt ihre eigenen in `keys`
 const STEP_KEYS = new Set(['name', 'kind', 'save', 'compare', 'ignore', 'record']);
@@ -106,14 +106,15 @@ export class ScenarioLoader {
     return { ...value };
   }
 
-  // Vorbereitungen vor den Schritten: Repos, Dateien im Home und Board-Konfiguration
+  // Vorbereitungen vor den Schritten: Repos, Board-Konfiguration, Umgebungsdatei der Session und Dateien im Home
   fixtures(value, fail) {
-    if (value === undefined) return { repos: [], boardConfig: null, homeFiles: {} };
+    if (value === undefined) return { repos: [], boardConfig: null, claudeEnvFile: false, homeFiles: {} };
     if (value === null || typeof value !== 'object' || Array.isArray(value)) fail('fixtures muss ein Objekt sein.');
     this.unknown(value, FIXTURE_KEYS, ' in fixtures', fail);
     if (value.boardConfig !== undefined && !BOARD_CONFIGS.has(value.boardConfig)) {
       fail(`fixtures.boardConfig erlaubt nur ${[...BOARD_CONFIGS].join(', ')}.`);
     }
+    if (value.claudeEnvFile !== undefined && typeof value.claudeEnvFile !== 'boolean') fail('fixtures.claudeEnvFile muss true oder false sein.');
     if (value.repos !== undefined && !Array.isArray(value.repos)) fail('fixtures.repos muss eine Liste sein.');
     const repos = (value.repos ?? []).map((repo, index) => this.repo(repo, index, fail));
     const names = new Set();
@@ -121,7 +122,12 @@ export class ScenarioLoader {
       if (names.has(repo.name)) fail(`fixtures.repos enthält den Namen ${repo.name} zweimal.`);
       names.add(repo.name);
     }
-    return { repos, boardConfig: value.boardConfig ?? null, homeFiles: this.homeFiles(value.homeFiles, fail) };
+    return {
+      repos,
+      boardConfig: value.boardConfig ?? null,
+      claudeEnvFile: value.claudeEnvFile ?? false,
+      homeFiles: this.homeFiles(value.homeFiles, fail),
+    };
   }
 
   // Dateien, die vor dem Start des Servers im HARNESS_HOME liegen (Zustand, Läufe, Protokolle des Dispatchers)

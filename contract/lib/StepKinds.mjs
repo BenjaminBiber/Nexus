@@ -1,3 +1,4 @@
+import { CliStep } from './CliStep.mjs';
 import { HttpStep } from './HttpStep.mjs';
 import { HttpStubStep } from './HttpStubStep.mjs';
 import { SseCloseStep, SseExpectStep, SseOpenStep } from './SseSteps.mjs';
@@ -8,6 +9,7 @@ import { SseCloseStep, SseExpectStep, SseOpenStep } from './SseSteps.mjs';
 // ohne `parse` bekommt sie den rohen Schritt als `raw` und prüft ihn beim Ausführen.
 export const stepKinds = {
   http: new HttpStep(),
+  cli: new CliStep(),
   httpStub: new HttpStubStep(),
   sseOpen: new SseOpenStep(),
   sseExpect: new SseExpectStep(),

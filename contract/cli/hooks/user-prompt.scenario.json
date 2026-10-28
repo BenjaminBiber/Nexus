@@ -1,0 +1,41 @@
+{
+  "title": "Hook user-prompt: Kommentare genau einmal einspeisen und Session benennen",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt anlegen", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board anlegen", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Ticket in Arbeit anlegen", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Login bauen", "status": "in_progress" }, "record": false },
+    { "name": "Projekt am Server anmelden", "method": "POST", "path": "/api/projects", "body": { "path": "{{REPO1}}" }, "save": { "pid": "json.id" }, "record": false },
+    {
+      "name": "Session beginnen",
+      "kind": "cli",
+      "args": ["hook", "session-start"],
+      "cwd": "{{REPO1}}",
+      "stdin": { "session_id": "s1", "cwd": "{{REPO1}}" },
+      "env": { "HARNESS_TICKET": "ARC-0001", "HARNESS_HOOK_DEADLINE_MS": "60000" },
+      "record": false
+    },
+    { "name": "Kommentar anhängen", "method": "POST", "path": "/api/db/tickets/ARC-0001/comments", "body": { "body": "Bitte Tastatur beachten" }, "record": false },
+    {
+      "name": "user-prompt mit neuem Kommentar",
+      "kind": "cli",
+      "args": ["hook", "user-prompt"],
+      "cwd": "{{REPO1}}",
+      "stdin": { "session_id": "s1", "cwd": "{{REPO1}}", "prompt": "Bitte den Login fertig machen" },
+      "env": { "HARNESS_TICKET": "ARC-0001", "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    },
+    { "name": "Sessions am Server", "method": "GET", "path": "/api/projects/{{pid}}/sessions" },
+    {
+      "name": "user-prompt ohne neuen Kommentar bleibt still",
+      "kind": "cli",
+      "args": ["hook", "user-prompt"],
+      "cwd": "{{REPO1}}",
+      "stdin": { "session_id": "s1", "cwd": "{{REPO1}}", "prompt": "weiter" },
+      "env": { "HARNESS_TICKET": "ARC-0001", "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    }
+  ]
+}

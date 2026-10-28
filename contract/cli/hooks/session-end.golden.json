@@ -1,0 +1,64 @@
+[
+  {
+    "name": "session-end",
+    "request": {
+      "args": [
+        "hook",
+        "session-end"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": {
+        "cwd": "<REPO1>",
+        "reason": "other",
+        "session_id": "s1"
+      }
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "Sessions am Server",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "cwd": "<REPO1>",
+          "displayState": "ended",
+          "endedAt": "<TIME>",
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": false,
+          "model": null,
+          "projectId": "<var:pid>",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "ended",
+          "subagents": [],
+          "ticketInfo": [
+            {
+              "id": "ARC-0001",
+              "status": "in_progress",
+              "title": "Login bauen"
+            }
+          ],
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "SE-001"
+        }
+      ],
+      "status": 200
+    }
+  }
+]

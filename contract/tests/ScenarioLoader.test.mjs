@@ -62,7 +62,7 @@ describe('ScenarioLoader', () => {
     it('ohne platforms und fixtures gilt: überall, ohne Vorbereitung', () => {
       const scenario = loader.parse(write('health', { title: 'Health', steps: [{ name: 'health', method: 'GET', path: '/api/health' }] }));
       expect(scenario.platforms).toEqual([]);
-      expect(scenario.fixtures).toEqual({ repos: [], boardConfig: null, homeFiles: {} });
+      expect(scenario.fixtures).toEqual({ repos: [], boardConfig: null, claudeEnvFile: false, homeFiles: {} });
       expect(ScenarioLoader.runsHere(scenario, 'win32')).toBe(true);
     });
 
@@ -118,6 +118,58 @@ describe('ScenarioLoader', () => {
     });
   });
 
+  describe('Schritte der Art cli', () => {
+    // Szenario mit einem CLI-Schritt
+    const cli = (step) => ({ title: 'Hook', steps: [{ name: 'hook', kind: 'cli', ...step }] });
+
+    it('liest Argumente, Arbeitsordner, Eingabe und Umgebung', () => {
+      const scenario = loader.parse(write('hook', cli({
+        args: ['hook', 'session-start'], cwd: '{{REPO1}}', stdin: { session_id: 's1' }, env: { HARNESS_TICKET: 'ARC-0001' },
+      })));
+      expect(scenario.steps[0]).toMatchObject({
+        kind: 'cli', args: ['hook', 'session-start'], cwd: '{{REPO1}}', stdin: { session_id: 's1' }, env: { HARNESS_TICKET: 'ARC-0001' },
+      });
+    });
+
+    it('nimmt eine Eingabe als Text, auch kaputtes JSON', () => {
+      const scenario = loader.parse(write('hook', cli({ args: ['hook', 'session-start'], stdin: '{kaputt' })));
+      expect(scenario.steps[0].stdin).toBe('{kaputt');
+    });
+
+    it('lässt cwd, stdin und env weg; dann gelten Home und keine Eingabe', () => {
+      const scenario = loader.parse(write('hook', cli({ args: ['--help'] })));
+      expect(scenario.steps[0]).toMatchObject({ cwd: undefined, stdin: undefined, env: {} });
+    });
+
+    it('meldet fehlende oder leere Argumente', () => {
+      failsWith(cli({}), /steps\[0\]\.args muss eine nicht leere Liste aus Texten sein/);
+      failsWith(cli({ args: [] }), /steps\[0\]\.args muss eine nicht leere Liste aus Texten sein/);
+      failsWith(cli({ args: ['hook', 7] }), /steps\[0\]\.args muss eine nicht leere Liste aus Texten sein/);
+    });
+
+    it('meldet eine Eingabe, die weder Objekt noch Text ist', () => {
+      failsWith(cli({ args: ['hook'], stdin: 7 }), /steps\[0\]\.stdin muss ein Objekt \(als JSON\) oder ein Text \(roh\) sein/);
+      failsWith(cli({ args: ['hook'], stdin: [] }), /steps\[0\]\.stdin muss ein Objekt \(als JSON\) oder ein Text \(roh\) sein/);
+    });
+
+    it('meldet eine Umgebungsvariable, die kein Text ist', () => {
+      failsWith(cli({ args: ['hook'], env: { HARNESS_TICKET: 1 } }), /steps\[0\]\.env\["HARNESS_TICKET"\] muss ein Text sein/);
+    });
+
+    it('meldet Felder der Art http an einem CLI-Schritt', () => {
+      failsWith(cli({ args: ['hook'], method: 'GET' }), /unbekannte Felder in steps\[0\]: method/);
+    });
+
+    it('nimmt die Fixture claudeEnvFile', () => {
+      const scenario = loader.parse(write('hook', { ...cli({ args: ['hook'] }), fixtures: { claudeEnvFile: true } }));
+      expect(scenario.fixtures.claudeEnvFile).toBe(true);
+    });
+
+    it('meldet ein claudeEnvFile, das nicht true oder false ist', () => {
+      failsWith({ ...cli({ args: ['hook'] }), fixtures: { claudeEnvFile: 'ja' } }, /fixtures\.claudeEnvFile muss true oder false sein/);
+    });
+  });
+
   describe('fehlerhafte Szenarien', () => {
     it('meldet ungültiges JSON mit dem Namen der Datei', () => {
       failsWith('{ kein json', /api\/basis\/kaputt\.scenario\.json: kein gültiges JSON/);
@@ -140,8 +192,8 @@ describe('ScenarioLoader', () => {
     });
 
     it('meldet eine unbekannte Schritt-Art', () => {
-      const alle = /steps\[0\]\.kind muss eine bekannte Art sein \(http, httpStub, sseClose, sseExpect, sseOpen\)/;
-      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'cli' }] }, alle);
+      const alle = /steps\[0\]\.kind muss eine bekannte Art sein \(cli, http, httpStub, sseClose, sseExpect, sseOpen\)/;
+      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'sse' }] }, alle);
       failsWith({ title: 'T', steps: [{ name: 'a', kind: 'sseWarten', stream: 's1' }] }, alle);
     });
 
