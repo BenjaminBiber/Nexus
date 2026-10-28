@@ -1,0 +1,1094 @@
+[
+  {
+    "name": "Zustand ohne Board und ohne Einstellung",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": null,
+        "boardInScope": false,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": false,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "message": "Dispatcher ist ausgeschaltet",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [],
+        "state": "off",
+        "tickets": [],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Projekt anlegen",
+    "request": {
+      "body": {
+        "key": "ARC",
+        "name": "Arches"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Board anlegen",
+    "request": {
+      "body": {
+        "name": "Sprint",
+        "project": "ARC"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Repo-Pfad des Boards setzen",
+    "request": {
+      "body": {
+        "repoPath": "<REPO1>"
+      },
+      "method": "PATCH",
+      "path": "/api/db/boards/1"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "Board aktivieren",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/boards/1/activate"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "Ticket anlegen",
+    "request": {
+      "body": {
+        "acceptance": "Login geht",
+        "labels": [
+          "auto"
+        ],
+        "needsPlanning": false,
+        "title": "Anmeldung bauen"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "zweites Ticket ohne Label anlegen",
+    "request": {
+      "body": {
+        "acceptance": "Logout geht",
+        "needsPlanning": false,
+        "title": "Abmeldung bauen"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Plan und Handbuch eintragen",
+    "request": {
+      "body": {
+        "handbook": "Tests mit vitest.",
+        "plan": "Formular bauen.",
+        "rev": 1
+      },
+      "method": "PATCH",
+      "path": "/api/db/tickets/ARC-0001"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "Ticket nach Geplant verschieben",
+    "request": {
+      "body": {
+        "rev": 2,
+        "status": "planned"
+      },
+      "method": "POST",
+      "path": "/api/db/tickets/ARC-0001/move"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "zweites Ticket nach Geplant verschieben",
+    "request": {
+      "body": {
+        "rev": 1,
+        "status": "planned"
+      },
+      "method": "POST",
+      "path": "/api/db/tickets/ARC-0002/move"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand mit bereitem Ticket",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": false,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "message": "Dispatcher ist ausgeschaltet",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [],
+        "state": "off",
+        "tickets": [
+          {
+            "id": "ARC-0001",
+            "reason": "bereit",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand eines ausdrücklich genannten Boards",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/status?boardId=1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": false,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "message": "Dispatcher ist ausgeschaltet",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [],
+        "state": "off",
+        "tickets": [
+          {
+            "id": "ARC-0001",
+            "reason": "bereit",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Dispatcher einschalten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/enable"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "message": "bereit · 0/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [],
+        "state": "idle",
+        "tickets": [
+          {
+            "id": "ARC-0001",
+            "reason": "bereit",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Dispatcher pausieren (message nennt die Uhrzeit des Endes und bleibt deshalb außen vor)",
+    "request": {
+      "body": {
+        "minutes": 15
+      },
+      "method": "POST",
+      "path": "/api/dispatch/pause"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "pausedUntil": "<TIME>",
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [],
+        "state": "paused",
+        "tickets": [
+          {
+            "id": "ARC-0001",
+            "reason": "bereit",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Pause aufheben",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/resume"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "message": "bereit · 0/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [],
+        "state": "idle",
+        "tickets": [
+          {
+            "id": "ARC-0001",
+            "reason": "bereit",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Durchlauf von Hand anstoßen",
+    "request": {
+      "body": {
+        "boardId": 1
+      },
+      "method": "POST",
+      "path": "/api/dispatch/run"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 1,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "läuft · 1/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:lauf>",
+            "kind": "work",
+            "log": "<var:lauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Anmeldung bauen"
+          }
+        ],
+        "state": "running",
+        "tickets": [
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand nach dem Durchlauf",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 1,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "läuft · 1/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:lauf>",
+            "kind": "work",
+            "log": "<var:lauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Anmeldung bauen"
+          }
+        ],
+        "state": "running",
+        "tickets": [
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand kurz danach unverändert",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 1,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "läuft · 1/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:lauf>",
+            "kind": "work",
+            "log": "<var:lauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Anmeldung bauen"
+          }
+        ],
+        "state": "running",
+        "tickets": [
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand eines unbekannten Boards",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/status?boardId=99"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 99 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Zustand mit kaputter Board-ID",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/status?boardId=x"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "id-invalid",
+        "message": "„x“ ist keine Board-ID."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Zustand ohne Board-ID im Abfrageteil",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/status?boardId="
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 1,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "läuft · 1/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:lauf>",
+            "kind": "work",
+            "log": "<var:lauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Anmeldung bauen"
+          }
+        ],
+        "state": "running",
+        "tickets": [
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Durchlauf für ein unbekanntes Board",
+    "request": {
+      "body": {
+        "boardId": 99
+      },
+      "method": "POST",
+      "path": "/api/dispatch/run"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 99 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Pause ohne Minuten",
+    "request": {
+      "body": {
+        "minutes": 0
+      },
+      "method": "POST",
+      "path": "/api/dispatch/pause"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "minutes muss eine ganze Zahl von 1 bis 1440 sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Pause mit Text statt Minuten",
+    "request": {
+      "body": {
+        "minutes": "viel"
+      },
+      "method": "POST",
+      "path": "/api/dispatch/pause"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "minutes muss eine ganze Zahl von 1 bis 1440 sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Pause über einen Tag hinaus",
+    "request": {
+      "body": {
+        "minutes": 1441
+      },
+      "method": "POST",
+      "path": "/api/dispatch/pause"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "minutes muss eine ganze Zahl von 1 bis 1440 sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Einschalten mit kaputter Board-ID",
+    "request": {
+      "body": {
+        "boardId": "x"
+      },
+      "method": "POST",
+      "path": "/api/dispatch/enable"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "id-invalid",
+        "message": "„x“ ist keine Board-ID."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Ausschalten für ein unbekanntes Board",
+    "request": {
+      "body": {
+        "boardId": 99
+      },
+      "method": "POST",
+      "path": "/api/dispatch/disable"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 99 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Zustand nach den Fehlversuchen unverändert",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 1,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "läuft · 1/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:lauf>",
+            "kind": "work",
+            "log": "<var:lauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Anmeldung bauen"
+          }
+        ],
+        "state": "running",
+        "tickets": [
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Dispatcher ausschalten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/disable"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 1,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": false,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "Dispatcher ist ausgeschaltet",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:lauf>",
+            "kind": "work",
+            "log": "<var:lauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Anmeldung bauen"
+          }
+        ],
+        "state": "off",
+        "tickets": [
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand nach dem Ausschalten",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 1,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": false,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "Dispatcher ist ausgeschaltet",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:lauf>",
+            "kind": "work",
+            "log": "<var:lauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Anmeldung bauen"
+          }
+        ],
+        "state": "off",
+        "tickets": [
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  }
+]

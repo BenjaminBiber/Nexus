@@ -1,0 +1,55 @@
+{
+  "title": "Läufe und Protokolle des Dispatchers lesen",
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "homeFiles": {
+      "dispatch-logs/dispatch.log": "2026-10-15 09:00:00  eingeschaltet\n2026-10-15 09:00:01  gestartet ARC-0001 → junior-ARC-0001 in /repos/arches-worktrees/ARC-0001 [standard: opus/high]\n2026-10-15 09:42:13  beendet ARC-0001 (work): review\n",
+      "dispatch-logs/ARC-0001-20261015-090000.log": "[dispatch] 2026-10-15T07:00:00.000Z junior-ARC-0001 startet in /repos/arches-worktrees/ARC-0001 (Umsetzung)\n[dispatch] Profil standard: Modell opus, Effort high, 80 Schritte, 90 min (Standardprofil)\n[dispatch] claude -p --model opus --permission-mode acceptEdits\n[dispatch] Arbeitsanweisung:\nDu bist junior-ARC-0001, ein Junior-Developer-Agent. Setze Ticket ARC-0001 („Anmeldung bauen“) um.\n\n[dispatch] Ausgabe:\n09:00:01  Claude startet (opus)\n09:42:12  Fertig: harness board done ARC-0001 --by junior-ARC-0001\n\n[dispatch] 2026-10-15T07:42:13.000Z Ende: Exit-Code 0\n",
+      "dispatch-logs/ARC-0001-20261016-101500-merge.log": "[dispatch] 2026-10-16T08:15:00.000Z junior-ARC-0001 startet in /repos/arches (Merge-Session)\n[dispatch] Profil standard: Modell opus, Effort high, 80 Schritte, 90 min (Merge-Session)\n[dispatch] Arbeitsanweisung:\nLöse den Konflikt zwischen ticket/arc-0001 und main.\n\n[dispatch] Ausgabe:\n10:15:01  Claude startet (opus)\n",
+      "dispatch-logs/ARC-00010-20261016-110000.log": "[dispatch] 2026-10-16T09:00:00.000Z junior-ARC-00010 startet in /repos/arches-worktrees/ARC-00010 (Umsetzung)\n",
+      "dispatch-logs/ARC-F0002-20261016-120000-research.log": "[dispatch] 2026-10-16T10:00:00.000Z research-ARC-F0002 startet in /repos/arches-research/ARC-F0002 (Recherche)\n[dispatch] Arbeitsanweisung:\nRecherchiere zu ARC-F0002 und speichere mit harness board question research ARC-F0002 --file research.json.\n\n[dispatch] Ausgabe:\n12:00:01  Claude startet (sonnet)\n\n[dispatch] 2026-10-16T10:04:00.000Z Ende: Exit-Code 0\n",
+      "dispatch-logs/ARC-0004-20261017-080000-plan.log": "[dispatch] 2026-10-17T06:00:00.000Z planner-ARC-0004 startet in /repos/arches-plan/ARC-0004 (Planung)\n08:00:01  Claude startet (opus)\n08:12:30  Plan gespeichert\n",
+      "dispatch-logs/notiz.txt": "Keine Protokolldatei des Dispatchers.\n",
+      "dispatch/runs/ARC-0001-20261016-101500-merge.json": {
+        "id": "ARC-0001-20261016-101500-merge",
+        "kind": "merge",
+        "ticketId": "ARC-0001",
+        "boardId": 1,
+        "title": "Anmeldung bauen",
+        "agent": "junior-ARC-0001",
+        "cwd": "/repos/arches",
+        "branch": "ticket/arc-0001",
+        "target": "main",
+        "run": { "profile": "standard", "why": "Merge-Session", "model": "opus", "effort": "high", "maxTurns": 80, "timeoutMinutes": 90 },
+        "command": "claude",
+        "args": ["-p", "--model", "opus"],
+        "prompt": "Löse den Konflikt zwischen ticket/arc-0001 und main.",
+        "logFile": "{{HOME}}/dispatch-logs/ARC-0001-20261016-101500-merge.log",
+        "startedAt": "{{NOW}}",
+        "pid": null
+      }
+    }
+  },
+  "steps": [
+    { "name": "Protokolle auflisten", "method": "GET", "path": "/api/dispatch/logs" },
+    { "name": "Ereignis-Protokoll lesen", "method": "GET", "path": "/api/dispatch/logs/dispatch.log" },
+    { "name": "Lauf-Protokoll als Text lesen", "method": "GET", "path": "/api/dispatch/logs/ARC-0001-20261015-090000.log" },
+    { "name": "unbekanntes Protokoll lesen", "method": "GET", "path": "/api/dispatch/logs/fehlt.log" },
+    { "name": "Protokoll außerhalb des Ordners lesen", "method": "GET", "path": "/api/dispatch/logs/..%2Fboard.yaml" },
+    { "name": "Datei ohne Endung .log lesen", "method": "GET", "path": "/api/dispatch/logs/notiz.txt" },
+
+    { "name": "Läufe eines Tickets auflisten", "method": "GET", "path": "/api/dispatch/runs?ticket=ARC-0001" },
+    { "name": "Läufe mit klein geschriebener Ticket-ID", "method": "GET", "path": "/api/dispatch/runs?ticket=arc-0001" },
+    { "name": "Läufe einer Frage auflisten", "method": "GET", "path": "/api/dispatch/runs?ticket=ARC-F0002" },
+    { "name": "Läufe eines Tickets ohne Protokoll", "method": "GET", "path": "/api/dispatch/runs?ticket=ARC-0099" },
+    { "name": "Läufe ohne Ticket-ID", "method": "GET", "path": "/api/dispatch/runs" },
+    { "name": "Läufe mit leerer Ticket-ID", "method": "GET", "path": "/api/dispatch/runs?ticket=" },
+    { "name": "Läufe mit kaputter Ticket-ID", "method": "GET", "path": "/api/dispatch/runs?ticket=..%2Fx" },
+
+    { "name": "Lauf-Protokoll zerlegt lesen", "method": "GET", "path": "/api/dispatch/runs/ARC-0001-20261015-090000.log" },
+    { "name": "Protokoll einer laufenden Merge-Session zerlegt lesen", "method": "GET", "path": "/api/dispatch/runs/ARC-0001-20261016-101500-merge.log" },
+    { "name": "Protokoll ohne Arbeitsanweisung zerlegt lesen", "method": "GET", "path": "/api/dispatch/runs/ARC-0004-20261017-080000-plan.log" },
+    { "name": "unbekanntes Lauf-Protokoll zerlegt lesen", "method": "GET", "path": "/api/dispatch/runs/fehlt.log" },
+    { "name": "Lauf-Protokoll außerhalb des Ordners zerlegt lesen", "method": "GET", "path": "/api/dispatch/runs/..%2Fboard.yaml" }
+  ]
+}

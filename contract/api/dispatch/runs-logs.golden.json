@@ -1,0 +1,297 @@
+[
+  {
+    "name": "Protokolle auflisten",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/logs"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        "dispatch.log",
+        "ARC-0004-20261017-080000-plan.log",
+        "ARC-F0002-20261016-120000-research.log",
+        "ARC-00010-20261016-110000.log",
+        "ARC-0001-20261016-101500-merge.log",
+        "ARC-0001-20261015-090000.log"
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Ereignis-Protokoll lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/logs/dispatch.log"
+    },
+    "response": {
+      "contentType": "text/plain",
+      "status": 200,
+      "text": "2026-10-15 09:00:00  eingeschaltet\n2026-10-15 09:00:01  gestartet ARC-0001 → junior-ARC-0001 in /repos/arches-worktrees/ARC-0001 [standard: opus/high]\n2026-10-15 09:42:13  beendet ARC-0001 (work): review\n"
+    }
+  },
+  {
+    "name": "Lauf-Protokoll als Text lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/logs/ARC-0001-20261015-090000.log"
+    },
+    "response": {
+      "contentType": "text/plain",
+      "status": 200,
+      "text": "[dispatch] <TIME> junior-ARC-0001 startet in /repos/arches-worktrees/ARC-0001 (Umsetzung)\n[dispatch] Profil standard: Modell opus, Effort high, 80 Schritte, 90 min (Standardprofil)\n[dispatch] claude -p --model opus --permission-mode acceptEdits\n[dispatch] Arbeitsanweisung:\nDu bist junior-ARC-0001, ein Junior-Developer-Agent. Setze Ticket ARC-0001 („Anmeldung bauen“) um.\n\n[dispatch] Ausgabe:\n09:00:01  Claude startet (opus)\n09:42:12  Fertig: harness board done ARC-0001 --by junior-ARC-0001\n\n[dispatch] <TIME> Ende: Exit-Code 0\n"
+    }
+  },
+  {
+    "name": "unbekanntes Protokoll lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/logs/fehlt.log"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "log-not-found",
+        "message": "Das Protokoll fehlt.log gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Protokoll außerhalb des Ordners lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/logs/..%2Fboard.yaml"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "log-name-invalid",
+        "message": "„../board.yaml“ ist kein Protokoll des Dispatchers."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Datei ohne Endung .log lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/logs/notiz.txt"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "log-name-invalid",
+        "message": "„notiz.txt“ ist kein Protokoll des Dispatchers."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Läufe eines Tickets auflisten",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/runs?ticket=ARC-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "kind": "merge",
+          "name": "ARC-0001-20261016-101500-merge.log",
+          "running": true,
+          "started": "<TIME>"
+        },
+        {
+          "kind": "work",
+          "name": "ARC-0001-20261015-090000.log",
+          "running": false,
+          "started": "<TIME>"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Läufe mit klein geschriebener Ticket-ID",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/runs?ticket=arc-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "kind": "merge",
+          "name": "ARC-0001-20261016-101500-merge.log",
+          "running": true,
+          "started": "<TIME>"
+        },
+        {
+          "kind": "work",
+          "name": "ARC-0001-20261015-090000.log",
+          "running": false,
+          "started": "<TIME>"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Läufe einer Frage auflisten",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/runs?ticket=ARC-F0002"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "kind": "research",
+          "name": "ARC-F0002-20261016-120000-research.log",
+          "running": false,
+          "started": "<TIME>"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Läufe eines Tickets ohne Protokoll",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/runs?ticket=ARC-0099"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "Läufe ohne Ticket-ID",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/runs"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "ticket (Ticket- oder Fragen-ID) fehlt."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Läufe mit leerer Ticket-ID",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/runs?ticket="
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "ticket (Ticket- oder Fragen-ID) fehlt."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Läufe mit kaputter Ticket-ID",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/runs?ticket=..%2Fx"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "id-invalid",
+        "message": "„../x“ ist keine Ticket- oder Fragen-ID."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Lauf-Protokoll zerlegt lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/runs/ARC-0001-20261015-090000.log"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "body": "09:00:01  Claude startet (opus)\n09:42:12  Fertig: harness board done ARC-0001 --by junior-ARC-0001\n\n[dispatch] <TIME> Ende: Exit-Code 0\n",
+        "header": "[dispatch] <TIME> junior-ARC-0001 startet in /repos/arches-worktrees/ARC-0001 (Umsetzung)\n[dispatch] Profil standard: Modell opus, Effort high, 80 Schritte, 90 min (Standardprofil)\n[dispatch] claude -p --model opus --permission-mode acceptEdits",
+        "name": "ARC-0001-20261015-090000.log",
+        "prompt": "Du bist junior-ARC-0001, ein Junior-Developer-Agent. Setze Ticket ARC-0001 („Anmeldung bauen“) um."
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Protokoll einer laufenden Merge-Session zerlegt lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/runs/ARC-0001-20261016-101500-merge.log"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "body": "10:15:01  Claude startet (opus)\n",
+        "header": "[dispatch] <TIME> junior-ARC-0001 startet in /repos/arches (Merge-Session)\n[dispatch] Profil standard: Modell opus, Effort high, 80 Schritte, 90 min (Merge-Session)",
+        "name": "ARC-0001-20261016-101500-merge.log",
+        "prompt": "Löse den Konflikt zwischen ticket/arc-0001 und main."
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Protokoll ohne Arbeitsanweisung zerlegt lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/runs/ARC-0004-20261017-080000-plan.log"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "body": "[dispatch] <TIME> planner-ARC-0004 startet in /repos/arches-plan/ARC-0004 (Planung)\n08:00:01  Claude startet (opus)\n08:12:30  Plan gespeichert\n",
+        "header": "",
+        "name": "ARC-0004-20261017-080000-plan.log",
+        "prompt": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "unbekanntes Lauf-Protokoll zerlegt lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/runs/fehlt.log"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "log-not-found",
+        "message": "Das Protokoll fehlt.log gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Lauf-Protokoll außerhalb des Ordners zerlegt lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/runs/..%2Fboard.yaml"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "log-name-invalid",
+        "message": "„../board.yaml“ ist kein Protokoll des Dispatchers."
+      },
+      "status": 422
+    }
+  }
+]

@@ -16,7 +16,7 @@ npm run contract                   # alles vergleichen (= node contract/run.mjs)
 node contract/run.mjs --update     # Golden-Dateien neu aufzeichnen
 node contract/run.mjs --only basis/projects
 node contract/run.mjs --coverage   # alle Routen mit abgedeckt/offen
-npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lader)
+npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lader, Variablen, Home-Dateien)
 ```
 
 | Option | Bedeutung |
@@ -40,7 +40,8 @@ Jedes Szenario läuft gegen einen **frischen Server mit frischem Home**. Deshalb
 Ticket-IDs (`BEN-0001`) deterministisch und müssen nicht normalisiert werden.
 
 1. Szenarien unter `contract/<suite>/**` suchen, nach `--only` und `platforms` filtern.
-2. Je Szenario: temporäres `HARNESS_HOME`, temporäre `CLAUDE_CONFIG_DIR`, freier Port, Fixture-Repos anlegen.
+2. Je Szenario: temporäres `HARNESS_HOME`, temporäre `CLAUDE_CONFIG_DIR`, freier Port, Fixture-Repos und
+   Fixture-Dateien im Home (`homeFiles`) anlegen.
 3. Server starten (Standard `node contract/servers/ts-server.mjs --port {port}`) und auf `GET /api/health`
    warten (höchstens 15 s).
 4. Fixture `boardConfig` anwenden, dann die Schritte ausführen und normalisieren.
@@ -53,7 +54,10 @@ Jede Umsetzung des Servers muss diesen Modus anbieten; nur so sind die Antworten
 Beim TypeScript-Server macht das `contract/servers/ts-server.mjs`.
 
 - Version in `GET /api/health` ist `contract`.
-- Kein Takt des Dispatchers; es wird **nie** ein Worker gestartet (`POST /api/dispatch/run` bleibt wirkungslos).
+- Kein Takt des Dispatchers von selbst, und es wird **nie** ein Prozess gestartet: der Starter des Workers
+  liefert immer `null`. `POST /api/dispatch/run` löst den Durchlauf trotzdem aus – ein bereites Ticket wird
+  gewählt und als Lauf vermerkt (`GET /api/dispatch/status` zeigt ihn mit `state: "running"`), nur arbeitet
+  niemand daran. Der Lauf endet deshalb nie; der Zustand bleibt über alle weiteren Anfragen gleich.
 - Kein Ordnerdialog (`POST /api/db/pick-folder` antwortet mit `{ "path": null }`), kein Öffnen von Dateien im
   Explorer oder in VS Code.
 - Keine Meldungen über neue Fragen (Abfrage aus).
@@ -76,7 +80,8 @@ bei `SIGTERM`/`SIGINT` sauber.
   "platforms": ["darwin", "linux", "win32"],
   "fixtures": {
     "repos": [{ "name": "REPO1", "git": true, "harnessInit": false, "files": { "docs/a.md": "# A\n" } }],
-    "boardConfig": "sqlite"
+    "boardConfig": "sqlite",
+    "homeFiles": { "dispatch/state.json": { "paused": false }, "dispatch-logs/a.log": "eine Zeile\n" }
   },
   "steps": [
     { "name": "anmelden", "method": "POST", "path": "/api/projects", "body": { "path": "{{REPO1}}" },
@@ -101,17 +106,33 @@ bei `SIGTERM`/`SIGINT` sauber.
 - `boardConfig: "sqlite"`: vor den Schritten `PUT /api/board-config` mit
   `{ provider: "sqlite", dbFile: "<HOME>/board.db", userId: "11111111-1111-1111-1111-111111111111", userName: "Vertrag" }`.
   Dieser Aufruf wird **nicht** aufgezeichnet.
+- `homeFiles`: Dateien, die **vor dem Start des Servers** im `HARNESS_HOME` liegen (`lib/HomeFiles.mjs`).
+  Schlüssel ist der Pfad relativ zum Home, immer mit `/` getrennt und ohne `..`; fehlende Ordner entstehen
+  mit. Ein Text wird so geschrieben, wie er dasteht, jeder andere JSON-Wert als JSON mit zwei Leerzeichen
+  Einrückung. Variablen (`{{HOME}}`, `{{NOW}}`, Repo-Namen) werden eingesetzt.
+
+  Damit bekommt ein Szenario einen Zustand, den der Server sonst erst durch echte Arbeit hätte: Zustand des
+  Dispatchers (`dispatch/state.json`), Läufe (`dispatch/runs/…`), vorgemerkte Zeilen für die Auswertung
+  (`dispatch/runs/stats/…`), Lauf-Protokolle (`dispatch-logs/…`) und die Einstellung (`dispatch.yaml`).
+  Diese Dateien sind Teil des Vertrags – jede Umsetzung des Servers muss sie lesen können.
 
 ### Variablen
 
-`{{NAME}}` wird in `path`, `body` und `headers` eingesetzt, auch verschachtelt. Bekannt sind:
+`{{NAME}}` wird in `path`, `body`, `headers` und in den Inhalten von `homeFiles` eingesetzt, auch
+verschachtelt. Bekannt sind:
 
 - die Repo-Namen der Fixtures (`{{REPO1}}` → Pfad des Repos),
 - `{{HOME}}` (das `HARNESS_HOME` des Laufs) und `{{PORT}}`,
+- `{{NOW}}` (ISO-Zeit beim Start des Szenarios; für Daten, die in einem Zeitfenster liegen müssen, etwa
+  Läufe in der Auswertung der Vorschläge – der Normalisierer macht daraus `<TIME>`),
 - alle mit `save` gemerkten Werte.
 
 Besteht ein Wert nur aus einem Platzhalter (`"{{PORT}}"`), behält er seinen Typ; sonst wird er in den Text
 eingesetzt. Ein unbekannter Name ist ein Fehler.
+
+`{{!name}}` ist ein **geschützter** Platzhalter: Er wird nicht eingesetzt, sondern zu `{{name}}`. So kommen
+Texte durch, die selbst Platzhalter enthalten – etwa die Vorlagen der Prompts des Dispatchers
+(`{{!agent}}`, `{{!ticketId}}`).
 
 `save` liest Werte aus der Antwort über Punkt-Notation, beginnend mit `json.` oder `headers.`
 (`"save": { "pid": "json.id", "ort": "headers.location" }`). Listen sprechen Indizes an: `json.items.0.id`.
@@ -231,12 +252,15 @@ contract/
 │  ├─ Variables.mjs           # {{NAME}} und save
 │  ├─ Coverage.mjs            # routes.json gegen die aufgezeichneten Schritte
 │  ├─ RepoFixture.mjs         # temporäre Git-Repos
+│  ├─ HomeFiles.mjs           # Fixture-Dateien im HARNESS_HOME
 │  └─ extract-routes.mjs      # erzeugt api/routes.json
 ├─ servers/
 │  └─ ts-server.mjs           # TS-Server im Vertragsmodus
 ├─ api/
 │  ├─ routes.json             # alle Routen des Servers
-│  └─ basis/                  # Beispielszenarien
+│  ├─ basis/                  # Beispielszenarien
+│  ├─ questions/              # Fragen-Routen
+│  └─ dispatch/               # Dispatcher: Einstellung, Steuerung, Läufe, Vorschläge
 └─ tests/                     # Einheitentests (vitest, siehe vitest.config.ts)
 ```
 

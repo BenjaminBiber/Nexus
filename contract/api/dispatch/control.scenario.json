@@ -1,0 +1,105 @@
+{
+  "title": "Zustand und Steuerung des Dispatchers: einschalten, pausieren, fortsetzen, Durchlauf, ausschalten",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "git": true, "files": { "README.md": "# Arches\n" } }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Zustand ohne Board und ohne Einstellung", "method": "GET", "path": "/api/dispatch/status" },
+
+    {
+      "name": "Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "compare": "status"
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "compare": "status"
+    },
+    {
+      "name": "Repo-Pfad des Boards setzen",
+      "method": "PATCH",
+      "path": "/api/db/boards/1",
+      "body": { "repoPath": "{{REPO1}}" },
+      "compare": "status"
+    },
+    { "name": "Board aktivieren", "method": "POST", "path": "/api/db/boards/1/activate", "body": {}, "compare": "status" },
+    {
+      "name": "Ticket anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Anmeldung bauen", "acceptance": "Login geht", "labels": ["auto"], "needsPlanning": false },
+      "compare": "status"
+    },
+    {
+      "name": "zweites Ticket ohne Label anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Abmeldung bauen", "acceptance": "Logout geht", "needsPlanning": false },
+      "compare": "status"
+    },
+    {
+      "name": "Plan und Handbuch eintragen",
+      "method": "PATCH",
+      "path": "/api/db/tickets/ARC-0001",
+      "body": { "rev": 1, "plan": "Formular bauen.", "handbook": "Tests mit vitest." },
+      "compare": "status"
+    },
+    {
+      "name": "Ticket nach Geplant verschieben",
+      "method": "POST",
+      "path": "/api/db/tickets/ARC-0001/move",
+      "body": { "rev": 2, "status": "planned" },
+      "compare": "status"
+    },
+    {
+      "name": "zweites Ticket nach Geplant verschieben",
+      "method": "POST",
+      "path": "/api/db/tickets/ARC-0002/move",
+      "body": { "rev": 1, "status": "planned" },
+      "compare": "status"
+    },
+
+    { "name": "Zustand mit bereitem Ticket", "method": "GET", "path": "/api/dispatch/status" },
+    { "name": "Zustand eines ausdrücklich genannten Boards", "method": "GET", "path": "/api/dispatch/status?boardId=1" },
+
+    { "name": "Dispatcher einschalten", "method": "POST", "path": "/api/dispatch/enable", "body": {} },
+    {
+      "name": "Dispatcher pausieren (message nennt die Uhrzeit des Endes und bleibt deshalb außen vor)",
+      "method": "POST",
+      "path": "/api/dispatch/pause",
+      "body": { "minutes": 15 },
+      "ignore": ["json.message"]
+    },
+    { "name": "Pause aufheben", "method": "POST", "path": "/api/dispatch/resume", "body": {} },
+
+    {
+      "name": "Durchlauf von Hand anstoßen",
+      "method": "POST",
+      "path": "/api/dispatch/run",
+      "body": { "boardId": 1 },
+      "save": { "lauf": "json.runs.0.id" }
+    },
+    { "name": "Zustand nach dem Durchlauf", "method": "GET", "path": "/api/dispatch/status" },
+    { "name": "Zustand kurz danach unverändert", "method": "GET", "path": "/api/dispatch/status" },
+
+    { "name": "Zustand eines unbekannten Boards", "method": "GET", "path": "/api/dispatch/status?boardId=99" },
+    { "name": "Zustand mit kaputter Board-ID", "method": "GET", "path": "/api/dispatch/status?boardId=x" },
+    { "name": "Zustand ohne Board-ID im Abfrageteil", "method": "GET", "path": "/api/dispatch/status?boardId=" },
+    { "name": "Durchlauf für ein unbekanntes Board", "method": "POST", "path": "/api/dispatch/run", "body": { "boardId": 99 } },
+    { "name": "Pause ohne Minuten", "method": "POST", "path": "/api/dispatch/pause", "body": { "minutes": 0 } },
+    { "name": "Pause mit Text statt Minuten", "method": "POST", "path": "/api/dispatch/pause", "body": { "minutes": "viel" } },
+    { "name": "Pause über einen Tag hinaus", "method": "POST", "path": "/api/dispatch/pause", "body": { "minutes": 1441 } },
+    { "name": "Einschalten mit kaputter Board-ID", "method": "POST", "path": "/api/dispatch/enable", "body": { "boardId": "x" } },
+    { "name": "Ausschalten für ein unbekanntes Board", "method": "POST", "path": "/api/dispatch/disable", "body": { "boardId": 99 } },
+    { "name": "Zustand nach den Fehlversuchen unverändert", "method": "GET", "path": "/api/dispatch/status" },
+
+    { "name": "Dispatcher ausschalten", "method": "POST", "path": "/api/dispatch/disable", "body": {} },
+    { "name": "Zustand nach dem Ausschalten", "method": "GET", "path": "/api/dispatch/status" }
+  ]
+}
