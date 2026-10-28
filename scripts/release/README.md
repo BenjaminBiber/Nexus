@@ -119,7 +119,7 @@ Vorabversion gilt dabei als Weg zu ihrer eigenen Version: `1.4.2-rc.1` + `patch`
 (`patch`, `minor` oder `major`) und `dry_run` (Probelauf). `concurrency: release` lässt nur ein Release zur Zeit zu.
 Der erste Job `version` läuft in der Umgebung `release` – dort liegt `RELEASE_TOKEN`, mit dem der Checkout
 arbeitet; ohne dieses Token lösen Commit und Tag keine weiteren Workflows aus. Er liefert die Ausgaben `version`,
-`tag` und `release_id` für die Jobs, die bauen und veröffentlichen (P6-4 und P6-5).
+`tag` und `release_id` für den Job `build` (unten) und den Job, der den Entwurf veröffentlicht (P6-5).
 
 Die Logik steckt in drei Skripten, nicht im Workflow:
 
@@ -146,6 +146,62 @@ cat "$T/out"; git log -1 --oneline; git tag --list 'v*'; node scripts/release/bu
 `check-ci.sh` und `draft-release.sh` brauchen `gh` samt Token und ein Repo bei GitHub; lokal werden sie nur mit
 `shellcheck` geprüft. Den Workflow selbst prüft `actionlint .github/workflows/release.yml`.
 
+## Job `build`: Installer und CLI-Archiv
+
+Der zweite Job `build` hängt am Tag aus `version` und baut je Plattform in einer Matrix:
+
+| Runner | Ziel | Pakete |
+| --- | --- | --- |
+| `macos-14` | `aarch64-apple-darwin` | `app`, `dmg` |
+| `macos-15-intel` | `x86_64-apple-darwin` | `app`, `dmg` |
+| `windows-latest` | `x86_64-pc-windows-msvc` | `nsis` |
+| `ubuntu-22.04` | `x86_64-unknown-linux-gnu` | `appimage`, `deb`, `rpm` |
+
+Jeder Eintrag checkt das Tag aus, richtet Rust (Version wie in `rust-toolchain.toml`) und Node 26 ein, installiert
+unter Linux die Systempakete von Tauri samt `rpm`, baut dann Oberfläche (`npm run build`) und Sidecar
+(`npm run build:sidecar -- --target <ziel>`) und ruft `tauri-apps/tauri-action` mit `releaseId` auf. Die Action lädt
+dmg, NSIS-Installer, AppImage, deb und rpm an den Entwurf; `includeUpdaterJson` bleibt aus (P6-7). Der Job läuft in
+der Umgebung `release`, nutzt aber noch keine Secrets – gebaut wird unsigniert, die Signatur kommt mit P6-6.
+
+**x64-macOS baut nativ** auf `macos-15-intel` statt als Cross-Build. Das Sidecar ist eine Node Single Executable
+Application und braucht das Node-Programm der Zielarchitektur; `build-sidecar.mjs` bricht für ein fremdes Ziel ohne
+`--node-binary` ab. ARM-Linux gibt es nicht; die Entscheidung dazu ist offen.
+
+`projectPath` zeigt auf `apps/desktop`, denn dort liegt `@tauri-apps/cli`. Version und Produktname der Dateien
+kommen aus dem Crate (`Nexus_<version>_aarch64.dmg`), nicht aus dem Workflow. Dass der Tauri-Build das Sidecar
+über `beforeBuildCommand` (`npm run prepare-sidecar`) ein zweites Mal baut, ist gewollt: der eigene Schritt davor
+zeigt einen Fehler am Sidecar früh und baut für genau das gewählte Ziel.
+
+### `cli-archive.mjs`
+
+Packt die CLI für den Betrieb ohne App und gibt den Pfad des Archivs auf stdout aus; der Workflow lädt es mit
+`gh release upload` an denselben Entwurf.
+
+```sh
+node scripts/release/cli-archive.mjs --version 0.2.0 [--target <rust-ziel>] [--out <ordner>] [--root <dir>]
+```
+
+Ergebnis: `dist/release/nexus-cli-<version>-<ziel>.tar.gz` (Windows-Ziel: `.zip`, geschrieben mit `tar -a`). Im
+Archiv liegen `bin/harness[.exe]` – das SEA-Programm aus `dist/sidecar/`, das ohne `serve` die CLI startet –, das
+gebündelte Plugin unter `plugin/` (`build-plugin.mjs` mit `HARNESS_PLUGIN_OUT`) und eine kurze `LIESMICH.md`.
+Voraussetzung sind `npm run build` und `npm run build:sidecar -- --target <ziel>`; fehlt das Sidecar, bricht das
+Skript mit diesem Hinweis ab. Die Namensbildung steckt in `lib/CliArchive.mjs` und hat eigene Tests.
+
+### Lokal prüfen (macOS arm64)
+
+```sh
+npm ci && npm run build
+npm run build:sidecar -- --target aarch64-apple-darwin
+(cd apps/desktop && npx tauri build --target aarch64-apple-darwin --bundles dmg)
+ls target/aarch64-apple-darwin/release/bundle/dmg/
+node scripts/release/cli-archive.mjs --version 0.0.0-test --target aarch64-apple-darwin
+```
+
+Der Sidecar-Build braucht ein eigenständiges Node von nodejs.org; mit dem Node aus Homebrew bricht er mit
+`SEA_DISABLED` ab (siehe `scripts/sidecar/build-sidecar.mjs`). Dasselbe gilt für `tauri build`, weil dessen
+`beforeBuildCommand` das Sidecar baut – deshalb lokal mit dem passenden Node im `PATH` bauen. Der lokale Build ist
+unsigniert; Gatekeeper-Warnungen sind dabei erwartet.
+
 ## Dateien
 
 | Datei | Aufgabe |
@@ -160,6 +216,8 @@ cat "$T/out"; git log -1 --oneline; git tag --list 'v*'; node scripts/release/bu
 | `check-ci.sh` | Branch und CI-Status des Commits prüfen (erster Schritt des Release-Workflows) |
 | `version-job.sh` | Version setzen, committen, taggen, pushen |
 | `draft-release.sh` | Entwurfs-Release anlegen und seine Id ausgeben |
+| `cli-archive.mjs` | CLI und Plugin zu `nexus-cli-<version>-<ziel>.tar.gz` bzw. `.zip` packen |
+| `lib/CliArchive.mjs` | Namen des Archivs, des Ordners darin und des Programms (reine Funktionen) |
 | `tests/*.test.mjs` | Unit-Tests (`npx vitest run scripts/release`) |
 | `tests/RepoCopy.mjs` | kopiert das Fixture-Repo in einen Temp-Ordner |
 | `tests/fixtures/repo/` | Mini-Abbild eines Repos mit allen Versionsstellen |
