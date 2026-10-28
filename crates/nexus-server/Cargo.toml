@@ -30,6 +30,14 @@ nix = { workspace = true, features = ["process"] }
 
 [dev-dependencies]
 tempfile = { workspace = true }
+# Die portierten Tests des BoardRuntimeHolder bauen die Treiberfehler selbst, nach denen die
+# Laufzeit als verloren gilt (SQLite-Dateifehler, Socket des SQL Servers)
+rusqlite = { workspace = true }
+tiberius = { workspace = true }
+# Die Proxy-Tests starten einen Test-Upstream und lesen dessen Strom Stück für Stück
+futures = { workspace = true }
+http-body-util = { workspace = true }
+tower = { workspace = true }
 
 # Ersatz für Claude Code in Tests; wird nicht ausgeliefert (P5-4 prüft das).
 [[bin]]

@@ -70,15 +70,12 @@ impl DbInput {
         let Some(value) = body.get(key) else {
             return Ok(None);
         };
-        let texts = value
-            .as_array()
-            .map(|items| {
-                items
-                    .iter()
-                    .map(|item| item.as_str().map(str::to_string))
-                    .collect::<Option<Vec<String>>>()
-            })
-            .flatten();
+        let texts = value.as_array().and_then(|items| {
+            items
+                .iter()
+                .map(|item| item.as_str().map(str::to_string))
+                .collect::<Option<Vec<String>>>()
+        });
         texts
             .map(Some)
             .ok_or_else(|| invalid(format!("Feld „{key}“ muss eine Liste von Texten sein.")))

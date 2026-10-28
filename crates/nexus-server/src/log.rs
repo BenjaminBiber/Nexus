@@ -51,7 +51,7 @@ impl ServerLog {
             .create(true)
             .append(true)
             .open(&self.file)?;
-        write!(file, "{} {line}\n", crate::now_iso())
+        writeln!(file, "{} {line}", crate::now_iso())
     }
 }
 
