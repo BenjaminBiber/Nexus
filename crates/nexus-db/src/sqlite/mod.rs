@@ -13,7 +13,7 @@ pub mod schema_runner;
 pub mod unit_of_work;
 
 pub use database::{SqliteBoardDatabase, SqliteFut, SqliteWork};
-pub use runner::{bool_of, date, guid, iso, iso_millis, Params, SqlValue, SqliteRunner};
+pub use runner::{bool_of, date, guid, iso, iso_millis, ParamName, Params, SqlValue, SqliteRunner};
 pub use schema::{SqliteSchemaStep, SQLITE_SCHEMA_STEPS};
 pub use schema_runner::SqliteSchemaRunner;
 pub use unit_of_work::SqliteUnitOfWork;

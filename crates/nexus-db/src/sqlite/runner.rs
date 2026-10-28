@@ -28,9 +28,12 @@ pub enum SqlValue {
     Date(String),
 }
 
-/// Benannte Parameter einer Anweisung; der Name steht ohne `@` davor. Er darf geliehen sein
-/// (Namen im Quelltext) oder erzeugt (IN-Listen wie `@i0`, `@i1`, …).
-pub type Params = Vec<(Cow<'static, str>, SqlValue)>;
+/// Name eines Parameters ohne `@`; er darf geliehen sein (Namen im Quelltext) oder erzeugt
+/// (IN-Listen wie `@i0`, `@i1`, …)
+pub type ParamName = Cow<'static, str>;
+
+/// Benannte Parameter einer Anweisung; der Name steht ohne `@` davor
+pub type Params = Vec<(ParamName, SqlValue)>;
 
 impl From<&str> for SqlValue {
     fn from(value: &str) -> Self {

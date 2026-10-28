@@ -82,7 +82,7 @@ impl Row {
 impl BoardQuestionRepository for SqliteUnitOfWork<'_> {
     /// `for_update` ist bei SQLite ein No-op (Schreibtransaktionen laufen mit BEGIN IMMEDIATE)
     async fn by_id(&mut self, id: &str, _for_update: bool) -> Result<Option<BoardQuestion>> {
-        let found = self.load("WHERE q.Id = @id", &sqlite_params! { "id": id })?;
+        let found = self.load_questions("WHERE q.Id = @id", &sqlite_params! { "id": id })?;
         Ok(found.into_iter().next())
     }
 
@@ -126,7 +126,7 @@ impl BoardQuestionRepository for SqliteUnitOfWork<'_> {
         } else {
             format!("WHERE {}", where_parts.join(" AND "))
         };
-        self.load(&where_sql, &params)
+        self.load_questions(&where_sql, &params)
     }
 
     async fn insert(&mut self, question: &BoardQuestion) -> Result<()> {
@@ -139,7 +139,7 @@ impl BoardQuestionRepository for SqliteUnitOfWork<'_> {
                @createdAt, @createdById, @updatedAt, @rev)",
             &params_of(question),
         )?;
-        self.write_children(question)
+        self.write_question_children(question)
     }
 
     /// Schreibt nur, wenn in der DB noch die Vorgängerversion steht
@@ -177,7 +177,7 @@ impl BoardQuestionRepository for SqliteUnitOfWork<'_> {
             "DELETE FROM QuestionDependencies WHERE QuestionId = @id",
             &id,
         )?;
-        self.write_children(question)
+        self.write_question_children(question)
     }
 
     /// Liest die Fragen, die das Ticket betreffen oder davon abhängen (ohne Sperre)
@@ -218,7 +218,7 @@ impl BoardQuestionRepository for SqliteUnitOfWork<'_> {
 
 impl SqliteUnitOfWork<'_> {
     /// Lädt Fragen zu einer WHERE-Klausel und ergänzt Tags, Tickets und Abhängigkeiten
-    fn load(&mut self, where_sql: &str, params: &Params) -> Result<Vec<BoardQuestion>> {
+    fn load_questions(&mut self, where_sql: &str, params: &Params) -> Result<Vec<BoardQuestion>> {
         let rows = self.sql.query_rows(
             &format!(
                 "SELECT {COLUMNS} FROM Questions q {where_sql} ORDER BY q.ProjectId, q.Number"
@@ -258,7 +258,7 @@ impl SqliteUnitOfWork<'_> {
     }
 
     /// Schreibt Tags (mit Position), betroffene Tickets und Abhängigkeiten (mit Position)
-    fn write_children(&mut self, question: &BoardQuestion) -> Result<()> {
+    fn write_question_children(&mut self, question: &BoardQuestion) -> Result<()> {
         for (position, tag) in question.tags.iter().enumerate() {
             self.sql.execute(
                 "INSERT INTO QuestionTags (QuestionId, Position, Tag) VALUES (@id, @position, @tag)",
