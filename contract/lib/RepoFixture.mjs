@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -14,7 +14,11 @@ export class RepoFixture {
     this.home = options.home;
     this.claudeConfig = options.claudeConfig;
     this.cli = options.cli;
-    this.base = mkdtempSync(join(tmpdir(), 'harness-contract-repos-'));
+    // Aufgelöster Pfad: Git meldet die Projektwurzel ohne Verknüpfungen (unter macOS /private/var statt /var).
+    // Nur so ist `{{REPO1}}` derselbe Text, den der Server als Projektwurzel führt – sonst fände ein Board,
+    // dessen Repo-Pfad auf `{{REPO1}}` zeigt, sein Projekt unter macOS nicht und die Golden-Dateien
+    // wären je Plattform verschieden.
+    this.base = realpathSync(mkdtempSync(join(tmpdir(), 'harness-contract-repos-')));
   }
 
   // Legt alle Repos an und liefert Name → Pfad
