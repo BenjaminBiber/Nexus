@@ -1,0 +1,19 @@
+{
+  "title": "DB-Projekte anlegen, auflisten und umbenennen",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    { "name": "leere Liste", "method": "GET", "path": "/api/db/projects" },
+    { "name": "anlegen (Key wird groß)", "method": "POST", "path": "/api/db/projects", "body": { "key": "vtr", "name": "Vertrag" } },
+    { "name": "zweites Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "INC", "name": "Incidents" } },
+    { "name": "liste nach Key", "method": "GET", "path": "/api/db/projects" },
+    { "name": "umbenennen", "method": "PATCH", "path": "/api/db/projects/VTR", "body": { "name": "Vertrag 2" } },
+    { "name": "umbenennen mit kleinem Key", "method": "PATCH", "path": "/api/db/projects/inc", "body": { "name": "Incidents 2" } },
+    { "name": "Key schon vergeben", "method": "POST", "path": "/api/db/projects", "body": { "key": "VTR", "name": "Doppelt" } },
+    { "name": "ohne Namen", "method": "POST", "path": "/api/db/projects", "body": { "key": "NEU" } },
+    { "name": "Name keine Zeichenkette", "method": "POST", "path": "/api/db/projects", "body": { "key": "NEU", "name": 5 } },
+    { "name": "Key zu kurz", "method": "POST", "path": "/api/db/projects", "body": { "key": "X", "name": "Zu kurz" } },
+    { "name": "leerer Name beim Umbenennen", "method": "PATCH", "path": "/api/db/projects/VTR", "body": { "name": " " } },
+    { "name": "unbekanntes Projekt umbenennen", "method": "PATCH", "path": "/api/db/projects/XYZ", "body": { "name": "x" } },
+    { "name": "liste am Ende", "method": "GET", "path": "/api/db/projects" }
+  ]
+}

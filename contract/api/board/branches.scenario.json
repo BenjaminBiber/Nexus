@@ -1,0 +1,42 @@
+{
+  "title": "Zielbranches des Board-Repos lesen und anlegen",
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "repos": [{ "name": "REPO1", "git": true, "files": { "docs/a.md": "# A\n" } }]
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "VTR", "name": "Vertrag" }, "record": false },
+    {
+      "name": "Board mit Repo",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "VTR", "name": "Sprint" },
+      "save": { "bid": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Board ohne Repo",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "VTR", "name": "Ohne Repo" },
+      "save": { "bid2": "json.id" },
+      "record": false
+    },
+    { "name": "Branches ohne Repo-Pfad", "method": "GET", "path": "/api/db/boards/{{bid}}/branches" },
+    { "name": "Repo-Pfad setzen", "method": "PATCH", "path": "/api/db/boards/{{bid}}", "body": { "repoPath": "{{REPO1}}" } },
+    { "name": "Branches des Repos", "method": "GET", "path": "/api/db/boards/{{bid}}/branches" },
+    { "name": "Branch anlegen", "method": "POST", "path": "/api/db/boards/{{bid}}/branches", "body": { "name": " release/1 " } },
+    { "name": "Branch gibt es schon", "method": "POST", "path": "/api/db/boards/{{bid}}/branches", "body": { "name": "release/1" } },
+    { "name": "Branches nach dem Anlegen", "method": "GET", "path": "/api/db/boards/{{bid}}/branches" },
+    { "name": "Branch-Name mit Leerzeichen", "method": "POST", "path": "/api/db/boards/{{bid}}/branches", "body": { "name": "a b" } },
+    { "name": "Branch im Namensraum der Tickets", "method": "POST", "path": "/api/db/boards/{{bid}}/branches", "body": { "name": "ticket/x" } },
+    { "name": "leerer Branch-Name", "method": "POST", "path": "/api/db/boards/{{bid}}/branches", "body": { "name": " " } },
+    { "name": "ohne Branch-Name", "method": "POST", "path": "/api/db/boards/{{bid}}/branches", "body": {} },
+    { "name": "Repo-Pfad zeigt ins Leere", "method": "PATCH", "path": "/api/db/boards/{{bid2}}", "body": { "repoPath": "{{REPO1}}/fehlt" }, "record": false },
+    { "name": "Branches bei fehlendem Ordner", "method": "GET", "path": "/api/db/boards/{{bid2}}/branches" },
+    { "name": "Branch ohne Repo anlegen", "method": "POST", "path": "/api/db/boards/{{bid2}}/branches", "body": { "name": "release/2" } },
+    { "name": "Branches eines unbekannten Boards", "method": "GET", "path": "/api/db/boards/999/branches" },
+    { "name": "Branch auf unbekanntem Board", "method": "POST", "path": "/api/db/boards/999/branches", "body": { "name": "release/2" } },
+    { "name": "keine Board-Nummer", "method": "GET", "path": "/api/db/boards/abc/branches" }
+  ]
+}

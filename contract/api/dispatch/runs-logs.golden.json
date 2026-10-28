@@ -9,11 +9,11 @@
       "contentType": "application/json",
       "json": [
         "dispatch.log",
-        "ARC-0004-20261017-080000-plan.log",
-        "ARC-F0002-20261016-120000-research.log",
-        "ARC-00010-20261016-110000.log",
-        "ARC-0001-20261016-101500-merge.log",
-        "ARC-0001-20261015-090000.log"
+        "ARC-0004-20200304-080000-plan.log",
+        "ARC-F0002-20200303-120000-research.log",
+        "ARC-00010-20200303-110000.log",
+        "ARC-0001-20200303-101500-merge.log",
+        "ARC-0001-20200302-090000.log"
       ],
       "status": 200
     }
@@ -27,14 +27,14 @@
     "response": {
       "contentType": "text/plain",
       "status": 200,
-      "text": "2026-10-15 09:00:00  eingeschaltet\n2026-10-15 09:00:01  gestartet ARC-0001 → junior-ARC-0001 in /repos/arches-worktrees/ARC-0001 [standard: opus/high]\n2026-10-15 09:42:13  beendet ARC-0001 (work): review\n"
+      "text": "2020-03-02 09:00:00  eingeschaltet\n2020-03-02 09:00:01  gestartet ARC-0001 → junior-ARC-0001 in /repos/arches-worktrees/ARC-0001 [standard: opus/high]\n2020-03-02 09:42:13  beendet ARC-0001 (work): review\n"
     }
   },
   {
     "name": "Lauf-Protokoll als Text lesen",
     "request": {
       "method": "GET",
-      "path": "/api/dispatch/logs/ARC-0001-20261015-090000.log"
+      "path": "/api/dispatch/logs/ARC-0001-20200302-090000.log"
     },
     "response": {
       "contentType": "text/plain",
@@ -98,13 +98,13 @@
       "json": [
         {
           "kind": "merge",
-          "name": "ARC-0001-20261016-101500-merge.log",
+          "name": "ARC-0001-20200303-101500-merge.log",
           "running": true,
           "started": "<TIME>"
         },
         {
           "kind": "work",
-          "name": "ARC-0001-20261015-090000.log",
+          "name": "ARC-0001-20200302-090000.log",
           "running": false,
           "started": "<TIME>"
         }
@@ -123,13 +123,13 @@
       "json": [
         {
           "kind": "merge",
-          "name": "ARC-0001-20261016-101500-merge.log",
+          "name": "ARC-0001-20200303-101500-merge.log",
           "running": true,
           "started": "<TIME>"
         },
         {
           "kind": "work",
-          "name": "ARC-0001-20261015-090000.log",
+          "name": "ARC-0001-20200302-090000.log",
           "running": false,
           "started": "<TIME>"
         }
@@ -148,7 +148,7 @@
       "json": [
         {
           "kind": "research",
-          "name": "ARC-F0002-20261016-120000-research.log",
+          "name": "ARC-F0002-20200303-120000-research.log",
           "running": false,
           "started": "<TIME>"
         }
@@ -217,14 +217,14 @@
     "name": "Lauf-Protokoll zerlegt lesen",
     "request": {
       "method": "GET",
-      "path": "/api/dispatch/runs/ARC-0001-20261015-090000.log"
+      "path": "/api/dispatch/runs/ARC-0001-20200302-090000.log"
     },
     "response": {
       "contentType": "application/json",
       "json": {
         "body": "09:00:01  Claude startet (opus)\n09:42:12  Fertig: harness board done ARC-0001 --by junior-ARC-0001\n\n[dispatch] <TIME> Ende: Exit-Code 0\n",
         "header": "[dispatch] <TIME> junior-ARC-0001 startet in /repos/arches-worktrees/ARC-0001 (Umsetzung)\n[dispatch] Profil standard: Modell opus, Effort high, 80 Schritte, 90 min (Standardprofil)\n[dispatch] claude -p --model opus --permission-mode acceptEdits",
-        "name": "ARC-0001-20261015-090000.log",
+        "name": "ARC-0001-20200302-090000.log",
         "prompt": "Du bist junior-ARC-0001, ein Junior-Developer-Agent. Setze Ticket ARC-0001 („Anmeldung bauen“) um."
       },
       "status": 200
@@ -234,14 +234,14 @@
     "name": "Protokoll einer laufenden Merge-Session zerlegt lesen",
     "request": {
       "method": "GET",
-      "path": "/api/dispatch/runs/ARC-0001-20261016-101500-merge.log"
+      "path": "/api/dispatch/runs/ARC-0001-20200303-101500-merge.log"
     },
     "response": {
       "contentType": "application/json",
       "json": {
         "body": "10:15:01  Claude startet (opus)\n",
         "header": "[dispatch] <TIME> junior-ARC-0001 startet in /repos/arches (Merge-Session)\n[dispatch] Profil standard: Modell opus, Effort high, 80 Schritte, 90 min (Merge-Session)",
-        "name": "ARC-0001-20261016-101500-merge.log",
+        "name": "ARC-0001-20200303-101500-merge.log",
         "prompt": "Löse den Konflikt zwischen ticket/arc-0001 und main."
       },
       "status": 200
@@ -251,14 +251,14 @@
     "name": "Protokoll ohne Arbeitsanweisung zerlegt lesen",
     "request": {
       "method": "GET",
-      "path": "/api/dispatch/runs/ARC-0004-20261017-080000-plan.log"
+      "path": "/api/dispatch/runs/ARC-0004-20200304-080000-plan.log"
     },
     "response": {
       "contentType": "application/json",
       "json": {
         "body": "[dispatch] <TIME> planner-ARC-0004 startet in /repos/arches-plan/ARC-0004 (Planung)\n08:00:01  Claude startet (opus)\n08:12:30  Plan gespeichert\n",
         "header": "",
-        "name": "ARC-0004-20261017-080000-plan.log",
+        "name": "ARC-0004-20200304-080000-plan.log",
         "prompt": null
       },
       "status": 200

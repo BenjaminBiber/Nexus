@@ -1,0 +1,112 @@
+{
+  "title": "Meine Aufgaben mit eigener Reihenfolge",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    {
+      "name": "Vorbereitung: Projekt",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: erstes Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "board": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: zweites Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Zweites" },
+      "save": { "second": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Ticket zur Abnahme",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/tickets",
+      "body": { "title": "Abnahme", "status": "blocked" },
+      "save": { "rev": "json.rev" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Grund der Abnahme",
+      "method": "PATCH",
+      "path": "/api/db/tickets/ARC-0001",
+      "body": { "rev": "{{rev}}", "blockedReason": "Human Interaction: Ergebnis ansehen" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Ticket mit Merge-Konflikt",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/tickets",
+      "body": { "title": "Merge", "status": "blocked", "priority": "high" },
+      "save": { "mergeRev": "json.rev" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Grund des Merge",
+      "method": "PATCH",
+      "path": "/api/db/tickets/ARC-0002",
+      "body": { "rev": "{{mergeRev}}", "blockedReason": "Merge: Konflikt in board.ts" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Ticket in Planung",
+      "method": "POST",
+      "path": "/api/db/boards/{{second}}/tickets",
+      "body": { "title": "Planen", "status": "in_planning" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: offene Notiz",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/notes",
+      "body": { "title": "Suche findet Umlaute nicht" },
+      "record": false
+    },
+    { "name": "Meine Aufgaben", "method": "GET", "path": "/api/db/inbox" },
+    { "name": "nur ein Board", "method": "GET", "path": "/api/db/inbox?board={{second}}" },
+    { "name": "leerer Board-Filter", "method": "GET", "path": "/api/db/inbox?board=" },
+    { "name": "Board ohne Nummer", "method": "GET", "path": "/api/db/inbox?board=abc" },
+    { "name": "fremdes Board", "method": "GET", "path": "/api/db/inbox?board=999" },
+    {
+      "name": "Reihenfolge speichern",
+      "method": "PUT",
+      "path": "/api/db/inbox/order",
+      "body": { "keys": ["ticket:ARC-0003", "ticket:ARC-0001"] }
+    },
+    { "name": "Meine Aufgaben in eigener Reihenfolge", "method": "GET", "path": "/api/db/inbox" },
+    { "name": "Reihenfolge zurücksetzen", "method": "DELETE", "path": "/api/db/inbox/order", "body": {} },
+    { "name": "Meine Aufgaben nach Dringlichkeit", "method": "GET", "path": "/api/db/inbox" },
+    {
+      "name": "unbekannter Schlüssel",
+      "method": "PUT",
+      "path": "/api/db/inbox/order",
+      "body": { "keys": ["quatsch"] }
+    },
+    {
+      "name": "Schlüssel ist keine Liste",
+      "method": "PUT",
+      "path": "/api/db/inbox/order",
+      "body": { "keys": "ticket:ARC-0001" }
+    },
+    {
+      "name": "Zahl als Schlüssel",
+      "method": "PUT",
+      "path": "/api/db/inbox/order",
+      "body": { "keys": [42] }
+    },
+    {
+      "name": "zu langer Schlüssel",
+      "method": "PUT",
+      "path": "/api/db/inbox/order",
+      "body": { "keys": ["ticket:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"] }
+    },
+    { "name": "ohne Schlüssel", "method": "PUT", "path": "/api/db/inbox/order", "body": {} }
+  ]
+}

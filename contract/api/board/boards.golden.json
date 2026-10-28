@@ -1,0 +1,635 @@
+[
+  {
+    "name": "leere Liste",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "ohne aktives Board",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/active"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "board": null,
+        "boardId": null,
+        "user": {
+          "id": "11111111-1111-1111-1111-111111111111",
+          "name": "Vertrag"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Board anlegen",
+    "request": {
+      "body": {
+        "name": "Sprint",
+        "project": "vtr"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "id": 1,
+        "name": "Sprint",
+        "openTickets": 0,
+        "ownerId": "11111111-1111-1111-1111-111111111111",
+        "ownerName": "Vertrag",
+        "projectId": 1,
+        "projectKey": "VTR",
+        "projectName": "Vertrag",
+        "repoPath": null,
+        "repoSource": null
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "zweites Board im Projekt",
+    "request": {
+      "body": {
+        "name": "Kollege",
+        "project": "VTR"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "id": 2,
+        "name": "Kollege",
+        "openTickets": 0,
+        "ownerId": "11111111-1111-1111-1111-111111111111",
+        "ownerName": "Vertrag",
+        "projectId": 1,
+        "projectKey": "VTR",
+        "projectName": "Vertrag",
+        "repoPath": null,
+        "repoSource": null
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Board im anderen Projekt",
+    "request": {
+      "body": {
+        "name": "Störungen",
+        "project": "INC"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "id": 3,
+        "name": "Störungen",
+        "openTickets": 0,
+        "ownerId": "11111111-1111-1111-1111-111111111111",
+        "ownerName": "Vertrag",
+        "projectId": 2,
+        "projectKey": "INC",
+        "projectName": "Incidents",
+        "repoPath": null,
+        "repoSource": null
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "alle Boards",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "createdAt": "<TIME>",
+          "id": 3,
+          "name": "Störungen",
+          "openTickets": 0,
+          "ownerId": "11111111-1111-1111-1111-111111111111",
+          "ownerName": "Vertrag",
+          "projectId": 2,
+          "projectKey": "INC",
+          "projectName": "Incidents",
+          "repoPath": null,
+          "repoSource": null
+        },
+        {
+          "createdAt": "<TIME>",
+          "id": 2,
+          "name": "Kollege",
+          "openTickets": 0,
+          "ownerId": "11111111-1111-1111-1111-111111111111",
+          "ownerName": "Vertrag",
+          "projectId": 1,
+          "projectKey": "VTR",
+          "projectName": "Vertrag",
+          "repoPath": null,
+          "repoSource": null
+        },
+        {
+          "createdAt": "<TIME>",
+          "id": 1,
+          "name": "Sprint",
+          "openTickets": 0,
+          "ownerId": "11111111-1111-1111-1111-111111111111",
+          "ownerName": "Vertrag",
+          "projectId": 1,
+          "projectKey": "VTR",
+          "projectName": "Vertrag",
+          "repoPath": null,
+          "repoSource": null
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Boards eines Projekts",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards?project=VTR"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "createdAt": "<TIME>",
+          "id": 2,
+          "name": "Kollege",
+          "openTickets": 0,
+          "ownerId": "11111111-1111-1111-1111-111111111111",
+          "ownerName": "Vertrag",
+          "projectId": 1,
+          "projectKey": "VTR",
+          "projectName": "Vertrag",
+          "repoPath": null,
+          "repoSource": null
+        },
+        {
+          "createdAt": "<TIME>",
+          "id": 1,
+          "name": "Sprint",
+          "openTickets": 0,
+          "ownerId": "11111111-1111-1111-1111-111111111111",
+          "ownerName": "Vertrag",
+          "projectId": 1,
+          "projectKey": "VTR",
+          "projectName": "Vertrag",
+          "repoPath": null,
+          "repoSource": null
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Boards eines unbekannten Projekts",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards?project=XYZ"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt XYZ gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "umbenennen",
+    "request": {
+      "body": {
+        "name": "Sprint 2"
+      },
+      "method": "PATCH",
+      "path": "/api/db/boards/1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "id": 1,
+        "name": "Sprint 2",
+        "openTickets": 0,
+        "ownerId": "11111111-1111-1111-1111-111111111111",
+        "ownerName": "Vertrag",
+        "projectId": 1,
+        "projectKey": "VTR",
+        "projectName": "Vertrag",
+        "repoPath": null,
+        "repoSource": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Repo-Pfad setzen",
+    "request": {
+      "body": {
+        "repoPath": "C:/Repos/Mein Repo"
+      },
+      "method": "PATCH",
+      "path": "/api/db/boards/1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "id": 1,
+        "name": "Sprint 2",
+        "openTickets": 0,
+        "ownerId": "11111111-1111-1111-1111-111111111111",
+        "ownerName": "Vertrag",
+        "projectId": 1,
+        "projectKey": "VTR",
+        "projectName": "Vertrag",
+        "repoPath": "C:/Repos/Mein Repo",
+        "repoSource": "local"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Repo-Pfad leeren",
+    "request": {
+      "body": {
+        "repoPath": null
+      },
+      "method": "PATCH",
+      "path": "/api/db/boards/1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "id": 1,
+        "name": "Sprint 2",
+        "openTickets": 0,
+        "ownerId": "11111111-1111-1111-1111-111111111111",
+        "ownerName": "Vertrag",
+        "projectId": 1,
+        "projectKey": "VTR",
+        "projectName": "Vertrag",
+        "repoPath": null,
+        "repoSource": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "ohne Änderung",
+    "request": {
+      "body": {},
+      "method": "PATCH",
+      "path": "/api/db/boards/1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "nothing-changed",
+        "message": "Keine Änderung angegeben."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "leerer Name",
+    "request": {
+      "body": {
+        "name": " "
+      },
+      "method": "PATCH",
+      "path": "/api/db/boards/1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-name-empty",
+        "message": "Der Boardname darf nicht leer sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekanntes Board ändern",
+    "request": {
+      "body": {
+        "name": "x"
+      },
+      "method": "PATCH",
+      "path": "/api/db/boards/999"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 999 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "keine Board-Nummer",
+    "request": {
+      "body": {
+        "name": "x"
+      },
+      "method": "PATCH",
+      "path": "/api/db/boards/abc"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "id-invalid",
+        "message": "„abc“ ist keine gültige Board-Nummer."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Board ohne Projekt",
+    "request": {
+      "body": {
+        "name": "Ohne Projekt"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „project“ fehlt oder ist kein Text."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Board in unbekanntem Projekt",
+    "request": {
+      "body": {
+        "name": "Fremd",
+        "project": "XYZ"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt XYZ gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "aktivieren",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/boards/1/activate"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "board": {
+          "createdAt": "<TIME>",
+          "id": 1,
+          "name": "Sprint 2",
+          "openTickets": 0,
+          "ownerId": "11111111-1111-1111-1111-111111111111",
+          "ownerName": "Vertrag",
+          "projectId": 1,
+          "projectKey": "VTR",
+          "projectName": "Vertrag",
+          "repoPath": null,
+          "repoSource": null
+        },
+        "boardId": 1,
+        "user": {
+          "id": "11111111-1111-1111-1111-111111111111",
+          "name": "Vertrag"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "aktives Board lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/active"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "board": {
+          "createdAt": "<TIME>",
+          "id": 1,
+          "name": "Sprint 2",
+          "openTickets": 0,
+          "ownerId": "11111111-1111-1111-1111-111111111111",
+          "ownerName": "Vertrag",
+          "projectId": 1,
+          "projectKey": "VTR",
+          "projectName": "Vertrag",
+          "repoPath": null,
+          "repoSource": null
+        },
+        "boardId": 1,
+        "user": {
+          "id": "11111111-1111-1111-1111-111111111111",
+          "name": "Vertrag"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "unbekanntes Board aktivieren",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/boards/999/activate"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 999 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "keine Board-Nummer aktivieren",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/boards/abc/activate"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "id-invalid",
+        "message": "„abc“ ist keine gültige Board-Nummer."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "aktivieren ohne Körper",
+    "request": {
+      "method": "POST",
+      "path": "/api/db/boards/1/activate"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "bad-request",
+        "message": "Die Anfrage ist ungültig."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "leeres Board löschen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/db/boards/2"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "deletedTickets": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Board mit offenem Ticket löschen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/db/boards/3?deleteOpen=false"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-has-open-tickets",
+        "message": "Auf dem Board liegen noch offene Tickets: INC-0001. Erst verschieben oder ausdrücklich alles löschen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Board samt offener Tickets löschen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/db/boards/3?deleteOpen=true"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "deletedTickets": [
+          "INC-0001"
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "aktives Board löschen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/db/boards/1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "deletedTickets": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "aktives Board ist vergessen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/active"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "board": null,
+        "boardId": null,
+        "user": {
+          "id": "11111111-1111-1111-1111-111111111111",
+          "name": "Vertrag"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "unbekanntes Board löschen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/db/boards/999"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 999 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "keine Board-Nummer löschen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/db/boards/abc"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "id-invalid",
+        "message": "„abc“ ist keine gültige Board-Nummer."
+      },
+      "status": 422
+    }
+  }
+]

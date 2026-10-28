@@ -1,0 +1,89 @@
+{
+  "title": "Dispatch-Statistik eines Projekts mit Zeitraum, Board und Lauf-Art",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    {
+      "name": "Vorbereitung: Projekt",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "board": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: zweites Projekt",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "OTH", "name": "Andere" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: fremdes Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "OTH", "name": "Fremd" },
+      "save": { "foreign": "json.id" },
+      "record": false
+    },
+    { "name": "ohne Projekt", "method": "GET", "path": "/api/db/stats/dispatch" },
+    { "name": "unbekanntes Projekt", "method": "GET", "path": "/api/db/stats/dispatch?project=XYZ" },
+    {
+      "name": "Zeitraum je Tag",
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=arc&from=2020-03-02&to=2020-03-08"
+    },
+    {
+      "name": "Zeitraum je Woche",
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&from=2020-03-02&to=2020-05-03"
+    },
+    {
+      "name": "Board als Filter",
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&board={{board}}&from=2020-03-02&to=2020-03-08"
+    },
+    {
+      "name": "Lauf-Art merge",
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&kind=merge&from=2020-03-02&to=2020-03-08"
+    },
+    {
+      "name": "Standard-Zeitraum von acht Wochen",
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC",
+      "ignore": ["json.series"]
+    },
+    {
+      "name": "ab der neuesten Fassung der Einstellung",
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&from=config",
+      "ignore": ["json.series"]
+    },
+    {
+      "name": "Board eines anderen Projekts",
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&board={{foreign}}"
+    },
+    { "name": "unbekanntes Board", "method": "GET", "path": "/api/db/stats/dispatch?project=ARC&board=999" },
+    { "name": "Board ohne Nummer", "method": "GET", "path": "/api/db/stats/dispatch?project=ARC&board=abc" },
+    {
+      "name": "Anfang nach Ende",
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&from=2020-02-01&to=2020-01-01"
+    },
+    { "name": "Tag gibt es nicht", "method": "GET", "path": "/api/db/stats/dispatch?project=ARC&from=2020-02-30" },
+    {
+      "name": "Zeitraum zu lang",
+      "method": "GET",
+      "path": "/api/db/stats/dispatch?project=ARC&from=2019-01-01&to=2020-12-31"
+    },
+    { "name": "unbekannte Lauf-Art", "method": "GET", "path": "/api/db/stats/dispatch?project=ARC&kind=plan" }
+  ]
+}
