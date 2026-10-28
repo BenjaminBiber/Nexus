@@ -319,8 +319,14 @@ mod tests {
             .unwrap();
 
         assert!(Path::new(&result.bin_dir).join(BINARY_NAME).exists());
-        assert!(Path::new(&result.app_dir).join("lib").join("server.mjs").exists());
-        assert!(Path::new(&result.app_dir).join("web").join("index.html").exists());
+        assert!(Path::new(&result.app_dir)
+            .join("lib")
+            .join("server.mjs")
+            .exists());
+        assert!(Path::new(&result.app_dir)
+            .join("web")
+            .join("index.html")
+            .exists());
         let cmd = fs::read_to_string(Path::new(&result.bin_dir).join("harness.cmd")).unwrap();
         assert!(cmd.contains("nexus.exe"), "{cmd}");
         let sh = fs::read_to_string(Path::new(&result.bin_dir).join("harness")).unwrap();
@@ -381,7 +387,10 @@ mod tests {
             .install(&plugin.root(), InstallOptions::default())
             .unwrap();
 
-        assert!(!Path::new(&first.app_dir).join("lib").join("alt.mjs").exists());
+        assert!(!Path::new(&first.app_dir)
+            .join("lib")
+            .join("alt.mjs")
+            .exists());
         assert_eq!(
             fs::read(Path::new(&first.bin_dir).join(BINARY_NAME)).unwrap(),
             b"neu"
@@ -400,7 +409,10 @@ mod tests {
         // Das installierte Binary liegt in `<home>/bin`; eine Wurzel daraus hat `bin/` und
         // (nach dem ersten Lauf) die Regeln daneben
         let second = installer
-            .install(Path::new(&first.bin_dir).parent().unwrap(), InstallOptions::default())
+            .install(
+                Path::new(&first.bin_dir).parent().unwrap(),
+                InstallOptions::default(),
+            )
             .unwrap();
 
         assert!(Path::new(&second.bin_dir).join(BINARY_NAME).exists());
@@ -511,7 +523,12 @@ mod tests {
             .unwrap();
 
         let json = serde_json::to_value(&result).unwrap();
-        let mut keys: Vec<&str> = json.as_object().unwrap().keys().map(String::as_str).collect();
+        let mut keys: Vec<&str> = json
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
         keys.sort_unstable();
         assert_eq!(
             keys,

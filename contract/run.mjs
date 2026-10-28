@@ -20,6 +20,7 @@ const HELP = `Vertragstest von HTTP-API, CLI und Hooks.
 
   --update              Golden-Dateien neu aufzeichnen (nur geänderte werden geschrieben)
   --only <teilstring>   nur Szenarien, deren Pfad den Teilstring enthält
+  --step <präfix>       nur Schritte, deren Name mit dem Präfix beginnt (z. B. "harness init")
   --suite <name>        Ordner unter contract/ (Standard: alle, also api und sse)
   --server-cmd "<cmd>"  eigener Startbefehl, {port} wird ersetzt
   --base <url>          fremder, laufender Server (braucht --home und genau ein Szenario)
@@ -44,10 +45,10 @@ export class ContractRun {
   static parse(argv) {
     const options = {
       // Ohne --suite laufen alle Ordner unter contract/ (api und sse)
-      update: false, only: null, suite: '', serverCmd: DEFAULT_SERVER_CMD, base: null, home: null,
+      update: false, only: null, step: null, suite: '', serverCmd: DEFAULT_SERVER_CMD, base: null, home: null,
       cliCmd: DEFAULT_CLI_CMD, coverage: false, strict: false, verbose: false, help: false,
     };
-    const values = { '--only': 'only', '--suite': 'suite', '--server-cmd': 'serverCmd', '--base': 'base', '--home': 'home', '--cli-cmd': 'cliCmd' };
+    const values = { '--only': 'only', '--step': 'step', '--suite': 'suite', '--server-cmd': 'serverCmd', '--base': 'base', '--home': 'home', '--cli-cmd': 'cliCmd' };
     const flags = { '--update': 'update', '--coverage': 'coverage', '--strict': 'strict', '--verbose': 'verbose', '--help': 'help', '-h': 'help' };
     for (let i = 0; i < argv.length; i += 1) {
       const arg = argv[i];
@@ -77,11 +78,22 @@ export class ContractRun {
     return this.runAll(scenarios);
   }
 
-  // Szenarien der Suite, gefiltert nach --only und Betriebssystem
+  // Szenarien der Suite, gefiltert nach --only, --step und Betriebssystem
   scenarios() {
     const all = this.loader.load(join(CONTRACT_DIR, this.options.suite));
     const only = this.options.only;
-    return all.filter((scenario) => (!only || scenario.name.includes(only)) && ScenarioLoader.runsHere(scenario));
+    const chosen = all.filter((scenario) => (!only || scenario.name.includes(only)) && ScenarioLoader.runsHere(scenario));
+    if (!this.options.step) return chosen;
+    // Mit --step bleiben nur die genannten Schritte übrig: so lässt sich eine Umsetzung prüfen,
+    // die erst einen Teil der Befehle kennt. Die Golden-Datei wird dabei nie geschrieben.
+    return chosen
+      .map((scenario) => ({ ...scenario, steps: scenario.steps.filter((step) => this.matches(step)) }))
+      .filter((scenario) => scenario.steps.length > 0);
+  }
+
+  // Gehört der Schritt (bzw. der Eintrag der Golden-Datei) zum Filter --step?
+  matches(step) {
+    return !this.options.step || step.name.startsWith(this.options.step);
   }
 
   // Spielt alle Szenarien ab und vergleicht oder schreibt die Golden-Dateien
@@ -129,6 +141,9 @@ export class ContractRun {
   // Schreibt die Golden-Datei (--update) oder vergleicht sie; liefert die Abweichungen
   settle(scenario, entries) {
     this.written = false;
+    if (this.options.update && this.options.step) {
+      return ['--update und --step zusammen würden die Golden-Datei auf die gefilterten Schritte verkürzen.'];
+    }
     if (this.options.update) {
       this.written = this.golden.write(scenario.golden, entries);
       return [];
@@ -142,7 +157,7 @@ export class ContractRun {
     if (expected === null) {
       return [`Es gibt noch keine Golden-Datei (${this.relative(scenario.golden)}). Mit \`node contract/run.mjs --update\` aufzeichnen.`];
     }
-    return GoldenStore.compare(expected, entries);
+    return GoldenStore.compare(expected.filter((entry) => this.matches(entry)), entries);
   }
 
   // Ein fremder Server behält seinen Zustand: dann ist genau ein Szenario erlaubt

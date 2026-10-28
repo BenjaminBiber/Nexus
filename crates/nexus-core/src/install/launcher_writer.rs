@@ -64,11 +64,17 @@ mod tests {
 
         let launchers = LauncherWriter::new().write(&bin).unwrap();
 
-        assert_eq!(launchers, vec![bin.join("harness.cmd"), bin.join("harness")]);
+        assert_eq!(
+            launchers,
+            vec![bin.join("harness.cmd"), bin.join("harness")]
+        );
         let cmd = fs::read_to_string(bin.join("harness.cmd")).unwrap();
         assert!(cmd.contains("\"%~dp0nexus.exe\" %*"), "{cmd}");
         let sh = fs::read_to_string(bin.join("harness")).unwrap();
-        assert!(sh.contains("exec \"$(dirname \"$0\")/nexus\" \"$@\""), "{sh}");
+        assert!(
+            sh.contains("exec \"$(dirname \"$0\")/nexus\" \"$@\""),
+            "{sh}"
+        );
         assert!(!sh.contains('\r'), "{sh}");
     }
 

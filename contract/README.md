@@ -34,6 +34,7 @@ npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lad
 | --- | --- |
 | `--update` | Golden-Dateien neu schreiben; nur Dateien mit geändertem Inhalt werden angefasst. |
 | `--only <teilstring>` | Nur Szenarien, deren Pfad den Teilstring enthält (z. B. `basis/health`). |
+| `--step <präfix>` | Nur Schritte, deren Name mit dem Präfix beginnt (z. B. `--step "harness init"`), und nur die passenden Einträge der Golden-Datei. Für eine Umsetzung, die erst einen Teil der Befehle kennt; zusammen mit `--update` abgewiesen, damit keine Golden-Datei verkürzt wird. |
 | `--suite <name>` | Ordner unter `contract/` mit den Szenarien (Standard: alle, also `api`, `sse` und `cli`). |
 | `--server-cmd "<cmd {port}>"` | Eigener Startbefehl statt des TS-Servers; `{port}` wird ersetzt. Relative Pfade gelten ab der Projektwurzel. |
 | `--base <url> --home <ordner>` | Gegen einen schon laufenden Server prüfen (siehe unten). |

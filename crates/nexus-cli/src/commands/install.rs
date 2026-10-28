@@ -40,7 +40,10 @@ fn lines(result: &InstallResult, register_path: bool) -> Vec<String> {
                 .to_string(),
         );
     } else {
-        lines.push("PATH war schon eingerichtet. Falls `harness` fehlt: neues Terminal öffnen.".to_string());
+        lines.push(
+            "PATH war schon eingerichtet. Falls `harness` fehlt: neues Terminal öffnen."
+                .to_string(),
+        );
     }
     lines
 }

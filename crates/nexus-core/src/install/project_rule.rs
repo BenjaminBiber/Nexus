@@ -176,14 +176,20 @@ mod tests {
         let text = rule("/x/.harness", true).content();
         assert!(text.starts_with("---\n"), "{text}");
         assert!(text.contains("paths:\n  - \"**/docs/**\"\n"), "{text}");
-        assert!(text.ends_with("\n---\n@/x/.harness/rules/docs.md\n"), "{text}");
+        assert!(
+            text.ends_with("\n---\n@/x/.harness/rules/docs.md\n"),
+            "{text}"
+        );
     }
 
     #[test]
     fn die_board_rule_hat_keine_eingrenzung() {
         let text = rule("/x/.harness", false).content();
         assert!(!text.contains("paths:"), "{text}");
-        assert!(text.ends_with("---\n@/x/.harness/rules/board.md\n"), "{text}");
+        assert!(
+            text.ends_with("---\n@/x/.harness/rules/board.md\n"),
+            "{text}"
+        );
     }
 
     #[test]
@@ -211,7 +217,10 @@ mod tests {
     #[test]
     fn kennt_die_orte_beider_rules() {
         assert_eq!(rule("/x", true).path(), ".claude/rules/ai-harness-docs.md");
-        assert_eq!(rule("/x", false).path(), ".claude/rules/ai-harness-board.md");
+        assert_eq!(
+            rule("/x", false).path(),
+            ".claude/rules/ai-harness-board.md"
+        );
         assert_eq!(
             rule("/x", true).file(Path::new("p")),
             Path::new("p")

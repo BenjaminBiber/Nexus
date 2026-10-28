@@ -69,9 +69,9 @@ impl UserPath for WindowsUserPath {
             use std::os::windows::process::CommandExt;
             command.creation_flags(crate::process::CREATE_NO_WINDOW);
         }
-        let mut child = command.spawn().map_err(|error| {
-            failed(format!("Der PATH konnte nicht ergänzt werden: {error}"))
-        })?;
+        let mut child = command
+            .spawn()
+            .map_err(|error| failed(format!("Der PATH konnte nicht ergänzt werden: {error}")))?;
         let started = Instant::now();
         loop {
             match child.try_wait() {
@@ -93,9 +93,9 @@ impl UserPath for WindowsUserPath {
                 }
             }
         }
-        let output = child.wait_with_output().map_err(|error| {
-            failed(format!("Der PATH konnte nicht ergänzt werden: {error}"))
-        })?;
+        let output = child
+            .wait_with_output()
+            .map_err(|error| failed(format!("Der PATH konnte nicht ergänzt werden: {error}")))?;
         if !output.status.success() {
             let message = String::from_utf8_lossy(&output.stderr).trim().to_string();
             return Err(failed(format!("Der PATH konnte nicht ergänzt werden: {message}")).into());
@@ -111,9 +111,15 @@ mod tests {
     #[test]
     fn das_skript_ist_wortgleich_zu_typescript() {
         let script = WindowsUserPath::script();
-        assert!(script.starts_with("$d = $env:HARNESS_BIN_DIR; "), "{script}");
+        assert!(
+            script.starts_with("$d = $env:HARNESS_BIN_DIR; "),
+            "{script}"
+        );
         assert!(script.contains("DoNotExpandEnvironmentNames"), "{script}");
-        assert!(script.contains("if ($items -contains $d) { 'present'; exit 0 }"), "{script}");
+        assert!(
+            script.contains("if ($items -contains $d) { 'present'; exit 0 }"),
+            "{script}"
+        );
         assert!(script.ends_with("'added'"), "{script}");
     }
 

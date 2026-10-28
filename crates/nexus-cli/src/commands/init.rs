@@ -111,7 +111,9 @@ mod tests {
         assert!(approval_lines(&result(ApprovalStatus::Unchanged)).is_empty());
         let no_config = approval_lines(&result(ApprovalStatus::NoConfig));
         assert!(
-            no_config[0].starts_with("Claude Code lief auf diesem Rechner noch nie (/h/.claude.json fehlt)."),
+            no_config[0].starts_with(
+                "Claude Code lief auf diesem Rechner noch nie (/h/.claude.json fehlt)."
+            ),
             "{no_config:?}"
         );
     }

@@ -51,8 +51,11 @@ fn die_hauptseite_hat_den_aufrufkopf_und_deutsche_uberschriften() {
     );
     assert!(lauf.stdout.contains("Optionen:"), "{}", lauf.stdout);
     assert!(lauf.stdout.contains("Befehle:"), "{}", lauf.stdout);
+    // Die Spaltenbreite richtet sich nach dem längsten Begriff und wächst mit jedem Befehl
     assert!(
-        lauf.stdout.contains("-h, --help     Hilfe anzeigen"),
+        lauf.stdout
+            .lines()
+            .any(|line| line.starts_with("  -h, --help") && line.ends_with("Hilfe anzeigen")),
         "{}",
         lauf.stdout
     );

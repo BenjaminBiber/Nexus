@@ -40,7 +40,10 @@ fn legt_die_doku_rule_mit_eingrenzung_auf_docs_an() {
     let text = fs::read_to_string(rule.file(repo.path())).unwrap();
     assert!(text.starts_with("---\n"), "{text}");
     assert!(text.contains("paths:\n  - \"**/docs/**\"\n"), "{text}");
-    assert!(text.ends_with("\n---\n@/x/.harness/rules/docs.md\n"), "{text}");
+    assert!(
+        text.ends_with("\n---\n@/x/.harness/rules/docs.md\n"),
+        "{text}"
+    );
 }
 
 #[test]
@@ -117,7 +120,10 @@ fn legt_die_board_rule_ohne_eingrenzung_an_und_nimmt_sie_aus_git_heraus() {
     );
     let text = fs::read_to_string(rule.file(repo.path())).unwrap();
     assert!(!text.contains("paths:"), "{text}");
-    assert!(text.ends_with("---\n@/x/.harness/rules/board.md\n"), "{text}");
+    assert!(
+        text.ends_with("---\n@/x/.harness/rules/board.md\n"),
+        "{text}"
+    );
     assert!(!rule.ensure(repo.path()).unwrap());
     assert_eq!(
         repo.git(&["status", "--porcelain", "--untracked-files=all"]),

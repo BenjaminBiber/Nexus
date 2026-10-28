@@ -109,15 +109,29 @@ fn richtet_das_projekt_ohne_ticket_ordner_ein_und_weist_auf_die_fehlende_board_d
 
     assert_eq!(lauf.stderr, "");
     assert_eq!(lauf.code, 0);
-    assert!(lauf.stdout.contains("Harness eingerichtet"), "{}", lauf.stdout);
+    assert!(
+        lauf.stdout.contains("Harness eingerichtet"),
+        "{}",
+        lauf.stdout
+    );
     assert!(
         lauf.stdout
             .contains("Board-Datenbank ist noch nicht eingerichtet"),
         "{}",
         lauf.stdout
     );
-    assert!(projekt.path.join(".git").join("harness").join("token").exists());
-    assert!(!projekt.path.join(".git").join("harness").join("tickets").exists());
+    assert!(projekt
+        .path
+        .join(".git")
+        .join("harness")
+        .join("token")
+        .exists());
+    assert!(!projekt
+        .path
+        .join(".git")
+        .join("harness")
+        .join("tickets")
+        .exists());
 }
 
 #[test]
@@ -129,7 +143,10 @@ fn liefert_mit_json_ordner_plugin_schalter_und_board_hinweis() {
     assert_eq!(wert["pluginEnabled"], serde_json::Value::Bool(true));
     assert_eq!(wert["board"], serde_json::Value::Null);
     assert!(
-        wert["boardHint"].as_str().unwrap().contains("Board-Datenbank"),
+        wert["boardHint"]
+            .as_str()
+            .unwrap()
+            .contains("Board-Datenbank"),
         "{wert}"
     );
 }
@@ -189,9 +206,14 @@ fn legt_die_rule_fur_die_doku_regeln_an_ohne_sie_zu_versionieren() {
         docs_rule.ends_with("/Demo Projekt ä/.claude/rules/ai-harness-docs.md"),
         "{docs_rule}"
     );
-    let text =
-        fs::read_to_string(projekt.path.join(".claude").join("rules").join("ai-harness-docs.md"))
-            .unwrap();
+    let text = fs::read_to_string(
+        projekt
+            .path
+            .join(".claude")
+            .join("rules")
+            .join("ai-harness-docs.md"),
+    )
+    .unwrap();
     assert!(text.contains('@'), "{text}");
     assert!(!projekt
         .git(&["status", "--porcelain", "--untracked-files=all"])
@@ -220,7 +242,10 @@ fn legt_die_immer_geladene_board_regel_an_und_erganzt_sie_in_schon_eingerichtete
     );
     let text = fs::read_to_string(&board_rule).unwrap();
     assert!(!text.contains("paths:"), "{text}");
-    assert!(text.contains("\n@") && text.trim_end().ends_with("rules/board.md"), "{text}");
+    assert!(
+        text.contains("\n@") && text.trim_end().ends_with("rules/board.md"),
+        "{text}"
+    );
     assert!(!projekt
         .git(&["status", "--porcelain", "--untracked-files=all"])
         .contains("ai-harness-board.md"));
@@ -264,7 +289,10 @@ fn ohne_konfiguration_von_claude_code_weist_init_auf_den_ersten_start_hin() {
 
     let lauf = projekt.run(&["init"]);
 
-    assert_eq!(json(&projekt.run(&["--json", "init"]))["importApproval"]["status"], "no-config");
+    assert_eq!(
+        json(&projekt.run(&["--json", "init"]))["importApproval"]["status"],
+        "no-config"
+    );
     assert!(
         lauf.stdout
             .contains("Claude Code lief auf diesem Rechner noch nie"),
@@ -290,7 +318,10 @@ fn meldet_eine_nicht_erreichbare_board_datenbank_nur_als_hinweis_und_endet_mit_0
     let wert = json(&lauf);
     assert_eq!(wert["board"], serde_json::Value::Null);
     assert!(
-        wert["boardHint"].as_str().unwrap().contains("Board-Datenbank"),
+        wert["boardHint"]
+            .as_str()
+            .unwrap()
+            .contains("Board-Datenbank"),
         "{wert}"
     );
 }
@@ -309,7 +340,11 @@ fn wartet_hochstens_kurz_auf_die_board_datenbank_und_endet_mit_0() {
     let lauf = projekt.run(&["init"]);
 
     assert_eq!(lauf.code, 0, "{}", lauf.stderr);
-    assert!(lauf.stdout.contains("Harness eingerichtet"), "{}", lauf.stdout);
+    assert!(
+        lauf.stdout.contains("Harness eingerichtet"),
+        "{}",
+        lauf.stdout
+    );
     assert!(lauf.stdout.contains("Board-Datenbank"), "{}", lauf.stdout);
     assert!(start.elapsed().as_millis() < 7000, "{:?}", start.elapsed());
 }

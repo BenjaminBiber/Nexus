@@ -96,7 +96,11 @@ async fn lookup(home: &HarnessHome, root: &str) -> BoardInfo {
 }
 
 /// Öffnet die Datenbank des Anbieters und fragt das Board des Repos ab
-async fn for_repo(home: &HarnessHome, root: &str, config: &BoardConfig) -> Result<Option<BoardName>> {
+async fn for_repo(
+    home: &HarnessHome,
+    root: &str,
+    config: &BoardConfig,
+) -> Result<Option<BoardName>> {
     let options = ConnectOptions {
         connection_timeout_ms: Some(BOARD_TIMEOUT_MS),
     };

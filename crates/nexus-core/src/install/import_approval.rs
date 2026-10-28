@@ -65,7 +65,9 @@ impl ClaudeImportApproval {
     /// Freigabe aus der Umgebung des laufenden Prozesses (`CLAUDE_CONFIG_DIR`, Benutzerordner)
     pub fn from_process_env() -> Self {
         Self::new(
-            std::env::var("CLAUDE_CONFIG_DIR").ok().filter(|dir| !dir.is_empty()),
+            std::env::var("CLAUDE_CONFIG_DIR")
+                .ok()
+                .filter(|dir| !dir.is_empty()),
             home_dir(),
             cfg!(windows),
         )
@@ -132,7 +134,10 @@ impl ClaudeImportApproval {
         let mut config = self.read(&file)?;
         let mut projects = projects(&config);
         let keys = self.keys(project_dir, &projects);
-        if keys.iter().all(|key| is_set(&projects, key, APPROVED) && is_set(&projects, key, SHOWN)) {
+        if keys
+            .iter()
+            .all(|key| is_set(&projects, key, APPROVED) && is_set(&projects, key, SHOWN))
+        {
             return Ok(ApprovalResult {
                 status: ApprovalStatus::Unchanged,
                 file: name,
@@ -149,7 +154,8 @@ impl ClaudeImportApproval {
             projects.insert(key.clone(), Value::Object(entry));
         }
         config.insert("projects".to_string(), Value::Object(projects));
-        let json = serde_json::to_string_pretty(&Value::Object(config)).map_err(Error::unexpected)?;
+        let json =
+            serde_json::to_string_pretty(&Value::Object(config)).map_err(Error::unexpected)?;
         self.writer.write(&file, &format!("{json}\n"))?;
         self.verify(&file, &keys)?;
         Ok(ApprovalResult {
@@ -221,9 +227,7 @@ fn with_first(path: &str, upper: bool) -> String {
 
 /// Vergleichsform eines Windows-Pfads: Schrägstriche, ohne Schrägstrich am Ende, Kleinbuchstaben
 fn comparable(path: &str) -> String {
-    path.replace('\\', "/")
-        .trim_end_matches('/')
-        .to_lowercase()
+    path.replace('\\', "/").trim_end_matches('/').to_lowercase()
 }
 
 /// Benutzerordner des angemeldeten Benutzers, wie `os.homedir()` in Node
@@ -282,7 +286,10 @@ mod tests {
     fn nimmt_die_altere_config_json_wenn_es_sie_gibt() {
         let (_base, home, _config) = basis();
         fs::create_dir(home.join(".claude")).unwrap();
-        schreiben(&home.join(".claude").join(".config.json"), serde_json::json!({}));
+        schreiben(
+            &home.join(".claude").join(".config.json"),
+            serde_json::json!({}),
+        );
         assert_eq!(
             freigabe(&home).config_file(),
             home.join(".claude").join(".config.json")
@@ -406,7 +413,11 @@ mod tests {
 
         let config = lesen(&file);
         for key in ["C:\\Dev\\P", "C:/Dev/P", "c:/Dev/P"] {
-            assert_eq!(config["projects"][key][APPROVED], Value::Bool(true), "{key}");
+            assert_eq!(
+                config["projects"][key][APPROVED],
+                Value::Bool(true),
+                "{key}"
+            );
         }
     }
 

@@ -69,7 +69,8 @@ impl ProjectPluginSwitch {
 
     /// Schreibt die Einstellungen wie TypeScript: JSON mit zwei Leerzeichen und `\n` am Ende
     fn write(&self, file: &Path, settings: Map<String, Value>) -> Result<bool> {
-        let json = serde_json::to_string_pretty(&Value::Object(settings)).map_err(Error::unexpected)?;
+        let json =
+            serde_json::to_string_pretty(&Value::Object(settings)).map_err(Error::unexpected)?;
         self.writer.write(file, &format!("{json}\n"))?;
         Ok(true)
     }
