@@ -2,16 +2,15 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { GIT_IDENTITY_ENV } from './GitIdentity.mjs';
 
 // Ordnername mit Leerzeichen und Umlaut: Pfade, die auf allen drei Plattformen zu Fehlern führen, fallen früh auf
 const REPO_DIR = 'Mein Projekt ä';
 
-// Fester Zeitpunkt des ersten Commits. Nur damit ist sein Hash in jedem Lauf derselbe – und damit auch der
-// Hash, den ein Merge meldet („ARC-0002 gemergt in main (6f07eff)“). Das Datum liegt weit zurück, damit der
-// Normalisierer es nicht als berechnete Grenze (`<DATE-55>`) liest.
-const COMMIT_DATE = '2020-03-02T10:00:00+00:00';
+// Hauptbranch der Fixture-Repos
+const MAIN = 'main';
 
-// Legt die temporären Git-Repos eines Szenarios an (Dateien, erster Commit, auf Wunsch `harness init`).
+// Legt die temporären Git-Repos eines Szenarios an (Dateien, erster Commit, Arbeitsbranches, auf Wunsch `harness init`).
 export class RepoFixture {
   // `home`: HARNESS_HOME des Szenarios, `claudeConfig`: leere Claude-Code-Konfiguration,
   // `cli`: Befehl der CLI als Liste (z. B. ['node', '…/cli/dist/main.js'])
@@ -37,15 +36,11 @@ export class RepoFixture {
   one(repo) {
     const path = join(this.base, repo.name, REPO_DIR);
     mkdirSync(path, { recursive: true });
-    for (const [file, content] of Object.entries(repo.files)) {
-      const target = join(path, ...file.split('/'));
-      mkdirSync(dirname(target), { recursive: true });
-      writeFileSync(target, content);
-    }
+    this.write(path, repo.files);
     if (repo.git) {
-      this.git(path, ['init', '-q', '-b', 'main']);
-      this.git(path, ['add', '-A']);
-      this.git(path, ['-c', 'user.name=Vertrag', '-c', 'user.email=vertrag@example.invalid', 'commit', '--allow-empty', '-q', '-m', 'init']);
+      this.git(path, ['init', '-q', '-b', MAIN]);
+      this.commit(path, 'init');
+      for (const branch of repo.branches ?? []) this.branch(path, branch);
     }
     if (repo.harnessInit) this.harnessInit(path);
     // Aufgelöster Pfad: Git meldet die Projektwurzel ohne Verknüpfungen (unter macOS `/private/var/…` statt
@@ -54,14 +49,38 @@ export class RepoFixture {
     return realpathSync(path);
   }
 
-  // Führt Git im Repo aus; die festen Commit-Daten machen den ersten Commit reproduzierbar
+  // Legt einen Arbeitsbranch mit einem Commit an und wechselt zurück auf den Hauptbranch: der Branch steht damit vor
+  // dem Hauptbranch, wie nach der Arbeit eines Agenten
+  branch(cwd, branch) {
+    this.git(cwd, ['checkout', '-q', '-b', branch.name]);
+    this.write(cwd, branch.files);
+    this.commit(cwd, branch.message);
+    this.git(cwd, ['checkout', '-q', MAIN]);
+  }
+
+  // Schreibt die Dateien eines Repos oder eines Branches (Pfade mit `/`)
+  write(cwd, files) {
+    for (const [file, content] of Object.entries(files ?? {})) {
+      const target = join(cwd, ...file.split('/'));
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, content);
+    }
+  }
+
+  // Nimmt alles auf und committet es
+  commit(cwd, message) {
+    this.git(cwd, ['add', '-A']);
+    this.git(cwd, ['commit', '--allow-empty', '-q', '-m', message]);
+  }
+
+  // Führt Git im Repo aus; die feste Identität und das feste Datum aus GIT_IDENTITY_ENV machen die Commits reproduzierbar
   git(cwd, args) {
     execFileSync('git', args, {
       cwd,
       encoding: 'utf8',
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, GIT_AUTHOR_DATE: COMMIT_DATE, GIT_COMMITTER_DATE: COMMIT_DATE },
+      env: { ...process.env, ...GIT_IDENTITY_ENV },
     });
   }
 
@@ -74,7 +93,7 @@ export class RepoFixture {
         encoding: 'utf8',
         windowsHide: true,
         stdio: ['ignore', 'pipe', 'pipe'],
-        env: { ...process.env, HARNESS_HOME: this.home, CLAUDE_CONFIG_DIR: this.claudeConfig },
+        env: { ...process.env, ...GIT_IDENTITY_ENV, HARNESS_HOME: this.home, CLAUDE_CONFIG_DIR: this.claudeConfig },
       });
     } catch (error) {
       const output = `${error.stdout ?? ''}${error.stderr ?? ''}`.trim();

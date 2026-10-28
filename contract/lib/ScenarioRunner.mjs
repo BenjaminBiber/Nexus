@@ -1,6 +1,7 @@
 import { mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { GIT_IDENTITY_ENV } from './GitIdentity.mjs';
 import { HomeFiles } from './HomeFiles.mjs';
 import { Normalizer } from './Normalizer.mjs';
 import { RepoFixture } from './RepoFixture.mjs';
@@ -69,6 +70,8 @@ export class ScenarioRunner {
         claudeConfig,
         port,
         envFile: scenario.fixtures.claudeEnvFile ? join(claudeConfig, ENV_FILE) : null,
+        // `home` und `reposDir` brauchen die Schritt-Arten, die Dateien schreiben bzw. committen (homeFile, commit)
+        reposDir: fixture.base,
       };
       return await this.steps(scenario, context);
     } finally {
@@ -98,9 +101,17 @@ export class ScenarioRunner {
   }
 
   // Umgebung des Servers; `env` des Szenarios setzt die CONTRACT_*-Variablen (Takt des Herzschlags und
-  // der Abfragen), sonst erbt der Server sie aus dem eigenen Prozess
+  // der Abfragen), sonst erbt der Server sie aus dem eigenen Prozess.
+  // GIT_IDENTITY_ENV gibt seinen Commits (Merge eines Ticket-Branches) eine feste Identität und ein festes Datum
   env(home, claudeConfig, port, scenarioEnv = {}) {
-    const env = { ...process.env, ...scenarioEnv, HARNESS_HOME: home, HARNESS_PORT: String(port), CLAUDE_CONFIG_DIR: claudeConfig };
+    const env = {
+      ...process.env,
+      ...GIT_IDENTITY_ENV,
+      ...scenarioEnv,
+      HARNESS_HOME: home,
+      HARNESS_PORT: String(port),
+      CLAUDE_CONFIG_DIR: claudeConfig,
+    };
     // Eine geerbte Session- oder Ticket-Zuordnung gilt nicht für den Vertrag
     delete env.HARNESS_SESSION;
     delete env.HARNESS_TICKET;

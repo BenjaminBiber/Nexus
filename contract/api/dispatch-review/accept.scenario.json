@@ -1,0 +1,120 @@
+{
+  "title": "Abnehmen: Ticket mit Branch wird gemergt, Ticket ohne Branch nur erledigt, Fehlerfälle",
+  "fixtures": {
+    "repos": [
+      {
+        "name": "REPO1",
+        "files": {
+          "README.md": "# Bestellung\n",
+          "src/preis.ts": "export function preis(netto: number): number {\n  return netto;\n}\n"
+        }
+      }
+    ],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "BEN", "name": "Bestellung" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "BEN", "name": "Sprint" }, "record": false },
+    { "name": "Repo-Pfad des Boards", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Board aktivieren", "method": "POST", "path": "/api/db/boards/1/activate", "body": {}, "record": false },
+    {
+      "name": "Ticket für den Dispatcher",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Rabatt einbauen", "acceptance": "Der Preis sinkt um den Rabatt.", "labels": ["auto"], "needsPlanning": false },
+      "record": false
+    },
+    {
+      "name": "Plan und Handbuch",
+      "method": "PATCH",
+      "path": "/api/db/tickets/BEN-0001",
+      "body": { "rev": 1, "plan": "Rabatt in preis() verrechnen.", "handbook": "Tests mit vitest." },
+      "record": false
+    },
+    { "name": "Ticket nach Geplant", "method": "POST", "path": "/api/db/tickets/BEN-0001/move", "body": { "status": "planned" }, "record": false },
+    {
+      "name": "zweites Ticket, das nie gestartet wird und deshalb keinen Branch hat",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Versand prüfen", "acceptance": "Die Versandkosten stimmen." },
+      "record": false
+    },
+    {
+      "name": "zweites Ticket wartet von Hand auf einen Menschen",
+      "method": "PATCH",
+      "path": "/api/db/tickets/BEN-0002",
+      "body": { "rev": 1, "status": "blocked", "blockedReason": "Human Interaction: bitte die Versandkosten prüfen" },
+      "record": false
+    },
+    { "name": "Dispatcher einschalten", "method": "POST", "path": "/api/dispatch/enable", "body": {}, "record": false },
+    {
+      "name": "Durchlauf: Branch und Worktree des Tickets",
+      "method": "POST",
+      "path": "/api/dispatch/run",
+      "body": {},
+      "save": { "lauf": "json.runs.0.id" },
+      "record": false
+    },
+    {
+      "name": "Arbeit des Agenten im Worktree",
+      "kind": "commit",
+      "cwd": "{{REPO1}}-worktrees/BEN-0001",
+      "files": {
+        "src/preis.ts": "export function preis(netto: number): number {\n  return netto * (1 - RABATT);\n}\n",
+        "src/rabatt.ts": "export const RABATT = 0.1;\n"
+      },
+      "message": "BEN-0001: Rabatt eingebaut",
+      "record": false
+    },
+    {
+      "name": "der Agent hakt das Ticket ab",
+      "method": "POST",
+      "path": "/api/db/tickets/BEN-0001/move",
+      "body": { "status": "done", "acceptance": "Der Preis sinkt um den Rabatt." },
+      "record": false
+    },
+    {
+      "name": "Ergebnis des Workers",
+      "kind": "homeFile",
+      "path": "dispatch/runs/{{lauf}}.result.json",
+      "content": {
+        "code": 0,
+        "timedOut": false,
+        "endedAt": "2020-03-02T08:45:00.000Z",
+        "output": "{\"type\":\"assistant\",\"message\":{\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_01\",\"name\":\"Bash\",\"input\":{\"command\":\"npx vitest run\"}}]}}\n{\"type\":\"user\",\"message\":{\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_01\",\"content\":\"Test Files  2 passed (2)\"}]}}\n{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":false,\"result\":\"Rabatt eingebaut.\",\"total_cost_usd\":0}\n"
+      },
+      "record": false
+    },
+    {
+      "name": "Durchlauf: der Lauf wird ausgewertet, das Ticket wartet auf Freigabe",
+      "method": "POST",
+      "path": "/api/dispatch/run",
+      "body": {},
+      "record": false
+    },
+
+    { "name": "Abnehmen mit einem Namen, der kein Text ist", "method": "POST", "path": "/api/dispatch/accept/BEN-0001", "body": { "by": 7 } },
+    { "name": "Abnehmen für ein unbekanntes Board", "method": "POST", "path": "/api/dispatch/accept/BEN-0001", "body": { "boardId": 99 } },
+    { "name": "Abnehmen eines unbekannten Tickets", "method": "POST", "path": "/api/dispatch/accept/BEN-0099", "body": {} },
+
+    {
+      "name": "Abnehmen eines Tickets ohne Branch: nur erledigt, nichts zu mergen",
+      "method": "POST",
+      "path": "/api/dispatch/accept/BEN-0002",
+      "body": { "by": "Benjamin" }
+    },
+    { "name": "zweites Ticket ist erledigt", "method": "GET", "path": "/api/db/tickets/BEN-0002", "ignore": ["json.history"] },
+    { "name": "Abnehmen desselben Tickets ein zweites Mal", "method": "POST", "path": "/api/dispatch/accept/BEN-0002", "body": {} },
+
+    {
+      "name": "Abnehmen des Tickets mit Branch: erledigt und in den Hauptbranch gemergt",
+      "method": "POST",
+      "path": "/api/dispatch/accept/BEN-0001",
+      "body": { "by": "Benjamin" }
+    },
+    { "name": "Ticket ist erledigt, Branch und Worktree sind aufgeräumt", "method": "GET", "path": "/api/db/tickets/BEN-0001", "ignore": ["json.history"] },
+    { "name": "Review nach dem Merge – ohne Branch kein Diff", "method": "GET", "path": "/api/dispatch/review/BEN-0001" },
+    { "name": "Abnehmen des gemergten Tickets ein zweites Mal", "method": "POST", "path": "/api/dispatch/accept/BEN-0001", "body": {} },
+    { "name": "Erneut mergen ohne Branch", "method": "POST", "path": "/api/dispatch/merge/BEN-0001", "body": {} }
+  ]
+}

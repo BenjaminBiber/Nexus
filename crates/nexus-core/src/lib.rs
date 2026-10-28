@@ -4,12 +4,27 @@
 
 pub mod actors;
 pub mod board;
+pub mod counter;
+pub mod dispatch;
 pub mod error;
+pub mod git;
+pub mod locking;
+pub mod project;
 pub mod questions;
+pub mod registry;
+pub mod sessions;
+pub mod settings;
+#[cfg(feature = "testing")]
+pub mod testing;
 pub mod text;
+
+mod process;
+mod random;
 
 pub use actors::{Actor, AuthorKind, QuestionActor};
 pub use error::{Error, HarnessError, Result};
+pub use project::HarnessProject;
+pub use registry::HarnessHome;
 
 /// Name des Crates, wie er in Protokollen und Diagnoseausgaben erscheint.
 pub const CRATE_NAME: &str = "nexus-core";

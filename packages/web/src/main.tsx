@@ -21,13 +21,16 @@ import { BrowserRouter } from 'react-router-dom';
 import { ApiClient } from './api/ApiClient.js';
 import { ApiProvider } from './api/ApiContext.js';
 import { App } from './App.js';
+import { PlatformProvider } from './platform/PlatformContext.js';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ApiProvider api={new ApiClient()}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <PlatformProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </PlatformProvider>
     </ApiProvider>
   </StrictMode>,
 );

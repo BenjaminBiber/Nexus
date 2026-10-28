@@ -15,8 +15,27 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+dirs = "6"
+log = "0.4"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# tray-icon: Symbol in der Menüleiste; image-png: die Tray-Symbole liegen als PNG neben der App
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-log = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-shell = "2"
+thiserror = "2"
+tokio = { version = "1", features = ["time", "signal", "macros"] }
 
 [features]
 # Von `tauri dev` gesetzt, wenn eine eigene Schutzschicht aktiv sein soll.
 custom-protocol = ["tauri/custom-protocol"]
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "io-util"] }
+
+[target."cfg(unix)".dependencies]
+libc = "0.2"
