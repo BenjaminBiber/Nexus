@@ -6,7 +6,7 @@
 //   node sqlite-crosscheck.mjs dump  <datei>
 //   node sqlite-crosscheck.mjs init  <datei>
 //   node sqlite-crosscheck.mjs burst <datei> <anzahl> <präfix>
-//   node sqlite-crosscheck.mjs bump  <datei> <ticketId> <rev>
+//   node sqlite-crosscheck.mjs bump  <datei> <ticketId> <erwartete rev>
 //
 // Nur stdout trägt das Ergebnis (kanonisches JSON, Schlüssel sortiert); Warnungen von Node
 // („ExperimentalWarning“) gehen nach stderr. Das Skript arbeitet ausschließlich über die
@@ -199,13 +199,14 @@ function ticketFor(nummer, titel) {
   };
 }
 
-// Ein Update auf die angegebene Rev; Ergebnis 'ok' oder der Fehlercode
+// Ein Update, das <rev> als aktuelle Rev erwartet und auf rev + 1 schreibt;
+// Ergebnis 'ok' oder der Fehlercode
 async function bump(db, id, rev) {
   try {
     await db.transaction(async (u) => {
       const ticket = await u.tickets.byId(id, true);
       if (!ticket) throw new Error(`Ticket ${id} fehlt`);
-      await u.tickets.update({ ...ticket, title: 'Von TypeScript', rev });
+      await u.tickets.update({ ...ticket, title: 'Von TypeScript', rev: rev + 1 });
     });
     return { result: 'ok' };
   } catch (error) {
