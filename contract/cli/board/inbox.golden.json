@@ -1,0 +1,260 @@
+[
+  {
+    "name": "inbox (Text)",
+    "request": {
+      "args": [
+        "board",
+        "inbox"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "1. [Frage] ARC-F0001  Welcher Speicher?  (ARC · Sprint, 1 Ticket(s) warten)\n   → harness board question show ARC-F0001\n2. [Abnahme] ARC-0001  Abnahme  (ARC · Sprint)\n   Human Interaction: Ergebnis ansehen\n   → harness board accept ARC-0001\n3. [In Planung] ARC-0003  Planen  (ARC · Zweites)\n   → harness board show ARC-0003\n4. [Notiz] Notiz 1  Suche findet Umlaute nicht  (ARC · Sprint)\n   → harness board note take 1\n5. [Merge gescheitert] ARC-0002  Merge  (ARC · Sprint)\n   Merge: Konflikt in board.ts\n   → harness board merge ARC-0002"
+    }
+  },
+  {
+    "name": "inbox --md",
+    "request": {
+      "args": [
+        "board",
+        "inbox",
+        "--md"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "1. **Frage** `ARC-F0001` Welcher Speicher? (ARC · Sprint, 1 Ticket(s) warten) → `harness board question show ARC-F0001`\n2. **Abnahme** `ARC-0001` Abnahme (ARC · Sprint) – Human Interaction: Ergebnis ansehen → `harness board accept ARC-0001`\n3. **In Planung** `ARC-0003` Planen (ARC · Zweites) → `harness board show ARC-0003`\n4. **Notiz** `Notiz 1` Suche findet Umlaute nicht (ARC · Sprint) → `harness board note take 1`\n5. **Merge gescheitert** `ARC-0002` Merge (ARC · Sprint) – Merge: Konflikt in board.ts → `harness board merge ARC-0002`"
+    }
+  },
+  {
+    "name": "inbox --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "inbox"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": [
+        {
+          "boardId": 1,
+          "boardName": "Sprint",
+          "detail": null,
+          "key": "question:ARC-F0001",
+          "kind": "question",
+          "noteId": null,
+          "priority": null,
+          "projectKey": "ARC",
+          "questionId": "ARC-F0001",
+          "rank": 3,
+          "since": "<TIME>",
+          "ticketId": null,
+          "title": "Welcher Speicher?",
+          "waitingTickets": 1
+        },
+        {
+          "boardId": 1,
+          "boardName": "Sprint",
+          "detail": "Human Interaction: Ergebnis ansehen",
+          "key": "ticket:ARC-0001",
+          "kind": "accept",
+          "noteId": null,
+          "priority": "normal",
+          "projectKey": "ARC",
+          "questionId": null,
+          "rank": 4,
+          "since": "<TIME>",
+          "ticketId": "ARC-0001",
+          "title": "Abnahme",
+          "waitingTickets": 0
+        },
+        {
+          "boardId": 2,
+          "boardName": "Zweites",
+          "detail": null,
+          "key": "ticket:ARC-0003",
+          "kind": "planning",
+          "noteId": null,
+          "priority": "normal",
+          "projectKey": "ARC",
+          "questionId": null,
+          "rank": 6,
+          "since": "<TIME>",
+          "ticketId": "ARC-0003",
+          "title": "Planen",
+          "waitingTickets": 0
+        },
+        {
+          "boardId": 1,
+          "boardName": "Sprint",
+          "detail": null,
+          "key": "note:1",
+          "kind": "note",
+          "noteId": 1,
+          "priority": null,
+          "projectKey": "ARC",
+          "questionId": null,
+          "rank": 7,
+          "since": "<TIME>",
+          "ticketId": null,
+          "title": "Suche findet Umlaute nicht",
+          "waitingTickets": 0
+        },
+        {
+          "boardId": 1,
+          "boardName": "Sprint",
+          "detail": "Merge: Konflikt in board.ts",
+          "key": "ticket:ARC-0002",
+          "kind": "merge",
+          "noteId": null,
+          "priority": "high",
+          "projectKey": "ARC",
+          "questionId": null,
+          "rank": 1,
+          "since": "<TIME>",
+          "ticketId": "ARC-0002",
+          "title": "Merge",
+          "waitingTickets": 0
+        }
+      ],
+      "stderr": ""
+    }
+  },
+  {
+    "name": "inbox --kind merge,accept",
+    "request": {
+      "args": [
+        "board",
+        "inbox",
+        "--kind",
+        "merge,accept"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "1. [Abnahme] ARC-0001  Abnahme  (ARC · Sprint)\n   Human Interaction: Ergebnis ansehen\n   → harness board accept ARC-0001\n2. [Merge gescheitert] ARC-0002  Merge  (ARC · Sprint)\n   Merge: Konflikt in board.ts\n   → harness board merge ARC-0002"
+    }
+  },
+  {
+    "name": "inbox --board 2",
+    "request": {
+      "args": [
+        "board",
+        "inbox",
+        "--board",
+        "2"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "1. [In Planung] ARC-0003  Planen  (ARC · Zweites)\n   → harness board show ARC-0003"
+    }
+  },
+  {
+    "name": "inbox --kind note --board 2 (leer)",
+    "request": {
+      "args": [
+        "board",
+        "inbox",
+        "--kind",
+        "note",
+        "--board",
+        "2"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Nichts wartet auf dich."
+    }
+  },
+  {
+    "name": "inbox --kind note --board 2 --md (leer)",
+    "request": {
+      "args": [
+        "board",
+        "inbox",
+        "--kind",
+        "note",
+        "--board",
+        "2",
+        "--md"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "_Nichts wartet auf dich._"
+    }
+  },
+  {
+    "name": "inbox --kind unbekannt (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "inbox",
+        "--kind",
+        "quatsch"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "„quatsch“ ist keine Art. Erlaubt: merge, setup, question, accept, blocked, planning, note. [input-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "inbox --kind leer (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "inbox",
+        "--kind",
+        ","
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "„,“ ist keine Art. Erlaubt: merge, setup, question, accept, blocked, planning, note. [input-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "inbox --board ohne Nummer --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "inbox",
+        "--board",
+        "abc"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "board-id-invalid",
+          "message": "„abc“ ist keine Board-Nummer."
+        }
+      },
+      "stderr": ""
+    }
+  }
+]

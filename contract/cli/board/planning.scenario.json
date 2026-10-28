@@ -1,0 +1,64 @@
+{
+  "title": "board plan, plan-json und next-planning: Text, JSON, Dateien, Standardeingabe und Fehler",
+  "fixtures": {
+    "repos": [
+      {
+        "name": "REPO1",
+        "harnessInit": true,
+        "files": {
+          "plan.md": "## Vorgehen\n\n1. Test schreiben\n2. Umsetzen\n",
+          "handbuch.md": "## Kontext\n\nDas Handbuch des Tickets.\n",
+          "diagramm.mmd": "flowchart LR\n  A --> B\n",
+          "payload.json": "{\n  \"plan\": \"## Vorgehen\\n\\n1. Schnittstelle lesen\\n2. Export bauen\",\n  \"handbook\": \"## Kontext\\n\\nCSV für die Buchhaltung.\",\n  \"diagram\": \"flowchart LR\\n  CSV --> Buchhaltung\",\n  \"acceptance\": \"Der Export erzeugt eine CSV-Datei.\",\n  \"by\": \"claude\"\n}\n",
+          "kaputt.json": "{ kein JSON\n",
+          "liste.json": "[1, 2, 3]\n",
+          "falsches-feld.json": "{ \"plan\": 5 }\n"
+        }
+      }
+    ],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Ticket mit Planungsbedarf", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Login bauen" }, "record": false },
+    { "name": "zweites Ticket mit Planungsbedarf", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Export bauen" }, "record": false },
+    { "name": "drittes Ticket mit Planungsbedarf", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Suche beschleunigen" }, "record": false },
+
+    { "name": "next-planning (Text)", "kind": "cli", "args": ["board", "next-planning"], "cwd": "{{REPO1}}" },
+    { "name": "next-planning --json --claim", "kind": "cli", "args": ["--json", "board", "next-planning", "--claim", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "next-planning überspringt das beanspruchte Ticket", "kind": "cli", "args": ["board", "next-planning"], "cwd": "{{REPO1}}" },
+    { "name": "next-planning --board all", "kind": "cli", "args": ["board", "next-planning", "--board", "all"], "cwd": "{{REPO1}}" },
+    { "name": "next-planning --board unbekannt (Fehler)", "kind": "cli", "args": ["board", "next-planning", "--board", "99"], "cwd": "{{REPO1}}" },
+
+    { "name": "plan mit Texten aus Dateien", "kind": "cli", "args": ["board", "plan", "ARC-0001", "--plan-file", "plan.md", "--handbook-file", "handbuch.md", "--diagram-file", "diagramm.mmd", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "plan mit Text und Zielstatus --json", "kind": "cli", "args": ["--json", "board", "plan", "ARC-0003", "--plan", "## Vorgehen\n\n1. Index bauen", "--status", "in Arbeit", "--by", "claude"], "cwd": "{{REPO1}}" },
+    {
+      "name": "plan aus der Standardeingabe",
+      "kind": "cli",
+      "args": ["board", "plan", "ARC-0003", "--plan-file", "-", "--by", "claude"],
+      "cwd": "{{REPO1}}",
+      "stdin": "## Vorgehen\n\n1. Index messen\n2. Index bauen\n"
+    },
+    { "name": "plan mit unbekanntem Status (Fehler)", "kind": "cli", "args": ["board", "plan", "ARC-0003", "--plan", "x", "--status", "quatsch", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "plan an unbekanntem Ticket --json (Fehler)", "kind": "cli", "args": ["--json", "board", "plan", "ARC-9999", "--plan", "x", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "plan-json aus Datei", "kind": "cli", "args": ["board", "plan-json", "ARC-0002", "--file", "payload.json"], "cwd": "{{REPO1}}" },
+    {
+      "name": "plan-json aus der Standardeingabe --json",
+      "kind": "cli",
+      "args": ["--json", "board", "plan-json", "ARC-0002", "--file", "-", "--status", "geplant", "--by", "claude"],
+      "cwd": "{{REPO1}}",
+      "stdin": { "plan": "## Vorgehen\n\n1. Spalten festlegen", "handbook": "## Kontext\n\nZweiter Anlauf.", "diagram": "flowchart LR\n  A --> B" }
+    },
+    { "name": "plan-json mit kaputtem JSON (Fehler)", "kind": "cli", "args": ["board", "plan-json", "ARC-0002", "--file", "kaputt.json"], "cwd": "{{REPO1}}" },
+    { "name": "plan-json mit einer Liste (Fehler)", "kind": "cli", "args": ["board", "plan-json", "ARC-0002", "--file", "liste.json"], "cwd": "{{REPO1}}" },
+    { "name": "plan-json mit falschem Feldtyp (Fehler)", "kind": "cli", "args": ["board", "plan-json", "ARC-0002", "--file", "falsches-feld.json"], "cwd": "{{REPO1}}" },
+    { "name": "plan-json ohne --file (Fehler)", "kind": "cli", "args": ["board", "plan-json", "ARC-0002"], "cwd": "{{REPO1}}" },
+    { "name": "plan-json mit unlesbarer Datei --json (Fehler)", "kind": "cli", "args": ["--json", "board", "plan-json", "ARC-0002", "--file", "fehlt.json"], "cwd": "{{REPO1}}" },
+
+    { "name": "Tickets am Ende", "kind": "cli", "args": ["board", "list", "--md"], "cwd": "{{REPO1}}" },
+    { "name": "next-planning ohne Ticket", "kind": "cli", "args": ["board", "next-planning"], "cwd": "{{REPO1}}" }
+  ]
+}

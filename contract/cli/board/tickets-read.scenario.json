@@ -1,0 +1,105 @@
+{
+  "title": "board list und board show: Text, Markdown, JSON, Filter, Rohfelder und Fehler",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "zweites Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Später" }, "record": false },
+    {
+      "name": "Ticket in Arbeit",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": {
+        "title": "Login bauen",
+        "description": "Anmeldung mit Kennwort",
+        "plan": "## Vorgehen\n\n1. Test schreiben\n2. Umsetzen",
+        "handbook": "## Kontext\n\nDas Handbuch des Tickets.",
+        "diagram": "flowchart LR\n  A --> B",
+        "acceptance": "Die Anmeldung geht.",
+        "status": "in_progress",
+        "priority": "high",
+        "assignee": "claude",
+        "labels": ["ui", "auth"],
+        "needsPlanning": false
+      },
+      "record": false
+    },
+    {
+      "name": "Texte und Zuweisung nachtragen",
+      "method": "PATCH",
+      "path": "/api/db/tickets/ARC-0001",
+      "body": {
+        "rev": 1,
+        "plan": "## Vorgehen\n\n1. Test schreiben\n2. Umsetzen",
+        "handbook": "## Kontext\n\nDas Handbuch des Tickets.",
+        "diagram": "flowchart LR\n  A --> B",
+        "assignee": "claude"
+      },
+      "record": false
+    },
+    { "name": "Schritt 1", "method": "POST", "path": "/api/db/tickets/ARC-0001/steps", "body": { "text": "Test schreiben", "detail": "npm test – erwartet: rot" }, "record": false },
+    { "name": "Schritt 2", "method": "POST", "path": "/api/db/tickets/ARC-0001/steps", "body": { "text": "Umsetzen" }, "record": false },
+    { "name": "Schritt 1 abhaken", "method": "POST", "path": "/api/db/tickets/ARC-0001/steps/1", "body": { "done": true }, "record": false },
+    { "name": "Kommentar eines Menschen", "method": "POST", "path": "/api/db/tickets/ARC-0001/comments", "body": { "body": "Bitte Tastatur beachten" }, "record": false },
+    { "name": "Agenten-Kommentar 1", "kind": "cli", "args": ["board", "comment", "ARC-0001", "Schritt 1 von 2 fertig", "--author", "claude"], "cwd": "{{REPO1}}", "record": false },
+    { "name": "Agenten-Kommentar 2", "kind": "cli", "args": ["board", "comment", "ARC-0001", "Test ist rot", "--author", "claude"], "cwd": "{{REPO1}}", "record": false },
+    { "name": "Agenten-Kommentar 3", "kind": "cli", "args": ["board", "comment", "ARC-0001", "Umsetzung läuft", "--author", "claude"], "cwd": "{{REPO1}}", "record": false },
+    { "name": "Agenten-Kommentar 4", "kind": "cli", "args": ["board", "comment", "ARC-0001", "Tests sind grün", "--author", "claude"], "cwd": "{{REPO1}}", "record": false },
+    {
+      "name": "Ticket mit Planungsbedarf",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Export bauen", "description": "CSV für die Buchhaltung", "labels": ["api"] },
+      "record": false
+    },
+    {
+      "name": "Ticket mit offener Voraussetzung",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Suche beschleunigen", "status": "planned", "dependsOn": ["ARC-0002"], "needsPlanning": false },
+      "record": false
+    },
+    {
+      "name": "blockiertes Ticket",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Altlast entfernen", "status": "blocked", "blockedReason": "Zugang fehlt", "priority": "low", "needsPlanning": false },
+      "record": false
+    },
+    {
+      "name": "Ticket auf dem zweiten Board",
+      "method": "POST",
+      "path": "/api/db/boards/2/tickets",
+      "body": { "title": "Berichte prüfen", "needsPlanning": false },
+      "record": false
+    },
+
+    { "name": "list (Text)", "kind": "cli", "args": ["board", "list"], "cwd": "{{REPO1}}" },
+    { "name": "list --md", "kind": "cli", "args": ["board", "list", "--md"], "cwd": "{{REPO1}}" },
+    { "name": "list --json", "kind": "cli", "args": ["--json", "board", "list"], "cwd": "{{REPO1}}" },
+    { "name": "list --status geplant,wartet", "kind": "cli", "args": ["board", "list", "--status", "geplant,wartet"], "cwd": "{{REPO1}}" },
+    { "name": "list --q login", "kind": "cli", "args": ["board", "list", "--q", "login"], "cwd": "{{REPO1}}" },
+    { "name": "list --needs-planning", "kind": "cli", "args": ["board", "list", "--needs-planning"], "cwd": "{{REPO1}}" },
+    { "name": "list --assignee claude", "kind": "cli", "args": ["board", "list", "--assignee", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "list --label api", "kind": "cli", "args": ["board", "list", "--label", "api"], "cwd": "{{REPO1}}" },
+    { "name": "list --board all --md", "kind": "cli", "args": ["board", "list", "--board", "all", "--md"], "cwd": "{{REPO1}}" },
+    { "name": "list --board 2", "kind": "cli", "args": ["board", "list", "--board", "2"], "cwd": "{{REPO1}}" },
+    { "name": "list --status unbekannt (Fehler)", "kind": "cli", "args": ["board", "list", "--status", "quatsch"], "cwd": "{{REPO1}}" },
+    { "name": "list --board 99 (Fehler)", "kind": "cli", "args": ["board", "list", "--board", "99"], "cwd": "{{REPO1}}" },
+    { "name": "list --board 99 --json (Fehler)", "kind": "cli", "args": ["--json", "board", "list", "--board", "99"], "cwd": "{{REPO1}}" },
+
+    { "name": "show (Text)", "kind": "cli", "args": ["board", "show", "ARC-0001"], "cwd": "{{REPO1}}" },
+    { "name": "show --all-comments --history", "kind": "cli", "args": ["board", "show", "ARC-0001", "--all-comments", "--history"], "cwd": "{{REPO1}}" },
+    { "name": "show --json", "kind": "cli", "args": ["--json", "board", "show", "ARC-0001"], "cwd": "{{REPO1}}" },
+    { "name": "show --field plan", "kind": "cli", "args": ["board", "show", "ARC-0001", "--field", "plan"], "cwd": "{{REPO1}}" },
+    { "name": "show --field plan --json", "kind": "cli", "args": ["--json", "board", "show", "ARC-0001", "--field", "plan"], "cwd": "{{REPO1}}" },
+    { "name": "show eines wartenden Tickets", "kind": "cli", "args": ["board", "show", "ARC-0003"], "cwd": "{{REPO1}}" },
+    { "name": "show --field unbekannt (Fehler)", "kind": "cli", "args": ["board", "show", "ARC-0001", "--field", "quatsch"], "cwd": "{{REPO1}}" },
+    { "name": "show unbekanntes Ticket (Fehler)", "kind": "cli", "args": ["board", "show", "ARC-9999"], "cwd": "{{REPO1}}" },
+    { "name": "show unbekanntes Ticket --json (Fehler)", "kind": "cli", "args": ["--json", "board", "show", "ARC-9999"], "cwd": "{{REPO1}}" }
+  ]
+}

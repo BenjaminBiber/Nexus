@@ -1,0 +1,53 @@
+{
+  "title": "board comment: Text, Datei, Standardeingabe, JSON, aus einer Session und Fehler",
+  "fixtures": {
+    "repos": [
+      {
+        "name": "REPO1",
+        "harnessInit": true,
+        "files": {
+          "nachweis.md": "Tests grün:\n  12 bestanden, 0 rot\n",
+          "vertrag.gitconfig": "[user]\n\tname = Vertrag\n\temail = vertrag@example.invalid\n"
+        }
+      }
+    ],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Ticket", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Login bauen", "status": "in_progress", "needsPlanning": false }, "record": false },
+
+    { "name": "comment mit Text", "kind": "cli", "args": ["board", "comment", "ARC-0001", "Schritt 2 von 4 fertig", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "comment mehrzeilig --json", "kind": "cli", "args": ["--json", "board", "comment", "ARC-0001", "Zwischenstand:\n- Test rot\n- Umsetzung offen", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "comment --body-file", "kind": "cli", "args": ["board", "comment", "ARC-0001", "--body-file", "nachweis.md", "--author", "claude"], "cwd": "{{REPO1}}" },
+    {
+      "name": "comment aus der Standardeingabe",
+      "kind": "cli",
+      "args": ["board", "comment", "ARC-0001", "--body-file", "-", "--author", "claude"],
+      "cwd": "{{REPO1}}",
+      "stdin": "Nachweis von der Standardeingabe\n"
+    },
+    {
+      "name": "comment aus einer Session gilt als gelesen --json",
+      "kind": "cli",
+      "args": ["--json", "board", "comment", "ARC-0001", "Aus einer Session geschrieben", "--author", "claude"],
+      "cwd": "{{REPO1}}",
+      "env": { "HARNESS_SESSION": "s1" }
+    },
+    {
+      "name": "comment ohne Autor nimmt den Git-Benutzernamen",
+      "kind": "cli",
+      "args": ["board", "comment", "ARC-0001", "Von einem Menschen"],
+      "cwd": "{{REPO1}}",
+      "env": { "GIT_CONFIG_GLOBAL": "{{REPO1}}/vertrag.gitconfig", "GIT_CONFIG_NOSYSTEM": "1" }
+    },
+    { "name": "comment ohne Text (Fehler)", "kind": "cli", "args": ["board", "comment", "ARC-0001", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "comment mit unlesbarer Datei (Fehler)", "kind": "cli", "args": ["board", "comment", "ARC-0001", "--body-file", "fehlt.md", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "comment an unbekanntem Ticket (Fehler)", "kind": "cli", "args": ["board", "comment", "ARC-9999", "Hallo", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "comment an unbekanntem Ticket --json (Fehler)", "kind": "cli", "args": ["--json", "board", "comment", "ARC-9999", "Hallo", "--author", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "Kommentare am Ticket", "kind": "cli", "args": ["board", "show", "ARC-0001", "--all-comments"], "cwd": "{{REPO1}}" }
+  ]
+}

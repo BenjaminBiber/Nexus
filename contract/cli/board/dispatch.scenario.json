@@ -1,0 +1,67 @@
+{
+  "title": "board dispatch, dispatch-runs, plan-start und question research-start: Zustand, Steuerung, Läufe nachtragen und Läufe starten",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Board aktivieren", "method": "POST", "path": "/api/db/boards/1/activate", "body": {}, "record": false },
+
+    { "name": "Ticket Anmeldung", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Anmeldung bauen", "acceptance": "Der Login geht.", "labels": ["auto"], "needsPlanning": false }, "record": false },
+    { "name": "Plan und Handbuch der Anmeldung", "method": "PATCH", "path": "/api/db/tickets/ARC-0001", "body": { "rev": 1, "plan": "Formular bauen.", "handbook": "Tests mit vitest." }, "record": false },
+    { "name": "Anmeldung nach Geplant", "method": "POST", "path": "/api/db/tickets/ARC-0001/move", "body": { "rev": 2, "status": "planned" }, "record": false },
+    { "name": "Ticket Abmeldung", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Abmeldung bauen", "acceptance": "Der Logout geht.", "status": "planned", "needsPlanning": false }, "record": false },
+    { "name": "Ticket Suche", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Suche beschleunigen", "needsPlanning": true }, "record": false },
+    { "name": "Ticket Bericht", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Bericht prüfen", "needsPlanning": false }, "record": false },
+    { "name": "Start-Kommentar des Dispatchers", "method": "POST", "path": "/api/db/tickets/ARC-0004/comments", "body": { "body": "[dispatch] Start: an junior-ARC-0004 übergeben – Branch ticket/ARC-0004-bericht-pruefen, Profil standard (Modell opus, Effort high, max. 80 Schritte, 90 min). Grund: Standardprofil standard." }, "record": false },
+    { "name": "Abbruch-Kommentar des Dispatchers", "method": "POST", "path": "/api/db/tickets/ARC-0004/comments", "body": { "body": "[dispatch] Abbruch Versuch 1/3: Claude hat keinen Ausgang gemeldet." }, "record": false },
+    { "name": "Frage zum Speicher", "kind": "cli", "args": ["board", "question", "add", "Welcher Speicher?", "--ticket", "ARC-0002", "--author", "claude"], "cwd": "{{REPO1}}", "record": false },
+
+    { "name": "dispatch status (Text)", "kind": "cli", "args": ["board", "dispatch", "status"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch status --json", "kind": "cli", "args": ["--json", "board", "dispatch", "status"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch status --board", "kind": "cli", "args": ["board", "dispatch", "status", "--board", "1"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch status mit unbekanntem Board (Fehler)", "kind": "cli", "args": ["board", "dispatch", "status", "--board", "99"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch status mit kaputter Board-Nummer --json (Fehler)", "kind": "cli", "args": ["--json", "board", "dispatch", "status", "--board", "abc"], "cwd": "{{REPO1}}" },
+
+    { "name": "dispatch enable", "kind": "cli", "args": ["board", "dispatch", "enable"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch disable --json", "kind": "cli", "args": ["--json", "board", "dispatch", "disable"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch enable --json", "kind": "cli", "args": ["--json", "board", "dispatch", "enable"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch disable", "kind": "cli", "args": ["board", "dispatch", "disable"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch enable erneut", "kind": "cli", "args": ["board", "dispatch", "enable"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch enable mit kaputtem Port (Fehler)", "kind": "cli", "args": ["board", "--port", "abc", "dispatch", "enable"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch disable mit kaputtem Port --json (Fehler)", "kind": "cli", "args": ["--json", "board", "--port", "0", "dispatch", "disable"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch resume mit kaputtem Port (Fehler)", "kind": "cli", "args": ["board", "--port", "99999", "dispatch", "resume"], "cwd": "{{REPO1}}" },
+
+    { "name": "dispatch pause --json (die Meldung nennt die Uhrzeit des Endes und bleibt deshalb außen vor)", "kind": "cli", "args": ["--json", "board", "dispatch", "pause", "--minutes", "15"], "cwd": "{{REPO1}}", "ignore": ["json.message"] },
+    { "name": "dispatch resume", "kind": "cli", "args": ["board", "dispatch", "resume"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch resume ohne Pause --json", "kind": "cli", "args": ["--json", "board", "dispatch", "resume"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch pause ohne Minuten (Fehler)", "kind": "cli", "args": ["board", "dispatch", "pause", "--minutes", "0"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch pause über einen Tag hinaus --json (Fehler)", "kind": "cli", "args": ["--json", "board", "dispatch", "pause", "--minutes", "1441"], "cwd": "{{REPO1}}" },
+
+    { "name": "dispatch-runs backfill --dry-run", "kind": "cli", "args": ["board", "dispatch-runs", "backfill", "--project", "ARC", "--dry-run"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch-runs backfill --json", "kind": "cli", "args": ["--json", "board", "dispatch-runs", "backfill", "--project", "ARC"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch-runs backfill erneut", "kind": "cli", "args": ["board", "dispatch-runs", "backfill"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch-runs backfill in unbekanntem Projekt (Fehler)", "kind": "cli", "args": ["board", "dispatch-runs", "backfill", "--project", "XYZ"], "cwd": "{{REPO1}}" },
+
+    { "name": "dispatch run --json", "kind": "cli", "args": ["--json", "board", "dispatch", "run", "--board", "1"], "cwd": "{{REPO1}}", "save": { "lauf": "json.runs.0.id" } },
+    { "name": "dispatch status nach dem Durchlauf", "kind": "cli", "args": ["board", "dispatch", "status"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch run (kein zweiter Lauf, der Platz ist belegt)", "kind": "cli", "args": ["board", "dispatch", "run"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch run mit kaputter Board-Nummer (Fehler)", "kind": "cli", "args": ["board", "dispatch", "run", "--board", "abc"], "cwd": "{{REPO1}}" },
+
+    { "name": "plan-start --json", "kind": "cli", "args": ["--json", "board", "plan-start", "ARC-0003"], "cwd": "{{REPO1}}", "save": { "planlauf": "json.started.id" } },
+    { "name": "plan-start mit laufender Planung (Fehler)", "kind": "cli", "args": ["board", "plan-start", "ARC-0003"], "cwd": "{{REPO1}}" },
+    { "name": "plan-start eines Tickets mit laufender Umsetzung (Fehler)", "kind": "cli", "args": ["board", "plan-start", "ARC-0001"], "cwd": "{{REPO1}}" },
+    { "name": "plan-start eines Tickets mit offener Frage (Fehler)", "kind": "cli", "args": ["board", "plan-start", "ARC-0002"], "cwd": "{{REPO1}}" },
+    { "name": "plan-start eines unbekannten Tickets --json (Fehler)", "kind": "cli", "args": ["--json", "board", "plan-start", "ARC-9999"], "cwd": "{{REPO1}}" },
+
+    { "name": "question research-start --json", "kind": "cli", "args": ["--json", "board", "question", "research-start", "ARC-F0001"], "cwd": "{{REPO1}}", "save": { "recherche": "json.started.id" } },
+    { "name": "question research-start mit laufender Recherche (Fehler)", "kind": "cli", "args": ["board", "question", "research-start", "ARC-F0001"], "cwd": "{{REPO1}}" },
+    { "name": "question research-start einer unbekannten Frage (Fehler)", "kind": "cli", "args": ["board", "question", "research-start", "ARC-F0099"], "cwd": "{{REPO1}}" },
+
+    { "name": "dispatch status am Ende", "kind": "cli", "args": ["board", "dispatch", "status"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch disable am Ende", "kind": "cli", "args": ["board", "dispatch", "disable"], "cwd": "{{REPO1}}" }
+  ]
+}

@@ -1,0 +1,1937 @@
+[
+  {
+    "name": "question add",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "add",
+        "Welcher Speicher?",
+        "--description",
+        "## Worum es geht\n\nSQLite oder SQL Server als Standard.",
+        "--ticket",
+        "ARC-0001",
+        "--tag",
+        "speicher",
+        "--occasion",
+        "Planung ARC-0001",
+        "--kind",
+        "session",
+        "--author",
+        "claude",
+        "--session",
+        "s1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Frage ARC-F0001 angelegt: Welcher Speicher?"
+    }
+  },
+  {
+    "name": "question add --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "question",
+        "add",
+        "Welches Format für den Export?",
+        "--ticket",
+        "ARC-0002",
+        "--depends",
+        "ARC-F0001",
+        "--kind",
+        "session",
+        "--author",
+        "claude",
+        "--session",
+        "s1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [
+          "ARC-F0001"
+        ],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "Frage angelegt",
+            "type": "created"
+          }
+        ],
+        "id": "ARC-F0002",
+        "number": 2,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "session",
+        "originName": "claude",
+        "originSession": "s1",
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [],
+        "researched": false,
+        "rev": 1,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0002"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0002",
+            "status": "backlog",
+            "title": "Export bauen"
+          }
+        ],
+        "title": "Welches Format für den Export?",
+        "updatedAt": "<TIME>",
+        "waitingOn": [
+          {
+            "id": "ARC-F0001",
+            "state": "open"
+          }
+        ]
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question add ohne Titel (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "add",
+        " ",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Der Titel darf nicht leer sein. [title-empty]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question add in unbekanntem Projekt --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "question",
+        "add",
+        "Fremd",
+        "--project",
+        "XYZ",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "project-not-found",
+          "message": "Projekt XYZ gibt es nicht."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question add mit unbekannter Art (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "add",
+        "Mit falscher Art",
+        "--kind",
+        "quatsch",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Art „quatsch“ ist ungültig. Erlaubt: human, session, subagent. [kind-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question research --from",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "research",
+        "ARC-F0001",
+        "--from",
+        "recherche.json",
+        "--kind",
+        "session",
+        "--author",
+        "claude",
+        "--session",
+        "s1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Recherche zu ARC-F0001 ergänzt: 2 Optionen (O1 bis O2), O1 empfohlen."
+    }
+  },
+  {
+    "name": "question research von der Standardeingabe --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "question",
+        "research",
+        "ARC-F0002",
+        "--from",
+        "-",
+        "--kind",
+        "session",
+        "--author",
+        "claude",
+        "--session",
+        "s1"
+      ],
+      "cwd": "<REPO1>",
+      "stdin": {
+        "context": "CSV reicht für die Buchhaltung.",
+        "options": [
+          {
+            "recommended": true,
+            "text": "eine Zeile je Beleg",
+            "title": "CSV"
+          }
+        ]
+      }
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "at": "<TIME>",
+        "byId": "11111111-1111-1111-1111-111111111111",
+        "byName": "claude",
+        "context": "CSV reicht für die Buchhaltung.",
+        "id": 2,
+        "kind": "session",
+        "options": [
+          {
+            "cons": [],
+            "id": "O1",
+            "pros": [],
+            "recommended": true,
+            "text": "eine Zeile je Beleg",
+            "title": "CSV"
+          }
+        ],
+        "questionId": "ARC-F0002"
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question research --context",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "research",
+        "ARC-F0002",
+        "--context",
+        "Nachtrag: Excel liest CSV mit Semikolon.",
+        "--kind",
+        "session",
+        "--author",
+        "claude",
+        "--session",
+        "s1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Recherche zu ARC-F0002 ergänzt: Kontext ergänzt."
+    }
+  },
+  {
+    "name": "question research ohne Quelle (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "research",
+        "ARC-F0001",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Bitte --from <datei|-> oder --context <text> angeben. [research-input]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question research mit beiden Quellen (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "research",
+        "ARC-F0001",
+        "--from",
+        "recherche.json",
+        "--context",
+        "Text",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Bitte entweder --from oder --context angeben, nicht beides. [research-input]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question research mit kaputtem JSON (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "research",
+        "ARC-F0001",
+        "--from",
+        "kaputt.json",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Die Eingabe ist kein gültiges JSON. [research-input]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question comment",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "comment",
+        "ARC-F0001",
+        "Neuer Befund: SQLite reicht für den Anfang.",
+        "--kind",
+        "session",
+        "--author",
+        "claude",
+        "--session",
+        "s1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Kommentar an ARC-F0001 gespeichert."
+    }
+  },
+  {
+    "name": "question comment --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "question",
+        "comment",
+        "ARC-F0001",
+        "Zweiter Hinweis",
+        "--kind",
+        "human",
+        "--author",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "session",
+            "authorName": "claude",
+            "body": "Neuer Befund: SQLite reicht für den Anfang.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "questionId": "ARC-F0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Florian",
+            "body": "Zweiter Hinweis",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "## Worum es geht\n\nSQLite oder SQL Server als Standard.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0001",
+            "text": "2 Optionen (O1 bis O2), O1 empfohlen",
+            "type": "research"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Planung ARC-0001",
+        "optionCount": 2,
+        "originKind": "session",
+        "originName": "claude",
+        "originSession": "s1",
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "claude",
+            "context": "Beide Speicher sind im Einsatz; SQLite braucht keine Installation.",
+            "id": 1,
+            "kind": "session",
+            "options": [
+              {
+                "cons": [
+                  "nur ein Rechner"
+                ],
+                "id": "O1",
+                "pros": [
+                  "keine Installation"
+                ],
+                "recommended": true,
+                "text": "Datei im Home",
+                "title": "SQLite"
+              },
+              {
+                "cons": [
+                  "Zugang nötig"
+                ],
+                "id": "O2",
+                "pros": [
+                  "mehrere Rechner"
+                ],
+                "recommended": false,
+                "text": "gemeinsame Datenbank",
+                "title": "SQL Server"
+              }
+            ],
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "researched": true,
+        "rev": 4,
+        "state": "open",
+        "tags": [
+          "speicher"
+        ],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login bauen"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question comment an unbekannter Frage (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "comment",
+        "ARC-F0099",
+        "Hallo",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Frage ARC-F0099 gibt es nicht. [question-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question list (Text)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "list"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "  ARC-F0001  Welcher Speicher?  [bereit] [2 Optionen] → ARC-0001\n  ARC-F0002  Welches Format für den Export?  [wartet auf ARC-F0001] [0 Optionen] → ARC-0002"
+    }
+  },
+  {
+    "name": "question list --md",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "list",
+        "--md"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "## Fragen\n\n- **ARC-F0001** Welcher Speicher? — offen, bereit zur Entscheidung\n  - Betrifft: ARC-0001\n  - Neueste Recherche: 2 Optionen\n- **ARC-F0002** Welches Format für den Export? — offen\n  - Betrifft: ARC-0002\n  - Wartet auf: ARC-F0001\n  - Neueste Recherche: 0 Optionen"
+    }
+  },
+  {
+    "name": "question list --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "question",
+        "list"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "counts": {
+          "answered": 0,
+          "discarded": 0,
+          "mine": 0,
+          "open": 2
+        },
+        "questions": [
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [],
+            "description": "## Worum es geht\n\nSQLite oder SQL Server als Standard.",
+            "id": "ARC-F0001",
+            "mine": false,
+            "number": 1,
+            "occasion": "Planung ARC-0001",
+            "optionCount": 2,
+            "originKind": "session",
+            "originName": "claude",
+            "originSession": "s1",
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": true,
+            "researched": true,
+            "rev": 4,
+            "state": "open",
+            "tags": [
+              "speicher"
+            ],
+            "ticketIds": [
+              "ARC-0001"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0001",
+                "status": "backlog",
+                "title": "Login bauen"
+              }
+            ],
+            "title": "Welcher Speicher?",
+            "updatedAt": "<TIME>",
+            "waitingOn": []
+          },
+          {
+            "createdAt": "<TIME>",
+            "createdById": "11111111-1111-1111-1111-111111111111",
+            "decision": null,
+            "dependsOn": [
+              "ARC-F0001"
+            ],
+            "description": "",
+            "id": "ARC-F0002",
+            "mine": false,
+            "number": 2,
+            "occasion": null,
+            "optionCount": 0,
+            "originKind": "session",
+            "originName": "claude",
+            "originSession": "s1",
+            "projectId": 1,
+            "projectKey": "ARC",
+            "ready": false,
+            "researched": true,
+            "rev": 3,
+            "state": "open",
+            "tags": [],
+            "ticketIds": [
+              "ARC-0002"
+            ],
+            "tickets": [
+              {
+                "boardId": 1,
+                "id": "ARC-0002",
+                "status": "backlog",
+                "title": "Export bauen"
+              }
+            ],
+            "title": "Welches Format für den Export?",
+            "updatedAt": "<TIME>",
+            "waitingOn": [
+              {
+                "id": "ARC-F0001",
+                "state": "open"
+              }
+            ]
+          }
+        ]
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question list --ticket",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "list",
+        "--ticket",
+        "ARC-0002"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "  ARC-F0002  Welches Format für den Export?  [wartet auf ARC-F0001] [0 Optionen] → ARC-0002"
+    }
+  },
+  {
+    "name": "question list --state unbekannt (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "list",
+        "--state",
+        "quatsch"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Zustand „quatsch“ ist ungültig. Erlaubt: offen, beantwortet, verworfen, alle. [state-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question show",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "show",
+        "ARC-F0001"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-F0001  Welcher Speicher?\nZustand: offen (bereit zur Entscheidung) | rev 4\nTags: speicher\nHerkunft: claude (Session), Session s1\nAnlass: Planung ARC-0001\nBetrifft: ARC-0001 Login bauen\nAbhängig von: –\nWartet auf: –\n\n## Worum es geht\n\nSQLite oder SQL Server als Standard.\n\nRecherchen:\n  [<TIME>] claude (Session)\n    Beide Speicher sind im Einsatz; SQLite braucht keine Installation.\n    O1 (empfohlen): SQLite – Datei im Home\n      + keine Installation\n      - nur ein Rechner\n    O2: SQL Server – gemeinsame Datenbank\n      + mehrere Rechner\n      - Zugang nötig\n\nKommentare:\n  [<TIME>] claude (Session): Neuer Befund: SQLite reicht für den Anfang.\n  [<TIME>] Florian (Mensch): Zweiter Hinweis\n\nVerlauf:\n  [<TIME>] claude (Session) created: Frage angelegt\n  [<TIME>] claude (Session) research: 2 Optionen (O1 bis O2), O1 empfohlen"
+    }
+  },
+  {
+    "name": "question show --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "question",
+        "show",
+        "ARC-F0002"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [
+          "ARC-F0001"
+        ],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "1 Option (O1), O1 empfohlen",
+            "type": "research"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "Kontext ergänzt",
+            "type": "research"
+          }
+        ],
+        "id": "ARC-F0002",
+        "number": 2,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "session",
+        "originName": "claude",
+        "originSession": "s1",
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "claude",
+            "context": "CSV reicht für die Buchhaltung.",
+            "id": 2,
+            "kind": "session",
+            "options": [
+              {
+                "cons": [],
+                "id": "O1",
+                "pros": [],
+                "recommended": true,
+                "text": "eine Zeile je Beleg",
+                "title": "CSV"
+              }
+            ],
+            "questionId": "ARC-F0002"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "claude",
+            "context": "Nachtrag: Excel liest CSV mit Semikolon.",
+            "id": 3,
+            "kind": "session",
+            "options": [],
+            "questionId": "ARC-F0002"
+          }
+        ],
+        "researched": true,
+        "rev": 3,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0002"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0002",
+            "status": "backlog",
+            "title": "Export bauen"
+          }
+        ],
+        "title": "Welches Format für den Export?",
+        "updatedAt": "<TIME>",
+        "waitingOn": [
+          {
+            "id": "ARC-F0001",
+            "state": "open"
+          }
+        ]
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question show unbekannt (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "show",
+        "ARC-F0099"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Frage ARC-F0099 gibt es nicht. [question-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question link",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "link",
+        "ARC-F0001",
+        "--add",
+        "ARC-0002",
+        "--kind",
+        "session",
+        "--author",
+        "claude",
+        "--session",
+        "s1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Betroffene Tickets von ARC-F0001: ARC-0001, ARC-0002"
+    }
+  },
+  {
+    "name": "question link --remove --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "question",
+        "link",
+        "ARC-F0001",
+        "--remove",
+        "ARC-0002",
+        "--kind",
+        "session",
+        "--author",
+        "claude",
+        "--session",
+        "s1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "session",
+            "authorName": "claude",
+            "body": "Neuer Befund: SQLite reicht für den Anfang.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "questionId": "ARC-F0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Florian",
+            "body": "Zweiter Hinweis",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [],
+        "description": "## Worum es geht\n\nSQLite oder SQL Server als Standard.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0001",
+            "text": "2 Optionen (O1 bis O2), O1 empfohlen",
+            "type": "research"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0001",
+            "text": "ARC-0001 → ARC-0001, ARC-0002",
+            "type": "tickets"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0001",
+            "text": "ARC-0001, ARC-0002 → ARC-0001",
+            "type": "tickets"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Planung ARC-0001",
+        "optionCount": 2,
+        "originKind": "session",
+        "originName": "claude",
+        "originSession": "s1",
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": true,
+        "research": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "claude",
+            "context": "Beide Speicher sind im Einsatz; SQLite braucht keine Installation.",
+            "id": 1,
+            "kind": "session",
+            "options": [
+              {
+                "cons": [
+                  "nur ein Rechner"
+                ],
+                "id": "O1",
+                "pros": [
+                  "keine Installation"
+                ],
+                "recommended": true,
+                "text": "Datei im Home",
+                "title": "SQLite"
+              },
+              {
+                "cons": [
+                  "Zugang nötig"
+                ],
+                "id": "O2",
+                "pros": [
+                  "mehrere Rechner"
+                ],
+                "recommended": false,
+                "text": "gemeinsame Datenbank",
+                "title": "SQL Server"
+              }
+            ],
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "researched": true,
+        "rev": 6,
+        "state": "open",
+        "tags": [
+          "speicher"
+        ],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login bauen"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question link ohne --add und --remove (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "link",
+        "ARC-F0001",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Bitte --add oder --remove angeben. [usage]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question depends",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "depends",
+        "ARC-F0002",
+        "--add",
+        "ARC-0001",
+        "--kind",
+        "session",
+        "--author",
+        "claude",
+        "--session",
+        "s1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Abhängigkeiten von ARC-F0002: ARC-F0001, ARC-0001"
+    }
+  },
+  {
+    "name": "question depends --remove --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "question",
+        "depends",
+        "ARC-F0002",
+        "--remove",
+        "ARC-0001",
+        "--kind",
+        "session",
+        "--author",
+        "claude",
+        "--session",
+        "s1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [
+          "ARC-F0001"
+        ],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "1 Option (O1), O1 empfohlen",
+            "type": "research"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "Kontext ergänzt",
+            "type": "research"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "ARC-F0001 → ARC-F0001, ARC-0001",
+            "type": "depends"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "ARC-F0001, ARC-0001 → ARC-F0001",
+            "type": "depends"
+          }
+        ],
+        "id": "ARC-F0002",
+        "number": 2,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "session",
+        "originName": "claude",
+        "originSession": "s1",
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "claude",
+            "context": "CSV reicht für die Buchhaltung.",
+            "id": 2,
+            "kind": "session",
+            "options": [
+              {
+                "cons": [],
+                "id": "O1",
+                "pros": [],
+                "recommended": true,
+                "text": "eine Zeile je Beleg",
+                "title": "CSV"
+              }
+            ],
+            "questionId": "ARC-F0002"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "claude",
+            "context": "Nachtrag: Excel liest CSV mit Semikolon.",
+            "id": 3,
+            "kind": "session",
+            "options": [],
+            "questionId": "ARC-F0002"
+          }
+        ],
+        "researched": true,
+        "rev": 5,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0002"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0002",
+            "status": "backlog",
+            "title": "Export bauen"
+          }
+        ],
+        "title": "Welches Format für den Export?",
+        "updatedAt": "<TIME>",
+        "waitingOn": [
+          {
+            "id": "ARC-F0001",
+            "state": "open"
+          }
+        ]
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question depends ohne --add und --remove (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "depends",
+        "ARC-F0002",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Bitte --add oder --remove angeben. [usage]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question depends im Kreis (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "depends",
+        "ARC-F0001",
+        "--add",
+        "ARC-F0002",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Abhängigkeiten liefen im Kreis: ARC-F0001 -> ARC-F0002 -> ARC-F0001. [dependency-cycle]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question answer mit Option",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "answer",
+        "ARC-F0001",
+        "--option",
+        "O1",
+        "--reason",
+        "Passt zum Betrieb",
+        "--author",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-F0001 beantwortet: Option O1 „SQLite“ gewählt. Begründung: Passt zum Betrieb"
+    }
+  },
+  {
+    "name": "question answer mit eigenem Text --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "question",
+        "answer",
+        "ARC-F0002",
+        "--text",
+        "CSV mit Semikolon",
+        "--author",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": {
+          "at": "<TIME>",
+          "byId": "11111111-1111-1111-1111-111111111111",
+          "byName": "Florian",
+          "option": null,
+          "outcome": "answered",
+          "reason": "",
+          "text": "CSV mit Semikolon"
+        },
+        "dependsOn": [
+          "ARC-F0001"
+        ],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "1 Option (O1), O1 empfohlen",
+            "type": "research"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "Kontext ergänzt",
+            "type": "research"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "ARC-F0001 → ARC-F0001, ARC-0001",
+            "type": "depends"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "ARC-F0001, ARC-0001 → ARC-F0001",
+            "type": "depends"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Florian",
+            "questionId": "ARC-F0002",
+            "text": "Antwort: CSV mit Semikolon.",
+            "type": "decided"
+          }
+        ],
+        "id": "ARC-F0002",
+        "number": 2,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "session",
+        "originName": "claude",
+        "originSession": "s1",
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "claude",
+            "context": "CSV reicht für die Buchhaltung.",
+            "id": 2,
+            "kind": "session",
+            "options": [
+              {
+                "cons": [],
+                "id": "O1",
+                "pros": [],
+                "recommended": true,
+                "text": "eine Zeile je Beleg",
+                "title": "CSV"
+              }
+            ],
+            "questionId": "ARC-F0002"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "claude",
+            "context": "Nachtrag: Excel liest CSV mit Semikolon.",
+            "id": 3,
+            "kind": "session",
+            "options": [],
+            "questionId": "ARC-F0002"
+          }
+        ],
+        "researched": true,
+        "rev": 6,
+        "state": "answered",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0002"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0002",
+            "status": "backlog",
+            "title": "Export bauen"
+          }
+        ],
+        "title": "Welches Format für den Export?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question answer aus einer Session (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "answer",
+        "ARC-F0001",
+        "--text",
+        "Von einem Agenten",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_SESSION": "s1"
+      }
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Diese Entscheidung trifft ein Mensch. Bitte in der Oberfläche oder in einem eigenen Terminal ausführen. [human-only]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question answer einer beantworteten Frage (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "answer",
+        "ARC-F0001",
+        "--text",
+        "Noch einmal",
+        "--author",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Die Frage ARC-F0001 ist nicht offen. Zuerst wieder öffnen. [question-state-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question reopen",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "reopen",
+        "ARC-F0001",
+        "--reason",
+        "neue Lage",
+        "--author",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-F0001 wieder geöffnet."
+    }
+  },
+  {
+    "name": "question reopen --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "question",
+        "reopen",
+        "ARC-F0002",
+        "--author",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "comments": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": null,
+        "dependsOn": [
+          "ARC-F0001"
+        ],
+        "description": "",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "1 Option (O1), O1 empfohlen",
+            "type": "research"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "Kontext ergänzt",
+            "type": "research"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "ARC-F0001 → ARC-F0001, ARC-0001",
+            "type": "depends"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0002",
+            "text": "ARC-F0001, ARC-0001 → ARC-F0001",
+            "type": "depends"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Florian",
+            "questionId": "ARC-F0002",
+            "text": "Antwort: CSV mit Semikolon.",
+            "type": "decided"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Florian",
+            "questionId": "ARC-F0002",
+            "text": "Wieder geöffnet. Frühere Entscheidung: Antwort: CSV mit Semikolon. (Florian)",
+            "type": "reopened"
+          }
+        ],
+        "id": "ARC-F0002",
+        "number": 2,
+        "occasion": null,
+        "optionCount": 0,
+        "originKind": "session",
+        "originName": "claude",
+        "originSession": "s1",
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "claude",
+            "context": "CSV reicht für die Buchhaltung.",
+            "id": 2,
+            "kind": "session",
+            "options": [
+              {
+                "cons": [],
+                "id": "O1",
+                "pros": [],
+                "recommended": true,
+                "text": "eine Zeile je Beleg",
+                "title": "CSV"
+              }
+            ],
+            "questionId": "ARC-F0002"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "claude",
+            "context": "Nachtrag: Excel liest CSV mit Semikolon.",
+            "id": 3,
+            "kind": "session",
+            "options": [],
+            "questionId": "ARC-F0002"
+          }
+        ],
+        "researched": true,
+        "rev": 7,
+        "state": "open",
+        "tags": [],
+        "ticketIds": [
+          "ARC-0002"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0002",
+            "status": "backlog",
+            "title": "Export bauen"
+          }
+        ],
+        "title": "Welches Format für den Export?",
+        "updatedAt": "<TIME>",
+        "waitingOn": [
+          {
+            "id": "ARC-F0001",
+            "state": "open"
+          }
+        ]
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question reopen einer offenen Frage (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "reopen",
+        "ARC-F0001",
+        "--author",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Die Frage ARC-F0001 ist bereits offen. [question-state-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question discard",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "discard",
+        "ARC-F0002",
+        "--reason",
+        "erledigt sich mit ARC-F0001",
+        "--author",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-F0002 verworfen."
+    }
+  },
+  {
+    "name": "question discard ohne Grund (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "discard",
+        "ARC-F0001",
+        "--author",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Bitte eine Begründung angeben. [decision-reason-missing]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question discard --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "question",
+        "discard",
+        "ARC-F0001",
+        "--reason",
+        "doch nicht nötig",
+        "--author",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "session",
+            "authorName": "claude",
+            "body": "Neuer Befund: SQLite reicht für den Anfang.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "questionId": "ARC-F0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorKind": "human",
+            "authorName": "Florian",
+            "body": "Zweiter Hinweis",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "decision": {
+          "at": "<TIME>",
+          "byId": "11111111-1111-1111-1111-111111111111",
+          "byName": "Florian",
+          "option": null,
+          "outcome": "discarded",
+          "reason": "doch nicht nötig",
+          "text": null
+        },
+        "dependsOn": [],
+        "description": "## Worum es geht\n\nSQLite oder SQL Server als Standard.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0001",
+            "text": "Frage angelegt",
+            "type": "created"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0001",
+            "text": "2 Optionen (O1 bis O2), O1 empfohlen",
+            "type": "research"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0001",
+            "text": "ARC-0001 → ARC-0001, ARC-0002",
+            "type": "tickets"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "session",
+            "byName": "claude",
+            "questionId": "ARC-F0001",
+            "text": "ARC-0001, ARC-0002 → ARC-0001",
+            "type": "tickets"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Florian",
+            "questionId": "ARC-F0001",
+            "text": "Option O1 „SQLite“ gewählt. Begründung: Passt zum Betrieb",
+            "type": "decided"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Florian",
+            "questionId": "ARC-F0001",
+            "text": "Wieder geöffnet. Grund: neue Lage. Frühere Entscheidung: Option O1 „SQLite“ gewählt. Begründung: Passt zum Betrieb (Florian)",
+            "type": "reopened"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byKind": "human",
+            "byName": "Florian",
+            "questionId": "ARC-F0001",
+            "text": "Verworfen. Begründung: doch nicht nötig",
+            "type": "discarded"
+          }
+        ],
+        "id": "ARC-F0001",
+        "number": 1,
+        "occasion": "Planung ARC-0001",
+        "optionCount": 2,
+        "originKind": "session",
+        "originName": "claude",
+        "originSession": "s1",
+        "projectId": 1,
+        "projectKey": "ARC",
+        "ready": false,
+        "research": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "claude",
+            "context": "Beide Speicher sind im Einsatz; SQLite braucht keine Installation.",
+            "id": 1,
+            "kind": "session",
+            "options": [
+              {
+                "cons": [
+                  "nur ein Rechner"
+                ],
+                "id": "O1",
+                "pros": [
+                  "keine Installation"
+                ],
+                "recommended": true,
+                "text": "Datei im Home",
+                "title": "SQLite"
+              },
+              {
+                "cons": [
+                  "Zugang nötig"
+                ],
+                "id": "O2",
+                "pros": [
+                  "mehrere Rechner"
+                ],
+                "recommended": false,
+                "text": "gemeinsame Datenbank",
+                "title": "SQL Server"
+              }
+            ],
+            "questionId": "ARC-F0001"
+          }
+        ],
+        "researched": true,
+        "rev": 9,
+        "state": "discarded",
+        "tags": [
+          "speicher"
+        ],
+        "ticketIds": [
+          "ARC-0001"
+        ],
+        "tickets": [
+          {
+            "boardId": 1,
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Login bauen"
+          }
+        ],
+        "title": "Welcher Speicher?",
+        "updatedAt": "<TIME>",
+        "waitingOn": []
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question list --state alle",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "list",
+        "--state",
+        "alle"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "  ARC-F0001  Welcher Speicher?  [verworfen] [2 Optionen] → ARC-0001\n  ARC-F0002  Welches Format für den Export?  [verworfen] [0 Optionen] → ARC-0002"
+    }
+  }
+]
