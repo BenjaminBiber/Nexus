@@ -3,7 +3,7 @@
 use std::path::Path;
 
 use crate::error::{HarnessError, Result};
-use crate::git::GitRunner;
+use crate::git::{GitCommands, GitRunner};
 
 /// Git-Pfade eines Projekts oder Worktrees.
 #[derive(Debug, Clone, Copy, Default)]
