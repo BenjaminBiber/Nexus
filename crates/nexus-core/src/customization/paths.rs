@@ -108,17 +108,30 @@ fn relative(from: &Path, to: &Path) -> String {
     hoch.chain(runter).collect::<Vec<_>>().join("/")
 }
 
-/// Bestandteile eines Pfades als Texte; Wurzel und Laufwerk bleiben ein eigener Teil
+/// Bestandteile eines Pfades als Texte; Wurzel und Laufwerk bleiben ein eigener Teil.
+/// `.` und `..` werden dabei aufgelöst, wie `path.resolve` es tut: Meldungen von tsc nennen
+/// Pfade auch mit `..`.
 fn parts(path: &Path) -> Vec<String> {
-    path.components()
-        .filter_map(|teil| match teil {
-            Component::Prefix(prefix) => Some(prefix.as_os_str().to_string_lossy().into_owned()),
-            Component::RootDir => Some("/".to_string()),
-            Component::Normal(name) => Some(name.to_string_lossy().into_owned()),
-            // `.` und `..` kommen in den Pfaden der Anpassungen nicht vor
-            Component::CurDir | Component::ParentDir => None,
-        })
-        .collect()
+    let mut teile: Vec<String> = Vec::new();
+    for teil in path.components() {
+        match teil {
+            Component::Prefix(prefix) => {
+                teile.push(prefix.as_os_str().to_string_lossy().into_owned())
+            }
+            Component::RootDir => teile.push("/".to_string()),
+            Component::Normal(name) => teile.push(name.to_string_lossy().into_owned()),
+            Component::CurDir => {}
+            // Ein `..` hebt den Teil davor auf; über der Wurzel bleibt es stehen
+            Component::ParentDir => match teile.last().map(String::as_str) {
+                Some("..") | None => teile.push("..".to_string()),
+                Some("/") => {}
+                Some(_) => {
+                    teile.pop();
+                }
+            },
+        }
+    }
+    teile
 }
 
 /// Gleicher Pfadteil? Unter Windows ohne Rücksicht auf Groß- und Kleinschreibung
@@ -203,6 +216,20 @@ mod tests {
                     .join("SKILL.md")
             ),
             "custom/skills/x/SKILL.md"
+        );
+    }
+
+    #[test]
+    fn loest_punkte_im_pfad_auf_wie_path_resolve() {
+        let (root, paths) = pfade();
+        // So nennt tsc eine Datei, die neben dem Clone liegt
+        assert_eq!(
+            paths.display(root.join("..").join("fremd").join("x.ts")),
+            "../fremd/x.ts"
+        );
+        assert_eq!(
+            paths.display(root.join("custom").join(".").join("workflow.ts")),
+            "custom/workflow.ts"
         );
     }
 

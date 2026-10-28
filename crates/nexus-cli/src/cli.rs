@@ -42,10 +42,38 @@ pub struct Cli {
     pub command: Option<Commands>,
 }
 
-/// Die Befehle des Programms. Die Fachbefehle folgen in P3-8 bis P3-18; `help` steht wie bei
-/// commander in jedem Befehl, der selbst nichts tut und Unterbefehle hat.
+/// Beschreibung von `customize` auf der Hauptseite der Hilfe
+const CUSTOMIZE_ABOUT: &str =
+    "Anpassungen des Clones (custom/) prüfen, kopieren, zurücksetzen und anwenden";
+
+/// Zusatztext der Hilfe von `customize`: die Unterbefehle, die ihre Argumente selbst lesen
+const CUSTOMIZE_AFTER: &str = "
+Weitere Befehle:
+  check                              alle Anpassungen prüfen, ohne etwas zu schreiben
+  copy workflow|skill <name>|output-style <name> [--rebase]
+                                     Standard als Ausgangspunkt nach custom/ kopieren
+  reset workflow|skill <name>|output-style <name>
+                                     Anpassung und Basis löschen
+
+Beispiele:
+  harness customize check
+  harness customize copy skill harness-grill
+  harness customize reset workflow";
+
+/// Die Befehle des Programms. Die weiteren Fachbefehle folgen in P3-8 bis P3-18; `help` steht
+/// wie bei commander in jedem Befehl, der selbst nichts tut und Unterbefehle hat.
 #[derive(Debug, Subcommand)]
 pub enum Commands {
+    /// Anpassungen des Clones prüfen, kopieren, zurücksetzen, anwenden und anzeigen
+    #[command(
+        name = "customize",
+        about = CUSTOMIZE_ABOUT,
+        after_help = CUSTOMIZE_AFTER,
+        disable_help_flag = true,
+        disable_help_subcommand = true
+    )]
+    Customize(commands::customize::CustomizeCli),
+
     /// Hilfe zu einem Befehl anzeigen
     #[command(
         name = "help",
@@ -102,6 +130,7 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
             eprint!("{}", help::render(PROGRAM, root));
             Ok(1)
         }
+        Some(Commands::Customize(args)) => commands::customize::run(&context, args),
         Some(Commands::Help { befehl }) => help_command(root, befehl.as_deref()),
         #[cfg(debug_assertions)]
         Some(Commands::SelbsttestFehler { code, meldung }) => {

@@ -51,8 +51,10 @@ fn die_hauptseite_hat_den_aufrufkopf_und_deutsche_uberschriften() {
     );
     assert!(lauf.stdout.contains("Optionen:"), "{}", lauf.stdout);
     assert!(lauf.stdout.contains("Befehle:"), "{}", lauf.stdout);
+    // Die Spaltenbreite richtet sich nach dem längsten Eintrag; geprüft wird nur der Text
+    // (das genaue Layout vergleicht tests/help_layout.rs mit der Golden-Datei)
     assert!(
-        lauf.stdout.contains("-h, --help     Hilfe anzeigen"),
+        lauf.stdout.contains("-h, --help") && lauf.stdout.contains("Hilfe anzeigen"),
         "{}",
         lauf.stdout
     );
