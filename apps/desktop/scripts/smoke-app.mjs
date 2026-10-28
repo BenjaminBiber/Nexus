@@ -65,6 +65,13 @@ function info(home) {
   }
 }
 
+// Wartet auf server.json: Der Server öffnet den Port, bevor er sie schreibt, darum reicht die Health-Antwort
+// als Zeitpunkt nicht aus. null, wenn sie nicht kommt.
+async function waitForInfo(home, ms = 5000) {
+  await waitFor(() => info(home) !== null, ms);
+  return info(home);
+}
+
 // Läuft der Prozess noch?
 function alive(pid) {
   try {
@@ -131,7 +138,7 @@ async function appStartetDenServer() {
     check(answer?.name === 'ai-harness', `${label}: GET /api/health meldet name "ai-harness"`, answer === null ? `keine Antwort in ${START_MS} ms, App ${app.exited === null ? 'läuft' : `endete mit ${app.exited}`}: ${app.output.trim().slice(-300)}` : JSON.stringify(answer));
     if (answer === null) return;
 
-    const written = info(home);
+    const written = await waitForInfo(home);
     server = written?.pid;
     check(written?.port === port, `${label}: server.json nennt den Port der App`, JSON.stringify(written));
     check(typeof server === 'number' && server !== app.child.pid, `${label}: server.json nennt den Sidecar, nicht die App`, `pid ${server}, App ${app.child.pid}`);
@@ -145,7 +152,7 @@ async function appStartetDenServer() {
     check(await waitFor(() => app.exited !== null, STOP_MS), `${label}: die App endet auf SIGTERM`, String(app.exited));
     check(await waitFor(() => !alive(server), 5000), `${label}: der von der App gestartete Server ist mit beendet`, `pid ${server}`);
     check(await waitFor(async () => (await health(port)) === null, 5000), `${label}: auf dem Port antwortet niemand mehr`);
-    check(info(home) === null, `${label}: server.json ist entfernt`, JSON.stringify(info(home)));
+    check(await waitFor(() => info(home) === null, 5000), `${label}: server.json ist entfernt`, JSON.stringify(info(home)));
   } finally {
     if (app.exited === null) app.child.kill('SIGKILL');
     if (server && alive(server)) process.kill(server, 'SIGKILL');
@@ -165,7 +172,7 @@ async function serverLaeuftSchon() {
     const answer = await waitForHealth(port, server);
     check(answer?.name === 'ai-harness', `${label}: der vorher gestartete Server antwortet`, answer === null ? server.output.trim().slice(-300) : JSON.stringify(answer));
     if (answer === null) return;
-    const before = info(home);
+    const before = await waitForInfo(home);
     check(before?.pid === server.child.pid, `${label}: server.json nennt den vorher gestarteten Server`, JSON.stringify(before));
 
     app = start(APP, [], env);
