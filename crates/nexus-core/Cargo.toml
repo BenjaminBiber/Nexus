@@ -12,10 +12,21 @@ regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
+tokio = { workspace = true }
 ts-rs = { workspace = true }
+
+# Die Vertrags-Makros und die Fixtures für andere Crates; nur für Tests gedacht.
+[features]
+testing = []
 
 [dev-dependencies]
 tokio = { workspace = true }
+
+# Die Verträge laufen gegen die Speicher-Datenbank; sie brauchen das Merkmal `testing`.
+[[test]]
+name = "in_memory_contract"
+path = "tests/in_memory_contract.rs"
+required-features = ["testing"]
 
 [lints]
 workspace = true

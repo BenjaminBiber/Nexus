@@ -7,6 +7,8 @@ pub mod board;
 pub mod dispatch;
 pub mod error;
 pub mod questions;
+#[cfg(feature = "testing")]
+pub mod testing;
 pub mod text;
 
 pub use actors::{Actor, AuthorKind, QuestionActor};
