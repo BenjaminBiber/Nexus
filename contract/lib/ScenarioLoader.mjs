@@ -4,7 +4,8 @@ import { stepKinds } from './StepKinds.mjs';
 
 const SCENARIO_KEYS = new Set(['title', 'platforms', 'fixtures', 'steps']);
 const FIXTURE_KEYS = new Set(['repos', 'boardConfig', 'homeFiles']);
-const REPO_KEYS = new Set(['name', 'git', 'harnessInit', 'files']);
+const REPO_KEYS = new Set(['name', 'git', 'harnessInit', 'files', 'branches']);
+const BRANCH_KEYS = new Set(['name', 'message', 'files']);
 // Felder, die jede Schritt-Art hat; die Art nennt ihre eigenen in `keys`
 const STEP_KEYS = new Set(['name', 'kind', 'save', 'compare', 'ignore', 'record']);
 const PLATFORMS = new Set(['darwin', 'linux', 'win32']);
@@ -12,6 +13,8 @@ const METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']);
 const COMPARE = new Set(['full', 'status', 'shape']);
 const BOARD_CONFIGS = new Set(['sqlite']);
 const REPO_NAME = /^[A-Z][A-Z0-9_]*$/;
+// Branch-Name eines Fixture-Repos: wie bei Git, aber ohne Sonderfälle – Abschnitte aus Buchstaben, Zahlen, . _ -
+const BRANCH_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*(?:\/[A-Za-z0-9][A-Za-z0-9._-]*)*$/;
 // Pfad einer Datei im Home: relativ, mit `/` getrennt, Abschnitte ohne Schrägstriche und Rückwärtsschritte
 const HOME_FILE = /^[^/\\]+(?:\/[^/\\]+)*$/;
 
@@ -135,16 +138,47 @@ export class ScenarioLoader {
     for (const flag of ['git', 'harnessInit']) {
       if (value[flag] !== undefined && typeof value[flag] !== 'boolean') fail(`fixtures.repos[${index}].${flag} muss true oder false sein.`);
     }
-    const files = value.files ?? {};
-    if (files === null || typeof files !== 'object' || Array.isArray(files)) fail(`fixtures.repos[${index}].files muss ein Objekt sein.`);
-    for (const [path, content] of Object.entries(files)) {
-      if (typeof content !== 'string') fail(`fixtures.repos[${index}].files["${path}"] muss ein Text sein.`);
-    }
-    // Ohne Git kein eingerichteter Harness: `harness init` braucht ein Git-Repo
+    const files = this.repoFiles(value.files, `fixtures.repos[${index}].files`, fail);
+    // Ohne Git kein eingerichteter Harness und keine Branches: beides braucht ein Git-Repo
     const git = value.git ?? true;
     const harnessInit = value.harnessInit ?? false;
     if (harnessInit && !git) fail(`fixtures.repos[${index}]: harnessInit braucht git: true.`);
-    return { name: value.name, git, harnessInit, files };
+    if (value.branches !== undefined && !Array.isArray(value.branches)) fail(`fixtures.repos[${index}].branches muss eine Liste sein.`);
+    const branches = (value.branches ?? []).map((branch, at) => this.branch(branch, index, at, fail));
+    if (branches.length && !git) fail(`fixtures.repos[${index}]: branches braucht git: true.`);
+    const names = new Set();
+    for (const branch of branches) {
+      if (names.has(branch.name)) fail(`fixtures.repos[${index}].branches enthält den Namen ${branch.name} zweimal.`);
+      names.add(branch.name);
+    }
+    return { name: value.name, git, harnessInit, files, branches };
+  }
+
+  // Ein Arbeitsbranch des Repos: Name, Dateien des Commits und seine Nachricht
+  branch(value, index, at, fail) {
+    const where = `fixtures.repos[${index}].branches[${at}]`;
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) fail(`${where} muss ein Objekt sein.`);
+    this.unknown(value, BRANCH_KEYS, ` in ${where}`, fail);
+    if (typeof value.name !== 'string' || !BRANCH_NAME.test(value.name)) {
+      fail(`${where}.name muss ein Branch-Name sein (z. B. harness/BEN-0001).`);
+    }
+    // Der Hauptbranch entsteht schon mit dem Repo; das Fixture wechselt nach jedem Branch dorthin zurück
+    if (value.name === 'main') fail(`${where}.name darf nicht main sein – das ist der Hauptbranch des Repos.`);
+    if (value.message !== undefined && (typeof value.message !== 'string' || !value.message.trim())) {
+      fail(`${where}.message muss eine Commit-Nachricht als Text sein.`);
+    }
+    const files = this.repoFiles(value.files, `${where}.files`, fail);
+    return { name: value.name, message: value.message ?? `Arbeit auf ${value.name}`, files };
+  }
+
+  // Dateien eines Repos oder eines Branches: Pfad → Text
+  repoFiles(value, where, fail) {
+    if (value === undefined) return {};
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) fail(`${where} muss ein Objekt sein.`);
+    for (const [path, content] of Object.entries(value)) {
+      if (typeof content !== 'string') fail(`${where}["${path}"] muss ein Text sein.`);
+    }
+    return { ...value };
   }
 
   // Die Schritte des Szenarios

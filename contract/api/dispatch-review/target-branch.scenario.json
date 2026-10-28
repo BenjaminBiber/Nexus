@@ -1,0 +1,112 @@
+{
+  "title": "Ticket mit Zielbranch: Review gegen den Zielbranch und Merge im Merge-Worktree",
+  "fixtures": {
+    "repos": [
+      {
+        "name": "REPO1",
+        "files": {
+          "README.md": "# Bestellung\n",
+          "src/preis.ts": "export function preis(netto: number): number {\n  return netto;\n}\n"
+        },
+        "branches": [
+          {
+            "name": "release/1",
+            "message": "1.0: Versandkosten",
+            "files": { "src/versand.ts": "export const VERSAND = 4.9;\n" }
+          }
+        ]
+      }
+    ],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "BEN", "name": "Bestellung" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "BEN", "name": "Sprint" }, "record": false },
+    { "name": "Repo-Pfad des Boards", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Board aktivieren", "method": "POST", "path": "/api/db/boards/1/activate", "body": {}, "record": false },
+    {
+      "name": "Ticket, dessen Zielbranch schon im Repo liegt",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": {
+        "title": "Rabatt einbauen",
+        "acceptance": "Der Preis sinkt um den Rabatt.",
+        "labels": ["auto"],
+        "needsPlanning": false,
+        "targetBranch": "release/1"
+      },
+      "record": false
+    },
+    {
+      "name": "Plan und Handbuch",
+      "method": "PATCH",
+      "path": "/api/db/tickets/BEN-0001",
+      "body": { "rev": 1, "plan": "Rabatt in preis() verrechnen.", "handbook": "Tests mit vitest." },
+      "record": false
+    },
+    { "name": "Ticket nach Geplant", "method": "POST", "path": "/api/db/tickets/BEN-0001/move", "body": { "status": "planned" }, "record": false },
+    { "name": "Dispatcher einschalten", "method": "POST", "path": "/api/dispatch/enable", "body": {}, "record": false },
+    {
+      "name": "Durchlauf: der Ticket-Branch zweigt vom Zielbranch ab",
+      "method": "POST",
+      "path": "/api/dispatch/run",
+      "body": {},
+      "save": { "lauf": "json.runs.0.id" },
+      "record": false
+    },
+    {
+      "name": "Arbeit des Agenten im Worktree",
+      "kind": "commit",
+      "cwd": "{{REPO1}}-worktrees/BEN-0001",
+      "files": { "src/rabatt.ts": "export const RABATT = 0.1;\n" },
+      "message": "BEN-0001: Rabattsatz",
+      "record": false
+    },
+    {
+      "name": "der Agent hakt das Ticket ab",
+      "method": "POST",
+      "path": "/api/db/tickets/BEN-0001/move",
+      "body": { "status": "done", "acceptance": "Der Preis sinkt um den Rabatt." },
+      "record": false
+    },
+    {
+      "name": "Ergebnis des Workers",
+      "kind": "homeFile",
+      "path": "dispatch/runs/{{lauf}}.result.json",
+      "content": {
+        "code": 0,
+        "timedOut": false,
+        "endedAt": "2020-03-02T08:45:00.000Z",
+        "output": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":false,\"result\":\"Rabattsatz angelegt.\",\"total_cost_usd\":0}\n"
+      },
+      "record": false
+    },
+    {
+      "name": "Durchlauf: das Ticket wartet auf Freigabe",
+      "method": "POST",
+      "path": "/api/dispatch/run",
+      "body": {},
+      "record": false
+    },
+
+    {
+      "name": "Review: verglichen wird gegen den Zielbranch, nicht gegen den Hauptbranch",
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001"
+    },
+    { "name": "Patch der neuen Datei", "method": "GET", "path": "/api/dispatch/review/BEN-0001/file?path=src/rabatt.ts" },
+    {
+      "name": "Patch einer Datei, die nur der Zielbranch hat",
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001/file?path=src/versand.ts"
+    },
+
+    {
+      "name": "Abnehmen: gemergt wird in den Zielbranch, der dafür in einem Merge-Worktree ausgecheckt wird",
+      "method": "POST",
+      "path": "/api/dispatch/accept/BEN-0001",
+      "body": { "by": "Benjamin" }
+    },
+    { "name": "Ticket ist erledigt und aufgeräumt", "method": "GET", "path": "/api/db/tickets/BEN-0001", "ignore": ["json.history"] }
+  ]
+}

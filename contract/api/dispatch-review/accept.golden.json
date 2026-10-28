@@ -1,0 +1,396 @@
+[
+  {
+    "name": "Abnehmen mit einem Namen, der kein Text ist",
+    "request": {
+      "body": {
+        "by": 7
+      },
+      "method": "POST",
+      "path": "/api/dispatch/accept/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "by muss ein Name sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Abnehmen für ein unbekanntes Board",
+    "request": {
+      "body": {
+        "boardId": 99
+      },
+      "method": "POST",
+      "path": "/api/dispatch/accept/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 99 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Abnehmen eines unbekannten Tickets",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/accept/BEN-0099"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-not-found",
+        "message": "Ticket BEN-0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Abnehmen eines Tickets ohne Branch: nur erledigt, nichts zu mergen",
+    "request": {
+      "body": {
+        "by": "Benjamin"
+      },
+      "method": "POST",
+      "path": "/api/dispatch/accept/BEN-0002"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "bereit · 0/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "result": {
+          "outcome": "accepted",
+          "text": "BEN-0002 abgenommen und erledigt; kein Branch eingetragen, es gibt nichts zu mergen."
+        },
+        "runs": [],
+        "state": "idle",
+        "tickets": [],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "zweites Ticket ist erledigt",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/BEN-0002"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "Die Versandkosten stimmen.",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "done",
+        "comments": [],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "",
+        "id": "BEN-0002",
+        "labels": [],
+        "needsPlanning": true,
+        "number": 2,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 3,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "done",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Versand prüfen",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Abnehmen desselben Tickets ein zweites Mal",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/accept/BEN-0002"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "accept-not-possible",
+        "message": "BEN-0002 wartet auf keine Abnahme (nur Blockiert mit Grund „Human Interaction: …“)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Abnehmen des Tickets mit Branch: erledigt und in den Hauptbranch gemergt",
+    "request": {
+      "body": {
+        "by": "Benjamin"
+      },
+      "method": "POST",
+      "path": "/api/dispatch/accept/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "bereit · 0/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "result": {
+          "outcome": "merged",
+          "text": "BEN-0001 gemergt in main (a2ac689)."
+        },
+        "runs": [],
+        "state": "idle",
+        "tickets": [],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Ticket ist erledigt, Branch und Worktree sind aufgeräumt",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "Der Preis sinkt um den Rabatt.",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "done",
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "dispatcher",
+            "body": "[dispatch] Start: an junior-BEN-0001 übergeben – Branch ticket/BEN-0001-rabatt-einbauen, Profil standard (Modell opus, Effort high, max. 80 Schritte, 90 min). Grund: Standardprofil standard.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "readByAgentAt": null,
+            "ticketId": "BEN-0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "dispatcher",
+            "body": "[dispatch] Review: wartet auf Freigabe – 2 Dateien geändert (+2/−1), Tests: 1 grün, 0 rot.\nIm Panel „Übernehmen“ oder „Zurück an den Agenten“.",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "readByAgentAt": null,
+            "ticketId": "BEN-0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "dispatcher",
+            "body": "[dispatch] Merge: erneuter Merge angestoßen von Benjamin.",
+            "createdAt": "<TIME>",
+            "id": 3,
+            "readByAgentAt": null,
+            "ticketId": "BEN-0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "dispatcher",
+            "body": "[dispatch] Gemergt in main (a2ac689). Branch ticket/BEN-0001-rabatt-einbauen aufgeräumt.",
+            "createdAt": "<TIME>",
+            "id": 4,
+            "readByAgentAt": null,
+            "ticketId": "BEN-0001"
+          }
+        ],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "Tests mit vitest.",
+        "id": "BEN-0001",
+        "labels": [
+          "auto"
+        ],
+        "needsPlanning": false,
+        "number": 1,
+        "plan": "Rabatt in preis() verrechnen.",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 13,
+        "sessions": [],
+        "sortOrder": 1,
+        "spec": null,
+        "specTask": null,
+        "status": "done",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Rabatt einbauen",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Review nach dem Merge – ohne Branch kein Diff",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/review/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "available": false,
+        "base": null,
+        "branch": null,
+        "files": [],
+        "reason": "Am Ticket ist kein Branch eingetragen.",
+        "runLog": null,
+        "target": null,
+        "tests": [],
+        "testsAt": null,
+        "ticketId": "BEN-0001"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Abnehmen des gemergten Tickets ein zweites Mal",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/accept/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "accept-not-possible",
+        "message": "BEN-0001 wartet auf keine Abnahme (nur Blockiert mit Grund „Human Interaction: …“)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Erneut mergen ohne Branch",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/merge/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "merge-not-possible",
+        "message": "BEN-0001 wartet auf keinen Merge (nur Erledigt mit Branch oder Blockiert mit Grund „Merge: …“)."
+      },
+      "status": 422
+    }
+  }
+]

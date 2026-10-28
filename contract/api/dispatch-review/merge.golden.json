@@ -1,0 +1,393 @@
+[
+  {
+    "name": "Erneut mergen eines unbekannten Tickets",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/merge/BEN-0099"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-not-found",
+        "message": "Ticket BEN-0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Erneut mergen für ein unbekanntes Board",
+    "request": {
+      "body": {
+        "boardId": 99
+      },
+      "method": "POST",
+      "path": "/api/dispatch/merge/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 99 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Erneut mergen, solange das Ticket auf Freigabe wartet",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/merge/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "merge-not-possible",
+        "message": "BEN-0001 wartet auf keinen Merge (nur Erledigt mit Branch oder Blockiert mit Grund „Merge: …“)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Erneut mergen: der Branch geht sauber in den Hauptbranch",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/merge/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "bereit · 0/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "result": {
+          "outcome": "merged",
+          "text": "BEN-0001 gemergt in main (821cfcd)."
+        },
+        "runs": [],
+        "state": "idle",
+        "tickets": [],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "erstes Ticket ist gemergt und aufgeräumt",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "Der Preis sinkt um den Rabatt.",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "done",
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "dispatcher",
+            "body": "[dispatch] Start: an junior-BEN-0001 übergeben – Branch ticket/BEN-0001-rabatt-einbauen, Profil standard (Modell opus, Effort high, max. 80 Schritte, 90 min). Grund: Standardprofil standard.",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "readByAgentAt": null,
+            "ticketId": "BEN-0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "dispatcher",
+            "body": "[dispatch] Review: wartet auf Freigabe – 1 Datei geändert (+1/−0), Tests: keine erkannt.\nIm Panel „Übernehmen“ oder „Zurück an den Agenten“.",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "readByAgentAt": null,
+            "ticketId": "BEN-0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "dispatcher",
+            "body": "[dispatch] Merge: erneuter Merge angestoßen von Vertrag.",
+            "createdAt": "<TIME>",
+            "id": 5,
+            "readByAgentAt": null,
+            "ticketId": "BEN-0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "dispatcher",
+            "body": "[dispatch] Gemergt in main (821cfcd). Branch ticket/BEN-0001-rabatt-einbauen aufgeräumt, Worktree <REPO1>-worktrees/BEN-0001 entfernt.",
+            "createdAt": "<TIME>",
+            "id": 6,
+            "readByAgentAt": null,
+            "ticketId": "BEN-0001"
+          }
+        ],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "Tests mit vitest.",
+        "id": "BEN-0001",
+        "labels": [
+          "auto"
+        ],
+        "needsPlanning": false,
+        "number": 1,
+        "plan": "Rabattsatz als eigene Datei.",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 13,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "done",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Rabatt einbauen",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Erneut mergen mit Konflikt: eine Merge-Session übernimmt",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/merge/BEN-0002"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 1,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [
+          {
+            "branch": "ticket/BEN-0002-preis-runden",
+            "phase": "session",
+            "target": null,
+            "ticketId": "BEN-0002"
+          }
+        ],
+        "message": "läuft · 1/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "result": {
+          "outcome": "session",
+          "text": "BEN-0002: Merge-Konflikt – Merge-Session gestartet."
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:mergeLauf>",
+            "kind": "merge",
+            "log": "<var:mergeLauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "BEN-0002",
+            "title": "Preis runden"
+          }
+        ],
+        "state": "running",
+        "tickets": [],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Erneut mergen, solange die Merge-Session läuft",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/merge/BEN-0002"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "merge-not-possible",
+        "message": "BEN-0002: Die Merge-Session läuft noch."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "zweites Ticket wartet auf die Merge-Session",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/BEN-0002"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "acceptance": "Der Preis ist auf zwei Stellen gerundet.",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": "ticket/BEN-0002-preis-runden",
+        "column": "done",
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "dispatcher",
+            "body": "[dispatch] Start: an junior-BEN-0002 übergeben – Branch ticket/BEN-0002-preis-runden, Profil standard (Modell opus, Effort high, max. 80 Schritte, 90 min). Grund: Standardprofil standard.",
+            "createdAt": "<TIME>",
+            "id": 3,
+            "readByAgentAt": null,
+            "ticketId": "BEN-0002"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "dispatcher",
+            "body": "[dispatch] Review: wartet auf Freigabe – 1 Datei geändert (+1/−1), Tests: keine erkannt.\nIm Panel „Übernehmen“ oder „Zurück an den Agenten“.",
+            "createdAt": "<TIME>",
+            "id": 4,
+            "readByAgentAt": null,
+            "ticketId": "BEN-0002"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "dispatcher",
+            "body": "[dispatch] Merge: erneuter Merge angestoßen von Vertrag.",
+            "createdAt": "<TIME>",
+            "id": 7,
+            "readByAgentAt": null,
+            "ticketId": "BEN-0002"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "dispatcher",
+            "body": "[dispatch] Merge-Konflikt in src/preis.ts beim Merge in main – Merge-Session gestartet (Profil standard).",
+            "createdAt": "<TIME>",
+            "id": 8,
+            "readByAgentAt": null,
+            "ticketId": "BEN-0002"
+          }
+        ],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "Tests mit vitest.",
+        "id": "BEN-0002",
+        "labels": [
+          "auto"
+        ],
+        "needsPlanning": false,
+        "number": 2,
+        "plan": "Rückgabe von preis() runden.",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 12,
+        "sessions": [],
+        "sortOrder": 1,
+        "spec": null,
+        "specTask": null,
+        "status": "done",
+        "steps": [],
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Preis runden",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": "<REPO1>-worktrees/BEN-0002"
+      },
+      "status": 200
+    }
+  }
+]

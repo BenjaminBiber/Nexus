@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { GIT_IDENTITY_ENV } from './GitIdentity.mjs';
 import { HomeFiles } from './HomeFiles.mjs';
 import { Normalizer } from './Normalizer.mjs';
 import { RepoFixture } from './RepoFixture.mjs';
@@ -51,7 +52,8 @@ export class ScenarioRunner {
         saved,
       });
       if (scenario.fixtures.boardConfig === 'sqlite') await this.writeBoardConfig(server.base, home);
-      return await this.steps(scenario, { base: server.base, variables, normalizer, saved, stubs });
+      // `home` und `reposDir` brauchen die Schritt-Arten, die Dateien schreiben bzw. committen (homeFile, commit)
+      return await this.steps(scenario, { base: server.base, variables, normalizer, saved, stubs, home, reposDir: fixture.base });
     } finally {
       if (server) await server.stop();
       for (const stub of stubs.values()) await stub.close();
@@ -69,9 +71,10 @@ export class ScenarioRunner {
     return url.protocol === 'https:' ? 443 : 80;
   }
 
-  // Umgebung des Servers; CONTRACT_HEARTBEAT_MS und CONTRACT_POLL_MS erbt er aus dem eigenen Prozess
+  // Umgebung des Servers; CONTRACT_HEARTBEAT_MS und CONTRACT_POLL_MS erbt er aus dem eigenen Prozess.
+  // GIT_IDENTITY_ENV gibt seinen Commits (Merge eines Ticket-Branches) eine feste Identität und ein festes Datum
   env(home, claudeConfig, port) {
-    const env = { ...process.env, HARNESS_HOME: home, HARNESS_PORT: String(port), CLAUDE_CONFIG_DIR: claudeConfig };
+    const env = { ...process.env, ...GIT_IDENTITY_ENV, HARNESS_HOME: home, HARNESS_PORT: String(port), CLAUDE_CONFIG_DIR: claudeConfig };
     // Eine geerbte Session- oder Ticket-Zuordnung gilt nicht für den Vertrag
     delete env.HARNESS_SESSION;
     delete env.HARNESS_TICKET;

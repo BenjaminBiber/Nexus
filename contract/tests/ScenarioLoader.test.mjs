@@ -45,7 +45,16 @@ describe('ScenarioLoader', () => {
       const scenario = loader.parse(write('projects', GOOD));
       expect(scenario.title).toBe('Projekte anmelden');
       expect(scenario.steps).toHaveLength(2);
-      expect(scenario.fixtures.repos[0]).toEqual({ name: 'REPO1', git: true, harnessInit: true, files: { 'docs/a.md': '# A\n' } });
+      expect(scenario.fixtures.repos[0]).toEqual({ name: 'REPO1', git: true, harnessInit: true, files: { 'docs/a.md': '# A\n' }, branches: [] });
+    });
+
+    it('liest Arbeitsbranches eines Repos mit Nachricht und Dateien', () => {
+      const repos = [{ name: 'REPO1', branches: [{ name: 'harness/BEN-0001', message: 'BEN-0001: Rabatt', files: { 'src/a.ts': 'neu\n' } }, { name: 'release/1' }] }];
+      const scenario = loader.parse(write('branches', { title: 'T', fixtures: { repos }, steps: GOOD.steps }));
+      expect(scenario.fixtures.repos[0].branches).toEqual([
+        { name: 'harness/BEN-0001', message: 'BEN-0001: Rabatt', files: { 'src/a.ts': 'neu\n' } },
+        { name: 'release/1', message: 'Arbeit auf release/1', files: {} },
+      ]);
     });
 
     it('setzt die Standardwerte je Schritt', () => {
@@ -119,7 +128,7 @@ describe('ScenarioLoader', () => {
     });
 
     it('meldet eine unbekannte Schritt-Art', () => {
-      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'cli' }] }, /steps\[0\]\.kind muss eine bekannte Art sein \(http, httpStub\)/);
+      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'cli' }] }, /steps\[0\]\.kind muss eine bekannte Art sein \(commit, homeFile, http, httpStub\)/);
     });
 
     it('meldet leere Schritte', () => {
@@ -157,6 +166,36 @@ describe('ScenarioLoader', () => {
 
     it('meldet harnessInit ohne git', () => {
       failsWith({ title: 'T', fixtures: { repos: [{ name: 'REPO1', git: false, harnessInit: true }] }, steps: GOOD.steps }, /harnessInit braucht git: true/);
+    });
+
+    it('meldet branches ohne git', () => {
+      const repos = [{ name: 'REPO1', git: false, branches: [{ name: 'harness/BEN-0001' }] }];
+      failsWith({ title: 'T', fixtures: { repos }, steps: GOOD.steps }, /branches braucht git: true/);
+    });
+
+    it('meldet einen ungültigen Branch-Namen', () => {
+      const repos = [{ name: 'REPO1', branches: [{ name: 'mit Leerzeichen' }] }];
+      failsWith({ title: 'T', fixtures: { repos }, steps: GOOD.steps }, /branches\[0\]\.name muss ein Branch-Name sein/);
+    });
+
+    it('meldet den Hauptbranch als Arbeitsbranch', () => {
+      const repos = [{ name: 'REPO1', branches: [{ name: 'main' }] }];
+      failsWith({ title: 'T', fixtures: { repos }, steps: GOOD.steps }, /darf nicht main sein/);
+    });
+
+    it('meldet doppelte Branch-Namen', () => {
+      const repos = [{ name: 'REPO1', branches: [{ name: 'release/1' }, { name: 'release/1' }] }];
+      failsWith({ title: 'T', fixtures: { repos }, steps: GOOD.steps }, /den Namen release\/1 zweimal/);
+    });
+
+    it('meldet ein unbekanntes Feld an einem Branch', () => {
+      const repos = [{ name: 'REPO1', branches: [{ name: 'release/1', dateien: {} }] }];
+      failsWith({ title: 'T', fixtures: { repos }, steps: GOOD.steps }, /unbekannte Felder in fixtures\.repos\[0\]\.branches\[0\]: dateien/);
+    });
+
+    it('meldet einen Dateiinhalt eines Branches, der kein Text ist', () => {
+      const repos = [{ name: 'REPO1', branches: [{ name: 'release/1', files: { 'a.ts': 7 } }] }];
+      failsWith({ title: 'T', fixtures: { repos }, steps: GOOD.steps }, /branches\[0\]\.files\["a\.ts"\] muss ein Text sein/);
     });
 
     it('meldet ein unbekanntes boardConfig', () => {
