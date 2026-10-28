@@ -49,6 +49,13 @@ pub enum PortState {
     Foreign,
 }
 
+/// Die gefundene Programmdatei des Node-Servers samt der Umgebung, die sie braucht
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct NodeServer {
+    program: PathBuf,
+    env: Vec<(String, String)>,
+}
+
 /// Ein Startweg: Programm, Argumente und zusätzliche Umgebungsvariablen
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StartCommand {
@@ -62,8 +69,8 @@ pub struct StartCommand {
 pub struct ServerLauncher {
     env: HashMap<String, String>,
     home: HarnessHome,
-    /// Ordner, in dem das laufende `nexus`-Binary liegt
-    exe_dir: Option<PathBuf>,
+    /// Das laufende `nexus`-Binary; es startet den Server mit `serve`
+    exe: Option<PathBuf>,
     http: LocalHttp,
 }
 
@@ -73,18 +80,16 @@ impl ServerLauncher {
         Self::new(
             std::env::vars().collect(),
             HarnessHome::from_process_env(),
-            std::env::current_exe()
-                .ok()
-                .and_then(|exe| exe.parent().map(Path::to_path_buf)),
+            std::env::current_exe().ok(),
         )
     }
 
     /// Starter mit frei wählbarer Umgebung (Tests)
-    pub fn new(env: HashMap<String, String>, home: HarnessHome, exe_dir: Option<PathBuf>) -> Self {
+    pub fn new(env: HashMap<String, String>, home: HarnessHome, exe: Option<PathBuf>) -> Self {
         Self {
             env,
             home,
-            exe_dir,
+            exe,
             http: LocalHttp::new(TIMEOUT),
         }
     }
@@ -158,13 +163,33 @@ impl ServerLauncher {
         }
     }
 
-    /// Der erste Startweg, den es gibt: Umgebung (Tests), gebündelte Programmdatei aus P1-2,
-    /// `lib/server.mjs` im Plugin oder im Benutzerordner
+    /// Der Startweg des Servers: immer dieses Binary mit `serve`, also Rust auf dem
+    /// öffentlichen Port und der Node-Server als Kindprozess dahinter.
+    ///
+    /// Gefunden wird nur noch die Programmdatei des Node-Servers; findet sie dieser Starter
+    /// nicht, sucht `nexus serve` selbst eine neben dem Programm.
     pub fn start_command(&self, port: u16) -> Option<StartCommand> {
+        let program = self.exe.clone()?;
+        let mut args = vec!["serve".to_string(), "--port".to_string(), port.to_string()];
+        let mut env = Vec::new();
+        if let Some(node) = self.node_server() {
+            args.push("--node-sidecar".to_string());
+            args.push(Self::text(&node.program));
+            env = node.env;
+        }
+        Some(StartCommand {
+            program,
+            args,
+            env,
+        })
+    }
+
+    /// Programmdatei des Node-Servers: Umgebung (Tests), gebündelte Programmdatei aus P1-2,
+    /// `lib/server.mjs` im Plugin oder im Benutzerordner
+    fn node_server(&self) -> Option<NodeServer> {
         if let Some(entry) = self.var(SERVER_ENTRY_ENV) {
-            return Some(StartCommand {
-                program: PathBuf::from("node"),
-                args: vec![entry, "--port".into(), port.to_string()],
+            return Some(NodeServer {
+                program: PathBuf::from(entry),
                 env: Vec::new(),
             });
         }
@@ -175,9 +200,8 @@ impl ServerLauncher {
                 SIDECAR.to_string()
             });
             if sidecar.is_file() {
-                return Some(StartCommand {
+                return Some(NodeServer {
                     program: sidecar,
-                    args: vec!["serve".into(), "--port".into(), port.to_string()],
                     env: Vec::new(),
                 });
             }
@@ -190,9 +214,8 @@ impl ServerLauncher {
                 if self.var(WEB_DIR_ENV).is_none() {
                     env.push((WEB_DIR_ENV.to_string(), Self::text(&root.join("web"))));
                 }
-                return Some(StartCommand {
-                    program: PathBuf::from("node"),
-                    args: vec![Self::text(&entry), "--port".into(), port.to_string()],
+                return Some(NodeServer {
+                    program: entry,
                     env,
                 });
             }
@@ -204,8 +227,8 @@ impl ServerLauncher {
     /// Ordner darüber (Plugin: `lib/` neben `web/`) und `<benutzerordner>/app`
     fn roots(&self) -> Vec<PathBuf> {
         let mut roots = Vec::new();
-        if let Some(dir) = &self.exe_dir {
-            roots.push(dir.clone());
+        if let Some(dir) = self.exe.as_ref().and_then(|exe| exe.parent()) {
+            roots.push(dir.to_path_buf());
             if let Some(parent) = dir.parent() {
                 roots.push(parent.to_path_buf());
             }
@@ -316,23 +339,44 @@ fn detach(command: &mut Command) {
 mod tests {
     use super::*;
 
-    fn starter(paare: &[(&str, &str)], home: &Path, exe_dir: Option<&Path>) -> ServerLauncher {
+    /// Das laufende Binary in den Tests; es wird nie gestartet, nur im Startweg erwartet
+    fn exe(dir: &Path) -> PathBuf {
+        dir.join(if cfg!(windows) { "nexus.exe" } else { "nexus" })
+    }
+
+    fn starter(paare: &[(&str, &str)], home: &Path, exe: Option<PathBuf>) -> ServerLauncher {
         ServerLauncher::new(
             paare
                 .iter()
                 .map(|(name, value)| (name.to_string(), value.to_string()))
                 .collect(),
             HarnessHome::at(home),
-            exe_dir.map(Path::to_path_buf),
+            exe,
         )
     }
 
     #[test]
-    fn die_umgebungsvariable_geht_vor() {
-        let starter = starter(&[(SERVER_ENTRY_ENV, "/s/main.js")], Path::new("/h"), None);
+    fn gestartet_wird_immer_dieses_binary_mit_serve() {
+        let starter = starter(&[], Path::new("/h"), Some(exe(Path::new("/opt/nexus"))));
         let start = starter.start_command(4800).unwrap();
-        assert_eq!(start.program, Path::new("node"));
-        assert_eq!(start.args, vec!["/s/main.js", "--port", "4800"]);
+        assert_eq!(start.program, exe(Path::new("/opt/nexus")));
+        assert_eq!(start.args, vec!["serve", "--port", "4800"]);
+        assert!(start.env.is_empty());
+    }
+
+    #[test]
+    fn die_umgebungsvariable_nennt_den_node_server() {
+        let starter = starter(
+            &[(SERVER_ENTRY_ENV, "/s/main.js")],
+            Path::new("/h"),
+            Some(exe(Path::new("/opt/nexus"))),
+        );
+        let start = starter.start_command(4800).unwrap();
+        assert_eq!(start.program, exe(Path::new("/opt/nexus")));
+        assert_eq!(
+            start.args,
+            vec!["serve", "--port", "4800", "--node-sidecar", "/s/main.js"]
+        );
         assert!(start.env.is_empty());
     }
 
@@ -349,10 +393,19 @@ mod tests {
         };
         std::fs::write(dir.path().join(name), b"x").unwrap();
 
-        let starter = starter(&[], Path::new("/h"), Some(dir.path()));
+        let starter = starter(&[], Path::new("/h"), Some(exe(dir.path())));
         let start = starter.start_command(4710).unwrap();
-        assert_eq!(start.program, dir.path().join(name));
-        assert_eq!(start.args, vec!["serve", "--port", "4710"]);
+        assert_eq!(start.program, exe(dir.path()));
+        assert_eq!(
+            start.args,
+            vec![
+                "serve".to_string(),
+                "--port".to_string(),
+                "4710".to_string(),
+                "--node-sidecar".to_string(),
+                dir.path().join(name).to_string_lossy().to_string(),
+            ]
+        );
     }
 
     #[test]
@@ -364,20 +417,16 @@ mod tests {
         std::fs::create_dir_all(dir.path().join("lib")).unwrap();
         std::fs::write(dir.path().join("lib").join("server.mjs"), b"x").unwrap();
 
-        let starter = starter(&[], Path::new("/h"), Some(dir.path()));
+        let starter = starter(&[], Path::new("/h"), Some(exe(dir.path())));
         let start = starter.start_command(4710).unwrap();
-        assert_eq!(start.program, Path::new("node"));
+        assert_eq!(start.program, exe(dir.path()));
         assert_eq!(
-            start.args,
-            vec![
-                dir.path()
-                    .join("lib")
-                    .join("server.mjs")
-                    .to_string_lossy()
-                    .to_string(),
-                "--port".to_string(),
-                "4710".to_string()
-            ]
+            start.args.last().unwrap(),
+            &dir.path()
+                .join("lib")
+                .join("server.mjs")
+                .to_string_lossy()
+                .to_string()
         );
         assert_eq!(
             start.env,
@@ -400,7 +449,7 @@ mod tests {
         let starter = starter(
             &[(WEB_DIR_ENV, "/eigen/web")],
             Path::new("/h"),
-            Some(dir.path()),
+            Some(exe(dir.path())),
         );
         assert!(starter.start_command(4710).unwrap().env.is_empty());
     }
@@ -414,13 +463,17 @@ mod tests {
         std::fs::create_dir_all(dir.path().join("app").join("lib")).unwrap();
         std::fs::write(dir.path().join("app").join("lib").join("server.mjs"), b"x").unwrap();
 
-        let starter = starter(&[], dir.path(), None);
+        let starter = starter(&[], dir.path(), Some(exe(Path::new("/opt/nexus"))));
         let start = starter.start_command(4710).unwrap();
-        assert!(start.args[0].ends_with("server.mjs"), "{:?}", start.args);
+        assert!(
+            start.args.last().unwrap().ends_with("server.mjs"),
+            "{:?}",
+            start.args
+        );
     }
 
     #[test]
-    fn ohne_jeden_startweg_fehlt_der_server() {
+    fn ohne_eigenes_binary_fehlt_der_server() {
         let dir = tempfile::Builder::new()
             .prefix("nexus-h-")
             .tempdir()

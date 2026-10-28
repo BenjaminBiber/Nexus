@@ -98,6 +98,27 @@ impl ProcessGroup {
         self.child.wait().await
     }
 
+    /// Bittet den Prozess samt allem, was er gestartet hat, um ein geordnetes Ende (SIGTERM an
+    /// die Gruppe). Windows kennt kein SIGTERM; dort beendet das Job-Objekt den Baum sofort,
+    /// deshalb ist das dort dasselbe wie [`Self::kill_tree`].
+    pub fn terminate_tree(&mut self) {
+        #[cfg(unix)]
+        {
+            use nix::sys::signal::{killpg, Signal};
+            use nix::unistd::Pid;
+
+            let Some(pid) = self.child.id() else { return };
+            let Ok(number) = i32::try_from(pid) else {
+                return;
+            };
+            let _ = killpg(Pid::from_raw(number), Signal::SIGTERM);
+        }
+        #[cfg(not(unix))]
+        {
+            self.kill_tree();
+        }
+    }
+
     /// Beendet den Prozess samt allem, was er gestartet hat (Tests, Builds).
     /// Ist schon alles beendet, passiert nichts.
     pub fn kill_tree(&mut self) {

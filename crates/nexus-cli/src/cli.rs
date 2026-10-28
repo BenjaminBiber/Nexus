@@ -72,6 +72,12 @@ const BOARD_ABOUT: &str = "Ohne Unterbefehl: startet bei Bedarf den Server und �
 /// Hilfe der Option `--port`; die Zahl ist `DEFAULT_SERVER_PORT` aus dem Fachkern
 const BOARD_PORT_HELP: &str = "Port des Servers (Standard 4710 oder HARNESS_PORT)";
 
+/// Beschreibung von `serve` auf der Hilfeseite
+const SERVE_ABOUT: &str = "Startet den Server im Vordergrund: Rust nimmt den Port an, der Node-Server läuft als Kindprozess dahinter.";
+
+/// Beispiele unter der Hilfe von `serve`
+const SERVE_EXAMPLES: &str = "\nBeispiele:\n  harness serve\n  harness serve --port 4800\n  harness serve --node-sidecar packages/server/dist/main.js\n\nBeendet wird mit Strg+C; der Node-Server geht dabei mit.";
+
 /// Beispiele unter der Hilfe von `board`
 const BOARD_EXAMPLES: &str = "\nBeispiele:\n  harness board\n  harness board --port 4800 --no-open";
 
@@ -107,6 +113,35 @@ pub enum Commands {
         /// abgewiesen. Versteckt, damit die Hilfe wie heute aussieht.
         #[arg(hide = true, trailing_var_arg = true)]
         extra: Vec<String>,
+    },
+
+    /// Server im Vordergrund starten (Rust vorn, Node-Server dahinter)
+    #[command(
+        name = "serve",
+        about = SERVE_ABOUT,
+        after_help = SERVE_EXAMPLES,
+        disable_help_flag = true
+    )]
+    Serve {
+        #[arg(long, value_name = "nummer", help = BOARD_PORT_HELP)]
+        port: Option<String>,
+        #[arg(
+            long = "web-dir",
+            value_name = "ordner",
+            help = "Ordner der gebauten Oberfläche (Standard: web neben dem Programm oder HARNESS_WEB_DIR)"
+        )]
+        web_dir: Option<PathBuf>,
+        #[arg(
+            long = "node-sidecar",
+            value_name = "pfad",
+            help = "Programmdatei des Node-Servers (Standard: neben dem Programm oder NEXUS_NODE_SIDECAR)"
+        )]
+        node_sidecar: Option<String>,
+        #[arg(
+            long = "no-node",
+            help = "Ohne Node-Server starten; nicht portierte Routen antworten dann mit 404"
+        )]
+        no_node: bool,
     },
 
     /// `harness` im normalen Terminal verfügbar machen
@@ -193,6 +228,20 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
             no_open,
             extra,
         }) => commands::board::open::run(&context, port.as_deref(), !no_open, &extra),
+        Some(Commands::Serve {
+            port,
+            web_dir,
+            node_sidecar,
+            no_node,
+        }) => commands::serve::run(
+            &context,
+            &commands::serve::ServeOptions {
+                port,
+                web_dir,
+                node_sidecar,
+                no_node,
+            },
+        ),
         Some(Commands::Install { no_path }) => commands::install::run(&context, !no_path),
         Some(Commands::Customize(args)) => commands::customize::run(&context, args),
         Some(Commands::Help { befehl }) => help_command(root, befehl.as_deref()),

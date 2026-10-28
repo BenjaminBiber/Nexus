@@ -58,4 +58,29 @@ describe('ServerConfigLoader', () => {
   it('nimmt HARNESS_HOME für den Benutzerordner', () => {
     expect(loader.load([], { HARNESS_HOME: '/wo/home' }).home.dir).toBe('/wo/home');
   });
+
+  it('läuft nur mit HARNESS_SIDECAR=1 als Sidecar', () => {
+    expect(loader.load([], {}).sidecar).toBe(false);
+    expect(loader.load([], { HARNESS_SIDECAR: '1' }).sidecar).toBe(true);
+    expect(loader.load([], { HARNESS_SIDECAR: '0' }).sidecar).toBe(false);
+    expect(loader.load([], { HARNESS_SIDECAR: '' }).sidecar).toBe(false);
+  });
+
+  it('nimmt den öffentlichen Port aus HARNESS_PUBLIC_PORT', () => {
+    expect(loader.load([], {}).publicPort).toBeUndefined();
+    expect(loader.load([], { HARNESS_PUBLIC_PORT: '' }).publicPort).toBeUndefined();
+    expect(loader.load(['--port', '0'], { HARNESS_PUBLIC_PORT: '4710' }).publicPort).toBe(4710);
+  });
+
+  it.each(['abc', '-1', '65536', '1.5'])('weist den öffentlichen Port %j ab', (raw) => {
+    expect(() => loader.load([], { HARNESS_PUBLIC_PORT: raw })).toThrowError(
+      expect.objectContaining({ code: 'port-invalid' }),
+    );
+  });
+
+  it('schickt Links in Meldungen auf den öffentlichen Port', () => {
+    const hinter = loader.load(['--port', '0'], { HARNESS_SIDECAR: '1', HARNESS_PUBLIC_PORT: '4710' });
+    expect(ServerConfigLoader.noticeBaseUrl({ ...hinter, port: 51234 })).toBe('http://127.0.0.1:4710');
+    expect(ServerConfigLoader.noticeBaseUrl(loader.load(['--port', '4800'], {}))).toBe('http://127.0.0.1:4800');
+  });
 });
