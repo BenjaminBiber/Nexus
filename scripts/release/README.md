@@ -113,6 +113,39 @@ der nächsten `## `-Überschrift aus.
 einer Warnung übersprungen. Ohne Tag und ohne Git-Repo rechnet `next` ab der Version der Quelle. Eine
 Vorabversion gilt dabei als Weg zu ihrer eigenen Version: `1.4.2-rc.1` + `patch` ist `1.4.2`.
 
+## Release-Workflow
+
+`.github/workflows/release.yml` wird von Hand gestartet (`workflow_dispatch`) und nimmt zwei Eingaben: `bump`
+(`patch`, `minor` oder `major`) und `dry_run` (Probelauf). `concurrency: release` lässt nur ein Release zur Zeit zu.
+Der erste Job `version` läuft in der Umgebung `release` – dort liegt `RELEASE_TOKEN`, mit dem der Checkout
+arbeitet; ohne dieses Token lösen Commit und Tag keine weiteren Workflows aus. Er liefert die Ausgaben `version`,
+`tag` und `release_id` für die Jobs, die bauen und veröffentlichen (P6-4 und P6-5).
+
+Die Logik steckt in drei Skripten, nicht im Workflow:
+
+| Skript | Aufgabe |
+| --- | --- |
+| `check-ci.sh <ref> <sha> <dry_run>` | bricht ab, wenn der Lauf nicht auf `main` steht oder der jüngste Lauf von `ci.yml` für genau diesen Commit nicht `completed`/`success` ist; im Probelauf nur eine Warnung |
+| `version-job.sh <stelle> <dry_run>` | `bump.mjs next` → `bump.mjs set --changelog`, Commit „Release vX.Y.Z“, Tag `vX.Y.Z`, Push nach `main` (im Probelauf kein Push); schreibt `version` und `tag` |
+| `draft-release.sh <tag> <version>` | legt mit `gh release create --draft --verify-tag` den Entwurf an, Text aus `bump.mjs notes` plus erzeugte Notizen; schreibt `release_id` |
+
+`cargo` und `npm install` braucht der Job nicht: `bump.mjs set` pflegt `Cargo.lock` und `package-lock.json` selbst.
+Die Ausgaben gehen nach `$GITHUB_OUTPUT`; fehlt die Variable, nach stdout. Den Entwurf sucht `draft-release.sh`
+über die Liste aller Releases, denn `GET /releases/tags/<tag>` findet keine Entwürfe.
+
+### Probelauf auf dem eigenen Rechner
+
+Nur in einem Temp-Klon, damit weder das Repo noch `origin` etwas abbekommt:
+
+```sh
+T=$(mktemp -d); git clone -q . "$T/r"; cd "$T/r"
+GITHUB_OUTPUT=$T/out bash scripts/release/version-job.sh patch true
+cat "$T/out"; git log -1 --oneline; git tag --list 'v*'; node scripts/release/bump.mjs check
+```
+
+`check-ci.sh` und `draft-release.sh` brauchen `gh` samt Token und ein Repo bei GitHub; lokal werden sie nur mit
+`shellcheck` geprüft. Den Workflow selbst prüft `actionlint .github/workflows/release.yml`.
+
 ## Dateien
 
 | Datei | Aufgabe |
@@ -124,6 +157,9 @@ Vorabversion gilt dabei als Weg zu ihrer eigenen Version: `1.4.2-rc.1` + `patch`
 | `lib/Changelog.mjs` | Abschnitt umbenennen, leeren Abschnitt einsetzen, Abschnitt einer Version lesen |
 | `lib/TomlText.mjs` | TOML zeilenweise lesen und einzelne Schlüssel setzen |
 | `lib/JsonText.mjs` | JSON-Werte an ihrer Textstelle setzen, einfügen und entfernen |
+| `check-ci.sh` | Branch und CI-Status des Commits prüfen (erster Schritt des Release-Workflows) |
+| `version-job.sh` | Version setzen, committen, taggen, pushen |
+| `draft-release.sh` | Entwurfs-Release anlegen und seine Id ausgeben |
 | `tests/*.test.mjs` | Unit-Tests (`npx vitest run scripts/release`) |
 | `tests/RepoCopy.mjs` | kopiert das Fixture-Repo in einen Temp-Ordner |
 | `tests/fixtures/repo/` | Mini-Abbild eines Repos mit allen Versionsstellen |
@@ -147,5 +183,5 @@ echten Repo sind nur die lesenden Befehle gedacht: `check`, `next`, `current` un
   `.claude/launch.json`, `skills-lock.json`) sind keine Release-Versionen und bleiben außen vor.
 - **Gemischte Zeilenenden.** Eine Datei mit teils `\n` und teils `\r\n` wird beim Schreiben auf das häufigere
   Zeilenende vereinheitlicht. Dateien mit einheitlichen Zeilenenden behalten sie.
-- **Kein Tag und kein Push.** Das Skript setzt Versionen; `git tag`, `git commit` und `git push` macht der
-  Release-Workflow (P6-3).
+- **Kein Tag und kein Push.** `bump.mjs` setzt nur Versionen; `git commit`, `git tag` und `git push` macht
+  `version-job.sh` (siehe „Release-Workflow“).
