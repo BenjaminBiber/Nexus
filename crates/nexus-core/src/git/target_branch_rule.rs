@@ -124,7 +124,11 @@ mod tests {
         ];
 
         for name in names {
-            let code = rule.normalize(Some(name)).unwrap_err().code().map(String::from);
+            let code = rule
+                .normalize(Some(name))
+                .unwrap_err()
+                .code()
+                .map(String::from);
             assert!(
                 matches!(
                     code.as_deref(),

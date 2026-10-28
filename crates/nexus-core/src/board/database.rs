@@ -460,11 +460,16 @@ impl<T, F> TransactionWork<T> for F where
 pub trait BoardDatabase: Send + Sync {
     /// Führt die Arbeit in genau einer Transaktion aus. Die Arbeit ist `Fn`: SQLite wiederholt
     /// sie einmal mit Schreibsperre, wenn ein anderer Prozess dazwischen geschrieben hat.
-    /// Aufrufer klonen benötigte Werte im Closure.
+    /// Aufrufer klonen benötigte Werte im Closure – deshalb ist die Arbeit `'static`.
+    ///
+    /// `'static` statt `'a`: Eine Umsetzung, die eine andere Datenbank umhüllt (etwa um
+    /// Zugriffe mitzuschreiben), muss die Arbeit in ein eigenes Closure mit höherrangig
+    /// gebundener Lebensdauer (`for<'u>`) einpacken; dafür muss die Arbeit beliebig lange
+    /// leben. Alle Aufrufer erfüllen das ohnehin, weil `tx!` nur eigene Kopien einschließt.
     fn transaction<'a, T, W>(&'a self, work: W) -> impl Future<Output = Result<T>> + Send + 'a
     where
         T: Send + 'static,
-        W: TransactionWork<T> + 'a;
+        W: TransactionWork<T> + 'static;
 
     /// Kennwert für den Stand eines Boards (Tickets, Kommentare, Notizen, Board, Fragen zu
     /// seinen Tickets)

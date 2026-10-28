@@ -205,10 +205,10 @@ fn tiberius_config(config: &BoardConfig) -> tiberius::Config {
 }
 
 impl BoardDatabase for MssqlBoardDatabase {
-    async fn transaction<'a, T, W>(&'a self, work: W) -> Result<T>
+    async fn transaction<T, W>(&self, work: W) -> Result<T>
     where
         T: Send + 'static,
-        W: TransactionWork<T> + 'a,
+        W: TransactionWork<T> + 'static,
     {
         {
             let missing = self.missing();

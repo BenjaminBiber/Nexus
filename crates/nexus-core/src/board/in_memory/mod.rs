@@ -76,10 +76,10 @@ impl InMemoryBoardDatabase {
 impl BoardDatabase for InMemoryBoardDatabase {
     /// Führt die Arbeit auf einer Kopie aus und übernimmt sie nur bei Erfolg; berührte Boards
     /// und Projekte zählen weiter
-    async fn transaction<'a, T, W>(&'a self, work: W) -> Result<T>
+    async fn transaction<T, W>(&self, work: W) -> Result<T>
     where
         T: Send + 'static,
-        W: TransactionWork<T> + 'a,
+        W: TransactionWork<T> + 'static,
     {
         let mut state = self.state.lock().await;
         let mut draft = state.clone();

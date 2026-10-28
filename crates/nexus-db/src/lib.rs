@@ -54,10 +54,10 @@ mod tests {
     enum DummyNiemals {}
 
     impl crate::BoardDatabase for DummyNiemals {
-        async fn transaction<'a, T, W>(&'a self, _work: W) -> nexus_core::Result<T>
+        async fn transaction<T, W>(&self, _work: W) -> nexus_core::Result<T>
         where
             T: Send + 'static,
-            W: crate::TransactionWork<T> + 'a,
+            W: crate::TransactionWork<T> + 'static,
         {
             match *self {}
         }

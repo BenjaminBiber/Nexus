@@ -144,3 +144,66 @@ impl NoteSimilarity {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::board::basics::NoteState;
+
+    /// Eine Notiz mit diesem Titel und Inhalt
+    fn note(id: i32, title: &str, body: &str) -> Note {
+        Note {
+            id,
+            board_id: 1,
+            author_id: "u".into(),
+            author_name: "claude".into(),
+            title: title.to_string(),
+            body: body.to_string(),
+            source: None,
+            labels: Vec::new(),
+            seen_count: 1,
+            seen_in: Vec::new(),
+            state: NoteState::Open,
+            ticket_id: None,
+            reason: None,
+            created_at: "2026-10-13T10:00:00.000Z".into(),
+        }
+    }
+
+    #[test]
+    fn zeigt_den_titel_bei_alteren_notizen_die_erste_zeile_des_inhalts() {
+        assert_eq!(
+            note_title(&note(1, " Cache kaputt ", "egal")),
+            "Cache kaputt"
+        );
+        assert_eq!(
+            note_title(&note(2, "", "\n  \nErste gefüllte Zeile\nnoch eine")),
+            "Erste gefüllte Zeile"
+        );
+        assert_eq!(note_title(&note(7, "", "   ")), "Notiz 7");
+    }
+
+    #[test]
+    fn erkennt_denselben_befund_an_gemeinsamen_begriffen_ohne_ids_und_fullworter() {
+        let bekannt = vec![
+            note(
+                1,
+                "Dispatcher startet Worktree doppelt",
+                "WorktreeManager legt Branch zweimal an",
+            ),
+            note(2, "Cache der Board-Ansicht läuft nie ab", ""),
+        ];
+
+        assert_eq!(
+            NoteSimilarity::similar("WorktreeManager: Branch doppelt, Dispatcher", &bekannt)
+                .into_iter()
+                .map(|note| note.id)
+                .collect::<Vec<_>>(),
+            [1]
+        );
+        // Zwei gemeinsame Begriffe sind Zufall
+        assert!(NoteSimilarity::similar("Dispatcher und Branch", &bekannt).is_empty());
+        // Ticket-IDs sagen nichts über den Befund
+        assert!(NoteSimilarity::similar("ARC-0001 AIH-0022 ARC-F0001", &bekannt).is_empty());
+    }
+}

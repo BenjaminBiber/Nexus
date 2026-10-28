@@ -1584,3 +1584,6 @@ fn flag(done: bool) -> &'static str {
         "offen"
     }
 }
+
+#[cfg(test)]
+mod tests;

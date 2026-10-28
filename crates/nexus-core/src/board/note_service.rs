@@ -463,3 +463,6 @@ async fn load_note(u: &mut dyn BoardUnitOfWork, id: i32, for_update: bool) -> Re
         HarnessError::new("note-not-found", format!("Notiz {id} gibt es nicht.")).into()
     })
 }
+
+#[cfg(test)]
+mod tests;
