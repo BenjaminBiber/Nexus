@@ -1,0 +1,61 @@
+{
+  "title": "board note: add, seen, list, show, take und drop – Text, Markdown, JSON und Fehler",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Ticket", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Login bauen", "status": "in_progress", "needsPlanning": false }, "record": false },
+    { "name": "zweites Ticket", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Export bauen", "needsPlanning": false }, "record": false },
+
+    {
+      "name": "note add",
+      "kind": "cli",
+      "args": [
+        "board", "note", "add", "Cache der Board-Ansicht läuft nie ab",
+        "--details", "BoardViewService.ts: ohne TTL; nach Ticketwechsel bleibt die alte Spalte stehen. Vorschlag: changeMarker prüfen.",
+        "--from", "ARC-0001", "--label", "cache", "--author", "claude"
+      ],
+      "cwd": "{{REPO1}}"
+    },
+    {
+      "name": "note add --json",
+      "kind": "cli",
+      "args": ["--json", "board", "note", "add", "Fehlermeldung beim Import nennt die Zeile nicht", "--details", "ImportService: nur „ungültig“ ohne Zeilennummer.", "--from", "ARC-0002", "--label", "import", "--label", "ux", "--author", "claude"],
+      "cwd": "{{REPO1}}"
+    },
+    { "name": "note add auf ein genanntes Board", "kind": "cli", "args": ["board", "note", "add", "Protokoll wächst unbegrenzt", "--board", "1", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "note add mit gleichem Titel (Fehler)", "kind": "cli", "args": ["board", "note", "add", "Cache der Board-Ansicht läuft nie ab", "--from", "ARC-0002", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "note add mit gleichem Titel und --force", "kind": "cli", "args": ["board", "note", "add", "Cache der Board-Ansicht läuft nie ab", "--from", "ARC-0002", "--force", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "note add aus unbekanntem Ticket --json (Fehler)", "kind": "cli", "args": ["--json", "board", "note", "add", "Fremd", "--from", "ARC-9999", "--author", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "note seen", "kind": "cli", "args": ["board", "note", "seen", "1", "--from", "ARC-0002"], "cwd": "{{REPO1}}" },
+    { "name": "note seen --json", "kind": "cli", "args": ["--json", "board", "note", "seen", "1", "--from", "ARC-0001"], "cwd": "{{REPO1}}" },
+    { "name": "note seen mit unbekannter Nummer (Fehler)", "kind": "cli", "args": ["board", "note", "seen", "99"], "cwd": "{{REPO1}}" },
+    { "name": "note seen ohne Nummer (Fehler)", "kind": "cli", "args": ["board", "note", "seen", "null"], "cwd": "{{REPO1}}" },
+
+    { "name": "note list (Text)", "kind": "cli", "args": ["board", "note", "list"], "cwd": "{{REPO1}}" },
+    { "name": "note list --md", "kind": "cli", "args": ["board", "note", "list", "--md"], "cwd": "{{REPO1}}" },
+    { "name": "note list --json", "kind": "cli", "args": ["--json", "board", "note", "list"], "cwd": "{{REPO1}}" },
+    { "name": "note list --from", "kind": "cli", "args": ["board", "note", "list", "--from", "ARC-0002"], "cwd": "{{REPO1}}" },
+    { "name": "note list --state mit unbekanntem Stand (Fehler)", "kind": "cli", "args": ["board", "note", "list", "--state", "quatsch"], "cwd": "{{REPO1}}" },
+
+    { "name": "note show", "kind": "cli", "args": ["board", "note", "show", "1"], "cwd": "{{REPO1}}" },
+    { "name": "note show --json", "kind": "cli", "args": ["--json", "board", "note", "show", "3"], "cwd": "{{REPO1}}" },
+    { "name": "note show mit unbekannter Nummer (Fehler)", "kind": "cli", "args": ["board", "note", "show", "99"], "cwd": "{{REPO1}}" },
+
+    { "name": "note take", "kind": "cli", "args": ["board", "note", "take", "1", "--priority", "high", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "note take --json", "kind": "cli", "args": ["--json", "board", "note", "take", "2", "--title", "Importfehler nennt die Zeile", "--status", "geplant", "--label", "import", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "note take einer übernommenen Notiz (Fehler)", "kind": "cli", "args": ["board", "note", "take", "1", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "note drop", "kind": "cli", "args": ["board", "note", "drop", "3", "--reason", "erledigt sich mit ARC-0004"], "cwd": "{{REPO1}}" },
+    { "name": "note drop --json", "kind": "cli", "args": ["--json", "board", "note", "drop", "4", "--reason", "doppelt zu Notiz 1"], "cwd": "{{REPO1}}" },
+    { "name": "note drop ohne Grund (Fehler)", "kind": "cli", "args": ["board", "note", "drop", "1"], "cwd": "{{REPO1}}" },
+
+    { "name": "note list --state alle --md", "kind": "cli", "args": ["board", "note", "list", "--state", "alle", "--md"], "cwd": "{{REPO1}}" },
+    { "name": "note list ohne offene Notizen", "kind": "cli", "args": ["board", "note", "list"], "cwd": "{{REPO1}}" }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "title": "board inbox: Text, Markdown, JSON, Filter nach Art und Board, eigene Reihenfolge und Fehler",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true }],
+    "boardConfig": "sqlite",
+    "homeFiles": { "inbox-order.json": { "version": 1, "keys": ["note:1", "ticket:ARC-0002"] } }
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "zweites Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Zweites" }, "record": false },
+
+    { "name": "Ticket zur Abnahme", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Abnahme", "status": "blocked", "needsPlanning": false }, "record": false },
+    { "name": "Grund der Abnahme", "method": "PATCH", "path": "/api/db/tickets/ARC-0001", "body": { "rev": 1, "blockedReason": "Human Interaction: Ergebnis ansehen" }, "record": false },
+    { "name": "Ticket mit Merge-Konflikt", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Merge", "status": "blocked", "priority": "high", "needsPlanning": false }, "record": false },
+    { "name": "Grund des Merge", "method": "PATCH", "path": "/api/db/tickets/ARC-0002", "body": { "rev": 1, "blockedReason": "Merge: Konflikt in board.ts" }, "record": false },
+    { "name": "Ticket in Planung", "method": "POST", "path": "/api/db/boards/2/tickets", "body": { "title": "Planen", "status": "in_planning" }, "record": false },
+    { "name": "offene Notiz", "method": "POST", "path": "/api/db/boards/1/notes", "body": { "title": "Suche findet Umlaute nicht" }, "record": false },
+    { "name": "Ticket, das auf eine Frage wartet", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Speicher umstellen", "status": "planned", "needsPlanning": false }, "record": false },
+    { "name": "Frage mit wartendem Ticket", "method": "POST", "path": "/api/db/projects/ARC/questions", "body": { "title": "Welcher Speicher?", "ticketIds": ["ARC-0004"] }, "record": false },
+
+    { "name": "inbox (Text)", "kind": "cli", "args": ["board", "inbox"], "cwd": "{{REPO1}}" },
+    { "name": "inbox --md", "kind": "cli", "args": ["board", "inbox", "--md"], "cwd": "{{REPO1}}" },
+    { "name": "inbox --json", "kind": "cli", "args": ["--json", "board", "inbox"], "cwd": "{{REPO1}}" },
+    { "name": "inbox --kind merge,accept", "kind": "cli", "args": ["board", "inbox", "--kind", "merge,accept"], "cwd": "{{REPO1}}" },
+    { "name": "inbox --board 2", "kind": "cli", "args": ["board", "inbox", "--board", "2"], "cwd": "{{REPO1}}" },
+    { "name": "inbox --kind note --board 2 (leer)", "kind": "cli", "args": ["board", "inbox", "--kind", "note", "--board", "2"], "cwd": "{{REPO1}}" },
+    { "name": "inbox --kind note --board 2 --md (leer)", "kind": "cli", "args": ["board", "inbox", "--kind", "note", "--board", "2", "--md"], "cwd": "{{REPO1}}" },
+    { "name": "inbox --kind unbekannt (Fehler)", "kind": "cli", "args": ["board", "inbox", "--kind", "quatsch"], "cwd": "{{REPO1}}" },
+    { "name": "inbox --kind leer (Fehler)", "kind": "cli", "args": ["board", "inbox", "--kind", ","], "cwd": "{{REPO1}}" },
+    { "name": "inbox --board ohne Nummer --json (Fehler)", "kind": "cli", "args": ["--json", "board", "inbox", "--board", "abc"], "cwd": "{{REPO1}}" }
+  ]
+}

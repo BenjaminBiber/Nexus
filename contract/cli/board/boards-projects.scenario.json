@@ -1,0 +1,56 @@
+{
+  "title": "board project und board boards: Projekte und Boards anlegen, auflisten, umbenennen, umschalten, Repo-Pfad und löschen",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true }, { "name": "REPO2", "harnessInit": true }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "project list ohne Projekte", "kind": "cli", "args": ["board", "project", "list"], "cwd": "{{REPO1}}" },
+    { "name": "project create", "kind": "cli", "args": ["board", "project", "create", "ARC", "Arches"], "cwd": "{{REPO1}}" },
+    { "name": "project create --json", "kind": "cli", "args": ["--json", "board", "project", "create", "SHP", "Shopsystem"], "cwd": "{{REPO1}}" },
+    { "name": "project create mit vergebenem Key (Fehler)", "kind": "cli", "args": ["board", "project", "create", "ARC", "Zweimal"], "cwd": "{{REPO1}}" },
+    { "name": "project create mit ungültigem Key --json (Fehler)", "kind": "cli", "args": ["--json", "board", "project", "create", "a", "Zu kurz"], "cwd": "{{REPO1}}" },
+    { "name": "project list", "kind": "cli", "args": ["board", "project", "list"], "cwd": "{{REPO1}}" },
+    { "name": "project list --json", "kind": "cli", "args": ["--json", "board", "project", "list"], "cwd": "{{REPO1}}" },
+    { "name": "project list ohne eingerichtete Board-Datenbank (Fehler)", "kind": "cli", "args": ["board", "project", "list"], "cwd": "{{REPO1}}", "env": { "HARNESS_HOME": "{{HOME}}/ohne-board" } },
+    { "name": "project rename", "kind": "cli", "args": ["board", "project", "rename", "SHP", "Shop"], "cwd": "{{REPO1}}" },
+    { "name": "project rename --json", "kind": "cli", "args": ["--json", "board", "project", "rename", "SHP", "Shopsystem"], "cwd": "{{REPO1}}" },
+    { "name": "project rename unbekannt (Fehler)", "kind": "cli", "args": ["board", "project", "rename", "XYZ", "Fremd"], "cwd": "{{REPO1}}" },
+
+    { "name": "boards list ohne Boards", "kind": "cli", "args": ["board", "boards", "list"], "cwd": "{{REPO1}}" },
+    { "name": "boards create", "kind": "cli", "args": ["board", "boards", "create", "ARC", "Sprint"], "cwd": "{{REPO1}}" },
+    { "name": "boards create --use --json", "kind": "cli", "args": ["--json", "board", "boards", "create", "ARC", "Später", "--use"], "cwd": "{{REPO1}}" },
+    { "name": "boards create in unbekanntem Projekt (Fehler)", "kind": "cli", "args": ["board", "boards", "create", "XYZ", "Fremd"], "cwd": "{{REPO1}}" },
+
+    { "name": "Board 1 dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Ticket auf Board 1", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Login bauen", "needsPlanning": false }, "record": false },
+
+    { "name": "boards list", "kind": "cli", "args": ["board", "boards", "list"], "cwd": "{{REPO1}}" },
+    { "name": "boards list --json", "kind": "cli", "args": ["--json", "board", "boards", "list"], "cwd": "{{REPO1}}" },
+    { "name": "boards list --project --mine", "kind": "cli", "args": ["board", "boards", "list", "--project", "ARC", "--mine"], "cwd": "{{REPO1}}" },
+    { "name": "boards list --project unbekannt (Fehler)", "kind": "cli", "args": ["board", "boards", "list", "--project", "XYZ"], "cwd": "{{REPO1}}" },
+    { "name": "boards list ohne eingerichtete Board-Datenbank --json (Fehler)", "kind": "cli", "args": ["--json", "board", "boards", "list"], "cwd": "{{REPO1}}", "env": { "HARNESS_HOME": "{{HOME}}/ohne-board" } },
+
+    { "name": "boards rename", "kind": "cli", "args": ["board", "boards", "rename", "2", "Sprint 13"], "cwd": "{{REPO1}}" },
+    { "name": "boards rename --json", "kind": "cli", "args": ["--json", "board", "boards", "rename", "2", "Später"], "cwd": "{{REPO1}}" },
+    { "name": "boards rename unbekannt (Fehler)", "kind": "cli", "args": ["board", "boards", "rename", "99", "Fremd"], "cwd": "{{REPO1}}" },
+
+    { "name": "boards use", "kind": "cli", "args": ["board", "boards", "use", "1"], "cwd": "{{REPO1}}" },
+    { "name": "boards use --json", "kind": "cli", "args": ["--json", "board", "boards", "use", "2"], "cwd": "{{REPO1}}" },
+    { "name": "boards use unbekannt (Fehler)", "kind": "cli", "args": ["board", "boards", "use", "99"], "cwd": "{{REPO1}}" },
+    { "name": "boards use ohne Nummer (Fehler)", "kind": "cli", "args": ["board", "boards", "use", "abc"], "cwd": "{{REPO1}}" },
+
+    { "name": "boards repo ohne Pfad", "kind": "cli", "args": ["board", "boards", "repo", "2"], "cwd": "{{REPO1}}" },
+    { "name": "boards repo setzen", "kind": "cli", "args": ["board", "boards", "repo", "2", "{{REPO2}}"], "cwd": "{{REPO1}}" },
+    { "name": "boards repo zeigt den gesetzten Pfad", "kind": "cli", "args": ["board", "boards", "repo", "2"], "cwd": "{{REPO1}}" },
+    { "name": "boards repo --clear --json", "kind": "cli", "args": ["--json", "board", "boards", "repo", "2", "--clear"], "cwd": "{{REPO1}}" },
+    { "name": "boards repo mit Pfad und --clear (Fehler)", "kind": "cli", "args": ["board", "boards", "repo", "2", "{{REPO2}}", "--clear"], "cwd": "{{REPO1}}" },
+
+    { "name": "boards delete mit offenem Ticket (Fehler)", "kind": "cli", "args": ["board", "boards", "delete", "1", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "boards delete --delete-open", "kind": "cli", "args": ["board", "boards", "delete", "1", "--delete-open", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "boards delete --json", "kind": "cli", "args": ["--json", "board", "boards", "delete", "2", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "boards delete unbekannt (Fehler)", "kind": "cli", "args": ["board", "boards", "delete", "99", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "boards list am Ende", "kind": "cli", "args": ["board", "boards", "list"], "cwd": "{{REPO1}}" }
+  ]
+}
