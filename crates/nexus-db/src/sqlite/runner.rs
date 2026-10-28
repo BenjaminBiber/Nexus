@@ -28,7 +28,8 @@ pub enum SqlValue {
     Date(String),
 }
 
-/// Name eines Parameters ohne `@`; meist ein Literal, bei Listen (`b0`, `b1`, …) erzeugt
+/// Name eines Parameters ohne `@`; er darf geliehen sein (Namen im Quelltext) oder erzeugt
+/// (IN-Listen wie `@i0`, `@i1`, …)
 pub type ParamName = Cow<'static, str>;
 
 /// Benannte Parameter einer Anweisung; der Name steht ohne `@` davor
@@ -96,7 +97,9 @@ impl ToSql for SqlValue {
     }
 }
 
-/// Schreibt `vec![("id", SqlValue::from(…)), …]` als `sqlite_params!{ "id": …, "rev": … }`.
+/// Schreibt `vec![(Cow::Borrowed("id"), SqlValue::from(…)), …]` als
+/// `sqlite_params!{ "id": …, "rev": … }`. Erzeugte Namen (IN-Listen) kommen als
+/// `Cow::Owned` dazu.
 #[macro_export]
 macro_rules! sqlite_params {
     () => { ::std::vec::Vec::new() };

@@ -1,0 +1,1145 @@
+[
+  {
+    "name": "dispatch status (Text)",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "status"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Dispatcher: Dispatcher ist ausgeschaltet\nLäufe:\n  keine\nRecherchen: 0/1 laufen, Automatik aus, heute 0/10 automatisch\nPlanungen: 0/1 laufen, Automatik aus\nGeplant (Board 1):\n  ARC-0001  bereit\n  ARC-0002  Label „auto“ fehlt\nEinstellung: <HOME>/dispatch.yaml"
+    }
+  },
+  {
+    "name": "dispatch status --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "dispatch",
+        "status"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": false,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "message": "Dispatcher ist ausgeschaltet",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [],
+        "state": "off",
+        "tickets": [
+          {
+            "id": "ARC-0001",
+            "reason": "bereit",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "dispatch status --board",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "status",
+        "--board",
+        "1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Dispatcher: Dispatcher ist ausgeschaltet\nLäufe:\n  keine\nRecherchen: 0/1 laufen, Automatik aus, heute 0/10 automatisch\nPlanungen: 0/1 laufen, Automatik aus\nGeplant (Board 1):\n  ARC-0001  bereit\n  ARC-0002  Label „auto“ fehlt\nEinstellung: <HOME>/dispatch.yaml"
+    }
+  },
+  {
+    "name": "dispatch status mit unbekanntem Board (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "status",
+        "--board",
+        "99"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Board 99 gibt es nicht. [board-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "dispatch status mit kaputter Board-Nummer --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "dispatch",
+        "status",
+        "--board",
+        "abc"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "id-invalid",
+          "message": "„abc“ ist keine Board-ID."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "dispatch enable",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "enable"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Dispatcher: bereit · 0/1\nLäufe:\n  keine\nRecherchen: 0/1 laufen, Automatik aus, heute 0/10 automatisch\nPlanungen: 0/1 laufen, Automatik aus\nGeplant (Board 1):\n  ARC-0001  bereit\n  ARC-0002  Label „auto“ fehlt\nEinstellung: <HOME>/dispatch.yaml"
+    }
+  },
+  {
+    "name": "dispatch disable --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "dispatch",
+        "disable"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": false,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "message": "Dispatcher ist ausgeschaltet",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [],
+        "state": "off",
+        "tickets": [
+          {
+            "id": "ARC-0001",
+            "reason": "bereit",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "dispatch enable --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "dispatch",
+        "enable"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "message": "bereit · 0/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [],
+        "state": "idle",
+        "tickets": [
+          {
+            "id": "ARC-0001",
+            "reason": "bereit",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "dispatch disable",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "disable"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Dispatcher: Dispatcher ist ausgeschaltet\nLäufe:\n  keine\nRecherchen: 0/1 laufen, Automatik aus, heute 0/10 automatisch\nPlanungen: 0/1 laufen, Automatik aus\nGeplant (Board 1):\n  ARC-0001  bereit\n  ARC-0002  Label „auto“ fehlt\nEinstellung: <HOME>/dispatch.yaml"
+    }
+  },
+  {
+    "name": "dispatch enable erneut",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "enable"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Dispatcher: bereit · 0/1\nLäufe:\n  keine\nRecherchen: 0/1 laufen, Automatik aus, heute 0/10 automatisch\nPlanungen: 0/1 laufen, Automatik aus\nGeplant (Board 1):\n  ARC-0001  bereit\n  ARC-0002  Label „auto“ fehlt\nEinstellung: <HOME>/dispatch.yaml"
+    }
+  },
+  {
+    "name": "dispatch enable mit kaputtem Port (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "--port",
+        "abc",
+        "dispatch",
+        "enable"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Der Port „abc“ ist ungültig. [port-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "dispatch disable mit kaputtem Port --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "--port",
+        "0",
+        "dispatch",
+        "disable"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "port-invalid",
+          "message": "Der Port „0“ ist ungültig."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "dispatch resume mit kaputtem Port (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "--port",
+        "99999",
+        "dispatch",
+        "resume"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Der Port „99999“ ist ungültig. [port-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "dispatch pause --json (die Meldung nennt die Uhrzeit des Endes und bleibt deshalb außen vor)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "dispatch",
+        "pause",
+        "--minutes",
+        "15"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "pausedUntil": "<TIME>",
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [],
+        "state": "paused",
+        "tickets": [
+          {
+            "id": "ARC-0001",
+            "reason": "bereit",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "dispatch resume",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "resume"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Dispatcher: bereit · 0/1\nLäufe:\n  keine\nRecherchen: 0/1 laufen, Automatik aus, heute 0/10 automatisch\nPlanungen: 0/1 laufen, Automatik aus\nGeplant (Board 1):\n  ARC-0001  bereit\n  ARC-0002  Label „auto“ fehlt\nEinstellung: <HOME>/dispatch.yaml"
+    }
+  },
+  {
+    "name": "dispatch resume ohne Pause --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "dispatch",
+        "resume"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "message": "bereit · 0/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [],
+        "state": "idle",
+        "tickets": [
+          {
+            "id": "ARC-0001",
+            "reason": "bereit",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "dispatch pause ohne Minuten (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "pause",
+        "--minutes",
+        "0"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "minutes muss eine ganze Zahl von 1 bis 1440 sein. [input-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "dispatch pause über einen Tag hinaus --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "dispatch",
+        "pause",
+        "--minutes",
+        "1441"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "input-invalid",
+          "message": "minutes muss eine ganze Zahl von 1 bis 1440 sein."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "dispatch-runs backfill --dry-run",
+    "request": {
+      "args": [
+        "board",
+        "dispatch-runs",
+        "backfill",
+        "--project",
+        "ARC",
+        "--dry-run"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Projekt ARC: 1 Läufe in den [dispatch]-Kommentaren gefunden, 1 würden neu angelegt (Trockenlauf).\n  ARC-0004  Versuch 1  standard  abort (other)"
+    }
+  },
+  {
+    "name": "dispatch-runs backfill --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "dispatch-runs",
+        "backfill",
+        "--project",
+        "ARC"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "created": [
+          {
+            "abortCategory": "other",
+            "abortReason": "Claude hat keinen Ausgang gemeldet",
+            "agent": "junior-ARC-0004",
+            "attempt": 1,
+            "boardId": 1,
+            "cacheReadTokens": null,
+            "cacheWriteTokens": null,
+            "configHash": null,
+            "costUsd": null,
+            "deniedCount": null,
+            "deniedTools": null,
+            "durationMs": 0,
+            "effort": "high",
+            "endedAt": "<TIME>",
+            "escalatedFrom": null,
+            "exitCode": null,
+            "id": "c1",
+            "inputTokens": null,
+            "kind": "work",
+            "maxTurns": null,
+            "model": null,
+            "modelUsage": null,
+            "numTurns": null,
+            "outcome": "abort",
+            "outputTokens": null,
+            "profile": "standard",
+            "profileReason": null,
+            "projectId": 1,
+            "requestedModel": "opus",
+            "ruleIndex": null,
+            "source": "comments",
+            "startedAt": "<TIME>",
+            "subjectId": "ARC-0004",
+            "timedOut": false,
+            "timeoutMinutes": null
+          }
+        ],
+        "found": 1
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "dispatch-runs backfill erneut",
+    "request": {
+      "args": [
+        "board",
+        "dispatch-runs",
+        "backfill"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Projekt ARC: 1 Läufe in den [dispatch]-Kommentaren gefunden, 0 neu angelegt."
+    }
+  },
+  {
+    "name": "dispatch-runs backfill in unbekanntem Projekt (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "dispatch-runs",
+        "backfill",
+        "--project",
+        "XYZ"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Projekt XYZ gibt es nicht. [project-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "dispatch run --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "dispatch",
+        "run",
+        "--board",
+        "1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "active": 1,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "läuft · 1/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:lauf>",
+            "kind": "work",
+            "log": "<var:lauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Anmeldung bauen"
+          }
+        ],
+        "state": "running",
+        "tickets": [
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "dispatch status nach dem Durchlauf",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "status"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Dispatcher: läuft · 1/1\nLäufe:\n  ARC-0001  Umsetzung, Profil standard (opus/high), Protokoll <var:lauf>.log\nRecherchen: 0/1 laufen, Automatik aus, heute 0/10 automatisch\nPlanungen: 0/1 laufen, Automatik aus\nGeplant (Board 1):\n  ARC-0002  Label „auto“ fehlt\nEinstellung: <HOME>/dispatch.yaml"
+    }
+  },
+  {
+    "name": "dispatch run (kein zweiter Lauf, der Platz ist belegt)",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "run"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Dispatcher: läuft · 1/1\nLäufe:\n  ARC-0001  Umsetzung, Profil standard (opus/high), Protokoll <var:lauf>.log\nRecherchen: 0/1 laufen, Automatik aus, heute 0/10 automatisch\nPlanungen: 0/1 laufen, Automatik aus\nGeplant (Board 1):\n  ARC-0002  Label „auto“ fehlt\nEinstellung: <HOME>/dispatch.yaml"
+    }
+  },
+  {
+    "name": "dispatch run mit kaputter Board-Nummer (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "run",
+        "--board",
+        "abc"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "„abc“ ist keine Board-ID. [id-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "plan-start --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "plan-start",
+        "ARC-0003"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "active": 1,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "läuft · 1/1",
+        "pausedUntil": null,
+        "planning": 1,
+        "planningAuto": {
+          "active": 1,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:lauf>",
+            "kind": "work",
+            "log": "<var:lauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "effort": "high",
+            "id": "<var:planlauf>",
+            "kind": "plan",
+            "log": "<var:planlauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-0003",
+            "title": "Suche beschleunigen"
+          }
+        ],
+        "started": {
+          "effort": "high",
+          "id": "<var:planlauf>",
+          "kind": "plan",
+          "log": "<var:planlauf>.log",
+          "model": "opus",
+          "profile": "standard",
+          "startedAt": "<TIME>",
+          "ticketId": "ARC-0003",
+          "title": "Suche beschleunigen"
+        },
+        "state": "running",
+        "tickets": [
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "plan-start mit laufender Planung (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "plan-start",
+        "ARC-0003"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Für ARC-0003 läuft schon eine Planung. [plan-running]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "plan-start eines Tickets mit laufender Umsetzung (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "plan-start",
+        "ARC-0001"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "ARC-0001 steht auf „in_progress“ – geplant werden nur Tickets in Backlog, In Planung, Geplant oder Blockiert. [plan-not-possible]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "plan-start eines Tickets mit offener Frage (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "plan-start",
+        "ARC-0002"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "ARC-0002 wartet auf Frage ARC-F0001 – erst entscheiden, dann planen. [plan-waiting-question]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "plan-start eines unbekannten Tickets --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "plan-start",
+        "ARC-9999"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "ticket-not-found",
+          "message": "Ticket ARC-9999 gibt es nicht."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question research-start --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "question",
+        "research-start",
+        "ARC-F0001"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "active": 1,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [],
+        "message": "läuft · 1/1",
+        "pausedUntil": null,
+        "planning": 1,
+        "planningAuto": {
+          "active": 1,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 1,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:lauf>",
+            "kind": "work",
+            "log": "<var:lauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "effort": "high",
+            "id": "<var:planlauf>",
+            "kind": "plan",
+            "log": "<var:planlauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-0003",
+            "title": "Suche beschleunigen"
+          },
+          {
+            "effort": "high",
+            "id": "<var:recherche>",
+            "kind": "research",
+            "log": "<var:recherche>.log",
+            "model": "opus",
+            "profile": "standard",
+            "questionId": "ARC-F0001",
+            "startedAt": "<TIME>",
+            "ticketId": "ARC-F0001",
+            "title": "Welcher Speicher?"
+          }
+        ],
+        "started": {
+          "effort": "high",
+          "id": "<var:recherche>",
+          "kind": "research",
+          "log": "<var:recherche>.log",
+          "model": "opus",
+          "profile": "standard",
+          "questionId": "ARC-F0001",
+          "startedAt": "<TIME>",
+          "ticketId": "ARC-F0001",
+          "title": "Welcher Speicher?"
+        },
+        "state": "running",
+        "tickets": [
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "question research-start mit laufender Recherche (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "research-start",
+        "ARC-F0001"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Für Frage ARC-F0001 läuft schon eine Recherche. [research-running]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "question research-start einer unbekannten Frage (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "question",
+        "research-start",
+        "ARC-F0099"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Frage ARC-F0099 gibt es nicht. [question-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "dispatch status am Ende",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "status"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Dispatcher: läuft · 1/1\nLäufe:\n  ARC-0001  Umsetzung, Profil standard (opus/high), Protokoll <var:lauf>.log\n  ARC-0003  Planung, Profil standard (opus/high), Protokoll <var:planlauf>.log\n  Recherche ARC-F0001, Profil standard (opus/high), Protokoll <var:recherche>.log\nRecherchen: 1/1 laufen, Automatik aus, heute 0/10 automatisch\nPlanungen: 1/1 laufen, Automatik aus\nGeplant (Board 1):\n  ARC-0002  Label „auto“ fehlt\nEinstellung: <HOME>/dispatch.yaml"
+    }
+  },
+  {
+    "name": "dispatch disable am Ende",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "disable"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Dispatcher: Dispatcher ist ausgeschaltet\nLäufe:\n  ARC-0001  Umsetzung, Profil standard (opus/high), Protokoll <var:lauf>.log\n  ARC-0003  Planung, Profil standard (opus/high), Protokoll <var:planlauf>.log\n  Recherche ARC-F0001, Profil standard (opus/high), Protokoll <var:recherche>.log\nRecherchen: 1/1 laufen, Automatik aus, heute 0/10 automatisch\nPlanungen: 1/1 laufen, Automatik aus\nGeplant (Board 1):\n  ARC-0002  Label „auto“ fehlt\nEinstellung: <HOME>/dispatch.yaml"
+    }
+  }
+]

@@ -1,0 +1,310 @@
+[
+  {
+    "name": "spec comments (Text)",
+    "request": {
+      "args": [
+        "spec",
+        "comments"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "K-1a2b3c4d · docs/superpowers/specs/2020-03-02-speicher-waehlen-design.md · Abschnitt „Ziel“ · Zeile 5\n  Stelle: „Das Board speichert Tickets in SQLite.“\n  Kommentar: Bitte das Ziel schärfen.\nK-3c4d5e6f · docs/superpowers/plans/2020-03-02-speicher-waehlen.md · Abschnitt „Schritte“ · Zeile 6\n  Stelle: „Migration schreiben“\n  Kommentar: Schritt 2 braucht einen Test.\nK-4d5e6f70 · GLOSSARY.md\n  Stelle: „Glossar“\n  Kommentar: Der Begriff „Board“ fehlt.\nK-5e6f7081 · docs/adr/0001-speicher.md · Abschnitt „Entscheidung“ · Zeile 5\n  Stelle: „SQLite.“\n  Kommentar: Die Folgen fehlen."
+    }
+  },
+  {
+    "name": "spec comments --json",
+    "request": {
+      "args": [
+        "--json",
+        "spec",
+        "comments"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": [
+        {
+          "comment": {
+            "createdAt": "<TIME>",
+            "heading": "Ziel",
+            "id": "K-1a2b3c4d",
+            "lines": [
+              5,
+              5
+            ],
+            "quote": "Das Board speichert Tickets in SQLite.",
+            "resolution": null,
+            "status": "open",
+            "text": "Bitte das Ziel schärfen."
+          },
+          "path": "docs/superpowers/specs/2020-03-02-speicher-waehlen-design.md"
+        },
+        {
+          "comment": {
+            "createdAt": "<TIME>",
+            "heading": "Schritte",
+            "id": "K-3c4d5e6f",
+            "lines": [
+              6,
+              6
+            ],
+            "quote": "Migration schreiben",
+            "resolution": null,
+            "status": "open",
+            "text": "Schritt 2 braucht einen Test."
+          },
+          "path": "docs/superpowers/plans/2020-03-02-speicher-waehlen.md"
+        },
+        {
+          "comment": {
+            "createdAt": "<TIME>",
+            "heading": null,
+            "id": "K-4d5e6f70",
+            "lines": null,
+            "quote": "Glossar",
+            "resolution": null,
+            "status": "open",
+            "text": "Der Begriff „Board“ fehlt."
+          },
+          "path": "GLOSSARY.md"
+        },
+        {
+          "comment": {
+            "createdAt": "<TIME>",
+            "heading": "Entscheidung",
+            "id": "K-5e6f7081",
+            "lines": [
+              5,
+              5
+            ],
+            "quote": "SQLite.",
+            "resolution": null,
+            "status": "open",
+            "text": "Die Folgen fehlen."
+          },
+          "path": "docs/adr/0001-speicher.md"
+        }
+      ],
+      "stderr": ""
+    }
+  },
+  {
+    "name": "spec comments eines Themas",
+    "request": {
+      "args": [
+        "spec",
+        "comments",
+        "speicher-waehlen"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "K-1a2b3c4d · docs/superpowers/specs/2020-03-02-speicher-waehlen-design.md · Abschnitt „Ziel“ · Zeile 5\n  Stelle: „Das Board speichert Tickets in SQLite.“\n  Kommentar: Bitte das Ziel schärfen.\nK-3c4d5e6f · docs/superpowers/plans/2020-03-02-speicher-waehlen.md · Abschnitt „Schritte“ · Zeile 6\n  Stelle: „Migration schreiben“\n  Kommentar: Schritt 2 braucht einen Test."
+    }
+  },
+  {
+    "name": "spec comments eines Dokuments",
+    "request": {
+      "args": [
+        "spec",
+        "comments",
+        "docs/superpowers/specs/2020-03-02-speicher-waehlen-design.md"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "K-1a2b3c4d · docs/superpowers/specs/2020-03-02-speicher-waehlen-design.md · Abschnitt „Ziel“ · Zeile 5\n  Stelle: „Das Board speichert Tickets in SQLite.“\n  Kommentar: Bitte das Ziel schärfen."
+    }
+  },
+  {
+    "name": "spec comments eines unbekannten Themas",
+    "request": {
+      "args": [
+        "spec",
+        "comments",
+        "gibt-es-nicht"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Keine offenen Kommentare."
+    }
+  },
+  {
+    "name": "spec comments mit beschädigter Kommentardatei (Fehler)",
+    "request": {
+      "args": [
+        "spec",
+        "comments"
+      ],
+      "cwd": "<REPO2>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Die Kommentardatei docs/superpowers/specs/2020-03-02-kaputt-design.comments.json ist beschädigt. [comments-corrupt]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "spec comments in einem nicht eingerichteten Projekt --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "spec",
+        "comments"
+      ],
+      "cwd": "<REPO3>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "not-initialized",
+          "message": "Dieses Projekt ist nicht eingerichtet. Bitte zuerst `harness init` ausführen."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "spec resolve",
+    "request": {
+      "args": [
+        "spec",
+        "resolve",
+        "K-1a2b3c4d",
+        "Ziel in Abschnitt „Ziel“ präzisiert"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Kommentar K-1a2b3c4d erledigt."
+    }
+  },
+  {
+    "name": "spec resolve --json",
+    "request": {
+      "args": [
+        "--json",
+        "spec",
+        "resolve",
+        "K-3c4d5e6f",
+        "Test für Schritt 2 ergänzt"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "comment": {
+          "createdAt": "<TIME>",
+          "heading": "Schritte",
+          "id": "K-3c4d5e6f",
+          "lines": [
+            6,
+            6
+          ],
+          "quote": "Migration schreiben",
+          "resolution": "Test für Schritt 2 ergänzt",
+          "status": "resolved",
+          "text": "Schritt 2 braucht einen Test."
+        },
+        "path": "docs/superpowers/plans/2020-03-02-speicher-waehlen.md"
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "spec resolve eines unbekannten Kommentars (Fehler)",
+    "request": {
+      "args": [
+        "spec",
+        "resolve",
+        "K-99999999",
+        "Nichts"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Kommentar K-99999999 gibt es nicht. [comment-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "spec resolve eines schon erledigten Kommentars",
+    "request": {
+      "args": [
+        "spec",
+        "resolve",
+        "K-2b3c4d5e",
+        "Noch einmal"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Kommentar K-2b3c4d5e erledigt."
+    }
+  },
+  {
+    "name": "spec comments nach dem Erledigen",
+    "request": {
+      "args": [
+        "spec",
+        "comments"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "K-4d5e6f70 · GLOSSARY.md\n  Stelle: „Glossar“\n  Kommentar: Der Begriff „Board“ fehlt.\nK-5e6f7081 · docs/adr/0001-speicher.md · Abschnitt „Entscheidung“ · Zeile 5\n  Stelle: „SQLite.“\n  Kommentar: Die Folgen fehlen."
+    }
+  },
+  {
+    "name": "stop",
+    "request": {
+      "args": [
+        "stop"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Server beendet."
+    }
+  },
+  {
+    "name": "stop ohne laufenden Server --json",
+    "request": {
+      "args": [
+        "--json",
+        "stop"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "restarted": false,
+        "stopped": false
+      },
+      "stderr": ""
+    }
+  }
+]

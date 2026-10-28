@@ -21,6 +21,9 @@ pub mod text;
 mod process;
 mod random;
 
+#[cfg(test)]
+mod test_support;
+
 pub use actors::{Actor, AuthorKind, QuestionActor};
 pub use error::{Error, HarnessError, Result};
 pub use project::HarnessProject;

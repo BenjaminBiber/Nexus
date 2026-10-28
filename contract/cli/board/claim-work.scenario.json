@@ -1,0 +1,55 @@
+{
+  "title": "board claim, release, start, done, merge und accept: Zuweisung, Worktrees, Branches und Abnahme",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Ticket Login", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Login bauen", "status": "planned", "needsPlanning": false }, "record": false },
+    { "name": "Ticket Export", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Export bauen", "status": "planned", "needsPlanning": false }, "record": false },
+    { "name": "Ticket Suche", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Suche beschleunigen", "status": "planned", "needsPlanning": false }, "record": false },
+    { "name": "Ticket zur Abnahme", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Bericht prüfen", "status": "blocked", "acceptance": "Der Bericht stimmt.", "needsPlanning": false }, "record": false },
+    { "name": "Grund der Abnahme", "method": "PATCH", "path": "/api/db/tickets/ARC-0004", "body": { "rev": 1, "blockedReason": "Human Interaction: Ergebnis ansehen" }, "record": false },
+    { "name": "zweites Ticket zur Abnahme", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Rechnung prüfen", "status": "blocked", "acceptance": "Die Rechnung stimmt.", "needsPlanning": false }, "record": false },
+    { "name": "Grund der zweiten Abnahme", "method": "PATCH", "path": "/api/db/tickets/ARC-0005", "body": { "rev": 1, "blockedReason": "Human Interaction: Rechnung ansehen" }, "record": false },
+
+    { "name": "claim", "kind": "cli", "args": ["board", "claim", "ARC-0001", "--agent", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "claim eines zugewiesenen Tickets (Fehler)", "kind": "cli", "args": ["board", "claim", "ARC-0001", "--agent", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "claim --force", "kind": "cli", "args": ["board", "claim", "ARC-0001", "--agent", "claude", "--force"], "cwd": "{{REPO1}}" },
+    { "name": "claim --status --json", "kind": "cli", "args": ["--json", "board", "claim", "ARC-0002", "--agent", "claude", "--status", "geplant"], "cwd": "{{REPO1}}" },
+    { "name": "claim ohne --agent (Fehler)", "kind": "cli", "args": ["board", "claim", "ARC-0003"], "cwd": "{{REPO1}}" },
+    { "name": "claim eines unbekannten Tickets --json (Fehler)", "kind": "cli", "args": ["--json", "board", "claim", "ARC-9999", "--agent", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "release mit Status", "kind": "cli", "args": ["board", "release", "ARC-0002", "--status", "geplant", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "release --json", "kind": "cli", "args": ["--json", "board", "release", "ARC-0001", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "release mit unbekanntem Status (Fehler)", "kind": "cli", "args": ["board", "release", "ARC-0001", "--status", "quatsch", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "release eines unbekannten Tickets (Fehler)", "kind": "cli", "args": ["board", "release", "ARC-9999", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "start", "kind": "cli", "args": ["board", "start", "ARC-0001", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "start eines laufenden Tickets (Fehler)", "kind": "cli", "args": ["board", "start", "ARC-0001", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "start --json", "kind": "cli", "args": ["--json", "board", "start", "ARC-0002", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "start --in", "kind": "cli", "args": ["board", "start", "ARC-0003", "--in", "ARC-0001", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "start eines unbekannten Tickets --json (Fehler)", "kind": "cli", "args": ["--json", "board", "start", "ARC-9999", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "Ticket nach dem Start", "kind": "cli", "args": ["board", "show", "ARC-0001"], "cwd": "{{REPO1}}" },
+
+    { "name": "done ohne Abnahme (Fehler)", "kind": "cli", "args": ["board", "done", "ARC-0002", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "done mit Abnahme", "kind": "cli", "args": ["board", "done", "ARC-0002", "--acceptance", "Der Export erzeugt eine CSV-Datei.", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "done --json", "kind": "cli", "args": ["--json", "board", "done", "ARC-0003", "--acceptance", "Die Suche nutzt den Index.", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "done eines unbekannten Tickets (Fehler)", "kind": "cli", "args": ["board", "done", "ARC-9999", "--acceptance", "x", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "merge", "kind": "cli", "args": ["board", "merge", "ARC-0002"], "cwd": "{{REPO1}}" },
+    { "name": "merge --json", "kind": "cli", "args": ["--json", "board", "merge", "ARC-0003"], "cwd": "{{REPO1}}" },
+    { "name": "merge eines unbekannten Tickets (Fehler)", "kind": "cli", "args": ["board", "merge", "ARC-9999"], "cwd": "{{REPO1}}" },
+
+    { "name": "accept", "kind": "cli", "args": ["board", "accept", "ARC-0004", "--by", "Florian"], "cwd": "{{REPO1}}" },
+    { "name": "accept --json", "kind": "cli", "args": ["--json", "board", "accept", "ARC-0005", "--by", "Florian"], "cwd": "{{REPO1}}" },
+    { "name": "accept eines nicht blockierten Tickets --json (Fehler)", "kind": "cli", "args": ["--json", "board", "accept", "ARC-0001", "--by", "Florian"], "cwd": "{{REPO1}}" },
+    { "name": "accept aus einer Session (Fehler)", "kind": "cli", "args": ["board", "accept", "ARC-0004", "--by", "Florian"], "cwd": "{{REPO1}}", "env": { "HARNESS_SESSION": "s1" } },
+
+    { "name": "Tickets am Ende", "kind": "cli", "args": ["board", "list"], "cwd": "{{REPO1}}" }
+  ]
+}

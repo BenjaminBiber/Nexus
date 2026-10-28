@@ -1,0 +1,722 @@
+[
+  {
+    "name": "note add",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "add",
+        "Cache der Board-Ansicht läuft nie ab",
+        "--details",
+        "BoardViewService.ts: ohne TTL; nach Ticketwechsel bleibt die alte Spalte stehen. Vorschlag: changeMarker prüfen.",
+        "--from",
+        "ARC-0001",
+        "--label",
+        "cache",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Notiz 1 gespeichert."
+    }
+  },
+  {
+    "name": "note add --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "note",
+        "add",
+        "Fehlermeldung beim Import nennt die Zeile nicht",
+        "--details",
+        "ImportService: nur „ungültig“ ohne Zeilennummer.",
+        "--from",
+        "ARC-0002",
+        "--label",
+        "import",
+        "--label",
+        "ux",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "authorId": "11111111-1111-1111-1111-111111111111",
+        "authorName": "claude",
+        "boardId": 1,
+        "body": "ImportService: nur „ungültig“ ohne Zeilennummer.",
+        "createdAt": "<TIME>",
+        "id": 2,
+        "labels": [
+          "import",
+          "ux"
+        ],
+        "reason": null,
+        "seenCount": 1,
+        "seenIn": [],
+        "source": "ARC-0002",
+        "state": "open",
+        "ticketId": null,
+        "title": "Fehlermeldung beim Import nennt die Zeile nicht"
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "note add auf ein genanntes Board",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "add",
+        "Protokoll wächst unbegrenzt",
+        "--board",
+        "1",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Notiz 3 gespeichert."
+    }
+  },
+  {
+    "name": "note add mit gleichem Titel (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "add",
+        "Cache der Board-Ansicht läuft nie ab",
+        "--from",
+        "ARC-0002",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Diesen Befund gibt es vermutlich schon:\n  1  [offen] Cache der Board-Ansicht läuft nie ab\nDerselbe Befund: harness board note seen 1 --from ARC-0002\nWirklich etwas anderes: mit --force anlegen. [note-similar]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "note add mit gleichem Titel und --force",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "add",
+        "Cache der Board-Ansicht läuft nie ab",
+        "--from",
+        "ARC-0002",
+        "--force",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Notiz 4 gespeichert."
+    }
+  },
+  {
+    "name": "note add aus unbekanntem Ticket --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "note",
+        "add",
+        "Fremd",
+        "--from",
+        "ARC-9999",
+        "--author",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "ticket-not-found",
+          "message": "Ticket ARC-9999 gibt es nicht."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "note seen",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "seen",
+        "1",
+        "--from",
+        "ARC-0002"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Notiz 1: 2× aufgefallen."
+    }
+  },
+  {
+    "name": "note seen --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "note",
+        "seen",
+        "1",
+        "--from",
+        "ARC-0001"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "authorId": "11111111-1111-1111-1111-111111111111",
+        "authorName": "claude",
+        "boardId": 1,
+        "body": "BoardViewService.ts: ohne TTL; nach Ticketwechsel bleibt die alte Spalte stehen. Vorschlag: changeMarker prüfen.",
+        "createdAt": "<TIME>",
+        "id": 1,
+        "labels": [
+          "cache"
+        ],
+        "reason": null,
+        "seenCount": 3,
+        "seenIn": [
+          "ARC-0002"
+        ],
+        "source": "ARC-0001",
+        "state": "open",
+        "ticketId": null,
+        "title": "Cache der Board-Ansicht läuft nie ab"
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "note seen mit unbekannter Nummer (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "seen",
+        "99"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Notiz 99 gibt es nicht. [note-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "note seen ohne Nummer (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "seen",
+        "null"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "„null“ ist keine Notiz-Nummer. [note-id-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "note list (Text)",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "list"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "  1  [offen] Cache der Board-Ansicht läuft nie ab [3×] (aus ARC-0001)  cache\n  2  [offen] Fehlermeldung beim Import nennt die Zeile nicht (aus ARC-0002)  import,ux\n  3  [offen] Protokoll wächst unbegrenzt\n  4  [offen] Cache der Board-Ansicht läuft nie ab (aus ARC-0002)"
+    }
+  },
+  {
+    "name": "note list --md",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "list",
+        "--md"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "- **1** Cache der Board-Ansicht läuft nie ab — offen · 3× aufgefallen · aus ARC-0001 · cache\n- **2** Fehlermeldung beim Import nennt die Zeile nicht — offen · aus ARC-0002 · import,ux\n- **3** Protokoll wächst unbegrenzt — offen\n- **4** Cache der Board-Ansicht läuft nie ab — offen · aus ARC-0002"
+    }
+  },
+  {
+    "name": "note list --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "note",
+        "list"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": [
+        {
+          "authorId": "11111111-1111-1111-1111-111111111111",
+          "authorName": "claude",
+          "boardId": 1,
+          "body": "BoardViewService.ts: ohne TTL; nach Ticketwechsel bleibt die alte Spalte stehen. Vorschlag: changeMarker prüfen.",
+          "createdAt": "<TIME>",
+          "id": 1,
+          "labels": [
+            "cache"
+          ],
+          "reason": null,
+          "seenCount": 3,
+          "seenIn": [
+            "ARC-0002"
+          ],
+          "source": "ARC-0001",
+          "state": "open",
+          "ticketId": null,
+          "title": "Cache der Board-Ansicht läuft nie ab"
+        },
+        {
+          "authorId": "11111111-1111-1111-1111-111111111111",
+          "authorName": "claude",
+          "boardId": 1,
+          "body": "ImportService: nur „ungültig“ ohne Zeilennummer.",
+          "createdAt": "<TIME>",
+          "id": 2,
+          "labels": [
+            "import",
+            "ux"
+          ],
+          "reason": null,
+          "seenCount": 1,
+          "seenIn": [],
+          "source": "ARC-0002",
+          "state": "open",
+          "ticketId": null,
+          "title": "Fehlermeldung beim Import nennt die Zeile nicht"
+        },
+        {
+          "authorId": "11111111-1111-1111-1111-111111111111",
+          "authorName": "claude",
+          "boardId": 1,
+          "body": "",
+          "createdAt": "<TIME>",
+          "id": 3,
+          "labels": [],
+          "reason": null,
+          "seenCount": 1,
+          "seenIn": [],
+          "source": null,
+          "state": "open",
+          "ticketId": null,
+          "title": "Protokoll wächst unbegrenzt"
+        },
+        {
+          "authorId": "11111111-1111-1111-1111-111111111111",
+          "authorName": "claude",
+          "boardId": 1,
+          "body": "",
+          "createdAt": "<TIME>",
+          "id": 4,
+          "labels": [],
+          "reason": null,
+          "seenCount": 1,
+          "seenIn": [],
+          "source": "ARC-0002",
+          "state": "open",
+          "ticketId": null,
+          "title": "Cache der Board-Ansicht läuft nie ab"
+        }
+      ],
+      "stderr": ""
+    }
+  },
+  {
+    "name": "note list --from",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "list",
+        "--from",
+        "ARC-0002"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "  2  [offen] Fehlermeldung beim Import nennt die Zeile nicht (aus ARC-0002)  import,ux\n  4  [offen] Cache der Board-Ansicht läuft nie ab (aus ARC-0002)"
+    }
+  },
+  {
+    "name": "note list --state mit unbekanntem Stand (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "list",
+        "--state",
+        "quatsch"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Stand „quatsch“ ist ungültig. Erlaubt: offen, uebernommen, verworfen, alle. [state-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "note show",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "show",
+        "1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Notiz 1  [offen]  <TIME>  claude\nAus: ARC-0001\nAufgefallen: 3× (auch bei ARC-0002)\nLabels: cache\n\n# Cache der Board-Ansicht läuft nie ab\n\nBoardViewService.ts: ohne TTL; nach Ticketwechsel bleibt die alte Spalte stehen. Vorschlag: changeMarker prüfen."
+    }
+  },
+  {
+    "name": "note show --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "note",
+        "show",
+        "3"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "authorId": "11111111-1111-1111-1111-111111111111",
+        "authorName": "claude",
+        "boardId": 1,
+        "body": "",
+        "createdAt": "<TIME>",
+        "id": 3,
+        "labels": [],
+        "reason": null,
+        "seenCount": 1,
+        "seenIn": [],
+        "source": null,
+        "state": "open",
+        "ticketId": null,
+        "title": "Protokoll wächst unbegrenzt"
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "note show mit unbekannter Nummer (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "show",
+        "99"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Notiz 99 gibt es nicht. [note-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "note take",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "take",
+        "1",
+        "--priority",
+        "high",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Notiz 1 → ARC-0003 Cache der Board-Ansicht läuft nie ab"
+    }
+  },
+  {
+    "name": "note take --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "note",
+        "take",
+        "2",
+        "--title",
+        "Importfehler nennt die Zeile",
+        "--status",
+        "geplant",
+        "--label",
+        "import",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "note": {
+          "authorId": "11111111-1111-1111-1111-111111111111",
+          "authorName": "claude",
+          "boardId": 1,
+          "body": "ImportService: nur „ungültig“ ohne Zeilennummer.",
+          "createdAt": "<TIME>",
+          "id": 2,
+          "labels": [
+            "import",
+            "ux"
+          ],
+          "reason": null,
+          "seenCount": 1,
+          "seenIn": [],
+          "source": "ARC-0002",
+          "state": "taken",
+          "ticketId": "ARC-0004",
+          "title": "Fehlermeldung beim Import nennt die Zeile nicht"
+        },
+        "ticket": {
+          "acceptance": "",
+          "assignee": null,
+          "blockedReason": null,
+          "boardId": 1,
+          "branch": null,
+          "column": "planned",
+          "consumes": [],
+          "createdAt": "<TIME>",
+          "createdById": "11111111-1111-1111-1111-111111111111",
+          "createdByName": "claude",
+          "dependents": [],
+          "dependsOn": [],
+          "dependsOpen": [],
+          "dependsUnmerged": [],
+          "description": "ImportService: nur „ungültig“ ohne Zeilennummer.\n\n(Notiz vom <TIME>, aufgefallen bei ARC-0002)",
+          "diagram": "",
+          "handbook": "",
+          "id": "ARC-0004",
+          "labels": [
+            "import"
+          ],
+          "needsPlanning": true,
+          "number": 4,
+          "plan": "",
+          "plannedAt": null,
+          "plannedBy": null,
+          "planningClaimAt": null,
+          "planningClaimBy": null,
+          "priority": "normal",
+          "produces": [],
+          "projectId": 1,
+          "rev": 1,
+          "sessions": [],
+          "sortOrder": 0,
+          "spec": null,
+          "specTask": null,
+          "status": "planned",
+          "stepsDone": 0,
+          "stepsTotal": 0,
+          "targetBranch": null,
+          "title": "Importfehler nennt die Zeile",
+          "touches": [],
+          "unlocks": [],
+          "updatedAt": "<TIME>",
+          "waiting": false,
+          "waitingOnQuestions": [],
+          "worktree": null
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "note take einer übernommenen Notiz (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "take",
+        "1",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Notiz 1 ist schon als ARC-0003 übernommen. [note-not-open]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "note drop",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "drop",
+        "3",
+        "--reason",
+        "erledigt sich mit ARC-0004"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Notiz 3 verworfen."
+    }
+  },
+  {
+    "name": "note drop --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "note",
+        "drop",
+        "4",
+        "--reason",
+        "doppelt zu Notiz 1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "authorId": "11111111-1111-1111-1111-111111111111",
+        "authorName": "claude",
+        "boardId": 1,
+        "body": "",
+        "createdAt": "<TIME>",
+        "id": 4,
+        "labels": [],
+        "reason": "doppelt zu Notiz 1",
+        "seenCount": 1,
+        "seenIn": [],
+        "source": "ARC-0002",
+        "state": "dropped",
+        "ticketId": null,
+        "title": "Cache der Board-Ansicht läuft nie ab"
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "note drop ohne Grund (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "drop",
+        "1"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Zum Verwerfen gehört ein Grund (--reason). [reason-missing]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "note list --state alle --md",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "list",
+        "--state",
+        "alle",
+        "--md"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "- **1** Cache der Board-Ansicht läuft nie ab — übernommen · 3× aufgefallen · aus ARC-0001 · → ARC-0003 · cache\n- **2** Fehlermeldung beim Import nennt die Zeile nicht — übernommen · aus ARC-0002 · → ARC-0004 · import,ux\n- **3** Protokoll wächst unbegrenzt — verworfen\n- **4** Cache der Board-Ansicht läuft nie ab — verworfen · aus ARC-0002"
+    }
+  },
+  {
+    "name": "note list ohne offene Notizen",
+    "request": {
+      "args": [
+        "board",
+        "note",
+        "list"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "(keine Notizen)"
+    }
+  }
+]

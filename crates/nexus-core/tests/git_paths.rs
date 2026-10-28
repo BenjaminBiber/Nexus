@@ -5,7 +5,7 @@ mod common;
 
 use std::fs;
 
-use nexus_core::git::{GitPaths, GitRunner};
+use nexus_core::git::{GitCommands, GitPaths, GitRunner};
 
 use common::{canonical, make_temp_dir, slashes, TempRepo};
 

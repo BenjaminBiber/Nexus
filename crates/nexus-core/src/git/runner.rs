@@ -13,6 +13,22 @@ pub struct GitAttempt {
     pub err: String,
 }
 
+/// Die drei Arten, Git aufzurufen. Als Trait, damit Tests einzelne Aufrufe scheitern
+/// lassen können (wie `FakeGit` in den TypeScript-Tests).
+pub trait GitCommands {
+    /// Führt `git <args>` im Ordner `cwd` aus und liefert die getrimmte Ausgabe
+    fn run(&self, cwd: &Path, args: &[&str]) -> Result<String> {
+        Ok(self.raw(cwd, args)?.trim().to_string())
+    }
+
+    /// Wie `run`, aber ungetrimmt (für maschinenlesbare Ausgaben, deren erste Spalte
+    /// ein Leerzeichen sein kann)
+    fn raw(&self, cwd: &Path, args: &[&str]) -> Result<String>;
+
+    /// Führt aus, ohne zu werfen; liefert Erfolg, Ausgabe und Fehlerausgabe (getrimmt)
+    fn try_run(&self, cwd: &Path, args: &[&str]) -> GitAttempt;
+}
+
 /// Führt Git-Befehle aus.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct GitRunner;
@@ -21,42 +37,6 @@ impl GitRunner {
     /// Neuer Aufrufer (hält keinen Zustand)
     pub fn new() -> Self {
         Self
-    }
-
-    /// Führt `git <args>` im Ordner `cwd` aus und liefert die getrimmte Ausgabe
-    pub fn run(&self, cwd: &Path, args: &[&str]) -> Result<String> {
-        Ok(self.raw(cwd, args)?.trim().to_string())
-    }
-
-    /// Wie `run`, aber ungetrimmt (für maschinenlesbare Ausgaben, deren erste Spalte
-    /// ein Leerzeichen sein kann)
-    pub fn raw(&self, cwd: &Path, args: &[&str]) -> Result<String> {
-        let output = self.output(cwd, args)?;
-        if output.status.success() {
-            return Ok(String::from_utf8_lossy(&output.stdout).into_owned());
-        }
-        Err(HarnessError::new("git-failed", failure_message(args, &output)).into())
-    }
-
-    /// Führt aus, ohne zu werfen; liefert Erfolg, Ausgabe und Fehlerausgabe (getrimmt)
-    pub fn try_run(&self, cwd: &Path, args: &[&str]) -> GitAttempt {
-        match self.output(cwd, args) {
-            Ok(output) if output.status.success() => GitAttempt {
-                ok: true,
-                out: String::from_utf8_lossy(&output.stdout).trim().to_string(),
-                err: String::new(),
-            },
-            Ok(output) => GitAttempt {
-                ok: false,
-                out: String::from_utf8_lossy(&output.stdout).trim().to_string(),
-                err: failure_detail(args, &output),
-            },
-            Err(error) => GitAttempt {
-                ok: false,
-                out: String::new(),
-                err: error.to_string(),
-            },
-        }
     }
 
     /// Startet Git und wartet auf das Ergebnis; unter Windows ohne Konsolenfenster
@@ -79,6 +59,36 @@ impl GitRunner {
             )
             .into()
         })
+    }
+}
+
+impl GitCommands for GitRunner {
+    fn raw(&self, cwd: &Path, args: &[&str]) -> Result<String> {
+        let output = self.output(cwd, args)?;
+        if output.status.success() {
+            return Ok(String::from_utf8_lossy(&output.stdout).into_owned());
+        }
+        Err(HarnessError::new("git-failed", failure_message(args, &output)).into())
+    }
+
+    fn try_run(&self, cwd: &Path, args: &[&str]) -> GitAttempt {
+        match self.output(cwd, args) {
+            Ok(output) if output.status.success() => GitAttempt {
+                ok: true,
+                out: String::from_utf8_lossy(&output.stdout).trim().to_string(),
+                err: String::new(),
+            },
+            Ok(output) => GitAttempt {
+                ok: false,
+                out: String::from_utf8_lossy(&output.stdout).trim().to_string(),
+                err: failure_detail(args, &output),
+            },
+            Err(error) => GitAttempt {
+                ok: false,
+                out: String::new(),
+                err: error.to_string(),
+            },
+        }
     }
 }
 

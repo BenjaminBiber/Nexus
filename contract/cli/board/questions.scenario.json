@@ -1,0 +1,90 @@
+{
+  "title": "board question: fragen, recherchieren, kommentieren, lesen, verknüpfen und entscheiden",
+  "fixtures": {
+    "repos": [
+      {
+        "name": "REPO1",
+        "harnessInit": true,
+        "files": {
+          "recherche.json": "{\n  \"context\": \"Beide Speicher sind im Einsatz; SQLite braucht keine Installation.\",\n  \"options\": [\n    { \"title\": \"SQLite\", \"text\": \"Datei im Home\", \"pros\": [\"keine Installation\"], \"cons\": [\"nur ein Rechner\"], \"recommended\": true },\n    { \"title\": \"SQL Server\", \"text\": \"gemeinsame Datenbank\", \"pros\": [\"mehrere Rechner\"], \"cons\": [\"Zugang nötig\"] }\n  ]\n}\n",
+          "kaputt.json": "{ kein JSON\n"
+        }
+      }
+    ],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Ticket Login", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Login bauen", "needsPlanning": false }, "record": false },
+    { "name": "Ticket Export", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Export bauen", "needsPlanning": false }, "record": false },
+
+    {
+      "name": "question add",
+      "kind": "cli",
+      "args": [
+        "board", "question", "add", "Welcher Speicher?",
+        "--description", "## Worum es geht\n\nSQLite oder SQL Server als Standard.",
+        "--ticket", "ARC-0001", "--tag", "speicher", "--occasion", "Planung ARC-0001",
+        "--kind", "session", "--author", "claude", "--session", "s1"
+      ],
+      "cwd": "{{REPO1}}"
+    },
+    { "name": "question add --json", "kind": "cli", "args": ["--json", "board", "question", "add", "Welches Format für den Export?", "--ticket", "ARC-0002", "--depends", "ARC-F0001", "--kind", "session", "--author", "claude", "--session", "s1"], "cwd": "{{REPO1}}" },
+    { "name": "question add ohne Titel (Fehler)", "kind": "cli", "args": ["board", "question", "add", " ", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "question add in unbekanntem Projekt --json (Fehler)", "kind": "cli", "args": ["--json", "board", "question", "add", "Fremd", "--project", "XYZ", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "question add mit unbekannter Art (Fehler)", "kind": "cli", "args": ["board", "question", "add", "Mit falscher Art", "--kind", "quatsch", "--author", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "question research --from", "kind": "cli", "args": ["board", "question", "research", "ARC-F0001", "--from", "recherche.json", "--kind", "session", "--author", "claude", "--session", "s1"], "cwd": "{{REPO1}}" },
+    {
+      "name": "question research von der Standardeingabe --json",
+      "kind": "cli",
+      "args": ["--json", "board", "question", "research", "ARC-F0002", "--from", "-", "--kind", "session", "--author", "claude", "--session", "s1"],
+      "cwd": "{{REPO1}}",
+      "stdin": { "context": "CSV reicht für die Buchhaltung.", "options": [{ "title": "CSV", "text": "eine Zeile je Beleg", "recommended": true }] }
+    },
+    { "name": "question research --context", "kind": "cli", "args": ["board", "question", "research", "ARC-F0002", "--context", "Nachtrag: Excel liest CSV mit Semikolon.", "--kind", "session", "--author", "claude", "--session", "s1"], "cwd": "{{REPO1}}" },
+    { "name": "question research ohne Quelle (Fehler)", "kind": "cli", "args": ["board", "question", "research", "ARC-F0001", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "question research mit beiden Quellen (Fehler)", "kind": "cli", "args": ["board", "question", "research", "ARC-F0001", "--from", "recherche.json", "--context", "Text", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "question research mit kaputtem JSON (Fehler)", "kind": "cli", "args": ["board", "question", "research", "ARC-F0001", "--from", "kaputt.json", "--author", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "question comment", "kind": "cli", "args": ["board", "question", "comment", "ARC-F0001", "Neuer Befund: SQLite reicht für den Anfang.", "--kind", "session", "--author", "claude", "--session", "s1"], "cwd": "{{REPO1}}" },
+    { "name": "question comment --json", "kind": "cli", "args": ["--json", "board", "question", "comment", "ARC-F0001", "Zweiter Hinweis", "--kind", "human", "--author", "Florian"], "cwd": "{{REPO1}}" },
+    { "name": "question comment an unbekannter Frage (Fehler)", "kind": "cli", "args": ["board", "question", "comment", "ARC-F0099", "Hallo", "--author", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "question list (Text)", "kind": "cli", "args": ["board", "question", "list"], "cwd": "{{REPO1}}" },
+    { "name": "question list --md", "kind": "cli", "args": ["board", "question", "list", "--md"], "cwd": "{{REPO1}}" },
+    { "name": "question list --json", "kind": "cli", "args": ["--json", "board", "question", "list"], "cwd": "{{REPO1}}" },
+    { "name": "question list --ticket", "kind": "cli", "args": ["board", "question", "list", "--ticket", "ARC-0002"], "cwd": "{{REPO1}}" },
+    { "name": "question list --state unbekannt (Fehler)", "kind": "cli", "args": ["board", "question", "list", "--state", "quatsch"], "cwd": "{{REPO1}}" },
+
+    { "name": "question show", "kind": "cli", "args": ["board", "question", "show", "ARC-F0001"], "cwd": "{{REPO1}}" },
+    { "name": "question show --json", "kind": "cli", "args": ["--json", "board", "question", "show", "ARC-F0002"], "cwd": "{{REPO1}}" },
+    { "name": "question show unbekannt (Fehler)", "kind": "cli", "args": ["board", "question", "show", "ARC-F0099"], "cwd": "{{REPO1}}" },
+
+    { "name": "question link", "kind": "cli", "args": ["board", "question", "link", "ARC-F0001", "--add", "ARC-0002", "--kind", "session", "--author", "claude", "--session", "s1"], "cwd": "{{REPO1}}" },
+    { "name": "question link --remove --json", "kind": "cli", "args": ["--json", "board", "question", "link", "ARC-F0001", "--remove", "ARC-0002", "--kind", "session", "--author", "claude", "--session", "s1"], "cwd": "{{REPO1}}" },
+    { "name": "question link ohne --add und --remove (Fehler)", "kind": "cli", "args": ["board", "question", "link", "ARC-F0001", "--author", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "question depends", "kind": "cli", "args": ["board", "question", "depends", "ARC-F0002", "--add", "ARC-0001", "--kind", "session", "--author", "claude", "--session", "s1"], "cwd": "{{REPO1}}" },
+    { "name": "question depends --remove --json", "kind": "cli", "args": ["--json", "board", "question", "depends", "ARC-F0002", "--remove", "ARC-0001", "--kind", "session", "--author", "claude", "--session", "s1"], "cwd": "{{REPO1}}" },
+    { "name": "question depends ohne --add und --remove (Fehler)", "kind": "cli", "args": ["board", "question", "depends", "ARC-F0002", "--author", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "question depends im Kreis (Fehler)", "kind": "cli", "args": ["board", "question", "depends", "ARC-F0001", "--add", "ARC-F0002", "--author", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "question answer mit Option", "kind": "cli", "args": ["board", "question", "answer", "ARC-F0001", "--option", "O1", "--reason", "Passt zum Betrieb", "--author", "Florian"], "cwd": "{{REPO1}}" },
+    { "name": "question answer mit eigenem Text --json", "kind": "cli", "args": ["--json", "board", "question", "answer", "ARC-F0002", "--text", "CSV mit Semikolon", "--author", "Florian"], "cwd": "{{REPO1}}" },
+    { "name": "question answer aus einer Session (Fehler)", "kind": "cli", "args": ["board", "question", "answer", "ARC-F0001", "--text", "Von einem Agenten", "--author", "claude"], "cwd": "{{REPO1}}", "env": { "HARNESS_SESSION": "s1" } },
+    { "name": "question answer einer beantworteten Frage (Fehler)", "kind": "cli", "args": ["board", "question", "answer", "ARC-F0001", "--text", "Noch einmal", "--author", "Florian"], "cwd": "{{REPO1}}" },
+
+    { "name": "question reopen", "kind": "cli", "args": ["board", "question", "reopen", "ARC-F0001", "--reason", "neue Lage", "--author", "Florian"], "cwd": "{{REPO1}}" },
+    { "name": "question reopen --json", "kind": "cli", "args": ["--json", "board", "question", "reopen", "ARC-F0002", "--author", "Florian"], "cwd": "{{REPO1}}" },
+    { "name": "question reopen einer offenen Frage (Fehler)", "kind": "cli", "args": ["board", "question", "reopen", "ARC-F0001", "--author", "Florian"], "cwd": "{{REPO1}}" },
+
+    { "name": "question discard", "kind": "cli", "args": ["board", "question", "discard", "ARC-F0002", "--reason", "erledigt sich mit ARC-F0001", "--author", "Florian"], "cwd": "{{REPO1}}" },
+    { "name": "question discard ohne Grund (Fehler)", "kind": "cli", "args": ["board", "question", "discard", "ARC-F0001", "--author", "Florian"], "cwd": "{{REPO1}}" },
+    { "name": "question discard --json", "kind": "cli", "args": ["--json", "board", "question", "discard", "ARC-F0001", "--reason", "doch nicht nötig", "--author", "Florian"], "cwd": "{{REPO1}}" },
+
+    { "name": "question list --state alle", "kind": "cli", "args": ["board", "question", "list", "--state", "alle"], "cwd": "{{REPO1}}" }
+  ]
+}

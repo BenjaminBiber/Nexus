@@ -7,8 +7,8 @@ Anfragen und CLI-Aufrufe aus Szenario-Dateien ab, ersetzt die je Lauf wechselnde
 und vergleicht das Ergebnis mit einer Golden-Datei – oder zeichnet sie neu auf.
 
 Es gibt drei Sammlungen von Szenarien: `api/` für einzelne Anfragen, `sse/` für den Ereignisstrom
-(Server-Sent Events) eines Projekts und `cli/` für die Hooks und die Hilfetexte. Ohne `--suite` laufen alle
-drei.
+(Server-Sent Events) eines Projekts und `cli/` für die Hooks, die `board`-Befehle und die Hilfetexte. Ohne
+`--suite` laufen alle drei.
 
 Alles hier ist plain Node (ESM, `.mjs`), ohne zusätzliche Abhängigkeiten und ohne eigenen Build-Schritt.
 Nur der geprüfte Server und die geprüfte CLI müssen gebaut sein (`npm run build`).
@@ -22,8 +22,9 @@ node contract/run.mjs --update     # Golden-Dateien neu aufzeichnen
 node contract/run.mjs --only basis/projects
 node contract/run.mjs --only sse   # nur die Szenarien des Ereignisstroms
 node contract/run.mjs --coverage   # alle Routen mit abgedeckt/offen
-node contract/run.mjs --suite cli             # Hooks und Hilfetexte
+node contract/run.mjs --suite cli             # Hooks, board-Befehle und Hilfetexte
 node contract/run.mjs --suite cli --only cli/hooks
+node contract/run.mjs --suite cli --only cli/board   # alle board-Unterbefehle
 node contract/lib/gen-help-scenarios.mjs      # Szenario der Hilfetexte neu erzeugen
 npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lader, Variablen,
                                    # Home-Dateien, Strom, CLI-Schritt, Commit, Home-Datei, Generator)
@@ -126,6 +127,9 @@ Vertragsmodus. Szenarien mit Ereignisstrom drücken damit den Takt, damit sie in
 - `repos`: temporäre Git-Repos. `name` in Großbuchstaben (`REPO1`), danach als `{{REPO1}}` verwendbar.
   `git` (Standard `true`) legt ein Repo mit erstem Commit an, `files` schreibt Dateien (Pfade mit `/`),
   `harnessInit` führt `<cli> init` im Repo aus (nötig, damit sich das Projekt anmelden lässt).
+  Benutzer und Zeitpunkt des ersten Commits stehen fest (`Vertrag <vertrag@example.invalid>`, `2020-03-02`),
+  deshalb ist sein Hash in jedem Lauf derselbe. Das zählt, sobald ein Befehl ihn ausgibt – `harness board
+  merge` meldet „… gemergt in main (6f07eff)“.
   Der Ordner heißt `<temp>/<NAME>/Mein Projekt ä` – Leerzeichen und Umlaut gehören zum Test.
   `branches` legt Arbeitsbranches an, die vor dem Hauptbranch `main` stehen – je Branch `name` (nicht `main`),
   `files` und `message` (Standard `Arbeit auf <name>`); danach steht das Repo wieder auf `main`.
@@ -472,10 +476,11 @@ den Abschluss von Phase 0).
 
 `--coverage` gilt nur für die Suite `api`; die Suite `cli` kennt keine Routenliste.
 
-## Suite `cli`: Hooks und Hilfetexte
+## Suite `cli`: Hooks, Board-Befehle und Hilfetexte
 
 ```sh
 node contract/run.mjs --suite cli --only cli/hooks
+node contract/run.mjs --suite cli --only cli/board
 node contract/run.mjs --suite cli --only cli/help
 ```
 
@@ -498,6 +503,71 @@ den Server im Vertrag.
 
 `HARNESS_HOOK_DEADLINE_MS` steht in jedem Szenario großzügig (60 s). Die Frist selbst ist **kein**
 Vertragsbestandteil – sie ist nur hoch, damit ein langsamer CI-Rechner den Hook nicht abbricht.
+
+### Board-Befehle (`cli/board/`)
+
+Agenten und Skills arbeiten über `harness board …`; deren Ausgaben und Fehlermeldungen sind Vertrag. Jedes
+Szenario legt sich seinen Stand selbst an (Projekt, Board, Tickets – als `http`-Schritte mit `record: false`)
+und ruft danach die Unterbefehle auf: jeden mit mindestens einem Erfolgsfall je Ausgabeart, die er anbietet
+(Text, `--md`, `--json`), und mindestens einem Fehlerfall. Ein Fehler meldet Exit-Code 1 und schreibt den
+Text samt `[code]` auf die Standardfehlerausgabe; mit `--json` steht stattdessen
+`{"error":{"code","message"}}` auf der Standardausgabe.
+
+Die Fixture ist fast überall dieselbe: ein Repo mit `harnessInit: true`, `boardConfig: "sqlite"` und ein
+Board, dessen `repoPath` auf `{{REPO1}}` zeigt – nur so findet ein Befehl aus dem Repo heraus „sein“ Board.
+`boards-projects` braucht ein zweites Repo für den Repo-Pfad eines fremden Boards, `spec-stop` kommt ohne
+Board-Datenbank aus und braucht drei Repos (Kommentare, beschädigte Kommentardatei, nicht eingerichtet).
+
+| Szenario | Unterbefehle | Quelle unter `packages/cli/src/commands/` |
+| --- | --- | --- |
+| `tickets-read` | `list`, `show` (mit `--md`, `--json`, `--field`, `--history`, `--all-comments`, Filtern) | `board/BoardTicketReadCommands.ts` |
+| `tickets-write` | `create`, `set`, `move`, `delete` (Labels, Voraussetzungen, `--rev`) | `board/BoardTicketWriteCommands.ts` |
+| `steps` | `step <id> <nummer>`, `step done`, `step add`, `step edit`, `step rm`, `step move` | `board/BoardStepCommands.ts` |
+| `comments` | `comment` | `board/BoardCommentCommand.ts` |
+| `notes` | `note add`, `note seen`, `note list`, `note show`, `note take`, `note drop` | `board/BoardNoteCommands.ts` |
+| `inbox` | `inbox` | `board/BoardInboxCommands.ts` |
+| `planning` | `plan`, `plan-json`, `next-planning` | `board/BoardPlanningCommands.ts` |
+| `boards-projects` | `project list/create/rename`, `boards list/create/rename/use/repo/delete`, `board --no-open` | `board/BoardProjectCommands.ts`, `board/BoardBoardsCommands.ts`, `BoardCommand.ts` |
+| `questions` | `question add/research/comment/list/show/link/depends/answer/reopen/discard` | `board/BoardQuestionCommands.ts` |
+| `claim-work` | `claim`, `release`, `start`, `done`, `merge`, `accept` | `board/BoardClaimCommands.ts`, `board/BoardWorkCommands.ts`, `board/BoardDispatchCommands.ts` |
+| `dispatch` | `dispatch status/run/pause/resume/enable/disable`, `dispatch-runs backfill`, `plan-start`, `question research-start` | `board/BoardDispatchCommands.ts` |
+| `spec-stop` | `spec comments`, `spec resolve`, `stop` | `SpecCommentsCommand.ts`, `SpecResolveCommand.ts`, `StopCommand.ts` |
+
+Was beim Aufzeichnen zu beachten ist:
+
+- **Kein Browser.** `harness board` ohne Unterbefehl öffnet das Board im Browser (`BrowserOpener`). Im
+  Vertrag steht er deshalb nur als `harness board --no-open`: Server prüfen, Projekt anmelden, Adresse
+  ausgeben. Ohne `--no-open` wird er in keinem Szenario aufgerufen.
+- **Nie ein Port, auf dem nichts läuft.** `harness board` und die `dispatch`-Befehle starten den Server
+  selbst, wenn der Port frei ist – ein solcher Prozess überlebte das Szenario. Die Fehlerfälle nehmen
+  deshalb immer einen ungültigen Port (`--port abc`), der schon beim Prüfen auffällt.
+- **Worktrees und Branches.** `start`, `done`, `merge`, `plan-start` und `question research-start` legen
+  Worktrees neben dem Repo an (`<REPO1>-worktrees/ARC-0001`, `…/plan-ARC-0003`, `…/research-ARC-F0001`). Sie
+  liegen unter dem Repo-Ordner der Fixture und werden mit ihm gelöscht. Weil Autor und Zeitpunkt des ersten
+  Commits feststehen, ist auch der Hash in der Merge-Meldung in jedem Lauf derselbe.
+- **Immer `--by`, `--author` oder `--agent` angeben.** Ohne sie nimmt die CLI den Git-Benutzernamen des
+  Rechners – der steht nicht im Vertrag.
+- **`stop` zuletzt.** `harness stop` beendet den Server des Szenarios. Danach folgt nur noch ein zweiter
+  Aufruf, der „Es läuft kein Server.“ meldet; der Läufer merkt, dass der Server schon weg ist, und meldet
+  deshalb keinen Fehler.
+- **Keine Spaltenbreite.** Die Board-Ausgaben rechnen nicht mit der Breite des Terminals, nur commander
+  bricht seine Hilfe bei 80 Zeichen um (Suite `cli/help`). `COLUMNS` muss deshalb nirgends gesetzt werden.
+- **Läufe ohne Prozess.** Der Server läuft im Vertragsmodus und startet nie einen Worker: `dispatch run`,
+  `plan-start` und `question research-start` legen einen Lauf an, der nie endet. Deshalb steht danach
+  überall derselbe Zustand, und `claude` wird nie aufgerufen.
+
+Drei Erfolgsfälle fehlen mit Absicht, weil ihre Textausgabe einen Wert aus der Uhr enthält, der kein
+Vertragsbestandteil ist und sich nicht ersetzen lässt (der Normalisierer kennt nur ganze Zeitstempel):
+
+| Befehl | Was in der Textausgabe steht | Stattdessen im Vertrag |
+| --- | --- | --- |
+| `dispatch pause` | „pausiert bis 14:35“ – Uhrzeit des Endes | `--json`; `message` steht in `ignore`, `pausedUntil` wird zu `<TIME>` |
+| `plan-start` | „Protokoll ARC-0003-20261028-132938-plan.log“ | `--json` mit `save`; der Name des Laufs wird zu `<var:planlauf>` |
+| `question research-start` | dasselbe für die Recherche | `--json` mit `save` → `<var:recherche>` |
+
+Sobald ein Name des Laufs mit `save` gemerkt ist, ersetzt ihn der Normalisierer auch in den Textausgaben der
+folgenden Schritte – `dispatch status` nennt ihn deshalb als `<var:lauf>`. Genauso hat `harness stop` keinen
+Fehlerfall: ohne laufenden Server meldet er „Es läuft kein Server.“ mit Exit-Code 0.
 
 ### Hilfetexte (`cli/help/`)
 
@@ -583,6 +653,7 @@ contract/
 ├─ sse/                       # Szenarien des Ereignisstroms
 ├─ cli/
 │  ├─ hooks/                  # je Hook-Ereignis ein Szenario
+│  ├─ board/                  # alle Unterbefehle von `harness board`, dazu `spec` und `stop`
 │  └─ help/                   # Hilfetexte aller Befehle (erzeugt)
 └─ tests/                     # Einheitentests (vitest, siehe vitest.config.ts)
 ```
