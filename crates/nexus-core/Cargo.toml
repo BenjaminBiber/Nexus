@@ -28,6 +28,8 @@ nix = { workspace = true }
 
 [target.'cfg(windows)'.dependencies]
 sysinfo = { workspace = true }
+# Beendet unter Windows einen ganzen Prozessbaum über ein Job-Objekt
+win32job = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

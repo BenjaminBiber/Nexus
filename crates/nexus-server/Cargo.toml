@@ -1,0 +1,29 @@
+[package]
+name = "nexus-server"
+description = "HTTP-API, Dispatch-Worker und Benachrichtigungen von Nexus"
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+nexus-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+
+# Der Test-Ersatz nexus-fake-claude legt sich für einen Modus in eine eigene Prozessgruppe
+[target.'cfg(unix)'.dependencies]
+nix = { workspace = true, features = ["process"] }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+# Ersatz für Claude Code in Tests; wird nicht ausgeliefert (P5-4 prüft das).
+[[bin]]
+name = "nexus-fake-claude"
+path = "src/bin/nexus_fake_claude.rs"
+
+[lints]
+workspace = true
