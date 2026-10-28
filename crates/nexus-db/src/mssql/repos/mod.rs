@@ -14,6 +14,8 @@
 
 use nexus_core::{Error, HarnessError};
 
+use crate::mssql::runner::{MsRow, MsValue};
+
 pub mod board;
 pub mod comment;
 pub mod deletion;
@@ -40,4 +42,22 @@ pub(crate) fn not_implemented(access: &str, ticket: &str) -> Error {
         format!("Der Zugriff {access} auf SQL Server ist noch nicht umgesetzt ({ticket})."),
     )
     .into()
+}
+
+/// Parameter mit erzeugten Namen (IN-Listen, Statuslisten) in die Form, die der Runner nimmt.
+///
+/// Die Namen entstehen zur Laufzeit und müssen deshalb als `String` gehalten werden; der Runner
+/// nimmt `&str`. Die Liste bleibt dabei in ihrer Reihenfolge.
+pub(crate) fn borrow_params(params: &[(String, MsValue)]) -> Vec<(&str, MsValue)> {
+    params
+        .iter()
+        .map(|(name, value)| (name.as_str(), value.clone()))
+        .collect()
+}
+
+/// Die erste Zeile einer Abfrage, die genau eine liefern muss (`OUTPUT inserted.Id`)
+pub(crate) fn first_row<'r>(rows: &'r [MsRow], access: &str) -> Result<&'r MsRow, Error> {
+    rows.first().ok_or_else(|| {
+        Error::unexpected_message(format!("Die Anweisung {access} hat keine Zeile geliefert."))
+    })
 }
