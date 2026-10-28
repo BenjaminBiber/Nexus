@@ -1,5 +1,4 @@
-# Release von Hand starten: Version erhöhen, Tag setzen, Entwurfs-Release anlegen.
-# Teil 1 und 2 – der Job, der den Entwurf veröffentlicht, kommt in P6-5 dazu.
+# Release von Hand starten: Version erhöhen, Tag setzen, Entwurfs-Release anlegen, bauen und veröffentlichen.
 # Die Logik steckt in scripts/release/*.sh, damit sie lesbar bleibt und sich lokal durchspielen lässt.
 name: Release
 on:
@@ -119,3 +118,21 @@ jobs:
         run: |
           file=$(node scripts/release/cli-archive.mjs --version "${{ needs.version.outputs.version }}" --target "${{ matrix.target }}")
           gh release upload "${{ needs.version.outputs.tag }}" "$file" --clobber
+
+  # Prüft, dass alle erwarteten Dateien am Entwurf hängen, hängt die Prüfsummen an und veröffentlicht das Release
+  publish:
+    name: Veröffentlichen
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+      - name: Dateien prüfen, Prüfsummen, veröffentlichen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/release/publish.sh "${{ needs.version.outputs.tag }}" "${{ needs.version.outputs.version }}"
