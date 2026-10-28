@@ -10,6 +10,7 @@
     "build": "tsc -b packages/core packages/db packages/server packages/cli && tsc --noEmit -p packages/web && npm run build -w packages/web",
     "typecheck": "tsc -b packages/core packages/db packages/server packages/cli && tsc --noEmit -p packages/web",
     "lint": "npm run typecheck",
+    "check:bindings": "tsc -p crates/nexus-core/bindings-check/tsconfig.json",
     "test": "vitest run && vitest run -c vitest.process.config.ts",
     "test:concurrency": "vitest run -c vitest.concurrency.config.ts",
     "dev": "node scripts/dev.mjs",
