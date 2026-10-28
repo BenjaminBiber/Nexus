@@ -6,6 +6,8 @@
 //! nativ. Gebunden werden nur die Namen, die im SQL vorkommen: die Repositories geben oft mehr
 //! mit, als eine Anweisung braucht. Fehlende Namen bleiben NULL.
 
+use std::borrow::Cow;
+
 use rusqlite::types::{ToSqlOutput, Value};
 use rusqlite::{CachedStatement, Connection, Row, ToSql};
 
@@ -26,8 +28,9 @@ pub enum SqlValue {
     Date(String),
 }
 
-/// Benannte Parameter einer Anweisung; der Name steht ohne `@` davor
-pub type Params = Vec<(&'static str, SqlValue)>;
+/// Benannte Parameter einer Anweisung; der Name steht ohne `@` davor. Er darf geliehen sein
+/// (Namen im Quelltext) oder erzeugt (IN-Listen wie `@i0`, `@i1`, …).
+pub type Params = Vec<(Cow<'static, str>, SqlValue)>;
 
 impl From<&str> for SqlValue {
     fn from(value: &str) -> Self {
@@ -91,12 +94,17 @@ impl ToSql for SqlValue {
     }
 }
 
-/// Schreibt `vec![("id", SqlValue::from(…)), …]` als `sqlite_params!{ "id": …, "rev": … }`.
+/// Schreibt `vec![(Cow::Borrowed("id"), SqlValue::from(…)), …]` als
+/// `sqlite_params!{ "id": …, "rev": … }`. Erzeugte Namen (IN-Listen) kommen als
+/// `Cow::Owned` dazu.
 #[macro_export]
 macro_rules! sqlite_params {
     () => { ::std::vec::Vec::new() };
     ($($name:literal : $value:expr),+ $(,)?) => {
-        ::std::vec![$(($name, $crate::sqlite::SqlValue::from($value))),+]
+        ::std::vec![$((
+            ::std::borrow::Cow::Borrowed($name),
+            $crate::sqlite::SqlValue::from($value),
+        )),+]
     };
 }
 
@@ -163,7 +171,7 @@ fn bind(statement: &mut CachedStatement<'_>, params: &Params) -> rusqlite::Resul
         })
         .collect();
     for (index, name) in used {
-        if let Some((_, value)) = params.iter().find(|(key, _)| *key == name) {
+        if let Some((_, value)) = params.iter().find(|(key, _)| key.as_ref() == name) {
             statement.raw_bind_parameter(index, value)?;
         }
     }

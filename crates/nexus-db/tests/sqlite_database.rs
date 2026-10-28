@@ -342,15 +342,6 @@ async fn liefert_eine_unit_of_work_mit_allen_17_repositories() {
                 );
                 merke(u.deletions().list().await.unwrap_err());
                 merke(
-                    u.questions()
-                        .list(&nexus_core::board::database::BoardQuestionFilter::default())
-                        .await
-                        .unwrap_err(),
-                );
-                merke(u.question_research().list("ARC-F1").await.unwrap_err());
-                merke(u.question_comments().list("ARC-F1").await.unwrap_err());
-                merke(u.question_history().list("ARC-F1").await.unwrap_err());
-                merke(
                     u.search()
                         .find(&nexus_core::board::search_types::SearchRequest {
                             terms: vec!["x".to_string()],
@@ -362,6 +353,16 @@ async fn liefert_eine_unit_of_work_mit_allen_17_repositories() {
                 );
                 merke(u.dispatch_runs().existing(&[]).await.unwrap_err());
                 merke(u.dispatch_stats().dispatch_comments(1).await.unwrap_err());
+                // Die vier Repositories der Fragen sind gefüllt (P2-8) und liefern leere Listen
+                assert!(u
+                    .questions()
+                    .list(&nexus_core::board::database::BoardQuestionFilter::default())
+                    .await?
+                    .is_empty());
+                assert!(u.question_research().list("ARC-F1").await?.is_empty());
+                assert!(u.question_comments().list("ARC-F1").await?.is_empty());
+                assert!(u.question_history().list("ARC-F1").await?.is_empty());
+                codes.extend(std::iter::repeat_n("ok".to_string(), 4));
                 Ok(codes)
             })
         })
@@ -369,8 +370,11 @@ async fn liefert_eine_unit_of_work_mit_allen_17_repositories() {
         .expect("Transaktion");
 
     assert_eq!(codes.len(), 17);
+    assert_eq!(codes.iter().filter(|code| *code == "ok").count(), 4);
     assert!(
-        codes.iter().all(|code| code == "not-implemented"),
+        codes
+            .iter()
+            .all(|code| code == "not-implemented" || code == "ok"),
         "{codes:?}"
     );
     temp.dispose().await;

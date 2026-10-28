@@ -35,7 +35,7 @@ fn datum_hin_und_zuruck() {
     let mut sql = SqliteRunner::new(&mut conn);
     sql.execute(
         "INSERT INTO T (At) VALUES (@at)",
-        &vec![("at", date("2026-10-21T07:45:42.579Z"))],
+        &sqlite_params! { "at": date("2026-10-21T07:45:42.579Z") },
     )
     .expect("Insert");
 
@@ -58,7 +58,7 @@ fn datum_wird_auch_beim_binden_auf_millisekunden_gebracht() {
     let mut sql = SqliteRunner::new(&mut conn);
     sql.execute(
         "INSERT INTO T (At) VALUES (@at)",
-        &vec![("at", date("2026-10-21T09:45:42+02:00"))],
+        &sqlite_params! { "at": date("2026-10-21T09:45:42+02:00") },
     )
     .expect("Insert");
     assert_eq!(
