@@ -1,0 +1,195 @@
+{
+  "title": "Hook-Eingang mit Token: alle sieben Ereignisarten und Fehlerfälle",
+  "fixtures": {
+    "repos": [
+      { "name": "REPO1", "git": true, "harnessInit": true },
+      { "name": "REPO2", "git": true, "harnessInit": true },
+      { "name": "REPO3", "git": true, "harnessInit": true },
+      { "name": "REPO4", "git": true, "harnessInit": false }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "compare": "status"
+    },
+    {
+      "name": "zweites Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO2}}" },
+      "compare": "status"
+    },
+    {
+      "name": "Token des Projekts lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/settings",
+      "save": { "token": "json.token" }
+    },
+
+    {
+      "name": "session-start",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": {
+        "project": "{{REPO1}}",
+        "event": {
+          "kind": "session-start",
+          "sessionId": "s1",
+          "cwd": "{{REPO1}}",
+          "tickets": ["ARC-0001"],
+          "title": "Vertrag prüfen",
+          "model": "opus",
+          "source": "startup"
+        }
+      },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "Sitzung nach dem Start",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions"
+    },
+    {
+      "name": "user-prompt",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "project": "{{REPO1}}", "event": { "kind": "user-prompt", "sessionId": "s1", "cwd": "{{REPO1}}" } },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "notification",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": {
+        "project": "{{REPO1}}",
+        "event": { "kind": "notification", "sessionId": "s1", "cwd": "{{REPO1}}", "notificationType": "permission_prompt" }
+      },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "Sitzung wartet",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions"
+    },
+    {
+      "name": "subagent-start",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": {
+        "project": "{{REPO1}}",
+        "event": { "kind": "subagent-start", "sessionId": "s1", "cwd": "{{REPO1}}", "agentId": "a1", "agentType": "Explore" }
+      },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "subagent-stop",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": {
+        "project": "{{REPO1}}",
+        "event": { "kind": "subagent-stop", "sessionId": "s1", "cwd": "{{REPO1}}", "agentId": "a1", "agentType": "Explore" }
+      },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "stop",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "project": "{{REPO1}}", "event": { "kind": "stop", "sessionId": "s1", "cwd": "{{REPO1}}" } },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "session-end",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "project": "{{REPO1}}", "event": { "kind": "session-end", "sessionId": "s1", "cwd": "{{REPO1}}" } },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "Sitzung nach dem Ende",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions"
+    },
+
+    {
+      "name": "falsches Token",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "project": "{{REPO1}}", "event": { "kind": "user-prompt", "sessionId": "s1", "cwd": "{{REPO1}}" } },
+      "headers": { "x-harness-token": "falsch" }
+    },
+    {
+      "name": "ohne Token",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "project": "{{REPO1}}", "event": { "kind": "user-prompt", "sessionId": "s1", "cwd": "{{REPO1}}" } }
+    },
+    {
+      "name": "Token eines anderen Projekts",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "project": "{{REPO2}}", "event": { "kind": "session-start", "sessionId": "s2", "cwd": "{{REPO2}}" } },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "Ereignis ohne Angaben",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "project": "{{REPO1}}", "event": {} },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "unbekannte Ereignisart",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "project": "{{REPO1}}", "event": { "kind": "quatsch", "sessionId": "s1", "cwd": "{{REPO1}}" } },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "Ereignis ohne Sitzung",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "project": "{{REPO1}}", "event": { "kind": "stop", "cwd": "{{REPO1}}" } },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "ohne Pfad des Projekts",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "event": { "kind": "stop", "sessionId": "s1", "cwd": "{{REPO1}}" } },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "relativer Pfad des Projekts",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "project": "projekt", "event": { "kind": "stop", "sessionId": "s1", "cwd": "{{REPO1}}" } },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "eingerichtetes, aber nicht angemeldetes Projekt",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "project": "{{REPO3}}", "event": { "kind": "stop", "sessionId": "s1", "cwd": "{{REPO3}}" } },
+      "headers": { "x-harness-token": "{{token}}" },
+      "ignore": ["json.message"]
+    },
+    {
+      "name": "nicht eingerichtetes Projekt",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": { "project": "{{REPO4}}", "event": { "kind": "stop", "sessionId": "s1", "cwd": "{{REPO4}}" } },
+      "headers": { "x-harness-token": "{{token}}" }
+    },
+    {
+      "name": "Sitzungen bleiben unverändert",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions"
+    }
+  ]
+}

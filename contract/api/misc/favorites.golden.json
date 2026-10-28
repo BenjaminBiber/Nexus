@@ -1,0 +1,422 @@
+[
+  {
+    "name": "Projekt anmelden",
+    "request": {
+      "body": {
+        "path": "<REPO1>"
+      },
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "DB-Projekt anlegen",
+    "request": {
+      "body": {
+        "key": "ARC",
+        "name": "Arches"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Board anlegen",
+    "request": {
+      "body": {
+        "name": "Sprint",
+        "project": "ARC"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Ticket anlegen",
+    "request": {
+      "body": {
+        "title": "Erstes"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Sitzung über den Hook anlegen",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "session-start",
+          "sessionId": "s1",
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "Vertrag prüfen"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "status": 204
+    }
+  },
+  {
+    "name": "ohne Favoriten",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/favorites"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "Sitzung mit Notiz markieren",
+    "request": {
+      "body": {
+        "note": "Weiter mit Tests"
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/favorites/s1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "command": "cd \"<REPO1>\" && claude --resume s1",
+        "cwd": "<REPO1>",
+        "cwdExists": true,
+        "displayState": "idle",
+        "lastEventAt": "<TIME>",
+        "live": true,
+        "markedAt": "<TIME>",
+        "note": "Weiter mit Tests",
+        "resumedAs": [],
+        "sessionId": "s1",
+        "state": "idle",
+        "ticketInfo": [
+          {
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Erstes"
+          }
+        ],
+        "tickets": [
+          "ARC-0001"
+        ],
+        "title": "Vertrag prüfen"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Favoriten lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/favorites"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "command": "cd \"<REPO1>\" && claude --resume s1",
+          "cwd": "<REPO1>",
+          "cwdExists": true,
+          "displayState": "idle",
+          "lastEventAt": "<TIME>",
+          "live": true,
+          "markedAt": "<TIME>",
+          "note": "Weiter mit Tests",
+          "resumedAs": [],
+          "sessionId": "s1",
+          "state": "idle",
+          "ticketInfo": [
+            {
+              "id": "ARC-0001",
+              "status": "backlog",
+              "title": "Erstes"
+            }
+          ],
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "Vertrag prüfen"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Notiz ändern",
+    "request": {
+      "body": {
+        "note": "Erst den Vertrag"
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/favorites/s1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "command": "cd \"<REPO1>\" && claude --resume s1",
+        "cwd": "<REPO1>",
+        "cwdExists": true,
+        "displayState": "idle",
+        "lastEventAt": "<TIME>",
+        "live": true,
+        "markedAt": "<TIME>",
+        "note": "Erst den Vertrag",
+        "resumedAs": [],
+        "sessionId": "s1",
+        "state": "idle",
+        "ticketInfo": [
+          {
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Erstes"
+          }
+        ],
+        "tickets": [
+          "ARC-0001"
+        ],
+        "title": "Vertrag prüfen"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "ohne Notiz erneut markieren",
+    "request": {
+      "body": {},
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/favorites/s1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "command": "cd \"<REPO1>\" && claude --resume s1",
+        "cwd": "<REPO1>",
+        "cwdExists": true,
+        "displayState": "idle",
+        "lastEventAt": "<TIME>",
+        "live": true,
+        "markedAt": "<TIME>",
+        "note": "Erst den Vertrag",
+        "resumedAs": [],
+        "sessionId": "s1",
+        "state": "idle",
+        "ticketInfo": [
+          {
+            "id": "ARC-0001",
+            "status": "backlog",
+            "title": "Erstes"
+          }
+        ],
+        "tickets": [
+          "ARC-0001"
+        ],
+        "title": "Vertrag prüfen"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Notiz ist kein Text",
+    "request": {
+      "body": {
+        "note": 42
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/favorites/s1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "note-invalid",
+        "message": "Die Notiz muss ein Text sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekannte Sitzung markieren",
+    "request": {
+      "body": {},
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/favorites/gibtsnicht"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "session-unknown",
+        "message": "Diese Session ist nicht bekannt."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Sitzung fortsetzen",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "session-start",
+          "sessionId": "s2",
+          "source": "resume"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "status": 204
+    }
+  },
+  {
+    "name": "fortgesetzte Sitzung am Favoriten",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/favorites"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "command": "cd \"<REPO1>\" && claude --resume s1",
+          "cwd": "<REPO1>",
+          "cwdExists": true,
+          "displayState": "idle",
+          "lastEventAt": "<TIME>",
+          "live": true,
+          "markedAt": "<TIME>",
+          "note": "Erst den Vertrag",
+          "resumedAs": [
+            "s2"
+          ],
+          "sessionId": "s1",
+          "state": "idle",
+          "ticketInfo": [
+            {
+              "id": "ARC-0001",
+              "status": "backlog",
+              "title": "Erstes"
+            }
+          ],
+          "tickets": [
+            "ARC-0001"
+          ],
+          "title": "Vertrag prüfen"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Favorit entfernen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/projects/<var:pid>/favorites/s1"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "danach keine Favoriten",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/favorites"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "unbekannten Favoriten entfernen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/projects/<var:pid>/favorites/s1"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "Favoriten eines unbekannten Projekts",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/gibtsnicht/favorites"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Favorit in einem unbekannten Projekt",
+    "request": {
+      "body": {},
+      "method": "PUT",
+      "path": "/api/projects/gibtsnicht/favorites/s1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Favorit eines unbekannten Projekts entfernen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/projects/gibtsnicht/favorites/s1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  }
+]

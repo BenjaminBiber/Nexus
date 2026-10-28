@@ -4,6 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { JsonText } from './JsonText.mjs';
 
 const REGISTRATION = /app\.(get|post|put|patch|delete|head|options)\(\s*'([^']+)'/g;
+// Rückfall einer Datei: beantwortet alle übrigen Adressen (Seiten der Oberfläche, fehlende Dateien)
+const NOT_FOUND = /app\.setNotFoundHandler\(/;
+// Muster des Rückfalls; nur lesend, weil Seiten der Oberfläche und Dateien nur mit GET geholt werden
+const NOT_FOUND_ROUTE = { method: 'GET', pattern: '/*' };
 
 // Liest die Routen aus `packages/server/src/routes/*.ts` (Methode, Muster, Quelldatei) für `contract/api/routes.json`.
 export class RouteExtractor {
@@ -23,6 +27,8 @@ export class RouteExtractor {
       for (const match of source.matchAll(REGISTRATION)) {
         routes.push({ method: match[1].toUpperCase(), pattern: match[2], file });
       }
+      // Der Rückfall hat kein Muster im Quellcode; er steht als `GET /*` in der Liste
+      if (NOT_FOUND.test(source)) routes.push({ ...NOT_FOUND_ROUTE, file });
     }
     return routes.sort((a, b) => a.file.localeCompare(b.file) || a.pattern.localeCompare(b.pattern) || a.method.localeCompare(b.method));
   }

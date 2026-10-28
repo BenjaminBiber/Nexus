@@ -1,0 +1,115 @@
+{
+  "title": "Favoriten eines Projekts markieren, mit Notiz ändern und entfernen",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "git": true, "harnessInit": true }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    {
+      "name": "Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "compare": "status"
+    },
+    {
+      "name": "Token des Projekts lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/settings",
+      "save": { "token": "json.token" },
+      "record": false
+    },
+    {
+      "name": "DB-Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "compare": "status"
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "compare": "status"
+    },
+    {
+      "name": "Ticket anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Erstes" },
+      "compare": "status"
+    },
+    {
+      "name": "Sitzung über den Hook anlegen",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": {
+        "project": "{{REPO1}}",
+        "event": { "kind": "session-start", "sessionId": "s1", "cwd": "{{REPO1}}", "tickets": ["ARC-0001"], "title": "Vertrag prüfen" }
+      },
+      "headers": { "x-harness-token": "{{token}}" },
+      "compare": "status"
+    },
+
+    { "name": "ohne Favoriten", "method": "GET", "path": "/api/projects/{{pid}}/favorites" },
+    {
+      "name": "Sitzung mit Notiz markieren",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/favorites/s1",
+      "body": { "note": "Weiter mit Tests" }
+    },
+    { "name": "Favoriten lesen", "method": "GET", "path": "/api/projects/{{pid}}/favorites" },
+    {
+      "name": "Notiz ändern",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/favorites/s1",
+      "body": { "note": "Erst den Vertrag" }
+    },
+    {
+      "name": "ohne Notiz erneut markieren",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/favorites/s1",
+      "body": {}
+    },
+    {
+      "name": "Notiz ist kein Text",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/favorites/s1",
+      "body": { "note": 42 }
+    },
+    {
+      "name": "unbekannte Sitzung markieren",
+      "method": "PUT",
+      "path": "/api/projects/{{pid}}/favorites/gibtsnicht",
+      "body": {}
+    },
+
+    {
+      "name": "Sitzung fortsetzen",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": {
+        "project": "{{REPO1}}",
+        "event": { "kind": "session-start", "sessionId": "s2", "cwd": "{{REPO1}}", "source": "resume" }
+      },
+      "headers": { "x-harness-token": "{{token}}" },
+      "compare": "status"
+    },
+    { "name": "fortgesetzte Sitzung am Favoriten", "method": "GET", "path": "/api/projects/{{pid}}/favorites" },
+
+    { "name": "Favorit entfernen", "method": "DELETE", "path": "/api/projects/{{pid}}/favorites/s1", "body": {} },
+    { "name": "danach keine Favoriten", "method": "GET", "path": "/api/projects/{{pid}}/favorites" },
+    { "name": "unbekannten Favoriten entfernen", "method": "DELETE", "path": "/api/projects/{{pid}}/favorites/s1", "body": {} },
+
+    { "name": "Favoriten eines unbekannten Projekts", "method": "GET", "path": "/api/projects/gibtsnicht/favorites" },
+    {
+      "name": "Favorit in einem unbekannten Projekt",
+      "method": "PUT",
+      "path": "/api/projects/gibtsnicht/favorites/s1",
+      "body": {}
+    },
+    { "name": "Favorit eines unbekannten Projekts entfernen", "method": "DELETE", "path": "/api/projects/gibtsnicht/favorites/s1", "body": {} }
+  ]
+}
