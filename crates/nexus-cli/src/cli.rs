@@ -42,6 +42,24 @@ pub struct Cli {
     pub command: Option<Commands>,
 }
 
+/// Beschreibung von `customize` auf der Hauptseite der Hilfe
+const CUSTOMIZE_ABOUT: &str =
+    "Anpassungen des Clones (custom/) prüfen, kopieren, zurücksetzen und anwenden";
+
+/// Zusatztext der Hilfe von `customize`: die Unterbefehle, die ihre Argumente selbst lesen
+const CUSTOMIZE_AFTER: &str = "
+Weitere Befehle:
+  check                              alle Anpassungen prüfen, ohne etwas zu schreiben
+  copy workflow|skill <name>|output-style <name> [--rebase]
+                                     Standard als Ausgangspunkt nach custom/ kopieren
+  reset workflow|skill <name>|output-style <name>
+                                     Anpassung und Basis löschen
+
+Beispiele:
+  harness customize check
+  harness customize copy skill harness-grill
+  harness customize reset workflow";
+
 /// Beschreibung von `init` (wortgleich zu `InitCommand.ts`)
 const INIT_ABOUT: &str = "Richtet den Harness im aktuellen Git-Projekt ein (einmal pro Projekt, wiederholbar) und nennt das zugeordnete Board.";
 
@@ -57,7 +75,7 @@ const BOARD_PORT_HELP: &str = "Port des Servers (Standard 4710 oder HARNESS_PORT
 /// Beispiele unter der Hilfe von `board`
 const BOARD_EXAMPLES: &str = "\nBeispiele:\n  harness board\n  harness board --port 4800 --no-open";
 
-/// Die Befehle des Programms. Die restlichen Fachbefehle folgen in P3-15 bis P3-18; `help` steht
+/// Die Befehle des Programms. Die restlichen Fachbefehle folgen in P3-16 bis P3-18; `help` steht
 /// wie bei commander in jedem Befehl, der selbst nichts tut und Unterbefehle hat.
 #[derive(Debug, Subcommand)]
 pub enum Commands {
@@ -102,6 +120,16 @@ pub enum Commands {
         #[arg(long = "no-path", help = "PATH nicht ändern, nur kopieren")]
         no_path: bool,
     },
+
+    /// Anpassungen des Clones prüfen, kopieren, zurücksetzen, anwenden und anzeigen
+    #[command(
+        name = "customize",
+        about = CUSTOMIZE_ABOUT,
+        after_help = CUSTOMIZE_AFTER,
+        disable_help_flag = true,
+        disable_help_subcommand = true
+    )]
+    Customize(commands::customize::CustomizeCli),
 
     /// Hilfe zu einem Befehl anzeigen
     #[command(
@@ -166,6 +194,7 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
             extra,
         }) => commands::board::open::run(&context, port.as_deref(), !no_open, &extra),
         Some(Commands::Install { no_path }) => commands::install::run(&context, !no_path),
+        Some(Commands::Customize(args)) => commands::customize::run(&context, args),
         Some(Commands::Help { befehl }) => help_command(root, befehl.as_deref()),
         #[cfg(debug_assertions)]
         Some(Commands::SelbsttestFehler { code, meldung }) => {

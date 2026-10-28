@@ -6,6 +6,7 @@ pub mod actors;
 pub mod board;
 pub mod clock;
 pub mod counter;
+pub mod customization;
 pub mod dispatch;
 pub mod error;
 pub mod git;
@@ -21,6 +22,7 @@ pub mod settings;
 #[cfg(any(test, feature = "testing"))]
 pub mod testing;
 pub mod text;
+pub mod workflow;
 
 mod random;
 

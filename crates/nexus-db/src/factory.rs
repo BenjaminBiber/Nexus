@@ -36,10 +36,10 @@ impl AnyBoardDatabase {
 }
 
 impl BoardDatabase for AnyBoardDatabase {
-    async fn transaction<'a, T, W>(&'a self, work: W) -> Result<T>
+    async fn transaction<T, W>(&self, work: W) -> Result<T>
     where
         T: Send + 'static,
-        W: TransactionWork<T> + 'a,
+        W: TransactionWork<T> + 'static,
     {
         match self {
             AnyBoardDatabase::Sqlite(db) => db.transaction(work).await,

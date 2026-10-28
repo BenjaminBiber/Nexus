@@ -136,10 +136,10 @@ impl FakeDb {
 struct Shared(Arc<FakeDb>);
 
 impl BoardDatabase for Shared {
-    async fn transaction<'a, T, W>(&'a self, work: W) -> Result<T>
+    async fn transaction<T, W>(&self, work: W) -> Result<T>
     where
         T: Send + 'static,
-        W: TransactionWork<T> + 'a,
+        W: TransactionWork<T> + 'static,
     {
         self.0.inner.transaction(work).await
     }
