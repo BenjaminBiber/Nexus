@@ -4,6 +4,7 @@
 
 pub mod actors;
 pub mod board;
+pub mod clock;
 pub mod counter;
 pub mod dispatch;
 pub mod error;
@@ -14,7 +15,8 @@ pub mod questions;
 pub mod registry;
 pub mod sessions;
 pub mod settings;
-#[cfg(feature = "testing")]
+// Auch in den eigenen Tests gebraucht: die Dienste des Boards prüfen gegen `BoardFixture`
+#[cfg(any(test, feature = "testing"))]
 pub mod testing;
 pub mod text;
 
@@ -22,6 +24,7 @@ mod process;
 mod random;
 
 pub use actors::{Actor, AuthorKind, QuestionActor};
+pub use clock::Clock;
 pub use error::{Error, HarnessError, Result};
 pub use project::HarnessProject;
 pub use registry::HarnessHome;
