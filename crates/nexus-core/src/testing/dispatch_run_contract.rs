@@ -20,6 +20,9 @@ macro_rules! dispatch_run_contract {
         $crate::dispatch_run_contract!($name, $create, $reset, || async {});
     };
     ($name:ident, $create:expr, $reset:expr, $lock:expr) => {
+        $crate::dispatch_run_contract!($name, $create, $reset, $lock,);
+    };
+    ($name:ident, $create:expr, $reset:expr, $lock:expr, $(#[$attr:meta])*) => {
         mod $name {
             #![allow(unused_imports)]
 
@@ -64,6 +67,7 @@ macro_rules! dispatch_run_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn speichert_laufe_vollstandig_lehnt_doppelte_ids_ab_und_filtert() {
                 let (db, _guard) = setup().await;
                 let seed = seed_dispatch(&db).await;
@@ -205,6 +209,7 @@ macro_rules! dispatch_run_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn liefert_laufe_aller_projekte_im_zeitraum_altester_zuerst() {
                 let (db, _guard) = setup().await;
                 let seed = seed_dispatch(&db).await;
@@ -241,6 +246,7 @@ macro_rules! dispatch_run_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn gibt_die_dashboard_details_eines_laufs_unverandert_zuruck() {
                 let (db, _guard) = setup().await;
                 let seed = seed_dispatch(&db).await;
@@ -286,6 +292,7 @@ macro_rules! dispatch_run_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn findet_erledigte_tickets_ihre_statuswechsel_und_dispatch_kommentare() {
                 let (db, _guard) = setup().await;
                 let seed = seed_dispatch(&db).await;
@@ -445,6 +452,7 @@ macro_rules! dispatch_run_contract {
             }
 
             #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn legt_jede_konfig_version_einmal_an_und_liefert_sie_nach_zeitraum_sortiert() {
                 let (db, _guard) = setup().await;
                 let alt = version(

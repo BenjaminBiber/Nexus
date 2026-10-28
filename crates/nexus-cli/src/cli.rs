@@ -48,6 +48,15 @@ const INIT_ABOUT: &str = "Richtet den Harness im aktuellen Git-Projekt ein (einm
 /// Beschreibung von `install` (wortgleich zu `InstallCommand.ts`)
 const INSTALL_ABOUT: &str = "Macht den Befehl harness im normalen Terminal verfügbar (Kopie unter ~/.harness, Eintrag im PATH des Benutzers).";
 
+/// Beschreibung von `board` auf der Hilfeseite; wortgleich zum TypeScript-Befehl
+const BOARD_ABOUT: &str = "Ohne Unterbefehl: startet bei Bedarf den Server und öffnet das Board. Mit Unterbefehl: Board-Datenbank bedienen.";
+
+/// Hilfe der Option `--port`; die Zahl ist `DEFAULT_SERVER_PORT` aus dem Fachkern
+const BOARD_PORT_HELP: &str = "Port des Servers (Standard 4710 oder HARNESS_PORT)";
+
+/// Beispiele unter der Hilfe von `board`
+const BOARD_EXAMPLES: &str = "\nBeispiele:\n  harness board\n  harness board --port 4800 --no-open";
+
 /// Die Befehle des Programms. Die restlichen Fachbefehle folgen in P3-15 bis P3-18; `help` steht
 /// wie bei commander in jedem Befehl, der selbst nichts tut und Unterbefehle hat.
 #[derive(Debug, Subcommand)]
@@ -60,6 +69,27 @@ pub enum Commands {
         disable_help_flag = true
     )]
     Init,
+
+    /// Ohne Unterbefehl: Server starten und das Board öffnen
+    #[command(
+        name = "board",
+        about = BOARD_ABOUT,
+        after_help = BOARD_EXAMPLES,
+        disable_help_flag = true
+    )]
+    Board {
+        #[arg(long, value_name = "nummer", help = BOARD_PORT_HELP)]
+        port: Option<String>,
+        #[arg(
+            long = "no-open",
+            help = "Browser nicht öffnen, nur die Adresse ausgeben"
+        )]
+        no_open: bool,
+        /// Wörter, die kein registrierter Unterbefehl sind; sie werden mit `command-unknown`
+        /// abgewiesen. Versteckt, damit die Hilfe wie heute aussieht.
+        #[arg(hide = true, trailing_var_arg = true)]
+        extra: Vec<String>,
+    },
 
     /// `harness` im normalen Terminal verfügbar machen
     #[command(
@@ -130,6 +160,11 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
             Ok(1)
         }
         Some(Commands::Init) => commands::init::run(&context),
+        Some(Commands::Board {
+            port,
+            no_open,
+            extra,
+        }) => commands::board::open::run(&context, port.as_deref(), !no_open, &extra),
         Some(Commands::Install { no_path }) => commands::install::run(&context, !no_path),
         Some(Commands::Help { befehl }) => help_command(root, befehl.as_deref()),
         #[cfg(debug_assertions)]
