@@ -23,6 +23,7 @@ pub const TEST_USER_NAME: &str = "Test";
 pub const TEST_NOW: &str = "2026-10-13T10:00:00.000Z";
 
 /// Nutzer, Projekt und Board, die [`TempSqlite::seed_board`] angelegt hat
+#[derive(Debug, Clone)]
 pub struct SeededBoard {
     pub user_id: String,
     pub project_id: i32,

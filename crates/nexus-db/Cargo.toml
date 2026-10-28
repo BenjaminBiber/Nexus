@@ -23,6 +23,9 @@ tokio = { workspace = true }
 tokio-util = { workspace = true }
 
 [dev-dependencies]
+# Die gemeinsamen Vertrags-Makros stecken im Merkmal `testing` des Fachkerns.
+nexus-core = { workspace = true, features = ["testing"] }
+serde = { workspace = true }
 tempfile = { workspace = true }
 
 [lints]
