@@ -1,0 +1,263 @@
+[
+  {
+    "name": "Strom des ersten Projekts",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid1>/events"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Strom des zweiten Projekts",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid2>/events"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Begrüßung des ersten Stroms",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Begrüßung des zweiten Stroms",
+    "request": {
+      "stream": "s2",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Takt des zweiten Stroms abwarten",
+    "request": {
+      "stream": "s2",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Hook: Session beginnt im ersten Projekt",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "session-start",
+          "sessionId": "sitzung-1",
+          "title": "Vertrag prüfen"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token1>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "sessions am ersten Strom",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "type": "sessions"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "sessions"
+        }
+      ]
+    }
+  },
+  {
+    "name": "zweites Projekt bekommt nichts",
+    "request": {
+      "stream": "s2",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "ersten Strom schließen",
+    "request": {
+      "stream": "s1"
+    },
+    "response": {
+      "closed": true
+    }
+  },
+  {
+    "name": "Hook bei geschlossenem Strom",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "user-prompt",
+          "sessionId": "sitzung-1"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token1>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "neuen Strom des ersten Projekts öffnen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid1>/events"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Begrüßung des neuen Stroms",
+    "request": {
+      "stream": "s3",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "nichts Verpasstes wird nachgeholt",
+    "request": {
+      "stream": "s3",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Hook: Session endet",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "session-end",
+          "sessionId": "sitzung-1"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token1>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "sessions am neuen Strom",
+    "request": {
+      "stream": "s3",
+      "until": {
+        "type": "sessions"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "sessions"
+        }
+      ]
+    }
+  },
+  {
+    "name": "zweiten Strom schließen",
+    "request": {
+      "stream": "s2"
+    },
+    "response": {
+      "closed": true
+    }
+  },
+  {
+    "name": "neuen Strom schließen",
+    "request": {
+      "stream": "s3"
+    },
+    "response": {
+      "closed": true
+    }
+  }
+]

@@ -2,13 +2,14 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { stepKinds } from './StepKinds.mjs';
 
-const SCENARIO_KEYS = new Set(['title', 'platforms', 'fixtures', 'steps']);
+const SCENARIO_KEYS = new Set(['title', 'platforms', 'env', 'fixtures', 'steps']);
 const FIXTURE_KEYS = new Set(['repos', 'boardConfig', 'homeFiles']);
 const REPO_KEYS = new Set(['name', 'git', 'harnessInit', 'files']);
 // Felder, die jede Schritt-Art hat; die Art nennt ihre eigenen in `keys`
 const STEP_KEYS = new Set(['name', 'kind', 'save', 'compare', 'ignore', 'record']);
 const PLATFORMS = new Set(['darwin', 'linux', 'win32']);
-const METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']);
+// Umgebungsvariablen, die ein Szenario setzen darf: nur der Vertragsmodus des Servers
+const ENV_NAME = /^CONTRACT_[A-Z][A-Z0-9_]*$/;
 const COMPARE = new Set(['full', 'status', 'shape']);
 const BOARD_CONFIGS = new Set(['sqlite']);
 const REPO_NAME = /^[A-Z][A-Z0-9_]*$/;
@@ -17,9 +18,11 @@ const HOME_FILE = /^[^/\\]+(?:\/[^/\\]+)*$/;
 
 // Liest die Szenario-Dateien eines Verzeichnisbaums und prüft ihre Felder.
 export class ScenarioLoader {
-  // `root`: Ordner, auf den sich die Namen der Szenarien beziehen (`contract/`)
-  constructor(root) {
+  // `root`: Ordner, auf den sich die Namen der Szenarien beziehen (`contract/`),
+  // `kinds`: die bekannten Schritt-Arten (jede nennt ihre Felder in `keys` und prüft sie in `parse`)
+  constructor(root, kinds = stepKinds) {
     this.root = root;
+    this.kinds = kinds;
   }
 
   // Alle Szenarien unter `dir`, nach Namen sortiert
@@ -57,6 +60,7 @@ export class ScenarioLoader {
     this.unknown(raw, SCENARIO_KEYS, '', fail);
     if (typeof raw.title !== 'string' || !raw.title.trim()) fail('title fehlt oder ist leer.');
     const platforms = this.platforms(raw.platforms, fail);
+    const env = this.env(raw.env, fail);
     const fixtures = this.fixtures(raw.fixtures, fail);
     const steps = this.steps(raw.steps, fail);
     return {
@@ -65,6 +69,7 @@ export class ScenarioLoader {
       golden: file.replace(/\.scenario\.json$/, '.golden.json'),
       title: raw.title,
       platforms,
+      env,
       fixtures,
       steps,
     };
@@ -88,6 +93,17 @@ export class ScenarioLoader {
       fail(`platforms muss eine Liste aus ${[...PLATFORMS].join(', ')} sein.`);
     }
     return [...value];
+  }
+
+  // Umgebung des Servers für dieses Szenario (Takt des Herzschlags und der Abfragen); nur CONTRACT_*
+  env(value, fail) {
+    if (value === undefined) return {};
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) fail('env muss ein Objekt sein.');
+    for (const [name, entry] of Object.entries(value)) {
+      if (!ENV_NAME.test(name)) fail(`env["${name}"]: ein Szenario darf nur CONTRACT_*-Variablen setzen.`);
+      if (typeof entry !== 'string') fail(`env["${name}"] muss ein Text sein (z. B. "300").`);
+    }
+    return { ...value };
   }
 
   // Vorbereitungen vor den Schritten: Repos, Dateien im Home und Board-Konfiguration
@@ -159,16 +175,16 @@ export class ScenarioLoader {
     });
   }
 
-  // Ein Schritt; `kind` entscheidet, welche Felder gelten (Standard `http`)
+  // Ein Schritt; `kind` entscheidet, welche Felder dazukommen (Standard `http`)
   step(value, index, fail) {
     const where = ` in steps[${index}]`;
     if (value === null || typeof value !== 'object' || Array.isArray(value)) fail(`steps[${index}] muss ein Objekt sein.`);
     if (typeof value.name !== 'string' || !value.name.trim()) fail(`steps[${index}].name fehlt oder ist leer.`);
     const kind = value.kind ?? 'http';
-    if (typeof kind !== 'string' || !stepKinds[kind]) {
-      fail(`steps[${index}].kind muss eine bekannte Art sein (${Object.keys(stepKinds).sort().join(', ')}).`);
+    if (typeof kind !== 'string' || !this.kinds[kind]) {
+      fail(`steps[${index}].kind muss eine bekannte Art sein (${Object.keys(this.kinds).sort().join(', ')}).`);
     }
-    this.unknown(value, new Set([...STEP_KEYS, ...stepKinds[kind].keys]), where, fail);
+    this.unknown(value, new Set([...STEP_KEYS, ...this.kinds[kind].keys]), where, fail);
     if (value.compare !== undefined && !COMPARE.has(value.compare)) {
       fail(`steps[${index}].compare erlaubt nur ${[...COMPARE].join(', ')}.`);
     }
@@ -191,22 +207,11 @@ export class ScenarioLoader {
       record: value.record ?? true,
       save,
     };
-    if (kind === 'http') return { ...step, ...this.httpStep(value, index, fail) };
-    return { ...step, raw: value };
-  }
-
-  // Felder eines HTTP-Schritts
-  httpStep(value, index, fail) {
-    if (typeof value.method !== 'string' || !METHODS.has(value.method)) {
-      fail(`steps[${index}].method muss eine von ${[...METHODS].join(', ')} sein.`);
-    }
-    if (typeof value.path !== 'string' || !value.path.startsWith('/')) fail(`steps[${index}].path muss mit / beginnen.`);
-    const headers = value.headers ?? {};
-    if (headers === null || typeof headers !== 'object' || Array.isArray(headers)) fail(`steps[${index}].headers muss ein Objekt sein.`);
-    for (const [name, header] of Object.entries(headers)) {
-      if (header !== null && typeof header !== 'string') fail(`steps[${index}].headers["${name}"] muss ein Text oder null sein.`);
-    }
-    return { method: value.method, path: value.path, body: value.body, headers };
+    // Arten mit `parse` prüfen ihre eigenen Felder und liefern sie in der Form, die ihr `run` erwartet;
+    // die anderen bekommen den Schritt als `raw` und prüfen ihn selbst beim Ausführen
+    const own = this.kinds[kind];
+    if (typeof own.parse !== 'function') return { ...step, raw: value };
+    return { ...step, ...own.parse(value, index, fail) };
   }
 
   // Gibt es den Ordner?

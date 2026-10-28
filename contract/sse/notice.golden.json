@@ -1,0 +1,235 @@
+[
+  {
+    "name": "Strom ohne notify",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/events"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Strom mit notify",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/events?notify=1"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Begrüßung ohne notify",
+    "request": {
+      "stream": "schlicht",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Begrüßung mit notify",
+    "request": {
+      "stream": "tab1",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Takt des Stroms ohne notify abwarten",
+    "request": {
+      "stream": "schlicht",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Testmeldung auslösen",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/user-settings/test-notification"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "error": null,
+        "ok": true
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "notice am Strom mit notify",
+    "request": {
+      "stream": "tab1",
+      "until": {
+        "type": "notice"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "body": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung des Harness",
+          "kind": "wartet",
+          "tag": "attention",
+          "title": "Session braucht deine Antwort",
+          "type": "notice",
+          "url": "/"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Strom ohne notify bekommt keine Meldung",
+    "request": {
+      "stream": "schlicht",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Strom mit notify schließen",
+    "request": {
+      "stream": "tab1"
+    },
+    "response": {
+      "closed": true
+    }
+  },
+  {
+    "name": "neuer Strom mit notify",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/events?notify=1"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Begrüßung des neuen Stroms",
+    "request": {
+      "stream": "tab2",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Testmeldung erneut auslösen",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/user-settings/test-notification"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "error": null,
+        "ok": true
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "notice am neuen Strom",
+    "request": {
+      "stream": "tab2",
+      "until": {
+        "type": "notice"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "body": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung des Harness",
+          "kind": "wartet",
+          "tag": "attention",
+          "title": "Session braucht deine Antwort",
+          "type": "notice",
+          "url": "/"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Strom ohne notify bekommt weiterhin keine Meldung",
+    "request": {
+      "stream": "schlicht",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Strom ohne notify schließen",
+    "request": {
+      "stream": "schlicht"
+    },
+    "response": {
+      "closed": true
+    }
+  },
+  {
+    "name": "neuen Strom schließen",
+    "request": {
+      "stream": "tab2"
+    },
+    "response": {
+      "closed": true
+    }
+  }
+]

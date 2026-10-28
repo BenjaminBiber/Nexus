@@ -1,0 +1,89 @@
+[
+  {
+    "name": "Strom öffnen",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/events"
+    },
+    "response": {
+      "cacheControl": "no-cache, no-transform",
+      "contentType": "text/event-stream",
+      "status": 200
+    }
+  },
+  {
+    "name": "Begrüßung",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "type": "hello"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "type": "hello"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Takt abwarten",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "comment": "ping"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "comment": "ping"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Abschnitt schreiben",
+    "request": {
+      "body": {
+        "content": "Neuer Text.",
+        "endLine": 5,
+        "expectedHash": "<var:hash>",
+        "path": "docs/superpowers/specs/2020-03-02-vertrag-design.md",
+        "startLine": 5
+      },
+      "method": "PUT",
+      "path": "/api/projects/<var:pid>/docs/section"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "docs-changed nach dem Schreiben",
+    "request": {
+      "stream": "s1",
+      "until": {
+        "type": "docs-changed"
+      }
+    },
+    "response": {
+      "events": [
+        {
+          "projectId": "<var:pid>",
+          "type": "docs-changed"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Strom schließen",
+    "request": {
+      "stream": "s1"
+    },
+    "response": {
+      "closed": true
+    }
+  }
+]
