@@ -1,5 +1,15 @@
 //! Fachkern von Nexus: Typen und Regeln des Boards, unabhängig von Datenbank,
-//! HTTP-Schicht und Oberfläche. Die Inhalte kommen in den folgenden Tickets.
+//! HTTP-Schicht und Oberfläche. Die Grundtypen sind 1:1 aus `packages/core` portiert,
+//! samt Fehlercodes und deutschen Meldungen.
+
+pub mod actors;
+pub mod board;
+pub mod error;
+pub mod questions;
+pub mod text;
+
+pub use actors::{Actor, AuthorKind, QuestionActor};
+pub use error::{Error, HarnessError, Result};
 
 /// Name des Crates, wie er in Protokollen und Diagnoseausgaben erscheint.
 pub const CRATE_NAME: &str = "nexus-core";
