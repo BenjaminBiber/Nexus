@@ -1,0 +1,668 @@
+[
+  {
+    "name": "claim",
+    "request": {
+      "args": [
+        "board",
+        "claim",
+        "ARC-0001",
+        "--agent",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0001 übernommen von claude (in_progress)"
+    }
+  },
+  {
+    "name": "claim eines zugewiesenen Tickets (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "claim",
+        "ARC-0001",
+        "--agent",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "ARC-0001 ist bereits claude zugewiesen. Ist es deins, einfach weitermachen; sonst nächstes freies Ticket nehmen oder nachfragen. [conflict]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "claim --force",
+    "request": {
+      "args": [
+        "board",
+        "claim",
+        "ARC-0001",
+        "--agent",
+        "claude",
+        "--force"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0001 übernommen von claude (in_progress)"
+    }
+  },
+  {
+    "name": "claim --status --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "claim",
+        "ARC-0002",
+        "--agent",
+        "claude",
+        "--status",
+        "geplant"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "acceptance": "",
+        "assignee": "claude",
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "planned",
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "",
+        "id": "ARC-0002",
+        "labels": [],
+        "needsPlanning": false,
+        "number": 2,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 2,
+        "sessions": [],
+        "sortOrder": 1,
+        "spec": null,
+        "specTask": null,
+        "status": "planned",
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Export bauen",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "claim ohne --agent (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "claim",
+        "ARC-0003"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Fehler: required option '--agent <name>' not specified",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "claim eines unbekannten Tickets --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "claim",
+        "ARC-9999",
+        "--agent",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "ticket-not-found",
+          "message": "Ticket ARC-9999 gibt es nicht."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "release mit Status",
+    "request": {
+      "args": [
+        "board",
+        "release",
+        "ARC-0002",
+        "--status",
+        "geplant",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0002 freigegeben (planned)"
+    }
+  },
+  {
+    "name": "release --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "release",
+        "ARC-0001",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "acceptance": "",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "in_progress",
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "",
+        "diagram": "",
+        "handbook": "",
+        "id": "ARC-0001",
+        "labels": [],
+        "needsPlanning": false,
+        "number": 1,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 4,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "in_progress",
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Login bauen",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "release mit unbekanntem Status (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "release",
+        "ARC-0001",
+        "--status",
+        "quatsch",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Status „quatsch“ ist ungültig. Erlaubt: backlog, in_planning, planned, in_progress, blocked, done, not_needed. [status-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "release eines unbekannten Tickets (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "release",
+        "ARC-9999",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Ticket ARC-9999 gibt es nicht. [ticket-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "start",
+    "request": {
+      "args": [
+        "board",
+        "start",
+        "ARC-0001",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0001 läuft jetzt auf Branch ticket/ARC-0001-login-bauen im Worktree <REPO1>-worktrees/ARC-0001"
+    }
+  },
+  {
+    "name": "start eines laufenden Tickets (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "start",
+        "ARC-0001",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "ARC-0001 läuft bereits auf Branch ticket/ARC-0001-login-bauen. [already-started]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "start --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "start",
+        "ARC-0002",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "branch": "ticket/ARC-0002-export-bauen",
+        "id": "ARC-0002",
+        "joined": false,
+        "path": "<REPO1>-worktrees/ARC-0002",
+        "removed": []
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "start --in",
+    "request": {
+      "args": [
+        "board",
+        "start",
+        "ARC-0003",
+        "--in",
+        "ARC-0001",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0003 arbeitet jetzt auf Branch ticket/ARC-0001-login-bauen im Worktree <REPO1>-worktrees/ARC-0001"
+    }
+  },
+  {
+    "name": "start eines unbekannten Tickets --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "start",
+        "ARC-9999",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "ticket-not-found",
+          "message": "Ticket ARC-9999 gibt es nicht."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "Ticket nach dem Start",
+    "request": {
+      "args": [
+        "board",
+        "show",
+        "ARC-0001"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0001  Login bauen\nStatus in_progress | Prio normal | rev 5 | nicht zugewiesen\nBranch: ticket/ARC-0001-login-bauen (Worktree <REPO1>-worktrees/ARC-0001)\n\n## Kommentare\n(keine)\n\nVerlauf: 6 Einträge – --history zeigt sie"
+    }
+  },
+  {
+    "name": "done ohne Abnahme (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "done",
+        "ARC-0002",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "ARC-0002 hat keine Abnahme. Mit --acceptance angeben, woran man sieht, dass es fertig ist. [acceptance-missing]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "done mit Abnahme",
+    "request": {
+      "args": [
+        "board",
+        "done",
+        "ARC-0002",
+        "--acceptance",
+        "Der Export erzeugt eine CSV-Datei.",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0002 ist erledigt.\nDer Branch ticket/ARC-0002-export-bauen ist bereit zum Merge (es wurde nichts gemergt).\nWorktree <REPO1>-worktrees/ARC-0002 aufgeräumt (der Branch bleibt erhalten)."
+    }
+  },
+  {
+    "name": "done --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "done",
+        "ARC-0003",
+        "--acceptance",
+        "Die Suche nutzt den Index.",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "branch": "ticket/ARC-0001-login-bauen",
+        "id": "ARC-0003",
+        "readyToMerge": false,
+        "removed": [],
+        "warnings": []
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "done eines unbekannten Tickets (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "done",
+        "ARC-9999",
+        "--acceptance",
+        "x",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Ticket ARC-9999 gibt es nicht. [ticket-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "merge",
+    "request": {
+      "args": [
+        "board",
+        "merge",
+        "ARC-0002"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0002 gemergt in main (192af99)."
+    }
+  },
+  {
+    "name": "merge --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "merge",
+        "ARC-0003"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": null,
+        "boardInScope": false,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": false,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [
+          {
+            "branch": "ticket/ARC-0001-login-bauen",
+            "phase": "waiting",
+            "target": null,
+            "ticketId": "ARC-0003"
+          }
+        ],
+        "message": "Dispatcher ist ausgeschaltet",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "result": {
+          "outcome": "waiting",
+          "text": "ARC-0003: Merge wartet auf ARC-0001 – der Branch wird gemergt, sobald alle Tickets des Worktrees fertig sind."
+        },
+        "runs": [],
+        "state": "off",
+        "tickets": [],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "merge eines unbekannten Tickets (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "merge",
+        "ARC-9999"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Ticket ARC-9999 gibt es nicht. [ticket-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "accept",
+    "request": {
+      "args": [
+        "board",
+        "accept",
+        "ARC-0004",
+        "--by",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0004 abgenommen und erledigt; kein Branch eingetragen, es gibt nichts zu mergen."
+    }
+  },
+  {
+    "name": "accept eines nicht blockierten Tickets --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "accept",
+        "ARC-0001",
+        "--by",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "accept-not-possible",
+          "message": "ARC-0001 wartet auf keine Abnahme (nur Blockiert mit Grund „Human Interaction: …“)."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "accept aus einer Session (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "accept",
+        "ARC-0004",
+        "--by",
+        "Florian"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_SESSION": "s1"
+      }
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Diese Entscheidung trifft ein Mensch. Bitte in der Oberfläche oder in einem eigenen Terminal ausführen. [human-only]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "Tickets am Ende",
+    "request": {
+      "args": [
+        "board",
+        "list"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "\nIn Arbeit (1)\n  ARC-0001  Login bauen\n\nErledigt (3)\n  ARC-0002  Export bauen\n  ARC-0003  Suche beschleunigen\n  ARC-0004  Bericht prüfen"
+    }
+  }
+]

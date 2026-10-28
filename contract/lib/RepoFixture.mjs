@@ -6,6 +6,11 @@ import { dirname, join } from 'node:path';
 // Ordnername mit Leerzeichen und Umlaut: Pfade, die auf allen drei Plattformen zu Fehlern führen, fallen früh auf
 const REPO_DIR = 'Mein Projekt ä';
 
+// Fester Zeitpunkt des ersten Commits. Nur damit ist sein Hash in jedem Lauf derselbe – und damit auch der
+// Hash, den ein Merge meldet („ARC-0002 gemergt in main (6f07eff)“). Das Datum liegt weit zurück, damit der
+// Normalisierer es nicht als berechnete Grenze (`<DATE-55>`) liest.
+const COMMIT_DATE = '2020-03-02T10:00:00+00:00';
+
 // Legt die temporären Git-Repos eines Szenarios an (Dateien, erster Commit, auf Wunsch `harness init`).
 export class RepoFixture {
   // `home`: HARNESS_HOME des Szenarios, `claudeConfig`: leere Claude-Code-Konfiguration,
@@ -49,9 +54,15 @@ export class RepoFixture {
     return realpathSync(path);
   }
 
-  // Führt Git im Repo aus
+  // Führt Git im Repo aus; die festen Commit-Daten machen den ersten Commit reproduzierbar
   git(cwd, args) {
-    execFileSync('git', args, { cwd, encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    execFileSync('git', args, {
+      cwd,
+      encoding: 'utf8',
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, GIT_AUTHOR_DATE: COMMIT_DATE, GIT_COMMITTER_DATE: COMMIT_DATE },
+    });
   }
 
   // Richtet den Harness im Repo ein (`<cli> init`) – mit dem Home des Szenarios und leerer Claude-Konfiguration
