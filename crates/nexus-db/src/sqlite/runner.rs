@@ -6,6 +6,8 @@
 //! nativ. Gebunden werden nur die Namen, die im SQL vorkommen: die Repositories geben oft mehr
 //! mit, als eine Anweisung braucht. Fehlende Namen bleiben NULL.
 
+use std::borrow::Cow;
+
 use rusqlite::types::{ToSqlOutput, Value};
 use rusqlite::{CachedStatement, Connection, Row, ToSql};
 
@@ -26,8 +28,11 @@ pub enum SqlValue {
     Date(String),
 }
 
+/// Name eines Parameters ohne `@`; meist ein Literal, bei Listen (`b0`, `b1`, …) erzeugt
+pub type ParamName = Cow<'static, str>;
+
 /// Benannte Parameter einer Anweisung; der Name steht ohne `@` davor
-pub type Params = Vec<(&'static str, SqlValue)>;
+pub type Params = Vec<(ParamName, SqlValue)>;
 
 impl From<&str> for SqlValue {
     fn from(value: &str) -> Self {
@@ -96,7 +101,10 @@ impl ToSql for SqlValue {
 macro_rules! sqlite_params {
     () => { ::std::vec::Vec::new() };
     ($($name:literal : $value:expr),+ $(,)?) => {
-        ::std::vec![$(($name, $crate::sqlite::SqlValue::from($value))),+]
+        ::std::vec![$((
+            ::std::borrow::Cow::Borrowed($name),
+            $crate::sqlite::SqlValue::from($value),
+        )),+]
     };
 }
 
@@ -163,7 +171,7 @@ fn bind(statement: &mut CachedStatement<'_>, params: &Params) -> rusqlite::Resul
         })
         .collect();
     for (index, name) in used {
-        if let Some((_, value)) = params.iter().find(|(key, _)| *key == name) {
+        if let Some((_, value)) = params.iter().find(|(key, _)| key.as_ref() == name) {
             statement.raw_bind_parameter(index, value)?;
         }
     }
