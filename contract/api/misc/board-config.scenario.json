@@ -1,0 +1,71 @@
+{
+  "title": "Board-Datenbank einstellen: abgelehnte Eingaben",
+  "steps": [
+    {
+      "name": "unbekannter Anbieter",
+      "method": "PUT",
+      "path": "/api/board-config",
+      "body": { "provider": "oracle", "userId": "11111111-1111-1111-1111-111111111111", "userName": "Vertrag" }
+    },
+    { "name": "ohne Angaben", "method": "PUT", "path": "/api/board-config", "body": {} },
+    {
+      "name": "SQLite ohne Benutzer",
+      "method": "PUT",
+      "path": "/api/board-config",
+      "body": { "provider": "sqlite", "dbFile": "{{HOME}}/board.db" }
+    },
+    {
+      "name": "userId ist keine GUID",
+      "method": "PUT",
+      "path": "/api/board-config",
+      "body": { "provider": "sqlite", "dbFile": "{{HOME}}/board.db", "userId": "abc", "userName": "Vertrag" }
+    },
+    {
+      "name": "leerer Pfad der SQLite-Datei",
+      "method": "PUT",
+      "path": "/api/board-config",
+      "body": { "provider": "sqlite", "dbFile": "", "userId": "11111111-1111-1111-1111-111111111111", "userName": "Vertrag" }
+    },
+    {
+      "name": "ungültiger Port für SQL Server",
+      "method": "PUT",
+      "path": "/api/board-config",
+      "body": {
+        "provider": "mssql",
+        "server": "sql.example",
+        "port": 0,
+        "database": "AiHarness",
+        "user": "sa",
+        "password": "geheim",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag"
+      }
+    },
+    { "name": "nach den Fehlern unkonfiguriert", "method": "GET", "path": "/api/board-config" },
+    {
+      "name": "Verbindung mit unbekanntem Anbieter prüfen",
+      "method": "POST",
+      "path": "/api/board-config/test",
+      "body": { "provider": "oracle", "userId": "11111111-1111-1111-1111-111111111111", "userName": "Vertrag" }
+    },
+    {
+      "name": "Verbindung ohne Angaben prüfen",
+      "method": "POST",
+      "path": "/api/board-config/test",
+      "body": {}
+    },
+    {
+      "name": "relativer Pfad gilt ab dem Home",
+      "method": "PUT",
+      "path": "/api/board-config",
+      "body": {
+        "provider": "sqlite",
+        "dbFile": "boards/vertrag.db",
+        "userId": "11111111-1111-1111-1111-111111111111",
+        "userName": "Vertrag",
+        "activeBoard": 7
+      }
+    },
+    { "name": "danach lesen", "method": "GET", "path": "/api/board-config" }
+  ]
+}

@@ -19,7 +19,11 @@ export class Coverage {
   add(method, path) {
     const url = path.split('?')[0];
     const candidates = this.routes.filter((route) => route.method === method);
-    const route = candidates.find((entry) => entry.pattern === url) ?? candidates.find((entry) => entry.regex.test(url));
+    // Ein Muster mit `*` (der Rückfall der Oberfläche) deckt alles ab und zählt erst, wenn keine genauere Route passt
+    const specific = candidates.filter((route) => !route.pattern.includes('*'));
+    const route = candidates.find((entry) => entry.pattern === url)
+      ?? specific.find((entry) => entry.regex.test(url))
+      ?? candidates.find((entry) => entry.regex.test(url));
     if (!route) {
       this.unmatched.push(`${method} ${url}`);
       return false;

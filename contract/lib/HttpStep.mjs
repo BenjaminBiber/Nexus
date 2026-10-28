@@ -1,5 +1,10 @@
 // Schritt-Art `http`: eine Anfrage an den Server, aufgezeichnet als Anfrage und Antwort.
 export class HttpStep {
+  // Eigene Felder der Art; der Lader meldet damit Tippfehler im Szenario
+  get keys() {
+    return ['method', 'path', 'body', 'headers'];
+  }
+
   // Führt den Schritt aus; `variables` setzt `{{NAME}}` ein, `base` ist die Adresse des Servers
   async run(step, context) {
     const path = context.variables.apply(step.path);

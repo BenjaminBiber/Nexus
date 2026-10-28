@@ -1,0 +1,129 @@
+{
+  "title": "Projekteinstellungen mit Token und benutzerweite Einstellungen",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "git": true, "harnessInit": true }]
+  },
+  "steps": [
+    {
+      "name": "Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "compare": "status"
+    },
+    {
+      "name": "Einstellungen des Projekts",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/settings",
+      "save": { "token": "json.token" }
+    },
+    {
+      "name": "Einstellungen eines unbekannten Projekts",
+      "method": "GET",
+      "path": "/api/projects/gibtsnicht/settings"
+    },
+
+    { "name": "benutzerweite Standardwerte", "method": "GET", "path": "/api/user-settings" },
+    {
+      "name": "alle Felder setzen",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": {
+        "notifications": "windows",
+        "heroImages": true,
+        "theme": "dark",
+        "claudeUsage": true,
+        "compactCards": true,
+        "hideNotNeeded": true,
+        "hideInPlanning": true,
+        "ntfy": true,
+        "ntfyServer": "  https://push.example  ",
+        "ntfyTopic": "harness-vertrag",
+        "ntfyToken": " tk_vertrag "
+      }
+    },
+    { "name": "gespeicherte Werte lesen", "method": "GET", "path": "/api/user-settings" },
+    {
+      "name": "nur ein Feld ändern",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "theme": "win95" }
+    },
+    { "name": "leerer Körper ändert nichts", "method": "PUT", "path": "/api/user-settings", "body": {} },
+    {
+      "name": "Thema der Push-Meldungen leeren",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "ntfyTopic": "" }
+    },
+
+    {
+      "name": "unbekannte Art der Meldung",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "notifications": "telegram" }
+    },
+    {
+      "name": "unbekanntes Farbschema",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "theme": "lila" }
+    },
+    {
+      "name": "Hero-Bilder ohne Wahrheitswert",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "heroImages": "ja" }
+    },
+    {
+      "name": "kompakte Kacheln ohne Wahrheitswert",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "compactCards": "ja" }
+    },
+    {
+      "name": "Nutzungslimits ohne Wahrheitswert",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "claudeUsage": 1 }
+    },
+    {
+      "name": "ausgeblendete Spalten ohne Wahrheitswert",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "hideNotNeeded": "nein" }
+    },
+    {
+      "name": "Spalte In Planung ohne Wahrheitswert",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "hideInPlanning": "nein" }
+    },
+    {
+      "name": "Push ohne Wahrheitswert",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "ntfy": "an" }
+    },
+    {
+      "name": "Server der Push-Meldungen ohne http",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "ntfyServer": "ntfy.sh" }
+    },
+    {
+      "name": "Thema der Push-Meldungen mit Leerzeichen",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "ntfyTopic": "mein thema" }
+    },
+    {
+      "name": "Token der Push-Meldungen ist kein Text",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "ntfyToken": 42 }
+    },
+    { "name": "nach den Fehlern unverändert", "method": "GET", "path": "/api/user-settings" }
+  ]
+}

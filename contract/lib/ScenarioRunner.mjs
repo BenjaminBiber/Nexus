@@ -1,15 +1,11 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { HttpStep } from './HttpStep.mjs';
 import { Normalizer } from './Normalizer.mjs';
 import { RepoFixture } from './RepoFixture.mjs';
 import { ServerHandle } from './ServerHandle.mjs';
+import { stepKinds } from './StepKinds.mjs';
 import { Variables } from './Variables.mjs';
-
-// Bekannte Schritt-Arten; neue Arten (Ereignisstrom, CLI-Aufrufe) kommen als eigenes Modul hinzu und
-// melden sich hier an. Jede Art liefert `{ request, response }`.
-export const stepKinds = { http: new HttpStep() };
 
 // Feste GUID des Vertrags-Benutzers in der Board-Konfiguration
 const CONTRACT_USER_ID = '11111111-1111-1111-1111-111111111111';
@@ -34,6 +30,8 @@ export class ScenarioRunner {
     const claudeConfig = mkdtempSync(join(tmpdir(), 'harness-contract-claude-'));
     const port = own ? await ServerHandle.freePort() : ScenarioRunner.portOf(this.base);
     const fixture = new RepoFixture({ home, claudeConfig, cli: this.cli });
+    // Attrappen fremder Dienste der Schritt-Art `httpStub`, nach Namen; sie leben nur in diesem Szenario
+    const stubs = new Map();
     let server = null;
     try {
       const repos = fixture.create(scenario.fixtures.repos);
@@ -50,9 +48,10 @@ export class ScenarioRunner {
         saved,
       });
       if (scenario.fixtures.boardConfig === 'sqlite') await this.writeBoardConfig(server.base, home);
-      return await this.steps(scenario, { base: server.base, variables, normalizer, saved });
+      return await this.steps(scenario, { base: server.base, variables, normalizer, saved, stubs });
     } finally {
       if (server) await server.stop();
+      for (const stub of stubs.values()) await stub.close();
       fixture.dispose();
       rmSync(claudeConfig, { recursive: true, force: true });
       // Ein von außen übergebenes Home gehört dem Aufrufer
