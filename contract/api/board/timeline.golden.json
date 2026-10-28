@@ -1,0 +1,462 @@
+[
+  {
+    "name": "Zeitleiste nach dem Anlegen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/VTR-0001/timeline"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "events": [
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "status",
+            "from": null,
+            "kind": "status",
+            "note": "angelegt",
+            "to": "backlog",
+            "type": "field:status"
+          }
+        ],
+        "sources": {
+          "git": "unavailable",
+          "gitMessage": "Kein Repo-Pfad auf diesem Rechner.",
+          "runs": "unavailable"
+        },
+        "ticketId": "VTR-0001"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zeitleiste ohne Repo auf diesem Rechner",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/VTR-0001/timeline"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "events": [
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "status",
+            "from": null,
+            "kind": "status",
+            "note": "angelegt",
+            "to": "backlog",
+            "type": "field:status"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "title",
+            "from": "Login bauen",
+            "kind": "content",
+            "note": null,
+            "to": "Login bauen und prüfen",
+            "type": "field:title"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "assignee",
+            "from": null,
+            "kind": "claim",
+            "note": null,
+            "to": "claude",
+            "type": "field:assignee"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "kind": "comment",
+            "text": "Erster Blick",
+            "type": "comment"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "status",
+            "from": "backlog",
+            "kind": "status",
+            "note": "verschoben",
+            "to": "in_planning",
+            "type": "field:status"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "step",
+            "from": null,
+            "kind": "content",
+            "note": "Schritt hinzugefügt",
+            "to": "1: Test schreiben",
+            "type": "field:step"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "step",
+            "from": "1: offen",
+            "kind": "content",
+            "note": "Test schreiben",
+            "to": "1: erledigt",
+            "type": "field:step"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "status",
+            "from": "in_planning",
+            "kind": "status",
+            "note": "verschoben",
+            "to": "in_progress",
+            "type": "field:status"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "kind": "comment",
+            "text": "Zweiter Blick",
+            "type": "comment"
+          }
+        ],
+        "sources": {
+          "git": "unavailable",
+          "gitMessage": "Kein Repo-Pfad auf diesem Rechner.",
+          "runs": "unavailable"
+        },
+        "ticketId": "VTR-0001"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zeitleiste mit Repo, aber ohne Ticket-Branch",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/VTR-0001/timeline"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "events": [
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "status",
+            "from": null,
+            "kind": "status",
+            "note": "angelegt",
+            "to": "backlog",
+            "type": "field:status"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "title",
+            "from": "Login bauen",
+            "kind": "content",
+            "note": null,
+            "to": "Login bauen und prüfen",
+            "type": "field:title"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "assignee",
+            "from": null,
+            "kind": "claim",
+            "note": null,
+            "to": "claude",
+            "type": "field:assignee"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "kind": "comment",
+            "text": "Erster Blick",
+            "type": "comment"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "status",
+            "from": "backlog",
+            "kind": "status",
+            "note": "verschoben",
+            "to": "in_planning",
+            "type": "field:status"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "step",
+            "from": null,
+            "kind": "content",
+            "note": "Schritt hinzugefügt",
+            "to": "1: Test schreiben",
+            "type": "field:step"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "step",
+            "from": "1: offen",
+            "kind": "content",
+            "note": "Test schreiben",
+            "to": "1: erledigt",
+            "type": "field:step"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "status",
+            "from": "in_planning",
+            "kind": "status",
+            "note": "verschoben",
+            "to": "in_progress",
+            "type": "field:status"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "kind": "comment",
+            "text": "Zweiter Blick",
+            "type": "comment"
+          }
+        ],
+        "sources": {
+          "git": "unavailable",
+          "gitMessage": "Branch und Merge-Commit sind in diesem Repo nicht (mehr) vorhanden.",
+          "runs": "unavailable"
+        },
+        "ticketId": "VTR-0001"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zeitleiste mit kurzer ID",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/vtr-1/timeline"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "events": [
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "status",
+            "from": null,
+            "kind": "status",
+            "note": "angelegt",
+            "to": "backlog",
+            "type": "field:status"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "title",
+            "from": "Login bauen",
+            "kind": "content",
+            "note": null,
+            "to": "Login bauen und prüfen",
+            "type": "field:title"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "assignee",
+            "from": null,
+            "kind": "claim",
+            "note": null,
+            "to": "claude",
+            "type": "field:assignee"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "kind": "comment",
+            "text": "Erster Blick",
+            "type": "comment"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "status",
+            "from": "backlog",
+            "kind": "status",
+            "note": "verschoben",
+            "to": "in_planning",
+            "type": "field:status"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "step",
+            "from": null,
+            "kind": "content",
+            "note": "Schritt hinzugefügt",
+            "to": "1: Test schreiben",
+            "type": "field:step"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "step",
+            "from": "1: offen",
+            "kind": "content",
+            "note": "Test schreiben",
+            "to": "1: erledigt",
+            "type": "field:step"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "field": "status",
+            "from": "in_planning",
+            "kind": "status",
+            "note": "verschoben",
+            "to": "in_progress",
+            "type": "field:status"
+          },
+          {
+            "actor": {
+              "name": "Vertrag",
+              "type": "person"
+            },
+            "at": "<TIME>",
+            "kind": "comment",
+            "text": "Zweiter Blick",
+            "type": "comment"
+          }
+        ],
+        "sources": {
+          "git": "unavailable",
+          "gitMessage": "Branch und Merge-Commit sind in diesem Repo nicht (mehr) vorhanden.",
+          "runs": "unavailable"
+        },
+        "ticketId": "VTR-0001"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zeitleiste eines unbekannten Tickets",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/VTR-0099/timeline"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-not-found",
+        "message": "Ticket VTR-0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "keine Ticket-ID",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/tickets/quatsch/timeline"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-id-invalid",
+        "message": "„quatsch“ ist keine Ticket-ID (erwartet z. B. ARC-0042)."
+      },
+      "status": 422
+    }
+  }
+]

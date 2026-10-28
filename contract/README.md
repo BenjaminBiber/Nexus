@@ -240,7 +240,8 @@ contract/
 │  └─ ts-server.mjs           # TS-Server im Vertragsmodus
 ├─ api/
 │  ├─ routes.json             # alle Routen des Servers
-│  └─ basis/                  # Beispielszenarien
+│  ├─ basis/                  # Beispielszenarien
+│  └─ board/                  # Board-Kern: Projekte, Boards, Tickets, Schritte (/api/db)
 └─ tests/                     # Einheitentests (vitest, siehe vitest.config.ts)
 ```
 

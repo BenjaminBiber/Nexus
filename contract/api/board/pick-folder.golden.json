@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Ordnerwahl ohne Startordner",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/pick-folder"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "path": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Ordnerwahl mit Startordner",
+    "request": {
+      "body": {
+        "start": " C:/Repos "
+      },
+      "method": "POST",
+      "path": "/api/db/pick-folder"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "path": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Startordner keine Zeichenkette",
+    "request": {
+      "body": {
+        "start": 5
+      },
+      "method": "POST",
+      "path": "/api/db/pick-folder"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „start“ fehlt oder ist kein Text."
+      },
+      "status": 422
+    }
+  }
+]

@@ -1,0 +1,268 @@
+[
+  {
+    "name": "Branches ohne Repo-Pfad",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "branches": [],
+        "reason": "no-repo"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Repo-Pfad setzen",
+    "request": {
+      "body": {
+        "repoPath": "<REPO1>"
+      },
+      "method": "PATCH",
+      "path": "/api/db/boards/1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "id": 1,
+        "name": "Sprint",
+        "openTickets": 0,
+        "ownerId": "11111111-1111-1111-1111-111111111111",
+        "ownerName": "Vertrag",
+        "projectId": 1,
+        "projectKey": "VTR",
+        "projectName": "Vertrag",
+        "repoPath": "<REPO1>",
+        "repoSource": "local"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Branches des Repos",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "branches": [
+          "main"
+        ],
+        "reason": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Branch anlegen",
+    "request": {
+      "body": {
+        "name": " release/1 "
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "created": true,
+        "from": "main",
+        "name": "release/1"
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Branch gibt es schon",
+    "request": {
+      "body": {
+        "name": "release/1"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "created": false,
+        "from": null,
+        "name": "release/1"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Branches nach dem Anlegen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "branches": [
+          "main",
+          "release/1"
+        ],
+        "reason": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Branch-Name mit Leerzeichen",
+    "request": {
+      "body": {
+        "name": "a b"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "target-branch-invalid",
+        "message": "„a b“ ist kein gültiger Branch-Name."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Branch im Namensraum der Tickets",
+    "request": {
+      "body": {
+        "name": "ticket/x"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "target-branch-invalid",
+        "message": "„ticket/x“ ist der Branch eines Tickets; dorthin wird nicht gemergt."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "leerer Branch-Name",
+    "request": {
+      "body": {
+        "name": " "
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "target-branch-invalid",
+        "message": "Kein Branch-Name angegeben."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ohne Branch-Name",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/boards/1/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „name“ fehlt oder ist kein Text."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Branches bei fehlendem Ordner",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/2/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "branches": [],
+        "reason": "no-repo"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Branch ohne Repo anlegen",
+    "request": {
+      "body": {
+        "name": "release/2"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/2/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-repo-missing",
+        "message": "Board 2 hat auf diesem Rechner kein Repo."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Branches eines unbekannten Boards",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/999/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 999 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Branch auf unbekanntem Board",
+    "request": {
+      "body": {
+        "name": "release/2"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/999/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 999 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "keine Board-Nummer",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/abc/branches"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "id-invalid",
+        "message": "„abc“ ist keine gültige Board-Nummer."
+      },
+      "status": 422
+    }
+  }
+]
