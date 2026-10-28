@@ -1,0 +1,12 @@
+[package]
+name = "nexus-db"
+description = "Datenzugriff von Nexus (SQLite und SQL Server)"
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+nexus-core = { workspace = true }
+
+[lints]
+workspace = true

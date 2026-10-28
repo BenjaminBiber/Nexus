@@ -1,0 +1,43 @@
+{
+  "title": "Ereignisstrom: Änderungen an den Fragen des beobachteten Projekts als dbquestions",
+  "env": { "CONTRACT_HEARTBEAT_MS": "400", "CONTRACT_POLL_MS": "200" },
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "repos": [{ "name": "REPO1", "harnessInit": true }]
+  },
+  "steps": [
+    {
+      "name": "Vorbereitung: Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Board-Projekt",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "save": { "projekt": "json.id" },
+      "record": false
+    },
+    { "name": "Strom mit dbProject", "kind": "sseOpen", "as": "s1", "path": "/api/projects/{{pid}}/events?dbProject={{projekt}}" },
+    { "name": "Strom ohne dbProject", "kind": "sseOpen", "as": "s2", "path": "/api/projects/{{pid}}/events" },
+    { "name": "Begrüßung mit dbProject", "kind": "sseExpect", "stream": "s1", "until": { "type": "hello" } },
+    { "name": "Begrüßung ohne dbProject", "kind": "sseExpect", "stream": "s2", "until": { "type": "hello" } },
+    { "name": "Takt abwarten", "kind": "sseExpect", "stream": "s1", "until": { "comment": "ping" } },
+    { "name": "Takt des Stroms ohne dbProject abwarten", "kind": "sseExpect", "stream": "s2", "until": { "comment": "ping" } },
+    {
+      "name": "Frage stellen",
+      "method": "POST",
+      "path": "/api/db/projects/ARC/questions",
+      "body": { "title": "Welcher Speicher?" },
+      "compare": "status"
+    },
+    { "name": "dbquestions nach dem Stellen", "kind": "sseExpect", "stream": "s1", "until": { "type": "dbquestions" }, "timeoutMs": 6000 },
+    { "name": "Strom ohne dbProject bekommt nichts", "kind": "sseExpect", "stream": "s2", "until": { "comment": "ping" } },
+    { "name": "Strom mit dbProject schließen", "kind": "sseClose", "stream": "s1" },
+    { "name": "Strom ohne dbProject schließen", "kind": "sseClose", "stream": "s2" }
+  ]
+}

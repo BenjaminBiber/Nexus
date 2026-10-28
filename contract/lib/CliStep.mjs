@@ -13,6 +13,23 @@ export class CliStep {
     return ['args', 'cwd', 'stdin', 'env'];
   }
 
+  // Prüft die Felder des Schritts: Argumente des Programms, Arbeitsordner, Standardeingabe und Umgebung
+  parse(value, index, fail) {
+    if (!Array.isArray(value.args) || value.args.length === 0 || value.args.some((arg) => typeof arg !== 'string')) {
+      fail(`steps[${index}].args muss eine nicht leere Liste aus Texten sein.`);
+    }
+    if (value.cwd !== undefined && (typeof value.cwd !== 'string' || !value.cwd)) fail(`steps[${index}].cwd muss ein Text sein.`);
+    if (value.stdin !== undefined && (typeof value.stdin !== 'string' && (value.stdin === null || typeof value.stdin !== 'object' || Array.isArray(value.stdin)))) {
+      fail(`steps[${index}].stdin muss ein Objekt (als JSON) oder ein Text (roh) sein.`);
+    }
+    const env = value.env ?? {};
+    if (env === null || typeof env !== 'object' || Array.isArray(env)) fail(`steps[${index}].env muss ein Objekt sein.`);
+    for (const [name, entry] of Object.entries(env)) {
+      if (typeof entry !== 'string') fail(`steps[${index}].env["${name}"] muss ein Text sein.`);
+    }
+    return { args: [...value.args], cwd: value.cwd, stdin: value.stdin, env };
+  }
+
   // Führt den Schritt aus; `context.cli` ist das Programm als Liste, `context.home`/`port`/`claudeConfig`
   // die Umgebung des Szenarios und `context.envFile` die Datei der Fixture `claudeEnvFile`
   async run(step, context) {

@@ -90,6 +90,27 @@ describe('ScenarioLoader', () => {
       expect(loader.load(join(root, 'gibtsnicht'))).toEqual([]);
     });
 
+    it('liest die Schritte eines Ereignisstroms mit den Feldern ihrer Art', () => {
+      const steps = [
+        { name: 'öffnen', kind: 'sseOpen', as: 's1', path: '/api/projects/x/events?notify=1' },
+        { name: 'hello', kind: 'sseExpect', stream: 's1', until: { type: 'hello' } },
+        { name: 'schließen', kind: 'sseClose', stream: 's1' },
+      ];
+      const scenario = loader.parse(write('strom', { title: 'Strom', steps }));
+      expect(scenario.steps[0]).toMatchObject({ kind: 'sseOpen', as: 's1', path: '/api/projects/x/events?notify=1' });
+      expect(scenario.steps[1]).toMatchObject({ kind: 'sseExpect', stream: 's1', until: { type: 'hello' }, timeoutMs: 3000 });
+      expect(scenario.steps[2]).toMatchObject({ kind: 'sseClose', stream: 's1' });
+    });
+
+    it('nimmt die CONTRACT-Variablen des Szenarios', () => {
+      const scenario = loader.parse(write('takt', { title: 'Takt', env: { CONTRACT_HEARTBEAT_MS: '300' }, steps: GOOD.steps }));
+      expect(scenario.env).toEqual({ CONTRACT_HEARTBEAT_MS: '300' });
+    });
+
+    it('ohne env bleibt die Umgebung leer', () => {
+      expect(loader.parse(write('projects', GOOD)).env).toEqual({});
+    });
+
     it('nimmt die eigenen Felder einer anderen Schritt-Art als raw mit', () => {
       const steps = [{ name: 'Attrappe', kind: 'httpStub', action: 'start', stub: 'NTFY', record: false }];
       const scenario = loader.parse(write('stub', { title: 'Attrappe', steps }));
@@ -171,7 +192,9 @@ describe('ScenarioLoader', () => {
     });
 
     it('meldet eine unbekannte Schritt-Art', () => {
-      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'sse' }] }, /steps\[0\]\.kind muss eine bekannte Art sein \(cli, http, httpStub\)/);
+      const alle = /steps\[0\]\.kind muss eine bekannte Art sein \(cli, http, httpStub, sseClose, sseExpect, sseOpen\)/;
+      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'sse' }] }, alle);
+      failsWith({ title: 'T', steps: [{ name: 'a', kind: 'sseWarten', stream: 's1' }] }, alle);
     });
 
     it('meldet leere Schritte', () => {
@@ -233,6 +256,25 @@ describe('ScenarioLoader', () => {
 
     it('meldet ein unbekanntes Betriebssystem', () => {
       failsWith({ title: 'T', platforms: ['macos'], steps: GOOD.steps }, /platforms muss eine Liste/);
+    });
+
+    it('meldet ein Feld, das es bei dieser Art nicht gibt', () => {
+      failsWith(
+        { title: 'T', steps: [{ name: 'a', kind: 'sseOpen', as: 's1', path: '/api/events', method: 'GET' }] },
+        /unbekannte Felder in steps\[0\]: method/,
+      );
+    });
+
+    it('meldet ein Feld eines Ereignisstroms an einem HTTP-Schritt', () => {
+      failsWith({ title: 'T', steps: [{ name: 'a', method: 'GET', path: '/api/health', stream: 's1' }] }, /unbekannte Felder in steps\[0\]: stream/);
+    });
+
+    it('meldet eine Umgebungsvariable außerhalb von CONTRACT_', () => {
+      failsWith({ title: 'T', env: { PATH: '/bin' }, steps: GOOD.steps }, /env\["PATH"\]: ein Szenario darf nur CONTRACT_\*-Variablen setzen/);
+    });
+
+    it('meldet eine Umgebungsvariable, die kein Text ist', () => {
+      failsWith({ title: 'T', env: { CONTRACT_HEARTBEAT_MS: 300 }, steps: GOOD.steps }, /env\["CONTRACT_HEARTBEAT_MS"\] muss ein Text sein/);
     });
 
     it('meldet einen Kopf, der kein Text und nicht null ist', () => {

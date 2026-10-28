@@ -7,8 +7,8 @@ build/
 coverage/
 *.tsbuildinfo
 
-# Tauri-Desktop: Rust-Build und die bei jedem Build neu erzeugten Schemas
-apps/desktop/src-tauri/target/
+# Rust: gemeinsames target/ des Cargo-Workspace und die bei jedem Tauri-Build neu erzeugten Schemas
+/target/
 apps/desktop/src-tauri/gen/schemas/
 
 # Test- und Laufzeit-Temp
