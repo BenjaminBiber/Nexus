@@ -7,9 +7,10 @@ build/
 coverage/
 *.tsbuildinfo
 
-# Tauri-Desktop: Rust-Build und die bei jedem Build neu erzeugten Schemas
+# Tauri-Desktop: Rust-Build, die bei jedem Build neu erzeugten Schemas und das kopierte Sidecar
 apps/desktop/src-tauri/target/
 apps/desktop/src-tauri/gen/schemas/
+apps/desktop/src-tauri/binaries/
 
 # Test- und Laufzeit-Temp
 .tmp-tests/
