@@ -15,7 +15,7 @@ use nexus_core::board::dispatch_run_types::{
 use nexus_core::text::utf16_prefix;
 use nexus_core::{HarnessError, Result};
 
-use crate::sqlite::runner::{bool_of, date, iso, iso_millis, Params, SqlValue};
+use crate::sqlite::runner::{bool_of, date, iso, iso_millis, ParamName, Params, SqlValue};
 use crate::sqlite::unit_of_work::SqliteUnitOfWork;
 use crate::sqlite_params;
 use crate::SqlChunks;
@@ -59,7 +59,12 @@ pub(crate) fn liste(names: &[&'static str], values: &[String]) -> (String, Param
     let params = values
         .iter()
         .enumerate()
-        .map(|(index, value)| (names[index], SqlValue::from(value.clone())))
+        .map(|(index, value)| {
+            (
+                ParamName::Borrowed(names[index]),
+                SqlValue::from(value.clone()),
+            )
+        })
         .collect();
     (list, params)
 }
