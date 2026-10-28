@@ -307,32 +307,33 @@ async fn gibt_nach_einem_sql_fehler_die_verbindung_frei() {
 #[tokio::test]
 async fn liefert_eine_unit_of_work_mit_allen_17_repositories() {
     let temp = TempSqlite::create().expect("Temp-Datei");
-    // Kompiliertest der 17 Zugriffe: jeder meldet (noch) not-implemented
+    // Kompiliertest der 17 Zugriffe: die sechs von P2-6 gefüllten antworten, die übrigen
+    // melden (noch) not-implemented
     let codes = temp
         .db()
         .transaction(|u| {
             Box::pin(async move {
+                // Die sechs gefüllten Repositories liefern auf einer leeren Datei leere Listen
+                assert!(u.users().list().await?.is_empty());
+                assert!(u.projects().list().await?.is_empty());
+                assert!(u
+                    .boards()
+                    .list(&nexus_core::board::database::BoardFilter::default())
+                    .await?
+                    .is_empty());
+                assert!(u
+                    .tickets()
+                    .list(&nexus_core::board::database::TicketFilter::default())
+                    .await?
+                    .is_empty());
+                assert!(u.steps().list("ARC-1").await?.is_empty());
+                assert!(u.ticket_sessions().tickets_of("sess-1").await?.is_empty());
+
                 let mut codes: Vec<String> = Vec::new();
                 let mut merke = |fehler: nexus_core::Error| {
                     codes.push(fehler.code().unwrap_or_default().to_string());
                 };
-                merke(u.users().list().await.unwrap_err());
-                merke(u.projects().list().await.unwrap_err());
-                merke(
-                    u.boards()
-                        .list(&nexus_core::board::database::BoardFilter::default())
-                        .await
-                        .unwrap_err(),
-                );
-                merke(
-                    u.tickets()
-                        .list(&nexus_core::board::database::TicketFilter::default())
-                        .await
-                        .unwrap_err(),
-                );
                 merke(u.comments().list("ARC-1").await.unwrap_err());
-                merke(u.steps().list("ARC-1").await.unwrap_err());
-                merke(u.ticket_sessions().tickets_of("sess-1").await.unwrap_err());
                 merke(u.history().list("ARC-1").await.unwrap_err());
                 merke(
                     u.notes()
@@ -368,7 +369,7 @@ async fn liefert_eine_unit_of_work_mit_allen_17_repositories() {
         .await
         .expect("Transaktion");
 
-    assert_eq!(codes.len(), 17);
+    assert_eq!(codes.len(), 11);
     assert!(
         codes.iter().all(|code| code == "not-implemented"),
         "{codes:?}"
