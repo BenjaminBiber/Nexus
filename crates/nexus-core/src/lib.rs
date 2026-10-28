@@ -4,6 +4,7 @@
 
 pub mod actors;
 pub mod board;
+pub mod dispatch;
 pub mod error;
 pub mod questions;
 pub mod text;
