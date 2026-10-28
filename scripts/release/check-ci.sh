@@ -29,14 +29,20 @@ else
   echo "Branch: $ref"
 fi
 
-# Der jüngste CI-Lauf genau dieses Commits als eine Zeile „Status<Tab>Ergebnis<Tab>Adresse“; ohne Lauf leer
-run=$(gh run list --workflow "$CI_WORKFLOW" --commit "$sha" --limit 1 \
+# Der jüngste CI-Lauf genau dieses Commits als eine Zeile „Status<Tab>Ergebnis<Tab>Adresse“; ohne Lauf leer.
+# Scheitert die Abfrage selbst, ist das genauso ein Grund wie ein roter Lauf – im Probelauf also nur eine Warnung
+errors=$(mktemp)
+trap 'rm -f "$errors"' EXIT
+if ! run=$(gh run list --workflow "$CI_WORKFLOW" --commit "$sha" --limit 1 \
   --json status,conclusion,url \
-  --jq '.[0] // empty | [.status, (.conclusion // "offen"), .url] | @tsv')
+  --jq '.[0] // empty | [.status, (.conclusion // "offen"), .url] | @tsv' 2>"$errors"); then
+  problem "Der Status der CI für $sha lässt sich nicht abfragen: $(tr '\n' ' ' <"$errors")"
+  exit 0 # nur der Probelauf kommt hierhin; sonst hat „problem“ schon abgebrochen
+fi
 
 if [ -z "$run" ]; then
   problem "Für $sha gibt es keinen Lauf von $CI_WORKFLOW. Erst die CI abwarten."
-  exit 0
+  exit 0 # dito
 fi
 
 IFS=$'\t' read -r status conclusion url <<<"$run"

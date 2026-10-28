@@ -13,6 +13,7 @@ version=$(node scripts/release/bump.mjs next "$kind")
 tag="v$version"
 echo "Nächste Version: $version (Tag $tag)"
 
+# Netz für den seltenen Fall, dass seit dem Checkout schon jemand dieses Tag angelegt hat
 if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
   echo "Abbruch: Tag $tag existiert schon." >&2
   exit 1
