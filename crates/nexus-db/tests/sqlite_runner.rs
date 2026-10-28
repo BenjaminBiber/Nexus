@@ -46,7 +46,10 @@ fn datum_hin_und_zuruck() {
         Some("2026-10-21T07:45:42.579Z".to_string())
     );
     // Eine Angabe ohne Millisekunden bekommt sie beim Binden
-    assert_eq!(iso_millis("2026-10-21T07:45:42Z"), "2026-10-21T07:45:42.000Z");
+    assert_eq!(
+        iso_millis("2026-10-21T07:45:42Z"),
+        "2026-10-21T07:45:42.000Z"
+    );
 }
 
 #[test]
@@ -144,11 +147,9 @@ fn benannte_parameter_mit_at() {
     // „a“ kommt zweimal vor, „fehlt“ wird nicht mitgegeben, „unbenutzt“ steht nicht im SQL
     let params: Params = sqlite_params! { "a": 5i32, "unbenutzt": 1i32 };
     let zeilen: Vec<(Option<i64>, Option<i64>, Option<i64>)> = sql
-        .query_rows(
-            "SELECT @a AS x, @a AS y, @fehlt AS z",
-            &params,
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
-        )
+        .query_rows("SELECT @a AS x, @a AS y, @fehlt AS z", &params, |row| {
+            Ok((row.get(0)?, row.get(1)?, row.get(2)?))
+        })
         .expect("Abfrage");
     assert_eq!(zeilen, vec![(Some(5), Some(5), None)]);
 
@@ -228,8 +229,5 @@ fn je_aufruf_nur_eine_anweisung() {
 
     // Ein abschließendes Semikolon und ein Semikolon im Text sind in Ordnung
     assert_eq!(numbers(&mut sql, "SELECT 1;"), vec![Some(1)]);
-    assert_eq!(
-        texts(&mut sql, "SELECT ';' AS s")[0].as_deref(),
-        Some(";")
-    );
+    assert_eq!(texts(&mut sql, "SELECT ';' AS s")[0].as_deref(), Some(";"));
 }

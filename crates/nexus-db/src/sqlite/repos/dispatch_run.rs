@@ -38,10 +38,7 @@ impl DispatchRunRepository for SqliteUnitOfWork<'_> {
         Err(folgt("DispatchRunRepository.existing"))
     }
 
-    async fn record_config_version(
-        &mut self,
-        _version: &DispatchConfigVersion,
-    ) -> Result<bool> {
+    async fn record_config_version(&mut self, _version: &DispatchConfigVersion) -> Result<bool> {
         Err(folgt("DispatchRunRepository.record_config_version"))
     }
 

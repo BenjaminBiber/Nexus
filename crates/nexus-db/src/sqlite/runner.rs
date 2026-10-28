@@ -298,11 +298,26 @@ mod tests {
 
     #[test]
     fn datumstexte_bekommen_immer_millisekunden_und_z() {
-        assert_eq!(iso_millis("2026-10-21T07:45:42.579Z"), "2026-10-21T07:45:42.579Z");
-        assert_eq!(iso_millis("2026-10-21T07:45:42Z"), "2026-10-21T07:45:42.000Z");
-        assert_eq!(iso_millis("2026-10-21T09:45:42+02:00"), "2026-10-21T07:45:42.000Z");
-        assert_eq!(iso_millis("2026-10-21T07:45:42.5"), "2026-10-21T07:45:42.500Z");
-        assert_eq!(iso_millis("2026-10-21 07:45:42"), "2026-10-21T07:45:42.000Z");
+        assert_eq!(
+            iso_millis("2026-10-21T07:45:42.579Z"),
+            "2026-10-21T07:45:42.579Z"
+        );
+        assert_eq!(
+            iso_millis("2026-10-21T07:45:42Z"),
+            "2026-10-21T07:45:42.000Z"
+        );
+        assert_eq!(
+            iso_millis("2026-10-21T09:45:42+02:00"),
+            "2026-10-21T07:45:42.000Z"
+        );
+        assert_eq!(
+            iso_millis("2026-10-21T07:45:42.5"),
+            "2026-10-21T07:45:42.500Z"
+        );
+        assert_eq!(
+            iso_millis("2026-10-21 07:45:42"),
+            "2026-10-21T07:45:42.000Z"
+        );
         assert_eq!(iso_millis("kein Datum"), "kein Datum");
         assert_eq!(iso(None), None);
         assert_eq!(

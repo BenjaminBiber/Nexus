@@ -99,8 +99,9 @@ pub fn is_sqlite_busy(error: &Error) -> bool {
 
 /// Doppelter Schlüssel: UNIQUE (2067) oder PRIMARY KEY (1555)
 pub fn is_unique_violation(error: &Error) -> bool {
-    sqlite_code(error)
-        .is_some_and(|code| code == SQLITE_CONSTRAINT_UNIQUE || code == SQLITE_CONSTRAINT_PRIMARYKEY)
+    sqlite_code(error).is_some_and(|code| {
+        code == SQLITE_CONSTRAINT_UNIQUE || code == SQLITE_CONSTRAINT_PRIMARYKEY
+    })
 }
 
 #[cfg(test)]

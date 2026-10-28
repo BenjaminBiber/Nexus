@@ -114,7 +114,10 @@ impl SqliteBoardDatabase {
     /// `board-db-unreachable`
     fn connect(file: &str) -> Result<Connection> {
         if file != ":memory:" {
-            if let Some(ordner) = Path::new(file).parent().filter(|p| !p.as_os_str().is_empty()) {
+            if let Some(ordner) = Path::new(file)
+                .parent()
+                .filter(|p| !p.as_os_str().is_empty())
+            {
                 std::fs::create_dir_all(ordner).map_err(|error| unreachable(file, &error))?;
             }
         }
@@ -366,9 +369,7 @@ fn register_search_lower(conn: &Connection) -> Result<()> {
         FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
         |ctx| {
             Ok(match ctx.get_raw(0) {
-                ValueRef::Text(text) => {
-                    Value::Text(String::from_utf8_lossy(text).to_lowercase())
-                }
+                ValueRef::Text(text) => Value::Text(String::from_utf8_lossy(text).to_lowercase()),
                 // Alles, was kein Text ist, bleibt unverändert (wie `typeof value === 'string'`)
                 ValueRef::Null => Value::Null,
                 ValueRef::Integer(zahl) => Value::Integer(zahl),

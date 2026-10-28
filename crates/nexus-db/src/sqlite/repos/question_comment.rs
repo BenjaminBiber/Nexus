@@ -16,10 +16,7 @@ impl BoardQuestionCommentRepository for SqliteUnitOfWork<'_> {
         Err(folgt("BoardQuestionCommentRepository.list"))
     }
 
-    async fn insert(
-        &mut self,
-        _comment: &NewQuestionComment,
-    ) -> Result<BoardQuestionComment> {
+    async fn insert(&mut self, _comment: &NewQuestionComment) -> Result<BoardQuestionComment> {
         Err(folgt("BoardQuestionCommentRepository.insert"))
     }
 }

@@ -246,19 +246,56 @@ fn stufe_001_ubernimmt_die_spaltennamen_von_sql_server() {
     assert_eq!(s.columns("Users"), ["Id", "Name", "CreatedAt"]);
     assert_eq!(
         s.columns("Projects"),
-        ["Id", "Key", "Name", "NextTicketNumber", "CreatedAt", "CreatedBy"]
+        [
+            "Id",
+            "Key",
+            "Name",
+            "NextTicketNumber",
+            "CreatedAt",
+            "CreatedBy"
+        ]
     );
     assert_eq!(
         s.columns("Boards"),
-        ["Id", "ProjectId", "OwnerId", "Name", "RepoPath", "CreatedAt", "RowVer"]
+        [
+            "Id",
+            "ProjectId",
+            "OwnerId",
+            "Name",
+            "RepoPath",
+            "CreatedAt",
+            "RowVer"
+        ]
     );
     assert_eq!(
         s.columns("Tickets"),
         [
-            "Id", "ProjectId", "BoardId", "Number", "Title", "Description", "Status", "Priority",
-            "SortOrder", "Assignee", "NeedsPlanning", "Acceptance", "Plan", "Handbook", "Diagram",
-            "BlockedReason", "PlannedAt", "PlannedBy", "PlanningClaimBy", "PlanningClaimAt",
-            "CreatedAt", "CreatedById", "CreatedByName", "UpdatedAt", "Rev", "RowVer",
+            "Id",
+            "ProjectId",
+            "BoardId",
+            "Number",
+            "Title",
+            "Description",
+            "Status",
+            "Priority",
+            "SortOrder",
+            "Assignee",
+            "NeedsPlanning",
+            "Acceptance",
+            "Plan",
+            "Handbook",
+            "Diagram",
+            "BlockedReason",
+            "PlannedAt",
+            "PlannedBy",
+            "PlanningClaimBy",
+            "PlanningClaimAt",
+            "CreatedAt",
+            "CreatedById",
+            "CreatedByName",
+            "UpdatedAt",
+            "Rev",
+            "RowVer",
         ]
     );
     assert_eq!(s.columns("TicketLabels"), ["TicketId", "Position", "Label"]);
@@ -268,22 +305,58 @@ fn stufe_001_ubernimmt_die_spaltennamen_von_sql_server() {
     );
     assert_eq!(
         s.columns("Comments"),
-        ["Id", "TicketId", "AuthorId", "AuthorName", "Body", "CreatedAt", "RowVer"]
+        [
+            "Id",
+            "TicketId",
+            "AuthorId",
+            "AuthorName",
+            "Body",
+            "CreatedAt",
+            "RowVer"
+        ]
     );
     assert_eq!(
         s.columns("History"),
-        ["Id", "TicketId", "At", "ById", "ByName", "Field", "FromValue", "ToValue", "Note"]
+        [
+            "Id",
+            "TicketId",
+            "At",
+            "ById",
+            "ByName",
+            "Field",
+            "FromValue",
+            "ToValue",
+            "Note"
+        ]
     );
     assert_eq!(
         s.columns("Notes"),
         [
-            "Id", "BoardId", "AuthorId", "AuthorName", "Body", "Source", "Labels", "State",
-            "TicketId", "Reason", "CreatedAt", "RowVer",
+            "Id",
+            "BoardId",
+            "AuthorId",
+            "AuthorName",
+            "Body",
+            "Source",
+            "Labels",
+            "State",
+            "TicketId",
+            "Reason",
+            "CreatedAt",
+            "RowVer",
         ]
     );
     assert_eq!(
         s.columns("Deletions"),
-        ["Id", "At", "ById", "ByName", "TicketId", "TicketTitle", "FromStatus"]
+        [
+            "Id",
+            "At",
+            "ById",
+            "ByName",
+            "TicketId",
+            "TicketTitle",
+            "FromStatus"
+        ]
     );
     assert_eq!(
         s.column("Tickets", "RowVer"),
@@ -309,7 +382,8 @@ fn stufe_001_legt_indizes_und_schlussel_an() {
         Some(&vec!["BoardId".to_string(), "Status".to_string()])
     );
     assert_eq!(
-        s.indexes("TicketDependencies").get("IX_TicketDeps_DependsOn"),
+        s.indexes("TicketDependencies")
+            .get("IX_TicketDeps_DependsOn"),
         Some(&vec!["DependsOnId".to_string()])
     );
     assert_eq!(
@@ -341,21 +415,51 @@ fn stufe_001_ubernimmt_fremdschlussel_und_kaskaden() {
     assert_eq!(
         s.foreign_keys("Tickets"),
         [
-            ForeignKey { from: "BoardId".into(), table: "Boards".into(), to: "Id".into(), on_delete: "NO ACTION".into() },
-            ForeignKey { from: "CreatedById".into(), table: "Users".into(), to: "Id".into(), on_delete: "NO ACTION".into() },
-            ForeignKey { from: "ProjectId".into(), table: "Projects".into(), to: "Id".into(), on_delete: "NO ACTION".into() },
+            ForeignKey {
+                from: "BoardId".into(),
+                table: "Boards".into(),
+                to: "Id".into(),
+                on_delete: "NO ACTION".into()
+            },
+            ForeignKey {
+                from: "CreatedById".into(),
+                table: "Users".into(),
+                to: "Id".into(),
+                on_delete: "NO ACTION".into()
+            },
+            ForeignKey {
+                from: "ProjectId".into(),
+                table: "Projects".into(),
+                to: "Id".into(),
+                on_delete: "NO ACTION".into()
+            },
         ]
     );
     assert_eq!(
         s.foreign_keys("TicketDependencies"),
         [
-            ForeignKey { from: "DependsOnId".into(), table: "Tickets".into(), to: "Id".into(), on_delete: "NO ACTION".into() },
-            ForeignKey { from: "TicketId".into(), table: "Tickets".into(), to: "Id".into(), on_delete: "CASCADE".into() },
+            ForeignKey {
+                from: "DependsOnId".into(),
+                table: "Tickets".into(),
+                to: "Id".into(),
+                on_delete: "NO ACTION".into()
+            },
+            ForeignKey {
+                from: "TicketId".into(),
+                table: "Tickets".into(),
+                to: "Id".into(),
+                on_delete: "CASCADE".into()
+            },
         ]
     );
     assert_eq!(
         s.foreign_keys("TicketLabels"),
-        [ForeignKey { from: "TicketId".into(), table: "Tickets".into(), to: "Id".into(), on_delete: "CASCADE".into() }]
+        [ForeignKey {
+            from: "TicketId".into(),
+            table: "Tickets".into(),
+            to: "Id".into(),
+            on_delete: "CASCADE".into()
+        }]
     );
     assert_eq!(
         s.foreign_keys_short("Comments"),
@@ -371,7 +475,12 @@ fn stufe_001_ubernimmt_fremdschlussel_und_kaskaden() {
     );
     assert_eq!(
         s.foreign_keys("Deletions"),
-        [ForeignKey { from: "ById".into(), table: "Users".into(), to: "Id".into(), on_delete: "NO ACTION".into() }]
+        [ForeignKey {
+            from: "ById".into(),
+            table: "Users".into(),
+            to: "Id".into(),
+            on_delete: "NO ACTION".into()
+        }]
     );
     assert_eq!(s.foreign_key_violations(), 0);
     s.dispose();
@@ -383,7 +492,9 @@ fn stufe_001_setzt_die_defaults_wie_sql_server() {
     s.seed_board();
     s.insert_ticket("AIH-0001", 1).expect("Ticket");
     assert!(ist_iso(&s.text("SELECT CreatedAt FROM Users").unwrap()));
-    assert!(ist_iso(&s.text("SELECT AppliedAt FROM SchemaVersion").unwrap()));
+    assert!(ist_iso(
+        &s.text("SELECT AppliedAt FROM SchemaVersion").unwrap()
+    ));
     assert_eq!(s.number("SELECT NextTicketNumber FROM Projects"), Some(1));
     let texte: Vec<(String, String, String, String, String, i64)> = s.rows(
         "SELECT Description, Acceptance, \"Plan\", Handbook, Diagram, RowVer FROM Tickets",
@@ -420,10 +531,7 @@ fn stufe_001_lehnt_check_fremdschlussel_und_doppelte_ab() {
     let fehler = s
         .insert_ticket_with("AIH-0001", 1, "foo", "normal", 1)
         .expect_err("Status");
-    assert!(
-        fehler.to_string().contains("CK_Tickets_Status"),
-        "{fehler}"
-    );
+    assert!(fehler.to_string().contains("CK_Tickets_Status"), "{fehler}");
     let fehler = s
         .insert_ticket_with("AIH-0001", 1, "backlog", "mega", 1)
         .expect_err("Priorität");
@@ -550,10 +658,28 @@ fn stufe_002_legt_alle_fragentabellen_an() {
     assert_eq!(
         s.columns("Questions"),
         [
-            "Id", "ProjectId", "Number", "Title", "Description", "State", "Occasion", "OriginKind",
-            "OriginName", "OriginSession", "DecisionOutcome", "DecisionOption", "DecisionText",
-            "DecisionReason", "DecidedById", "DecidedByName", "DecidedAt", "CreatedAt",
-            "CreatedById", "UpdatedAt", "Rev", "RowVer",
+            "Id",
+            "ProjectId",
+            "Number",
+            "Title",
+            "Description",
+            "State",
+            "Occasion",
+            "OriginKind",
+            "OriginName",
+            "OriginSession",
+            "DecisionOutcome",
+            "DecisionOption",
+            "DecisionText",
+            "DecisionReason",
+            "DecidedById",
+            "DecidedByName",
+            "DecidedAt",
+            "CreatedAt",
+            "CreatedById",
+            "UpdatedAt",
+            "Rev",
+            "RowVer",
         ]
     );
     assert_eq!(s.columns("QuestionTags"), ["QuestionId", "Position", "Tag"]);
@@ -564,19 +690,53 @@ fn stufe_002_legt_alle_fragentabellen_an() {
     );
     assert_eq!(
         s.columns("QuestionResearch"),
-        ["Id", "QuestionId", "At", "ById", "ByName", "Kind", "Context"]
+        [
+            "Id",
+            "QuestionId",
+            "At",
+            "ById",
+            "ByName",
+            "Kind",
+            "Context"
+        ]
     );
     assert_eq!(
         s.columns("QuestionOptions"),
-        ["QuestionId", "ResearchId", "OptionId", "Title", "Text", "Pros", "Cons", "Recommended"]
+        [
+            "QuestionId",
+            "ResearchId",
+            "OptionId",
+            "Title",
+            "Text",
+            "Pros",
+            "Cons",
+            "Recommended"
+        ]
     );
     assert_eq!(
         s.columns("QuestionComments"),
-        ["Id", "QuestionId", "AuthorId", "AuthorName", "AuthorKind", "Body", "CreatedAt"]
+        [
+            "Id",
+            "QuestionId",
+            "AuthorId",
+            "AuthorName",
+            "AuthorKind",
+            "Body",
+            "CreatedAt"
+        ]
     );
     assert_eq!(
         s.columns("QuestionHistory"),
-        ["Id", "QuestionId", "At", "ById", "ByName", "ByKind", "Type", "Text"]
+        [
+            "Id",
+            "QuestionId",
+            "At",
+            "ById",
+            "ByName",
+            "ByKind",
+            "Type",
+            "Text"
+        ]
     );
     s.dispose();
 }
@@ -585,13 +745,41 @@ fn stufe_002_legt_alle_fragentabellen_an() {
 fn stufe_002_legt_indizes_und_schlussel_an() {
     let s = SchemaInspect::fresh(bis(2));
     let erwartet = [
-        ("Questions", "IX_Questions_Project", vec!["ProjectId", "State"]),
-        ("QuestionTickets", "IX_QuestionTickets_Ticket", vec!["TicketId"]),
-        ("QuestionDependencies", "IX_QuestionDeps_DependsOn", vec!["DependsOnId"]),
-        ("QuestionResearch", "IX_QuestionResearch_Question", vec!["QuestionId"]),
-        ("QuestionOptions", "IX_QuestionOptions_Research", vec!["ResearchId"]),
-        ("QuestionComments", "IX_QuestionComments_Question", vec!["QuestionId"]),
-        ("QuestionHistory", "IX_QuestionHistory_Question", vec!["QuestionId"]),
+        (
+            "Questions",
+            "IX_Questions_Project",
+            vec!["ProjectId", "State"],
+        ),
+        (
+            "QuestionTickets",
+            "IX_QuestionTickets_Ticket",
+            vec!["TicketId"],
+        ),
+        (
+            "QuestionDependencies",
+            "IX_QuestionDeps_DependsOn",
+            vec!["DependsOnId"],
+        ),
+        (
+            "QuestionResearch",
+            "IX_QuestionResearch_Question",
+            vec!["QuestionId"],
+        ),
+        (
+            "QuestionOptions",
+            "IX_QuestionOptions_Research",
+            vec!["ResearchId"],
+        ),
+        (
+            "QuestionComments",
+            "IX_QuestionComments_Question",
+            vec!["QuestionId"],
+        ),
+        (
+            "QuestionHistory",
+            "IX_QuestionHistory_Question",
+            vec!["QuestionId"],
+        ),
     ];
     for (table, index, columns) in erwartet {
         let indizes = s.indexes(table);
@@ -619,25 +807,60 @@ fn stufe_002_ubernimmt_fremdschlussel_und_kaskaden() {
     assert_eq!(
         s.foreign_keys("Questions"),
         [
-            ForeignKey { from: "CreatedById".into(), table: "Users".into(), to: "Id".into(), on_delete: "NO ACTION".into() },
-            ForeignKey { from: "DecidedById".into(), table: "Users".into(), to: "Id".into(), on_delete: "NO ACTION".into() },
-            ForeignKey { from: "ProjectId".into(), table: "Projects".into(), to: "Id".into(), on_delete: "NO ACTION".into() },
+            ForeignKey {
+                from: "CreatedById".into(),
+                table: "Users".into(),
+                to: "Id".into(),
+                on_delete: "NO ACTION".into()
+            },
+            ForeignKey {
+                from: "DecidedById".into(),
+                table: "Users".into(),
+                to: "Id".into(),
+                on_delete: "NO ACTION".into()
+            },
+            ForeignKey {
+                from: "ProjectId".into(),
+                table: "Projects".into(),
+                to: "Id".into(),
+                on_delete: "NO ACTION".into()
+            },
         ]
     );
     assert_eq!(
         s.foreign_keys("QuestionTickets"),
         [
-            ForeignKey { from: "QuestionId".into(), table: "Questions".into(), to: "Id".into(), on_delete: "CASCADE".into() },
-            ForeignKey { from: "TicketId".into(), table: "Tickets".into(), to: "Id".into(), on_delete: "NO ACTION".into() },
+            ForeignKey {
+                from: "QuestionId".into(),
+                table: "Questions".into(),
+                to: "Id".into(),
+                on_delete: "CASCADE".into()
+            },
+            ForeignKey {
+                from: "TicketId".into(),
+                table: "Tickets".into(),
+                to: "Id".into(),
+                on_delete: "NO ACTION".into()
+            },
         ]
     );
     assert_eq!(
         s.foreign_keys("QuestionDependencies"),
-        [ForeignKey { from: "QuestionId".into(), table: "Questions".into(), to: "Id".into(), on_delete: "CASCADE".into() }]
+        [ForeignKey {
+            from: "QuestionId".into(),
+            table: "Questions".into(),
+            to: "Id".into(),
+            on_delete: "CASCADE".into()
+        }]
     );
     assert_eq!(
         s.foreign_keys("QuestionOptions"),
-        [ForeignKey { from: "ResearchId".into(), table: "QuestionResearch".into(), to: "Id".into(), on_delete: "CASCADE".into() }]
+        [ForeignKey {
+            from: "ResearchId".into(),
+            table: "QuestionResearch".into(),
+            to: "Id".into(),
+            on_delete: "CASCADE".into()
+        }]
     );
     for table in [
         "QuestionTags",
@@ -651,7 +874,12 @@ fn stufe_002_ubernimmt_fremdschlussel_und_kaskaden() {
             .find(|f| f.from == "QuestionId");
         assert_eq!(
             auf_frage,
-            Some(ForeignKey { from: "QuestionId".into(), table: "Questions".into(), to: "Id".into(), on_delete: "CASCADE".into() }),
+            Some(ForeignKey {
+                from: "QuestionId".into(),
+                table: "Questions".into(),
+                to: "Id".into(),
+                on_delete: "CASCADE".into()
+            }),
             "{table}"
         );
     }
@@ -751,11 +979,10 @@ fn stufe_002_loscht_tags_recherchen_kommentare_und_verlauf_mit_der_frage() {
     )
     .expect("Verlauf");
 
-    let vor_nach: Vec<(String, String)> = s.rows(
-        "SELECT Pros, Cons FROM QuestionOptions",
-        &[],
-        |row| Ok((row.get(0)?, row.get(1)?)),
-    );
+    let vor_nach: Vec<(String, String)> =
+        s.rows("SELECT Pros, Cons FROM QuestionOptions", &[], |row| {
+            Ok((row.get(0)?, row.get(1)?))
+        });
     assert_eq!(vor_nach, [("[]".to_string(), "[]".to_string())]);
 
     // Der Bezug aufs Ticket blockiert dessen Löschen
@@ -795,7 +1022,11 @@ fn stufe_003_meldet_die_erwartete_schema_version() {
         s.runner().schema_version().unwrap(),
         Some(EXPECTED_SCHEMA_VERSION)
     );
-    let versionen: Vec<i64> = s.rows("SELECT Version FROM SchemaVersion ORDER BY Version", &[], |row| row.get(0));
+    let versionen: Vec<i64> = s.rows(
+        "SELECT Version FROM SchemaVersion ORDER BY Version",
+        &[],
+        |row| row.get(0),
+    );
     assert_eq!(versionen, [1, 2, 3]);
     s.dispose();
 }
@@ -835,11 +1066,10 @@ fn stufe_003_hangt_die_harness_spalten_an() {
     );
 
     s.insert_ticket("AIH-0001", 1).expect("Ticket");
-    let werte: Vec<(Option<String>, Option<String>, String)> = s.rows(
-        "SELECT Spec, Branch, Touches FROM Tickets",
-        &[],
-        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
-    );
+    let werte: Vec<(Option<String>, Option<String>, String)> =
+        s.rows("SELECT Spec, Branch, Touches FROM Tickets", &[], |row| {
+            Ok((row.get(0)?, row.get(1)?, row.get(2)?))
+        });
     assert_eq!(werte, [(None, None, "[]".to_string())]);
     s.dispose();
 }
@@ -864,11 +1094,21 @@ fn stufe_003_legt_schritte_und_sessions_mit_kaskade_an() {
     );
     assert_eq!(
         s.foreign_keys("TicketSteps"),
-        [ForeignKey { from: "TicketId".into(), table: "Tickets".into(), to: "Id".into(), on_delete: "CASCADE".into() }]
+        [ForeignKey {
+            from: "TicketId".into(),
+            table: "Tickets".into(),
+            to: "Id".into(),
+            on_delete: "CASCADE".into()
+        }]
     );
     assert_eq!(
         s.foreign_keys("TicketSessions"),
-        [ForeignKey { from: "TicketId".into(), table: "Tickets".into(), to: "Id".into(), on_delete: "CASCADE".into() }]
+        [ForeignKey {
+            from: "TicketId".into(),
+            table: "Tickets".into(),
+            to: "Id".into(),
+            on_delete: "CASCADE".into()
+        }]
     );
 
     s.insert_ticket("AIH-0001", 1).expect("Ticket");
@@ -913,11 +1153,35 @@ fn stufe_004_legt_dispatchruns_und_schemafeatures_an() {
     assert_eq!(
         s.columns("DispatchRuns"),
         [
-            "Id", "Kind", "SubjectId", "ProjectId", "BoardId", "Agent", "Attempt", "Profile",
-            "EscalatedFrom", "RequestedModel", "Model", "Effort", "StartedAt", "EndedAt",
-            "DurationMs", "NumTurns", "ExitCode", "TimedOut", "Outcome", "AbortCategory",
-            "AbortReason", "CostUsd", "InputTokens", "OutputTokens", "CacheReadTokens",
-            "CacheWriteTokens", "ModelUsage", "Source", "RecordedAt",
+            "Id",
+            "Kind",
+            "SubjectId",
+            "ProjectId",
+            "BoardId",
+            "Agent",
+            "Attempt",
+            "Profile",
+            "EscalatedFrom",
+            "RequestedModel",
+            "Model",
+            "Effort",
+            "StartedAt",
+            "EndedAt",
+            "DurationMs",
+            "NumTurns",
+            "ExitCode",
+            "TimedOut",
+            "Outcome",
+            "AbortCategory",
+            "AbortReason",
+            "CostUsd",
+            "InputTokens",
+            "OutputTokens",
+            "CacheReadTokens",
+            "CacheWriteTokens",
+            "ModelUsage",
+            "Source",
+            "RecordedAt",
         ]
     );
     assert_eq!(
@@ -942,11 +1206,10 @@ fn stufe_004_legt_dispatchruns_und_schemafeatures_an() {
     );
     assert!(s.foreign_keys("DispatchRuns").is_empty());
     assert_eq!(s.runner().schema_features().unwrap(), ["dispatch-runs"]);
-    let eintrag: Vec<(String, String)> = s.rows(
-        "SELECT Name, Script FROM SchemaFeatures",
-        &[],
-        |row| Ok((row.get(0)?, row.get(1)?)),
-    );
+    let eintrag: Vec<(String, String)> =
+        s.rows("SELECT Name, Script FROM SchemaFeatures", &[], |row| {
+            Ok((row.get(0)?, row.get(1)?))
+        });
     assert_eq!(
         eintrag,
         [("dispatch-runs".to_string(), "004_dispatch_runs".to_string())]
@@ -965,7 +1228,9 @@ fn stufe_004_speichert_kosten_und_tokens_und_pruft_kind_und_source() {
         |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
     );
     assert_eq!(werte, [(0.123456, 1_234_567_890_123, 0)]);
-    assert!(ist_iso(&s.text("SELECT RecordedAt FROM DispatchRuns").unwrap()));
+    assert!(ist_iso(
+        &s.text("SELECT RecordedAt FROM DispatchRuns").unwrap()
+    ));
 
     let fehler = lauf(&s, "run-2", "spielen", "dispatcher").expect_err("Kind");
     assert!(
@@ -1119,11 +1384,10 @@ fn stufe_005_gibt_jeder_zeile_eines_updates_einen_eigenen_wert() {
     s.insert_ticket("AIH-0002", 2).expect("Ticket");
     s.run("UPDATE Tickets SET Title = Title || '!'")
         .expect("Update");
-    let werte: Vec<(String, i64)> = s.rows(
-        "SELECT Id, RowVer FROM Tickets ORDER BY Id",
-        &[],
-        |row| Ok((row.get(0)?, row.get(1)?)),
-    );
+    let werte: Vec<(String, i64)> =
+        s.rows("SELECT Id, RowVer FROM Tickets ORDER BY Id", &[], |row| {
+            Ok((row.get(0)?, row.get(1)?))
+        });
     assert_eq!(
         werte,
         [("AIH-0001".to_string(), 4), ("AIH-0002".to_string(), 5)]
@@ -1238,7 +1502,9 @@ fn stufe_007_erganzt_die_lauf_spalten_und_die_konfig_versionen() {
         ["Hash", "Dispatcher", "FirstSeenAt", "Content"]
     );
     assert_eq!(s.primary_key("DispatchConfigVersions"), ["Hash"]);
-    assert!(s.indexes("DispatchRuns").contains_key("IX_DispatchRuns_Config"));
+    assert!(s
+        .indexes("DispatchRuns")
+        .contains_key("IX_DispatchRuns_Config"));
     assert!(s
         .indexes("DispatchConfigVersions")
         .contains_key("IX_DispatchConfigVersions_FirstSeen"));

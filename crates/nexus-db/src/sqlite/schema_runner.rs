@@ -88,9 +88,7 @@ impl<'c> SqliteSchemaRunner<'c> {
             .map_err(error_map::wrap)?;
         match self.apply_in_transaction(step) {
             Ok(angewandt) => {
-                self.conn
-                    .execute_batch("COMMIT")
-                    .map_err(error_map::wrap)?;
+                self.conn.execute_batch("COMMIT").map_err(error_map::wrap)?;
                 Ok(angewandt)
             }
             Err(error) => {
@@ -148,9 +146,7 @@ impl<'c> SqliteSchemaRunner<'c> {
     /// `true`, wenn die Abfrage mit diesem Wert mindestens eine Zeile liefert
     fn exists(&self, sql: &str, value: &str) -> Result<bool> {
         let mut statement = self.conn.prepare_cached(sql).map_err(error_map::wrap)?;
-        let gefunden = statement
-            .exists([value])
-            .map_err(error_map::wrap)?;
+        let gefunden = statement.exists([value]).map_err(error_map::wrap)?;
         Ok(gefunden)
     }
 }

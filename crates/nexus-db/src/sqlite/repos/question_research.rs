@@ -18,10 +18,7 @@ impl BoardQuestionResearchRepository for SqliteUnitOfWork<'_> {
         Err(folgt("BoardQuestionResearchRepository.list"))
     }
 
-    async fn insert(
-        &mut self,
-        _research: &NewQuestionResearch,
-    ) -> Result<BoardQuestionResearch> {
+    async fn insert(&mut self, _research: &NewQuestionResearch) -> Result<BoardQuestionResearch> {
         Err(folgt("BoardQuestionResearchRepository.insert"))
     }
 

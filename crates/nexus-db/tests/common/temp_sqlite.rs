@@ -77,8 +77,7 @@ pub struct TempSqlite {
 impl TempSqlite {
     /// Neuer Ordner unter dem Temp-Verzeichnis, Datei `board.db`, Schema angelegt
     pub fn create() -> Result<Self> {
-        let dir = TempDir::with_prefix("harness-sqlite-")
-            .map_err(|e| nexus_core::Error::unexpected(e))?;
+        let dir = TempDir::with_prefix("harness-sqlite-").map_err(nexus_core::Error::unexpected)?;
         let file = dir.path().join("board.db").to_string_lossy().to_string();
         let db = SqliteBoardDatabase::open(&file)?;
         Ok(Self { dir, file, db })

@@ -112,8 +112,14 @@ mod tests {
         let hochste = SQLITE_SCHEMA_STEPS.iter().filter_map(|s| s.version).max();
         assert_eq!(hochste, Some(EXPECTED_SCHEMA_VERSION));
 
-        let features: Vec<&str> = SQLITE_SCHEMA_STEPS.iter().filter_map(|s| s.feature).collect();
-        let verlangt: Vec<&str> = REQUIRED_SCHEMA_FEATURES.iter().map(|(name, _)| *name).collect();
+        let features: Vec<&str> = SQLITE_SCHEMA_STEPS
+            .iter()
+            .filter_map(|s| s.feature)
+            .collect();
+        let verlangt: Vec<&str> = REQUIRED_SCHEMA_FEATURES
+            .iter()
+            .map(|(name, _)| *name)
+            .collect();
         assert_eq!(features, verlangt);
     }
 
