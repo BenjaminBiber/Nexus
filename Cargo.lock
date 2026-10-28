@@ -4326,7 +4326,7 @@ checksum = "5bc6c194a95a535abdfbe3bc1af9a43935b8b9b29c216b8e71af8b59132703cf"
 dependencies = [
  "log",
  "notify-rust",
- "rand",
+ "rand 0.10.3",
  "serde",
  "serde_json",
  "serde_repr",
