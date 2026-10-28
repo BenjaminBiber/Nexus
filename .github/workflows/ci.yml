@@ -99,3 +99,12 @@ jobs:
       - name: Erzeugte Typen passen zu packages/core und packages/web
         if: runner.os == 'Linux'
         run: npm run check:bindings
+      # Gegenprobe auf derselben board.db: TypeScript schreibt, Rust liest und umgekehrt.
+      # Das Node-Skript arbeitet über packages/db/dist, deshalb vorher bauen; die Fälle sind
+      # #[ignore] und laufen nur mit --ignored. Reicht auf einer Plattform.
+      - name: TypeScript für die Gegenprobe bauen
+        if: runner.os == 'Linux'
+        run: npm run build
+      - name: Gegenprobe TypeScript ↔ Rust auf derselben SQLite-Datei
+        if: runner.os == 'Linux'
+        run: cargo test -p nexus-db --test sqlite_crosscheck -- --ignored
