@@ -1,10 +1,26 @@
 // Einstieg der Desktop-App: Plugins, Zustand und Fenster einrichten.
+mod instance;
 mod lifecycle;
 mod server;
 mod tray;
 
+use tauri_plugin_window_state::StateFlags;
+
 pub fn run() {
     let builder = tauri::Builder::default()
+        // Single-Instance muss das erste Plugin sein, damit der zweite Start sofort abbricht und
+        // seine nexus://-Links an die laufende Instanz weitergibt
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            instance::focus_main(app, instance::deep_link_in_args(&argv));
+        }))
+        .plugin(tauri_plugin_deep_link::init())
+        // Größe und Position bleiben erhalten, aber nicht die Sichtbarkeit:
+        // ein ins Tray verstecktes Fenster soll beim nächsten Start wieder da sein
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(StateFlags::all() - StateFlags::VISIBLE)
+                .build(),
+        )
         // Info genügt; auf Trace würden die Bibliotheken unter reqwest das Protokoll fluten
         .plugin(
             tauri_plugin_log::Builder::new()
@@ -29,6 +45,7 @@ pub fn run() {
             lifecycle::init(app.handle());
             server::init(app.handle());
             tray::init(app.handle());
+            instance::setup(app.handle());
             Ok(())
         });
     // Auf macOS ersetzt ein eigenes Menü das vorgefertigte „Quit“, damit Cmd+Q die Rückfrage auslöst
