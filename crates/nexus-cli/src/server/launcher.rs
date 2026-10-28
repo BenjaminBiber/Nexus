@@ -177,11 +177,7 @@ impl ServerLauncher {
             args.push(Self::text(&node.program));
             env = node.env;
         }
-        Some(StartCommand {
-            program,
-            args,
-            env,
-        })
+        Some(StartCommand { program, args, env })
     }
 
     /// Programmdatei des Node-Servers: Umgebung (Tests), gebündelte Programmdatei aus P1-2,

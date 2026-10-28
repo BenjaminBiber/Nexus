@@ -124,7 +124,10 @@ fn serve_startet_rust_und_node_und_schreibt_server_json() {
 
     let health = warte_auf_health(port).expect("Health des Servers");
     // Die Antwort kommt von Rust, nicht vom Node-Server dahinter
-    assert!(health.to_lowercase().contains("x-nexus-backend: rust"), "{health}");
+    assert!(
+        health.to_lowercase().contains("x-nexus-backend: rust"),
+        "{health}"
+    );
 
     // `server.json` nennt den Rust-Prozess und den öffentlichen Port, nicht den internen
     let info = ServerInfoFile::new(HarnessHome::at(home.path()))
@@ -132,7 +135,10 @@ fn serve_startet_rust_und_node_und_schreibt_server_json() {
         .expect("server.json");
     assert_eq!(info.port, port);
     assert_eq!(info.pid, kind.id(), "die PID des Rust-Prozesses");
-    assert!(health.contains(&format!("\"pid\":{}", info.pid)), "{health}");
+    assert!(
+        health.contains(&format!("\"pid\":{}", info.pid)),
+        "{health}"
+    );
 
     // Eine noch nicht portierte Route kommt beim Node-Server an
     let projects = fetch(port, "/api/projects").expect("Antwort auf /api/projects");
@@ -191,7 +197,10 @@ fn sigterm_beendet_rust_und_node_und_loescht_server_json() {
         .find_map(|line| line.rsplit_once("Node-Server hört auf 127.0.0.1:"))
         .and_then(|(_, port)| port.trim().parse().ok())
         .unwrap_or_else(|| panic!("Port des Node-Servers im Protokoll: {protokoll}"));
-    assert_ne!(intern, port, "der Node-Server hört nicht auf dem öffentlichen Port");
+    assert_ne!(
+        intern, port,
+        "der Node-Server hört nicht auf dem öffentlichen Port"
+    );
 
     let pid = kind.id();
     let status = Command::new("kill")

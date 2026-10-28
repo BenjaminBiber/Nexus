@@ -66,7 +66,11 @@ fn load_config(options: &ServeOptions) -> Result<ServerConfig> {
 }
 
 /// Der eigentliche Ablauf; alles davon braucht eine Laufzeit
-async fn serve(context: &CliContext, options: &ServeOptions, mut config: ServerConfig) -> Result<u8> {
+async fn serve(
+    context: &CliContext,
+    options: &ServeOptions,
+    mut config: ServerConfig,
+) -> Result<u8> {
     let log = ServerLog::new(&config.home);
     // Zuerst der öffentliche Port: ist er belegt, endet der Befehl, bevor etwas gestartet ist
     let listener = nexus_server::bind(&config.host, config.port)
@@ -94,17 +98,17 @@ async fn serve(context: &CliContext, options: &ServeOptions, mut config: ServerC
     }
 
     let board = nexus_server::board_from_config(config.home.clone());
-    let server = match nexus_server::serve_on(listener, config, board, Platform::unavailable()).await
-    {
-        Ok(server) => server,
-        Err(error) => {
-            // Der Node-Server darf nicht übrig bleiben, wenn der Rust-Server nicht hochkommt
-            if let Some(sidecar) = sidecar {
-                sidecar.stop().await;
+    let server =
+        match nexus_server::serve_on(listener, config, board, Platform::unavailable()).await {
+            Ok(server) => server,
+            Err(error) => {
+                // Der Node-Server darf nicht übrig bleiben, wenn der Rust-Server nicht hochkommt
+                if let Some(sidecar) = sidecar {
+                    sidecar.stop().await;
+                }
+                return Err(error);
             }
-            return Err(error);
-        }
-    };
+        };
     let node_port = sidecar.as_ref().map(|sidecar| sidecar.port);
     context.printer().result(
         &ServeResult {
@@ -144,7 +148,6 @@ fn web_dir_beside_exe() -> Option<PathBuf> {
         .map(|dir| dir.join("web"))
         .filter(|dir| dir.is_dir())
 }
-
 
 #[cfg(test)]
 mod tests {

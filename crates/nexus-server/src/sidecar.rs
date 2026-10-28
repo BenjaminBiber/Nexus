@@ -251,10 +251,7 @@ impl NodeSidecar {
     fn failed(&self, reason: &str) -> HarnessError {
         HarnessError::new(
             "server-start-failed",
-            format!(
-                "{reason} Details stehen in {}",
-                text(self.log.file())
-            ),
+            format!("{reason} Details stehen in {}", text(self.log.file())),
         )
     }
 }
@@ -267,7 +264,10 @@ where
 {
     while let Ok(Some(line)) = lines.next_line().await {
         let line = line.trim_end();
-        match line.strip_prefix(PORT_LINE).and_then(|raw| raw.trim().parse().ok()) {
+        match line
+            .strip_prefix(PORT_LINE)
+            .and_then(|raw| raw.trim().parse().ok())
+        {
             Some(port) => return Some(port),
             None => log.write(&format!("Node: {line}")),
         }
@@ -391,8 +391,12 @@ mod tests {
     #[test]
     fn die_angabe_geht_vor_der_umgebung() {
         let map = env(&[("NEXUS_NODE_SIDECAR", "/aus/der/umgebung")]);
-        let spec = SidecarSpec::resolve(Some("/aus/dem/argument"), &|name| map.get(name).cloned(), None)
-            .unwrap();
+        let spec = SidecarSpec::resolve(
+            Some("/aus/dem/argument"),
+            &|name| map.get(name).cloned(),
+            None,
+        )
+        .unwrap();
         assert_eq!(spec.program, Path::new("/aus/dem/argument"));
     }
 
@@ -433,8 +437,8 @@ mod tests {
     fn ohne_programmdatei_fehlt_der_node_server() {
         let dir = tempfile::tempdir().unwrap();
         let map = env(&[]);
-        let error =
-            SidecarSpec::resolve(None, &|name| map.get(name).cloned(), Some(dir.path())).unwrap_err();
+        let error = SidecarSpec::resolve(None, &|name| map.get(name).cloned(), Some(dir.path()))
+            .unwrap_err();
         assert_eq!(error.code(), Some("node-sidecar-missing"));
         assert!(error.to_string().contains("--node-sidecar"), "{error}");
     }

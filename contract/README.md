@@ -92,6 +92,21 @@ Der Server wird mit `HARNESS_HOME`, `HARNESS_PORT`, `CLAUDE_CONFIG_DIR` und den 
 Umgebung gestartet und hört auf `127.0.0.1`. Er schreibt `server.json` wie der normale Start und beendet sich
 bei `SIGTERM`/`SIGINT` sauber.
 
+### Rust vorn, Node dahinter
+
+Im Betrieb nimmt der Rust-Server den Port an und hält den Node-Server als Kindprozess dahinter. Genau diesen
+Weg prüft der ganze Vertrag mit:
+
+```sh
+npm run build && cargo build -p nexus-cli --bin nexus
+node contract/run.mjs --server-cmd "node scripts/contract/rust-vor-node.mjs --port {port}"
+```
+
+Das Skript startet `nexus serve` mit dem Vertragsserver als Sidecar. Dafür kennt `contract/servers/ts-server.mjs`
+denselben Sidecar-Modus wie der echte Node-Server: Mit `HARNESS_SIDECAR=1` ist Port 0 erlaubt (freier Port), der
+gewählte Port geht als Zeile `HARNESS_SIDECAR_PORT=<port>` auf stdout, es entsteht keine `server.json` (die gehört
+dem Rust-Prozess), Links in Meldungen zeigen auf `HARNESS_PUBLIC_PORT`, und ein Ende der stdin beendet ihn.
+
 ## Szenario-Format (`*.scenario.json`)
 
 ```json
