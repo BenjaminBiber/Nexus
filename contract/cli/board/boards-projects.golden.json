@@ -770,5 +770,84 @@
       "stderr": "",
       "stdout": "Keine Boards. Mit „harness board boards create <projekt> <name>“ anlegen."
     }
+  },
+  {
+    "name": "board --no-open --json (ohne Unterbefehl, ohne Browser)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "--no-open"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "port": 0,
+        "project": {
+          "id": "<var:pid>",
+          "name": "Mein Projekt ä",
+          "path": "<REPO1>",
+          "reachable": true
+        },
+        "started": false,
+        "url": "http://127.0.0.1:<PORT>/p/<var:pid>/board"
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "board --no-open",
+    "request": {
+      "args": [
+        "board",
+        "--no-open"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Server läuft auf http://127.0.0.1:<PORT>\nBoard: http://127.0.0.1:<PORT>/p/<var:pid>/board"
+    }
+  },
+  {
+    "name": "board mit unbekanntem Unterbefehl (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "quatsch"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Unbekannter Befehl „board quatsch“. Hilfe: harness board --help [command-unknown]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "board mit kaputtem Port --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "--port",
+        "abc",
+        "--no-open"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "port-invalid",
+          "message": "Der Port „abc“ ist ungültig. Erlaubt sind Zahlen von 1 bis 65535."
+        }
+      },
+      "stderr": ""
+    }
   }
 ]

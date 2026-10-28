@@ -51,6 +51,11 @@
     { "name": "boards delete --json", "kind": "cli", "args": ["--json", "board", "boards", "delete", "2", "--by", "claude"], "cwd": "{{REPO1}}" },
     { "name": "boards delete unbekannt (Fehler)", "kind": "cli", "args": ["board", "boards", "delete", "99", "--by", "claude"], "cwd": "{{REPO1}}" },
 
-    { "name": "boards list am Ende", "kind": "cli", "args": ["board", "boards", "list"], "cwd": "{{REPO1}}" }
+    { "name": "boards list am Ende", "kind": "cli", "args": ["board", "boards", "list"], "cwd": "{{REPO1}}" },
+
+    { "name": "board --no-open --json (ohne Unterbefehl, ohne Browser)", "kind": "cli", "args": ["--json", "board", "--no-open"], "cwd": "{{REPO1}}", "save": { "pid": "json.project.id" } },
+    { "name": "board --no-open", "kind": "cli", "args": ["board", "--no-open"], "cwd": "{{REPO1}}" },
+    { "name": "board mit unbekanntem Unterbefehl (Fehler)", "kind": "cli", "args": ["board", "quatsch"], "cwd": "{{REPO1}}" },
+    { "name": "board mit kaputtem Port --json (Fehler)", "kind": "cli", "args": ["--json", "board", "--port", "abc", "--no-open"], "cwd": "{{REPO1}}" }
   ]
 }

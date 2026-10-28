@@ -606,6 +606,73 @@
     }
   },
   {
+    "name": "accept --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "accept",
+        "ARC-0005",
+        "--by",
+        "Florian"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": null,
+        "boardInScope": false,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": false,
+        "lastErrors": [],
+        "lastTick": "<TIME>",
+        "merges": [
+          {
+            "branch": "ticket/ARC-0001-login-bauen",
+            "phase": "waiting",
+            "target": null,
+            "ticketId": "ARC-0003"
+          }
+        ],
+        "message": "Dispatcher ist ausgeschaltet",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "result": {
+          "outcome": "accepted",
+          "text": "ARC-0005 abgenommen und erledigt; kein Branch eingetragen, es gibt nichts zu mergen."
+        },
+        "runs": [],
+        "state": "off",
+        "tickets": [],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "stderr": ""
+    }
+  },
+  {
     "name": "accept eines nicht blockierten Tickets --json (Fehler)",
     "request": {
       "args": [
@@ -662,7 +729,7 @@
     "response": {
       "code": 0,
       "stderr": "",
-      "stdout": "\nIn Arbeit (1)\n  ARC-0001  Login bauen\n\nErledigt (3)\n  ARC-0002  Export bauen\n  ARC-0003  Suche beschleunigen\n  ARC-0004  Bericht prüfen"
+      "stdout": "\nIn Arbeit (1)\n  ARC-0001  Login bauen\n\nErledigt (4)\n  ARC-0002  Export bauen\n  ARC-0003  Suche beschleunigen\n  ARC-0004  Bericht prüfen\n  ARC-0005  Rechnung prüfen"
     }
   }
 ]

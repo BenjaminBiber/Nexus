@@ -19,6 +19,8 @@
 
     { "name": "step abhaken (alte Form)", "kind": "cli", "args": ["board", "step", "ARC-0001", "2", "--by", "claude"], "cwd": "{{REPO1}}" },
     { "name": "step --undo", "kind": "cli", "args": ["board", "step", "ARC-0001", "2", "--undo", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step abhaken --json (alte Form)", "kind": "cli", "args": ["--json", "board", "step", "ARC-0001", "2", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step --undo --json", "kind": "cli", "args": ["--json", "board", "step", "ARC-0001", "2", "--undo", "--by", "claude"], "cwd": "{{REPO1}}" },
     { "name": "step done", "kind": "cli", "args": ["board", "step", "done", "ARC-0001", "1", "--by", "claude"], "cwd": "{{REPO1}}" },
     { "name": "step done --expect", "kind": "cli", "args": ["board", "step", "done", "ARC-0001", "2", "--expect", "Test schreiben", "--by", "claude"], "cwd": "{{REPO1}}" },
     { "name": "step done --json", "kind": "cli", "args": ["--json", "board", "step", "done", "ARC-0001", "3", "--by", "claude"], "cwd": "{{REPO1}}" },

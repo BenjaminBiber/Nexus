@@ -222,6 +222,87 @@
     }
   },
   {
+    "name": "dispatch enable --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "dispatch",
+        "enable"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": true,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "message": "bereit · 0/1",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [],
+        "state": "idle",
+        "tickets": [
+          {
+            "id": "ARC-0001",
+            "reason": "bereit",
+            "title": "Anmeldung bauen"
+          },
+          {
+            "id": "ARC-0002",
+            "reason": "Label „auto“ fehlt",
+            "title": "Abmeldung bauen"
+          }
+        ],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "dispatch disable",
+    "request": {
+      "args": [
+        "board",
+        "dispatch",
+        "disable"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Dispatcher: Dispatcher ist ausgeschaltet\nLäufe:\n  keine\nRecherchen: 0/1 laufen, Automatik aus, heute 0/10 automatisch\nPlanungen: 0/1 laufen, Automatik aus\nGeplant (Board 1):\n  ARC-0001  bereit\n  ARC-0002  Label „auto“ fehlt\nEinstellung: <HOME>/dispatch.yaml"
+    }
+  },
+  {
     "name": "dispatch enable erneut",
     "request": {
       "args": [
@@ -235,6 +316,66 @@
       "code": 0,
       "stderr": "",
       "stdout": "Dispatcher: bereit · 0/1\nLäufe:\n  keine\nRecherchen: 0/1 laufen, Automatik aus, heute 0/10 automatisch\nPlanungen: 0/1 laufen, Automatik aus\nGeplant (Board 1):\n  ARC-0001  bereit\n  ARC-0002  Label „auto“ fehlt\nEinstellung: <HOME>/dispatch.yaml"
+    }
+  },
+  {
+    "name": "dispatch enable mit kaputtem Port (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "--port",
+        "abc",
+        "dispatch",
+        "enable"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Der Port „abc“ ist ungültig. [port-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "dispatch disable mit kaputtem Port --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "--port",
+        "0",
+        "dispatch",
+        "disable"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "port-invalid",
+          "message": "Der Port „0“ ist ungültig."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "dispatch resume mit kaputtem Port (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "--port",
+        "99999",
+        "dispatch",
+        "resume"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Der Port „99999“ ist ungültig. [port-invalid]",
+      "stdout": ""
     }
   },
   {
@@ -986,7 +1127,7 @@
     }
   },
   {
-    "name": "dispatch disable",
+    "name": "dispatch disable am Ende",
     "request": {
       "args": [
         "board",

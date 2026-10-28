@@ -28,7 +28,12 @@
 
     { "name": "dispatch enable", "kind": "cli", "args": ["board", "dispatch", "enable"], "cwd": "{{REPO1}}" },
     { "name": "dispatch disable --json", "kind": "cli", "args": ["--json", "board", "dispatch", "disable"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch enable --json", "kind": "cli", "args": ["--json", "board", "dispatch", "enable"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch disable", "kind": "cli", "args": ["board", "dispatch", "disable"], "cwd": "{{REPO1}}" },
     { "name": "dispatch enable erneut", "kind": "cli", "args": ["board", "dispatch", "enable"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch enable mit kaputtem Port (Fehler)", "kind": "cli", "args": ["board", "--port", "abc", "dispatch", "enable"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch disable mit kaputtem Port --json (Fehler)", "kind": "cli", "args": ["--json", "board", "--port", "0", "dispatch", "disable"], "cwd": "{{REPO1}}" },
+    { "name": "dispatch resume mit kaputtem Port (Fehler)", "kind": "cli", "args": ["board", "--port", "99999", "dispatch", "resume"], "cwd": "{{REPO1}}" },
 
     { "name": "dispatch pause --json (die Meldung nennt die Uhrzeit des Endes und bleibt deshalb außen vor)", "kind": "cli", "args": ["--json", "board", "dispatch", "pause", "--minutes", "15"], "cwd": "{{REPO1}}", "ignore": ["json.message"] },
     { "name": "dispatch resume", "kind": "cli", "args": ["board", "dispatch", "resume"], "cwd": "{{REPO1}}" },
@@ -57,6 +62,6 @@
     { "name": "question research-start einer unbekannten Frage (Fehler)", "kind": "cli", "args": ["board", "question", "research-start", "ARC-F0099"], "cwd": "{{REPO1}}" },
 
     { "name": "dispatch status am Ende", "kind": "cli", "args": ["board", "dispatch", "status"], "cwd": "{{REPO1}}" },
-    { "name": "dispatch disable", "kind": "cli", "args": ["board", "dispatch", "disable"], "cwd": "{{REPO1}}" }
+    { "name": "dispatch disable am Ende", "kind": "cli", "args": ["board", "dispatch", "disable"], "cwd": "{{REPO1}}" }
   ]
 }

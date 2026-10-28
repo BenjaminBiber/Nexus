@@ -13,6 +13,8 @@
     { "name": "Ticket Suche", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Suche beschleunigen", "status": "planned", "needsPlanning": false }, "record": false },
     { "name": "Ticket zur Abnahme", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Bericht prüfen", "status": "blocked", "acceptance": "Der Bericht stimmt.", "needsPlanning": false }, "record": false },
     { "name": "Grund der Abnahme", "method": "PATCH", "path": "/api/db/tickets/ARC-0004", "body": { "rev": 1, "blockedReason": "Human Interaction: Ergebnis ansehen" }, "record": false },
+    { "name": "zweites Ticket zur Abnahme", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Rechnung prüfen", "status": "blocked", "acceptance": "Die Rechnung stimmt.", "needsPlanning": false }, "record": false },
+    { "name": "Grund der zweiten Abnahme", "method": "PATCH", "path": "/api/db/tickets/ARC-0005", "body": { "rev": 1, "blockedReason": "Human Interaction: Rechnung ansehen" }, "record": false },
 
     { "name": "claim", "kind": "cli", "args": ["board", "claim", "ARC-0001", "--agent", "claude"], "cwd": "{{REPO1}}" },
     { "name": "claim eines zugewiesenen Tickets (Fehler)", "kind": "cli", "args": ["board", "claim", "ARC-0001", "--agent", "claude"], "cwd": "{{REPO1}}" },
@@ -44,6 +46,7 @@
     { "name": "merge eines unbekannten Tickets (Fehler)", "kind": "cli", "args": ["board", "merge", "ARC-9999"], "cwd": "{{REPO1}}" },
 
     { "name": "accept", "kind": "cli", "args": ["board", "accept", "ARC-0004", "--by", "Florian"], "cwd": "{{REPO1}}" },
+    { "name": "accept --json", "kind": "cli", "args": ["--json", "board", "accept", "ARC-0005", "--by", "Florian"], "cwd": "{{REPO1}}" },
     { "name": "accept eines nicht blockierten Tickets --json (Fehler)", "kind": "cli", "args": ["--json", "board", "accept", "ARC-0001", "--by", "Florian"], "cwd": "{{REPO1}}" },
     { "name": "accept aus einer Session (Fehler)", "kind": "cli", "args": ["board", "accept", "ARC-0004", "--by", "Florian"], "cwd": "{{REPO1}}", "env": { "HARNESS_SESSION": "s1" } },
 
