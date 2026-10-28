@@ -43,7 +43,7 @@ fn chunk_params<T: Clone + Into<SqlValue>>(values: &[T]) -> (String, Params) {
     let params = names
         .iter()
         .zip(values.iter())
-        .map(|(name, value)| (*name, value.clone().into()))
+        .map(|(name, value)| (std::borrow::Cow::Borrowed(*name), value.clone().into()))
         .collect();
     (list, params)
 }
@@ -126,7 +126,7 @@ impl CommentRepository for SqliteUnitOfWork<'_> {
     async fn mark_read_by_agent(&mut self, ids: &[i64], at: &str) -> Result<()> {
         for chunk in SqlChunks::of(ids) {
             let (list, mut params) = chunk_params(chunk);
-            params.push(("at", date(at)));
+            params.push((std::borrow::Cow::Borrowed("at"), date(at)));
             let sql = format!(
                 "UPDATE Comments SET ReadByAgentAt = @at WHERE ReadByAgentAt IS NULL AND Id IN ({list})"
             );

@@ -71,7 +71,10 @@ impl NoteRepository for SqliteUnitOfWork<'_> {
             "source": filter.source.clone(),
         };
         for (name, state) in STATE_NAMES.iter().zip(states.iter()) {
-            params.push((name, SqlValue::from(state.as_str())));
+            params.push((
+                std::borrow::Cow::Borrowed(name),
+                SqlValue::from(state.as_str()),
+            ));
         }
         let state_clause = if states.is_empty() {
             String::new()
