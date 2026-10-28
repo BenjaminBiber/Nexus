@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CliStep } from './lib/CliStep.mjs';
 import { Coverage } from './lib/Coverage.mjs';
 import { GoldenStore } from './lib/GoldenStore.mjs';
 import { ScenarioLoader } from './lib/ScenarioLoader.mjs';
@@ -13,7 +14,7 @@ const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const DEFAULT_SERVER_CMD = 'node contract/servers/ts-server.mjs --port {port}';
 const DEFAULT_CLI_CMD = 'node packages/cli/dist/main.js';
 
-const HELP = `Vertragstest der HTTP-API.
+const HELP = `Vertragstest von HTTP-API, CLI und Hooks.
 
   node contract/run.mjs [Optionen]
 
@@ -23,7 +24,8 @@ const HELP = `Vertragstest der HTTP-API.
   --server-cmd "<cmd>"  eigener Startbefehl, {port} wird ersetzt
   --base <url>          fremder, laufender Server (braucht --home und genau ein Szenario)
   --home <ordner>       HARNESS_HOME des fremden Servers
-  --cli-cmd "<cmd>"     Befehl der CLI für harnessInit (Standard: ${DEFAULT_CLI_CMD})
+  --cli-cmd "<cmd>"     Befehl der CLI für harnessInit und die cli-Schritte, auch als JSON-Array
+                        (Standard: ${DEFAULT_CLI_CMD})
   --coverage            Routen aus contract/api/routes.json mit abgedeckt/offen auflisten
   --strict              mit --coverage: Exit 1, wenn eine Route offen ist
   --verbose             Ausgabe des Servers mitschreiben
@@ -88,7 +90,7 @@ export class ContractRun {
     const runner = new ScenarioRunner({
       cwd: REPO_ROOT,
       serverCmd: this.options.serverCmd,
-      cli: ServerHandle.resolve(ServerHandle.split(this.options.cliCmd), REPO_ROOT),
+      cli: ServerHandle.resolve(CliStep.command(this.options.cliCmd), REPO_ROOT),
       base: this.options.base,
       homeDir: this.options.home,
       verbose: this.options.verbose,

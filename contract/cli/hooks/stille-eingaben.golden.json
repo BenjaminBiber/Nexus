@@ -1,0 +1,159 @@
+[
+  {
+    "name": "kaputtes JSON",
+    "request": {
+      "args": [
+        "hook",
+        "session-start"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": "{kaputt"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "leere Eingabe",
+    "request": {
+      "args": [
+        "hook",
+        "session-start"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": ""
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "JSON ohne Objekt",
+    "request": {
+      "args": [
+        "hook",
+        "session-start"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": "[]"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "JSON null",
+    "request": {
+      "args": [
+        "hook",
+        "session-start"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": "null"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "ohne Sitzungskennung",
+    "request": {
+      "args": [
+        "hook",
+        "session-start"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": {
+        "cwd": "<REPO1>"
+      }
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "Sitzungskennung keine Zeichenkette",
+    "request": {
+      "args": [
+        "hook",
+        "session-start"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": "{\"session_id\":5,\"cwd\":\".\"}"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "unbekanntes Ereignis",
+    "request": {
+      "args": [
+        "hook",
+        "quatsch"
+      ],
+      "cwd": "<REPO1>",
+      "env": {
+        "HARNESS_HOOK_DEADLINE_MS": "60000",
+        "HARNESS_TICKET": "ARC-0001"
+      },
+      "stdin": {
+        "cwd": "<REPO1>",
+        "session_id": "s1"
+      }
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "keine Session am Server",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  }
+]

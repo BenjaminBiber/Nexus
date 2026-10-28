@@ -79,6 +79,15 @@ describe('Normalizer', () => {
       expect(make().times(TODAY)).toBe('<DATE>');
       expect(make().times('2020-01-01')).toBe('2020-01-01');
     });
+
+    it('ersetzt Datum mit Uhrzeit in deutscher Schreibweise – so gibt die CLI Kommentare aus', () => {
+      expect(make().times('- 27.10.2026, 18:05, Vertrag: Hallo')).toBe('- <TIME>, Vertrag: Hallo');
+      expect(make().times('27.10.2026, 18:05:09')).toBe('<TIME>');
+    });
+
+    it('lässt ein deutsches Datum ohne Uhrzeit stehen', () => {
+      expect(make().times('27.10.2026')).toBe('27.10.2026');
+    });
   });
 
   describe('5. Datum relativ zu heute', () => {

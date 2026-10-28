@@ -4,13 +4,15 @@ use std::fmt;
 use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::error::{Error, HarnessError};
 use crate::text::join_names;
 
 /// Zustand einer Frage; „bereit“, „wartet auf“ und „recherchiert“ werden berechnet, nicht gespeichert
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
+#[ts(export, export_to = "question.ts")]
 pub enum QuestionState {
     Open,
     Answered,

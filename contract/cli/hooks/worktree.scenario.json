@@ -1,0 +1,37 @@
+{
+  "title": "Hook aus dem Worktree eines Tickets: Projekt bleibt das Hauptrepo, Ticket kommt aus dem Ordner",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt anlegen", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board anlegen", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    {
+      "name": "Ticket anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Login bauen", "needsPlanning": false },
+      "record": false
+    },
+    { "name": "Kommentar anhängen", "method": "POST", "path": "/api/db/tickets/ARC-0001/comments", "body": { "body": "Bitte Tastatur beachten" }, "record": false },
+    { "name": "Projekt am Server anmelden", "method": "POST", "path": "/api/projects", "body": { "path": "{{REPO1}}" }, "save": { "pid": "json.id" }, "record": false },
+    {
+      "name": "Ticket starten (legt Branch und Worktree an)",
+      "kind": "cli",
+      "args": ["board", "start", "ARC-0001", "--by", "vertrag"],
+      "cwd": "{{REPO1}}",
+      "record": false
+    },
+    {
+      "name": "session-start aus dem Worktree",
+      "kind": "cli",
+      "args": ["hook", "session-start"],
+      "cwd": "{{REPO1}}-worktrees/ARC-0001",
+      "stdin": { "session_id": "s1", "cwd": "{{REPO1}}-worktrees/ARC-0001" },
+      "env": { "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    },
+    { "name": "Sessions am Server", "method": "GET", "path": "/api/projects/{{pid}}/sessions" }
+  ]
+}

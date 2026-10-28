@@ -1,0 +1,32 @@
+{
+  "title": "Hook session-end: Session als beendet melden",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt anlegen", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board anlegen", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Ticket in Arbeit anlegen", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Login bauen", "status": "in_progress" }, "record": false },
+    { "name": "Projekt am Server anmelden", "method": "POST", "path": "/api/projects", "body": { "path": "{{REPO1}}" }, "save": { "pid": "json.id" }, "record": false },
+    {
+      "name": "Session beginnen",
+      "kind": "cli",
+      "args": ["hook", "session-start"],
+      "cwd": "{{REPO1}}",
+      "stdin": { "session_id": "s1", "cwd": "{{REPO1}}" },
+      "env": { "HARNESS_TICKET": "ARC-0001", "HARNESS_HOOK_DEADLINE_MS": "60000" },
+      "record": false
+    },
+    {
+      "name": "session-end",
+      "kind": "cli",
+      "args": ["hook", "session-end"],
+      "cwd": "{{REPO1}}",
+      "stdin": { "session_id": "s1", "cwd": "{{REPO1}}", "reason": "other" },
+      "env": { "HARNESS_TICKET": "ARC-0001", "HARNESS_HOOK_DEADLINE_MS": "60000" }
+    },
+    { "name": "Sessions am Server", "method": "GET", "path": "/api/projects/{{pid}}/sessions" }
+  ]
+}

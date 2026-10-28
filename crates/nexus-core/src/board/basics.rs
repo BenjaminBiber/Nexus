@@ -4,13 +4,15 @@ use std::fmt;
 use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::error::{Error, HarnessError};
 use crate::text::join_names;
 
 /// Spalten des Boards in der Reihenfolge der Anzeige
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
+#[ts(export, export_to = "board.ts")]
 pub enum TicketStatus {
     Backlog,
     InPlanning,
@@ -98,8 +100,9 @@ impl FromStr for TicketStatus {
 }
 
 /// Priorität eines Tickets
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
+#[ts(export, export_to = "board.ts")]
 pub enum Priority {
     Low,
     Normal,
@@ -167,8 +170,9 @@ impl FromStr for Priority {
 }
 
 /// Stand einer Notiz: offen, in ein Ticket übernommen oder verworfen
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
+#[ts(export, export_to = "board.ts")]
 pub enum NoteState {
     Open,
     Taken,
@@ -216,8 +220,9 @@ impl FromStr for NoteState {
 }
 
 /// Wer handelt: Benutzer-GUID aus der Konfig und der Name im Verlauf (z. B. „claude“)
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "board.ts")]
 pub struct BoardActor {
     pub user_id: String,
     pub name: String,

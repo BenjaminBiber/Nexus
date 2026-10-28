@@ -5,6 +5,7 @@
 pub mod actors;
 pub mod board;
 pub mod counter;
+pub mod dispatch;
 pub mod error;
 pub mod git;
 pub mod locking;

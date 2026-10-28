@@ -1,0 +1,10 @@
+# Einstellungen des Cargo-Workspace von Nexus.
+
+# ts-rs liest diese Werte beim Erzeugen der TypeScript-Typen
+# (`cargo test -p nexus-core export_bindings`).
+[env]
+# Basisordner der erzeugten Typen; relativ zum Workspace (also zum Ordner über .cargo/).
+TS_RS_EXPORT_DIR = { value = "packages/web/src/api/generated", relative = true }
+# Ohne diese Angabe würde ts-rs aus i64/u64 `bigint` machen; die Board-DTOs nutzen
+# in TypeScript durchweg `number`, auch bei Spalten vom Typ bigint.
+TS_RS_LARGE_INT = "number"
