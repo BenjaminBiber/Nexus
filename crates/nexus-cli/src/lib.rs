@@ -2,6 +2,7 @@
 //! Das Binary `nexus` in `src/main.rs` ist nur die Hülle darum; so lassen sich alle Teile
 //! einzeln testen.
 
+pub mod board_lookup;
 pub mod cli;
 pub mod commands;
 pub mod context;

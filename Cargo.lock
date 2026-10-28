@@ -2534,10 +2534,12 @@ dependencies = [
  "assert_cmd",
  "clap",
  "nexus-core",
+ "nexus-db",
  "predicates",
  "serde",
  "serde_json",
  "tempfile",
+ "tokio",
 ]
 
 [[package]]
