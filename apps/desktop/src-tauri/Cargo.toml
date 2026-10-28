@@ -1,0 +1,20 @@
+[package]
+name = "nexus-desktop"
+version = "0.1.0"
+description = "Nexus Desktop"
+edition = "2021"
+
+# Die Bibliothek trägt den Einstieg, damit das Binary auf allen Plattformen gleich bleibt.
+[lib]
+name = "nexus_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[features]
+# Von `tauri dev` gesetzt, wenn eine eigene Schutzschicht aktiv sein soll.
+custom-protocol = ["tauri/custom-protocol"]

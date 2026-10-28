@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
     "build": "tsc -b packages/core packages/db packages/server packages/cli && tsc --noEmit -p packages/web && npm run build -w packages/web",
@@ -12,6 +13,7 @@
     "test": "vitest run && vitest run -c vitest.process.config.ts",
     "test:concurrency": "vitest run -c vitest.concurrency.config.ts",
     "dev": "node scripts/dev.mjs",
+    "desktop": "npm run tauri -w apps/desktop --",
     "dev:web": "npm run dev -w packages/web",
     "dev:server": "tsx packages/server/src/main.ts",
     "build:plugin": "node packages/plugin/scripts/build-plugin.mjs",
