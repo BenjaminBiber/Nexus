@@ -53,9 +53,13 @@
       "../../../dist/sidecar/sql/": "sql/"
     },
     "macOS": {
-      "minimumSystemVersion": "11.0"
+      "minimumSystemVersion": "11.0",
+      "hardenedRuntime": true,
+      "entitlements": "Entitlements.plist",
+      "signingIdentity": null
     },
     "windows": {
+      "signCommand": "node scripts/sign-windows.mjs %1",
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
       },

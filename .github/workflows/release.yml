@@ -60,7 +60,7 @@ jobs:
   build:
     name: Installer (${{ matrix.target }})
     needs: version
-    # Noch ohne Secrets; P6-6 (Signatur) und P6-7 (Updater) lesen sie später aus dieser Umgebung
+    # „release“ trägt die Signatur-Secrets (Apple, Azure); P6-7 (Updater) liest sie später ebenfalls hier
     environment: release
     strategy:
       # Jede Plattform läuft zu Ende, damit ein Fehler auf einer die anderen nicht verdeckt
@@ -102,10 +102,40 @@ jobs:
       - run: npm run build
       # Sidecar für genau dieses Ziel; der Tauri-Build selbst ruft es über beforeBuildCommand erneut auf
       - run: npm run build:sidecar -- --target ${{ matrix.target }}
-      # Baut die App und lädt dmg, NSIS-Installer, AppImage, deb und rpm an den Entwurf des Releases
+      # Der Notarisierungs-Schlüssel muss als Datei vorliegen; ohne Secret entfällt die Notarisierung
+      - name: API-Key für Notarisierung
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+        run: |
+          if [ -z "$APPLE_API_PRIVATE_KEY" ]; then
+            echo "Kein API-Key: Notarisierung entfällt"
+            exit 0
+          fi
+          printf '%s' "$APPLE_API_PRIVATE_KEY" > "$RUNNER_TEMP/AuthKey.p8"
+          echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
+      # signCommand ruft trusted-signing-cli auf; der Cache oben deckt den Build mit ab
+      - name: trusted-signing-cli installieren
+        if: runner.os == 'Windows'
+        run: cargo install trusted-signing-cli --locked
+      # Baut die App und lädt dmg, NSIS-Installer, AppImage, deb und rpm an den Entwurf des Releases.
+      # Die Signatur-Variablen dürfen auf allen Plattformen gesetzt sein: sind sie leer (Fork, Probelauf),
+      # baut tauri-action unsigniert und sign-windows.mjs überspringt die Signatur.
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          AZURE_SIGNING_ENDPOINT: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+          AZURE_SIGNING_ACCOUNT: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+          AZURE_SIGNING_PROFILE: ${{ vars.AZURE_SIGNING_PROFILE }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         with:
           projectPath: apps/desktop
           releaseId: ${{ needs.version.outputs.release_id }}
