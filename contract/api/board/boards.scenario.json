@@ -1,0 +1,62 @@
+{
+  "title": "Boards anlegen, ändern, aktivieren und löschen",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    { "name": "leere Liste", "method": "GET", "path": "/api/db/boards" },
+    { "name": "ohne aktives Board", "method": "GET", "path": "/api/db/active" },
+    { "name": "Projekt VTR", "method": "POST", "path": "/api/db/projects", "body": { "key": "VTR", "name": "Vertrag" }, "record": false },
+    { "name": "Projekt INC", "method": "POST", "path": "/api/db/projects", "body": { "key": "INC", "name": "Incidents" }, "record": false },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "vtr", "name": "Sprint" },
+      "save": { "bid": "json.id" }
+    },
+    {
+      "name": "zweites Board im Projekt",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "VTR", "name": "Kollege" },
+      "save": { "bid2": "json.id" }
+    },
+    {
+      "name": "Board im anderen Projekt",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "INC", "name": "Störungen" },
+      "save": { "bid3": "json.id" }
+    },
+    { "name": "alle Boards", "method": "GET", "path": "/api/db/boards" },
+    { "name": "Boards eines Projekts", "method": "GET", "path": "/api/db/boards?project=VTR" },
+    { "name": "Boards eines unbekannten Projekts", "method": "GET", "path": "/api/db/boards?project=XYZ" },
+    { "name": "umbenennen", "method": "PATCH", "path": "/api/db/boards/{{bid}}", "body": { "name": "Sprint 2" } },
+    { "name": "Repo-Pfad setzen", "method": "PATCH", "path": "/api/db/boards/{{bid}}", "body": { "repoPath": "C:/Repos/Mein Repo" } },
+    { "name": "Repo-Pfad leeren", "method": "PATCH", "path": "/api/db/boards/{{bid}}", "body": { "repoPath": null } },
+    { "name": "ohne Änderung", "method": "PATCH", "path": "/api/db/boards/{{bid}}", "body": {} },
+    { "name": "leerer Name", "method": "PATCH", "path": "/api/db/boards/{{bid}}", "body": { "name": " " } },
+    { "name": "unbekanntes Board ändern", "method": "PATCH", "path": "/api/db/boards/999", "body": { "name": "x" } },
+    { "name": "keine Board-Nummer", "method": "PATCH", "path": "/api/db/boards/abc", "body": { "name": "x" } },
+    { "name": "Board ohne Projekt", "method": "POST", "path": "/api/db/boards", "body": { "name": "Ohne Projekt" } },
+    { "name": "Board in unbekanntem Projekt", "method": "POST", "path": "/api/db/boards", "body": { "project": "XYZ", "name": "Fremd" } },
+    { "name": "aktivieren", "method": "POST", "path": "/api/db/boards/{{bid}}/activate", "body": {} },
+    { "name": "aktives Board lesen", "method": "GET", "path": "/api/db/active" },
+    { "name": "unbekanntes Board aktivieren", "method": "POST", "path": "/api/db/boards/999/activate", "body": {} },
+    { "name": "keine Board-Nummer aktivieren", "method": "POST", "path": "/api/db/boards/abc/activate", "body": {} },
+    { "name": "aktivieren ohne Körper", "method": "POST", "path": "/api/db/boards/{{bid}}/activate" },
+    { "name": "leeres Board löschen", "method": "DELETE", "path": "/api/db/boards/{{bid2}}", "body": {} },
+    {
+      "name": "Ticket auf dem Störungs-Board",
+      "method": "POST",
+      "path": "/api/db/boards/{{bid3}}/tickets",
+      "body": { "title": "Offen" },
+      "record": false
+    },
+    { "name": "Board mit offenem Ticket löschen", "method": "DELETE", "path": "/api/db/boards/{{bid3}}?deleteOpen=false", "body": {} },
+    { "name": "Board samt offener Tickets löschen", "method": "DELETE", "path": "/api/db/boards/{{bid3}}?deleteOpen=true", "body": {} },
+    { "name": "aktives Board löschen", "method": "DELETE", "path": "/api/db/boards/{{bid}}", "body": {} },
+    { "name": "aktives Board ist vergessen", "method": "GET", "path": "/api/db/active" },
+    { "name": "unbekanntes Board löschen", "method": "DELETE", "path": "/api/db/boards/999", "body": {} },
+    { "name": "keine Board-Nummer löschen", "method": "DELETE", "path": "/api/db/boards/abc", "body": {} }
+  ]
+}

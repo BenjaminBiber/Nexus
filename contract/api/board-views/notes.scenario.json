@@ -1,0 +1,133 @@
+{
+  "title": "Notizen anlegen, zählen, übernehmen und verwerfen",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    {
+      "name": "Vorbereitung: Projekt",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Board",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "board": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: Ticket als Herkunft",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/tickets",
+      "body": { "title": "Dispatcher aufräumen" },
+      "record": false
+    },
+    {
+      "name": "Vorbereitung: zweites Ticket",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/tickets",
+      "body": { "title": "Worktrees aufräumen" },
+      "record": false
+    },
+    { "name": "Liste ohne Notizen", "method": "GET", "path": "/api/db/boards/{{board}}/notes" },
+    {
+      "name": "Notiz anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/notes",
+      "body": {
+        "title": "Dispatcher legt den Worktree-Branch doppelt an",
+        "body": "Fällt beim zweiten Lauf auf.",
+        "labels": ["dispatch", "bug"],
+        "source": "ARC-0001"
+      },
+      "save": { "note": "json.id" }
+    },
+    {
+      "name": "Notiz ohne Titel",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/notes",
+      "body": { "body": "ohne Titel" }
+    },
+    {
+      "name": "Notiz mit unbekannter Herkunft",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/notes",
+      "body": { "title": "Die Suche findet Umlaute nicht", "source": "ARC-0042" }
+    },
+    {
+      "name": "Notiz eines unbekannten Boards",
+      "method": "POST",
+      "path": "/api/db/boards/999/notes",
+      "body": { "title": "Die Suche findet Umlaute nicht" }
+    },
+    {
+      "name": "ähnlicher Befund",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/notes",
+      "body": { "title": "Worktree-Branch wird vom Dispatcher doppelt angelegt" }
+    },
+    {
+      "name": "ähnlicher Befund mit force",
+      "method": "POST",
+      "path": "/api/db/boards/{{board}}/notes",
+      "body": { "title": "Worktree-Branch wird vom Dispatcher doppelt angelegt", "force": true },
+      "save": { "second": "json.id" }
+    },
+    {
+      "name": "erneut aufgefallen",
+      "method": "POST",
+      "path": "/api/db/notes/{{note}}/seen",
+      "body": { "source": "ARC-0002" }
+    },
+    {
+      "name": "erneut aufgefallen bei unbekannter Notiz",
+      "method": "POST",
+      "path": "/api/db/notes/999/seen",
+      "body": {}
+    },
+    { "name": "Liste offen", "method": "GET", "path": "/api/db/boards/{{board}}/notes" },
+    {
+      "name": "Notiz übernehmen",
+      "method": "POST",
+      "path": "/api/db/notes/{{note}}/take",
+      "body": { "title": "Worktree-Branch doppelt anlegen beheben", "status": "planned", "priority": "high", "labels": ["dispatch"] }
+    },
+    {
+      "name": "Notiz erneut übernehmen",
+      "method": "POST",
+      "path": "/api/db/notes/{{note}}/take",
+      "body": {}
+    },
+    {
+      "name": "unbekannte Notiz übernehmen",
+      "method": "POST",
+      "path": "/api/db/notes/999/take",
+      "body": {}
+    },
+    {
+      "name": "Notiz ohne Grund verwerfen",
+      "method": "POST",
+      "path": "/api/db/notes/{{second}}/drop",
+      "body": { "reason": " " }
+    },
+    {
+      "name": "Notiz verwerfen",
+      "method": "POST",
+      "path": "/api/db/notes/{{second}}/drop",
+      "body": { "reason": "doppelt notiert" }
+    },
+    {
+      "name": "übernommene Notiz verwerfen",
+      "method": "POST",
+      "path": "/api/db/notes/{{note}}/drop",
+      "body": { "reason": "doch nicht" }
+    },
+    { "name": "Liste übernommen", "method": "GET", "path": "/api/db/boards/{{board}}/notes?state=taken" },
+    { "name": "Liste verworfen", "method": "GET", "path": "/api/db/boards/{{board}}/notes?state=dropped" },
+    { "name": "Liste alle", "method": "GET", "path": "/api/db/boards/{{board}}/notes?state=all" },
+    { "name": "Liste mit unbekanntem Filter", "method": "GET", "path": "/api/db/boards/{{board}}/notes?state=constructor" },
+    { "name": "Liste eines unbekannten Boards", "method": "GET", "path": "/api/db/boards/999/notes" }
+  ]
+}

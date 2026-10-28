@@ -1,0 +1,281 @@
+[
+  {
+    "name": "leere Liste",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "anlegen (Key wird groß)",
+    "request": {
+      "body": {
+        "key": "vtr",
+        "name": "Vertrag"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "createdBy": "11111111-1111-1111-1111-111111111111",
+        "id": 1,
+        "key": "VTR",
+        "name": "Vertrag",
+        "nextQuestionNumber": 1,
+        "nextTicketNumber": 1
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "zweites Projekt",
+    "request": {
+      "body": {
+        "key": "INC",
+        "name": "Incidents"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "createdBy": "11111111-1111-1111-1111-111111111111",
+        "id": 2,
+        "key": "INC",
+        "name": "Incidents",
+        "nextQuestionNumber": 1,
+        "nextTicketNumber": 1
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "liste nach Key",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "createdAt": "<TIME>",
+          "createdBy": "11111111-1111-1111-1111-111111111111",
+          "id": 2,
+          "key": "INC",
+          "name": "Incidents",
+          "nextQuestionNumber": 1,
+          "nextTicketNumber": 1
+        },
+        {
+          "createdAt": "<TIME>",
+          "createdBy": "11111111-1111-1111-1111-111111111111",
+          "id": 1,
+          "key": "VTR",
+          "name": "Vertrag",
+          "nextQuestionNumber": 1,
+          "nextTicketNumber": 1
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "umbenennen",
+    "request": {
+      "body": {
+        "name": "Vertrag 2"
+      },
+      "method": "PATCH",
+      "path": "/api/db/projects/VTR"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "createdBy": "11111111-1111-1111-1111-111111111111",
+        "id": 1,
+        "key": "VTR",
+        "name": "Vertrag 2",
+        "nextQuestionNumber": 1,
+        "nextTicketNumber": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "umbenennen mit kleinem Key",
+    "request": {
+      "body": {
+        "name": "Incidents 2"
+      },
+      "method": "PATCH",
+      "path": "/api/db/projects/inc"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "createdAt": "<TIME>",
+        "createdBy": "11111111-1111-1111-1111-111111111111",
+        "id": 2,
+        "key": "INC",
+        "name": "Incidents 2",
+        "nextQuestionNumber": 1,
+        "nextTicketNumber": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Key schon vergeben",
+    "request": {
+      "body": {
+        "key": "VTR",
+        "name": "Doppelt"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-exists",
+        "message": "Projekt VTR gibt es schon."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ohne Namen",
+    "request": {
+      "body": {
+        "key": "NEU"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „name“ fehlt oder ist kein Text."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Name keine Zeichenkette",
+    "request": {
+      "body": {
+        "key": "NEU",
+        "name": 5
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „name“ fehlt oder ist kein Text."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Key zu kurz",
+    "request": {
+      "body": {
+        "key": "X",
+        "name": "Zu kurz"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-key-invalid",
+        "message": "Projektkey „X“ ist ungültig: 2–6 Buchstaben oder Ziffern, beginnend mit einem Buchstaben."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "leerer Name beim Umbenennen",
+    "request": {
+      "body": {
+        "name": " "
+      },
+      "method": "PATCH",
+      "path": "/api/db/projects/VTR"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-name-empty",
+        "message": "Der Projektname darf nicht leer sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekanntes Projekt umbenennen",
+    "request": {
+      "body": {
+        "name": "x"
+      },
+      "method": "PATCH",
+      "path": "/api/db/projects/XYZ"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt XYZ gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "liste am Ende",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "createdAt": "<TIME>",
+          "createdBy": "11111111-1111-1111-1111-111111111111",
+          "id": 2,
+          "key": "INC",
+          "name": "Incidents 2",
+          "nextQuestionNumber": 1,
+          "nextTicketNumber": 1
+        },
+        {
+          "createdAt": "<TIME>",
+          "createdBy": "11111111-1111-1111-1111-111111111111",
+          "id": 1,
+          "key": "VTR",
+          "name": "Vertrag 2",
+          "nextQuestionNumber": 1,
+          "nextTicketNumber": 1
+        }
+      ],
+      "status": 200
+    }
+  }
+]

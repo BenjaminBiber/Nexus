@@ -1,0 +1,597 @@
+[
+  {
+    "name": "Liste ohne Notizen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/notes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "Notiz anlegen",
+    "request": {
+      "body": {
+        "body": "Fällt beim zweiten Lauf auf.",
+        "labels": [
+          "dispatch",
+          "bug"
+        ],
+        "source": "ARC-0001",
+        "title": "Dispatcher legt den Worktree-Branch doppelt an"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/notes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "authorId": "11111111-1111-1111-1111-111111111111",
+        "authorName": "Vertrag",
+        "boardId": 1,
+        "body": "Fällt beim zweiten Lauf auf.",
+        "createdAt": "<TIME>",
+        "id": 1,
+        "labels": [
+          "dispatch",
+          "bug"
+        ],
+        "reason": null,
+        "seenCount": 1,
+        "seenIn": [],
+        "source": "ARC-0001",
+        "state": "open",
+        "ticketId": null,
+        "title": "Dispatcher legt den Worktree-Branch doppelt an"
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Notiz ohne Titel",
+    "request": {
+      "body": {
+        "body": "ohne Titel"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/notes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „title“ fehlt oder ist kein Text."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Notiz mit unbekannter Herkunft",
+    "request": {
+      "body": {
+        "source": "ARC-0042",
+        "title": "Die Suche findet Umlaute nicht"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/notes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-not-found",
+        "message": "Ticket ARC-0042 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Notiz eines unbekannten Boards",
+    "request": {
+      "body": {
+        "title": "Die Suche findet Umlaute nicht"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/999/notes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 999 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "ähnlicher Befund",
+    "request": {
+      "body": {
+        "title": "Worktree-Branch wird vom Dispatcher doppelt angelegt"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/notes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "note-similar",
+        "details": {
+          "notes": [
+            {
+              "id": 1,
+              "state": "open",
+              "ticketId": null,
+              "title": "Dispatcher legt den Worktree-Branch doppelt an"
+            }
+          ]
+        },
+        "message": "Diesen Befund gibt es vermutlich schon:\n  1  [offen] Dispatcher legt den Worktree-Branch doppelt an\nDerselbe Befund: harness board note seen 1\nWirklich etwas anderes: mit --force anlegen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ähnlicher Befund mit force",
+    "request": {
+      "body": {
+        "force": true,
+        "title": "Worktree-Branch wird vom Dispatcher doppelt angelegt"
+      },
+      "method": "POST",
+      "path": "/api/db/boards/1/notes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "authorId": "11111111-1111-1111-1111-111111111111",
+        "authorName": "Vertrag",
+        "boardId": 1,
+        "body": "",
+        "createdAt": "<TIME>",
+        "id": 2,
+        "labels": [],
+        "reason": null,
+        "seenCount": 1,
+        "seenIn": [],
+        "source": null,
+        "state": "open",
+        "ticketId": null,
+        "title": "Worktree-Branch wird vom Dispatcher doppelt angelegt"
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "erneut aufgefallen",
+    "request": {
+      "body": {
+        "source": "ARC-0002"
+      },
+      "method": "POST",
+      "path": "/api/db/notes/1/seen"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "authorId": "11111111-1111-1111-1111-111111111111",
+        "authorName": "Vertrag",
+        "boardId": 1,
+        "body": "Fällt beim zweiten Lauf auf.",
+        "createdAt": "<TIME>",
+        "id": 1,
+        "labels": [
+          "dispatch",
+          "bug"
+        ],
+        "reason": null,
+        "seenCount": 2,
+        "seenIn": [
+          "ARC-0002"
+        ],
+        "source": "ARC-0001",
+        "state": "open",
+        "ticketId": null,
+        "title": "Dispatcher legt den Worktree-Branch doppelt an"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "erneut aufgefallen bei unbekannter Notiz",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/notes/999/seen"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "note-not-found",
+        "message": "Notiz 999 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Liste offen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/notes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "authorId": "11111111-1111-1111-1111-111111111111",
+          "authorName": "Vertrag",
+          "boardId": 1,
+          "body": "Fällt beim zweiten Lauf auf.",
+          "createdAt": "<TIME>",
+          "id": 1,
+          "labels": [
+            "dispatch",
+            "bug"
+          ],
+          "reason": null,
+          "seenCount": 2,
+          "seenIn": [
+            "ARC-0002"
+          ],
+          "source": "ARC-0001",
+          "state": "open",
+          "ticketId": null,
+          "title": "Dispatcher legt den Worktree-Branch doppelt an"
+        },
+        {
+          "authorId": "11111111-1111-1111-1111-111111111111",
+          "authorName": "Vertrag",
+          "boardId": 1,
+          "body": "",
+          "createdAt": "<TIME>",
+          "id": 2,
+          "labels": [],
+          "reason": null,
+          "seenCount": 1,
+          "seenIn": [],
+          "source": null,
+          "state": "open",
+          "ticketId": null,
+          "title": "Worktree-Branch wird vom Dispatcher doppelt angelegt"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Notiz übernehmen",
+    "request": {
+      "body": {
+        "labels": [
+          "dispatch"
+        ],
+        "priority": "high",
+        "status": "planned",
+        "title": "Worktree-Branch doppelt anlegen beheben"
+      },
+      "method": "POST",
+      "path": "/api/db/notes/1/take"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "note": {
+          "authorId": "11111111-1111-1111-1111-111111111111",
+          "authorName": "Vertrag",
+          "boardId": 1,
+          "body": "Fällt beim zweiten Lauf auf.",
+          "createdAt": "<TIME>",
+          "id": 1,
+          "labels": [
+            "dispatch",
+            "bug"
+          ],
+          "reason": null,
+          "seenCount": 2,
+          "seenIn": [
+            "ARC-0002"
+          ],
+          "source": "ARC-0001",
+          "state": "taken",
+          "ticketId": "ARC-0003",
+          "title": "Dispatcher legt den Worktree-Branch doppelt an"
+        },
+        "ticket": {
+          "acceptance": "",
+          "assignee": null,
+          "blockedReason": null,
+          "boardId": 1,
+          "branch": null,
+          "column": "planned",
+          "consumes": [],
+          "createdAt": "<TIME>",
+          "createdById": "11111111-1111-1111-1111-111111111111",
+          "createdByName": "Vertrag",
+          "dependents": [],
+          "dependsOn": [],
+          "dependsOpen": [],
+          "dependsUnmerged": [],
+          "description": "Fällt beim zweiten Lauf auf.\n\n(Notiz vom <TIME>, aufgefallen bei ARC-0001; insgesamt 2× aufgefallen, auch bei ARC-0002)",
+          "diagram": "",
+          "handbook": "",
+          "id": "ARC-0003",
+          "labels": [
+            "dispatch"
+          ],
+          "needsPlanning": true,
+          "number": 3,
+          "plan": "",
+          "plannedAt": null,
+          "plannedBy": null,
+          "planningClaimAt": null,
+          "planningClaimBy": null,
+          "priority": "high",
+          "produces": [],
+          "projectId": 1,
+          "rev": 1,
+          "sessions": [],
+          "sortOrder": 0,
+          "spec": null,
+          "specTask": null,
+          "status": "planned",
+          "stepsDone": 0,
+          "stepsTotal": 0,
+          "targetBranch": null,
+          "title": "Worktree-Branch doppelt anlegen beheben",
+          "touches": [],
+          "unlocks": [],
+          "updatedAt": "<TIME>",
+          "waiting": false,
+          "waitingOnQuestions": [],
+          "worktree": null
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Notiz erneut übernehmen",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/notes/1/take"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "note-not-open",
+        "message": "Notiz 1 ist schon als ARC-0003 übernommen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekannte Notiz übernehmen",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/db/notes/999/take"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "note-not-found",
+        "message": "Notiz 999 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Notiz ohne Grund verwerfen",
+    "request": {
+      "body": {
+        "reason": " "
+      },
+      "method": "POST",
+      "path": "/api/db/notes/2/drop"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "reason-missing",
+        "message": "Zum Verwerfen gehört ein Grund (--reason)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Notiz verwerfen",
+    "request": {
+      "body": {
+        "reason": "doppelt notiert"
+      },
+      "method": "POST",
+      "path": "/api/db/notes/2/drop"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "authorId": "11111111-1111-1111-1111-111111111111",
+        "authorName": "Vertrag",
+        "boardId": 1,
+        "body": "",
+        "createdAt": "<TIME>",
+        "id": 2,
+        "labels": [],
+        "reason": "doppelt notiert",
+        "seenCount": 1,
+        "seenIn": [],
+        "source": null,
+        "state": "dropped",
+        "ticketId": null,
+        "title": "Worktree-Branch wird vom Dispatcher doppelt angelegt"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "übernommene Notiz verwerfen",
+    "request": {
+      "body": {
+        "reason": "doch nicht"
+      },
+      "method": "POST",
+      "path": "/api/db/notes/1/drop"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "note-taken",
+        "message": "Notiz 1 ist schon als ARC-0003 übernommen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Liste übernommen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/notes?state=taken"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "authorId": "11111111-1111-1111-1111-111111111111",
+          "authorName": "Vertrag",
+          "boardId": 1,
+          "body": "Fällt beim zweiten Lauf auf.",
+          "createdAt": "<TIME>",
+          "id": 1,
+          "labels": [
+            "dispatch",
+            "bug"
+          ],
+          "reason": null,
+          "seenCount": 2,
+          "seenIn": [
+            "ARC-0002"
+          ],
+          "source": "ARC-0001",
+          "state": "taken",
+          "ticketId": "ARC-0003",
+          "title": "Dispatcher legt den Worktree-Branch doppelt an"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Liste verworfen",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/notes?state=dropped"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "authorId": "11111111-1111-1111-1111-111111111111",
+          "authorName": "Vertrag",
+          "boardId": 1,
+          "body": "",
+          "createdAt": "<TIME>",
+          "id": 2,
+          "labels": [],
+          "reason": "doppelt notiert",
+          "seenCount": 1,
+          "seenIn": [],
+          "source": null,
+          "state": "dropped",
+          "ticketId": null,
+          "title": "Worktree-Branch wird vom Dispatcher doppelt angelegt"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Liste alle",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/notes?state=all"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "authorId": "11111111-1111-1111-1111-111111111111",
+          "authorName": "Vertrag",
+          "boardId": 1,
+          "body": "Fällt beim zweiten Lauf auf.",
+          "createdAt": "<TIME>",
+          "id": 1,
+          "labels": [
+            "dispatch",
+            "bug"
+          ],
+          "reason": null,
+          "seenCount": 2,
+          "seenIn": [
+            "ARC-0002"
+          ],
+          "source": "ARC-0001",
+          "state": "taken",
+          "ticketId": "ARC-0003",
+          "title": "Dispatcher legt den Worktree-Branch doppelt an"
+        },
+        {
+          "authorId": "11111111-1111-1111-1111-111111111111",
+          "authorName": "Vertrag",
+          "boardId": 1,
+          "body": "",
+          "createdAt": "<TIME>",
+          "id": 2,
+          "labels": [],
+          "reason": "doppelt notiert",
+          "seenCount": 1,
+          "seenIn": [],
+          "source": null,
+          "state": "dropped",
+          "ticketId": null,
+          "title": "Worktree-Branch wird vom Dispatcher doppelt angelegt"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Liste mit unbekanntem Filter",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/1/notes?state=constructor"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Filter „constructor“ ist ungültig. Erlaubt: open, taken, dropped, all."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Liste eines unbekannten Boards",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/boards/999/notes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  }
+]

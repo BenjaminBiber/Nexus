@@ -3,6 +3,10 @@ import { realpathSync } from 'node:fs';
 // Zeitstempel mit Zone (`2026-10-27T18:05:00.123Z`, `…+02:00`)
 const ISO_TIME = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})/g;
 const UUID = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g;
+// Datum `2026-09-02` für sich, nicht als Teil einer längeren Zahlenfolge
+const DATE = /(?<!\d)\d{4}-\d{2}-\d{2}(?!\d)/g;
+// Weiter zurückliegende Tage sind keine berechneten Grenzen mehr, sondern feste Daten der Szenarien
+const MAX_RELATIVE_DAYS = 366;
 // Diese GUID steht fest in den Szenarien (Benutzer der Board-Konfiguration) und bleibt lesbar
 const STABLE_UUID = '11111111-1111-1111-1111-111111111111';
 // Rest eines Pfades hinter einem Platzhalter (`<HOME>\board.db`, `<REPO1>\\.git`); Leerzeichen beenden ihn
@@ -84,6 +88,7 @@ export class Normalizer {
     out = this.paths(out);
     out = this.ports(out);
     out = this.times(out);
+    out = this.relativeDates(out);
     out = this.uuids(out);
     return this.shas(out, key);
   }
@@ -118,18 +123,36 @@ export class Normalizer {
     return out.split(this.today).join('<DATE>');
   }
 
-  // 5. UUIDs außer der festen GUID der Szenarien → `<UUID>`
+  // 5. Datum vor heute, höchstens ein Jahr zurück → `<DATE-55>`: Zeiträume, die der Server aus „heute“ berechnet
+  // (etwa der Anfang der Standard-Auswertung), bleiben so über Tage hinweg dieselbe Golden-Datei
+  relativeDates(input) {
+    return input.replace(DATE, (match) => {
+      const days = this.daysBefore(match);
+      return days === null ? match : `<DATE-${days}>`;
+    });
+  }
+
+  // Ganze Tage zwischen einem Datum und heute; null, wenn es kein Tag im letzten Jahr ist
+  daysBefore(date) {
+    const day = Date.parse(`${date}T00:00:00Z`);
+    const today = Date.parse(`${this.today}T00:00:00Z`);
+    if (Number.isNaN(day) || Number.isNaN(today)) return null;
+    const days = (today - day) / 86_400_000;
+    return Number.isInteger(days) && days >= 1 && days <= MAX_RELATIVE_DAYS ? days : null;
+  }
+
+  // 6. UUIDs außer der festen GUID der Szenarien → `<UUID>`
   uuids(input) {
     return input.replace(UUID, (match) => (match.toLowerCase() === STABLE_UUID ? match : '<UUID>'));
   }
 
-  // 6. Git-Commits in Feldern `sha`, `commit`, `head` → `<SHA>`
+  // 7. Git-Commits in Feldern `sha`, `commit`, `head` → `<SHA>`
   shas(input, key) {
     if (!SHA_FIELDS.has(key)) return input;
     return input.replace(SHA_FULL, '<SHA>').replace(SHA_SHORT, '<SHA>');
   }
 
-  // 7. Zahlenfelder auf `Ms` oder `At` sowie `durationMs`, `pid`, `port` → 0
+  // 8. Zahlenfelder auf `Ms` oder `At` sowie `durationMs`, `pid`, `port` → 0
   number(input, key) {
     return ZERO_FIELDS.has(key) || /(?:Ms|At)$/.test(key) ? 0 : input;
   }

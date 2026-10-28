@@ -209,9 +209,13 @@ Alle Textwerte – auch Objekt-Schlüssel – gehen durch diese Regeln, in diese
    damit die Golden-Datei unter Windows dieselbe ist.
 3. **Port** des Servers: `127.0.0.1:<port>` und `localhost:<port>` → `…:<PORT>`.
 4. **Zeit**: ISO-Zeitstempel → `<TIME>`; ein Datum `YYYY-MM-DD` nur dann → `<DATE>`, wenn es das heutige ist.
-5. **UUIDs** → `<UUID>`, außer `11111111-1111-1111-1111-111111111111` (der Vertrags-Benutzer).
-6. **Git-Commits** in Feldern `sha`, `commit`, `head` (40 bzw. 7–12 Hex-Zeichen) → `<SHA>`.
-7. **Zahlenfelder** mit Namen auf `Ms` oder `At` sowie `durationMs`, `pid` und `port` → `0`. Das trifft auch
+5. **Datum relativ zu heute**: ein Datum bis zu einem Jahr vor heute → `<DATE-55>` (die Zahl ist der Abstand in
+   Tagen). Das trifft Grenzen, die der Server aus „heute“ rechnet – etwa der Anfang des Standard-Zeitraums der
+   Dispatch-Statistik (acht Wochen). Feste Daten eines Szenarios liegen deshalb weiter zurück (`2020-03-02`);
+   sonst hinge die Golden-Datei am Tag der Aufzeichnung.
+6. **UUIDs** → `<UUID>`, außer `11111111-1111-1111-1111-111111111111` (der Vertrags-Benutzer).
+7. **Git-Commits** in Feldern `sha`, `commit`, `head` (40 bzw. 7–12 Hex-Zeichen) → `<SHA>`.
+8. **Zahlenfelder** mit Namen auf `Ms` oder `At` sowie `durationMs`, `pid` und `port` → `0`. Das trifft auch
    feste Werte wie den Standard-Port 1433 der Board-Konfiguration; dafür bleibt die Datei über Läufe gleich.
 
 Jede Regel ist eine eigene Methode in `lib/Normalizer.mjs` und einzeln getestet
@@ -277,6 +281,8 @@ contract/
 ├─ api/
 │  ├─ routes.json             # alle Routen des Servers
 │  ├─ basis/                  # Beispielszenarien
+│  ├─ board/                  # Board-Kern: Projekte, Boards, Tickets, Schritte (/api/db)
+│  ├─ board-views/            # Notizen, Suche, Statistik, Graph, Inbox
 │  ├─ questions/              # Fragen-Routen
 │  └─ misc/                   # Sitzungen, Favoriten, Hook, Einstellungen, Usage, Workflow, Oberfläche
 └─ tests/                     # Einheitentests (vitest, siehe vitest.config.ts)

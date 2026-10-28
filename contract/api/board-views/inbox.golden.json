@@ -1,0 +1,561 @@
+[
+  {
+    "name": "Meine Aufgaben",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/inbox"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "accept": 1,
+          "blocked": 0,
+          "merge": 1,
+          "note": 1,
+          "planning": 1,
+          "question": 0,
+          "setup": 0
+        },
+        "items": [
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "detail": "Merge: Konflikt in board.ts",
+            "key": "ticket:ARC-0002",
+            "kind": "merge",
+            "noteId": null,
+            "priority": "high",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 1,
+            "since": "<TIME>",
+            "ticketId": "ARC-0002",
+            "title": "Merge",
+            "waitingTickets": 0
+          },
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "detail": "Human Interaction: Ergebnis ansehen",
+            "key": "ticket:ARC-0001",
+            "kind": "accept",
+            "noteId": null,
+            "priority": "normal",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 4,
+            "since": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Abnahme",
+            "waitingTickets": 0
+          },
+          {
+            "boardId": 2,
+            "boardName": "Zweites",
+            "detail": null,
+            "key": "ticket:ARC-0003",
+            "kind": "planning",
+            "noteId": null,
+            "priority": "normal",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 6,
+            "since": "<TIME>",
+            "ticketId": "ARC-0003",
+            "title": "Planen",
+            "waitingTickets": 0
+          },
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "detail": null,
+            "key": "note:1",
+            "kind": "note",
+            "noteId": 1,
+            "priority": null,
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 7,
+            "since": "<TIME>",
+            "ticketId": null,
+            "title": "Suche findet Umlaute nicht",
+            "waitingTickets": 0
+          }
+        ],
+        "total": 4
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "nur ein Board",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/inbox?board=2"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "accept": 0,
+          "blocked": 0,
+          "merge": 0,
+          "note": 0,
+          "planning": 1,
+          "question": 0,
+          "setup": 0
+        },
+        "items": [
+          {
+            "boardId": 2,
+            "boardName": "Zweites",
+            "detail": null,
+            "key": "ticket:ARC-0003",
+            "kind": "planning",
+            "noteId": null,
+            "priority": "normal",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 6,
+            "since": "<TIME>",
+            "ticketId": "ARC-0003",
+            "title": "Planen",
+            "waitingTickets": 0
+          }
+        ],
+        "total": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "leerer Board-Filter",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/inbox?board="
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "accept": 1,
+          "blocked": 0,
+          "merge": 1,
+          "note": 1,
+          "planning": 1,
+          "question": 0,
+          "setup": 0
+        },
+        "items": [
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "detail": "Merge: Konflikt in board.ts",
+            "key": "ticket:ARC-0002",
+            "kind": "merge",
+            "noteId": null,
+            "priority": "high",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 1,
+            "since": "<TIME>",
+            "ticketId": "ARC-0002",
+            "title": "Merge",
+            "waitingTickets": 0
+          },
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "detail": "Human Interaction: Ergebnis ansehen",
+            "key": "ticket:ARC-0001",
+            "kind": "accept",
+            "noteId": null,
+            "priority": "normal",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 4,
+            "since": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Abnahme",
+            "waitingTickets": 0
+          },
+          {
+            "boardId": 2,
+            "boardName": "Zweites",
+            "detail": null,
+            "key": "ticket:ARC-0003",
+            "kind": "planning",
+            "noteId": null,
+            "priority": "normal",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 6,
+            "since": "<TIME>",
+            "ticketId": "ARC-0003",
+            "title": "Planen",
+            "waitingTickets": 0
+          },
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "detail": null,
+            "key": "note:1",
+            "kind": "note",
+            "noteId": 1,
+            "priority": null,
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 7,
+            "since": "<TIME>",
+            "ticketId": null,
+            "title": "Suche findet Umlaute nicht",
+            "waitingTickets": 0
+          }
+        ],
+        "total": 4
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Board ohne Nummer",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/inbox?board=abc"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "id-invalid",
+        "message": "„abc“ ist keine gültige Board-Nummer."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "fremdes Board",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/inbox?board=999"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-owned",
+        "message": "Board 999 gehört nicht dir."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Reihenfolge speichern",
+    "request": {
+      "body": {
+        "keys": [
+          "ticket:ARC-0003",
+          "ticket:ARC-0001"
+        ]
+      },
+      "method": "PUT",
+      "path": "/api/db/inbox/order"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "keys": [
+          "ticket:ARC-0003",
+          "ticket:ARC-0001"
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Meine Aufgaben in eigener Reihenfolge",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/inbox"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "accept": 1,
+          "blocked": 0,
+          "merge": 1,
+          "note": 1,
+          "planning": 1,
+          "question": 0,
+          "setup": 0
+        },
+        "items": [
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "detail": "Merge: Konflikt in board.ts",
+            "key": "ticket:ARC-0002",
+            "kind": "merge",
+            "noteId": null,
+            "priority": "high",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 1,
+            "since": "<TIME>",
+            "ticketId": "ARC-0002",
+            "title": "Merge",
+            "waitingTickets": 0
+          },
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "detail": null,
+            "key": "note:1",
+            "kind": "note",
+            "noteId": 1,
+            "priority": null,
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 7,
+            "since": "<TIME>",
+            "ticketId": null,
+            "title": "Suche findet Umlaute nicht",
+            "waitingTickets": 0
+          },
+          {
+            "boardId": 2,
+            "boardName": "Zweites",
+            "detail": null,
+            "key": "ticket:ARC-0003",
+            "kind": "planning",
+            "noteId": null,
+            "priority": "normal",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 6,
+            "since": "<TIME>",
+            "ticketId": "ARC-0003",
+            "title": "Planen",
+            "waitingTickets": 0
+          },
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "detail": "Human Interaction: Ergebnis ansehen",
+            "key": "ticket:ARC-0001",
+            "kind": "accept",
+            "noteId": null,
+            "priority": "normal",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 4,
+            "since": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Abnahme",
+            "waitingTickets": 0
+          }
+        ],
+        "total": 4
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Reihenfolge zurücksetzen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/db/inbox/order"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "keys": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Meine Aufgaben nach Dringlichkeit",
+    "request": {
+      "method": "GET",
+      "path": "/api/db/inbox"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "counts": {
+          "accept": 1,
+          "blocked": 0,
+          "merge": 1,
+          "note": 1,
+          "planning": 1,
+          "question": 0,
+          "setup": 0
+        },
+        "items": [
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "detail": "Merge: Konflikt in board.ts",
+            "key": "ticket:ARC-0002",
+            "kind": "merge",
+            "noteId": null,
+            "priority": "high",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 1,
+            "since": "<TIME>",
+            "ticketId": "ARC-0002",
+            "title": "Merge",
+            "waitingTickets": 0
+          },
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "detail": "Human Interaction: Ergebnis ansehen",
+            "key": "ticket:ARC-0001",
+            "kind": "accept",
+            "noteId": null,
+            "priority": "normal",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 4,
+            "since": "<TIME>",
+            "ticketId": "ARC-0001",
+            "title": "Abnahme",
+            "waitingTickets": 0
+          },
+          {
+            "boardId": 2,
+            "boardName": "Zweites",
+            "detail": null,
+            "key": "ticket:ARC-0003",
+            "kind": "planning",
+            "noteId": null,
+            "priority": "normal",
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 6,
+            "since": "<TIME>",
+            "ticketId": "ARC-0003",
+            "title": "Planen",
+            "waitingTickets": 0
+          },
+          {
+            "boardId": 1,
+            "boardName": "Sprint",
+            "detail": null,
+            "key": "note:1",
+            "kind": "note",
+            "noteId": 1,
+            "priority": null,
+            "projectKey": "ARC",
+            "questionId": null,
+            "rank": 7,
+            "since": "<TIME>",
+            "ticketId": null,
+            "title": "Suche findet Umlaute nicht",
+            "waitingTickets": 0
+          }
+        ],
+        "total": 4
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "unbekannter Schlüssel",
+    "request": {
+      "body": {
+        "keys": [
+          "quatsch"
+        ]
+      },
+      "method": "PUT",
+      "path": "/api/db/inbox/order"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "„quatsch“ ist kein gültiger Schlüssel (z. B. ticket:AIH-0001)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Schlüssel ist keine Liste",
+    "request": {
+      "body": {
+        "keys": "ticket:ARC-0001"
+      },
+      "method": "PUT",
+      "path": "/api/db/inbox/order"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „keys“ muss eine Liste mit höchstens 1000 Schlüsseln sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Zahl als Schlüssel",
+    "request": {
+      "body": {
+        "keys": [
+          42
+        ]
+      },
+      "method": "PUT",
+      "path": "/api/db/inbox/order"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "„42“ ist kein gültiger Schlüssel (z. B. ticket:AIH-0001)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "zu langer Schlüssel",
+    "request": {
+      "body": {
+        "keys": [
+          "ticket:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        ]
+      },
+      "method": "PUT",
+      "path": "/api/db/inbox/order"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "„ticket:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA“ ist kein gültiger Schlüssel (z. B. ticket:AIH-0001)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "ohne Schlüssel",
+    "request": {
+      "body": {},
+      "method": "PUT",
+      "path": "/api/db/inbox/order"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Feld „keys“ muss eine Liste mit höchstens 1000 Schlüsseln sein."
+      },
+      "status": 422
+    }
+  }
+]
