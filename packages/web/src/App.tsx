@@ -10,6 +10,7 @@ import { GuidePage } from './pages/GuidePage.js';
 import { InboxPage } from './pages/InboxPage.js';
 import { SessionsPage } from './pages/SessionsPage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
+import { OpenLinkPage } from './pages/OpenLinkPage.js';
 import { RootPage } from './pages/RootPage.js';
 import { DocQuestionJobsProvider } from './hooks/docQuestionJobs.js';
 import { DocTicketJobsProvider } from './hooks/docTicketJobs.js';
@@ -19,6 +20,7 @@ import { usePlatform } from './platform/PlatformContext.js';
 // Alle Adressen der Oberfläche; Seiten unter /p/:pid teilen sich den Rahmen. ThemeSync setzt das Farbschema.
 // Board und Fragen kommen aus der Board-Datenbank; das Ticket-Panel liegt unter board/t/:id.
 // Ticket- und Fragen-Erzeugungen aus Dokumenten (DocTicketJobsProvider, DocQuestionJobsProvider) laufen über Seiten- und Projektwechsel weiter.
+// /open/:kind/:id ist die Weiterleitung für nexus://-Links; sie ergänzt die fehlende Projekt-ID.
 // Unbekannte Adressen eines Projekts (alte Lesezeichen wie board-alt, tickets/…, questions-alt) führen zum Board.
 export function App() {
   return (
@@ -28,6 +30,7 @@ export function App() {
         <ExternalLinks />
         <Routes>
           <Route path="/" element={<RootPage />} />
+          <Route path="/open/:kind/:id" element={<OpenLinkPage />} />
           <Route path="/p/:pid" element={<AppShell />}>
             <Route path="board/*" element={<DbBoardPage />} />
             <Route path="dashboard" element={<DashboardPage />} />
