@@ -78,6 +78,28 @@ impl MssqlErrorMap {
         Self::is_unique_violation_number(Self::number_of(error))
     }
 
+    /// Hat der Treiber die Verbindung verloren (E/A, TLS oder Protokoll)? Fehler mit
+    /// Fehlernummer kommen vom Server und zählen nicht – er hat ja geantwortet. Der Server
+    /// verwirft daraufhin seine Board-Laufzeit (Gegenstück zu `ConnectionError` und den
+    /// Socket-Codes von `mssql` in TypeScript).
+    pub fn is_connection_error(error: &Error) -> bool {
+        let Error::Unexpected {
+            source: Some(source),
+            ..
+        } = error
+        else {
+            return false;
+        };
+        matches!(
+            source.downcast_ref::<tiberius::error::Error>(),
+            Some(
+                tiberius::error::Error::Io { .. }
+                    | tiberius::error::Error::Tls(_)
+                    | tiberius::error::Error::Protocol(_)
+            )
+        )
+    }
+
     /// Fehlernummer des SQL Servers in einem Fehler des Fachkerns; `None`, wenn der Fehler
     /// nicht vom Treiber kommt
     pub fn number_of(error: &Error) -> Option<u32> {
@@ -90,5 +112,46 @@ impl MssqlErrorMap {
                 .and_then(tiberius::error::Error::code),
             _ => None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::ErrorKind;
+
+    /// Fehler, wie der Treiber ihn weitergibt: roh verpackt, damit die Art erhalten bleibt
+    fn driver_error(error: tiberius::error::Error) -> Error {
+        MssqlErrorMap::map(error)
+    }
+
+    #[test]
+    fn ea_tls_und_protokollfehler_gelten_als_verbindungsverlust() {
+        let io = driver_error(tiberius::error::Error::Io {
+            kind: ErrorKind::ConnectionReset,
+            message: "Socket geschlossen".into(),
+        });
+        assert!(MssqlErrorMap::is_connection_error(&io));
+        assert!(MssqlErrorMap::is_connection_error(&driver_error(
+            tiberius::error::Error::Tls("Handschlag fehlgeschlagen".into())
+        )));
+        assert!(MssqlErrorMap::is_connection_error(&driver_error(
+            tiberius::error::Error::Protocol("unerwartetes Token".into())
+        )));
+    }
+
+    #[test]
+    fn fehler_mit_nummer_und_fremde_fehler_sind_kein_verbindungsverlust() {
+        // Ein Fehler des Servers (Deadlock-Opfer) ist bereits übersetzt und kein Verlust
+        assert!(!MssqlErrorMap::is_connection_error(
+            &HarnessError::new("conflict", "x").into()
+        ));
+        // Umwandlungsfehler des Treibers sind Programmfehler, keine Verbindungsfehler
+        assert!(!MssqlErrorMap::is_connection_error(&driver_error(
+            tiberius::error::Error::Conversion("kein i32".into())
+        )));
+        assert!(!MssqlErrorMap::is_connection_error(
+            &Error::unexpected_message("Treiber antwortet nicht")
+        ));
     }
 }

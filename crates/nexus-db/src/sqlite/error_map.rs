@@ -97,6 +97,17 @@ pub fn is_sqlite_busy(error: &Error) -> bool {
     sqlite_code(error).is_some_and(|code| code & 0xff == SQLITE_BUSY)
 }
 
+/// Primärcodes, nach denen die Board-Datei als nicht erreichbar gilt: `SQLITE_PERM` (3),
+/// `SQLITE_READONLY` (8), `SQLITE_CANTOPEN` (14) und `SQLITE_NOTADB` (26). BUSY/LOCKED
+/// (Konflikt) und IOERR/FULL (`board-db-storage`) übersetzt [`map`].
+pub const SQLITE_FILE_CODES: [i32; 4] = [3, 8, 14, 26];
+
+/// Datei- oder Zugriffsfehler an der Board-Datei (die Datei ist damit nicht erreichbar);
+/// der Server verwirft daraufhin seine Board-Laufzeit
+pub fn is_file_error(error: &Error) -> bool {
+    sqlite_code(error).is_some_and(|code| SQLITE_FILE_CODES.contains(&(code & 0xff)))
+}
+
 /// Doppelter Schlüssel: UNIQUE (2067) oder PRIMARY KEY (1555)
 pub fn is_unique_violation(error: &Error) -> bool {
     sqlite_code(error).is_some_and(|code| {
@@ -170,6 +181,24 @@ mod tests {
         }
         assert!(is_sqlite_busy(&sqlite_error(517, "locked")));
         assert!(!is_sqlite_busy(&sqlite_error(6, "locked")));
+    }
+
+    #[test]
+    fn datei_und_zugriffsfehler_gelten_als_fehler_der_datei() {
+        // PERM, READONLY, CANTOPEN, NOTADB und ein erweiterter Code (CANTOPEN_ISDIR)
+        for code in [3, 8, 14, 26, 1038] {
+            assert!(
+                is_file_error(&sqlite_error(code, "unable to open database file")),
+                "{code}"
+            );
+        }
+        // BUSY, LOCKED, IOERR und FULL sind keine Fehler der Datei selbst
+        for code in [5, 517, 6, 10, 13, 2067] {
+            assert!(!is_file_error(&sqlite_error(code, "x")), "{code}");
+        }
+        assert!(!is_file_error(
+            &HarnessError::new("board-db-storage", "voll").into()
+        ));
     }
 
     #[test]

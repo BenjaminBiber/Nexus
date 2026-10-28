@@ -6,12 +6,23 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+axum = { workspace = true }
+chrono = { workspace = true }
+futures = { workspace = true }
+http-body-util = { workspace = true }
+hyper = { workspace = true }
+hyper-util = { workspace = true }
 nexus-core = { workspace = true }
+nexus-db = { workspace = true }
+nexus-platform = { workspace = true }
+async-trait = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
 
 # Der Test-Ersatz nexus-fake-claude legt sich für einen Modus in eine eigene Prozessgruppe
 [target.'cfg(unix)'.dependencies]
@@ -19,11 +30,24 @@ nix = { workspace = true, features = ["process"] }
 
 [dev-dependencies]
 tempfile = { workspace = true }
+# Die portierten Tests des BoardRuntimeHolder bauen die Treiberfehler selbst, nach denen die
+# Laufzeit als verloren gilt (SQLite-Dateifehler, Socket des SQL Servers)
+rusqlite = { workspace = true }
+tiberius = { workspace = true }
+# Die Proxy-Tests starten einen Test-Upstream und lesen dessen Strom Stück für Stück
+futures = { workspace = true }
+http-body-util = { workspace = true }
+tower = { workspace = true }
 
 # Ersatz für Claude Code in Tests; wird nicht ausgeliefert (P5-4 prüft das).
 [[bin]]
 name = "nexus-fake-claude"
 path = "src/bin/nexus_fake_claude.rs"
+
+# Entwicklungs-Binary: startet den Rust-Server mit --port, --upstream und --web-dir
+[[bin]]
+name = "nexus-server"
+path = "src/bin/nexus_server.rs"
 
 [lints]
 workspace = true
