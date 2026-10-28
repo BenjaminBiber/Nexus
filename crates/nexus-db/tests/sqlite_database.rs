@@ -307,7 +307,8 @@ async fn gibt_nach_einem_sql_fehler_die_verbindung_frei() {
 #[tokio::test]
 async fn liefert_eine_unit_of_work_mit_allen_17_repositories() {
     let temp = TempSqlite::create().expect("Temp-Datei");
-    // Kompiliertest der 17 Zugriffe: jeder meldet (noch) not-implemented
+    // Kompiliertest der 17 Zugriffe. Kommentare, Verlauf, Notizen und Löschprotokoll sind
+    // gefüllt und liefern Zeilen; die übrigen 13 melden noch not-implemented.
     let codes = temp
         .db()
         .transaction(|u| {
@@ -330,17 +331,17 @@ async fn liefert_eine_unit_of_work_mit_allen_17_repositories() {
                         .await
                         .unwrap_err(),
                 );
-                merke(u.comments().list("ARC-1").await.unwrap_err());
+                assert!(u.comments().list("ARC-1").await.unwrap().is_empty());
                 merke(u.steps().list("ARC-1").await.unwrap_err());
                 merke(u.ticket_sessions().tickets_of("sess-1").await.unwrap_err());
-                merke(u.history().list("ARC-1").await.unwrap_err());
-                merke(
-                    u.notes()
-                        .list(&nexus_core::board::database::NoteFilter::of_board(1))
-                        .await
-                        .unwrap_err(),
-                );
-                merke(u.deletions().list().await.unwrap_err());
+                assert!(u.history().list("ARC-1").await.unwrap().is_empty());
+                assert!(u
+                    .notes()
+                    .list(&nexus_core::board::database::NoteFilter::of_board(1))
+                    .await
+                    .unwrap()
+                    .is_empty());
+                assert!(u.deletions().list().await.unwrap().is_empty());
                 merke(
                     u.questions()
                         .list(&nexus_core::board::database::BoardQuestionFilter::default())
@@ -368,7 +369,7 @@ async fn liefert_eine_unit_of_work_mit_allen_17_repositories() {
         .await
         .expect("Transaktion");
 
-    assert_eq!(codes.len(), 17);
+    assert_eq!(codes.len(), 13);
     assert!(
         codes.iter().all(|code| code == "not-implemented"),
         "{codes:?}"
