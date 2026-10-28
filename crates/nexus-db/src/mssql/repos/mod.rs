@@ -1,10 +1,11 @@
 //! Die 17 Repositories auf SQL Server, je Trait eine Datei – wie in TypeScript je Klasse eine
 //! Datei (`MssqlUserRepository.ts` …).
 //!
-//! Dieses Ticket (P2-11) legt nur die Gerüste an: jeder Zugriff meldet `not-implemented`.
-//! Gefüllt werden sie von
+//! P2-11 hat nur die Gerüste angelegt: jeder Zugriff meldete `not-implemented`. Gefüllt sind
+//! sie von
 //!
-//! * **P2-12**: [`user`], [`project`], [`board`], [`ticket`], [`ticket_step`], [`ticket_session`]
+//! * **P2-12** (fertig): [`user`], [`project`], [`board`], [`ticket`], [`ticket_step`],
+//!   [`ticket_session`]
 //! * **P2-13**: [`comment`], [`note`], [`history`], [`deletion`], [`question`],
 //!   [`question_comment`], [`question_history`], [`question_research`]
 //! * **P2-14**: [`dispatch_run`], [`dispatch_stats`], [`search`]
