@@ -1,0 +1,48 @@
+{
+  "title": "board step: abhaken, anlegen, bearbeiten, löschen, verschieben – mit --rev und --expect",
+  "fixtures": {
+    "repos": [{ "name": "REPO1", "harnessInit": true, "files": { "anleitung.md": "npm test – erwartet: erst rot, dann grün\n" } }],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Ticket", "method": "POST", "path": "/api/db/boards/1/tickets", "body": { "title": "Login bauen", "status": "in_progress", "needsPlanning": false }, "record": false },
+
+    { "name": "step add", "kind": "cli", "args": ["board", "step", "add", "ARC-0001", "Test schreiben", "--detail", "npm test – erwartet: rot", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step add zweiter Schritt", "kind": "cli", "args": ["board", "step", "add", "ARC-0001", "Umsetzen", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step add --at", "kind": "cli", "args": ["board", "step", "add", "ARC-0001", "Plan lesen", "--at", "1", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step add --detail-file", "kind": "cli", "args": ["board", "step", "add", "ARC-0001", "Committen", "--detail-file", "anleitung.md", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step add --json", "kind": "cli", "args": ["--json", "board", "step", "add", "ARC-0001", "Review", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step add --at ohne Nummer (Fehler)", "kind": "cli", "args": ["board", "step", "add", "ARC-0001", "Falsch", "--at", "null", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "step abhaken (alte Form)", "kind": "cli", "args": ["board", "step", "ARC-0001", "2", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step --undo", "kind": "cli", "args": ["board", "step", "ARC-0001", "2", "--undo", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step done", "kind": "cli", "args": ["board", "step", "done", "ARC-0001", "1", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step done --expect", "kind": "cli", "args": ["board", "step", "done", "ARC-0001", "2", "--expect", "Test schreiben", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step done --json", "kind": "cli", "args": ["--json", "board", "step", "done", "ARC-0001", "3", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step done --undo", "kind": "cli", "args": ["board", "step", "done", "ARC-0001", "3", "--undo", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step done mit falschem --expect (Fehler)", "kind": "cli", "args": ["board", "step", "done", "ARC-0001", "3", "--expect", "Ganz anderer Text", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step mit unbekannter Nummer (Fehler)", "kind": "cli", "args": ["board", "step", "ARC-0001", "99", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step mit ungültiger Nummer (Fehler)", "kind": "cli", "args": ["board", "step", "ARC-0001", "null", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step an unbekanntem Ticket --json (Fehler)", "kind": "cli", "args": ["--json", "board", "step", "ARC-9999", "1", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "step edit Text", "kind": "cli", "args": ["board", "step", "edit", "ARC-0001", "2", "--text", "Test für Login schreiben", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step edit Anleitung aus Datei", "kind": "cli", "args": ["board", "step", "edit", "ARC-0001", "2", "--detail-file", "anleitung.md", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step edit Anleitung entfernen", "kind": "cli", "args": ["board", "step", "edit", "ARC-0001", "2", "--detail", "", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step edit --json", "kind": "cli", "args": ["--json", "board", "step", "edit", "ARC-0001", "5", "--text", "Review durch einen Menschen", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step edit mit falscher Version (Fehler)", "kind": "cli", "args": ["board", "step", "edit", "ARC-0001", "2", "--text", "Zu spät", "--rev", "1", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "step move", "kind": "cli", "args": ["board", "step", "move", "ARC-0001", "5", "1", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step move --json", "kind": "cli", "args": ["--json", "board", "step", "move", "ARC-0001", "1", "5", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step move mit falschem --expect (Fehler)", "kind": "cli", "args": ["board", "step", "move", "ARC-0001", "1", "2", "--expect", "Ganz anderer Text", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "step rm", "kind": "cli", "args": ["board", "step", "rm", "ARC-0001", "4", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step rm --expect", "kind": "cli", "args": ["board", "step", "rm", "ARC-0001", "4", "--expect", "Review durch einen Menschen", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step rm --json", "kind": "cli", "args": ["--json", "board", "step", "rm", "ARC-0001", "3", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "step rm mit unbekannter Nummer (Fehler)", "kind": "cli", "args": ["board", "step", "rm", "ARC-0001", "99", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "Ticket am Ende", "kind": "cli", "args": ["board", "show", "ARC-0001"], "cwd": "{{REPO1}}" }
+  ]
+}

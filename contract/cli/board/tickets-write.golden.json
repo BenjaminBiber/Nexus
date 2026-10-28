@@ -1,0 +1,838 @@
+[
+  {
+    "name": "create einfach",
+    "request": {
+      "args": [
+        "board",
+        "create",
+        "Login bauen",
+        "--desc",
+        "Anmeldung mit Kennwort",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0001 angelegt: Login bauen"
+    }
+  },
+  {
+    "name": "create mit allen Optionen --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "create",
+        "Export bauen",
+        "--desc-file",
+        "desc.md",
+        "--status",
+        "geplant",
+        "--priority",
+        "high",
+        "--label",
+        "api,export",
+        "--planned",
+        "--acceptance-file",
+        "abnahme.md",
+        "--depends-on",
+        "ARC-0001",
+        "--step",
+        "Test schreiben",
+        "--step",
+        "Umsetzen",
+        "--target-branch",
+        "release/1",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "acceptance": "Die Anmeldung geht, der Test deckt sie ab.\n",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "waiting",
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "claude",
+        "dependents": [],
+        "dependsOn": [
+          "ARC-0001"
+        ],
+        "dependsOpen": [
+          "ARC-0001"
+        ],
+        "dependsUnmerged": [],
+        "description": "Anmeldung mit Kennwort und Zweitfaktor.\n",
+        "diagram": "",
+        "handbook": "",
+        "id": "ARC-0002",
+        "labels": [
+          "api",
+          "export"
+        ],
+        "needsPlanning": false,
+        "number": 2,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "high",
+        "produces": [],
+        "projectId": 1,
+        "rev": 1,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "planned",
+        "stepsDone": 0,
+        "stepsTotal": 2,
+        "targetBranch": "release/1",
+        "title": "Export bauen",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": true,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "create aus der Standardeingabe",
+    "request": {
+      "args": [
+        "board",
+        "create",
+        "Suche beschleunigen",
+        "--desc-file",
+        "-",
+        "--board",
+        "2",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>",
+      "stdin": "Die Suche braucht einen Index.\n"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0003 angelegt: Suche beschleunigen"
+    }
+  },
+  {
+    "name": "create mit gleichem Titel (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "create",
+        "Login bauen",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Ein offenes Ticket mit diesem Titel gibt es schon: ARC-0001. Mit --force trotzdem anlegen. [ticket-duplicate]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "create mit gleichem Titel und --force",
+    "request": {
+      "args": [
+        "board",
+        "create",
+        "Login bauen",
+        "--force",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0004 angelegt: Login bauen"
+    }
+  },
+  {
+    "name": "create auf unbekanntem Board --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "create",
+        "Fremd",
+        "--board",
+        "99",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "board-not-found",
+          "message": "Board 99 gibt es nicht."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "create mit unlesbarer Datei (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "create",
+        "Ohne Datei",
+        "--desc-file",
+        "fehlt.md",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Die Eingabe fehlt.md lässt sich nicht lesen. [input-unreadable]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "set Titel und Priorität",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0001",
+        "--title",
+        "Login bauen und prüfen",
+        "--priority",
+        "high",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0001 geändert (rev 2)"
+    }
+  },
+  {
+    "name": "set Plan aus Datei",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0001",
+        "--plan-file",
+        "plan.md",
+        "--handbook",
+        "Kurzes Handbuch",
+        "--diagram",
+        "flowchart LR\n  A --> B",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0001 geändert (rev 3)"
+    }
+  },
+  {
+    "name": "set Labels und Zuweisung --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "set",
+        "ARC-0001",
+        "--label",
+        "ui",
+        "--label",
+        "auth",
+        "--assignee",
+        "claude",
+        "--needs-planning",
+        "false",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "acceptance": "",
+        "assignee": "claude",
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "backlog",
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "claude",
+        "dependents": [
+          "ARC-0002"
+        ],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "Anmeldung mit Kennwort",
+        "diagram": "flowchart LR\n  A --> B",
+        "handbook": "Kurzes Handbuch",
+        "id": "ARC-0001",
+        "labels": [
+          "ui",
+          "auth"
+        ],
+        "needsPlanning": false,
+        "number": 1,
+        "plan": "## Vorgehen\n\n1. Test schreiben\n2. Umsetzen\n",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "high",
+        "produces": [],
+        "projectId": 1,
+        "rev": 4,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "backlog",
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Login bauen und prüfen",
+        "touches": [],
+        "unlocks": [
+          "ARC-0002"
+        ],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "set Zuweisung entfernen",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0001",
+        "--assignee",
+        "none",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0001 geändert (rev 5)"
+    }
+  },
+  {
+    "name": "set blockiert mit Grund",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0001",
+        "--status",
+        "blockiert",
+        "--blocked-reason",
+        "Zugang fehlt",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0001 geändert (rev 6)"
+    }
+  },
+  {
+    "name": "set Voraussetzung ergänzen",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0003",
+        "--depends-on-add",
+        "ARC-0001",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0003 geändert (rev 2)"
+    }
+  },
+  {
+    "name": "set Voraussetzung entfernen",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0003",
+        "--depends-on-rm",
+        "ARC-0001",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0003 geändert (rev 3)"
+    }
+  },
+  {
+    "name": "set Voraussetzungen ersetzen",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0003",
+        "--depends-on",
+        "ARC-0001",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0003 geändert (rev 4)"
+    }
+  },
+  {
+    "name": "set Voraussetzungen leeren",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0003",
+        "--depends-on",
+        "none",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0003 geändert (rev 5)"
+    }
+  },
+  {
+    "name": "set Zielbranch entfernen",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0002",
+        "--target-branch",
+        "none",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0002 geändert (rev 2)"
+    }
+  },
+  {
+    "name": "set auf ein anderes Board",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0003",
+        "--to-board",
+        "1",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0003 geändert (rev 6)"
+    }
+  },
+  {
+    "name": "set Branch und Worktree leeren",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0003",
+        "--clear-branch",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0003 geändert (rev 7)"
+    }
+  },
+  {
+    "name": "set mit passender Version",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0003",
+        "--title",
+        "Suche mit Index",
+        "--rev",
+        "7",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0003 geändert (rev 8)"
+    }
+  },
+  {
+    "name": "set mit veralteter Version (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0003",
+        "--title",
+        "Zu spät",
+        "--rev",
+        "1",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Ticket ARC-0003 wurde inzwischen geändert (Version 8, erwartet 1). Bitte neu lesen. [conflict]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "set --depends-on mit --depends-on-add (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "set",
+        "ARC-0003",
+        "--depends-on",
+        "ARC-0001",
+        "--depends-on-add",
+        "ARC-0002",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "--depends-on lässt sich nicht mit --depends-on-add/--depends-on-rm kombinieren. [usage]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "set unbekanntes Ticket --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "set",
+        "ARC-9999",
+        "--title",
+        "Fremd",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "ticket-not-found",
+          "message": "Ticket ARC-9999 gibt es nicht."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "move in eine Spalte",
+    "request": {
+      "args": [
+        "board",
+        "move",
+        "ARC-0003",
+        "in Arbeit",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0003 → in_progress"
+    }
+  },
+  {
+    "name": "move auf erledigt mit Abnahme --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "move",
+        "ARC-0003",
+        "erledigt",
+        "--acceptance",
+        "Der Index greift.",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "acceptance": "Der Index greift.",
+        "assignee": null,
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "done",
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "claude",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "Die Suche braucht einen Index.\n",
+        "diagram": "",
+        "handbook": "",
+        "id": "ARC-0003",
+        "labels": [],
+        "needsPlanning": true,
+        "number": 3,
+        "plan": "",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "normal",
+        "produces": [],
+        "projectId": 1,
+        "rev": 10,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "done",
+        "stepsDone": 0,
+        "stepsTotal": 0,
+        "targetBranch": null,
+        "title": "Suche mit Index",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "move auf erledigt ohne Abnahme (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "move",
+        "ARC-0004",
+        "erledigt",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "ARC-0004 hat keine Abnahme. Mit --acceptance angeben, woran man sieht, dass es fertig ist. [acceptance-missing]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "move mit unbekannter Spalte (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "move",
+        "ARC-0004",
+        "quatsch",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Status „quatsch“ ist ungültig. Erlaubt: backlog, in_planning, planned, in_progress, blocked, done, not_needed. [status-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "move mit veralteter Version (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "move",
+        "ARC-0001",
+        "geplant",
+        "--rev",
+        "1",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Ticket ARC-0001 wurde inzwischen geändert (Version 6, erwartet 1). Bitte neu lesen. [conflict]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "delete",
+    "request": {
+      "args": [
+        "board",
+        "delete",
+        "ARC-0004",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0004 gelöscht."
+    }
+  },
+  {
+    "name": "delete --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "delete",
+        "ARC-0002",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "deleted": "ARC-0002"
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "delete unbekanntes Ticket (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "delete",
+        "ARC-9999",
+        "--by",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Ticket ARC-9999 gibt es nicht. [ticket-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "Liste am Ende",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--board",
+        "all"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "\nBlockiert (1)\n  ARC-0001  Login bauen und prüfen  (high) ui,auth\n\nErledigt (1)\n  ARC-0003  Suche mit Index  [planung]"
+    }
+  }
+]

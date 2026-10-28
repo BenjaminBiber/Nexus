@@ -1,0 +1,778 @@
+[
+  {
+    "name": "list (Text)",
+    "request": {
+      "args": [
+        "board",
+        "list"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "\nBacklog (1)\n  ARC-0002  Export bauen  [planung] api\n\nWartet (1)\n  ARC-0003  Suche beschleunigen  [wartet auf ARC-0002]\n\nIn Arbeit (1)\n  ARC-0001  Login bauen  @claude (high) [1/2 Schritte] ui,auth\n\nBlockiert (1)\n  ARC-0004  Altlast entfernen  (low)"
+    }
+  },
+  {
+    "name": "list --md",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--md"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "## Board 1\n\n### Backlog (1)\n- **ARC-0002** Export bauen — [planung] · api\n\n### Wartet (1)\n- **ARC-0003** Suche beschleunigen\n  - Wartet auf: ARC-0002\n\n### In Arbeit (1)\n- **ARC-0001** Login bauen — @claude · high · 1/2 Schritte · ui,auth\n  - Abnahme: Die Anmeldung geht.\n\n### Blockiert (1)\n- **ARC-0004** Altlast entfernen — low"
+    }
+  },
+  {
+    "name": "list --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "list"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": [
+        {
+          "acceptance": "",
+          "assignee": null,
+          "blockedReason": null,
+          "boardId": 1,
+          "branch": null,
+          "column": "backlog",
+          "consumes": [],
+          "createdAt": "<TIME>",
+          "createdById": "11111111-1111-1111-1111-111111111111",
+          "createdByName": "Vertrag",
+          "dependents": [
+            "ARC-0003"
+          ],
+          "dependsOn": [],
+          "dependsOpen": [],
+          "dependsUnmerged": [],
+          "description": "CSV für die Buchhaltung",
+          "diagram": "",
+          "handbook": "",
+          "id": "ARC-0002",
+          "labels": [
+            "api"
+          ],
+          "needsPlanning": true,
+          "number": 2,
+          "plan": "",
+          "plannedAt": null,
+          "plannedBy": null,
+          "planningClaimAt": null,
+          "planningClaimBy": null,
+          "priority": "normal",
+          "produces": [],
+          "projectId": 1,
+          "rev": 1,
+          "sessions": [],
+          "sortOrder": 0,
+          "spec": null,
+          "specTask": null,
+          "status": "backlog",
+          "stepsDone": 0,
+          "stepsTotal": 0,
+          "targetBranch": null,
+          "title": "Export bauen",
+          "touches": [],
+          "unlocks": [
+            "ARC-0003"
+          ],
+          "updatedAt": "<TIME>",
+          "waiting": false,
+          "waitingOnQuestions": [],
+          "worktree": null
+        },
+        {
+          "acceptance": "",
+          "assignee": null,
+          "blockedReason": null,
+          "boardId": 1,
+          "branch": null,
+          "column": "waiting",
+          "consumes": [],
+          "createdAt": "<TIME>",
+          "createdById": "11111111-1111-1111-1111-111111111111",
+          "createdByName": "Vertrag",
+          "dependents": [],
+          "dependsOn": [
+            "ARC-0002"
+          ],
+          "dependsOpen": [
+            "ARC-0002"
+          ],
+          "dependsUnmerged": [],
+          "description": "",
+          "diagram": "",
+          "handbook": "",
+          "id": "ARC-0003",
+          "labels": [],
+          "needsPlanning": false,
+          "number": 3,
+          "plan": "",
+          "plannedAt": null,
+          "plannedBy": null,
+          "planningClaimAt": null,
+          "planningClaimBy": null,
+          "priority": "normal",
+          "produces": [],
+          "projectId": 1,
+          "rev": 1,
+          "sessions": [],
+          "sortOrder": 0,
+          "spec": null,
+          "specTask": null,
+          "status": "planned",
+          "stepsDone": 0,
+          "stepsTotal": 0,
+          "targetBranch": null,
+          "title": "Suche beschleunigen",
+          "touches": [],
+          "unlocks": [],
+          "updatedAt": "<TIME>",
+          "waiting": true,
+          "waitingOnQuestions": [],
+          "worktree": null
+        },
+        {
+          "acceptance": "Die Anmeldung geht.",
+          "assignee": "claude",
+          "blockedReason": null,
+          "boardId": 1,
+          "branch": null,
+          "column": "in_progress",
+          "consumes": [],
+          "createdAt": "<TIME>",
+          "createdById": "11111111-1111-1111-1111-111111111111",
+          "createdByName": "Vertrag",
+          "dependents": [],
+          "dependsOn": [],
+          "dependsOpen": [],
+          "dependsUnmerged": [],
+          "description": "Anmeldung mit Kennwort",
+          "diagram": "flowchart LR\n  A --> B",
+          "handbook": "## Kontext\n\nDas Handbuch des Tickets.",
+          "id": "ARC-0001",
+          "labels": [
+            "ui",
+            "auth"
+          ],
+          "needsPlanning": false,
+          "number": 1,
+          "plan": "## Vorgehen\n\n1. Test schreiben\n2. Umsetzen",
+          "plannedAt": null,
+          "plannedBy": null,
+          "planningClaimAt": null,
+          "planningClaimBy": null,
+          "priority": "high",
+          "produces": [],
+          "projectId": 1,
+          "rev": 10,
+          "sessions": [],
+          "sortOrder": 0,
+          "spec": null,
+          "specTask": null,
+          "status": "in_progress",
+          "stepsDone": 1,
+          "stepsTotal": 2,
+          "targetBranch": null,
+          "title": "Login bauen",
+          "touches": [],
+          "unlocks": [],
+          "updatedAt": "<TIME>",
+          "waiting": false,
+          "waitingOnQuestions": [],
+          "worktree": null
+        },
+        {
+          "acceptance": "",
+          "assignee": null,
+          "blockedReason": null,
+          "boardId": 1,
+          "branch": null,
+          "column": "blocked",
+          "consumes": [],
+          "createdAt": "<TIME>",
+          "createdById": "11111111-1111-1111-1111-111111111111",
+          "createdByName": "Vertrag",
+          "dependents": [],
+          "dependsOn": [],
+          "dependsOpen": [],
+          "dependsUnmerged": [],
+          "description": "",
+          "diagram": "",
+          "handbook": "",
+          "id": "ARC-0004",
+          "labels": [],
+          "needsPlanning": false,
+          "number": 4,
+          "plan": "",
+          "plannedAt": null,
+          "plannedBy": null,
+          "planningClaimAt": null,
+          "planningClaimBy": null,
+          "priority": "low",
+          "produces": [],
+          "projectId": 1,
+          "rev": 1,
+          "sessions": [],
+          "sortOrder": 0,
+          "spec": null,
+          "specTask": null,
+          "status": "blocked",
+          "stepsDone": 0,
+          "stepsTotal": 0,
+          "targetBranch": null,
+          "title": "Altlast entfernen",
+          "touches": [],
+          "unlocks": [],
+          "updatedAt": "<TIME>",
+          "waiting": false,
+          "waitingOnQuestions": [],
+          "worktree": null
+        }
+      ],
+      "stderr": ""
+    }
+  },
+  {
+    "name": "list --status geplant,wartet",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--status",
+        "geplant,wartet"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "\nWartet (1)\n  ARC-0003  Suche beschleunigen  [wartet auf ARC-0002]"
+    }
+  },
+  {
+    "name": "list --q login",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--q",
+        "login"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "\nIn Arbeit (1)\n  ARC-0001  Login bauen  @claude (high) [1/2 Schritte] ui,auth"
+    }
+  },
+  {
+    "name": "list --needs-planning",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--needs-planning"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "\nBacklog (1)\n  ARC-0002  Export bauen  [planung] api"
+    }
+  },
+  {
+    "name": "list --assignee claude",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--assignee",
+        "claude"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "\nIn Arbeit (1)\n  ARC-0001  Login bauen  @claude (high) [1/2 Schritte] ui,auth"
+    }
+  },
+  {
+    "name": "list --label api",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--label",
+        "api"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "\nBacklog (1)\n  ARC-0002  Export bauen  [planung] api"
+    }
+  },
+  {
+    "name": "list --board all --md",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--board",
+        "all",
+        "--md"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "## Alle Boards\n\n### Backlog (2)\n- **ARC-0002** Export bauen — [planung] · api\n- **ARC-0005** Berichte prüfen\n\n### Wartet (1)\n- **ARC-0003** Suche beschleunigen\n  - Wartet auf: ARC-0002\n\n### In Arbeit (1)\n- **ARC-0001** Login bauen — @claude · high · 1/2 Schritte · ui,auth\n  - Abnahme: Die Anmeldung geht.\n\n### Blockiert (1)\n- **ARC-0004** Altlast entfernen — low"
+    }
+  },
+  {
+    "name": "list --board 2",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--board",
+        "2"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "\nBacklog (1)\n  ARC-0005  Berichte prüfen"
+    }
+  },
+  {
+    "name": "list --status unbekannt (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--status",
+        "quatsch"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Status „quatsch“ ist ungültig. Erlaubt: backlog, in_planning, planned, in_progress, blocked, done, not_needed. [status-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "list --board 99 (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "list",
+        "--board",
+        "99"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Board 99 gibt es nicht. [board-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "list --board 99 --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "list",
+        "--board",
+        "99"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "board-not-found",
+          "message": "Board 99 gibt es nicht."
+        }
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "show (Text)",
+    "request": {
+      "args": [
+        "board",
+        "show",
+        "ARC-0001"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0001  Login bauen\nStatus in_progress | Prio high | rev 10 | @claude | ui,auth\nAbnahme: Die Anmeldung geht.\n\n## Beschreibung\nAnmeldung mit Kennwort\n\n## Plan\n## Vorgehen\n\n1. Test schreiben\n2. Umsetzen\n\n## Handbuch\n## Kontext\n\nDas Handbuch des Tickets.\n\n## Diagramm (mermaid)\nflowchart LR\n  A --> B\n\n## Schritte (1/2)\n  [x] 1. Test schreiben\n        npm test – erwartet: rot\n  [ ] 2. Umsetzen\n\n## Kommentare\n  1 ältere Agenten-Kommentare ausgeblendet – --all-comments zeigt sie\n  <TIME> Vertrag: Bitte Tastatur beachten\n  <TIME> claude: Test ist rot\n  <TIME> claude: Umsetzung läuft\n  <TIME> claude: Tests sind grün\n\nVerlauf: 8 Einträge – --history zeigt sie"
+    }
+  },
+  {
+    "name": "show --all-comments --history",
+    "request": {
+      "args": [
+        "board",
+        "show",
+        "ARC-0001",
+        "--all-comments",
+        "--history"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0001  Login bauen\nStatus in_progress | Prio high | rev 10 | @claude | ui,auth\nAbnahme: Die Anmeldung geht.\n\n## Beschreibung\nAnmeldung mit Kennwort\n\n## Plan\n## Vorgehen\n\n1. Test schreiben\n2. Umsetzen\n\n## Handbuch\n## Kontext\n\nDas Handbuch des Tickets.\n\n## Diagramm (mermaid)\nflowchart LR\n  A --> B\n\n## Schritte (1/2)\n  [x] 1. Test schreiben\n        npm test – erwartet: rot\n  [ ] 2. Umsetzen\n\n## Kommentare\n  <TIME> Vertrag: Bitte Tastatur beachten\n  <TIME> claude: Schritt 1 von 2 fertig\n  <TIME> claude: Test ist rot\n  <TIME> claude: Umsetzung läuft\n  <TIME> claude: Tests sind grün\n\n## Verlauf\n  <TIME> Vertrag status: – → in_progress (angelegt)\n  <TIME> Vertrag assignee: – → claude\n  <TIME> Vertrag plan: 0 Zeichen → 42 Zeichen\n  <TIME> Vertrag handbook: 0 Zeichen → 37 Zeichen\n  <TIME> Vertrag diagram: 0 Zeichen → 22 Zeichen\n  <TIME> Vertrag step: – → 1: Test schreiben (Schritt hinzugefügt)\n  <TIME> Vertrag step: – → 2: Umsetzen (Schritt hinzugefügt)\n  <TIME> Vertrag step: 1: offen → 1: erledigt (Test schreiben)"
+    }
+  },
+  {
+    "name": "show --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "show",
+        "ARC-0001"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "acceptance": "Die Anmeldung geht.",
+        "assignee": "claude",
+        "blockedReason": null,
+        "boardId": 1,
+        "branch": null,
+        "column": "in_progress",
+        "comments": [
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "Vertrag",
+            "body": "Bitte Tastatur beachten",
+            "createdAt": "<TIME>",
+            "id": 1,
+            "readByAgentAt": null,
+            "ticketId": "ARC-0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "claude",
+            "body": "Schritt 1 von 2 fertig",
+            "createdAt": "<TIME>",
+            "id": 2,
+            "readByAgentAt": null,
+            "ticketId": "ARC-0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "claude",
+            "body": "Test ist rot",
+            "createdAt": "<TIME>",
+            "id": 3,
+            "readByAgentAt": null,
+            "ticketId": "ARC-0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "claude",
+            "body": "Umsetzung läuft",
+            "createdAt": "<TIME>",
+            "id": 4,
+            "readByAgentAt": null,
+            "ticketId": "ARC-0001"
+          },
+          {
+            "authorId": "11111111-1111-1111-1111-111111111111",
+            "authorName": "claude",
+            "body": "Tests sind grün",
+            "createdAt": "<TIME>",
+            "id": 5,
+            "readByAgentAt": null,
+            "ticketId": "ARC-0001"
+          }
+        ],
+        "consumes": [],
+        "createdAt": "<TIME>",
+        "createdById": "11111111-1111-1111-1111-111111111111",
+        "createdByName": "Vertrag",
+        "dependents": [],
+        "dependsOn": [],
+        "dependsOpen": [],
+        "dependsUnmerged": [],
+        "description": "Anmeldung mit Kennwort",
+        "diagram": "flowchart LR\n  A --> B",
+        "handbook": "## Kontext\n\nDas Handbuch des Tickets.",
+        "history": [
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "status",
+            "from": null,
+            "note": "angelegt",
+            "ticketId": "ARC-0001",
+            "to": "in_progress"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "assignee",
+            "from": null,
+            "note": null,
+            "ticketId": "ARC-0001",
+            "to": "claude"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "plan",
+            "from": "0 Zeichen",
+            "note": null,
+            "ticketId": "ARC-0001",
+            "to": "42 Zeichen"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "handbook",
+            "from": "0 Zeichen",
+            "note": null,
+            "ticketId": "ARC-0001",
+            "to": "37 Zeichen"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "diagram",
+            "from": "0 Zeichen",
+            "note": null,
+            "ticketId": "ARC-0001",
+            "to": "22 Zeichen"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "step",
+            "from": null,
+            "note": "Schritt hinzugefügt",
+            "ticketId": "ARC-0001",
+            "to": "1: Test schreiben"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "step",
+            "from": null,
+            "note": "Schritt hinzugefügt",
+            "ticketId": "ARC-0001",
+            "to": "2: Umsetzen"
+          },
+          {
+            "at": "<TIME>",
+            "byId": "11111111-1111-1111-1111-111111111111",
+            "byName": "Vertrag",
+            "field": "step",
+            "from": "1: offen",
+            "note": "Test schreiben",
+            "ticketId": "ARC-0001",
+            "to": "1: erledigt"
+          }
+        ],
+        "id": "ARC-0001",
+        "labels": [
+          "ui",
+          "auth"
+        ],
+        "needsPlanning": false,
+        "number": 1,
+        "plan": "## Vorgehen\n\n1. Test schreiben\n2. Umsetzen",
+        "plannedAt": null,
+        "plannedBy": null,
+        "planningClaimAt": null,
+        "planningClaimBy": null,
+        "priority": "high",
+        "produces": [],
+        "projectId": 1,
+        "rev": 10,
+        "sessions": [],
+        "sortOrder": 0,
+        "spec": null,
+        "specTask": null,
+        "status": "in_progress",
+        "steps": [
+          {
+            "detail": "npm test – erwartet: rot",
+            "done": true,
+            "text": "Test schreiben"
+          },
+          {
+            "done": false,
+            "text": "Umsetzen"
+          }
+        ],
+        "stepsDone": 1,
+        "stepsTotal": 2,
+        "targetBranch": null,
+        "title": "Login bauen",
+        "touches": [],
+        "unlocks": [],
+        "updatedAt": "<TIME>",
+        "waiting": false,
+        "waitingOnQuestions": [],
+        "worktree": null
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "show --field plan",
+    "request": {
+      "args": [
+        "board",
+        "show",
+        "ARC-0001",
+        "--field",
+        "plan"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "## Vorgehen\n\n1. Test schreiben\n2. Umsetzen"
+    }
+  },
+  {
+    "name": "show --field plan --json",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "show",
+        "ARC-0001",
+        "--field",
+        "plan"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "json": {
+        "plan": "## Vorgehen\n\n1. Test schreiben\n2. Umsetzen"
+      },
+      "stderr": ""
+    }
+  },
+  {
+    "name": "show eines wartenden Tickets",
+    "request": {
+      "args": [
+        "board",
+        "show",
+        "ARC-0003"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "ARC-0003  Suche beschleunigen\nStatus planned (wartet) | Prio normal | rev 1 | nicht zugewiesen\nSetzt voraus: ARC-0002 (offen)\n\n## Kommentare\n(keine)\n\nVerlauf: 1 Eintrag – --history zeigt sie"
+    }
+  },
+  {
+    "name": "show --field unbekannt (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "show",
+        "ARC-0001",
+        "--field",
+        "quatsch"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Feld „quatsch“ gibt es nicht. Erlaubt: title, description, plan, handbook, diagram, acceptance, status, blockedReason. [field-invalid]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "show unbekanntes Ticket (Fehler)",
+    "request": {
+      "args": [
+        "board",
+        "show",
+        "ARC-9999"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "stderr": "Ticket ARC-9999 gibt es nicht. [ticket-not-found]",
+      "stdout": ""
+    }
+  },
+  {
+    "name": "show unbekanntes Ticket --json (Fehler)",
+    "request": {
+      "args": [
+        "--json",
+        "board",
+        "show",
+        "ARC-9999"
+      ],
+      "cwd": "<REPO1>"
+    },
+    "response": {
+      "code": 1,
+      "json": {
+        "error": {
+          "code": "ticket-not-found",
+          "message": "Ticket ARC-9999 gibt es nicht."
+        }
+      },
+      "stderr": ""
+    }
+  }
+]

@@ -1,0 +1,76 @@
+{
+  "title": "board create, set, move und delete: Text, JSON, Dateien, Voraussetzungen, Labels und Fehler",
+  "fixtures": {
+    "repos": [
+      {
+        "name": "REPO1",
+        "harnessInit": true,
+        "files": {
+          "desc.md": "Anmeldung mit Kennwort und Zweitfaktor.\n",
+          "abnahme.md": "Die Anmeldung geht, der Test deckt sie ab.\n",
+          "plan.md": "## Vorgehen\n\n1. Test schreiben\n2. Umsetzen\n"
+        }
+      }
+    ],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "ARC", "name": "Arches" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Sprint" }, "record": false },
+    { "name": "Board dem Repo zuordnen", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "zweites Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "ARC", "name": "Später" }, "record": false },
+
+    { "name": "create einfach", "kind": "cli", "args": ["board", "create", "Login bauen", "--desc", "Anmeldung mit Kennwort", "--by", "claude"], "cwd": "{{REPO1}}" },
+    {
+      "name": "create mit allen Optionen --json",
+      "kind": "cli",
+      "args": [
+        "--json", "board", "create", "Export bauen",
+        "--desc-file", "desc.md", "--status", "geplant", "--priority", "high", "--label", "api,export",
+        "--planned", "--acceptance-file", "abnahme.md", "--depends-on", "ARC-0001",
+        "--step", "Test schreiben", "--step", "Umsetzen", "--target-branch", "release/1", "--by", "claude"
+      ],
+      "cwd": "{{REPO1}}"
+    },
+    {
+      "name": "create aus der Standardeingabe",
+      "kind": "cli",
+      "args": ["board", "create", "Suche beschleunigen", "--desc-file", "-", "--board", "2", "--by", "claude"],
+      "cwd": "{{REPO1}}",
+      "stdin": "Die Suche braucht einen Index.\n"
+    },
+    { "name": "create mit gleichem Titel (Fehler)", "kind": "cli", "args": ["board", "create", "Login bauen", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "create mit gleichem Titel und --force", "kind": "cli", "args": ["board", "create", "Login bauen", "--force", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "create auf unbekanntem Board --json (Fehler)", "kind": "cli", "args": ["--json", "board", "create", "Fremd", "--board", "99", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "create mit unlesbarer Datei (Fehler)", "kind": "cli", "args": ["board", "create", "Ohne Datei", "--desc-file", "fehlt.md", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "set Titel und Priorität", "kind": "cli", "args": ["board", "set", "ARC-0001", "--title", "Login bauen und prüfen", "--priority", "high", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set Plan aus Datei", "kind": "cli", "args": ["board", "set", "ARC-0001", "--plan-file", "plan.md", "--handbook", "Kurzes Handbuch", "--diagram", "flowchart LR\n  A --> B", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set Labels und Zuweisung --json", "kind": "cli", "args": ["--json", "board", "set", "ARC-0001", "--label", "ui", "--label", "auth", "--assignee", "claude", "--needs-planning", "false", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set Zuweisung entfernen", "kind": "cli", "args": ["board", "set", "ARC-0001", "--assignee", "none", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set blockiert mit Grund", "kind": "cli", "args": ["board", "set", "ARC-0001", "--status", "blockiert", "--blocked-reason", "Zugang fehlt", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set Voraussetzung ergänzen", "kind": "cli", "args": ["board", "set", "ARC-0003", "--depends-on-add", "ARC-0001", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set Voraussetzung entfernen", "kind": "cli", "args": ["board", "set", "ARC-0003", "--depends-on-rm", "ARC-0001", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set Voraussetzungen ersetzen", "kind": "cli", "args": ["board", "set", "ARC-0003", "--depends-on", "ARC-0001", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set Voraussetzungen leeren", "kind": "cli", "args": ["board", "set", "ARC-0003", "--depends-on", "none", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set Zielbranch entfernen", "kind": "cli", "args": ["board", "set", "ARC-0002", "--target-branch", "none", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set auf ein anderes Board", "kind": "cli", "args": ["board", "set", "ARC-0003", "--to-board", "1", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set Branch und Worktree leeren", "kind": "cli", "args": ["board", "set", "ARC-0003", "--clear-branch", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set mit passender Version", "kind": "cli", "args": ["board", "set", "ARC-0003", "--title", "Suche mit Index", "--rev", "7", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set mit veralteter Version (Fehler)", "kind": "cli", "args": ["board", "set", "ARC-0003", "--title", "Zu spät", "--rev", "1", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set --depends-on mit --depends-on-add (Fehler)", "kind": "cli", "args": ["board", "set", "ARC-0003", "--depends-on", "ARC-0001", "--depends-on-add", "ARC-0002", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "set unbekanntes Ticket --json (Fehler)", "kind": "cli", "args": ["--json", "board", "set", "ARC-9999", "--title", "Fremd", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "move in eine Spalte", "kind": "cli", "args": ["board", "move", "ARC-0003", "in Arbeit", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "move auf erledigt mit Abnahme --json", "kind": "cli", "args": ["--json", "board", "move", "ARC-0003", "erledigt", "--acceptance", "Der Index greift.", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "move auf erledigt ohne Abnahme (Fehler)", "kind": "cli", "args": ["board", "move", "ARC-0004", "erledigt", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "move mit unbekannter Spalte (Fehler)", "kind": "cli", "args": ["board", "move", "ARC-0004", "quatsch", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "move mit veralteter Version (Fehler)", "kind": "cli", "args": ["board", "move", "ARC-0001", "geplant", "--rev", "1", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "delete", "kind": "cli", "args": ["board", "delete", "ARC-0004", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "delete --json", "kind": "cli", "args": ["--json", "board", "delete", "ARC-0002", "--by", "claude"], "cwd": "{{REPO1}}" },
+    { "name": "delete unbekanntes Ticket (Fehler)", "kind": "cli", "args": ["board", "delete", "ARC-9999", "--by", "claude"], "cwd": "{{REPO1}}" },
+
+    { "name": "Liste am Ende", "kind": "cli", "args": ["board", "list", "--board", "all"], "cwd": "{{REPO1}}" }
+  ]
+}
