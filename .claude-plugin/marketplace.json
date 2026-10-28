@@ -7,6 +7,7 @@
   "plugins": [
     {
       "name": "ai-harness",
+      "version": "0.1.0",
       "source": "./packages/plugin/dist/ai-harness",
       "defaultEnabled": false,
       "description": "Tickets, Sessions und Board für parallele Claude-Code-Sessions (Hooks, Skills, harness-Befehl)"

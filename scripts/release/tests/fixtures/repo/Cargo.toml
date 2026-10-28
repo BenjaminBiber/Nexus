@@ -1,0 +1,11 @@
+[workspace]
+members = ["crates/*", "apps/desktop/src-tauri"]
+resolver = "2"
+
+# Quelle der Version für das ganze Repo
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+serde = "1"

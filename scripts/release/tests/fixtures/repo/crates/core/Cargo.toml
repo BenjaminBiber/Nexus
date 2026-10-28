@@ -1,0 +1,8 @@
+[package]
+name = "fix-core"
+# Zieht die Version des Workspace: diese Datei darf das Skript nicht anfassen
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde = { workspace = true }

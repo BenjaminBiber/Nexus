@@ -1,0 +1,9 @@
+{
+  "name": "fix-harness",
+  "displayName": "Fixture Harness",
+  "version": "0.1.0",
+  "description": "Plugin des Fixture-Repos",
+  "author": { "name": "Fixture" },
+  "license": "MIT",
+  "keywords": ["fixture", "release"]
+}
