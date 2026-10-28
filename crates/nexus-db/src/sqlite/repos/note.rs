@@ -72,7 +72,7 @@ impl NoteRepository for SqliteUnitOfWork<'_> {
         };
         for (name, state) in STATE_NAMES.iter().zip(states.iter()) {
             params.push((
-                std::borrow::Cow::Borrowed(name),
+                std::borrow::Cow::Borrowed(*name),
                 SqlValue::from(state.as_str()),
             ));
         }

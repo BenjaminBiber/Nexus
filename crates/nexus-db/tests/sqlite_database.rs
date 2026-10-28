@@ -307,14 +307,11 @@ async fn gibt_nach_einem_sql_fehler_die_verbindung_frei() {
 #[tokio::test]
 async fn liefert_eine_unit_of_work_mit_allen_17_repositories() {
     let temp = TempSqlite::create().expect("Temp-Datei");
-    // Kompiliertest der 17 Zugriffe: Benutzer, Projekte, Boards, Tickets, Schritte,
-    // Ticket-Sitzungen, Kommentare, Verlauf, Notizen und Löschprotokoll sind gefüllt und
-    // liefern leere Listen; die übrigen sieben melden noch not-implemented.
-    let codes = temp
-        .db()
+    // Kompiliertest der 17 Zugriffe: alle sind gefüllt und liefern auf einer leeren Datei
+    // leere Listen.
+    temp.db()
         .transaction(|u| {
             Box::pin(async move {
-                // Die sechs gefüllten Repositories liefern auf einer leeren Datei leere Listen
                 assert!(u.users().list().await?.is_empty());
                 assert!(u.projects().list().await?.is_empty());
                 assert!(u
@@ -330,10 +327,6 @@ async fn liefert_eine_unit_of_work_mit_allen_17_repositories() {
                 assert!(u.steps().list("ARC-1").await?.is_empty());
                 assert!(u.ticket_sessions().tickets_of("sess-1").await?.is_empty());
 
-                let mut codes: Vec<String> = Vec::new();
-                let mut merke = |fehler: nexus_core::Error| {
-                    codes.push(fehler.code().unwrap_or_default().to_string());
-                };
                 assert!(u.comments().list("ARC-1").await.unwrap().is_empty());
                 assert!(u.history().list("ARC-1").await.unwrap().is_empty());
                 assert!(u
@@ -343,38 +336,33 @@ async fn liefert_eine_unit_of_work_mit_allen_17_repositories() {
                     .unwrap()
                     .is_empty());
                 assert!(u.deletions().list().await.unwrap().is_empty());
-                merke(
-                    u.questions()
-                        .list(&nexus_core::board::database::BoardQuestionFilter::default())
-                        .await
-                        .unwrap_err(),
-                );
-                merke(u.question_research().list("ARC-F1").await.unwrap_err());
-                merke(u.question_comments().list("ARC-F1").await.unwrap_err());
-                merke(u.question_history().list("ARC-F1").await.unwrap_err());
-                merke(
-                    u.search()
-                        .find(&nexus_core::board::search_types::SearchRequest {
-                            terms: vec!["x".to_string()],
-                            kinds: nexus_core::board::search_types::SEARCH_KINDS.to_vec(),
-                            per_source: 5,
-                        })
-                        .await
-                        .unwrap_err(),
-                );
-                merke(u.dispatch_runs().existing(&[]).await.unwrap_err());
-                merke(u.dispatch_stats().dispatch_comments(1).await.unwrap_err());
-                Ok(codes)
+                assert!(u
+                    .search()
+                    .find(&nexus_core::board::search_types::SearchRequest {
+                        terms: vec!["x".to_string()],
+                        kinds: nexus_core::board::search_types::SEARCH_KINDS.to_vec(),
+                        per_source: 5,
+                    })
+                    .await?
+                    .rows
+                    .is_empty());
+                assert!(u.dispatch_runs().existing(&[]).await?.is_empty());
+                assert!(u.dispatch_stats().dispatch_comments(1).await?.is_empty());
+                // Die vier Repositories der Fragen sind gefüllt (P2-8) und liefern leere Listen
+                assert!(u
+                    .questions()
+                    .list(&nexus_core::board::database::BoardQuestionFilter::default())
+                    .await?
+                    .is_empty());
+                assert!(u.question_research().list("ARC-F1").await?.is_empty());
+                assert!(u.question_comments().list("ARC-F1").await?.is_empty());
+                assert!(u.question_history().list("ARC-F1").await?.is_empty());
+                Ok(())
             })
         })
         .await
         .expect("Transaktion");
 
-    assert_eq!(codes.len(), 7);
-    assert!(
-        codes.iter().all(|code| code == "not-implemented"),
-        "{codes:?}"
-    );
     temp.dispose().await;
 }
 

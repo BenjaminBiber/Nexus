@@ -196,7 +196,10 @@ impl SqliteUnitOfWork<'_> {
             source.where_.into_iter().map(ToString::to_string).collect();
         for (index, term) in terms.iter().enumerate() {
             let name = TERM_NAMES[index];
-            params.push((name, SqlValue::Text(term.to_lowercase())));
+            params.push((
+                std::borrow::Cow::Borrowed(name),
+                SqlValue::Text(term.to_lowercase()),
+            ));
             conditions.push(format!(
                 "instr({SEARCH_LOWER}({}), @{name}) > 0",
                 source.val

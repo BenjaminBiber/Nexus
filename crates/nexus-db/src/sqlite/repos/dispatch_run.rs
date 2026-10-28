@@ -59,7 +59,12 @@ pub(crate) fn liste(names: &[&'static str], values: &[String]) -> (String, Param
     let params = values
         .iter()
         .enumerate()
-        .map(|(index, value)| (names[index], SqlValue::from(value.clone())))
+        .map(|(index, value)| {
+            (
+                std::borrow::Cow::Borrowed(names[index]),
+                SqlValue::from(value.clone()),
+            )
+        })
         .collect();
     (list, params)
 }
