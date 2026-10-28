@@ -246,6 +246,14 @@ pub fn init<R: Runtime>(app: &AppHandle<R>) {
     });
 }
 
+// Hat die App den Server selbst gestartet? Dann nimmt sie ihn beim Beenden mit.
+// Die Rückfrage beim Beenden sagt danach, was mit dem Server passiert.
+pub fn eigener_server<R: Runtime>(app: &AppHandle<R>) -> bool {
+    app.try_state::<ServerState>()
+        .and_then(|state| state.own.lock().ok().map(|slot| slot.is_some()))
+        .unwrap_or(false)
+}
+
 // Beendet den selbst gestarteten Server; einen fremden lässt die App laufen
 pub fn shutdown<R: Runtime>(app: &AppHandle<R>) {
     let Some(state) = app.try_state::<ServerState>() else {
@@ -676,9 +684,9 @@ mod tests {
         assert!(!passt("https://example.com/"));
     }
 
-    // Ordnerauswahl und Öffnen sind freigegeben, aber nur diese Befehle; Adressen nur für Browser und VS Code
+    // Ordnerauswahl, Öffnen und Systemmeldungen sind freigegeben, aber nur diese Befehle; Adressen nur für Browser und VS Code
     #[test]
-    fn capability_gibt_nur_dialog_und_opener_frei() {
+    fn capability_gibt_nur_dialog_opener_und_meldungen_frei() {
         let datei: serde_json::Value =
             serde_json::from_str(include_str!("../capabilities/remote.json")).unwrap();
         let rechte = datei["permissions"].as_array().unwrap();
@@ -696,6 +704,7 @@ mod tests {
             [
                 "core:default",
                 "log:default",
+                "notification:default",
                 "dialog:allow-open",
                 "opener:allow-reveal-item-in-dir",
                 "opener:allow-open-url",
@@ -712,5 +721,19 @@ mod tests {
             .map(|eintrag| eintrag["url"].as_str().unwrap())
             .collect();
         assert_eq!(adressen, ["http://*", "https://*", "vscode://*"]);
+    }
+
+    // Das Hauptfenster darf nicht gedrosselt werden, sonst schläft der Ereignisstrom im Hintergrund ein
+    #[test]
+    fn hauptfenster_wird_im_hintergrund_nicht_gedrosselt() {
+        let datei: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let fenster = datei["app"]["windows"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|fenster| fenster["label"] == "main")
+            .unwrap();
+        assert_eq!(fenster["backgroundThrottling"], "disabled");
     }
 }

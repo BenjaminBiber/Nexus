@@ -1,0 +1,288 @@
+[
+  {
+    "name": "Zustand vor der Planung",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/plan/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "pausedUntil": null,
+        "run": null,
+        "ticketId": "BEN-0001"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand mit klein geschriebener Ticket-ID",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/plan/ben-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "pausedUntil": null,
+        "run": null,
+        "ticketId": "BEN-0001"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand eines unbekannten Tickets – die Abfrage geht nicht an die Datenbank",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/plan/BEN-0099"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "pausedUntil": null,
+        "run": null,
+        "ticketId": "BEN-0099"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Planung eines unbekannten Tickets starten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/plan/BEN-0099"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "ticket-not-found",
+        "message": "Ticket BEN-0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Planung für ein unbekanntes Board starten",
+    "request": {
+      "body": {
+        "boardId": 99
+      },
+      "method": "POST",
+      "path": "/api/dispatch/plan/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 99 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Planung eines erledigten Tickets starten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/plan/BEN-0002"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "plan-not-possible",
+        "message": "BEN-0002 steht auf „done“ – geplant werden nur Tickets in Backlog, In Planung, Geplant oder Blockiert."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Planung eines Tickets starten, das auf eine Frage wartet",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/plan/BEN-0003"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "plan-waiting-question",
+        "message": "BEN-0003 wartet auf Frage BEN-F0001 – erst entscheiden, dann planen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Planung starten – der Worker wird nie wirklich gestartet",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/plan/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": false,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "message": "Dispatcher ist ausgeschaltet",
+        "pausedUntil": null,
+        "planning": 1,
+        "planningAuto": {
+          "active": 1,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:lauf>",
+            "kind": "plan",
+            "log": "<var:lauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "startedAt": "<TIME>",
+            "ticketId": "BEN-0001",
+            "title": "Rabatt einbauen"
+          }
+        ],
+        "started": {
+          "effort": "high",
+          "id": "<var:lauf>",
+          "kind": "plan",
+          "log": "<var:lauf>.log",
+          "model": "opus",
+          "profile": "standard",
+          "startedAt": "<TIME>",
+          "ticketId": "BEN-0001",
+          "title": "Rabatt einbauen"
+        },
+        "state": "off",
+        "tickets": [],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand nach dem Start",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/plan/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "pausedUntil": null,
+        "run": {
+          "effort": "high",
+          "id": "<var:lauf>",
+          "kind": "plan",
+          "log": "<var:lauf>.log",
+          "model": "opus",
+          "profile": "standard",
+          "startedAt": "<TIME>",
+          "ticketId": "BEN-0001",
+          "title": "Rabatt einbauen"
+        },
+        "ticketId": "BEN-0001"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Planung ein zweites Mal starten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/plan/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "plan-running",
+        "message": "Für BEN-0001 läuft schon eine Planung."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Planung während der Pause starten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/plan/BEN-0004"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "dispatch-paused"
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Zustand während der Pause",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/plan/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "pausedUntil": "<TIME>",
+        "run": {
+          "effort": "high",
+          "id": "<var:lauf>",
+          "kind": "plan",
+          "log": "<var:lauf>.log",
+          "model": "opus",
+          "profile": "standard",
+          "startedAt": "<TIME>",
+          "ticketId": "BEN-0001",
+          "title": "Rabatt einbauen"
+        },
+        "ticketId": "BEN-0001"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Planung ohne Repo-Pfad am Board starten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/plan/BEN-0004"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "plan-no-repo",
+        "message": "BEN-0004 liegt nicht auf einem eigenen Board mit Repo-Pfad – geplant wird nur auf eigenen Boards, deren Repo-Pfad gesetzt ist."
+      },
+      "status": 422
+    }
+  }
+]

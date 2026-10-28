@@ -11,6 +11,7 @@ import type { MarkdownSectionDto } from '../src/api/types.js';
 import type { Platform } from '../src/platform/Platform.js';
 import { PlatformProvider } from '../src/platform/PlatformContext.js';
 import { dbBoards, dbProjects, fakeApi } from './helpers/fakeApi.js';
+import { fakePlatform } from './helpers/fakePlatform.js';
 import { renderWithApp } from './helpers/renderWithApp.js';
 
 vi.mock('mermaid', () => ({ default: { initialize: vi.fn(), render: vi.fn(async () => ({ svg: '<svg></svg>' })) } }));
@@ -19,17 +20,6 @@ afterEach(() => {
   document.removeEventListener('click', stopNavigation);
   cleanup();
 });
-
-// Plattform-Doppel: merkt sich die Aufrufe, die Überschreibungen gewinnen
-function fakePlatform(overrides: Partial<Platform> = {}): Platform {
-  return {
-    kind: 'tauri',
-    pickFolder: vi.fn(async () => null),
-    openDoc: vi.fn(async () => undefined),
-    openExternal: vi.fn(async () => undefined),
-    ...overrides,
-  } as Platform;
-}
 
 describe('Ordnerauswahl über die Plattform', () => {
   it('übernimmt den Pfad aus dem Ordnerdialog der Plattform', async () => {

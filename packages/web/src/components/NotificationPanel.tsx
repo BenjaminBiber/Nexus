@@ -3,6 +3,7 @@ import { useApi } from '../api/ApiContext.js';
 import type { NotificationMode, UserSettingsDto } from '../api/types.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { useLiveConnection } from '../live/useLive.js';
+import { usePlatform } from '../platform/PlatformContext.js';
 import { Notice } from './settings/Notice.js';
 import { SettingsPanel, useSaveStatus } from './settings/SettingsPanel.js';
 import { SettingRow, SettingsSection } from './settings/SettingRow.js';
@@ -18,24 +19,25 @@ const MODES: Array<{ mode: NotificationMode; label: string; hint: string; icon: 
 // und zusätzlichem Push über ntfy.
 export function NotificationPanel() {
   const api = useApi();
+  const platform = usePlatform();
   const { reconnect } = useLiveConnection();
   const loaded = useAsync(() => api.getUserSettings(), [api]);
   const { state, run, setState } = useSaveStatus();
   const [test, setTest] = useState<{ ok: boolean; text: string } | null>(null);
   const [ntfyTest, setNtfyTest] = useState<{ ok: boolean; text: string } | null>(null);
   const settings = loaded.state.status === 'ready' ? loaded.state.data : null;
-  const supported = typeof Notification !== 'undefined';
+  const supported = platform.notificationsSupported();
 
-  // Speichert eine Änderung; für „Browser“ wird zuerst die Erlaubnis des Browsers eingeholt.
+  // Speichert eine Änderung; für „Browser“ wird zuerst die Erlaubnis eingeholt.
   // Für „Windows“ wird sie nur erfragt: mit Erlaubnis zeigt ein offener Tab die Meldung (Klick bleibt im Tab), sonst Windows.
   const save = async (patch: Partial<UserSettingsDto>) => {
     setTest(null);
-    if (patch.notifications === 'browser' && supported && Notification.permission !== 'granted') {
-      const answer = await Notification.requestPermission();
+    if (patch.notifications === 'browser' && supported && (await platform.notificationPermission()) !== 'granted') {
+      const answer = await platform.requestNotificationPermission();
       if (answer !== 'granted') return setState({ kind: 'error', message: 'Der Browser hat Benachrichtigungen nicht erlaubt.' });
     }
-    if (patch.notifications === 'windows' && supported && Notification.permission === 'default') {
-      if ((await Notification.requestPermission()) === 'granted') reconnect();
+    if (patch.notifications === 'windows' && supported && (await platform.notificationPermission()) === 'default') {
+      if ((await platform.requestNotificationPermission()) === 'granted') reconnect();
     }
     const saved = await run(() => api.saveUserSettings(patch));
     if (saved) loaded.set(saved);
@@ -69,8 +71,10 @@ export function NotificationPanel() {
       <SettingsSection title="Art der Meldung" bare>
         <fieldset className="choice-group" disabled={!settings}>
           <legend className="sr-only">Art der Benachrichtigung</legend>
-          {MODES.map(({ mode, label, hint, icon }) => {
+          {MODES.map(({ mode, label, hint: modeHint, icon }) => {
             const unavailable = mode === 'browser' && !supported;
+            // In der Desktop-App zeigt nicht Windows die Meldung, sondern das System dieses Rechners
+            const hint = mode === 'windows' && platform.kind === 'tauri' ? 'Auch ohne geöffnetes Board; in der App erscheint die Meldung als Systemmeldung.' : modeHint;
             return (
               <label key={mode} className={`choice${settings?.notifications === mode ? ' selected' : ''}${unavailable ? ' unavailable' : ''}`}>
                 <input

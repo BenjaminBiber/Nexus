@@ -2,6 +2,7 @@
 
 pub mod basics;
 pub mod config;
+pub mod config_store;
 pub mod database;
 pub mod dispatch_run_types;
 pub mod in_memory;
@@ -10,6 +11,7 @@ pub mod labels;
 pub mod limits;
 pub mod question_ids;
 pub mod question_types;
+pub mod repo_file;
 pub mod search_match;
 pub mod search_types;
 pub mod status_parser;
@@ -18,6 +20,7 @@ pub mod types;
 
 pub use basics::*;
 pub use config::{is_guid, BoardConfig, BoardProvider, BOARD_PROVIDERS};
+pub use config_store::BoardConfigStore;
 pub use database::*;
 pub use dispatch_run_types::*;
 pub use in_memory::{InMemoryBoardDatabase, InMemoryBoardSearch, SearchableState};
@@ -26,6 +29,7 @@ pub use labels::BoardLabels;
 pub use limits::BoardLimits;
 pub use question_ids::QuestionIds;
 pub use question_types::*;
+pub use repo_file::{BoardRepoEntries, BoardRepoFile};
 pub use search_match::{BoardSearchMatch, SearchExcerpt};
 pub use search_types::*;
 pub use status_parser::StatusParser;

@@ -1,4 +1,4 @@
-import type { OpenDocInput, Platform } from './Platform.js';
+import type { NotifyInput, NotifyPermission, OpenDocInput, Platform } from './Platform.js';
 
 // Setzt Wurzel und Dokumentpfad mit dem Trennzeichen der Wurzel zusammen (Windows-Wurzeln tragen `\`)
 export function joinDocPath(root: string, path: string): string {
@@ -64,6 +64,44 @@ export class TauriPlatform implements Platform {
       await openUrl(url);
     } catch (e) {
       throw failed('Die Adresse ließ sich nicht öffnen.', e);
+    }
+  }
+
+  // Jedes System der App kann Meldungen zeigen; die Erlaubnis dafür holt das Plugin
+  notificationsSupported(): boolean {
+    return true;
+  }
+
+  // Das Plugin kennt nur „erteilt“ oder „nicht erteilt“; ohne Erlaubnis gilt `default`, damit die Einstellung noch fragen darf
+  async notificationPermission(): Promise<NotifyPermission> {
+    const { isPermissionGranted } = await import('@tauri-apps/plugin-notification');
+    try {
+      return (await isPermissionGranted()) ? 'granted' : 'default';
+    } catch (e) {
+      throw failed('Der Stand der Erlaubnis für Meldungen ließ sich nicht lesen.', e);
+    }
+  }
+
+  // Erst fragen, wenn es die Erlaubnis nicht schon gibt; der Dialog des Systems erscheint nur beim ersten Mal
+  async requestNotificationPermission(): Promise<NotifyPermission> {
+    const { isPermissionGranted, requestPermission } = await import('@tauri-apps/plugin-notification');
+    try {
+      if (await isPermissionGranted()) return 'granted';
+      return await requestPermission();
+    } catch (e) {
+      throw failed('Die Erlaubnis für Meldungen ließ sich nicht einholen.', e);
+    }
+  }
+
+  // Systemmeldung dieses Rechners, auch bei verstecktem Fenster.
+  // Das Plugin nimmt nur Titel und Text; ein Klick holt die App nach vorn, meldet sich aber nicht zurück – `onClick` und `url` bleiben ungenutzt.
+  // Zwei Meldungen mit gleichem `tag` ersetzen sich nicht, sie stehen nebeneinander.
+  async notify(input: NotifyInput): Promise<void> {
+    const { sendNotification } = await import('@tauri-apps/plugin-notification');
+    try {
+      sendNotification({ title: input.title, body: input.body });
+    } catch (e) {
+      throw failed('Die Meldung ließ sich nicht zeigen.', e);
     }
   }
 }

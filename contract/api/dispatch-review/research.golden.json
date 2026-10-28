@@ -1,0 +1,301 @@
+[
+  {
+    "name": "Zustand vor der Recherche",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/research/BEN-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "count": 0,
+        "lastStartedAt": null,
+        "pausedUntil": null,
+        "questionId": "BEN-F0001",
+        "run": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand mit klein geschriebener Fragenummer",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/research/ben-f1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "count": 0,
+        "lastStartedAt": null,
+        "pausedUntil": null,
+        "questionId": "BEN-F0001",
+        "run": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand einer unbekannten Frage – die Abfrage geht nicht an die Datenbank",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/research/BEN-F0099"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "count": 0,
+        "lastStartedAt": null,
+        "pausedUntil": null,
+        "questionId": "BEN-F0099",
+        "run": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand zu etwas, das keine Fragenummer ist",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/research/BEN-0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-id-invalid",
+        "message": "„BEN-0001“ ist keine Fragenummer (erwartet z. B. ARC-F0001)."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Recherche einer unbekannten Frage starten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/research/BEN-F0099"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-not-found",
+        "message": "Frage BEN-F0099 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Recherche für ein unbekanntes Board starten",
+    "request": {
+      "body": {
+        "boardId": 99
+      },
+      "method": "POST",
+      "path": "/api/dispatch/research/BEN-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "board-not-found",
+        "message": "Board 99 gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Recherche einer entschiedenen Frage starten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/research/BEN-F0002"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "question-not-open",
+        "message": "Frage BEN-F0002 ist nicht offen – recherchiert werden nur offene Fragen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Recherche starten – der Worker wird nie wirklich gestartet",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/research/BEN-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "active": 0,
+        "agentPrefix": "junior-",
+        "boardId": 1,
+        "boardInScope": true,
+        "configError": null,
+        "configFile": "<HOME>/dispatch.yaml",
+        "enabled": false,
+        "lastErrors": [],
+        "lastTick": null,
+        "merges": [],
+        "message": "Dispatcher ist ausgeschaltet",
+        "pausedUntil": null,
+        "planning": 0,
+        "planningAuto": {
+          "active": 0,
+          "auto": false,
+          "error": null,
+          "retryAt": null,
+          "since": null,
+          "wip": 1
+        },
+        "research": {
+          "active": 1,
+          "auto": false,
+          "error": null,
+          "maxPerDay": 10,
+          "retryAt": null,
+          "since": null,
+          "today": 0,
+          "wip": 1
+        },
+        "runs": [
+          {
+            "effort": "high",
+            "id": "<var:lauf>",
+            "kind": "research",
+            "log": "<var:lauf>.log",
+            "model": "opus",
+            "profile": "standard",
+            "questionId": "BEN-F0001",
+            "startedAt": "<TIME>",
+            "ticketId": "BEN-F0001",
+            "title": "Gilt der Rabatt auch auf Versandkosten?"
+          }
+        ],
+        "started": {
+          "effort": "high",
+          "id": "<var:lauf>",
+          "kind": "research",
+          "log": "<var:lauf>.log",
+          "model": "opus",
+          "profile": "standard",
+          "questionId": "BEN-F0001",
+          "startedAt": "<TIME>",
+          "ticketId": "BEN-F0001",
+          "title": "Gilt der Rabatt auch auf Versandkosten?"
+        },
+        "state": "off",
+        "tickets": [],
+        "ticketsError": null,
+        "wip": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Zustand nach dem Start",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/research/BEN-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "count": 1,
+        "lastStartedAt": "<TIME>",
+        "pausedUntil": null,
+        "questionId": "BEN-F0001",
+        "run": {
+          "effort": "high",
+          "id": "<var:lauf>",
+          "kind": "research",
+          "log": "<var:lauf>.log",
+          "model": "opus",
+          "profile": "standard",
+          "questionId": "BEN-F0001",
+          "startedAt": "<TIME>",
+          "ticketId": "BEN-F0001",
+          "title": "Gilt der Rabatt auch auf Versandkosten?"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Recherche ein zweites Mal starten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/research/BEN-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "research-running",
+        "message": "Für Frage BEN-F0001 läuft schon eine Recherche."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Recherche während der Pause starten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/research/BEN-F0003"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "dispatch-paused"
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Zustand während der Pause",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/research/BEN-F0001"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "count": 1,
+        "lastStartedAt": "<TIME>",
+        "pausedUntil": "<TIME>",
+        "questionId": "BEN-F0001",
+        "run": {
+          "effort": "high",
+          "id": "<var:lauf>",
+          "kind": "research",
+          "log": "<var:lauf>.log",
+          "model": "opus",
+          "profile": "standard",
+          "questionId": "BEN-F0001",
+          "startedAt": "<TIME>",
+          "ticketId": "BEN-F0001",
+          "title": "Gilt der Rabatt auch auf Versandkosten?"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Recherche ohne Repo-Pfad am Board starten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/research/BEN-F0003"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "research-no-repo",
+        "message": "Für Frage BEN-F0003 ist kein eigenes Board mit Repo-Pfad bekannt – die Frage mit einem Ticket eines eigenen Boards verknüpfen oder bei einem eigenen Board des Projekts BEN den Repo-Pfad setzen."
+      },
+      "status": 422
+    }
+  }
+]

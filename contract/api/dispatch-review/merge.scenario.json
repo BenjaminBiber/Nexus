@@ -1,0 +1,174 @@
+{
+  "title": "Erneut mergen: sauberer Merge in den Hauptbranch, Merge-Konflikt und Fehlerfälle",
+  "fixtures": {
+    "repos": [
+      {
+        "name": "REPO1",
+        "files": {
+          "README.md": "# Bestellung\n",
+          "src/preis.ts": "export function preis(netto: number): number {\n  return netto;\n}\n"
+        }
+      }
+    ],
+    "boardConfig": "sqlite"
+  },
+  "steps": [
+    { "name": "Projekt", "method": "POST", "path": "/api/db/projects", "body": { "key": "BEN", "name": "Bestellung" }, "record": false },
+    { "name": "Board", "method": "POST", "path": "/api/db/boards", "body": { "project": "BEN", "name": "Sprint" }, "record": false },
+    { "name": "Repo-Pfad des Boards", "method": "PATCH", "path": "/api/db/boards/1", "body": { "repoPath": "{{REPO1}}" }, "record": false },
+    { "name": "Board aktivieren", "method": "POST", "path": "/api/db/boards/1/activate", "body": {}, "record": false },
+    {
+      "name": "erstes Ticket: eigene Datei, es wird sauber mergen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Rabatt einbauen", "acceptance": "Der Preis sinkt um den Rabatt.", "labels": ["auto"], "needsPlanning": false },
+      "record": false
+    },
+    {
+      "name": "Plan und Handbuch des ersten Tickets",
+      "method": "PATCH",
+      "path": "/api/db/tickets/BEN-0001",
+      "body": { "rev": 1, "plan": "Rabattsatz als eigene Datei.", "handbook": "Tests mit vitest." },
+      "record": false
+    },
+    { "name": "erstes Ticket nach Geplant", "method": "POST", "path": "/api/db/tickets/BEN-0001/move", "body": { "status": "planned" }, "record": false },
+    {
+      "name": "zweites Ticket: dieselbe Zeile wie der Hauptbranch, es wird kollidieren",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Preis runden", "acceptance": "Der Preis ist auf zwei Stellen gerundet.", "labels": ["auto"], "needsPlanning": false },
+      "record": false
+    },
+    {
+      "name": "Plan und Handbuch des zweiten Tickets",
+      "method": "PATCH",
+      "path": "/api/db/tickets/BEN-0002",
+      "body": { "rev": 1, "plan": "Rückgabe von preis() runden.", "handbook": "Tests mit vitest." },
+      "record": false
+    },
+    { "name": "zweites Ticket nach Geplant", "method": "POST", "path": "/api/db/tickets/BEN-0002/move", "body": { "status": "planned" }, "record": false },
+    { "name": "Dispatcher einschalten", "method": "POST", "path": "/api/dispatch/enable", "body": {}, "record": false },
+
+    {
+      "name": "Durchlauf: das erste Ticket bekommt Branch und Worktree",
+      "method": "POST",
+      "path": "/api/dispatch/run",
+      "body": {},
+      "save": { "lauf1": "json.runs.0.id" },
+      "record": false
+    },
+    {
+      "name": "Arbeit des Agenten am ersten Ticket",
+      "kind": "commit",
+      "cwd": "{{REPO1}}-worktrees/BEN-0001",
+      "files": { "src/rabatt.ts": "export const RABATT = 0.1;\n" },
+      "message": "BEN-0001: Rabattsatz",
+      "record": false
+    },
+    {
+      "name": "der Agent hakt das erste Ticket ab",
+      "method": "POST",
+      "path": "/api/db/tickets/BEN-0001/move",
+      "body": { "status": "done", "acceptance": "Der Preis sinkt um den Rabatt." },
+      "record": false
+    },
+    {
+      "name": "Ergebnis des ersten Laufs",
+      "kind": "homeFile",
+      "path": "dispatch/runs/{{lauf1}}.result.json",
+      "content": {
+        "code": 0,
+        "timedOut": false,
+        "endedAt": "2020-03-02T08:45:00.000Z",
+        "output": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":false,\"result\":\"Rabattsatz angelegt.\",\"total_cost_usd\":0}\n"
+      },
+      "record": false
+    },
+    {
+      "name": "Durchlauf: erstes Ticket wartet auf Freigabe, zweites Ticket bekommt Branch und Worktree",
+      "method": "POST",
+      "path": "/api/dispatch/run",
+      "body": {},
+      "save": { "lauf2": "json.runs.0.id" },
+      "record": false
+    },
+    {
+      "name": "Arbeit des Agenten am zweiten Ticket",
+      "kind": "commit",
+      "cwd": "{{REPO1}}-worktrees/BEN-0002",
+      "files": { "src/preis.ts": "export function preis(netto: number): number {\n  return Math.round(netto * 100) / 100;\n}\n" },
+      "message": "BEN-0002: Preis gerundet",
+      "record": false
+    },
+    {
+      "name": "jemand ändert dieselbe Zeile im Hauptbranch",
+      "kind": "commit",
+      "cwd": "{{REPO1}}",
+      "files": { "src/preis.ts": "export function preis(netto: number): number {\n  return netto + VERSAND;\n}\n" },
+      "message": "Versandkosten aufschlagen",
+      "record": false
+    },
+    {
+      "name": "der Agent hakt das zweite Ticket ab",
+      "method": "POST",
+      "path": "/api/db/tickets/BEN-0002/move",
+      "body": { "status": "done", "acceptance": "Der Preis ist auf zwei Stellen gerundet." },
+      "record": false
+    },
+    {
+      "name": "Ergebnis des zweiten Laufs",
+      "kind": "homeFile",
+      "path": "dispatch/runs/{{lauf2}}.result.json",
+      "content": {
+        "code": 0,
+        "timedOut": false,
+        "endedAt": "2020-03-02T09:15:00.000Z",
+        "output": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":false,\"result\":\"Preis gerundet.\",\"total_cost_usd\":0}\n"
+      },
+      "record": false
+    },
+    {
+      "name": "Durchlauf: auch das zweite Ticket wartet auf Freigabe",
+      "method": "POST",
+      "path": "/api/dispatch/run",
+      "body": {},
+      "record": false
+    },
+
+    { "name": "Erneut mergen eines unbekannten Tickets", "method": "POST", "path": "/api/dispatch/merge/BEN-0099", "body": {} },
+    { "name": "Erneut mergen für ein unbekanntes Board", "method": "POST", "path": "/api/dispatch/merge/BEN-0001", "body": { "boardId": 99 } },
+    {
+      "name": "Erneut mergen, solange das Ticket auf Freigabe wartet",
+      "method": "POST",
+      "path": "/api/dispatch/merge/BEN-0001",
+      "body": {}
+    },
+
+    {
+      "name": "der Mensch nimmt das erste Ticket außerhalb des Panels ab",
+      "method": "POST",
+      "path": "/api/db/tickets/BEN-0001/move",
+      "body": { "status": "done", "acceptance": "Der Preis sinkt um den Rabatt." },
+      "record": false
+    },
+    { "name": "Erneut mergen: der Branch geht sauber in den Hauptbranch", "method": "POST", "path": "/api/dispatch/merge/BEN-0001", "body": {} },
+    { "name": "erstes Ticket ist gemergt und aufgeräumt", "method": "GET", "path": "/api/db/tickets/BEN-0001", "ignore": ["json.history"] },
+
+    {
+      "name": "der Mensch nimmt auch das zweite Ticket außerhalb des Panels ab",
+      "method": "POST",
+      "path": "/api/db/tickets/BEN-0002/move",
+      "body": { "status": "done", "acceptance": "Der Preis ist auf zwei Stellen gerundet." },
+      "record": false
+    },
+    {
+      "name": "Erneut mergen mit Konflikt: eine Merge-Session übernimmt",
+      "method": "POST",
+      "path": "/api/dispatch/merge/BEN-0002",
+      "body": {},
+      "save": { "mergeLauf": "json.runs.0.id" }
+    },
+    { "name": "Erneut mergen, solange die Merge-Session läuft", "method": "POST", "path": "/api/dispatch/merge/BEN-0002", "body": {} },
+    { "name": "zweites Ticket wartet auf die Merge-Session", "method": "GET", "path": "/api/db/tickets/BEN-0002", "ignore": ["json.history"] }
+  ]
+}

@@ -1,4 +1,6 @@
 import { CliStep } from './CliStep.mjs';
+import { CommitStep } from './CommitStep.mjs';
+import { HomeFileStep } from './HomeFileStep.mjs';
 import { HttpStep } from './HttpStep.mjs';
 import { HttpStubStep } from './HttpStubStep.mjs';
 import { SseCloseStep, SseExpectStep, SseOpenStep } from './SseSteps.mjs';
@@ -14,4 +16,6 @@ export const stepKinds = {
   sseOpen: new SseOpenStep(),
   sseExpect: new SseExpectStep(),
   sseClose: new SseCloseStep(),
+  commit: new CommitStep(),
+  homeFile: new HomeFileStep(),
 };

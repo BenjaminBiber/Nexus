@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useApi } from '../api/ApiContext.js';
+import { usePlatform } from '../platform/PlatformContext.js';
 import { LiveContext, type ConnectionState, type LiveHandler, type TabNotice } from './liveContext.js';
 
-// Darf dieser Tab Benachrichtigungen zeigen?
-function canNotify(): boolean {
+// Erste Antwort auf „darf dieser Tab Meldungen zeigen?“, noch ohne die Plattform zu fragen.
+// So verbindet ein Browser mit erteilter Erlaubnis sofort richtig; die Desktop-App holt das gleich danach nach.
+function notifyAllowedAtOnce(): boolean {
   return typeof Notification !== 'undefined' && Notification.permission === 'granted';
 }
 
@@ -13,7 +15,9 @@ function canNotify(): boolean {
 // Gehen alle Beobachter, bleibt das Projekt noch `releaseDelayMs` beobachtet (kein Neuverbinden beim Wechsel Liste → Detail).
 export function LiveProvider({ pid, children, releaseDelayMs = 1000 }: { pid: string; children: ReactNode; releaseDelayMs?: number }) {
   const api = useApi();
+  const platform = usePlatform();
   const [state, setState] = useState<ConnectionState>('connecting');
+  const [notifyAllowed, setNotifyAllowed] = useState(notifyAllowedAtOnce);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [dbBoard, setDbBoard] = useState<number | null>(null);
@@ -27,11 +31,24 @@ export function LiveProvider({ pid, children, releaseDelayMs = 1000 }: { pid: st
     if (releaseTimer.current) clearTimeout(releaseTimer.current);
   }, []);
 
+  // Die Erlaubnis kommt von der Plattform und damit erst später; ein Wechsel verbindet den Strom neu.
+  // Nach jedem `reconnect()` wird sie erneut gelesen, denn danach kann sie gerade erteilt worden sein.
+  useEffect(() => {
+    let alive = true;
+    platform
+      .notificationPermission()
+      .then((permission) => alive && setNotifyAllowed(permission === 'granted'))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [platform, attempt]);
+
   useEffect(() => {
     let wasDown = false;
     setState('connecting');
     // Ohne beobachtetes Projekt wie bisher mit zwei Argumenten; mit erlaubten Benachrichtigungen zeigt der Tab die Meldungen des Servers
-    const source = canNotify()
+    const source = notifyAllowed
       ? api.openEvents(pid, dbBoard, dbProject, true)
       : dbProject === null ? api.openEvents(pid, dbBoard) : api.openEvents(pid, dbBoard, dbProject);
     source.onmessage = (event) => {
@@ -59,7 +76,7 @@ export function LiveProvider({ pid, children, releaseDelayMs = 1000 }: { pid: st
       setState('disconnected');
     };
     return () => source.close();
-  }, [api, pid, attempt, dbBoard, dbProject]);
+  }, [api, pid, attempt, dbBoard, dbProject, notifyAllowed]);
 
   const register = useCallback((handler: LiveHandler) => {
     handlers.current.add(handler);

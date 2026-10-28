@@ -20,6 +20,7 @@ unsafe_code = "forbid"
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+serde_yaml_ng = "0.10"
 thiserror = "2"
 async-trait = "0.1"
 futures = "0.3"
@@ -35,5 +36,12 @@ bb8 = "0.9"
 bb8-tiberius = "0.16"
 tokio-util = { version = "0.7", features = ["compat"] }
 tempfile = "3"
+# Zufall, SHA-1 und Prozessprüfung für Sperren, Token und Projekt-IDs. Der Workspace verbietet
+# `unsafe`, deshalb kommt der Blick auf fremde Prozesse aus Bibliotheken mit sicherer
+# Schnittstelle: unter Unix `nix`, unter Windows `sysinfo`.
+getrandom = "0.3"
+sha1_smol = "1"
+nix = { version = "0.31", default-features = false, features = ["signal"] }
+sysinfo = { version = "0.39", default-features = false, features = ["system"] }
 nexus-core = { path = "crates/nexus-core" }
 nexus-db = { path = "crates/nexus-db" }
