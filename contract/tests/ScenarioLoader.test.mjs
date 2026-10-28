@@ -62,8 +62,14 @@ describe('ScenarioLoader', () => {
     it('ohne platforms und fixtures gilt: überall, ohne Vorbereitung', () => {
       const scenario = loader.parse(write('health', { title: 'Health', steps: [{ name: 'health', method: 'GET', path: '/api/health' }] }));
       expect(scenario.platforms).toEqual([]);
-      expect(scenario.fixtures).toEqual({ repos: [], boardConfig: null });
+      expect(scenario.fixtures).toEqual({ repos: [], boardConfig: null, homeFiles: {} });
       expect(ScenarioLoader.runsHere(scenario, 'win32')).toBe(true);
+    });
+
+    it('übernimmt homeFiles als Text und als JSON-Wert', () => {
+      const homeFiles = { 'dispatch-logs/a.log': 'eine Zeile\n', 'dispatch/runs/r1.json': { id: 'r1', pid: null }, 'dispatch/liste.json': [1, 2] };
+      const scenario = loader.parse(write('home', { title: 'Home', fixtures: { homeFiles }, steps: GOOD.steps }));
+      expect(scenario.fixtures.homeFiles).toEqual(homeFiles);
     });
 
     it('platforms grenzt das Betriebssystem ein', () => {
@@ -155,6 +161,22 @@ describe('ScenarioLoader', () => {
 
     it('meldet ein unbekanntes boardConfig', () => {
       failsWith({ title: 'T', fixtures: { boardConfig: 'mssql' }, steps: GOOD.steps }, /fixtures\.boardConfig erlaubt nur sqlite/);
+    });
+
+    it('meldet einen absoluten Pfad in homeFiles', () => {
+      failsWith({ title: 'T', fixtures: { homeFiles: { '/etc/passwd': 'x' } }, steps: GOOD.steps }, /homeFiles\["\/etc\/passwd"\]: der Pfad muss relativ/);
+    });
+
+    it('meldet einen Pfad in homeFiles, der aus dem Home hinausführt', () => {
+      failsWith({ title: 'T', fixtures: { homeFiles: { 'dispatch/../../x': 'x' } }, steps: GOOD.steps }, /ohne „\.\.“/);
+    });
+
+    it('meldet einen Pfad in homeFiles mit umgekehrtem Schrägstrich', () => {
+      failsWith({ title: 'T', fixtures: { homeFiles: { 'dispatch\\state.json': 'x' } }, steps: GOOD.steps }, /mit \/ getrennt/);
+    });
+
+    it('meldet einen Inhalt in homeFiles, der kein Text und kein JSON-Wert ist', () => {
+      failsWith({ title: 'T', fixtures: { homeFiles: { 'dispatch/state.json': 7 } }, steps: GOOD.steps }, /muss ein Text oder ein JSON-Wert/);
     });
 
     it('meldet ein unbekanntes Betriebssystem', () => {

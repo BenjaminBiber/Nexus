@@ -3,7 +3,7 @@ import { join, relative, sep } from 'node:path';
 import { stepKinds } from './StepKinds.mjs';
 
 const SCENARIO_KEYS = new Set(['title', 'platforms', 'fixtures', 'steps']);
-const FIXTURE_KEYS = new Set(['repos', 'boardConfig']);
+const FIXTURE_KEYS = new Set(['repos', 'boardConfig', 'homeFiles']);
 const REPO_KEYS = new Set(['name', 'git', 'harnessInit', 'files']);
 // Felder, die jede Schritt-Art hat; die Art nennt ihre eigenen in `keys`
 const STEP_KEYS = new Set(['name', 'kind', 'save', 'compare', 'ignore', 'record']);
@@ -12,6 +12,8 @@ const METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']);
 const COMPARE = new Set(['full', 'status', 'shape']);
 const BOARD_CONFIGS = new Set(['sqlite']);
 const REPO_NAME = /^[A-Z][A-Z0-9_]*$/;
+// Pfad einer Datei im Home: relativ, mit `/` getrennt, Abschnitte ohne Schrägstriche und Rückwärtsschritte
+const HOME_FILE = /^[^/\\]+(?:\/[^/\\]+)*$/;
 
 // Liest die Szenario-Dateien eines Verzeichnisbaums und prüft ihre Felder.
 export class ScenarioLoader {
@@ -88,9 +90,9 @@ export class ScenarioLoader {
     return [...value];
   }
 
-  // Vorbereitungen vor den Schritten: Repos und Board-Konfiguration
+  // Vorbereitungen vor den Schritten: Repos, Dateien im Home und Board-Konfiguration
   fixtures(value, fail) {
-    if (value === undefined) return { repos: [], boardConfig: null };
+    if (value === undefined) return { repos: [], boardConfig: null, homeFiles: {} };
     if (value === null || typeof value !== 'object' || Array.isArray(value)) fail('fixtures muss ein Objekt sein.');
     this.unknown(value, FIXTURE_KEYS, ' in fixtures', fail);
     if (value.boardConfig !== undefined && !BOARD_CONFIGS.has(value.boardConfig)) {
@@ -103,7 +105,23 @@ export class ScenarioLoader {
       if (names.has(repo.name)) fail(`fixtures.repos enthält den Namen ${repo.name} zweimal.`);
       names.add(repo.name);
     }
-    return { repos, boardConfig: value.boardConfig ?? null };
+    return { repos, boardConfig: value.boardConfig ?? null, homeFiles: this.homeFiles(value.homeFiles, fail) };
+  }
+
+  // Dateien, die vor dem Start des Servers im HARNESS_HOME liegen (Zustand, Läufe, Protokolle des Dispatchers)
+  homeFiles(value, fail) {
+    if (value === undefined) return {};
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) fail('fixtures.homeFiles muss ein Objekt sein.');
+    for (const [path, content] of Object.entries(value)) {
+      const where = `fixtures.homeFiles["${path}"]`;
+      if (!HOME_FILE.test(path) || path.split('/').includes('..')) {
+        fail(`${where}: der Pfad muss relativ zum Home sein, mit / getrennt und ohne „..“ (z. B. dispatch/state.json).`);
+      }
+      if (content === null || (typeof content !== 'string' && typeof content !== 'object')) {
+        fail(`${where} muss ein Text oder ein JSON-Wert (Objekt oder Liste) sein.`);
+      }
+    }
+    return { ...value };
   }
 
   // Ein Repo der Fixtures
