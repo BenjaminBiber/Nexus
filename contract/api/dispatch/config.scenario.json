@@ -1,0 +1,221 @@
+{
+  "title": "Dispatcher-Einstellung lesen, speichern, ablehnen und Vorlagen vorschauen",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    {
+      "name": "Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "compare": "status"
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "compare": "status"
+    },
+    {
+      "name": "Ticket anlegen",
+      "method": "POST",
+      "path": "/api/db/boards/1/tickets",
+      "body": { "title": "Anmeldung bauen", "acceptance": "Login geht", "needsPlanning": false },
+      "compare": "status"
+    },
+
+    {
+      "name": "Einstellung ohne Datei lesen",
+      "method": "GET",
+      "path": "/api/dispatch/config",
+      "save": { "beispiel": "json.raw" }
+    },
+    {
+      "name": "Beispiel unverändert speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": "{{beispiel}}",
+      "ignore": ["json.promptInfo"]
+    },
+    {
+      "name": "gespeicherte Einstellung lesen",
+      "method": "GET",
+      "path": "/api/dispatch/config",
+      "ignore": ["json.promptInfo"]
+    },
+    {
+      "name": "eigene Einstellung speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": {
+        "enabled": true,
+        "wip": 2,
+        "window": { "from": "08:00", "to": "18:00" },
+        "optInLabel": "auto",
+        "optOutLabel": "manuell",
+        "maxAttempts": 3,
+        "agentPrefix": "junior-",
+        "profiles": {
+          "klein": { "model": "sonnet", "effort": "high", "maxTurns": 40, "timeoutMinutes": 45 },
+          "standard": { "model": "opus", "effort": "high", "maxTurns": 80, "timeoutMinutes": 90 }
+        },
+        "defaultProfile": "klein",
+        "escalation": ["klein", "standard"],
+        "rules": [{ "when": { "labels": ["architektur"] }, "profile": "standard" }],
+        "research": { "auto": false, "wip": 2, "maxPerDay": 5 },
+        "planning": { "auto": false, "wip": 1, "acceptance": false },
+        "claude": { "command": "claude", "model": "sonnet", "permissionMode": "acceptEdits" }
+      },
+      "ignore": ["json.promptInfo"]
+    },
+    {
+      "name": "eigene Vorlage speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": {
+        "wip": 2,
+        "prompts": {
+          "work": "{{!agent}} setzt {{!ticketId}} („{{!title}}“) um.\nFertig: harness board done {{!ticketId}} --by {{!agent}}\nBlockiert: harness board set {{!ticketId}} --status blocked\nFrage: harness board question add \"…\" --ticket {{!ticketId}}"
+        }
+      },
+      "ignore": ["json.promptInfo"]
+    },
+
+    {
+      "name": "Einstellung als Liste speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": []
+    },
+    {
+      "name": "negativen WIP speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": { "wip": -1 }
+    },
+    {
+      "name": "unbekanntes Standardprofil speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": { "defaultProfile": "riesig" }
+    },
+    {
+      "name": "zu viele Recherchen speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": { "research": { "wip": 6 } }
+    },
+    {
+      "name": "ungültiges Zeitfenster speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": { "window": { "from": "25:00", "to": "18:00" } }
+    },
+    {
+      "name": "Vorlage mit unbekanntem Platzhalter speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": {
+        "wip": 1,
+        "prompts": {
+          "work": "{{!agent}} setzt {{!ticketId}} um: harness board done {{!ticketId}} --by {{!agent}}\nBlockiert: harness board set {{!ticketId}} --status blocked\nFrage: harness board question add \"…\" --ticket {{!ticketId}}\n{{!quatsch}}"
+        }
+      }
+    },
+    {
+      "name": "Vorlage ohne Pflichtteile speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": { "wip": 1, "prompts": { "plan": "Nur {{!agent}} und {{!ticketId}}." } }
+    },
+    {
+      "name": "Einstellung nach den Fehlversuchen unverändert",
+      "method": "GET",
+      "path": "/api/dispatch/config",
+      "ignore": ["json.promptInfo"]
+    },
+
+    {
+      "name": "Vorschau der Standardvorlage mit Beispielwerten",
+      "method": "POST",
+      "path": "/api/dispatch/prompts/preview",
+      "body": { "kind": "work" }
+    },
+    {
+      "name": "Vorschau der Merge-Vorlage mit Beispielwerten",
+      "method": "POST",
+      "path": "/api/dispatch/prompts/preview",
+      "body": { "kind": "merge" }
+    },
+    {
+      "name": "Vorschau einer eigenen Planungs-Vorlage",
+      "method": "POST",
+      "path": "/api/dispatch/prompts/preview",
+      "body": {
+        "kind": "plan",
+        "template": "{{!agent}} plant {{!ticketId}} („{{!title}}“) und speichert mit harness board plan-json {{!ticketId}} --file plan.json."
+      }
+    },
+    {
+      "name": "Vorschau mit den Werten eines echten Tickets",
+      "method": "POST",
+      "path": "/api/dispatch/prompts/preview",
+      "body": {
+        "kind": "work",
+        "id": "arc-0001",
+        "template": "{{!agent}} setzt {{!ticketId}} („{{!title}}“) auf {{!branch}} um.\nFertig: harness board done {{!ticketId}} --by {{!agent}}\nBlockiert: harness board set {{!ticketId}} --status blocked\nFrage: harness board question add \"…\" --ticket {{!ticketId}}"
+      }
+    },
+    {
+      "name": "Vorschau zu einem unbekannten Ticket",
+      "method": "POST",
+      "path": "/api/dispatch/prompts/preview",
+      "body": { "kind": "work", "id": "ARC-0099" }
+    },
+    {
+      "name": "Vorschau zu einer unbekannten Fragenummer",
+      "method": "POST",
+      "path": "/api/dispatch/prompts/preview",
+      "body": { "kind": "research", "id": "kaputt" }
+    },
+    {
+      "name": "Vorschau ohne Laufart",
+      "method": "POST",
+      "path": "/api/dispatch/prompts/preview",
+      "body": {}
+    },
+    {
+      "name": "Vorschau mit unbekannter Laufart",
+      "method": "POST",
+      "path": "/api/dispatch/prompts/preview",
+      "body": { "kind": "quatsch" }
+    },
+    {
+      "name": "Vorschau mit einer Vorlage, die kein Text ist",
+      "method": "POST",
+      "path": "/api/dispatch/prompts/preview",
+      "body": { "kind": "plan", "template": 7 }
+    },
+    {
+      "name": "Vorschau mit fehlerhafter Vorlage",
+      "method": "POST",
+      "path": "/api/dispatch/prompts/preview",
+      "body": {
+        "kind": "plan",
+        "template": "{{!agent}} plant {{!ticketId}}: harness board plan-json {{!ticketId}} --file plan.json\n{{!quatsch}}"
+      }
+    },
+    {
+      "name": "Vorschau als Liste",
+      "method": "POST",
+      "path": "/api/dispatch/prompts/preview",
+      "body": []
+    },
+    {
+      "name": "Einstellung nach den Vorschauen unverändert",
+      "method": "GET",
+      "path": "/api/dispatch/config",
+      "ignore": ["json.promptInfo"]
+    }
+  ]
+}

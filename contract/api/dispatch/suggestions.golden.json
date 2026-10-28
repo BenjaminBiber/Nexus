@@ -1,0 +1,1146 @@
+[
+  {
+    "name": "Vorschläge ohne Einstellung und ohne Läufe",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/suggestions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "analysis": null,
+        "basis": {
+          "projects": 0,
+          "runs": 0,
+          "since": "<TIME>"
+        },
+        "configHash": "2a279428522a285a",
+        "dismissed": [],
+        "insufficient": [
+          {
+            "needed": 5,
+            "profile": "klein",
+            "runs": 0
+          },
+          {
+            "needed": 5,
+            "profile": "standard",
+            "runs": 0
+          },
+          {
+            "needed": 5,
+            "profile": "schwer",
+            "runs": 0
+          }
+        ],
+        "suggestions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Projekt anlegen",
+    "request": {
+      "body": {
+        "key": "ARC",
+        "name": "Arches"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "zweites Projekt anlegen",
+    "request": {
+      "body": {
+        "key": "OTH",
+        "name": "Andere"
+      },
+      "method": "POST",
+      "path": "/api/db/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Board anlegen",
+    "request": {
+      "body": {
+        "name": "Sprint",
+        "project": "ARC"
+      },
+      "method": "POST",
+      "path": "/api/db/boards"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Einstellung mit Leiter, Regel und ungenutztem Profil speichern",
+    "request": {
+      "body": {
+        "defaultProfile": "standard",
+        "enabled": true,
+        "escalation": [
+          "standard",
+          "gross"
+        ],
+        "maxAttempts": 3,
+        "optInLabel": "auto",
+        "planning": {
+          "auto": false,
+          "wip": 1
+        },
+        "profiles": {
+          "alt": {
+            "effort": "high",
+            "maxTurns": 10,
+            "model": "sonnet",
+            "timeoutMinutes": 15
+          },
+          "gross": {
+            "effort": "max",
+            "maxTurns": 80,
+            "model": "opus",
+            "timeoutMinutes": 120
+          },
+          "klein": {
+            "effort": "high",
+            "maxTurns": 20,
+            "model": "sonnet",
+            "timeoutMinutes": 30
+          },
+          "standard": {
+            "effort": "high",
+            "maxTurns": 40,
+            "model": "opus",
+            "timeoutMinutes": 60
+          }
+        },
+        "research": {
+          "auto": false,
+          "maxPerDay": 10,
+          "wip": 1
+        },
+        "rules": [
+          {
+            "profile": "klein",
+            "when": {
+              "labels": [
+                "klein"
+              ]
+            }
+          }
+        ],
+        "wip": 1
+      },
+      "method": "PUT",
+      "path": "/api/dispatch/config"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "vorgemerkte Läufe mit einem Durchlauf in die Auswertung schreiben",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/run"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "Vorschläge aus den Läufen lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/suggestions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "analysis": null,
+        "basis": {
+          "projects": 2,
+          "runs": 12,
+          "since": "<TIME>"
+        },
+        "configHash": "<var:hash>",
+        "dismissed": [],
+        "insufficient": [
+          {
+            "needed": 5,
+            "profile": "klein",
+            "runs": 0
+          },
+          {
+            "needed": 5,
+            "profile": "gross",
+            "runs": 4
+          }
+        ],
+        "suggestions": [
+          {
+            "evidence": {
+              "hits": 4,
+              "rate": 0.5,
+              "runs": 8
+            },
+            "fingerprint": "rule:profile-overtaken:standard:defaultProfile=\"standard\"",
+            "id": "<var:umlenken>",
+            "kind": "profile-overtaken",
+            "patch": [
+              {
+                "from": "standard",
+                "path": "defaultProfile",
+                "to": "gross"
+              }
+            ],
+            "reason": "4 von 8 Tickets (50 %), die mit „standard“ starteten, mussten eskaliert werden. „standard“ ist das Standardprofil – „gross“ als Standard spart die Umwege.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Profil wird meist überholt · standard",
+            "weight": 2
+          },
+          {
+            "evidence": {
+              "hits": 2,
+              "rate": 0.25,
+              "runs": 8
+            },
+            "fingerprint": "rule:turns-too-low:standard:profiles.standard.maxTurns=40",
+            "id": "<var:schritte>",
+            "kind": "turns-too-low",
+            "patch": [
+              {
+                "from": 40,
+                "path": "profiles.standard.maxTurns",
+                "to": 60
+              }
+            ],
+            "reason": "2 von 8 Läufen (25 %) mit „standard“ brachen ab, weil 40 Schritte nicht reichten.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Schritte zu knapp · standard",
+            "weight": 0.5
+          },
+          {
+            "evidence": {
+              "hits": 2,
+              "rate": 0.25,
+              "runs": 8
+            },
+            "fingerprint": "rule:timeout-too-low:standard:profiles.standard.timeoutMinutes=60",
+            "id": "b92106225b2f8db8",
+            "kind": "timeout-too-low",
+            "patch": [
+              {
+                "from": 60,
+                "path": "profiles.standard.timeoutMinutes",
+                "to": 90
+              }
+            ],
+            "reason": "2 von 8 Läufen (25 %) mit „standard“ brachen nach 60 Minuten am Zeitlimit ab.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Zeitlimit zu knapp · standard",
+            "weight": 0.5
+          },
+          {
+            "evidence": {
+              "hits": 2,
+              "rate": 0.25,
+              "runs": 8
+            },
+            "fingerprint": "rule:context-full:standard:maxTurns=40,timeoutMinutes=60",
+            "id": "f150cbe1e07cfc4e",
+            "kind": "context-full",
+            "patch": null,
+            "reason": "2 von 8 Läufen (25 %) mit „standard“ liefen in die Grenze des Kontextfensters. Ein Modell mit größerem Kontext (z. B. „opus[1m]“) oder kleiner geschnittene Tickets helfen.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Kontext läuft voll · standard",
+            "weight": 0.5
+          },
+          {
+            "evidence": null,
+            "fingerprint": "rule:profile-unused:alt:",
+            "id": "<var:hinweis>",
+            "kind": "profile-unused",
+            "patch": null,
+            "reason": "„alt“ steht weder in der Leiter noch in einer Regel und lief seit über 30 Tagen nicht. Es kann entfernt werden.",
+            "source": "rule",
+            "target": {
+              "profile": "alt"
+            },
+            "title": "Profil ungenutzt · alt",
+            "weight": 0
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Vorschlag ausblenden",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/<var:schritte>/dismiss"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "analysis": null,
+        "basis": {
+          "projects": 2,
+          "runs": 12,
+          "since": "<TIME>"
+        },
+        "configHash": "<var:hash>",
+        "dismissed": [
+          {
+            "evidence": {
+              "hits": 2,
+              "rate": 0.25,
+              "runs": 8
+            },
+            "fingerprint": "rule:turns-too-low:standard:profiles.standard.maxTurns=40",
+            "id": "<var:schritte>",
+            "kind": "turns-too-low",
+            "patch": [
+              {
+                "from": 40,
+                "path": "profiles.standard.maxTurns",
+                "to": 60
+              }
+            ],
+            "reason": "2 von 8 Läufen (25 %) mit „standard“ brachen ab, weil 40 Schritte nicht reichten.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Schritte zu knapp · standard",
+            "weight": 0.5
+          }
+        ],
+        "insufficient": [
+          {
+            "needed": 5,
+            "profile": "klein",
+            "runs": 0
+          },
+          {
+            "needed": 5,
+            "profile": "gross",
+            "runs": 4
+          }
+        ],
+        "suggestions": [
+          {
+            "evidence": {
+              "hits": 4,
+              "rate": 0.5,
+              "runs": 8
+            },
+            "fingerprint": "rule:profile-overtaken:standard:defaultProfile=\"standard\"",
+            "id": "<var:umlenken>",
+            "kind": "profile-overtaken",
+            "patch": [
+              {
+                "from": "standard",
+                "path": "defaultProfile",
+                "to": "gross"
+              }
+            ],
+            "reason": "4 von 8 Tickets (50 %), die mit „standard“ starteten, mussten eskaliert werden. „standard“ ist das Standardprofil – „gross“ als Standard spart die Umwege.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Profil wird meist überholt · standard",
+            "weight": 2
+          },
+          {
+            "evidence": {
+              "hits": 2,
+              "rate": 0.25,
+              "runs": 8
+            },
+            "fingerprint": "rule:timeout-too-low:standard:profiles.standard.timeoutMinutes=60",
+            "id": "b92106225b2f8db8",
+            "kind": "timeout-too-low",
+            "patch": [
+              {
+                "from": 60,
+                "path": "profiles.standard.timeoutMinutes",
+                "to": 90
+              }
+            ],
+            "reason": "2 von 8 Läufen (25 %) mit „standard“ brachen nach 60 Minuten am Zeitlimit ab.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Zeitlimit zu knapp · standard",
+            "weight": 0.5
+          },
+          {
+            "evidence": {
+              "hits": 2,
+              "rate": 0.25,
+              "runs": 8
+            },
+            "fingerprint": "rule:context-full:standard:maxTurns=40,timeoutMinutes=60",
+            "id": "f150cbe1e07cfc4e",
+            "kind": "context-full",
+            "patch": null,
+            "reason": "2 von 8 Läufen (25 %) mit „standard“ liefen in die Grenze des Kontextfensters. Ein Modell mit größerem Kontext (z. B. „opus[1m]“) oder kleiner geschnittene Tickets helfen.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Kontext läuft voll · standard",
+            "weight": 0.5
+          },
+          {
+            "evidence": null,
+            "fingerprint": "rule:profile-unused:alt:",
+            "id": "<var:hinweis>",
+            "kind": "profile-unused",
+            "patch": null,
+            "reason": "„alt“ steht weder in der Leiter noch in einer Regel und lief seit über 30 Tagen nicht. Es kann entfernt werden.",
+            "source": "rule",
+            "target": {
+              "profile": "alt"
+            },
+            "title": "Profil ungenutzt · alt",
+            "weight": 0
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Vorschlag wieder einblenden",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/dispatch/suggestions/<var:schritte>/dismiss"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "analysis": null,
+        "basis": {
+          "projects": 2,
+          "runs": 12,
+          "since": "<TIME>"
+        },
+        "configHash": "<var:hash>",
+        "dismissed": [],
+        "insufficient": [
+          {
+            "needed": 5,
+            "profile": "klein",
+            "runs": 0
+          },
+          {
+            "needed": 5,
+            "profile": "gross",
+            "runs": 4
+          }
+        ],
+        "suggestions": [
+          {
+            "evidence": {
+              "hits": 4,
+              "rate": 0.5,
+              "runs": 8
+            },
+            "fingerprint": "rule:profile-overtaken:standard:defaultProfile=\"standard\"",
+            "id": "<var:umlenken>",
+            "kind": "profile-overtaken",
+            "patch": [
+              {
+                "from": "standard",
+                "path": "defaultProfile",
+                "to": "gross"
+              }
+            ],
+            "reason": "4 von 8 Tickets (50 %), die mit „standard“ starteten, mussten eskaliert werden. „standard“ ist das Standardprofil – „gross“ als Standard spart die Umwege.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Profil wird meist überholt · standard",
+            "weight": 2
+          },
+          {
+            "evidence": {
+              "hits": 2,
+              "rate": 0.25,
+              "runs": 8
+            },
+            "fingerprint": "rule:turns-too-low:standard:profiles.standard.maxTurns=40",
+            "id": "<var:schritte>",
+            "kind": "turns-too-low",
+            "patch": [
+              {
+                "from": 40,
+                "path": "profiles.standard.maxTurns",
+                "to": 60
+              }
+            ],
+            "reason": "2 von 8 Läufen (25 %) mit „standard“ brachen ab, weil 40 Schritte nicht reichten.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Schritte zu knapp · standard",
+            "weight": 0.5
+          },
+          {
+            "evidence": {
+              "hits": 2,
+              "rate": 0.25,
+              "runs": 8
+            },
+            "fingerprint": "rule:timeout-too-low:standard:profiles.standard.timeoutMinutes=60",
+            "id": "b92106225b2f8db8",
+            "kind": "timeout-too-low",
+            "patch": [
+              {
+                "from": 60,
+                "path": "profiles.standard.timeoutMinutes",
+                "to": 90
+              }
+            ],
+            "reason": "2 von 8 Läufen (25 %) mit „standard“ brachen nach 60 Minuten am Zeitlimit ab.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Zeitlimit zu knapp · standard",
+            "weight": 0.5
+          },
+          {
+            "evidence": {
+              "hits": 2,
+              "rate": 0.25,
+              "runs": 8
+            },
+            "fingerprint": "rule:context-full:standard:maxTurns=40,timeoutMinutes=60",
+            "id": "f150cbe1e07cfc4e",
+            "kind": "context-full",
+            "patch": null,
+            "reason": "2 von 8 Läufen (25 %) mit „standard“ liefen in die Grenze des Kontextfensters. Ein Modell mit größerem Kontext (z. B. „opus[1m]“) oder kleiner geschnittene Tickets helfen.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Kontext läuft voll · standard",
+            "weight": 0.5
+          },
+          {
+            "evidence": null,
+            "fingerprint": "rule:profile-unused:alt:",
+            "id": "<var:hinweis>",
+            "kind": "profile-unused",
+            "patch": null,
+            "reason": "„alt“ steht weder in der Leiter noch in einer Regel und lief seit über 30 Tagen nicht. Es kann entfernt werden.",
+            "source": "rule",
+            "target": {
+              "profile": "alt"
+            },
+            "title": "Profil ungenutzt · alt",
+            "weight": 0
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Vorschlag mit kaputter ID ausblenden",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/kaputt!/dismiss"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "kaputt! ist keine gültige Vorschlags-ID."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Analyse von Claude starten (Vertragsmodus antwortet mit leerer Liste)",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/analyze"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "analysis": {
+          "at": "<TIME>",
+          "costUsd": 0,
+          "count": 0,
+          "skipped": 0,
+          "stale": false
+        },
+        "basis": {
+          "projects": 2,
+          "runs": 12,
+          "since": "<TIME>"
+        },
+        "configHash": "<var:hash>",
+        "dismissed": [],
+        "insufficient": [
+          {
+            "needed": 5,
+            "profile": "klein",
+            "runs": 0
+          },
+          {
+            "needed": 5,
+            "profile": "gross",
+            "runs": 4
+          }
+        ],
+        "suggestions": [
+          {
+            "evidence": {
+              "hits": 4,
+              "rate": 0.5,
+              "runs": 8
+            },
+            "fingerprint": "rule:profile-overtaken:standard:defaultProfile=\"standard\"",
+            "id": "<var:umlenken>",
+            "kind": "profile-overtaken",
+            "patch": [
+              {
+                "from": "standard",
+                "path": "defaultProfile",
+                "to": "gross"
+              }
+            ],
+            "reason": "4 von 8 Tickets (50 %), die mit „standard“ starteten, mussten eskaliert werden. „standard“ ist das Standardprofil – „gross“ als Standard spart die Umwege.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Profil wird meist überholt · standard",
+            "weight": 2
+          },
+          {
+            "evidence": {
+              "hits": 2,
+              "rate": 0.25,
+              "runs": 8
+            },
+            "fingerprint": "rule:turns-too-low:standard:profiles.standard.maxTurns=40",
+            "id": "<var:schritte>",
+            "kind": "turns-too-low",
+            "patch": [
+              {
+                "from": 40,
+                "path": "profiles.standard.maxTurns",
+                "to": 60
+              }
+            ],
+            "reason": "2 von 8 Läufen (25 %) mit „standard“ brachen ab, weil 40 Schritte nicht reichten.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Schritte zu knapp · standard",
+            "weight": 0.5
+          },
+          {
+            "evidence": {
+              "hits": 2,
+              "rate": 0.25,
+              "runs": 8
+            },
+            "fingerprint": "rule:timeout-too-low:standard:profiles.standard.timeoutMinutes=60",
+            "id": "b92106225b2f8db8",
+            "kind": "timeout-too-low",
+            "patch": [
+              {
+                "from": 60,
+                "path": "profiles.standard.timeoutMinutes",
+                "to": 90
+              }
+            ],
+            "reason": "2 von 8 Läufen (25 %) mit „standard“ brachen nach 60 Minuten am Zeitlimit ab.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Zeitlimit zu knapp · standard",
+            "weight": 0.5
+          },
+          {
+            "evidence": {
+              "hits": 2,
+              "rate": 0.25,
+              "runs": 8
+            },
+            "fingerprint": "rule:context-full:standard:maxTurns=40,timeoutMinutes=60",
+            "id": "f150cbe1e07cfc4e",
+            "kind": "context-full",
+            "patch": null,
+            "reason": "2 von 8 Läufen (25 %) mit „standard“ liefen in die Grenze des Kontextfensters. Ein Modell mit größerem Kontext (z. B. „opus[1m]“) oder kleiner geschnittene Tickets helfen.",
+            "source": "rule",
+            "target": {
+              "profile": "standard"
+            },
+            "title": "Kontext läuft voll · standard",
+            "weight": 0.5
+          },
+          {
+            "evidence": null,
+            "fingerprint": "rule:profile-unused:alt:",
+            "id": "<var:hinweis>",
+            "kind": "profile-unused",
+            "patch": null,
+            "reason": "„alt“ steht weder in der Leiter noch in einer Regel und lief seit über 30 Tagen nicht. Es kann entfernt werden.",
+            "source": "rule",
+            "target": {
+              "profile": "alt"
+            },
+            "title": "Profil ungenutzt · alt",
+            "weight": 0
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Übernehmen mit veralteter Einstellung",
+    "request": {
+      "body": {
+        "configHash": "veraltet"
+      },
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/<var:umlenken>/apply"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "conflict",
+        "details": {
+          "reason": "config-changed"
+        },
+        "message": "Die Dispatcher-Einstellung wurde inzwischen geändert – die Vorschläge wurden neu berechnet."
+      },
+      "status": 409
+    }
+  },
+  {
+    "name": "Übernehmen ohne Hash der Einstellung",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/<var:umlenken>/apply"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "„configHash“ fehlt."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekannten Vorschlag übernehmen",
+    "request": {
+      "body": {
+        "configHash": "<var:hash>"
+      },
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/0000000000000000/apply"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "suggestion-not-found",
+        "message": "Diesen Vorschlag gibt es nicht mehr."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Vorschlag mit kaputter ID übernehmen",
+    "request": {
+      "body": {
+        "configHash": "<var:hash>"
+      },
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/kaputt!/apply"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "kaputt! ist keine gültige Vorschlags-ID."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Hinweis ohne Änderung übernehmen",
+    "request": {
+      "body": {
+        "configHash": "<var:hash>"
+      },
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/<var:hinweis>/apply"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Dieser Vorschlag ist nur ein Hinweis und ändert nichts."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Vorschlag übernehmen (Vorlagen der Prompts stehen im Vertrag der Einstellung)",
+    "request": {
+      "body": {
+        "configHash": "<var:hash>"
+      },
+      "method": "POST",
+      "path": "/api/dispatch/suggestions/<var:umlenken>/apply"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "list": {
+          "analysis": {
+            "at": "<TIME>",
+            "costUsd": 0,
+            "count": 0,
+            "skipped": 0,
+            "stale": true
+          },
+          "basis": {
+            "projects": 2,
+            "runs": 12,
+            "since": "<TIME>"
+          },
+          "configHash": "a9d7cf9629c859d4",
+          "dismissed": [],
+          "insufficient": [
+            {
+              "needed": 5,
+              "profile": "klein",
+              "runs": 0
+            },
+            {
+              "needed": 5,
+              "profile": "gross",
+              "runs": 4
+            }
+          ],
+          "suggestions": [
+            {
+              "evidence": {
+                "hits": 2,
+                "rate": 0.25,
+                "runs": 8
+              },
+              "fingerprint": "rule:turns-too-low:standard:profiles.standard.maxTurns=40",
+              "id": "<var:schritte>",
+              "kind": "turns-too-low",
+              "patch": [
+                {
+                  "from": 40,
+                  "path": "profiles.standard.maxTurns",
+                  "to": 60
+                }
+              ],
+              "reason": "2 von 8 Läufen (25 %) mit „standard“ brachen ab, weil 40 Schritte nicht reichten.",
+              "source": "rule",
+              "target": {
+                "profile": "standard"
+              },
+              "title": "Schritte zu knapp · standard",
+              "weight": 0.5
+            },
+            {
+              "evidence": {
+                "hits": 2,
+                "rate": 0.25,
+                "runs": 8
+              },
+              "fingerprint": "rule:timeout-too-low:standard:profiles.standard.timeoutMinutes=60",
+              "id": "b92106225b2f8db8",
+              "kind": "timeout-too-low",
+              "patch": [
+                {
+                  "from": 60,
+                  "path": "profiles.standard.timeoutMinutes",
+                  "to": 90
+                }
+              ],
+              "reason": "2 von 8 Läufen (25 %) mit „standard“ brachen nach 60 Minuten am Zeitlimit ab.",
+              "source": "rule",
+              "target": {
+                "profile": "standard"
+              },
+              "title": "Zeitlimit zu knapp · standard",
+              "weight": 0.5
+            },
+            {
+              "evidence": {
+                "hits": 4,
+                "rate": 0.5,
+                "runs": 8
+              },
+              "fingerprint": "rule:profile-overtaken:standard:maxTurns=40,timeoutMinutes=60",
+              "id": "d20408d41409f628",
+              "kind": "profile-overtaken",
+              "patch": null,
+              "reason": "4 von 8 Tickets (50 %), die mit „standard“ starteten, mussten eskaliert werden.",
+              "source": "rule",
+              "target": {
+                "profile": "standard"
+              },
+              "title": "Profil wird meist überholt · standard",
+              "weight": 2
+            },
+            {
+              "evidence": {
+                "hits": 2,
+                "rate": 0.25,
+                "runs": 8
+              },
+              "fingerprint": "rule:context-full:standard:maxTurns=40,timeoutMinutes=60",
+              "id": "f150cbe1e07cfc4e",
+              "kind": "context-full",
+              "patch": null,
+              "reason": "2 von 8 Läufen (25 %) mit „standard“ liefen in die Grenze des Kontextfensters. Ein Modell mit größerem Kontext (z. B. „opus[1m]“) oder kleiner geschnittene Tickets helfen.",
+              "source": "rule",
+              "target": {
+                "profile": "standard"
+              },
+              "title": "Kontext läuft voll · standard",
+              "weight": 0.5
+            },
+            {
+              "evidence": null,
+              "fingerprint": "rule:profile-unused:alt:",
+              "id": "<var:hinweis>",
+              "kind": "profile-unused",
+              "patch": null,
+              "reason": "„alt“ steht weder in der Leiter noch in einer Regel und lief seit über 30 Tagen nicht. Es kann entfernt werden.",
+              "source": "rule",
+              "target": {
+                "profile": "alt"
+              },
+              "title": "Profil ungenutzt · alt",
+              "weight": 0
+            }
+          ]
+        },
+        "view": {
+          "config": {
+            "agentPrefix": "junior-",
+            "allowFable": false,
+            "boards": null,
+            "claude": {
+              "allowedTools": [
+                "Read",
+                "Edit",
+                "Write",
+                "Glob",
+                "Grep",
+                "Bash(harness:*)",
+                "Bash(node:*)",
+                "Bash(npm test:*)",
+                "Bash(npm run:*)",
+                "Bash(git status:*)",
+                "Bash(git diff:*)",
+                "Bash(git log:*)",
+                "Bash(git branch:*)",
+                "Bash(git add:*)",
+                "Bash(git commit:*)"
+              ],
+              "command": "claude",
+              "effort": null,
+              "extraArgs": [],
+              "gitBashPath": null,
+              "maxTurns": 80,
+              "model": "sonnet",
+              "permissionMode": "acceptEdits",
+              "timeoutMinutes": 60,
+              "useSubscription": true
+            },
+            "defaultProfile": "gross",
+            "dispatcherName": "dispatcher",
+            "enabled": true,
+            "escalate": true,
+            "joinWorktrees": "none",
+            "ladder": [
+              "standard",
+              "gross"
+            ],
+            "maxAttempts": 3,
+            "mergeStrategy": "merge",
+            "optInLabel": "auto",
+            "optOutLabel": "manuell",
+            "pauseMinutesOnLimit": 60,
+            "planning": {
+              "acceptance": true,
+              "auto": false,
+              "profile": null,
+              "wip": 1
+            },
+            "profiles": {
+              "alt": {
+                "effort": "high",
+                "maxTurns": 10,
+                "model": "sonnet",
+                "timeoutMinutes": 15
+              },
+              "gross": {
+                "effort": "max",
+                "maxTurns": 80,
+                "model": "opus",
+                "timeoutMinutes": 120
+              },
+              "klein": {
+                "effort": "high",
+                "maxTurns": 20,
+                "model": "sonnet",
+                "timeoutMinutes": 30
+              },
+              "standard": {
+                "effort": "high",
+                "maxTurns": 40,
+                "model": "opus",
+                "timeoutMinutes": 60
+              }
+            },
+            "promptExtra": "",
+            "prompts": {
+              "merge": null,
+              "plan": null,
+              "research": null,
+              "work": null
+            },
+            "research": {
+              "auto": false,
+              "maxPerDay": 10,
+              "profile": null,
+              "wip": 1
+            },
+            "reviewBeforeMerge": true,
+            "rules": [
+              {
+                "profile": "klein",
+                "when": {
+                  "labels": [
+                    "klein"
+                  ]
+                }
+              }
+            ],
+            "staleMinutes": 150,
+            "window": null,
+            "wip": 1,
+            "worktreeSetup": [],
+            "worktreeSetupTimeoutMinutes": 15
+          },
+          "error": null,
+          "exists": true,
+          "file": "<HOME>/dispatch.yaml",
+          "raw": {
+            "defaultProfile": "gross",
+            "enabled": true,
+            "escalation": [
+              "standard",
+              "gross"
+            ],
+            "maxAttempts": 3,
+            "optInLabel": "auto",
+            "planning": {
+              "auto": false,
+              "wip": 1
+            },
+            "profiles": {
+              "alt": {
+                "effort": "high",
+                "maxTurns": 10,
+                "model": "sonnet",
+                "timeoutMinutes": 15
+              },
+              "gross": {
+                "effort": "max",
+                "maxTurns": 80,
+                "model": "opus",
+                "timeoutMinutes": 120
+              },
+              "klein": {
+                "effort": "high",
+                "maxTurns": 20,
+                "model": "sonnet",
+                "timeoutMinutes": 30
+              },
+              "standard": {
+                "effort": "high",
+                "maxTurns": 40,
+                "model": "opus",
+                "timeoutMinutes": 60
+              }
+            },
+            "research": {
+              "auto": false,
+              "maxPerDay": 10,
+              "wip": 1
+            },
+            "rules": [
+              {
+                "profile": "klein",
+                "when": {
+                  "labels": [
+                    "klein"
+                  ]
+                }
+              }
+            ],
+            "wip": 1
+          }
+        }
+      },
+      "status": 200
+    }
+  }
+]

@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { HomeFiles } from './HomeFiles.mjs';
 import { Normalizer } from './Normalizer.mjs';
 import { RepoFixture } from './RepoFixture.mjs';
 import { ServerHandle } from './ServerHandle.mjs';
@@ -37,11 +38,13 @@ export class ScenarioRunner {
     let server = null;
     try {
       const repos = fixture.create(scenario.fixtures.repos);
+      const variables = new Variables({ ...repos, HOME: home, PORT: String(port), NOW: new Date().toISOString() });
+      // Dateien im Home liegen vor dem Start, damit der Server sie von der ersten Anfrage an sieht
+      new HomeFiles(home).write(scenario.fixtures.homeFiles, variables);
       server = own
         ? await ServerHandle.start({ command: this.serverCmd, port, cwd: this.cwd, env: this.env(home, claudeConfig, port, scenario.env), verbose: this.verbose })
         : ServerHandle.external(this.base);
       if (!own) await server.waitForHealth();
-      const variables = new Variables({ ...repos, HOME: home, PORT: String(port) });
       // Nur Werte aus `save` werden zu `<var:…>`; die Pfade der Fixtures haben eigene Platzhalter
       const saved = {};
       const normalizer = new Normalizer({
