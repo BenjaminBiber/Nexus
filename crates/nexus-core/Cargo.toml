@@ -11,7 +11,10 @@ chrono = { workspace = true }
 getrandom = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true }
+# „preserve_order“ für die rohe Übersicht von `OverviewFile::read_value`: `GET
+# /api/customizations` gibt unbekannte Felder und ihre Reihenfolge aus der Datei unverändert
+# weiter, nur ohne `diff`.
+serde_json = { workspace = true, features = ["preserve_order"] }
 serde_yaml_ng = { workspace = true }
 sha1_smol = { workspace = true }
 # Temporäre Ordner für den Vergleich der Basis und für die Typprüfung eines eigenen Workflows

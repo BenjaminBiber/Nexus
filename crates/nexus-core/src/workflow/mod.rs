@@ -3,5 +3,7 @@
 //! Workflows lesen alle hieraus.
 
 pub mod phases;
+pub mod source;
 
 pub use phases::{workflow_phases, WorkflowOption, WorkflowPhase, WorkflowStep};
+pub use source::{WorkflowOrigin, WorkflowSelection, WorkflowSource};
