@@ -1,0 +1,81 @@
+{
+  "title": "Fortschritt der Specs aus dem Board",
+  "fixtures": {
+    "boardConfig": "sqlite",
+    "repos": [
+      {
+        "name": "REPO1",
+        "git": true,
+        "harnessInit": true,
+        "files": {
+          "docs/superpowers/specs/2020-03-02-login.md": "---\nthema: anmeldung\nstatus: entwurf\n---\n\n# Anmeldung über Passkeys\n\nBenutzer melden sich künftig ohne Kennwort an.\n\n## Ziel\n\nAnmeldung ohne Kennwort auf allen drei Plattformen.\n\n## Offene Fragen\n\nWelcher Speicher hält die Schlüssel? Noch zu klären.\n"
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "name": "Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": { "path": "{{REPO1}}" },
+      "save": { "pid": "json.id" },
+      "record": false
+    },
+    { "name": "Fortschritt ohne Board zum Ordner", "method": "GET", "path": "/api/projects/{{pid}}/spec-progress" },
+    {
+      "name": "DB-Projekt anlegen",
+      "method": "POST",
+      "path": "/api/db/projects",
+      "body": { "key": "ARC", "name": "Arches" },
+      "record": false
+    },
+    {
+      "name": "Board anlegen",
+      "method": "POST",
+      "path": "/api/db/boards",
+      "body": { "project": "ARC", "name": "Sprint" },
+      "save": { "boardId": "json.id" },
+      "record": false
+    },
+    {
+      "name": "Repo-Pfad des Boards setzen",
+      "method": "PATCH",
+      "path": "/api/db/boards/{{boardId}}",
+      "body": { "repoPath": "{{REPO1}}" },
+      "record": false
+    },
+    { "name": "Fortschritt ohne Tickets", "method": "GET", "path": "/api/projects/{{pid}}/spec-progress" },
+    {
+      "name": "Tickets aus dem Dokument anlegen",
+      "method": "POST",
+      "path": "/api/projects/{{pid}}/docs/tickets",
+      "body": {
+        "path": "docs/superpowers/specs/2020-03-02-login.md",
+        "drafts": [
+          {
+            "title": "Schlüsselspeicher wählen",
+            "description": "Entscheiden, wo die Passkeys liegen.",
+            "acceptance": "Die Wahl steht in der Spec.",
+            "steps": [],
+            "dependsOn": [],
+            "labels": [],
+            "source": { "heading": "Offene Fragen", "startLine": 14, "endLine": 16 }
+          },
+          {
+            "title": "Oberfläche der Anmeldung bauen",
+            "description": "Maske ohne Kennwortfeld.",
+            "acceptance": "Die Maske zeigt nur den Passkey-Knopf.",
+            "steps": [],
+            "dependsOn": [0],
+            "labels": [],
+            "source": { "heading": "Ziel", "startLine": 10, "endLine": 12 }
+          }
+        ]
+      },
+      "record": false
+    },
+    { "name": "Fortschritt mit Tickets", "method": "GET", "path": "/api/projects/{{pid}}/spec-progress" },
+    { "name": "Fortschritt eines unbekannten Projekts", "method": "GET", "path": "/api/projects/gibtsnicht/spec-progress" }
+  ]
+}
