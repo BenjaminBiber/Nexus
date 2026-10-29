@@ -94,7 +94,10 @@ async fn serve(
         }
     };
     if let Some(sidecar) = &sidecar {
-        config.upstream = Some(format!("http://127.0.0.1:{}", sidecar.port));
+        // Erst jetzt steht der Node-Server dahinter fest – mit ihm gilt auch der Notschalter
+        config.set_upstream(format!("http://127.0.0.1:{}", sidecar.port), &|name| {
+            std::env::var(name).ok()
+        });
     }
 
     let board = nexus_server::board_from_config(config.home.clone());
