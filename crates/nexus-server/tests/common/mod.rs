@@ -298,6 +298,15 @@ impl BoardBackendWithServices {
         })
     }
 
+    /// Setzt den eigenen Repo-Pfad des Testbenutzers für ein Board (Gegenstück zu
+    /// `new BoardRepoPaths(backend.repoStore, MEMORY_USER.id).set(id, path)` in TypeScript)
+    pub fn set_repo_path(&self, board_id: i32, path: &std::path::Path) {
+        self.services
+            .repo_paths
+            .set(board_id, Some(&path.to_string_lossy()))
+            .expect("Repo-Pfad setzen");
+    }
+
     /// Der Handelnde des Testbenutzers
     pub fn actor(&self) -> BoardActor {
         BoardActor {
@@ -475,6 +484,157 @@ impl BoardBackend for MemoryBoardBackend {
     async fn close(&self) -> Result<()> {
         self.closed.store(true, Ordering::SeqCst);
         Ok(())
+    }
+}
+
+/// Server, Projekt und Board mit Repo-Pfad für die Docs-Routen; Gegenstück zum `setup()`
+/// der Docs-Tests in TypeScript
+pub struct DocsFixture {
+    pub server: TestServer,
+    pub backend: Arc<BoardBackendWithServices>,
+    pub repo: TempRepo,
+    /// ID des angemeldeten Projekts (Adresse der Docs-Routen)
+    pub pid: String,
+    /// ID des angelegten Boards
+    pub board_id: i32,
+}
+
+impl DocsFixture {
+    /// Server, Projekt und Board; `with_repo_path` ordnet das Board dem Projektordner zu
+    pub async fn start(with_repo_path: bool) -> Self {
+        Self::start_with(TestServerOptions::default(), with_repo_path).await
+    }
+
+    /// Wie [`DocsFixture::start`], mit eigenen Einstellungen des Servers
+    pub async fn start_with(options: TestServerOptions, with_repo_path: bool) -> Self {
+        let (server, backend) = TestServer::start_with_board_and(options).await;
+        let (repo, pid) = server.add_project();
+        server
+            .post("/api/db/projects", r#"{"key":"ARC","name":"Arches"}"#)
+            .await;
+        let created = server
+            .post("/api/db/boards", r#"{"project":"ARC","name":"Sprint"}"#)
+            .await;
+        let board_id = created
+            .json()
+            .and_then(|json| json["id"].as_i64())
+            .expect("Board-ID") as i32;
+        if with_repo_path {
+            backend.set_repo_path(board_id, repo.path());
+        }
+        Self {
+            server,
+            backend,
+            repo,
+            pid,
+            board_id,
+        }
+    }
+
+    /// Die Adresse der Docs-Routen dieses Projekts
+    pub fn base(&self) -> String {
+        format!("/api/projects/{}/docs", self.pid)
+    }
+
+    /// Der Repo-Pfad des Boards, wie die Quelle ihn ausgibt (immer mit `/`)
+    pub fn root(&self) -> String {
+        self.repo.path().to_string_lossy().replace('\\', "/")
+    }
+
+    /// Schreibt eine Datei im Repo des Boards
+    pub fn write(&self, dir: &str, name: &str, text: &str) {
+        let full = self.repo.path().join(dir);
+        std::fs::create_dir_all(&full).expect("Ordner");
+        std::fs::write(full.join(name), text).expect("Datei");
+    }
+
+    /// Inhalt einer Datei im Repo des Boards
+    pub fn read(&self, path: &str) -> String {
+        std::fs::read_to_string(self.repo.path().join(path)).expect("Datei")
+    }
+
+    /// Legt die freigegebenen Dokumente der Docs-Tests an
+    pub fn write_documents(&self) {
+        self.write(
+            "docs/superpowers/specs",
+            "2026-10-22-docs-rework-design.md",
+            "# Docs-Rework\n\nDas Ticket wird angelegt.\n\n## Ziel\n\nEine Quelle.\n",
+        );
+        self.write(
+            "docs/superpowers/plans",
+            "2026-10-22-docs-rework.md",
+            "# Plan Docs-Rework\n\nSchritt eins.\n",
+        );
+        self.write(
+            "docs/adr",
+            "0001-entscheidung.md",
+            "# Entscheidung\n\nTickets liegen im Git-Verzeichnis.\n",
+        );
+        self.write(
+            ".",
+            "GLOSSARY.md",
+            "# Glossar\n\n**Ticket**: Arbeitseinheit\n",
+        );
+        self.write("specs/001-login", "spec.md", "alte Spec-Kit-Datei");
+        self.write(".", "geheim.md", "geheim");
+    }
+
+    /// Aktueller Fingerabdruck eines freigegebenen Dokuments (so, wie der Editor ihn beim
+    /// Lesen bekommt)
+    pub async fn hash_of(&self, path: &str) -> String {
+        let url = format!("{}/file?path={}", self.base(), encode(path));
+        self.server
+            .get(&url)
+            .await
+            .json()
+            .and_then(|json| json["hash"].as_str().map(str::to_string))
+            .expect("Fingerabdruck")
+    }
+}
+
+/// Prozentkodierung eines Abfragewerts (wie `encodeURIComponent`)
+pub fn encode(value: &str) -> String {
+    value
+        .bytes()
+        .map(|byte| match byte {
+            b'A'..=b'Z'
+            | b'a'..=b'z'
+            | b'0'..=b'9'
+            | b'-'
+            | b'_'
+            | b'.'
+            | b'!'
+            | b'~'
+            | b'*'
+            | b'\''
+            | b'('
+            | b')' => char::from(byte).to_string(),
+            _ => format!("%{byte:02X}"),
+        })
+        .collect()
+}
+
+/// Systemfunktionen mit einem Öffner, dessen Aufrufe der Test nachsehen kann
+pub fn platform_with_opener() -> (Platform, Arc<nexus_platform::FakeFileOpener>) {
+    let opener = Arc::new(nexus_platform::FakeFileOpener::default());
+    let platform = Platform {
+        files: Box::new(SharedFileOpener(opener.clone())),
+        ..Platform::fake()
+    };
+    (platform, opener)
+}
+
+/// Reicht das Öffnen an einen geteilten Öffner weiter, damit der Test seine Aufrufe sieht
+struct SharedFileOpener(Arc<nexus_platform::FakeFileOpener>);
+
+#[async_trait]
+impl nexus_platform::FileOpener for SharedFileOpener {
+    async fn open(
+        &self,
+        file: &std::path::Path,
+        target: nexus_platform::OpenTarget,
+    ) -> nexus_platform::Result<()> {
+        self.0.open(file, target).await
     }
 }
 
