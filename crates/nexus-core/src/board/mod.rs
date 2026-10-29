@@ -63,6 +63,7 @@ pub use dependency_rules::{DependencyGraphMap, DependencyRules};
 pub use dispatch_run_types::*;
 pub use in_memory::{InMemoryBoardDatabase, InMemoryBoardSearch, SearchableState};
 pub use inbox::types::*;
+pub use inbox::{InboxFilter, InboxOrder, InboxOrderFile, InboxRanking, InboxService};
 pub use labels::BoardLabels;
 pub use limits::BoardLimits;
 pub use note_service::{AddNoteOptions, NewNoteText, NoteService, TakeNoteOptions, TakenNote};
