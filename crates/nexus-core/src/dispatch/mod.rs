@@ -16,6 +16,7 @@ pub mod invocation;
 mod js_value;
 pub mod markers;
 pub mod merge_strategy;
+pub mod optimization;
 pub mod output;
 pub mod profile_chooser;
 pub mod prompt;
@@ -43,6 +44,13 @@ pub use fingerprint::DispatchConfigFingerprint;
 pub use git_bash::{EnvLookup, GitBashLocator, ProcessEnv};
 pub use invocation::{ClaudeInvocation, RunKind};
 pub use merge_strategy::MergeStrategy;
+pub use optimization::{
+    sorted_json, suggestion_id, AdvisorResult, AnalysisWorkspace, ConfigPatchOp, ConfigPatcher,
+    EscalationPath, FactsInput, InsufficientData, OptimizationAdvisor, OptimizationBasis,
+    OptimizationFacts, OptimizationFactsCollector, ProfileFacts, RuleFacts, StartSource,
+    StoredAnalysis, Suggestion, SuggestionEvidence, SuggestionKind, SuggestionSource,
+    SuggestionState, SuggestionStateStore, SuggestionTarget, MIN_RUNS,
+};
 pub use output::{
     ModelUsage, OutputSummary, RunLogLine, RunLogLineKind, RunOutputReader, RunUsage,
     ShellCommandSummary, ShellKind, ShellSummary, StreamEventFormatter, TestRunExtractor,
