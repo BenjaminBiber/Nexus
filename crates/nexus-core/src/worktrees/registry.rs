@@ -267,7 +267,9 @@ mod tests {
         let dir = make_temp_dir("harness-reg-");
         let registry = registry(dir.path());
 
-        registry.add("ticket/T-0001-a", "/pfad/wt", "T-0001").unwrap();
+        registry
+            .add("ticket/T-0001-a", "/pfad/wt", "T-0001")
+            .unwrap();
         registry.add_ticket("ticket/T-0001-a", "T-0002").unwrap();
 
         let map = registry.read().unwrap();

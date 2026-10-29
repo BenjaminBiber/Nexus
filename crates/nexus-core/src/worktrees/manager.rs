@@ -16,9 +16,7 @@ use crate::dispatch::config::{JoinWorktrees, MERGE_REASON_PREFIX};
 use crate::dispatch::git::{BranchMerger, TargetBranches};
 use crate::error::{Error, HarnessError, Result};
 use crate::git::{GitCommands, GitRunner, LongPaths, PathKey, LONG_PATHS_ARGS, LONG_PATHS_NOTICE};
-use crate::install::{
-    ClaudeImportApproval, ProjectPluginSwitch, ProjectRules, PROJECT_RULE_PATHS,
-};
+use crate::install::{ClaudeImportApproval, ProjectPluginSwitch, ProjectRules, PROJECT_RULE_PATHS};
 use crate::project::HarnessLayout;
 use crate::registry::HarnessHome;
 use crate::text::SlugBuilder;
@@ -214,7 +212,10 @@ impl<D: BoardDatabase> WorktreeManager<D> {
         let mut result: Option<StartResult> = None;
         let mut warning: Option<String> = None;
         if let Some(host_id) = &options.in_ticket {
-            match self.try_join(&ticket, host_id, actor, options.force).await? {
+            match self
+                .try_join(&ticket, host_id, actor, options.force)
+                .await?
+            {
                 Ok(joined) => result = Some(joined),
                 Err(text) => warning = Some(text),
             }
@@ -526,9 +527,9 @@ Branch (der alte Branch bleibt im Repo)."
             Some(self.merger.head(&self.root, &full)?)
         };
         let mut removed: Option<String> = None;
-        if let Some(entry) = entry.filter(|entry| {
-            !entry.is_removed() && Path::new(&entry.path).exists()
-        }) {
+        if let Some(entry) =
+            entry.filter(|entry| !entry.is_removed() && Path::new(&entry.path).exists())
+        {
             let path = PathBuf::from(&entry.path);
             if is_empty_dir(&path) {
                 // Rest eines halb entfernten Worktrees (Windows ließ den gesperrten leeren
@@ -727,7 +728,9 @@ Bitte von Hand prüfen.",
     /// Ist der Ordner in `git worktree list` als Worktree des Branches eingetragen?
     fn is_worktree_of(&self, path: &Path, branch: &str) -> Result<bool> {
         let wanted = self.keys.of(path);
-        let listed = self.git.run(&self.root, &["worktree", "list", "--porcelain"])?;
+        let listed = self
+            .git
+            .run(&self.root, &["worktree", "list", "--porcelain"])?;
         let mut current: Option<String> = None;
         for line in listed.split('\n') {
             let text = line.trim();
@@ -864,10 +867,7 @@ angelegt.",
             .map(|(branch, entry)| (branch.clone(), entry.clone()))
             .collect();
         for (branch, entry) in entries {
-            if entry.is_removed()
-                || entry.ready_to_merge
-                || !Path::new(&entry.path).exists()
-            {
+            if entry.is_removed() || entry.ready_to_merge || !Path::new(&entry.path).exists() {
                 continue;
             }
             let others = self.load(&entry.tickets).await?;
@@ -990,15 +990,13 @@ angelegt.",
         .into_iter()
         .flatten()
         .collect();
-        let target_created = ensured
-            .filter(|ensured| ensured.created)
-            .map(|ensured| {
-                format!(
-                    "Zielbranch {} neu angelegt von {}.",
-                    target.clone().unwrap_or_default(),
-                    ensured.from.clone().unwrap_or_default()
-                )
-            });
+        let target_created = ensured.filter(|ensured| ensured.created).map(|ensured| {
+            format!(
+                "Zielbranch {} neu angelegt von {}.",
+                target.clone().unwrap_or_default(),
+                ensured.from.clone().unwrap_or_default()
+            )
+        });
         Ok(StartResult {
             id: ticket.id.clone(),
             branch,
@@ -1060,10 +1058,11 @@ werden:{error}"
             .into());
         }
         if self.branch_exists(branch, cwd) {
-            return Err(
-                HarnessError::new("branch-exists", format!("Branch {branch} existiert bereits."))
-                    .into(),
-            );
+            return Err(HarnessError::new(
+                "branch-exists",
+                format!("Branch {branch} existiert bereits."),
+            )
+            .into());
         }
         if Path::new(path).exists() {
             return Err(HarnessError::new(
@@ -1196,6 +1195,9 @@ fn join_warnings(warnings: &[String]) -> Option<String> {
         Some(text)
     }
 }
+
+#[cfg(test)]
+mod tests;
 
 /// Ordner ohne jeden Eintrag (auch keine versteckten Dateien)
 fn is_empty_dir(path: &Path) -> bool {

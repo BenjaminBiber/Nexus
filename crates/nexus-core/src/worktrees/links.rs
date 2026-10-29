@@ -135,7 +135,10 @@ mod tests {
         link_dir(&t, &link);
         let links = WorktreeLinks::new();
 
-        assert_eq!(links.find(&wt, &mut Vec::new()), std::slice::from_ref(&link));
+        assert_eq!(
+            links.find(&wt, &mut Vec::new()),
+            std::slice::from_ref(&link)
+        );
         assert_eq!(
             links.remove_all(&wt),
             LinkRemoval {
@@ -148,7 +151,10 @@ mod tests {
             fs::read_to_string(t.join(".package-lock.json")).unwrap(),
             "{}"
         );
-        assert_eq!(fs::read_to_string(t.join(".bin").join("tool")).unwrap(), "x");
+        assert_eq!(
+            fs::read_to_string(t.join(".bin").join("tool")).unwrap(),
+            "x"
+        );
         assert_eq!(
             fs::read_to_string(wt.join("app").join("a.txt")).unwrap(),
             "a"
