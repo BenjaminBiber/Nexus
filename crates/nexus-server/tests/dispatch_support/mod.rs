@@ -44,6 +44,8 @@ pub const OK_OUTPUT: &str =
 #[derive(Debug, Default)]
 pub struct FakeLauncher {
     launched: Mutex<Vec<String>>,
+    /// Umgebung je gestartetem Lauf
+    envs: Mutex<Vec<(String, BTreeMap<String, String>)>>,
     /// Fehlermeldung, mit der der Start scheitert (wie `launcher.fail` in TypeScript)
     fail: Mutex<Option<String>>,
     next_pid: AtomicI64,
@@ -63,14 +65,30 @@ impl FakeLauncher {
         *self.fail.lock().expect("Attrappe") = Some(message.to_string());
     }
 
+    /// Lässt Starts wieder gelingen
+    pub fn succeed(&self) {
+        *self.fail.lock().expect("Attrappe") = None;
+    }
+
     /// Läufe, die gestartet wurden
     pub fn launched(&self) -> Vec<String> {
         self.launched.lock().expect("Attrappe").clone()
     }
+
+    /// Umgebung, mit der der Lauf gestartet wurde
+    pub fn env_of(&self, run_id: &str) -> BTreeMap<String, String> {
+        self.envs
+            .lock()
+            .expect("Attrappe")
+            .iter()
+            .find(|(id, _)| id == run_id)
+            .map(|(_, env)| env.clone())
+            .unwrap_or_else(|| panic!("kein Start für {run_id}"))
+    }
 }
 
 impl WorkerLauncher for FakeLauncher {
-    fn launch(&self, run_id: &str, _env: &BTreeMap<String, String>) -> Result<Option<u32>> {
+    fn launch(&self, run_id: &str, env: &BTreeMap<String, String>) -> Result<Option<u32>> {
         if let Some(message) = self.fail.lock().expect("Attrappe").clone() {
             return Err(HarnessError::new("worker-start-failed", message).into());
         }
@@ -78,6 +96,10 @@ impl WorkerLauncher for FakeLauncher {
             .lock()
             .expect("Attrappe")
             .push(run_id.to_string());
+        self.envs
+            .lock()
+            .expect("Attrappe")
+            .push((run_id.to_string(), env.clone()));
         Ok(Some(self.next_pid.fetch_add(1, Ordering::SeqCst) as u32))
     }
 }
@@ -123,6 +145,7 @@ pub struct DispatchFixture {
     pub notices: Arc<CollectedNotices>,
     pub ctx: DispatchContext,
     pub cfg: DispatchConfig,
+    clock: Clock,
     now: Arc<Mutex<DateTime<Utc>>>,
 }
 
@@ -184,7 +207,7 @@ impl DispatchFixture {
             backend.clone() as Arc<dyn BoardBackend>,
             stores,
             launcher.clone(),
-            clock,
+            clock.clone(),
             notices.clone(),
             BTreeMap::new(),
             // Die Tests laufen auf jeder Plattform gegen denselben Zweig: ohne Windows keine
@@ -201,8 +224,35 @@ impl DispatchFixture {
             notices,
             ctx,
             cfg,
+            clock,
             now,
         }
+    }
+
+    /// Ein zweiter Kontext auf denselben Daten, aber mit einem anderen aktiven Board (im Betrieb
+    /// kommt es aus der Board-Einstellung des Benutzers)
+    pub fn context_with_active_board(&self, active_board: Option<i32>) -> DispatchContext {
+        let stores = DispatchStores {
+            runs: RunStore::new(self.home.clone()),
+            state: DispatchStateStore::with_clock(self.home.clone(), self.clock.clone()),
+            log: DispatchLog::with_clock(self.home.clone(), self.clock.clone()),
+            reviews: ReviewStore::new(self.home.clone()),
+        };
+        DispatchContext::new(
+            self.cfg.clone(),
+            nexus_core::board::repo_board_resolver::RepoBoardOwner {
+                user_id: self.backend.actor().user_id,
+                active_board,
+            },
+            self.home.clone(),
+            self.backend.clone() as Arc<dyn BoardBackend>,
+            stores,
+            self.launcher.clone(),
+            self.clock.clone(),
+            self.notices.clone(),
+            BTreeMap::new(),
+            "linux",
+        )
     }
 
     /// Der Handelnde des Testbenutzers
@@ -354,6 +404,21 @@ impl DispatchFixture {
             )
             .expect("Ergebnis schreiben");
         record
+    }
+
+    /// Das geschriebene Ergebnis eines Laufs
+    pub fn result(&self, run_id: &str) -> RunEnd {
+        self.ctx
+            .stores
+            .runs
+            .result(run_id)
+            .expect("Ergebnis lesen")
+            .unwrap_or_else(|| panic!("kein Ergebnis für {run_id}"))
+    }
+
+    /// Entfernt den ausgewerteten Lauf, wie der Tick es nach der Auswertung tut
+    pub fn drop_run(&self, run_id: &str) {
+        self.ctx.stores.runs.remove(run_id).expect("Lauf entfernen");
     }
 
     /// Wertet den jüngsten beendeten Lauf aus und merkt ihn für die Auswertung vor – die zwei

@@ -28,6 +28,18 @@ pub enum RunKind {
     Plan,
 }
 
+impl RunKind {
+    /// Name der Art wie im JSON der Lauf-Datei
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            RunKind::Work => "work",
+            RunKind::Merge => "merge",
+            RunKind::Research => "research",
+            RunKind::Plan => "plan",
+        }
+    }
+}
+
 /// Baut Argumentliste und Umgebung des Workers.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ClaudeInvocation;

@@ -6,7 +6,9 @@ pub mod claude_process;
 pub mod claude_runner;
 pub mod context;
 pub mod notifier;
+pub mod plan_runner;
 pub mod prompt_values;
+pub mod research_runner;
 pub mod result_envelope;
 pub mod result_handler;
 pub mod run_recorder;
@@ -21,7 +23,11 @@ pub use claude_runner::{
 };
 pub use context::{DispatchContext, DispatchStores, LaunchInput, RepoWork};
 pub use notifier::{DispatchNotice, DispatchNoticeKind, DispatchNotify, NoDispatchNotify};
+pub use plan_runner::{PlanAutoReport, PlanOutcome, PlanRunner, PLANNING_RETRY_MINUTES};
 pub use prompt_values::{PromptValues, SampleValues};
+pub use research_runner::{
+    ResearchAutoReport, ResearchOutcome, ResearchRunner, StartMode, RESEARCH_RETRY_MINUTES,
+};
 pub use result_envelope::{ClaudeResultEnvelope, ClaudeResultText};
 pub use result_handler::{
     MergeSessionEnd, NoMergeSessionEnd, NoReviewGate, ResultHandler, ReviewGate,

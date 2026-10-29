@@ -451,6 +451,16 @@ impl TempRepo {
         self.git(args);
     }
 
+    /// Führt Git im Projekt aus und liefert die Ausgabe ohne Leerzeichen am Rand
+    pub fn git_out(&self, args: &[&str]) -> String {
+        let output = std::process::Command::new("git")
+            .args(args)
+            .current_dir(&self.path)
+            .output()
+            .expect("git");
+        String::from_utf8_lossy(&output.stdout).trim().to_string()
+    }
+
     /// Führt Git im Projekt aus
     fn git(&self, args: &[&str]) {
         let output = std::process::Command::new("git")
