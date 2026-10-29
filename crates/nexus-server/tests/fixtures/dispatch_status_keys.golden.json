@@ -1,0 +1,88 @@
+{
+  "dispatchStatus": [
+    "enabled",
+    "state",
+    "message",
+    "pausedUntil",
+    "wip",
+    "active",
+    "planning",
+    "runs",
+    "research",
+    "planningAuto",
+    "merges",
+    "boardId",
+    "boardInScope",
+    "tickets",
+    "ticketsError",
+    "lastTick",
+    "lastErrors",
+    "configFile",
+    "configError",
+    "agentPrefix"
+  ],
+  "dispatchRunInfo": [
+    "id",
+    "kind",
+    "ticketId",
+    "title",
+    "profile",
+    "model",
+    "effort",
+    "startedAt",
+    "log"
+  ],
+  "dispatchResearchInfo": [
+    "auto",
+    "wip",
+    "active",
+    "maxPerDay",
+    "today",
+    "since",
+    "retryAt",
+    "error"
+  ],
+  "dispatchPlanningInfo": [
+    "auto",
+    "wip",
+    "active",
+    "since",
+    "retryAt",
+    "error"
+  ],
+  "dispatchMergeInfo": [
+    "ticketId",
+    "phase",
+    "branch",
+    "target"
+  ],
+  "dispatchTicketRow": [
+    "id",
+    "title",
+    "reason"
+  ],
+  "dispatchRunLog": [
+    "name",
+    "kind",
+    "started",
+    "running"
+  ],
+  "dispatchRunLogText": [
+    "name",
+    "header",
+    "prompt",
+    "body"
+  ],
+  "questionResearchStatus": [
+    "questionId",
+    "run",
+    "pausedUntil",
+    "lastStartedAt",
+    "count"
+  ],
+  "ticketPlanningStatus": [
+    "ticketId",
+    "run",
+    "pausedUntil"
+  ]
+}
