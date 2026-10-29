@@ -40,6 +40,9 @@ pub mod ticket_ids;
 pub mod ticket_ordering;
 pub mod ticket_service;
 pub mod ticket_step_edits;
+pub mod ticket_timeline;
+pub mod timeline_classifier;
+pub mod timeline_service;
 pub mod types;
 pub mod view_service;
 
@@ -91,5 +94,11 @@ pub use ticket_service::{
     TicketPatch, TicketService, TicketSummary, TicketView, WriteOptions,
 };
 pub use ticket_step_edits::{StepChange, StepEdit, StepGuard, StepPosition, TicketStepEdits};
+pub use ticket_timeline::{
+    sort_timeline, TicketTimeline, TimelineActor, TimelineActorType, TimelineAgentNames,
+    TimelineEvent, TimelineKind, TimelineRef, TIMELINE_KINDS,
+};
+pub use timeline_classifier::TimelineClassifier;
+pub use timeline_service::TicketTimelineService;
 pub use types::*;
 pub use view_service::{BoardCard, BoardView, BoardViewColumn, BoardViewService};
