@@ -86,6 +86,10 @@ pub struct TestServerOptions {
     /// Die Board-Laufzeit aus `board.yaml` statt der im Speicher: nur so prüfen Tests die
     /// Antworten ohne und mit kaputter Konfig
     pub board_from_config: bool,
+    /// Abstand des Herzschlags im Ereignisstrom; ohne Angabe der Standard
+    pub heartbeat_ms: Option<u64>,
+    /// Takt der Watcher; ohne Angabe der Standard
+    pub poll_ms: Option<u64>,
     /// Der Start von Claude; ohne Angabe der echte Prozess (Tests der Docs-Routen setzen hier
     /// immer Attrappen ein, damit nie das echte `claude` startet)
     pub claude: Option<ClaudeRunners>,
@@ -111,6 +115,13 @@ impl TestServer {
         config.web_dir = options.web_dir;
         config.upstream = options.upstream;
         config.proxy_groups = options.proxy_groups;
+        if let Some(heartbeat_ms) = options.heartbeat_ms {
+            config.heartbeat_ms = heartbeat_ms;
+        }
+        if let Some(poll_ms) = options.poll_ms {
+            config.db_poll_ms = poll_ms;
+            config.docs_poll_ms = poll_ms;
+        }
         if let Some(clock) = options.clock {
             config.clock = clock;
         }

@@ -37,6 +37,8 @@ nix = { workspace = true, features = ["process"] }
 # Die Standardwerte für Läufe des Dispatchers stecken im Merkmal `testing` des Fachkerns.
 nexus-core = { workspace = true, features = ["testing"] }
 tempfile = { workspace = true }
+# Die Watcher-Tests lassen die Uhr springen (`#[tokio::test(start_paused = true)]`)
+tokio = { workspace = true, features = ["test-util"] }
 # Der Golden-Vergleich des Lauf-Protokolls ersetzt Zeitstempel und Pfade
 regex = { workspace = true }
 # Die portierten Tests des BoardRuntimeHolder bauen die Treiberfehler selbst, nach denen die

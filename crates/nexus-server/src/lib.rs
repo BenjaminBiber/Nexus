@@ -13,11 +13,13 @@ pub mod conflict;
 pub mod dispatch;
 pub mod docs;
 pub mod error;
+pub mod events;
 pub mod extract;
 pub mod groups;
 pub mod guard;
 pub mod input;
 pub mod log;
+pub mod notices;
 pub mod projects;
 pub mod proxy;
 pub mod routes;
@@ -62,6 +64,7 @@ impl ServerHandle {
     pub async fn stop(self) {
         self.state.log.write("Server wird beendet.");
         self.state.shutdown.cancel();
+        self.state.close_events();
         let _ = self.task.await;
         self.state.board.reset().await;
         let _ = self.info.release(self.state.pid);

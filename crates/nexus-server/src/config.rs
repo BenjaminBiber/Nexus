@@ -133,6 +133,11 @@ impl ServerConfigLoader {
             version: value(env, &["NEXUS_SERVER_VERSION", "HARNESS_BUNDLED_VERSION"])
                 .filter(|version| !version.is_empty())
                 .unwrap_or_else(default_version),
+            // Der Vertragstest drückt die Takte, damit seine Szenarien in Sekunden fertig
+            // sind – wie `contract/servers/ts-server.mjs` beim Node-Server
+            heartbeat_ms: millis(env, "CONTRACT_HEARTBEAT_MS", DEFAULT_HEARTBEAT_MS),
+            db_poll_ms: millis(env, "CONTRACT_POLL_MS", DEFAULT_DB_POLL_MS),
+            docs_poll_ms: millis(env, "CONTRACT_POLL_MS", DEFAULT_DOCS_POLL_MS),
             ..ServerConfig::new(0, home)
         };
         if let Some(upstream) = upstream {
@@ -156,6 +161,14 @@ fn port(args: &[String], env: &dyn Fn(&str) -> Option<String>) -> Result<u16> {
         )
         .into()
     })
+}
+
+/// Takt in Millisekunden aus der Umgebung; ohne oder mit unbrauchbarem Wert der Standard
+fn millis(env: &dyn Fn(&str) -> Option<String>, name: &str, default: u64) -> u64 {
+    env(name)
+        .and_then(|raw| raw.trim().parse::<u64>().ok())
+        .filter(|value| *value > 0)
+        .unwrap_or(default)
 }
 
 /// Wert eines Schalters mit Wert (`--port 4710`)

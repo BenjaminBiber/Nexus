@@ -117,6 +117,18 @@ impl Upstream {
         Ok(Response::from_parts(parts, body))
     }
 
+    /// Schickt eine selbst gebaute Anfrage an den Upstream und gibt die Antwort mit noch
+    /// offenem Körper zurück; die Brücke des Ereignisstroms liest ihn Stück für Stück
+    pub async fn send(&self, request: Request) -> std::result::Result<Response, String> {
+        let response = self
+            .client
+            .request(request)
+            .await
+            .map_err(|error| error.to_string())?;
+        let (parts, incoming) = response.into_parts();
+        Ok(Response::from_parts(parts, Body::new(incoming)))
+    }
+
     /// Reicht eine schon beantwortete Anfrage am Upstream nach, ohne auf ihn zu warten.
     ///
     /// Gebraucht nach `PUT /api/board-config`: der Node-Server hält seine eigene
