@@ -24,8 +24,11 @@ const SUBCOMMAND: &str = "dispatch-worker";
 
 /// Startet den Worker eines Laufs; Tests ersetzen das durch eine Attrappe.
 pub trait WorkerLauncher: std::fmt::Debug + Send + Sync {
-    /// Startet losgelöst und liefert die Prozessnummer (`None`, wenn der Start scheiterte)
-    fn launch(&self, run_id: &str, env: &BTreeMap<String, String>) -> Option<u32>;
+    /// Startet losgelöst und liefert die Prozessnummer; `Ok(None)` heißt „läuft, Nummer
+    /// unbekannt“ (der Lauf bleibt und gilt ohne Nummer nach 2 min als verschwunden), ein
+    /// Fehler heißt „nicht gestartet“ (der Lauf wird wieder entfernt). In TypeScript sind das
+    /// `null` und die Ausnahme von `WorkerLauncher.launch`.
+    fn launch(&self, run_id: &str, env: &BTreeMap<String, String>) -> Result<Option<u32>>;
 }
 
 /// Startet dieselbe Programmdatei wie der Server mit `dispatch-worker <lauf>`.
@@ -101,7 +104,7 @@ impl ProcessWorkerLauncher {
 }
 
 impl WorkerLauncher for ProcessWorkerLauncher {
-    fn launch(&self, run_id: &str, env: &BTreeMap<String, String>) -> Option<u32> {
+    fn launch(&self, run_id: &str, env: &BTreeMap<String, String>) -> Result<Option<u32>> {
         let gestartet = match self.starte(run_id, env, true) {
             Ok(kind) => Ok(kind),
             // „Zugriff verweigert“: das Job-Objekt lässt keinen Ausbruch zu – ohne erneut
@@ -109,7 +112,10 @@ impl WorkerLauncher for ProcessWorkerLauncher {
             Err(_) if cfg!(windows) => self.starte(run_id, env, false),
             Err(error) => Err(error),
         };
-        let kind = gestartet.ok()?;
+        // Wie `spawn` in Node: ein gescheiterter Start zeigt sich als fehlende Prozessnummer
+        let Ok(kind) = gestartet else {
+            return Ok(None);
+        };
         let pid = kind.id();
         // Der Worker wird nicht abgewartet; ein Hintergrund-Thread holt nur sein Ende ab,
         // damit unter Unix kein Zombie bleibt, solange der Server läuft
@@ -117,7 +123,7 @@ impl WorkerLauncher for ProcessWorkerLauncher {
             let mut kind = kind;
             let _ = kind.wait();
         });
-        Some(pid)
+        Ok(Some(pid))
     }
 }
 
@@ -160,6 +166,9 @@ mod tests {
     #[test]
     fn ein_fehlendes_programm_zeigt_sich_als_fehlende_prozessnummer() {
         let launcher = ProcessWorkerLauncher::with_exe("/gibt/es/nicht/nexus");
-        assert_eq!(launcher.launch("ARC-0001-x", &BTreeMap::new()), None);
+        assert_eq!(
+            launcher.launch("ARC-0001-x", &BTreeMap::new()).unwrap(),
+            None
+        );
     }
 }

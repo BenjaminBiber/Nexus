@@ -30,7 +30,8 @@ use crate::clock::Clock;
 #[derive(Debug)]
 pub struct BoardServices<D: BoardDatabase> {
     pub db: Arc<D>,
-    /// Uhr aller Dienste (für [`Clone`], das die Dienste neu aufbaut)
+    /// Uhr aller Dienste (für [`Clone`] und [`BoardServices::duplicate`], die die Dienste neu
+    /// aufbauen)
     pub clock: Clock,
     pub repo_paths: BoardRepoPaths,
     pub projects: ProjectService<D>,
@@ -45,6 +46,12 @@ pub struct BoardServices<D: BoardDatabase> {
     pub dispatch_runs: DispatchRunService<D>,
     pub graph: DependencyGraphService<D>,
     pub inbox: InboxService<D>,
+}
+
+impl<D: BoardDatabase> Clone for BoardServices<D> {
+    fn clone(&self) -> Self {
+        self.duplicate()
+    }
 }
 
 impl<D: BoardDatabase> BoardServices<D> {
@@ -74,8 +81,13 @@ impl<D: BoardDatabase> BoardServices<D> {
         Self::new(db, clock, BoardRepoPaths::memory())
     }
 
-    /// Dieselben Dienste noch einmal; die Datenbank wird geteilt. Von Hand geschrieben,
-    /// weil `derive(Clone)` sonst `D: Clone` verlangen würde.
+    /// Dieselben Dienste noch einmal, auf derselben Datenbank und mit derselben Uhr. In
+    /// TypeScript wird `BoardServices` einfach weitergegeben; in Rust braucht etwa der
+    /// [`crate::worktrees::manager::WorktreeManager`] eine eigene Kopie.
+    ///
+    /// Von Hand geschrieben und nicht als `#[derive(Clone)]`, weil das Ableiten `D: Clone`
+    /// verlangt – die Datenbank des Servers ist aber keine Kopie wert (und kann es nicht sein).
+    /// [`Clone`] ruft diese Methode auf, damit beide Wege gleich kopieren.
     pub fn duplicate(&self) -> Self {
         Self::new(self.db.clone(), self.clock.clone(), self.repo_paths.clone())
     }

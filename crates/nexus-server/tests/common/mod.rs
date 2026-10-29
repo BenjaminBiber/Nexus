@@ -24,7 +24,7 @@ use nexus_core::board::repo_paths::{BoardRepoPaths, MemoryBoardRepoStore};
 use nexus_core::board::services::BoardServices;
 use nexus_core::board::types::BoardUser;
 use nexus_core::clock::Clock;
-use nexus_core::{tx, HarnessHome, Result};
+use nexus_core::{tx, HarnessError, HarnessHome, Result};
 use nexus_platform::Platform;
 use nexus_server::board_db::{ServerBoardDatabase, ServerBoardServices};
 use nexus_server::board_runtime::{BoardBackend, BoardBackendFactory, BoardBackendFuture};
@@ -328,6 +328,36 @@ impl BoardBackendWithServices {
     /// Wurde sie geschlossen?
     pub fn closed(&self) -> bool {
         self.closed.load(Ordering::SeqCst)
+    }
+
+    /// Jeder weitere Zugriff scheitert, als wäre die Verbindung weg
+    pub fn break_connection(&self) {
+        self.fail_with(Some(HarnessError::new(
+            "board-db-unreachable",
+            "Datenbank weg",
+        )));
+    }
+
+    /// Jeder weitere Zugriff scheitert, als fehlte die Erweiterung der Läufe
+    pub fn outdate_schema(&self) {
+        self.fail_with(Some(HarnessError::new(
+            "board-schema-outdated",
+            "Erweiterung dispatch-run-details fehlt",
+        )));
+    }
+
+    /// Hebt [`BoardBackendWithServices::break_connection`] bzw.
+    /// [`BoardBackendWithServices::outdate_schema`] wieder auf
+    pub fn mend_connection(&self) {
+        self.fail_with(None);
+    }
+
+    /// Setzt den Fehler der Datenbank im Speicher
+    fn fail_with(&self, error: Option<HarnessError>) {
+        match &*self.services.db {
+            ServerBoardDatabase::Memory(db) => db.fail_with(error),
+            ServerBoardDatabase::Open(_) => panic!("nur für die Datenbank im Speicher"),
+        }
     }
 }
 
