@@ -9,6 +9,7 @@ pub mod counter;
 pub mod customization;
 pub mod dispatch;
 pub mod docs;
+pub mod env;
 pub mod error;
 pub mod favorites;
 pub mod git;
@@ -37,7 +38,7 @@ pub use actors::{Actor, AuthorKind, QuestionActor};
 pub use clock::Clock;
 pub use error::{Error, HarnessError, Result};
 pub use project::HarnessProject;
-pub use registry::HarnessHome;
+pub use registry::{HarnessHome, HomeSource, NexusHome};
 
 /// Name des Crates, wie er in Protokollen und Diagnoseausgaben erscheint.
 pub const CRATE_NAME: &str = "nexus-core";
