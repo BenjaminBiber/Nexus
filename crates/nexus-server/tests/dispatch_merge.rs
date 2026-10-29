@@ -808,3 +808,241 @@ async fn erneut_mergen_und_der_folgende_durchlauf_laufen_unter_derselben_sperre(
     assert_eq!(report.report.merged, vec![id]);
     assert_eq!(&merge.order()[..3], ["retry", "retry fertig", "merge-tick"]);
 }
+
+// ----------------------------------------------------------------------------------------
+// Abschluss und Abweisungen
+// ----------------------------------------------------------------------------------------
+
+#[tokio::test]
+async fn abbruch_nach_dem_merge_wird_vom_nachsten_durchlauf_abgeschlossen() {
+    let f = DispatchFixture::create(json!({})).await;
+    let id = done_by_agent(&f, "Abbruch").await;
+    let ticket = f.ticket(&id).await;
+    let branch = ticket.branch.clone().expect("Branch");
+    let worktree = ticket.worktree.clone().expect("Worktree");
+    // Wie ein Verbindungsabriss: der Merge ist gelaufen, Branch und Worktree sind weg, nur das
+    // Leeren am Ticket fehlt noch
+    f.repo.run_git(&[
+        "merge",
+        "-q",
+        "--no-ff",
+        "-m",
+        &format!("Merge {id} „Abbruch“ ({branch})"),
+        &branch,
+    ]);
+    f.repo
+        .run_git(&["worktree", "remove", "--force", &worktree]);
+    f.repo.run_git(&["branch", "-D", &branch]);
+    let merge = f.repo.git_out(&["log", "-1", "--format=%h"]);
+
+    let report = f.tick().await;
+    assert_eq!(report.merged, vec![id.clone()]);
+    let after = f.ticket(&id).await;
+    assert_eq!(after.status, TicketStatus::Done);
+    assert_eq!(after.branch, None);
+    assert_eq!(after.worktree, None);
+    assert_eq!(after.blocked_reason, None);
+    assert!(last_comment(&f, &id).await.starts_with(&format!(
+        "{} in {} ({merge}).",
+        markers::MERGED,
+        main_branch(&f)
+    )));
+    // Kein zweiter Merge-Commit
+    assert_eq!(f.repo.git_out(&["log", "-1", "--format=%h"]), merge);
+    assert!(no_merges(&f));
+}
+
+#[tokio::test]
+async fn gemergt_kommentar_meldet_unvollstandiges_aufraumen() {
+    let f = DispatchFixture::create(json!({})).await;
+    let id = done_by_agent(&f, "Rest").await;
+    let worktree = f.ticket(&id).await.worktree.expect("Worktree");
+    std::fs::write(Path::new(&worktree).join("rest.txt"), "x").expect("Rest im Worktree");
+
+    assert_eq!(f.tick().await.merged, vec![id.clone()]);
+    let comment = last_comment(&f, &id).await;
+    assert!(comment.starts_with(markers::MERGED), "{comment}");
+    assert!(
+        comment.contains("Aufräumen unvollständig:\n") && comment.contains("ungesicherte Änderungen"),
+        "{comment}"
+    );
+    assert!(!comment.contains("aufgeräumt"), "{comment}");
+}
+
+#[tokio::test]
+async fn ein_von_git_abgewiesener_merge_mit_uberschneidung_wartet_statt_zu_blockieren() {
+    let (f, git) = with_fake_git(json!({})).await;
+    commit_on_main(&f, "cfg.yaml", "alt");
+    let id = done_by_agent_with(&f, "Sprache", "cfg.yaml", "ticket").await;
+    // Die Änderung entsteht erst zwischen Vorprüfung und Merge
+    git.write_before_merge("cfg.yaml", "lokal");
+    git.answer_merge(MergeAnswer::Refused(
+        "Fehler: lokale Änderungen würden überschrieben:\n\tcfg.yaml\nAbbruch".into(),
+    ));
+
+    f.tick().await;
+    let ticket = f.ticket(&id).await;
+    assert_eq!(ticket.status, TicketStatus::Done);
+    assert_eq!(ticket.blocked_reason, None);
+    assert_eq!(
+        last_comment(&f, &id).await,
+        "[dispatch] Merge wartet auf den Hauptordner: lokale Änderungen in cfg.yaml, die der \
+Branch ebenfalls ändert – gemergt wird automatisch, sobald das erledigt ist."
+    );
+    assert_eq!(merge_entry(&f, &id).phase, MergePhase::Waiting);
+}
+
+#[tokio::test]
+async fn abgewiesener_merge_ohne_uberschneidung_blockiert_mit_den_dateien_der_git_meldung() {
+    let (f, git) = with_fake_git(json!({})).await;
+    let id = done_by_agent(&f, "Abweisung").await;
+    git.answer_merge(MergeAnswer::Refused(
+        "error: The following untracked working tree files would be overwritten by merge:\n\tx.txt\nAborting"
+            .into(),
+    ));
+
+    f.tick().await;
+    assert_eq!(
+        f.ticket(&id).await.blocked_reason.as_deref(),
+        Some(
+            "Merge: Git lehnt den Merge ab, er würde lokale Änderungen überschreiben: x.txt"
+        )
+    );
+    assert_eq!(
+        last_comment(&f, &id).await,
+        "[dispatch] Merge nicht möglich: Git lehnt den Merge ab, er würde lokale Änderungen \
+überschreiben: x.txt"
+    );
+}
+
+#[tokio::test]
+async fn leere_konfliktliste_heisst_unbekannten_dateien() {
+    let (f, git) = with_fake_git(json!({})).await;
+    let id = done_by_agent(&f, "Leer").await;
+    git.answer_merge(MergeAnswer::Conflict(Vec::new()));
+
+    f.tick().await;
+    let comment = last_comment(&f, &id).await;
+    assert!(
+        comment.starts_with(&format!(
+            "{} in unbekannten Dateien beim Merge in ",
+            markers::MERGE_CONFLICT
+        )),
+        "{comment}"
+    );
+}
+
+#[tokio::test]
+async fn git_meldung_ohne_dateiliste_steht_zusammengefasst_in_einer_zeile() {
+    let (f, git) = with_fake_git(json!({})).await;
+    let id = done_by_agent(&f, "Zeilen").await;
+    git.answer_merge(MergeAnswer::Refused(
+        "fatal: etwas\n  ging   schief\nHinweis: x".into(),
+    ));
+
+    f.tick().await;
+    assert_eq!(
+        f.ticket(&id).await.blocked_reason.as_deref(),
+        Some("Merge: Git lehnt den Merge ab: fatal: etwas ging schief Hinweis: x")
+    );
+}
+
+#[tokio::test]
+async fn nicht_nutzbarer_repo_pfad_blockiert_mit_grund() {
+    let f = DispatchFixture::create(json!({})).await;
+    let id = done_by_agent(&f, "Pfad").await;
+    let missing = f.dir().join("gibt-es-nicht");
+    f.backend.set_repo_path(f.board.id, &missing);
+
+    let report = f.tick().await;
+    assert!(report.errors.is_empty(), "{report:?}");
+    let ticket = f.ticket(&id).await;
+    assert_eq!(ticket.status, TicketStatus::Blocked);
+    let reason = ticket.blocked_reason.expect("Grund");
+    assert!(
+        reason.starts_with(&format!(
+            "Merge: Repo-Pfad {} nicht nutzbar: ",
+            missing.to_string_lossy()
+        )),
+        "{reason}"
+    );
+}
+
+// ----------------------------------------------------------------------------------------
+// Ausgeschaltet, Pause und Zeitfenster
+// ----------------------------------------------------------------------------------------
+
+#[tokio::test]
+async fn ausgeschaltet_oder_ausserhalb_des_zeitfensters_startet_keine_merge_session() {
+    let (f, git) = with_fake_git(json!({})).await;
+    let id = f.ready("Aus", TicketPatch::default()).await;
+    f.tick().await;
+    commit_on_main(&f, "feature.txt", "haupt");
+    f.finish_as_agent(&id, "feature.txt", "ticket").await;
+    f.end(&id, OK_OUTPUT, Some(0));
+    f.service.set_enabled(false).await.expect("ausschalten");
+
+    let before = git.merge_calls();
+    f.tick().await;
+    assert_eq!(git.merge_calls(), before + 1);
+    assert!(merge_runs(&f).is_empty());
+    let entry = merge_entry(&f, &id);
+    assert_eq!(entry.phase, MergePhase::Pending);
+    assert!(!entry.session_used);
+    assert_eq!(entry.conflict_seen, Some(true));
+    // Kein weiterer Merge-Versuch, solange der Konflikt gesehen ist
+    f.tick().await;
+    assert_eq!(git.merge_calls(), before + 1);
+
+    // „Erneut mergen“ setzt den Merker zurück: genau ein neuer Versuch
+    let report = f.service.retry_merge(&id).await.expect("Erneut mergen");
+    assert_eq!(report.result.outcome, MergeRetryOutcome::Pending);
+    assert!(
+        report.result.text.contains("Merge-Session wartet"),
+        "{}",
+        report.result.text
+    );
+    assert_eq!(git.merge_calls(), before + 2);
+    assert!(merge_runs(&f).is_empty());
+
+    // Eingeschaltet, aber außerhalb des Zeitfensters: weiterhin kein Versuch
+    f.service.set_enabled(true).await.expect("einschalten");
+    f.set_local_time(12, 0);
+    f.write_config(json!({ "window": { "from": "14:00", "to": "15:00" } }));
+    f.tick().await;
+    assert_eq!(git.merge_calls(), before + 2);
+    assert!(merge_runs(&f).is_empty());
+
+    // Fenster offen: Merge-Versuch und Merge-Session
+    f.write_config(json!({ "window": null }));
+    f.tick().await;
+    assert_eq!(git.merge_calls(), before + 3);
+    assert_eq!(merge_runs(&f).len(), 1);
+}
+
+#[tokio::test]
+async fn wahrend_einer_pause_startet_keine_merge_session_danach_schon() {
+    let (f, git) = with_fake_git(json!({})).await;
+    let id = f.ready("Pause", TicketPatch::default()).await;
+    f.tick().await;
+    commit_on_main(&f, "feature.txt", "haupt");
+    f.finish_as_agent(&id, "feature.txt", "ticket").await;
+    f.end(&id, OK_OUTPUT, Some(0));
+    f.service.pause(30).await.expect("pausieren");
+
+    f.tick().await;
+    assert!(merge_runs(&f).is_empty());
+    let entry = merge_entry(&f, &id);
+    assert_eq!(entry.phase, MergePhase::Pending);
+    assert!(!entry.session_used);
+    assert_eq!(entry.conflict_seen, Some(true));
+
+    // Während der Pause kein weiterer Merge-Versuch im Hauptordner
+    let before = git.merge_calls();
+    f.tick().await;
+    assert_eq!(git.merge_calls(), before);
+
+    f.service.resume().await.expect("fortsetzen");
+    f.tick().await;
+    assert_eq!(merge_runs(&f).len(), 1);
+}
