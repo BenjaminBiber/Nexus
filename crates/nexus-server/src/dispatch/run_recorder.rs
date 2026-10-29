@@ -171,11 +171,28 @@ impl<'a> RunRecorder<'a> {
         let Some(kind) = recorded_kind(record.kind) else {
             return Ok(());
         };
+        let outcome = self.outcome(record, result);
+        let row = self.row(record, end, board.project_id, board.id, kind, outcome);
+        self.ctx.stores.runs.keep_stats(&row.id, &row)
+    }
+
+    /// Die Zeile eines beendeten Laufs: alles, was aus Lauf, Profil und Lauf-Ausgabe folgt,
+    /// dazu der schon bestimmte Ausgang. Der Schattenbetrieb rechnet damit dieselben Zahlen
+    /// nach, ohne den Lauf auszuwerten
+    pub fn row(
+        &self,
+        record: &RunRecord,
+        end: &RunEnd,
+        project_id: i32,
+        board_id: i32,
+        kind: DispatchRunKind,
+        outcome: (DispatchRunOutcome, Option<String>, Option<String>),
+    ) -> DispatchRun {
         let usage = self.ctx.output.usage(&end.result.output);
         let summary = self.ctx.output.summarize(&end.result.output);
-        let (outcome, abort_category, abort_reason) = self.outcome(record, result);
+        let (outcome, abort_category, abort_reason) = outcome;
         let denied = denied(usage.as_ref(), &summary);
-        let row = DispatchRun {
+        DispatchRun {
             model: usage.as_ref().and_then(|usage| usage.model.clone()),
             ended_at: Some(end.ended_at.clone()),
             duration_ms: duration_ms(&record.started_at, &end.ended_at),
@@ -201,15 +218,14 @@ impl<'a> RunRecorder<'a> {
                 &self.id(&record.id),
                 kind,
                 &record.ticket_id,
-                board.project_id,
-                board.id,
+                project_id,
+                board_id,
                 &record.agent,
                 &record.run,
                 record.attempt,
                 &record.started_at,
             )
-        };
-        self.ctx.stores.runs.keep_stats(&row.id, &row)
+        }
     }
 
     /// Gescheiterter Start (kein Lauf-Datensatz): Abbruch mit Kategorie `start-failed` vormerken

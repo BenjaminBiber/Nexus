@@ -70,6 +70,9 @@ impl ServerHandle {
         self.state.shutdown.cancel();
         // Vor dem Abbau der Board-Laufzeit anhalten, damit kein Durchlauf sie neu aufbaut
         self.state.dispatch_scheduler.stop().await;
+        if let Some(shadow) = &self.state.shadow {
+            shadow.stop().await;
+        }
         self.state.db_questions.stop();
         // Ausstehende Änderungen der Sessions landen noch in `sessions.json`
         self.state.sessions.close().await;
@@ -186,6 +189,24 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
             state.config.dispatch_tick_ms
         ));
         state.dispatch_scheduler.start().await;
+    }
+    // Im Schattenbetrieb dispatcht der Node-Sidecar, und Rust rechnet jede Entscheidung und
+    // jede Auswertung nach – Takt und Beobachter laufen, geschrieben wird nur unter
+    // `dispatch/shadow/`
+    if let Some(shadow) = &state.shadow {
+        state.log.write(&format!(
+            "Dispatcher: Node, Rust vergleicht im Schattenbetrieb (Takt {} ms, Ordner {})",
+            state.config.dispatch_tick_ms,
+            shadow.service.shadow_dir().to_string_lossy()
+        ));
+        let log = state.log.clone();
+        shadow
+            .start(Arc::new(move |line: &str| log.write(line)))
+            .await;
+    } else if state.config.dispatch.is_shadow() {
+        state.log.write(
+            "Schattenbetrieb ohne Node-Server: es gibt keine Gegenseite, also kein Vergleich.",
+        );
     }
 
     let router = routes::build_router(state.clone());

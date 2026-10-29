@@ -248,6 +248,24 @@ pub enum Commands {
         lauf: String,
     },
 
+    /// Bericht des Schattenbetriebs; ihn braucht nur, wer den Parallelbetrieb auswertet,
+    /// deshalb steht der Befehl nicht in der Hilfe.
+    #[command(
+        name = "dispatch-compare",
+        about = commands::dispatch_compare::COMPARE_ABOUT,
+        after_help = commands::dispatch_compare::COMPARE_EXAMPLES,
+        hide = true,
+        disable_help_flag = true
+    )]
+    DispatchCompare {
+        #[arg(long, value_name = "tag", help = commands::dispatch_compare::SINCE_HELP)]
+        since: Option<String>,
+        #[arg(long, value_name = "tag", help = commands::dispatch_compare::UNTIL_HELP)]
+        until: Option<String>,
+        #[arg(long, help = "Ausgabe als JSON")]
+        json: bool,
+    },
+
     /// Hilfe zu einem Befehl anzeigen
     #[command(
         name = "help",
@@ -378,6 +396,10 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
         Some(Commands::Hook { ereignis }) => commands::hook::run(&ereignis),
         Some(Commands::Customize(args)) => commands::customize::run(&context, args),
         Some(Commands::DispatchWorker { lauf }) => commands::dispatch_worker::run(&context, &lauf),
+        Some(Commands::DispatchCompare { since, until, json }) => commands::dispatch_compare::run(
+            &context,
+            &commands::dispatch_compare::CompareOptions { since, until, json },
+        ),
         Some(Commands::Help { befehl }) => help_command(root, befehl.as_deref()),
         #[cfg(debug_assertions)]
         Some(Commands::SelbsttestFehler { code, meldung }) => {

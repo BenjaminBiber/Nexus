@@ -76,6 +76,9 @@ http-body-util = "0.1"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "charset", "http2"] }
 # Systemmeldungen auf macOS und Linux (unter Windows geht es über WinRT)
 notify-rust = "4"
+# Dateibeobachter des Schattenbetriebs: meldet neue Lauf- und Ergebnisdateien sofort, statt
+# auf den nächsten Takt zu warten (FSEvents, inotify bzw. ReadDirectoryChangesW)
+notify = { version = "8", default-features = false, features = ["macos_fsevent"] }
 # WinRT-Toasts und die AUMID-Registrierung unter Windows
 windows = { version = "0.62", features = ["UI_Notifications", "Data_Xml_Dom"] }
 windows-registry = "0.6"

@@ -18,8 +18,8 @@ use crate::config::ServerConfig;
 use crate::dispatch::claude_runner::ClaudeRunners;
 use crate::dispatch::{
     DispatchScheduler, DispatchService, DispatchServiceDeps, DispatchSuggestionService,
-    NoWorkerLauncher, ProcessWorkerLauncher, ServerDispatchNotify, SuggestionAnalyzer,
-    WorkerLauncher,
+    HttpSidecarStatus, NoWorkerLauncher, ProcessWorkerLauncher, ServerDispatchNotify, ShadowDeps,
+    ShadowService, ShadowWatcher, SuggestionAnalyzer, WorkerLauncher,
 };
 use crate::docs::{
     DocQuestionService, DocRevisionService, DocTicketService, DocsRootResolver, DocsService,
@@ -40,6 +40,29 @@ use crate::proxy::Upstream;
 use crate::sessions::{SessionService, TicketInfoLookup, TicketSummaries};
 use crate::usage::ClaudeUsageService;
 
+/// Der Schattenbetrieb im Zustand: der Dienst, sein Takt und der Beobachter auf
+/// `dispatch/runs`
+pub struct ShadowParts {
+    pub service: Arc<ShadowService>,
+    pub scheduler: Arc<DispatchScheduler>,
+    pub watcher: Arc<ShadowWatcher>,
+}
+
+impl ShadowParts {
+    /// Startet Takt und Beobachter
+    pub async fn start(&self, log: Arc<dyn Fn(&str) + Send + Sync>) {
+        self.scheduler.start().await;
+        let dir = self.service.runs_dir();
+        self.watcher.start(self.service.clone(), dir, log).await;
+    }
+
+    /// Hält Beobachter und Takt an
+    pub async fn stop(&self) {
+        self.watcher.stop().await;
+        self.scheduler.stop().await;
+    }
+}
+
 /// Alles, was die Routen des Servers teilen
 pub struct AppState {
     pub config: ServerConfig,
@@ -51,6 +74,8 @@ pub struct AppState {
     pub dispatch: Arc<DispatchService>,
     /// Takt des Dispatchers; [`crate::serve`] startet ihn, das Herunterfahren hält ihn an
     pub dispatch_scheduler: Arc<DispatchScheduler>,
+    /// Der Schattenbetrieb samt Takt und Beobachter; nur mit `NEXUS_DISPATCH=shadow`
+    pub shadow: Option<ShadowParts>,
     /// Optimierungs-Vorschläge zur Dispatcher-Einstellung
     pub suggestions: Arc<DispatchSuggestionService>,
     /// Die Claude-Analyse der Vorschläge; sie lässt nur eine Analyse gleichzeitig zu und
@@ -200,6 +225,37 @@ impl AppState {
                 Arc::new(move |line: &str| log.write(line))
             }),
         );
+        // Der Schattenbetrieb läuft statt des Dispatchers: Node dispatcht, Rust vergleicht
+        // nur. Ohne Node-Server dahinter gäbe es keine Gegenseite, also auch keinen Vergleich
+        let shadow = (config.dispatch.is_shadow() && upstream.is_some()).then(|| {
+            let log: Arc<dyn Fn(&str) + Send + Sync> = {
+                let file = ServerLog::new(&config.home);
+                Arc::new(move |line: &str| file.write(line))
+            };
+            let service = Arc::new(ShadowService::new(ShadowDeps {
+                home: config.home.clone(),
+                boards: board.clone(),
+                clock: config.clock.clone(),
+                env: std::env::vars().collect(),
+                platform: crate::dispatch::context::node_platform().to_string(),
+                sidecar: Arc::new(HttpSidecarStatus::new(
+                    upstream.as_ref().expect("Upstream").base(),
+                )),
+                log: log.clone(),
+            }));
+            let scheduler = Arc::new(
+                DispatchScheduler::new(
+                    service.clone(),
+                    std::time::Duration::from_millis(config.dispatch_tick_ms),
+                )
+                .with_log(log),
+            );
+            ShadowParts {
+                service,
+                scheduler,
+                watcher: Arc::new(ShadowWatcher::new()),
+            }
+        });
         let suggestions = Arc::new(DispatchSuggestionService::new(
             board.clone(),
             config.home.clone(),
@@ -218,6 +274,7 @@ impl AppState {
             board,
             dispatch,
             dispatch_scheduler,
+            shadow,
             suggestions,
             suggestion_analyzer,
             docs: DocsService::new(),

@@ -428,6 +428,17 @@ Branch (der alte Branch bleibt im Repo)."
         })
     }
 
+    /// Ordner des eingetragenen Worktrees dieses Branches, auch wenn er aufgeräumt wurde;
+    /// ohne Eintrag `None`. Ändert nichts (der Schattenbetrieb braucht den Pfad, ohne einen
+    /// Worktree anzulegen)
+    pub fn path_of(&self, branch: &str) -> Result<Option<String>> {
+        Ok(self
+            .registry
+            .read()?
+            .get(branch)
+            .map(|entry| entry.path.clone()))
+    }
+
     /// Steht die Einrichtung (`worktreeSetup`) des Worktrees noch aus? Nur für Worktrees,
     /// die der Dispatcher mit Einrichtung anlegte
     pub fn setup_pending(&self, branch: &str) -> Result<bool> {
