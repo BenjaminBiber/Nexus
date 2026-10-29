@@ -19,7 +19,8 @@ const MAX_PATCH: usize = 200_000;
 pub struct ReviewFile {
     pub path: String,
     /// Bisheriger Pfad bei Umbenennung oder Kopie
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub old_path: Option<String>,
     /// A, M, D, R, C, T … (erster Buchstabe von --name-status)
     pub status: String,
