@@ -79,8 +79,7 @@ pub const DEPENDS_EXAMPLE: &str =
 /// Beschreibung des Befehls `help` der Gruppe
 pub const HELP_ABOUT: &str = "Hilfe zu einem Befehl anzeigen";
 
-/// Die Unterbefehle von `board question`. `research-start` läuft über den Server und kommt in
-/// P3-12 dazu.
+/// Die Unterbefehle von `board question`; `research-start` läuft über den Server.
 // Die Varianten tragen die Optionen von clap; sie dürfen unterschiedlich groß sein
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Subcommand)]
@@ -114,6 +113,14 @@ pub enum QuestionCommands {
 
     #[command(name = "depends", about = DEPENDS_ABOUT, after_help = DEPENDS_EXAMPLE, disable_help_flag = true)]
     Depends(DependsArgs),
+
+    #[command(
+        name = "research-start",
+        about = super::dispatch::RESEARCH_START_ABOUT,
+        after_help = super::dispatch::RESEARCH_START_EXAMPLE,
+        disable_help_flag = true
+    )]
+    ResearchStart(super::dispatch::IdArgs),
 
     /// Hilfe zu einem Befehl anzeigen
     #[command(name = "help", about = HELP_ABOUT, disable_help_flag = true)]
@@ -285,8 +292,13 @@ pub struct DependsArgs {
     pub who: WhoArgs,
 }
 
-/// Führt einen Unterbefehl von `board question` aus
-pub fn run(context: &CliContext, command: &QuestionCommands, root: &Command) -> Result<u8> {
+/// Führt einen Unterbefehl von `board question` aus; `port` ist die Option `--port` von `board`
+pub fn run(
+    context: &CliContext,
+    port: Option<&str>,
+    command: &QuestionCommands,
+    root: &Command,
+) -> Result<u8> {
     match command {
         QuestionCommands::Help { befehl } => help(root, befehl.as_deref()),
         QuestionCommands::Add(args) => add(context, args),
@@ -299,6 +311,9 @@ pub fn run(context: &CliContext, command: &QuestionCommands, root: &Command) -> 
         QuestionCommands::Reopen(args) => reopen(context, args),
         QuestionCommands::Link(args) => link(context, args),
         QuestionCommands::Depends(args) => depends(context, args),
+        QuestionCommands::ResearchStart(args) => {
+            super::dispatch::research_start(context, port, &args.id)
+        }
         QuestionCommands::Unbekannt(words) => Err(super::unknown_question(words)),
     }
 }

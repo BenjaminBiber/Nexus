@@ -18,12 +18,14 @@ const CONTRACT_USER_ID = '11111111-1111-1111-1111-111111111111';
 // Führt ein Szenario aus: frisches Home, Fixture-Repos, Server, Schritte, Normalisierung.
 export class ScenarioRunner {
   // `serverCmd`: Startbefehl mit `{port}`, `base`/`homeDir`: fremder Server, `cli`: Befehl der CLI als Liste,
-  // `initCli`: eigener Befehl nur für die Fixture `harnessInit` (ohne Angabe derselbe wie `cli`)
+  // `initCli`: eigener Befehl nur für die Fixture `harnessInit`, `setupCli`: eigener Befehl nur für
+  // CLI-Schritte mit `record: false` (ohne Angabe jeweils derselbe wie `cli`)
   constructor(options) {
     this.cwd = options.cwd;
     this.serverCmd = options.serverCmd;
     this.cli = options.cli;
     this.initCli = options.initCli ?? options.cli;
+    this.setupCli = options.setupCli ?? options.cli;
     this.base = options.base ?? null;
     this.homeDir = options.homeDir ?? null;
     this.verbose = options.verbose ?? false;
@@ -68,6 +70,8 @@ export class ScenarioRunner {
         stubs,
         // Für CLI-Schritte: Programm und die Umgebung, in der es läuft
         cli: this.cli,
+        // Schritte, die nur den Zustand aufbauen, dürfen ein anderes Programm benutzen
+        setupCli: this.setupCli,
         home,
         claudeConfig,
         port,

@@ -32,6 +32,8 @@ const HELP = `Vertragstest von HTTP-API, CLI und Hooks.
                         (Standard: ${DEFAULT_CLI_CMD})
   --init-cmd "<cmd>"    eigener Befehl nur für die Fixture harnessInit (Standard: --cli-cmd);
                         nötig, solange die geprüfte CLI noch kein init kennt
+  --setup-cmd "<cmd>"   eigener Befehl nur für cli-Schritte mit record: false (Standard: --cli-cmd);
+                        nötig, solange die geprüfte CLI die Befehle des Aufbaus noch nicht kennt
   --coverage            Routen aus contract/api/routes.json mit abgedeckt/offen auflisten
   --strict              mit --coverage: Exit 1, wenn eine Route offen ist
   --verbose             Ausgabe des Servers mitschreiben
@@ -52,9 +54,9 @@ export class ContractRun {
     const options = {
       // Ohne --suite laufen alle Ordner unter contract/ (api und sse)
       update: false, only: null, suite: '', serverCmd: DEFAULT_SERVER_CMD, base: null, home: null,
-      cliCmd: DEFAULT_CLI_CMD, initCmd: null, step: null, coverage: false, strict: false, verbose: false, help: false,
+      cliCmd: DEFAULT_CLI_CMD, initCmd: null, setupCmd: null, step: null, coverage: false, strict: false, verbose: false, help: false,
     };
-    const values = { '--only': 'only', '--suite': 'suite', '--server-cmd': 'serverCmd', '--base': 'base', '--home': 'home', '--cli-cmd': 'cliCmd', '--init-cmd': 'initCmd', '--step': 'step' };
+    const values = { '--only': 'only', '--suite': 'suite', '--server-cmd': 'serverCmd', '--base': 'base', '--home': 'home', '--cli-cmd': 'cliCmd', '--init-cmd': 'initCmd', '--setup-cmd': 'setupCmd', '--step': 'step' };
     const flags = { '--update': 'update', '--coverage': 'coverage', '--strict': 'strict', '--verbose': 'verbose', '--help': 'help', '-h': 'help' };
     for (let i = 0; i < argv.length; i += 1) {
       const arg = argv[i];
@@ -101,6 +103,9 @@ export class ContractRun {
       initCli: this.options.initCmd === null
         ? null
         : ServerHandle.resolve(CliStep.command(this.options.initCmd), REPO_ROOT),
+      setupCli: this.options.setupCmd === null
+        ? null
+        : ServerHandle.resolve(CliStep.command(this.options.setupCmd), REPO_ROOT),
       base: this.options.base,
       homeDir: this.options.home,
       verbose: this.options.verbose,
