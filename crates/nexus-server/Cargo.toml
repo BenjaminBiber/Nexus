@@ -33,6 +33,8 @@ nix = { workspace = true, features = ["process"] }
 
 [dev-dependencies]
 tempfile = { workspace = true }
+# Der Golden-Vergleich des Lauf-Protokolls ersetzt Zeitstempel und Pfade
+regex = { workspace = true }
 # Die portierten Tests des BoardRuntimeHolder bauen die Treiberfehler selbst, nach denen die
 # Laufzeit als verloren gilt (SQLite-Dateifehler, Socket des SQL Servers)
 rusqlite = { workspace = true }

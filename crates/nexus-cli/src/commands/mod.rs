@@ -3,6 +3,7 @@
 
 pub mod board;
 pub mod customize;
+pub mod dispatch_worker;
 pub mod init;
 pub mod install;
 #[cfg(debug_assertions)]
