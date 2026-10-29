@@ -4,10 +4,11 @@ pub mod claim;
 pub mod comment;
 pub mod dispatch;
 pub mod open;
+pub mod question;
 pub mod tickets_read;
 pub mod tickets_write;
 
-use clap::Subcommand;
+use clap::{Command, Subcommand};
 use nexus_core::{HarnessError, Result};
 
 use crate::context::CliContext;
@@ -124,13 +125,14 @@ pub enum BoardCommands {
 
     #[command(
         name = "question",
-        about = dispatch::QUESTION_ABOUT,
+        about = question::QUESTION_ABOUT,
         disable_help_flag = true,
-        disable_help_subcommand = true
+        subcommand_required = true,
+        arg_required_else_help = false
     )]
     Question {
         #[command(subcommand)]
-        sub: dispatch::QuestionCommands,
+        sub: question::QuestionCommands,
     },
 
     /// Alles, was kein angemeldeter Unterbefehl ist; wird mit `command-unknown` abgewiesen
@@ -138,8 +140,14 @@ pub enum BoardCommands {
     Unbekannt(Vec<String>),
 }
 
-/// Führt einen Unterbefehl von `board` aus; `port` ist die Option `--port` von `board`
-pub fn run(context: &CliContext, port: Option<&str>, command: &BoardCommands) -> Result<u8> {
+/// Führt einen Unterbefehl von `board` aus; `port` ist die Option `--port` von `board`,
+/// `root` der aufgebaute Befehlsbaum für die Hilfe
+pub fn run(
+    context: &CliContext,
+    port: Option<&str>,
+    command: &BoardCommands,
+    root: &Command,
+) -> Result<u8> {
     match command {
         BoardCommands::List(args) => tickets_read::list(context, args),
         BoardCommands::Show(args) => tickets_read::show(context, args),
@@ -153,9 +161,21 @@ pub fn run(context: &CliContext, port: Option<&str>, command: &BoardCommands) ->
         BoardCommands::Dispatch { sub } => dispatch::dispatch(context, port, sub),
         BoardCommands::DispatchRuns { sub } => dispatch::runs(context, sub),
         BoardCommands::PlanStart(args) => dispatch::plan_start(context, port, &args.id),
-        BoardCommands::Question { sub } => dispatch::question(context, port, sub),
+        BoardCommands::Question { sub } => question::run(context, port, sub, root),
         BoardCommands::Unbekannt(words) => Err(unknown(words)),
     }
+}
+
+/// Ein unbekannter Unterbefehl von `board question`
+pub fn unknown_question(words: &[String]) -> nexus_core::Error {
+    HarnessError::new(
+        "command-unknown",
+        format!(
+            "Unbekannter Befehl „board question {}“. Hilfe: harness board question --help",
+            words.join(" ")
+        ),
+    )
+    .into()
 }
 
 /// Ein unbekannter Unterbefehl wird ohne Datenbankzugriff abgewiesen

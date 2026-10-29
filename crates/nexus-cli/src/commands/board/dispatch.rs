@@ -62,10 +62,6 @@ pub const PLAN_START_ABOUT: &str = "Lässt ein Ticket eines eigenen Boards sofor
 /// Beispiel unter der Hilfe von `plan-start`
 pub const PLAN_START_EXAMPLE: &str = "\nBeispiel:\n  harness board plan-start ARC-0007";
 
-/// Beschreibung der Gruppe `question` (wortgleich zu `BoardQuestionCommands.ts`)
-pub const QUESTION_ABOUT: &str =
-    "Fragen auf der Board-Datenbank: fragen, recherchieren, entscheiden (entscheiden nur Menschen).";
-
 /// Beschreibung von `question research-start`
 pub const RESEARCH_START_ABOUT: &str = "Lässt eine offene Frage sofort von einer Claude-Session (claude -p, nur lesend, eigener losgelöster Worktree) recherchieren; das Ergebnis landet als Recherche an der Frage. Läuft über den lokalen Server, unabhängig davon, ob der Dispatcher eingeschaltet ist.";
 /// Beispiel unter der Hilfe von `question research-start`
@@ -203,25 +199,6 @@ pub enum RunsCommands {
     Help { befehl: Option<String> },
 }
 
-/// Die Unterbefehle von `board question`; die übrigen kommen mit P3-14 dazu
-#[derive(Debug, Subcommand)]
-pub enum QuestionCommands {
-    #[command(
-        name = "research-start",
-        about = RESEARCH_START_ABOUT,
-        after_help = RESEARCH_START_EXAMPLE,
-        disable_help_flag = true
-    )]
-    ResearchStart(IdArgs),
-
-    #[command(
-        name = "help",
-        about = "Hilfe zu einem Befehl anzeigen",
-        disable_help_flag = true
-    )]
-    Help { befehl: Option<String> },
-}
-
 /// Führt einen Unterbefehl von `board dispatch` aus
 pub fn dispatch(
     context: &CliContext,
@@ -261,20 +238,6 @@ pub fn runs(context: &CliContext, command: &RunsCommands) -> Result<u8> {
     }
 }
 
-/// Führt einen Unterbefehl von `board question` aus
-pub fn question(
-    context: &CliContext,
-    port: Option<&str>,
-    command: &QuestionCommands,
-) -> Result<u8> {
-    match command {
-        QuestionCommands::ResearchStart(args) => research_start(context, port, &args.id),
-        QuestionCommands::Help { befehl } => {
-            crate::cli::group_help(&["board", "question"], befehl.as_deref())
-        }
-    }
-}
-
 /// `board plan-start <id>`: Planung über den Server starten
 pub fn plan_start(context: &CliContext, port: Option<&str>, id: &str) -> Result<u8> {
     let view = client(port)?.start_planning(id)?;
@@ -284,7 +247,7 @@ pub fn plan_start(context: &CliContext, port: Option<&str>, id: &str) -> Result<
 }
 
 /// `board question research-start <id>`: Recherche über den Server starten
-fn research_start(context: &CliContext, port: Option<&str>, id: &str) -> Result<u8> {
+pub fn research_start(context: &CliContext, port: Option<&str>, id: &str) -> Result<u8> {
     let view = client(port)?.start_research(id)?;
     let lines = DispatchStatusFormatter.research_lines(&DispatchStatusFormatter::view(&view));
     context.printer().result(&view, &lines);

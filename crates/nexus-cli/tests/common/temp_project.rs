@@ -200,9 +200,31 @@ impl TempProject {
         self.spawn(&self.path.clone(), &self.home(), args, Some(input))
     }
 
+    /// Wie [`TempProject::run`], aber innerhalb einer Session (`HARNESS_SESSION`)
+    pub fn run_in_session(&self, session: &str, args: &[&str]) -> Lauf {
+        self.spawn_with(&self.path.clone(), &self.home(), args, None, Some(session))
+    }
+
+    /// Wie [`TempProject::run_in_session`], aber mit einem anderen `HARNESS_HOME`
+    pub fn run_in_session_in_home(&self, home: &Path, session: &str, args: &[&str]) -> Lauf {
+        self.spawn_with(&self.path.clone(), home, args, None, Some(session))
+    }
+
+    /// Startet das Binary ohne Session
+    fn spawn(&self, cwd: &Path, home: &Path, args: &[&str], input: Option<&str>) -> Lauf {
+        self.spawn_with(cwd, home, args, input, None)
+    }
+
     /// Startet das Binary; `HARNESS_SESSION` und `HARNESS_TICKET` werden nicht geerbt, sonst
     /// gilt der Testlauf als innerhalb einer Session bzw. einem Ticket zugeordnet
-    fn spawn(&self, cwd: &Path, home: &Path, args: &[&str], input: Option<&str>) -> Lauf {
+    fn spawn_with(
+        &self,
+        cwd: &Path,
+        home: &Path,
+        args: &[&str],
+        input: Option<&str>,
+        session: Option<&str>,
+    ) -> Lauf {
         let mut command = Command::cargo_bin("nexus").expect("Binary nexus");
         command
             .args(args)
@@ -210,6 +232,9 @@ impl TempProject {
             .env("HARNESS_HOME", home)
             .env_remove("HARNESS_SESSION")
             .env_remove("HARNESS_TICKET");
+        if let Some(session) = session {
+            command.env("HARNESS_SESSION", session);
+        }
         let output = match input {
             None => command.output().expect("nexus startet"),
             Some(text) => {

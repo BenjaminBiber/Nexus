@@ -263,7 +263,7 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
         }
         Some(Commands::Init) => commands::init::run(&context),
         Some(Commands::Board { port, no_open, sub }) => match sub {
-            Some(sub) => commands::board::run(&context, port.as_deref(), &sub),
+            Some(sub) => commands::board::run(&context, port.as_deref(), &sub, root),
             None => commands::board::open::run(&context, port.as_deref(), !no_open),
         },
         Some(Commands::Serve {
