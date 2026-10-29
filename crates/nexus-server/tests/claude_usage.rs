@@ -1,0 +1,315 @@
+//! Die Abo-Limits von Claude: Anmeldedatei, Zwischenspeicher, Fehlergründe und die Route
+//! `GET /api/claude-usage`; portiert aus `packages/server/tests/unit/ClaudeUsage.test.ts`.
+
+mod common;
+
+use std::sync::atomic::{AtomicI64, AtomicU16, AtomicUsize, Ordering};
+use std::sync::Arc;
+
+use common::{TestServer, TestServerOptions};
+use nexus_core::clock::Clock;
+use nexus_core::settings::{UserSettings, UserSettingsStore};
+use nexus_server::usage::{ClaudeUsageService, UsageFetch, UsageReply, DEFAULT_TTL_MS};
+use serde_json::{json, Value};
+
+/// Zeitpunkt der Tests
+const NOW: &str = "2026-10-20T10:00:00Z";
+
+/// Die Antwort des Endpunkts
+fn body() -> Value {
+    json!({
+        "five_hour": { "utilization": 79.4, "resets_at": "2026-10-20T11:19:59+00:00" },
+        "seven_day": { "utilization": 29, "resets_at": "2026-10-22T13:59:59+00:00" },
+    })
+}
+
+/// Jetzt in Millisekunden
+fn now_ms() -> i64 {
+    NOW.parse::<chrono::DateTime<chrono::Utc>>()
+        .expect("Zeitpunkt")
+        .timestamp_millis()
+}
+
+/// Eine Uhr auf dem Millisekunden-Zähler (Tests stellen die Zeit vor)
+fn clock(at: Arc<AtomicI64>) -> Clock {
+    Clock::from_fn(move || {
+        chrono::DateTime::from_timestamp_millis(at.load(Ordering::SeqCst)).expect("Zeitpunkt")
+    })
+}
+
+/// Schreibt eine Anmeldedatei mit diesen Feldern
+fn login(file: &std::path::Path, oauth: Value) {
+    let mut fields = json!({
+        "accessToken": "tok-secret",
+        "expiresAt": now_ms() + 3_600_000,
+        "subscriptionType": "team",
+    });
+    for (name, value) in oauth.as_object().into_iter().flatten() {
+        fields[name] = value.clone();
+    }
+    std::fs::write(file, json!({ "claudeAiOauth": fields }).to_string())
+        .expect("Anmeldedatei schreiben");
+}
+
+/// Ein Abruf, der diesen Status und Körper liefert und seine Aufrufe zählt
+fn answers(status: u16, body: Value) -> (UsageFetch, Arc<AtomicUsize>) {
+    let calls = Arc::new(AtomicUsize::new(0));
+    let counted = calls.clone();
+    let fetch: UsageFetch = Arc::new(move |request| {
+        counted.fetch_add(1, Ordering::SeqCst);
+        assert_eq!(request.url, nexus_server::usage::USAGE_URL);
+        assert_eq!(
+            request.headers,
+            vec![
+                ("Authorization".to_string(), "Bearer tok-secret".to_string()),
+                ("anthropic-beta".to_string(), "oauth-2025-04-20".to_string()),
+                ("User-Agent".to_string(), "ai-harness".to_string()),
+            ]
+        );
+        let body = body.clone();
+        Box::pin(async move {
+            Ok(UsageReply {
+                status,
+                body: Some(body),
+            })
+        })
+    });
+    (fetch, calls)
+}
+
+#[tokio::test]
+async fn liest_beide_fenster_und_schickt_das_token_nur_als_bearer_an_den_endpunkt() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    login(&file, json!({}));
+    let (fetch, calls) = answers(200, body());
+    let service = ClaudeUsageService::with(
+        file,
+        fetch,
+        Clock::fixed(NOW.parse().unwrap()),
+        DEFAULT_TTL_MS,
+    );
+    let usage = service.current().await;
+    assert_eq!(
+        serde_json::to_value(&usage).unwrap(),
+        json!({
+            "available": true, "reason": null, "plan": "team",
+            "fetchedAt": "2026-10-20T10:00:00.000Z",
+            "fiveHour": { "percent": 79, "resetsAt": "2026-10-20T11:19:59+00:00" },
+            "sevenDay": { "percent": 29, "resetsAt": "2026-10-22T13:59:59+00:00" },
+        })
+    );
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    assert!(!serde_json::to_string(&usage)
+        .unwrap()
+        .contains("tok-secret"));
+}
+
+#[tokio::test]
+async fn fragt_innerhalb_der_gultigkeit_nur_einmal_und_ruft_gleichzeitige_anfragen_zusammen() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    login(&file, json!({}));
+    let (fetch, calls) = answers(200, body());
+    let service = Arc::new(ClaudeUsageService::with(
+        file,
+        fetch,
+        Clock::fixed(NOW.parse().unwrap()),
+        DEFAULT_TTL_MS,
+    ));
+    let first = service.clone();
+    let second = service.clone();
+    let (left, right) = tokio::join!(
+        tokio::spawn(async move { first.current().await }),
+        tokio::spawn(async move { second.current().await })
+    );
+    assert!(left.unwrap().available);
+    assert!(right.unwrap().available);
+    service.current().await;
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+}
+
+#[tokio::test]
+async fn meldet_fehlende_anmeldung_abgelaufenes_token_und_fehler_des_endpunkts_ohne_werte() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    let service = |fetch: UsageFetch| {
+        ClaudeUsageService::with(
+            file.clone(),
+            fetch,
+            Clock::fixed(NOW.parse().unwrap()),
+            DEFAULT_TTL_MS,
+        )
+    };
+
+    let (fetch, never) = answers(200, body());
+    let usage = service(fetch.clone()).current().await;
+    assert_eq!(usage.reason.as_deref(), Some("no-login"));
+    assert!(!usage.available);
+
+    login(&file, json!({ "expiresAt": now_ms() - 1 }));
+    let usage = service(fetch.clone()).current().await;
+    assert_eq!(usage.reason.as_deref(), Some("token-expired"));
+    assert_eq!(usage.plan.as_deref(), Some("team"));
+    assert_eq!(never.load(Ordering::SeqCst), 0);
+
+    login(&file, json!({}));
+    let (unauthorized, _) = answers(401, body());
+    assert_eq!(
+        service(unauthorized).current().await.reason.as_deref(),
+        Some("token-expired")
+    );
+    let (broken, _) = answers(500, body());
+    assert_eq!(
+        service(broken).current().await.reason.as_deref(),
+        Some("request-failed")
+    );
+    let offline: UsageFetch = Arc::new(|_| Box::pin(async { Err("offline".to_string()) }));
+    assert_eq!(
+        service(offline).current().await.reason.as_deref(),
+        Some("request-failed")
+    );
+}
+
+#[tokio::test]
+async fn merkt_sich_einen_fehlschlag_nur_kurz_und_fragt_danach_wieder_an() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    login(&file, json!({}));
+    let at = Arc::new(AtomicI64::new(now_ms()));
+    let status = Arc::new(AtomicU16::new(500));
+    let calls = Arc::new(AtomicUsize::new(0));
+    let (answer, counted) = (status.clone(), calls.clone());
+    let fetch: UsageFetch = Arc::new(move |_| {
+        counted.fetch_add(1, Ordering::SeqCst);
+        let status = answer.load(Ordering::SeqCst);
+        Box::pin(async move {
+            Ok(UsageReply {
+                status,
+                body: Some(body()),
+            })
+        })
+    });
+    let service = ClaudeUsageService::with(file, fetch, clock(at.clone()), DEFAULT_TTL_MS);
+    assert_eq!(
+        service.current().await.reason.as_deref(),
+        Some("request-failed")
+    );
+    at.fetch_add(5_000, Ordering::SeqCst);
+    status.store(200, Ordering::SeqCst);
+    assert!(service.current().await.available);
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
+}
+
+#[tokio::test]
+async fn stempelt_den_zwischenspeicher_erst_nach_dem_laden() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    login(&file, json!({}));
+    let at = Arc::new(AtomicI64::new(now_ms()));
+    let calls = Arc::new(AtomicUsize::new(0));
+    let (ticking, counted) = (at.clone(), calls.clone());
+    // Die Anfrage selbst braucht Zeit; die Gültigkeit darf erst nach ihrem Abschluss beginnen
+    let fetch: UsageFetch = Arc::new(move |_| {
+        counted.fetch_add(1, Ordering::SeqCst);
+        ticking.fetch_add(50_000, Ordering::SeqCst);
+        Box::pin(async {
+            Ok(UsageReply {
+                status: 200,
+                body: Some(body()),
+            })
+        })
+    });
+    let service = ClaudeUsageService::with(file, fetch, clock(at.clone()), DEFAULT_TTL_MS);
+    service.current().await;
+    // 20 s nach dem Abschluss, also noch innerhalb der 60 s
+    at.fetch_add(20_000, Ordering::SeqCst);
+    service.current().await;
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+}
+
+#[tokio::test]
+async fn lasst_ein_fehlendes_fenster_leer() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    login(&file, json!({}));
+    let (fetch, _) = answers(
+        200,
+        json!({ "five_hour": { "utilization": 3, "resets_at": null }, "seven_day": null }),
+    );
+    let usage = ClaudeUsageService::with(
+        file,
+        fetch,
+        Clock::fixed(NOW.parse().unwrap()),
+        DEFAULT_TTL_MS,
+    )
+    .current()
+    .await;
+    assert!(usage.available);
+    assert_eq!(
+        serde_json::to_value(&usage.five_hour).unwrap(),
+        json!({ "percent": 3, "resetsAt": null })
+    );
+    assert_eq!(usage.seven_day, None);
+}
+
+/// Server, dessen Dienst der Abo-Limits aus dieser Anmeldedatei liest
+fn server_with_usage(file: std::path::PathBuf) -> (TestServer, Arc<AtomicUsize>) {
+    let (fetch, calls) = answers(200, body());
+    let server = TestServer::with(TestServerOptions {
+        usage: Some(ClaudeUsageService::with(
+            file,
+            fetch,
+            Clock::fixed(NOW.parse().unwrap()),
+            DEFAULT_TTL_MS,
+        )),
+        ..TestServerOptions::default()
+    });
+    (server, calls)
+}
+
+#[tokio::test]
+async fn bleibt_ohne_eingeschaltete_einstellung_bei_disabled_und_fragt_die_quelle_nie() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    login(&file, json!({}));
+    let (server, calls) = server_with_usage(file);
+    let reply = server.get("/api/claude-usage").await;
+    assert_eq!(reply.status, 200, "{}", reply.text);
+    assert_eq!(
+        reply.json(),
+        Some(json!({
+            "available": false, "reason": "disabled", "plan": null,
+            "fiveHour": null, "sevenDay": null, "fetchedAt": null,
+        }))
+    );
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+}
+
+#[tokio::test]
+async fn liefert_nach_dem_einschalten_was_die_quelle_meldet() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    login(&file, json!({}));
+    let (server, calls) = server_with_usage(file);
+    UserSettingsStore::new(server.home.clone())
+        .write(&UserSettings {
+            claude_usage: true,
+            ..UserSettings::default()
+        })
+        .expect("Einstellungen schreiben");
+
+    let reply = server.get("/api/claude-usage").await;
+    let usage = reply.json().expect("JSON");
+    assert_eq!(usage["available"], true);
+    assert_eq!(usage["plan"], "team");
+    assert_eq!(usage["fiveHour"]["percent"], 79);
+
+    // Nach dem Ausschalten wieder „disabled“, ohne die Quelle erneut zu fragen
+    UserSettingsStore::new(server.home.clone())
+        .write(&UserSettings::default())
+        .expect("Einstellungen schreiben");
+    let reply = server.get("/api/claude-usage").await;
+    assert_eq!(reply.json().expect("JSON")["reason"], "disabled");
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+}

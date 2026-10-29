@@ -35,6 +35,7 @@ use nexus_server::dispatch::{ClaudeRunInput, ClaudeRunner, ClaudeRunners, RunRes
 use nexus_server::groups::RouteGroups;
 use nexus_server::routes::build_router;
 use nexus_server::state::AppState;
+use nexus_server::usage::ClaudeUsageService;
 use tower::ServiceExt as _;
 
 /// Port, den der Schutz des Testservers erlaubt
@@ -73,7 +74,8 @@ pub struct TestServer {
     pub state: Arc<AppState>,
     pub home: HarnessHome,
     router: Router,
-    _dir: tempfile::TempDir,
+    /// Der eigene Benutzerordner; ein neu gestarteter Server teilt den des ersten
+    _dir: Option<tempfile::TempDir>,
 }
 
 /// Einstellungen eines Testservers
@@ -97,6 +99,11 @@ pub struct TestServerOptions {
     pub claude: Option<ClaudeRunners>,
     /// Uhr des Servers; ohne Angabe die des Rechners
     pub clock: Option<Clock>,
+    /// Die Abo-Limits von Claude; ohne Angabe der echte Dienst (den Tests nie fragen)
+    pub usage: Option<ClaudeUsageService>,
+    /// Benutzerordner eines schon laufenden Servers (Neustart mit demselben Bestand);
+    /// ohne Angabe ein frischer
+    pub home: Option<HarnessHome>,
 }
 
 impl TestServer {
@@ -107,11 +114,18 @@ impl TestServer {
 
     /// Startet einen Server mit eigenen Einstellungen
     pub fn with(options: TestServerOptions) -> TestServer {
-        let dir = tempfile::Builder::new()
-            .prefix("nexus-srv-")
-            .tempdir()
-            .expect("Benutzerordner");
-        let home = HarnessHome::at(dir.path());
+        let dir = match options.home {
+            Some(_) => None,
+            None => Some(
+                tempfile::Builder::new()
+                    .prefix("nexus-srv-")
+                    .tempdir()
+                    .expect("Benutzerordner"),
+            ),
+        };
+        let home = options
+            .home
+            .unwrap_or_else(|| HarnessHome::at(dir.as_ref().expect("Benutzerordner").path()));
         let mut config = ServerConfig::new(PORT, home.clone());
         config.version = "test".into();
         config.web_dir = options.web_dir;
@@ -136,7 +150,8 @@ impl TestServer {
         });
         let platform = options.platform.unwrap_or_else(Platform::fake);
         let claude = options.claude.unwrap_or_default();
-        let state = AppState::with_claude(config, board, platform, claude).expect("Zustand");
+        let state = AppState::with_claude_and_usage(config, board, platform, claude, options.usage)
+            .expect("Zustand");
         TestServer {
             router: build_router(state.clone()),
             state,
@@ -238,6 +253,35 @@ impl TestServer {
     /// `DELETE`
     pub async fn delete(&self, url: &str) -> Reply {
         self.request("DELETE", url, Some("{}"), &[]).await
+    }
+
+    /// Das Hook-Token eines Projektordners (`harness init` hat es angelegt)
+    pub fn token(&self, repo: &std::path::Path) -> String {
+        let project = nexus_core::HarnessProject::open(repo).expect("Projekt öffnen");
+        nexus_core::project::TokenStore::new(project.layout.clone())
+            .read()
+            .expect("Token lesen")
+    }
+
+    /// Schickt ein Hook-Ereignis mit einem Token; `None` lässt den Kopf weg
+    pub async fn hook(
+        &self,
+        project: &str,
+        event: serde_json::Value,
+        token: Option<&str>,
+    ) -> Reply {
+        let body = serde_json::json!({ "project": project, "event": event }).to_string();
+        let headers: Vec<(&str, Option<&str>)> = vec![("x-harness-token", token)];
+        self.request("POST", "/api/hook", Some(&body), &headers)
+            .await
+    }
+
+    /// Startet denselben Server neu: gleicher Benutzerordner, frischer Zustand
+    pub fn restarted_with(&self, options: TestServerOptions) -> TestServer {
+        TestServer::with(TestServerOptions {
+            home: Some(self.home.clone()),
+            ..options
+        })
     }
 }
 
