@@ -108,14 +108,15 @@ mod windows_picker {
                 .env("HARNESS_PICK_START", start.unwrap_or(""))
                 .stdin(std::process::Stdio::null())
                 .stdout(std::process::Stdio::piped())
-                .stderr(std::process::Stdio::null());
-            let mut child = command
+                .stderr(std::process::Stdio::null())
+                // Nach dem Zeitlimit fällt das Kind weg und wird dabei beendet, damit kein
+                // offener Dialog zurückbleibt
+                .kill_on_drop(true);
+            let child = command
                 .spawn()
                 .map_err(|error| unavailable(&error.to_string()))?;
             let output = match tokio::time::timeout(TIMEOUT, child.wait_with_output()).await {
                 Ok(output) => output.map_err(|error| unavailable(&error.to_string()))?,
-                // Nach dem Zeitlimit wird der Dialog beendet; `wait_with_output` hat das
-                // Kind übernommen, deshalb bleibt nur der Fehler
                 Err(_) => return Err(unavailable("die Auswahl hat zu lange gedauert")),
             };
             if !output.status.success() {

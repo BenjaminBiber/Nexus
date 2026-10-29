@@ -694,3 +694,23 @@ impl nexus_platform::FolderPicker for ArcPicker {
         self.0.pick(start).await
     }
 }
+
+/// Wie Fastify: ein leerer JSON-Körper ist 400 `bad-request`, auch wenn die Route den Körper
+/// gar nicht liest (`POST …/activate`, `DELETE …/{id}`)
+#[tokio::test]
+async fn lehnt_einen_leeren_json_korper_mit_bad_request_ab() {
+    let (server, _backend) = TestServer::start_with_board().await;
+    let id = seed(&server, "Sprint").await;
+    for (method, url) in [
+        ("POST", format!("/api/db/boards/{id}/activate")),
+        ("DELETE", format!("/api/db/boards/{id}")),
+    ] {
+        let reply = server.request(method, &url, None, &[]).await;
+        assert_eq!(reply.status, 400, "{method} {url}");
+        assert_eq!(
+            reply.code().as_deref(),
+            Some("bad-request"),
+            "{method} {url}"
+        );
+    }
+}

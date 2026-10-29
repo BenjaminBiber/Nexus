@@ -215,6 +215,8 @@ async fn delete_board(
     State(state): State<Arc<AppState>>,
     UrlPath(raw_id): UrlPath<String>,
     query: QueryMap,
+    // Der Körper wird nicht gelesen, aber wie in Fastify geprüft: leeres JSON ist 400
+    JsonBody(_): JsonBody,
 ) -> ApiResult<Response> {
     let id = DbInput::id(&raw_id, "Board")?;
     let delete_open = query.first("deleteOpen") == Some("true");
@@ -259,6 +261,8 @@ async fn pick_folder(
 async fn activate_board(
     State(state): State<Arc<AppState>>,
     UrlPath(raw_id): UrlPath<String>,
+    // Der Körper wird nicht gelesen, aber wie in Fastify geprüft: leeres JSON ist 400
+    JsonBody(_): JsonBody,
 ) -> ApiResult<Response> {
     let id = DbInput::id(&raw_id, "Board")?;
     let config = config(&state)?;

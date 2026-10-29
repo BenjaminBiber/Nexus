@@ -141,10 +141,10 @@ fn serve_startet_rust_und_node_und_schreibt_server_json() {
     );
 
     // Eine noch nicht portierte Route kommt beim Node-Server an
-    let projects = fetch(port, "/api/projects").expect("Antwort auf /api/projects");
+    let tickets = fetch(port, "/api/db/tickets").expect("Antwort auf /api/db/tickets");
     assert!(
-        projects.to_lowercase().contains("x-nexus-backend: node"),
-        "{projects}"
+        tickets.to_lowercase().contains("x-nexus-backend: node"),
+        "{tickets}"
     );
 
     let _ = kind.kill();
