@@ -3,10 +3,12 @@
 pub mod claim;
 pub mod comment;
 pub mod dispatch;
+pub mod merge;
 pub mod open;
 pub mod question;
 pub mod tickets_read;
 pub mod tickets_write;
+pub mod work;
 
 use clap::{Command, Subcommand};
 use nexus_core::{HarnessError, Result};
@@ -14,9 +16,8 @@ use nexus_core::{HarnessError, Result};
 use crate::context::CliContext;
 
 /// Die Unterbefehle von `board`, die die Board-Datenbank bedienen oder den Dispatcher im
-/// lokalen Server steuern. Die übrigen (`project`, `boards`, `start`, `done`, `step`, `note`,
-/// die restlichen `question …`, `merge`, `accept` …) kommen in den weiteren Tickets der Phase 3
-/// dazu.
+/// lokalen Server steuern. Die übrigen (`project`, `boards`, `step`, `note`, die restlichen
+/// `question …` …) kommen in den weiteren Tickets der Phase 3 dazu.
 // Die Varianten tragen die Optionen von clap; sie dürfen unterschiedlich groß sein
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Subcommand)]
@@ -86,6 +87,22 @@ pub enum BoardCommands {
     Release(claim::ReleaseArgs),
 
     #[command(
+        name = "start",
+        about = work::START_ABOUT,
+        after_help = work::START_EXAMPLES,
+        disable_help_flag = true
+    )]
+    Start(work::StartArgs),
+
+    #[command(
+        name = "done",
+        about = work::DONE_ABOUT,
+        after_help = work::DONE_EXAMPLE,
+        disable_help_flag = true
+    )]
+    Done(work::DoneArgs),
+
+    #[command(
         name = "comment",
         about = comment::COMMENT_ABOUT,
         after_help = comment::COMMENT_EXAMPLE,
@@ -114,6 +131,22 @@ pub enum BoardCommands {
         #[command(subcommand)]
         sub: dispatch::RunsCommands,
     },
+
+    #[command(
+        name = "merge",
+        about = merge::MERGE_ABOUT,
+        after_help = merge::MERGE_EXAMPLE,
+        disable_help_flag = true
+    )]
+    Merge(merge::MergeArgs),
+
+    #[command(
+        name = "accept",
+        about = merge::ACCEPT_ABOUT,
+        after_help = merge::ACCEPT_EXAMPLE,
+        disable_help_flag = true
+    )]
+    Accept(merge::AcceptArgs),
 
     #[command(
         name = "plan-start",
@@ -158,6 +191,10 @@ pub fn run(
         BoardCommands::Claim(args) => claim::claim(context, args),
         BoardCommands::Release(args) => claim::release(context, args),
         BoardCommands::Comment(args) => comment::comment(context, args),
+        BoardCommands::Start(args) => work::start(context, args),
+        BoardCommands::Done(args) => work::done(context, args),
+        BoardCommands::Merge(args) => merge::merge(context, port, args),
+        BoardCommands::Accept(args) => merge::accept(context, port, args),
         BoardCommands::Dispatch { sub } => dispatch::dispatch(context, port, sub),
         BoardCommands::DispatchRuns { sub } => dispatch::runs(context, sub),
         BoardCommands::PlanStart(args) => dispatch::plan_start(context, port, &args.id),

@@ -11,6 +11,7 @@ pub mod board_runtime;
 pub mod config;
 pub mod conflict;
 pub mod dispatch;
+pub mod docs;
 pub mod error;
 pub mod extract;
 pub mod groups;
