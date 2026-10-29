@@ -28,7 +28,7 @@ pub mod text;
 pub mod workflow;
 pub mod worktrees;
 
-mod random;
+pub mod random;
 
 #[cfg(test)]
 mod test_support;

@@ -3,7 +3,7 @@
 //! Zufallsquelle des Betriebssystems.
 
 /// `count` Zufallsbytes als Hex-Text (zwei Zeichen je Byte)
-pub(crate) fn hex(count: usize) -> String {
+pub fn hex(count: usize) -> String {
     let mut bytes = vec![0u8; count];
     fill(&mut bytes);
     bytes

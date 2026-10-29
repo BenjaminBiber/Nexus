@@ -66,7 +66,9 @@ fn startet_einen_echten_losgeloesten_worker_der_den_starter_ueberlebt() {
     if let Ok(run_id) = std::env::var(START_RUN) {
         let env: BTreeMap<String, String> = std::env::vars().collect();
         let exe = std::env::var("NEXUS_TEST_WORKER_EXE").expect("Programmdatei");
-        let pid = ProcessWorkerLauncher::with_exe(exe).launch(&run_id, &env);
+        let pid = ProcessWorkerLauncher::with_exe(exe)
+            .launch(&run_id, &env)
+            .expect("Start des Workers");
         assert!(pid.is_some(), "der Worker wurde gestartet");
         return;
     }

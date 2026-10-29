@@ -27,10 +27,12 @@ use crate::clock::Clock;
 ///
 /// Das Feld `questions` kommt aus P3-3; die Felder `planning`, `search`, `dispatch_runs`,
 /// `inbox` und die Zeitleiste (`timeline(names)`) aus P3-4.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct BoardServices<D: BoardDatabase> {
     pub db: Arc<D>,
     pub repo_paths: BoardRepoPaths,
+    /// Uhr aller Dienste; nur das Kopieren ([`Clone`]) braucht sie noch einmal
+    clock: Clock,
     pub projects: ProjectService<D>,
     pub boards: BoardService<D>,
     pub tickets: TicketService<D>,
@@ -43,6 +45,12 @@ pub struct BoardServices<D: BoardDatabase> {
     pub dispatch_runs: DispatchRunService<D>,
     pub graph: DependencyGraphService<D>,
     pub inbox: InboxService<D>,
+}
+
+impl<D: BoardDatabase> Clone for BoardServices<D> {
+    fn clone(&self) -> Self {
+        self.copy()
+    }
 }
 
 impl<D: BoardDatabase> BoardServices<D> {
@@ -59,9 +67,10 @@ impl<D: BoardDatabase> BoardServices<D> {
             views: BoardViewService::new(db.clone(), clock.clone()),
             search: BoardSearchService::new(db.clone()),
             dispatch_runs: DispatchRunService::new(db.clone()),
-            graph: DependencyGraphService::new(db.clone(), clock),
+            graph: DependencyGraphService::new(db.clone(), clock.clone()),
             inbox: InboxService::new(db.clone()),
             repo_paths,
+            clock,
             db,
         }
     }
@@ -69,6 +78,21 @@ impl<D: BoardDatabase> BoardServices<D> {
     /// Die Dienste ohne lokale Zuordnung der Repo-Pfade (der Standardwert aus TypeScript)
     pub fn with_memory_paths(db: Arc<D>, clock: Clock) -> Self {
         Self::new(db, clock, BoardRepoPaths::memory())
+    }
+
+    /// Dieselben Dienste noch einmal, auf derselben Datenbank und mit derselben Uhr. In
+    /// TypeScript wird `BoardServices` einfach weitergegeben; in Rust braucht etwa der
+    /// [`crate::worktrees::manager::WorktreeManager`] eine eigene Kopie.
+    ///
+    /// Steht hier und nicht als `#[derive(Clone)]`, weil das Ableiten `D: Clone` verlangt –
+    /// die Datenbank des Servers ist aber keine Kopie wert (und kann es nicht sein).
+    fn copy(&self) -> Self {
+        Self::new(self.db.clone(), self.clock.clone(), self.repo_paths.clone())
+    }
+
+    /// Die Uhr, mit der diese Dienste schreiben
+    pub fn clock(&self) -> &Clock {
+        &self.clock
     }
 
     /// Zeitleiste eines Tickets; `names` aus der Dispatch-Konfiguration erkennt Agenten
