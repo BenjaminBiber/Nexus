@@ -3,9 +3,13 @@
 //! `packages/core/src/board/inbox/InboxTypes.ts`.
 
 use std::fmt;
+use std::sync::LazyLock;
 
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
+
+use crate::text::utf16_len;
 
 /// Art eines Eintrags; die Reihenfolge ist zugleich die Dringlichkeit (merge zuerst)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
@@ -141,3 +145,12 @@ pub struct InboxList {
 pub const INBOX_KEY_PATTERN: &str = r"^(ticket|question|note|todo):[A-Za-z0-9-]+$";
 pub const MAX_INBOX_KEYS: usize = 1000;
 pub const MAX_INBOX_KEY_LENGTH: usize = 60;
+
+/// Das Format gespeicherter Schlüssel als Muster
+static KEY: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(INBOX_KEY_PATTERN).expect("festes Muster"));
+
+/// Ist das ein gespeicherter Schlüssel: richtiges Format und nicht zu lang?
+pub fn is_inbox_key(key: &str) -> bool {
+    utf16_len(key) <= MAX_INBOX_KEY_LENGTH && KEY.is_match(key)
+}

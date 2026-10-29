@@ -1,5 +1,5 @@
 import type { WriteStream } from 'node:fs';
-import { DispatchLog, HarnessError, RUN_LOG_OUTPUT_MARKER as OUTPUT_MARKER, RunStore, StreamEventFormatter, type HarnessHome, type RunLogLine, type RunRecord, type RunResult } from '@harness/core';
+import { DispatchLog, HarnessError, OrphanSweeper, RUN_LOG_OUTPUT_MARKER as OUTPUT_MARKER, RunStore, StreamEventFormatter, type HarnessHome, type RunLogLine, type RunRecord, type RunResult } from '@harness/core';
 import { ClaudeProcess } from './ClaudeProcess.js';
 import { WorktreeSetupRunner } from './WorktreeSetupRunner.js';
 
@@ -13,7 +13,7 @@ export class DispatchWorker {
   private readonly runs: RunStore;
   private readonly logs: DispatchLog;
 
-  constructor(home: HarnessHome) {
+  constructor(home: HarnessHome, private readonly sweeper: OrphanSweeper = new OrphanSweeper()) {
     this.runs = new RunStore(home);
     this.logs = new DispatchLog(home);
   }
@@ -23,11 +23,12 @@ export class DispatchWorker {
     if (!RUN_ID.test(runId)) throw new HarnessError('run-id-invalid', `„${runId}“ ist keine gültige Lauf-ID.`);
     let result: RunResult = { code: 1, timedOut: false, output: `Lauf ${runId} wurde nicht ausgeführt.` };
     let log: WriteStream | null = null;
+    let record: RunRecord | null = null;
     const write = (text: string) => {
       if (log && !log.destroyed) log.write(text);
     };
     try {
-      const record = await this.readRecord(runId);
+      record = await this.readRecord(runId);
       if (!record) throw new HarnessError('run-not-found', `Lauf ${runId} gibt es nicht.`);
       log = this.openLog(record.logFile);
       const r = record.run;
@@ -67,8 +68,37 @@ export class DispatchWorker {
       write(`\n[dispatch] ${new Date().toISOString()} Fehler: ${(error as Error).message}\n`);
       throw error;
     } finally {
+      if (record) await this.sweep(runId, record.cwd, write);
       await this.closeLog(log);
       await this.runs.finish(runId, { ...result, endedAt: new Date().toISOString() });
+    }
+  }
+
+  // Beendet Prozesse, die der Lauf in seinem Worktree verwaist zurückgelassen hat (z. B. ein `nexus serve … &`).
+  // Nur in einem verknüpften Worktree, den kein anderer laufender Lauf nutzt; Fehler beenden den Lauf nicht
+  private async sweep(runId: string, cwd: string, write: (text: string) => void): Promise<void> {
+    try {
+      if (!(await OrphanSweeper.linkedWorktree(cwd))) return;
+      for (const other of await this.runs.list()) {
+        if (other.id === runId || other.cwd !== cwd || (await this.runs.result(other.id))) continue;
+        if (other.pid === null || this.alive(other.pid)) return;
+      }
+      const pids = await this.sweeper.sweep(cwd);
+      if (pids.length) {
+        write(`[dispatch] ${new Date().toISOString()} Aufgeräumt: ${pids.length} übrig gebliebene Prozesse beendet (PID ${pids.join(', ')})\n`);
+      }
+    } catch {
+      // Aufräumen ist Kür
+    }
+  }
+
+  // Läuft der Prozess noch?
+  private alive(pid: number): boolean {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
     }
   }
 

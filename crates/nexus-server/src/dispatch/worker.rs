@@ -18,6 +18,7 @@ use nexus_core::dispatch::{
     DispatchLog, RunEnd, RunKind, RunRecord, RunResult, RunStore, StreamEventFormatter,
     RUN_LOG_OUTPUT_MARKER, RUN_LOG_PROMPT_MARKER,
 };
+use nexus_core::process::{is_alive, orphan_sweeper::linked_worktree, OrphanSweeper};
 use nexus_core::{HarnessError, HarnessHome, Result};
 
 use super::claude_process::{ClaudeProcess, ClaudeRunInput, OutputSource};
@@ -139,6 +140,7 @@ impl DispatchWorker {
                 )
             }
         };
+        self.raeume_auf(run_id, &log).await;
         log.close();
         let geschrieben = self.runs.finish(
             run_id,
@@ -150,6 +152,55 @@ impl DispatchWorker {
         match fehler {
             Some(error) => Err(error),
             None => geschrieben,
+        }
+    }
+
+    /// Beendet Prozesse, die der Lauf in seinem Worktree verwaist zurückgelassen hat (z. B. ein
+    /// `nexus serve … &`). Nur in einem verknüpften Worktree, den kein anderer laufender Lauf
+    /// nutzt; Fehler beenden den Lauf nicht
+    async fn raeume_auf(&self, run_id: &str, log: &RunLog) {
+        let Ok(Some(record)) = self.runs.read(run_id) else {
+            return;
+        };
+        if !linked_worktree(Path::new(&record.cwd)) {
+            return;
+        }
+        let Ok(laeufe) = self.runs.list() else {
+            return;
+        };
+        for anderer in laeufe {
+            if anderer.id == run_id
+                || anderer.cwd != record.cwd
+                || matches!(self.runs.result(&anderer.id), Ok(Some(_)))
+            {
+                continue;
+            }
+            let laeuft = anderer
+                .pid
+                .and_then(|pid| u32::try_from(pid).ok())
+                .is_none_or(is_alive);
+            if laeuft {
+                return;
+            }
+        }
+        let cwd = record.cwd.clone();
+        let own = std::process::id();
+        let Ok(pids) =
+            tokio::task::spawn_blocking(move || OrphanSweeper::default().sweep(&cwd, own)).await
+        else {
+            return;
+        };
+        if !pids.is_empty() {
+            let liste = pids
+                .iter()
+                .map(u32::to_string)
+                .collect::<Vec<_>>()
+                .join(", ");
+            log.write(&format!(
+                "[dispatch] {} Aufgeräumt: {} übrig gebliebene Prozesse beendet (PID {liste})\n",
+                self.jetzt_iso(),
+                pids.len()
+            ));
         }
     }
 

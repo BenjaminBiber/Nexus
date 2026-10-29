@@ -85,6 +85,8 @@ pub struct TestServerOptions {
     /// Die Board-Laufzeit aus `board.yaml` statt der im Speicher: nur so prüfen Tests die
     /// Antworten ohne und mit kaputter Konfig
     pub board_from_config: bool,
+    /// Uhr des Servers; ohne Angabe die des Rechners
+    pub clock: Option<Clock>,
 }
 
 impl TestServer {
@@ -105,6 +107,9 @@ impl TestServer {
         config.web_dir = options.web_dir;
         config.upstream = options.upstream;
         config.proxy_groups = options.proxy_groups;
+        if let Some(clock) = options.clock {
+            config.clock = clock;
+        }
         let board = options.board.unwrap_or_else(|| {
             if options.board_from_config {
                 nexus_server::board_from_config(home.clone())

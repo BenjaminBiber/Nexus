@@ -493,3 +493,96 @@ fn beginnt_mit_uhrzeit(zeile: &str) -> bool {
             }
         })
 }
+
+/// „Claude“, das im Ordner `cwd` einen losgelösten Dauerläufer (eigene Sitzung) startet, dessen
+/// PID in `pid_file` schreibt und endet
+#[cfg(unix)]
+fn hinterlaesst_waise(record: &mut RunRecord, cwd: &Path, pid_file: &Path) {
+    record.command = "/usr/bin/perl".to_string();
+    record.args = vec![
+        "-e".to_string(),
+        "use POSIX qw(setsid); chdir $ARGV[0] or die; defined(my $p = fork) or die; \
+         if ($p == 0) { setsid(); open STDIN, '<', '/dev/null'; open STDOUT, '>', '/dev/null'; \
+         open STDERR, '>', '/dev/null'; exec '/bin/sleep', '300' } \
+         open my $f, '>', $ARGV[1] or die; print $f $p; close $f"
+            .to_string(),
+        cwd.to_string_lossy().into_owned(),
+        pid_file.to_string_lossy().into_owned(),
+    ];
+}
+
+/// Läuft der Prozess noch?
+#[cfg(unix)]
+fn laeuft(pid: u32) -> bool {
+    nexus_core::process::is_alive(pid)
+}
+
+/// Wartet höchstens fünf Sekunden, bis der Prozess beendet ist
+#[cfg(unix)]
+async fn beendet(pid: u32) -> bool {
+    for _ in 0..50 {
+        if !laeuft(pid) {
+            return true;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    false
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn beendet_nach_dem_lauf_was_im_worktree_verwaist_uebrig_bleibt() {
+    let u = Umgebung::neu();
+    let worktree = u.pfad("wt");
+    std::fs::create_dir(&worktree).expect("Worktree");
+    std::fs::write(worktree.join(".git"), "gitdir: /x/.git/worktrees/wt\n").expect(".git");
+    let pid_file = u.pfad("waise.pid");
+    let log_file = u.pfad("lauf.log");
+    let mut record = lauf("ARC-0001-x", &worktree, &log_file);
+    hinterlaesst_waise(&mut record, &worktree, &pid_file);
+    u.runs().create(&record).expect("Lauf angelegt");
+
+    u.worker()
+        .run("ARC-0001-x", env(&[]))
+        .await
+        .expect("Lauf ausgeführt");
+
+    let waise: u32 = std::fs::read_to_string(&pid_file)
+        .expect("PID-Datei")
+        .trim()
+        .parse()
+        .expect("PID");
+    assert!(beendet(waise).await, "Waise {waise} läuft noch");
+    let log = u.protokoll(&log_file);
+    assert!(
+        log.contains(&format!(
+            "Aufgeräumt: 1 übrig gebliebene Prozesse beendet (PID {waise})"
+        )),
+        "{log}"
+    );
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn raeumt_im_hauptordner_nichts_ab() {
+    let u = Umgebung::neu();
+    let pid_file = u.pfad("waise.pid");
+    let mut record = lauf("ARC-0001-x", u.dir.path(), &u.pfad("lauf.log"));
+    record.kind = RunKind::Merge;
+    hinterlaesst_waise(&mut record, u.dir.path(), &pid_file);
+    u.runs().create(&record).expect("Lauf angelegt");
+
+    u.worker()
+        .run("ARC-0001-x", env(&[]))
+        .await
+        .expect("Lauf ausgeführt");
+
+    let waise: u32 = std::fs::read_to_string(&pid_file)
+        .expect("PID-Datei")
+        .trim()
+        .parse()
+        .expect("PID");
+    let lebt = laeuft(waise);
+    nexus_core::process::terminate(waise);
+    assert!(lebt, "die Waise im Hauptordner wurde beendet");
+}
