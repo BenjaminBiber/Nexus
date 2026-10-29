@@ -1,17 +1,30 @@
 //! Textausgaben des Boards für Menschen (Text) und Agenten (Markdown).
 //! Portiert aus `packages/cli/src/board/BoardTextFormatter.ts`.
 //!
-//! Die Ausgaben der Boards, Notizen und Fragen kommen mit den Tickets, die diese Befehle
-//! portieren; hier stehen die Teile für `board list` und `board show`.
+//! Die Ausgaben der Fragen kommen mit den Tickets, die diese Befehle portieren; hier stehen die
+//! Teile für `board list`, `board show`, `board boards` und `board note`.
 
-use nexus_core::board::basics::Priority;
+use nexus_core::board::basics::{NoteState, Priority};
+use nexus_core::board::board_service::BoardSummary;
+use nexus_core::board::note_similarity::note_title;
+use nexus_core::board::repo_paths::BoardRepoSource;
 use nexus_core::board::ticket_ordering::{BoardColumn, COLUMN_ORDER};
 use nexus_core::board::ticket_service::{TicketDetail, TicketView};
+use nexus_core::board::types::Note;
 
 use crate::board::comment_author_kind::CommentAuthorKind;
 
 /// So viele Agenten-Kommentare bleiben in der kompakten Ausgabe stehen
 const KEPT_AGENT_COMMENTS: usize = 3;
+
+/// Anzeigenamen der Stände einer Notiz (`NOTE_STATE_LABELS`)
+fn note_state_label(state: NoteState) -> &'static str {
+    match state {
+        NoteState::Open => "offen",
+        NoteState::Taken => "übernommen",
+        NoteState::Dropped => "verworfen",
+    }
+}
 
 /// Was [`BoardTextFormatter::show_text`] zusätzlich ausgibt
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -30,6 +43,158 @@ impl BoardTextFormatter {
     /// Spaltentitel
     pub fn column_label(&self, column: BoardColumn) -> &'static str {
         column.label()
+    }
+
+    /// Boards mit Projekt, Besitzer, offenen Tickets und eigenem Repo-Pfad; `*` = aktives Board
+    pub fn boards_text(&self, boards: &[BoardSummary], active: Option<i32>) -> Vec<String> {
+        if boards.is_empty() {
+            return vec![
+                "Keine Boards. Mit „harness board boards create <projekt> <name>“ anlegen."
+                    .to_string(),
+            ];
+        }
+        boards
+            .iter()
+            .map(|b| {
+                let repo = match b.board.repo_path.as_deref() {
+                    Some(_) => format!(
+                        "  {}",
+                        self.repo_path_text(b.board.repo_path.as_deref(), b.repo_source)
+                    ),
+                    None => String::new(),
+                };
+                format!(
+                    "{} {}  {}  {}  @{}  offen {}{repo}",
+                    if Some(b.board.id) == active { "*" } else { " " },
+                    b.board.id,
+                    b.project_key,
+                    b.board.name,
+                    b.owner_name,
+                    b.open_tickets
+                )
+            })
+            .collect()
+    }
+
+    /// Eigener Repo-Pfad eines Boards; aus der DB übernommen (Altbestand) wird gekennzeichnet
+    pub fn repo_path_text(&self, path: Option<&str>, source: Option<BoardRepoSource>) -> String {
+        let Some(path) = path.filter(|path| !path.is_empty()) else {
+            return "(keiner)".to_string();
+        };
+        if source == Some(BoardRepoSource::Legacy) {
+            format!("{path} (aus der DB, Altbestand)")
+        } else {
+            path.to_string()
+        }
+    }
+
+    /// Notizen als Text
+    pub fn notes_text(&self, notes: &[Note]) -> Vec<String> {
+        if notes.is_empty() {
+            return vec!["(keine Notizen)".to_string()];
+        }
+        notes
+            .iter()
+            .map(|n| {
+                format!(
+                    "  {}  [{}] {}{}{}{}",
+                    n.id,
+                    note_state_label(n.state),
+                    note_title(n),
+                    if n.seen_count > 1 {
+                        format!(" [{}×]", n.seen_count)
+                    } else {
+                        String::new()
+                    },
+                    match n.source.as_deref() {
+                        Some(source) => format!(" (aus {source})"),
+                        None => String::new(),
+                    },
+                    if n.labels.is_empty() {
+                        String::new()
+                    } else {
+                        format!("  {}", n.labels.join(","))
+                    }
+                )
+            })
+            .collect()
+    }
+
+    /// Notizen als Markdown
+    pub fn notes_markdown(&self, notes: &[Note]) -> Vec<String> {
+        if notes.is_empty() {
+            return vec!["- (keine Notizen)".to_string()];
+        }
+        notes
+            .iter()
+            .map(|n| {
+                let meta: Vec<String> = [
+                    note_state_label(n.state).to_string(),
+                    if n.seen_count > 1 {
+                        format!("{}× aufgefallen", n.seen_count)
+                    } else {
+                        String::new()
+                    },
+                    n.source
+                        .as_deref()
+                        .map(|source| format!("aus {source}"))
+                        .unwrap_or_default(),
+                    n.ticket_id
+                        .as_deref()
+                        .map(|id| format!("→ {id}"))
+                        .unwrap_or_default(),
+                    n.labels.join(","),
+                ]
+                .into_iter()
+                .filter(|part| !part.is_empty())
+                .collect();
+                format!("- **{}** {} — {}", n.id, note_title(n), meta.join(" · "))
+            })
+            .collect()
+    }
+
+    /// Eine Notiz vollständig
+    pub fn note_text(&self, n: &Note) -> Vec<String> {
+        let mut lines = vec![format!(
+            "Notiz {}  [{}]  {}  {}",
+            n.id,
+            note_state_label(n.state),
+            n.created_at,
+            n.author_name
+        )];
+        if let Some(source) = &n.source {
+            lines.push(format!("Aus: {source}"));
+        }
+        if n.seen_count > 1 {
+            lines.push(format!(
+                "Aufgefallen: {}×{}",
+                n.seen_count,
+                if n.seen_in.is_empty() {
+                    String::new()
+                } else {
+                    format!(" (auch bei {})", n.seen_in.join(", "))
+                }
+            ));
+        }
+        if !n.labels.is_empty() {
+            lines.push(format!("Labels: {}", n.labels.join(", ")));
+        }
+        if let Some(ticket) = &n.ticket_id {
+            lines.push(format!("Ticket: {ticket}"));
+        }
+        if let Some(reason) = &n.reason {
+            lines.push(format!("Grund: {reason}"));
+        }
+        // Ältere Notizen ohne Titel: der ganze Text steht im Inhalt
+        if !n.title.is_empty() {
+            lines.push(String::new());
+            lines.push(format!("# {}", n.title));
+        }
+        if !n.body.trim().is_empty() {
+            lines.push(String::new());
+            lines.push(n.body.trim_end().to_string());
+        }
+        lines
     }
 
     /// Liste je Spalte: „  ARC-0007  Titel  [wartet auf …] [planung] @agent (high) ui,api“

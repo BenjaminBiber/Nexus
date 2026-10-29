@@ -6,6 +6,7 @@ pub mod doc_comment;
 pub mod doc_comment_store;
 pub mod doc_hash;
 pub mod markdown_sections;
+pub mod spec_commit_check;
 pub mod superpowers_doc_scanner;
 pub mod ticket_draft;
 pub mod ticket_draft_validator;
@@ -16,6 +17,7 @@ pub use doc_comment::{
 pub use doc_comment_store::DocCommentStore;
 pub use doc_hash::DocHash;
 pub use markdown_sections::{MarkdownSection, MarkdownSections};
+pub use spec_commit_check::SpecCommitCheck;
 pub use superpowers_doc_scanner::{
     is_doc_file_name, SuperpowersDoc, SuperpowersDocKind, SuperpowersDocScanner, SuperpowersTopic,
 };

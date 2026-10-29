@@ -34,7 +34,7 @@ use std::sync::Mutex;
 use tokio::sync::Mutex as AsyncMutex;
 
 use crate::board::database::{BoardDatabase, BoardUnitOfWork, TransactionWork};
-use crate::error::Result;
+use crate::error::{HarnessError, Result};
 
 pub use search::{InMemoryBoardSearch, SearchableState};
 
@@ -50,12 +50,29 @@ pub struct InMemoryBoardDatabase {
     markers: Mutex<BTreeMap<i32, u64>>,
     /// Änderungszähler der Fragen je Projekt (Grundlage für `question_marker`)
     question_markers: Mutex<BTreeMap<i32, u64>>,
+    /// Fehler, mit dem jede Transaktion scheitert, solange er gesetzt ist
+    failure: Mutex<Option<HarnessError>>,
 }
 
 impl InMemoryBoardDatabase {
     /// Eine leere Datenbank
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Lässt jede Transaktion mit diesem Fehler scheitern (`None` hebt das wieder auf). Tests
+    /// bilden damit eine verlorene Verbindung oder ein zu altes Schema nach – in TypeScript
+    /// steht dafür `vi.spyOn(…).mockRejectedValue(…)`.
+    pub fn fail_with(&self, error: Option<HarnessError>) {
+        *self.failure.lock().expect("Fehler ist nicht vergiftet") = error;
+    }
+
+    /// Der eingestellte Fehler, falls einer gesetzt ist
+    fn failing(&self) -> Option<HarnessError> {
+        self.failure
+            .lock()
+            .expect("Fehler ist nicht vergiftet")
+            .clone()
     }
 
     /// Zählt die berührten Kennwerte weiter
@@ -81,6 +98,9 @@ impl BoardDatabase for InMemoryBoardDatabase {
         T: Send + 'static,
         W: TransactionWork<T> + 'static,
     {
+        if let Some(error) = self.failing() {
+            return Err(error.into());
+        }
         let mut state = self.state.lock().await;
         let mut draft = state.clone();
         let mut touched = Touched::default();

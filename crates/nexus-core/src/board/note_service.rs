@@ -3,6 +3,7 @@
 
 use std::sync::Arc;
 
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::board::basics::{
@@ -55,7 +56,8 @@ pub struct TakeNoteOptions {
 }
 
 /// Eine übernommene Notiz und das Ticket, das daraus entstand
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TakenNote {
     pub note: Note,
     pub ticket: TicketView,

@@ -235,7 +235,7 @@ pub enum Commands {
 /// Führt das Programm aus und liefert den Rückgabecode für alles, was schon ausgegeben wurde;
 /// erwartbare und unerwartete Fehler reicht sie an `main` weiter.
 pub fn run(args: &[String]) -> Result<u8> {
-    let mut root = Cli::command();
+    let mut root = help_tree();
     root.build();
     let walk = locate(&root, args);
 
@@ -244,8 +244,8 @@ pub fn run(args: &[String]) -> Result<u8> {
         return Ok(0);
     }
 
-    let matches = match root
-        .clone()
+    // Geparst wird mit dem unveränderten Baum, in dem `board step <id> <nummer>` freiwillig ist
+    let matches = match Cli::command()
         .try_get_matches_from(std::iter::once(PROGRAM.to_string()).chain(args.iter().cloned()))
     {
         Ok(matches) => matches,
@@ -262,6 +262,33 @@ pub fn run(args: &[String]) -> Result<u8> {
         }
     };
     dispatch(cli, &root)
+}
+
+/// Der Befehlsbaum, wie ihn die Hilfe zeigt.
+///
+/// `board step <id> <nummer>` teilt sich seine Stelle mit den Unterbefehlen `done`, `add`, `edit`,
+/// `rm` und `move` (in commander `enablePositionalOptions`). clap bildet das nur halb ab:
+/// `subcommand_negates_reqs` wirkt nicht auf Pflichtargumente, deshalb sind beide im Baum zum
+/// Parsen freiwillig und `board step` prüft ohne Unterbefehl selbst, ob sie da sind. In der Hilfe
+/// stehen sie wie in commander als Pflicht, also `<id> <nummer>` statt `[id] [nummer]`.
+///
+/// Geändert wird mit `mut_subcommands` und nicht mit `mut_subcommand`: Letzteres hängt den
+/// geänderten Unterbefehl hinten an, und die Hilfe zeigt die Unterbefehle in genau dieser
+/// Reihenfolge – `board` stünde dann am Ende von `harness --help` und `step` am Ende von
+/// `harness board --help`.
+pub fn help_tree() -> Command {
+    Cli::command().mut_subcommands(|sub| {
+        if sub.get_name() != "board" {
+            return sub;
+        }
+        sub.mut_subcommands(|step| {
+            if step.get_name() != "step" {
+                return step;
+            }
+            step.mut_arg("id", |arg| arg.required(true))
+                .mut_arg("nummer", |arg| arg.required(true))
+        })
+    })
 }
 
 /// Führt den gewählten Befehl aus; ohne Befehl zeigt das Programm wie commander seine Hilfe
@@ -325,28 +352,33 @@ fn help_command(root: &Command, name: Option<&str>) -> Result<u8> {
 }
 
 /// `harness <gruppe> help [befehl]`: Hilfe einer Gruppe oder eines ihrer Unterbefehle.
-/// commander meldet diesen Befehl in jeder Gruppe selbst an; im clap-Baum steht er als Variante.
+/// commander legt diesen Befehl in jeder Gruppe ohne eigene Aktion selbst an; in clap steht er
+/// als Variante im Aufzählungstyp der Gruppe und landet hier.
 pub fn group_help(path: &[&str], name: Option<&str>) -> Result<u8> {
-    let mut root = Cli::command();
-    root.build();
-    let mut cmd = &root;
-    for part in path {
+    let mut cmd = help_tree();
+    cmd.build();
+    for teil in path {
         cmd = cmd
-            .find_subcommand(part)
-            .unwrap_or_else(|| panic!("Befehl „{part}“ fehlt im Befehlsbaum"));
+            .find_subcommand(teil)
+            .unwrap_or_else(|| panic!("Befehl „{teil}“ fehlt im Befehlsbaum"))
+            .clone();
+        cmd.build();
     }
-    let aufruf = format!("{PROGRAM} {}", path.join(" "));
+    let mut aufruf: Vec<String> = std::iter::once(PROGRAM.to_string())
+        .chain(path.iter().map(ToString::to_string))
+        .collect();
     let Some(name) = name else {
-        print!("{}", help::render(&aufruf, cmd));
+        print!("{}", help::render(&aufruf.join(" "), &cmd));
         return Ok(0);
     };
     match cmd.find_subcommand(name) {
         Some(sub) => {
-            print!("{}", help::render(&format!("{aufruf} {name}"), sub));
+            aufruf.push(name.to_string());
+            print!("{}", help::render(&aufruf.join(" "), sub));
             Ok(0)
         }
         None => {
-            eprintln!("{}", errors::unknown_command(name, &subcommand_names(cmd)));
+            eprintln!("{}", errors::unknown_command(name, &subcommand_names(&cmd)));
             Ok(1)
         }
     }

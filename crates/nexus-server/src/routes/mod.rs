@@ -5,11 +5,14 @@
 //! und liefert sonst die Oberfläche bzw. 404 als JSON.
 
 pub mod db_boards;
+pub mod db_misc;
 pub mod db_tickets;
 pub mod doc_comments;
 pub mod docs;
+pub mod docs_claude;
 pub mod events;
 pub mod health;
+pub mod questions;
 pub mod settings;
 pub mod spec;
 pub mod static_files;
@@ -47,6 +50,12 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     if state.config.proxy_groups.enabled(RouteGroup::DbTickets) {
         router = router.merge(db_tickets::routes());
     }
+    if state.config.proxy_groups.enabled(RouteGroup::DbMisc) {
+        router = router.merge(db_misc::routes());
+    }
+    if state.config.proxy_groups.enabled(RouteGroup::Questions) {
+        router = router.merge(questions::routes());
+    }
     if state.config.proxy_groups.enabled(RouteGroup::Events) {
         router = router.merge(events::routes());
     }
@@ -55,6 +64,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
             .merge(docs::routes())
             .merge(doc_comments::routes())
             .merge(spec::routes());
+    }
+    if state.config.proxy_groups.enabled(RouteGroup::DocsClaude) {
+        router = router.merge(docs_claude::routes());
     }
     if state.config.proxy_groups.enabled(RouteGroup::Workflow) {
         router = router.merge(workflow::routes());

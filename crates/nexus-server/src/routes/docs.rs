@@ -4,7 +4,8 @@
 //!
 //! Die sechs Routen, die Claude aufrufen (`POST`/`DELETE …/docs/ticket-drafts`,
 //! `POST`/`DELETE …/docs/question-drafts`, `POST …/docs/questions`, `POST …/docs/revise`),
-//! bleiben bis P4-8b beim Node-Server und werden hier **nicht** angemeldet.
+//! gehören zur Gruppe `docs-claude` ([`crate::routes::docs_claude`]) und werden hier **nicht**
+//! angemeldet.
 
 use std::sync::Arc;
 

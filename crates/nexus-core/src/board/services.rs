@@ -27,9 +27,12 @@ use crate::clock::Clock;
 ///
 /// Das Feld `questions` kommt aus P3-3; die Felder `planning`, `search`, `dispatch_runs`,
 /// `inbox` und die Zeitleiste (`timeline(names)`) aus P3-4.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct BoardServices<D: BoardDatabase> {
     pub db: Arc<D>,
+    /// Uhr aller Dienste (für [`Clone`] und [`BoardServices::duplicate`], die die Dienste neu
+    /// aufbauen)
+    pub clock: Clock,
     pub repo_paths: BoardRepoPaths,
     pub projects: ProjectService<D>,
     pub boards: BoardService<D>,
@@ -43,6 +46,12 @@ pub struct BoardServices<D: BoardDatabase> {
     pub dispatch_runs: DispatchRunService<D>,
     pub graph: DependencyGraphService<D>,
     pub inbox: InboxService<D>,
+}
+
+impl<D: BoardDatabase> Clone for BoardServices<D> {
+    fn clone(&self) -> Self {
+        self.duplicate()
+    }
 }
 
 impl<D: BoardDatabase> BoardServices<D> {
@@ -59,9 +68,10 @@ impl<D: BoardDatabase> BoardServices<D> {
             views: BoardViewService::new(db.clone(), clock.clone()),
             search: BoardSearchService::new(db.clone()),
             dispatch_runs: DispatchRunService::new(db.clone()),
-            graph: DependencyGraphService::new(db.clone(), clock),
+            graph: DependencyGraphService::new(db.clone(), clock.clone()),
             inbox: InboxService::new(db.clone()),
             repo_paths,
+            clock,
             db,
         }
     }
@@ -69,6 +79,17 @@ impl<D: BoardDatabase> BoardServices<D> {
     /// Die Dienste ohne lokale Zuordnung der Repo-Pfade (der Standardwert aus TypeScript)
     pub fn with_memory_paths(db: Arc<D>, clock: Clock) -> Self {
         Self::new(db, clock, BoardRepoPaths::memory())
+    }
+
+    /// Dieselben Dienste noch einmal, auf derselben Datenbank und mit derselben Uhr. In
+    /// TypeScript wird `BoardServices` einfach weitergegeben; in Rust braucht etwa der
+    /// [`crate::worktrees::manager::WorktreeManager`] eine eigene Kopie.
+    ///
+    /// Von Hand geschrieben und nicht als `#[derive(Clone)]`, weil das Ableiten `D: Clone`
+    /// verlangt – die Datenbank des Servers ist aber keine Kopie wert (und kann es nicht sein).
+    /// [`Clone`] ruft diese Methode auf, damit beide Wege gleich kopieren.
+    pub fn duplicate(&self) -> Self {
+        Self::new(self.db.clone(), self.clock.clone(), self.repo_paths.clone())
     }
 
     /// Zeitleiste eines Tickets; `names` aus der Dispatch-Konfiguration erkennt Agenten
