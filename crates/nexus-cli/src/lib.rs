@@ -9,6 +9,7 @@ pub mod commands;
 pub mod context;
 pub mod hooks;
 pub mod http;
+pub mod notices;
 pub mod output;
 pub mod server;
 

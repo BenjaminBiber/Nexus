@@ -20,8 +20,8 @@ const BOARD_RESERVE_MS: u64 = 1000;
 /// So viel Zeit bekommt die Board-DB mindestens
 const MIN_BOARD_BUDGET_MS: u64 = 500;
 
-/// Umgebungsvariable mit der Frist des Hooks
-const DEADLINE_ENV: &str = "HARNESS_HOOK_DEADLINE_MS";
+/// Umgebungsvariable mit der Frist des Hooks (ohne Präfix; `NEXUS_…` vor `HARNESS_…`)
+const DEADLINE_ENV: &str = "HOOK_DEADLINE_MS";
 
 /// Beschreibung von `hook` in der Hilfe; die Liste ist [`HOOK_KINDS`]
 pub fn about() -> String {
@@ -40,8 +40,7 @@ pub const EXAMPLE: &str =
 /// nach der Frist (3 s). Ein unbekanntes Ereignis endet still mit Code 0.
 pub fn run(ereignis: &str) -> Result<u8> {
     let env: HashMap<String, String> = std::env::vars().collect();
-    let limit = env
-        .get(DEADLINE_ENV)
+    let limit = nexus_core::env::var_in(&env, DEADLINE_ENV)
         .and_then(|raw| raw.parse::<u64>().ok())
         .filter(|ms| *ms >= 1)
         .unwrap_or(DEFAULT_DEADLINE_MS);

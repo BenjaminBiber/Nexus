@@ -138,7 +138,9 @@ impl NodeSidecar {
             .args(["--port", "0"])
             .env("HARNESS_SIDECAR", "1")
             .env("HARNESS_PUBLIC_PORT", public_port.to_string())
-            // Rust löst `NEXUS_HOME` und `HARNESS_HOME` auf; Node kennt nur `HARNESS_HOME`
+            // Rust löst `NEXUS_HOME` und `HARNESS_HOME` auf und gibt den Ordner unter beiden
+            // Namen weiter; der Node-Server kennt nur `HARNESS_HOME`
+            .env("NEXUS_HOME", home.dir())
             .env("HARNESS_HOME", home.dir())
             // stdin bleibt offen und wird nie beschrieben: endet die Pipe, endet der Node-Server
             .stdin(std::process::Stdio::piped())

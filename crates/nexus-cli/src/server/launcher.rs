@@ -32,10 +32,15 @@ const SIDECAR: &str = "harness-sidecar";
 /// Programmdatei des Servers im Plugin bzw. im Benutzerordner
 const SERVER_ENTRY: &str = "server.mjs";
 
-/// Umgebungsvariable, mit der Tests eine eigene Programmdatei vorgeben
-pub const SERVER_ENTRY_ENV: &str = "HARNESS_SERVER_ENTRY";
+/// Umgebungsvariable, mit der Tests eine eigene Programmdatei vorgeben; gelesen wird sie über
+/// [`nexus_core::env`], also `NEXUS_SERVER_ENTRY` vor `HARNESS_SERVER_ENTRY`
+pub const SERVER_ENTRY_VAR: &str = "SERVER_ENTRY";
 
-/// Umgebungsvariable mit dem Ordner der Oberfläche
+/// Umgebungsvariable mit dem Ordner der Oberfläche (gelesen mit Rückfall wie oben)
+pub const WEB_DIR_VAR: &str = "WEB_DIR";
+
+/// Name, unter dem der Ordner der Oberfläche an den Node-Server weitergegeben wird. Der
+/// Node-Server kennt nur den alten Namen; der Rust-Server liest beide.
 pub const WEB_DIR_ENV: &str = "HARNESS_WEB_DIR";
 
 /// Zustand eines Ports
@@ -183,7 +188,7 @@ impl ServerLauncher {
     /// Programmdatei des Node-Servers: Umgebung (Tests), gebündelte Programmdatei aus P1-2,
     /// `lib/server.mjs` im Plugin oder im Benutzerordner
     fn node_server(&self) -> Option<NodeServer> {
-        if let Some(entry) = self.var(SERVER_ENTRY_ENV) {
+        if let Some(entry) = self.var(SERVER_ENTRY_VAR) {
             return Some(NodeServer {
                 program: PathBuf::from(entry),
                 env: Vec::new(),
@@ -207,7 +212,7 @@ impl ServerLauncher {
             if entry.is_file() {
                 // Im Plugin liegt die Oberfläche neben `lib/`; ist sie schon gesetzt, gilt die Einstellung
                 let mut env = Vec::new();
-                if self.var(WEB_DIR_ENV).is_none() {
+                if self.var(WEB_DIR_VAR).is_none() {
                     env.push((WEB_DIR_ENV.to_string(), Self::text(&root.join("web"))));
                 }
                 return Some(NodeServer {
@@ -302,10 +307,7 @@ impl ServerLauncher {
 
     /// Eine Umgebungsvariable, leere zählen wie keine
     fn var(&self, name: &str) -> Option<String> {
-        self.env
-            .get(name)
-            .filter(|value| !value.is_empty())
-            .cloned()
+        nexus_core::env::var_in(&self.env, name)
     }
 
     /// Pfad als Text für Argumente und Meldungen
@@ -362,18 +364,20 @@ mod tests {
 
     #[test]
     fn die_umgebungsvariable_nennt_den_node_server() {
-        let starter = starter(
-            &[(SERVER_ENTRY_ENV, "/s/main.js")],
-            Path::new("/h"),
-            Some(exe(Path::new("/opt/nexus"))),
-        );
-        let start = starter.start_command(4800).unwrap();
-        assert_eq!(start.program, exe(Path::new("/opt/nexus")));
-        assert_eq!(
-            start.args,
-            vec!["serve", "--port", "4800", "--node-sidecar", "/s/main.js"]
-        );
-        assert!(start.env.is_empty());
+        for name in ["NEXUS_SERVER_ENTRY", "HARNESS_SERVER_ENTRY"] {
+            let starter = starter(
+                &[(name, "/s/main.js")],
+                Path::new("/h"),
+                Some(exe(Path::new("/opt/nexus"))),
+            );
+            let start = starter.start_command(4800).unwrap();
+            assert_eq!(start.program, exe(Path::new("/opt/nexus")));
+            assert_eq!(
+                start.args,
+                vec!["serve", "--port", "4800", "--node-sidecar", "/s/main.js"]
+            );
+            assert!(start.env.is_empty());
+        }
     }
 
     #[test]
@@ -442,12 +446,14 @@ mod tests {
         std::fs::create_dir_all(dir.path().join("lib")).unwrap();
         std::fs::write(dir.path().join("lib").join("server.mjs"), b"x").unwrap();
 
-        let starter = starter(
-            &[(WEB_DIR_ENV, "/eigen/web")],
-            Path::new("/h"),
-            Some(exe(dir.path())),
-        );
-        assert!(starter.start_command(4710).unwrap().env.is_empty());
+        for name in ["NEXUS_WEB_DIR", WEB_DIR_ENV] {
+            let starter = starter(
+                &[(name, "/eigen/web")],
+                Path::new("/h"),
+                Some(exe(dir.path())),
+            );
+            assert!(starter.start_command(4710).unwrap().env.is_empty());
+        }
     }
 
     #[test]

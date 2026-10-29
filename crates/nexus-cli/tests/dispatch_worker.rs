@@ -87,7 +87,8 @@ fn startet_einen_echten_losgeloesten_worker_der_den_starter_ueberlebt() {
             "startet_einen_echten_losgeloesten_worker_der_den_starter_ueberlebt",
             "--nocapture",
         ])
-        .env("HARNESS_HOME", dir.path())
+        .env("NEXUS_HOME", dir.path())
+        .env_remove("HARNESS_HOME")
         .env(START_RUN, "ARC-0011-x")
         .env("NEXUS_TEST_WORKER_EXE", nexus())
         .env("FAKE_CLAUDE_MODE", "ok")

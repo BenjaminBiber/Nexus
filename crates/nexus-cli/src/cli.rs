@@ -8,10 +8,14 @@ use nexus_core::Result;
 
 use crate::commands;
 use crate::context::CliContext;
+use crate::notices;
 use crate::output::{errors, help};
 
-/// Name in Hilfe, Beispielen und Fehlermeldungen; bis P3-16 bleibt es „harness“
+/// Name in Hilfe, Beispielen und Fehlermeldungen
 pub const PROGRAM: &str = "harness";
+
+/// Name des Hook-Befehls; er bleibt still (keine Hinweise, keine Migration)
+const HOOK: &str = "hook";
 
 /// Beschreibung des Programms auf der Hauptseite der Hilfe
 const ABOUT: &str =
@@ -239,6 +243,11 @@ pub fn run(args: &[String]) -> Result<u8> {
     root.build();
     let walk = locate(&root, args);
 
+    // Hooks bleiben still: ihre Ausgabe gehört Claude Code
+    if walk.command() != Some(HOOK) {
+        notices::print_once();
+    }
+
     if walk.help {
         print!("{}", help::render(&walk.path.join(" "), walk.cmd));
         return Ok(0);
@@ -398,6 +407,13 @@ struct Walk<'a> {
     path: Vec<String>,
     cmd: &'a Command,
     help: bool,
+}
+
+impl Walk<'_> {
+    /// Der Befehl der ersten Ebene, also `hook` in `nexus hook session-start`; ohne Befehl nichts
+    fn command(&self) -> Option<&str> {
+        self.path.get(1).map(String::as_str)
+    }
 }
 
 /// Sucht `-h`/`--help` in den rohen Argumenten und merkt sich dabei, in welchem Befehl sie stehen.

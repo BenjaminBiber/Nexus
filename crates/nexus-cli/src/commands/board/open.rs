@@ -16,8 +16,8 @@ use crate::server::{PortState, ServerLauncher};
 /// Wartezeit der Anmeldung beim Server
 const TIMEOUT: Duration = Duration::from_secs(10);
 
-/// Umgebungsvariable mit dem Port des Servers
-pub const PORT_ENV: &str = "HARNESS_PORT";
+/// Umgebungsvariable mit dem Port des Servers (ohne Präfix; `NEXUS_PORT` vor `HARNESS_PORT`)
+pub const PORT_ENV: &str = "PORT";
 
 /// Das Ergebnis von `nexus board` (`--json`)
 #[derive(Debug, Serialize)]
@@ -31,7 +31,7 @@ struct BoardResult {
 /// Führt `board` ohne Unterbefehl aus: Server oder App starten und das Board öffnen
 pub fn run(context: &CliContext, port: Option<&str>, open: bool) -> Result<u8> {
     context.open_project()?;
-    let from_env = std::env::var(PORT_ENV).ok().filter(|raw| !raw.is_empty());
+    let from_env = nexus_core::env::var(PORT_ENV);
     let port = parse_port(port, from_env.as_deref())?;
     let launcher = ServerLauncher::from_process_env();
     let state = launcher.probe(port);

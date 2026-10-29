@@ -303,7 +303,10 @@ impl TempProject {
         command
             .args(args)
             .current_dir(cwd)
-            .env("HARNESS_HOME", home)
+            .env("NEXUS_HOME", home)
+            .env_remove("HARNESS_HOME")
+            .env_remove("NEXUS_SESSION")
+            .env_remove("NEXUS_TICKET")
             .env_remove("HARNESS_SESSION")
             .env_remove("HARNESS_TICKET");
         for (name, value) in extra {

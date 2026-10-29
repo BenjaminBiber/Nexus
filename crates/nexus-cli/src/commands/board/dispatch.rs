@@ -12,8 +12,8 @@ use crate::context::CliContext;
 use crate::output::DispatchStatusFormatter;
 use crate::server::DispatchClient;
 
-/// Umgebungsvariable mit dem Port des Servers
-const PORT_ENV: &str = "HARNESS_PORT";
+/// Umgebungsvariable mit dem Port des Servers (ohne Präfix; `NEXUS_PORT` vor `HARNESS_PORT`)
+const PORT_ENV: &str = "PORT";
 
 /// Beschreibung der Gruppe `dispatch`
 pub const DISPATCH_ABOUT: &str = "Dispatcher: übernimmt bereite Tickets (Label auto) der eigenen Boards und lässt sie von claude -p umsetzen. Einstellungen in der Oberfläche oder ~/.harness/dispatch.yaml.";
@@ -332,9 +332,10 @@ where
     Ok(0)
 }
 
-/// Client für den Port aus `--port` von `board`, sonst `HARNESS_PORT`, sonst Standard
+/// Client für den Port aus `--port` von `board`, sonst `NEXUS_PORT` (sonst `HARNESS_PORT`),
+/// sonst Standard
 pub fn client(port: Option<&str>) -> Result<DispatchClient> {
-    let env = std::env::var(PORT_ENV).ok().filter(|raw| !raw.is_empty());
+    let env = nexus_core::env::var(PORT_ENV);
     Ok(DispatchClient::new(
         DispatchOptionParser.port(port, env.as_deref())?,
     ))

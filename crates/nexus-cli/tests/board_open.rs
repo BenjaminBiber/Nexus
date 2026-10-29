@@ -69,10 +69,14 @@ fn freier_port() -> u16 {
 fn nexus(home: &Path, port: u16, entry: Option<&Path>) -> Command {
     let mut command = Command::cargo_bin("nexus").unwrap();
     command
-        .env("HARNESS_HOME", home)
-        .env("HARNESS_PORT", port.to_string())
+        .env("NEXUS_HOME", home)
+        .env("NEXUS_PORT", port.to_string())
+        .env_remove("HARNESS_HOME")
+        .env_remove("HARNESS_PORT")
         // Eine lokal installierte Nexus-App darf den Test nicht an sich ziehen
         .env("NEXUS_APP_PATH", home.join("keine-app"))
+        .env_remove("NEXUS_SESSION")
+        .env_remove("NEXUS_TICKET")
         .env_remove("HARNESS_SESSION")
         .env_remove("HARNESS_TICKET");
     match entry {
