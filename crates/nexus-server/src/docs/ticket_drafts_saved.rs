@@ -1,7 +1,7 @@
 //! Die gespeicherten Ticket-Entwürfe eines Dokuments: lesen, bearbeitet speichern, in der
 //! Docs-Liste markieren und verwerfen. Portiert aus den Claude-freien Teilen von
 //! `packages/server/src/docs/TicketDraftService.ts` (`saved`, `update`, `flag`, `discard`);
-//! das Erzeugen über Claude bleibt bis P4-8b beim Node-Server.
+//! das Erzeugen über Claude gehört [`crate::docs::TicketDraftService`].
 
 use std::path::{Path, PathBuf};
 
@@ -47,6 +47,18 @@ impl SavedTicketDrafts {
         path: Option<&str>,
     ) -> Result<Option<TicketDraftResult>> {
         Ok(self.store.get(&docs.full_path(source, path)?))
+    }
+
+    /// Merkt sich die eben erzeugten Entwürfe zum Dokument (ruft
+    /// [`crate::docs::TicketDraftService`] nach dem Lauf von Claude)
+    pub async fn put(
+        &self,
+        docs: &DocsService,
+        source: &DocsSource,
+        path: Option<&str>,
+        result: &TicketDraftResult,
+    ) -> Result<()> {
+        self.store.put(&docs.full_path(source, path)?, result).await
     }
 
     /// Speichert die im Dialog bearbeiteten Entwürfe (geprüft wie Claudes Antwort); Kosten und

@@ -3,6 +3,7 @@
 //! Worker eines Laufs (`worker`) und sein Start als eigener Prozess (`worker_launcher`).
 
 pub mod claude_process;
+pub mod claude_runner;
 pub mod context;
 pub mod notifier;
 pub mod prompt_values;
@@ -15,6 +16,9 @@ pub mod worker_launcher;
 pub mod worktree_setup;
 
 pub use claude_process::{ClaudeProcess, ClaudeRunInput, OutputSource, RunResult};
+pub use claude_runner::{
+    analysis_dir, ClaudeRunner, ClaudeRunners, FixedClaudeRunner, ProcessClaudeRunner,
+};
 pub use context::{DispatchContext, DispatchStores, LaunchInput, RepoWork};
 pub use notifier::{DispatchNotice, DispatchNoticeKind, DispatchNotify, NoDispatchNotify};
 pub use prompt_values::{PromptValues, SampleValues};

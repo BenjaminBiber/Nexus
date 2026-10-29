@@ -31,8 +31,32 @@ export class ServerInfoFile {
     await this.writer.write(this.home.serverFile, JSON.stringify(info));
   }
 
-  // Löscht die Angaben beim Beenden
+  // Löscht die Angaben (`harness stop`, nachdem es den eingetragenen Server beendet hat)
   async remove(): Promise<void> {
     await rm(this.home.serverFile, { force: true });
+  }
+
+  // Trägt den startenden Server ein – außer ein anderer, noch laufender Server steht schon darin
+  // (etwa wenn ein Testserver versehentlich mit dem echten Benutzerordner startet). `false`: nicht eingetragen
+  async claim(info: ServerInfo): Promise<boolean> {
+    const current = await this.read();
+    if (current && current.pid !== info.pid && ServerInfoFile.alive(current.pid)) return false;
+    await this.write(info);
+    return true;
+  }
+
+  // Löscht die Angaben beim Beenden, aber nur, wenn sie zu diesem Server (`pid`) gehören
+  async release(pid: number): Promise<void> {
+    if ((await this.read())?.pid === pid) await this.remove();
+  }
+
+  // Läuft der Prozess noch? Gehört er einem anderen Benutzer, zählt er als laufend
+  private static alive(pid: number): boolean {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch (error) {
+      return (error as NodeJS.ErrnoException).code === 'EPERM';
+    }
   }
 }

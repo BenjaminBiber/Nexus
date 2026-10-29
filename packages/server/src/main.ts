@@ -25,13 +25,15 @@ async function main(): Promise<void> {
   app.guard.allowPort(port);
   // Als Sidecar gehört `server.json` dem Rust-Server davor; dieser Prozess meldet nur seinen Port
   const info = config.sidecar ? null : new ServerInfoFile(config.home);
-  await info?.write({ pid: process.pid, port, startedAt: new Date().toISOString() });
+  if (info && !(await info.claim({ pid: process.pid, port, startedAt: new Date().toISOString() }))) {
+    log('server.json gehört einem anderen laufenden Server und bleibt unverändert.');
+  }
   log(`Server läuft auf http://${config.host}:${port}`);
 
   const stop = async () => {
     log('Server wird beendet.');
     await app.close();
-    await info?.remove();
+    await info?.release(process.pid);
     process.exit(0);
   };
   process.on('SIGINT', stop);

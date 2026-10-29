@@ -312,11 +312,16 @@ async fn statische_adressen_gehen_nie_zum_upstream() {
 }
 
 #[tokio::test]
-async fn die_claude_routen_der_docs_bleiben_beim_node_server() {
-    let (server, upstream, _base, task) = with_upstream().await;
+async fn der_notschalter_schickt_die_gruppe_docs_claude_zum_node_server() {
+    let (upstream, base, task) = start_upstream().await;
+    let server = TestServer::with(TestServerOptions {
+        upstream: Some(base),
+        proxy_groups: RouteGroups::from_env(Some("docs-claude")),
+        ..TestServerOptions::default()
+    });
 
-    // Die sechs Routen aus P4-8b; `…/docs/ticket-drafts` ist ein anderer Pfad als
-    // `…/docs/ticket-drafts/saved`, das Rust beantwortet
+    // Die sechs Routen der Gruppe; `…/docs/ticket-drafts` ist ein anderer Pfad als
+    // `…/docs/ticket-drafts/saved`, das zur Gruppe `docs` gehört
     for (method, path) in [
         ("POST", "/api/projects/p1/docs/ticket-drafts"),
         ("DELETE", "/api/projects/p1/docs/ticket-drafts"),
@@ -334,6 +339,30 @@ async fn die_claude_routen_der_docs_bleiben_beim_node_server() {
         assert_eq!(reply.json().unwrap()["path"], serde_json::json!(path));
     }
     assert_eq!(upstream.calls(), 6);
+    task.abort();
+}
+
+#[tokio::test]
+async fn die_claude_routen_der_docs_beantwortet_rust() {
+    let (server, upstream, _base, task) = with_upstream().await;
+
+    for (method, path) in [
+        ("POST", "/api/projects/p1/docs/ticket-drafts"),
+        ("DELETE", "/api/projects/p1/docs/ticket-drafts"),
+        ("POST", "/api/projects/p1/docs/question-drafts"),
+        ("DELETE", "/api/projects/p1/docs/question-drafts"),
+        ("POST", "/api/projects/p1/docs/questions"),
+        ("POST", "/api/projects/p1/docs/revise"),
+    ] {
+        let reply = server.request(method, path, Some("{}"), &[]).await;
+        assert_eq!(
+            reply.header("x-nexus-backend"),
+            Some("rust"),
+            "{method} {path}"
+        );
+    }
+    // Das Projekt „p1“ gibt es nicht; keine Anfrage geht deshalb an den Node-Server
+    assert_eq!(upstream.calls(), 0);
     task.abort();
 }
 
