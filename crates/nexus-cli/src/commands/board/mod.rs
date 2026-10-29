@@ -125,7 +125,13 @@ pub enum BoardCommands {
         about = step::STEP_ABOUT,
         after_help = step::STEP_EXAMPLES,
         disable_help_flag = true,
-        disable_help_subcommand = true
+        disable_help_subcommand = true,
+        // `board step <id> <nummer>` und die Unterbefehle teilen sich dieselbe Stelle: ein Wort
+        // wie `add` ist der Unterbefehl und nicht die Ticket-ID, und dann gelten weder `<id>`
+        // noch `<nummer>` von `step` selbst (in commander macht das `enablePositionalOptions`).
+        subcommand_precedence_over_arg = true,
+        args_conflicts_with_subcommands = true,
+        subcommand_negates_reqs = true
     )]
     Step(step::StepArgs),
 

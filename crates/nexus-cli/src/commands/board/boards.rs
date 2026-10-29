@@ -102,6 +102,14 @@ pub enum BoardsCommands {
         disable_help_flag = true
     )]
     Delete(DeleteArgs),
+
+    /// Den `help`-Befehl legt commander in jeder Gruppe selbst an; hier steht er im Modell
+    #[command(
+        name = "help",
+        about = "Hilfe zu einem Befehl anzeigen",
+        disable_help_flag = true
+    )]
+    Help { befehl: Option<String> },
 }
 
 /// Optionen von `boards list`
@@ -163,6 +171,9 @@ pub fn run(context: &CliContext, command: &BoardsCommands) -> Result<u8> {
         BoardsCommands::Use(args) => use_board(context, args),
         BoardsCommands::Repo(args) => repo(context, args),
         BoardsCommands::Delete(args) => delete(context, args),
+        BoardsCommands::Help { befehl } => {
+            crate::cli::group_help(&["board", "boards"], befehl.as_deref())
+        }
     }
 }
 

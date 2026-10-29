@@ -70,7 +70,7 @@ const TARGET_BRANCH_HELP: &str = "Zielbranch, in den der Dispatcher mergt (fehlt
 
 /// Der Befehl aus dem echten Befehlsbaum von `nexus` (nicht nachgebaut)
 fn aus_dem_baum(name: &str) -> Command {
-    let mut root = <nexus_cli::cli::Cli as clap::CommandFactory>::command();
+    let mut root = nexus_cli::cli::help_tree();
     root.build();
     root.find_subcommand(name)
         .unwrap_or_else(|| panic!("Befehl „{name}“ fehlt im Befehlsbaum"))
@@ -114,6 +114,44 @@ fn hilfe_der_ticketbefehle_wie_aufgezeichnet() {
         ["board", "claim"],
         ["board", "release"],
         ["board", "comment"],
+    ] {
+        wie_aufgezeichnet(&pfad);
+    }
+}
+
+#[test]
+fn hilfe_der_planungs_und_verwaltungsbefehle_wie_aufgezeichnet() {
+    // Die weiteren Blätter aus `LEAVES`, die mit Schritten, Notizen, „Meine Aufgaben“, Planung,
+    // Boards und Projekten dazukommen – samt der Hilfe ihrer Gruppen
+    for pfad in [
+        vec!["board", "project"],
+        vec!["board", "project", "list"],
+        vec!["board", "project", "create"],
+        vec!["board", "project", "rename"],
+        vec!["board", "boards"],
+        vec!["board", "boards", "list"],
+        vec!["board", "boards", "create"],
+        vec!["board", "boards", "rename"],
+        vec!["board", "boards", "use"],
+        vec!["board", "boards", "repo"],
+        vec!["board", "boards", "delete"],
+        vec!["board", "step"],
+        vec!["board", "step", "done"],
+        vec!["board", "step", "add"],
+        vec!["board", "step", "edit"],
+        vec!["board", "step", "rm"],
+        vec!["board", "step", "move"],
+        vec!["board", "note"],
+        vec!["board", "note", "add"],
+        vec!["board", "note", "seen"],
+        vec!["board", "note", "list"],
+        vec!["board", "note", "show"],
+        vec!["board", "note", "take"],
+        vec!["board", "note", "drop"],
+        vec!["board", "inbox"],
+        vec!["board", "plan"],
+        vec!["board", "plan-json"],
+        vec!["board", "next-planning"],
     ] {
         wie_aufgezeichnet(&pfad);
     }

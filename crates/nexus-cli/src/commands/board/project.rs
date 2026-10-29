@@ -53,6 +53,14 @@ pub enum ProjectCommands {
         disable_help_flag = true
     )]
     Rename(KeyNameArgs),
+
+    /// Den `help`-Befehl legt commander in jeder Gruppe selbst an; hier steht er im Modell
+    #[command(
+        name = "help",
+        about = "Hilfe zu einem Befehl anzeigen",
+        disable_help_flag = true
+    )]
+    Help { befehl: Option<String> },
 }
 
 /// Key und Name eines Projekts
@@ -68,6 +76,9 @@ pub fn run(context: &CliContext, command: &ProjectCommands) -> Result<u8> {
         ProjectCommands::List => list(context),
         ProjectCommands::Create(args) => create(context, args),
         ProjectCommands::Rename(args) => rename(context, args),
+        ProjectCommands::Help { befehl } => {
+            crate::cli::group_help(&["board", "project"], befehl.as_deref())
+        }
     }
 }
 

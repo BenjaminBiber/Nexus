@@ -102,6 +102,14 @@ pub enum NoteCommands {
         disable_help_flag = true
     )]
     Drop(DropArgs),
+
+    /// Den `help`-Befehl legt commander in jeder Gruppe selbst an; hier steht er im Modell
+    #[command(
+        name = "help",
+        about = "Hilfe zu einem Befehl anzeigen",
+        disable_help_flag = true
+    )]
+    Help { befehl: Option<String> },
 }
 
 /// Optionen von `note add`
@@ -202,6 +210,9 @@ pub fn run(context: &CliContext, command: &NoteCommands) -> Result<u8> {
         NoteCommands::Show(args) => show(context, args),
         NoteCommands::Take(args) => take(context, args),
         NoteCommands::Drop(args) => drop_note(context, args),
+        NoteCommands::Help { befehl } => {
+            crate::cli::group_help(&["board", "note"], befehl.as_deref())
+        }
     }
 }
 

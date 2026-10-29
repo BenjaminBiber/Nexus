@@ -8,7 +8,7 @@ use std::process::Command;
 
 use assert_cmd::cargo::CommandCargoExt;
 use nexus_core::HarnessHome;
-use nexus_db::{BoardRuntime, ConnectOptions};
+use nexus_db::{BoardDatabase, BoardRuntime, ConnectOptions};
 use tempfile::TempDir;
 
 /// GUID dieses Rechners in der Test-Konfig
@@ -132,6 +132,42 @@ impl TempProject {
                 .await
                 .expect("Repo-Pfad");
         });
+    }
+
+    /// Der eigene Repo-Pfad eines Boards aus `board-repos.yaml` dieses Homes
+    pub fn repo_file_path(&self, board_id: i32) -> Option<String> {
+        nexus_core::board::repo_file::BoardRepoFile::new(HarnessHome::at(self.home()))
+            .read()
+            .expect("board-repos.yaml")
+            .get(&i64::from(board_id))
+            .cloned()
+            .flatten()
+    }
+
+    /// Schreibt einen Repo-Pfad direkt in die Datenbank (Altbestand aus der Zeit vor der
+    /// lokalen Zuordnung); über die Dienste geht das nicht mehr
+    pub fn set_db_repo_path(&self, board_id: i32, path: &str) {
+        let path = path.to_string();
+        self.am_board(async |rt| {
+            nexus_core::tx!(rt.services.db, [board_id, path], |u| {
+                let mut board = u.boards().by_id(board_id).await?.expect("Board");
+                board.repo_path = Some(path);
+                u.boards().update(&board).await
+            })
+            .await
+            .expect("Repo-Pfad in der DB");
+        });
+    }
+
+    /// Der Repo-Pfad eines Boards, wie er in der Datenbank steht
+    pub fn db_repo_path(&self, board_id: i32) -> Option<String> {
+        self.am_board(async |rt| {
+            nexus_core::tx!(rt.services.db, [board_id], |u| {
+                Ok(u.boards().by_id(board_id).await?.expect("Board").repo_path)
+            })
+            .await
+            .expect("Board aus der DB")
+        })
     }
 
     /// Öffnet das Board dieses Homes, führt die Arbeit aus und schließt es wieder

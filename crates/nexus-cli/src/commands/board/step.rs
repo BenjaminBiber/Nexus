@@ -61,10 +61,11 @@ const MOVE_EXAMPLES: &str = "\nBeispiele:\n  harness board step move ARC-0007 4 
 
 /// `board step <id> <nummer>` samt seiner Unterbefehle
 #[derive(Debug, Args)]
-#[command(args_conflicts_with_subcommands = true, subcommand_negates_reqs = true)]
 pub struct StepArgs {
-    pub id: String,
-    pub nummer: String,
+    // Pflicht in der Hilfe (`<id> <nummer>`), beim Parsen freiwillig: an ihrer Stelle darf ein
+    // Unterbefehl stehen. Siehe `cli::ohne_pflicht_neben_unterbefehlen`.
+    pub id: Option<String>,
+    pub nummer: Option<String>,
     #[arg(long, help = "nimmt den Haken zurück")]
     pub undo: bool,
     #[arg(long, value_name = "name", help = "wer abhakt")]
@@ -216,15 +217,20 @@ pub struct MoveArgs {
 /// Führt `board step` mit oder ohne Unterbefehl aus
 pub fn run(context: &CliContext, args: &StepArgs) -> Result<u8> {
     match &args.sub {
-        None => check(
-            context,
-            &args.id,
-            &args.nummer,
-            !args.undo,
-            args.by.as_deref(),
-            args.rev.as_deref(),
-            args.expect.as_deref(),
-        ),
+        // Ohne Unterbefehl sind `<id>` und `<nummer>` Pflicht; clap prüft das hier nicht mehr
+        None => match (args.id.as_deref(), args.nummer.as_deref()) {
+            (Some(id), Some(nummer)) => check(
+                context,
+                id,
+                nummer,
+                !args.undo,
+                args.by.as_deref(),
+                args.rev.as_deref(),
+                args.expect.as_deref(),
+            ),
+            (None, _) => Ok(fehlendes_argument("id")),
+            (_, None) => Ok(fehlendes_argument("nummer")),
+        },
         Some(StepCommands::Done(o)) => check(
             context,
             &o.id,
@@ -361,6 +367,12 @@ fn move_step(context: &CliContext, args: &MoveArgs) -> Result<u8> {
         print(context, &detail, &format!("Schritt {from} → {to}"));
         Ok(0)
     })
+}
+
+/// Meldet ein fehlendes Pflichtargument wortgleich wie commander und endet mit Code 1
+fn fehlendes_argument(name: &str) -> u8 {
+    eprintln!("{}", crate::output::errors::missing_argument(name));
+    1
 }
 
 /// Schutz aus `--rev`/`--expect`; ohne beide ein leerer Schutz (Verhalten wie bisher)
