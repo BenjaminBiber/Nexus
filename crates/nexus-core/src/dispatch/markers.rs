@@ -4,6 +4,11 @@
 //! Der Dispatcher zählt an diesen Kommentaren seine Versuche und die Auswertung erkennt sie
 //! daran wieder – die Texte sind Vertrag und dürfen sich nicht ändern.
 
+use std::fmt;
+
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+
 /// Ein Lauf wurde an einen Agenten übergeben
 pub const START: &str = "[dispatch] Start";
 /// Ein Lauf wurde abgebrochen
@@ -50,6 +55,45 @@ pub const DISPATCH_MARKERS: [&str; 13] = [
 
 /// Gemeinsame Vorsilbe aller Dispatcher-Kommentare; die Auswertung sucht danach
 pub const DISPATCH_PREFIX: &str = "[dispatch] ";
+
+/// Vorsilbe des Blockiert-Grunds, wenn die Einrichtung eines neuen Worktrees scheiterte
+pub const SETUP_REASON_PREFIX: &str = "Einrichtung fehlgeschlagen:";
+
+/// Vorsilbe des Blockiert-Grunds, wenn der Merge scheiterte („Erneut mergen“ im Panel)
+pub const MERGE_REASON_PREFIX: &str = "Merge:";
+
+/// Worktrees des Dispatchers: ein Worktree je Ticket oder Tickets einer Spec in einem
+/// gemeinsamen Worktree (alt). Die volle Einstellung baut P4-12 daneben.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "dispatch.ts")]
+pub enum JoinWorktrees {
+    #[serde(rename = "none")]
+    None,
+    #[serde(rename = "sameSpec")]
+    SameSpec,
+}
+
+impl JoinWorktrees {
+    /// Erlaubte Werte in der Reihenfolge von TypeScript (`JOIN_WORKTREES`)
+    pub const ALL: [JoinWorktrees; 2] = [JoinWorktrees::None, JoinWorktrees::SameSpec];
+
+    /// Schreibweise in JSON und in der Einstellung
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            JoinWorktrees::None => "none",
+            JoinWorktrees::SameSpec => "sameSpec",
+        }
+    }
+}
+
+impl fmt::Display for JoinWorktrees {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+/// Erlaubte Werte von `joinWorktrees`
+pub const JOIN_WORKTREES: [JoinWorktrees; 2] = JoinWorktrees::ALL;
 
 #[cfg(test)]
 mod tests {
