@@ -121,11 +121,13 @@ async fn liest_die_port_zeile_und_wartet_auf_health() {
     assert!(sidecar.port > 0, "Port {} gelesen", sidecar.port);
 
     // Der Ersatz nennt die Umgebung, die er bekommen hat: Sidecar-Modus, öffentlicher Port,
-    // Benutzerordner und `--port 0`
+    // abgeschaltete Fragen-Beobachtung, Benutzerordner und `--port 0`
     let (status, text) = fetch(sidecar.port, "/api/echo").await;
     assert_eq!(status, 200, "{text}");
     assert!(text.contains(r#""sidecar":"1""#), "{text}");
     assert!(text.contains(r#""publicPort":"4710""#), "{text}");
+    // Die Fragen der Board-Datenbank beobachtet nur der Rust-Server
+    assert!(text.contains(r#""dbQuestionPollMs":"0""#), "{text}");
     assert!(
         text.contains(&format!("\"{}\"", dir.path().to_string_lossy())),
         "{text}"

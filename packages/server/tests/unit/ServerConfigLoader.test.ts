@@ -78,6 +78,19 @@ describe('ServerConfigLoader', () => {
     );
   });
 
+  it('nimmt den Abstand der Fragen-Beobachtung aus HARNESS_DB_QUESTION_POLL_MS, 0 schaltet sie ab', () => {
+    expect(loader.load([], {}).dbQuestionPollMs).toBeUndefined();
+    expect(loader.load([], { HARNESS_DB_QUESTION_POLL_MS: '' }).dbQuestionPollMs).toBeUndefined();
+    expect(loader.load([], { HARNESS_DB_QUESTION_POLL_MS: '0' }).dbQuestionPollMs).toBe(0);
+    expect(loader.load([], { HARNESS_DB_QUESTION_POLL_MS: '2500' }).dbQuestionPollMs).toBe(2500);
+  });
+
+  it.each(['abc', '-1', '1.5'])('weist den Abstand der Fragen-Beobachtung %j ab', (raw) => {
+    expect(() => loader.load([], { HARNESS_DB_QUESTION_POLL_MS: raw })).toThrowError(
+      expect.objectContaining({ code: 'config-invalid' }),
+    );
+  });
+
   it('schickt Links in Meldungen auf den öffentlichen Port', () => {
     const hinter = loader.load(['--port', '0'], { HARNESS_SIDECAR: '1', HARNESS_PUBLIC_PORT: '4710' });
     expect(ServerConfigLoader.noticeBaseUrl({ ...hinter, port: 51234 })).toBe('http://127.0.0.1:4710');

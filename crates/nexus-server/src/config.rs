@@ -35,6 +35,8 @@ pub struct ServerConfig {
     pub home: HarnessHome,
     /// Ordner der gebauten Oberfläche; `None`, wenn es keinen gibt
     pub web_dir: Option<PathBuf>,
+    /// Ordner mit den Bildern der Systemmeldung (`logo-app.png` …)
+    pub toast_dir: PathBuf,
     /// Version in `GET /api/health`
     pub version: String,
     /// Node-Server, an den alles geht, was Rust noch nicht beantwortet; `None` = kein Proxy
@@ -82,6 +84,7 @@ impl ServerConfig {
             host: HOST.to_string(),
             home,
             web_dir: None,
+            toast_dir: default_toast_dir(),
             version: default_version(),
             upstream: None,
             proxy_groups: RouteGroups::none(),
@@ -98,6 +101,21 @@ impl ServerConfig {
 /// Version, die `GET /api/health` meldet: die des Workspace
 fn default_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
+}
+
+/// Name des Bildes, an dem ein Bildordner zu erkennen ist
+const TOAST_MARKER: &str = "logo-app.png";
+
+/// Bilder der Systemmeldung: `toast/` neben dem Programm (gebündelte App), sonst der
+/// Ordner im Crate (nur Entwicklung). `NEXUS_TOAST_DIR` geht beidem vor.
+fn default_toast_dir() -> PathBuf {
+    let next_to_exe = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(|dir| dir.join("toast")));
+    let in_crate = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/toast");
+    next_to_exe
+        .filter(|dir| dir.join(TOAST_MARKER).is_file())
+        .unwrap_or(in_crate)
 }
 
 /// Liest die Einstellungen aus Argumenten und Umgebung.
@@ -124,6 +142,9 @@ impl ServerConfigLoader {
             .or_else(|| value(env, &["NEXUS_WEB_DIR", "HARNESS_WEB_DIR"]))
             .filter(|dir| !dir.is_empty())
             .map(PathBuf::from);
+        let toast_dir = value(env, &["NEXUS_TOAST_DIR", "HARNESS_TOAST_DIR"])
+            .filter(|dir| !dir.is_empty())
+            .map(PathBuf::from);
         let upstream = argument(args, "--upstream")
             .or_else(|| value(env, &["NEXUS_UPSTREAM"]))
             .filter(|url| !url.is_empty());
@@ -138,8 +159,21 @@ impl ServerConfigLoader {
             heartbeat_ms: millis(env, "CONTRACT_HEARTBEAT_MS", DEFAULT_HEARTBEAT_MS),
             db_poll_ms: millis(env, "CONTRACT_POLL_MS", DEFAULT_DB_POLL_MS),
             docs_poll_ms: millis(env, "CONTRACT_POLL_MS", DEFAULT_DOCS_POLL_MS),
+            // 0 schaltet die Fragen-Beobachtung ab und ist deshalb ein erlaubter Wert
+            db_question_poll_ms: count(
+                env,
+                &["NEXUS_DB_QUESTION_POLL_MS", "HARNESS_DB_QUESTION_POLL_MS"],
+                DEFAULT_DB_QUESTION_POLL_MS,
+            ),
             ..ServerConfig::new(0, home)
         };
+        if let Some(dir) = toast_dir {
+            config.toast_dir = dir;
+        }
+        // Im Vertragsmodus gibt es keine Meldungen über neue Fragen (siehe contract/README.md)
+        if config.is_contract() {
+            config.db_question_poll_ms = 0;
+        }
         if let Some(upstream) = upstream {
             config.set_upstream(upstream, env);
         }
@@ -168,6 +202,14 @@ fn millis(env: &dyn Fn(&str) -> Option<String>, name: &str, default: u64) -> u64
     env(name)
         .and_then(|raw| raw.trim().parse::<u64>().ok())
         .filter(|value| *value > 0)
+        .unwrap_or(default)
+}
+
+/// Ganze Zahl ab 0 aus der ersten gesetzten Variable; ohne oder mit unbrauchbarem Wert der
+/// Standard
+fn count(env: &dyn Fn(&str) -> Option<String>, names: &[&str], default: u64) -> u64 {
+    value(env, names)
+        .and_then(|raw| raw.trim().parse::<u64>().ok())
         .unwrap_or(default)
 }
 
@@ -314,6 +356,69 @@ mod tests {
         config.set_upstream("http://127.0.0.1:4711".to_string(), &umgebung);
         assert_eq!(config.upstream.as_deref(), Some("http://127.0.0.1:4711"));
         assert!(config.proxy_groups.contains(RouteGroup::DbTickets));
+    }
+
+    #[test]
+    fn nimmt_den_abstand_der_fragen_beobachtung_aus_der_umgebung_und_laesst_0_zu() {
+        assert_eq!(
+            load(&[], &[("HARNESS_DB_QUESTION_POLL_MS", "0")])
+                .unwrap()
+                .db_question_poll_ms,
+            0
+        );
+        assert_eq!(
+            load(&[], &[("NEXUS_DB_QUESTION_POLL_MS", "500")])
+                .unwrap()
+                .db_question_poll_ms,
+            500
+        );
+        // Unbrauchbare Werte fallen auf den Standard zurück, wie bei den übrigen Takten
+        for raw in ["", "abc", "-1"] {
+            assert_eq!(
+                load(&[], &[("HARNESS_DB_QUESTION_POLL_MS", raw)])
+                    .unwrap()
+                    .db_question_poll_ms,
+                DEFAULT_DB_QUESTION_POLL_MS,
+                "{raw}"
+            );
+        }
+    }
+
+    #[test]
+    fn im_vertragsmodus_bleibt_die_fragen_beobachtung_aus() {
+        let config = load(
+            &[],
+            &[
+                ("NEXUS_SERVER_VERSION", CONTRACT_VERSION),
+                ("HARNESS_DB_QUESTION_POLL_MS", "500"),
+            ],
+        )
+        .unwrap();
+        assert!(config.is_contract());
+        assert_eq!(config.db_question_poll_ms, 0);
+    }
+
+    #[test]
+    fn nimmt_den_bildordner_aus_der_umgebung_sonst_den_des_crates() {
+        assert_eq!(
+            load(&[], &[("NEXUS_TOAST_DIR", "/n/toast")])
+                .unwrap()
+                .toast_dir,
+            std::path::Path::new("/n/toast")
+        );
+        assert_eq!(
+            load(&[], &[("HARNESS_TOAST_DIR", "/h/toast")])
+                .unwrap()
+                .toast_dir,
+            std::path::Path::new("/h/toast")
+        );
+        // Ohne Angabe steht dort ein Ordner mit dem Symbol der App
+        let ohne = load(&[], &[]).unwrap();
+        assert!(
+            ohne.toast_dir.join(TOAST_MARKER).is_file(),
+            "{}",
+            ohne.toast_dir.display()
+        );
     }
 
     #[test]

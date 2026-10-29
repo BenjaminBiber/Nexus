@@ -20,6 +20,7 @@ pub mod guard;
 pub mod input;
 pub mod log;
 pub mod notices;
+pub mod notifications;
 pub mod projects;
 pub mod proxy;
 pub mod routes;
@@ -64,6 +65,8 @@ impl ServerHandle {
     pub async fn stop(self) {
         self.state.log.write("Server wird beendet.");
         self.state.shutdown.cancel();
+        // Vor dem Abbau der Board-Laufzeit anhalten, damit kein Durchlauf sie neu aufbaut
+        self.state.db_questions.stop();
         self.state.close_events();
         let _ = self.task.await;
         self.state.board.reset().await;
@@ -136,6 +139,8 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
         .map_err(nexus_core::Error::unexpected)?;
     let port = local.port();
     state.guard.allow_port(port);
+    // Bei Port 0 zeigen die Links in Meldungen erst jetzt auf den richtigen Port
+    state.notifications.set_port(port);
 
     let info = ServerInfoFile::new(state.home.clone());
     let eingetragen = info.claim(&ServerInfo {
@@ -164,6 +169,9 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
             proxied.join(", ")
         ));
     }
+
+    // Meldungen für neue Fragen und Recherchen der Board-Datenbank (Abstand 0 = aus)
+    state.db_questions.start();
 
     let router = routes::build_router(state.clone());
     let shutdown = state.shutdown.clone();

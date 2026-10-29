@@ -418,8 +418,14 @@ Verpasste **nicht** nach und erhält die folgenden Ereignisse wieder.
 | `docs-changed` | `PUT /api/projects/:pid/docs/section` im Repo des Boards. |
 
 Die Testmeldung geht nur an einen Strom mit `?notify=1`, solange einer offen ist; ohne einen solchen Strom
-würde der Server den Weg des Betriebssystems nehmen (Windows-Toast). Deshalb löst `notice` eine Testmeldung
+nimmt der Server den Weg des Betriebssystems (Systemmeldung). Deshalb löst `notice` eine Testmeldung
 immer nur bei offenem Strom aus.
+
+Ohne offenen Strom hängt die Antwort von `POST /api/user-settings/test-notification` am Rechner: Der
+TypeScript-Server meldet außerhalb von Windows „Windows-Benachrichtigungen gibt es nur unter Windows.“, der
+Rust-Server zeigt dort über `notify-rust` eine echte Meldung und antwortet mit `error: null`. Der Schritt
+„Testmeldung“ in `api/misc/notify.scenario.json` vergleicht deshalb mit `compare: "status"` nur den Status;
+die Form `{ ok: boolean, error: string | null }` ist durch die Routentests beider Umsetzungen abgedeckt.
 
 ## Golden-Format (`*.golden.json`)
 

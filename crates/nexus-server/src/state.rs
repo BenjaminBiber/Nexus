@@ -8,6 +8,7 @@ use std::collections::HashSet;
 use std::sync::Arc;
 
 use nexus_core::docs::SuperpowersDocScanner;
+use nexus_core::settings::UserSettingsStore;
 use nexus_core::HarnessHome;
 use nexus_platform::Platform;
 use tokio_util::sync::CancellationToken;
@@ -24,6 +25,9 @@ use crate::events::{ChangeWatcher, EventHub, SpecDocWatcher, BRIDGED_EVENTS};
 use crate::guard::RequestGuard;
 use crate::log::ServerLog;
 use crate::notices::BrowserNoticeHub;
+use crate::notifications::{
+    DbQuestionWatch, NotificationService, NotificationSetup, NtfySender, Query,
+};
 use crate::projects::ProjectService;
 use crate::proxy::Upstream;
 
@@ -59,8 +63,12 @@ pub struct AppState {
     pub question_changes: Arc<ChangeWatcher>,
     /// Beobachtet die Superpowers-Dokumente jedes Projekts mit offenem Strom
     pub spec_docs: Arc<SpecDocWatcher>,
-    /// Offene Tabs mit `notify=1`; P4-11 stellt darüber die Meldungen zu
+    /// Offene Tabs mit `notify=1`; die Meldungen gehen zuerst dorthin
     pub notice_tabs: Arc<BrowserNoticeHub>,
+    /// Systemmeldungen, Tab-Meldungen und ntfy
+    pub notifications: Arc<NotificationService>,
+    /// Beobachtet die offenen eigenen Fragen der Board-Datenbank
+    pub db_questions: Arc<DbQuestionWatch>,
     /// Ereignisse, die noch im Node-Server entstehen und deshalb gebrückt werden
     pub bridged_events: HashSet<&'static str>,
     /// Node-Server, an den alles Unbekannte geht; `None` = kein Proxy
@@ -98,6 +106,21 @@ impl AppState {
             .as_deref()
             .map(Upstream::parse)
             .transpose()?;
+        // Offene Tabs zeigen Meldungen selbst (der Klick bleibt im Tab); nur ohne Tab geht
+        // die Meldung den Weg des Betriebssystems
+        let notice_tabs = BrowserNoticeHub::new();
+        let notifications = Arc::new(NotificationService::new(NotificationSetup {
+            settings: UserSettingsStore::new(config.home.clone()),
+            notifier: platform.notifier.clone(),
+            assets_dir: config.toast_dir.clone(),
+            host: config.host.clone(),
+            port: config.port,
+            log: ServerLog::new(&config.home),
+            tabs: Some(notice_tabs.clone()),
+            // Der Vertrag prüft ntfy gegen eine Attrappe im eigenen Netz; der Abruf bleibt
+            // deshalb auch dort der echte
+            ntfy: NtfySender::default(),
+        }));
         // Die Watcher fragen über den Zustand ab, in dem sie selbst liegen; sie halten ihn
         // deshalb nur schwach – sonst hielte sich der Zustand selbst am Leben
         Ok(Arc::new_cyclic(|weak: &std::sync::Weak<AppState>| Self {
@@ -144,7 +167,14 @@ impl AppState {
                 config.db_poll_ms,
             ),
             spec_docs: SpecDocWatcher::new(signature_of(weak), config.docs_poll_ms),
-            notice_tabs: BrowserNoticeHub::new(),
+            db_questions: DbQuestionWatch::new(
+                notifiable_questions(weak),
+                reachable_projects(weak),
+                notifications.clone(),
+                config.db_question_poll_ms,
+            ),
+            notifications,
+            notice_tabs,
             bridged_events: BRIDGED_EVENTS.into_iter().collect(),
             upstream,
             shutdown: CancellationToken::new(),
@@ -162,6 +192,40 @@ impl AppState {
         self.spec_docs.close();
         self.notice_tabs.close();
     }
+}
+
+/// Die offenen eigenen Fragen der Board-Datenbank; hält den Zustand nur schwach
+fn notifiable_questions(
+    weak: &std::sync::Weak<AppState>,
+) -> Query<Vec<nexus_core::board::question_types::NotifiableBoardQuestion>> {
+    let weak = weak.clone();
+    Arc::new(move || {
+        let weak = weak.clone();
+        Box::pin(async move {
+            let state = weak.upgrade().ok_or_else(gone)?;
+            state
+                .board
+                .run(|backend| async move {
+                    let owner = backend.actor(None).user_id.clone();
+                    backend.services().questions.notifiable(&owner).await
+                })
+                .await
+        })
+    })
+}
+
+/// Die angemeldeten Projekte samt Erreichbarkeit; hält den Zustand nur schwach
+fn reachable_projects(
+    weak: &std::sync::Weak<AppState>,
+) -> Query<Vec<nexus_core::registry::ProjectState>> {
+    let weak = weak.clone();
+    Arc::new(move || {
+        let weak = weak.clone();
+        Box::pin(async move {
+            let state = weak.upgrade().ok_or_else(gone)?;
+            state.projects.list()
+        })
+    })
 }
 
 /// Baut eine Kennwert-Abfrage, die den Zustand nur schwach hält; ist er weg, endet der

@@ -3,8 +3,8 @@
 //! BoardConfig}Routes.ts`.
 //!
 //! Die beiden Testmeldungen der Benutzereinstellungen (`POST /api/user-settings/
-//! test-notification` und `…/test-ntfy`) bleiben bis P4-11 beim Node-Server: hier wird nur
-//! `/api/user-settings` selbst angemeldet, die Unterpfade fallen in den Proxy.
+//! test-notification` und `…/test-ntfy`) gehören zur Gruppe `notifications`
+//! ([`crate::routes::notifications`]); hier wird nur `/api/user-settings` selbst angemeldet.
 
 use std::sync::Arc;
 

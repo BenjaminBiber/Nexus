@@ -28,6 +28,10 @@ tower = { workspace = true }
 tower-http = { workspace = true }
 # Vorschlags-GUID der noch nicht eingerichteten Board-Konfig
 uuid = { workspace = true }
+# Push-Meldungen an ntfy
+reqwest = { workspace = true }
+# Reihenfolge des ersten Auftretens wie bei einer `Map` in JavaScript
+indexmap = { workspace = true }
 
 # Der Test-Ersatz nexus-fake-claude legt sich für einen Modus in eine eigene Prozessgruppe
 [target.'cfg(unix)'.dependencies]

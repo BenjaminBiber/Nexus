@@ -71,6 +71,14 @@ tower-http = { version = "0.6", features = ["fs", "catch-panic"] }
 hyper = { version = "1", features = ["client", "http1"] }
 hyper-util = { version = "0.1", features = ["client-legacy", "http1", "tokio"] }
 http-body-util = "0.1"
+# ntfy schickt seine Push-Meldungen über HTTP; rustls statt OpenSSL, damit nichts vom System
+# gebraucht wird.
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "charset", "http2"] }
+# Systemmeldungen auf macOS und Linux (unter Windows geht es über WinRT)
+notify-rust = "4"
+# WinRT-Toasts und die AUMID-Registrierung unter Windows
+windows = { version = "0.62", features = ["UI_Notifications", "Data_Xml_Dom"] }
+windows-registry = "0.6"
 nexus-core = { path = "crates/nexus-core" }
 nexus-db = { path = "crates/nexus-db" }
 nexus-server = { path = "crates/nexus-server" }

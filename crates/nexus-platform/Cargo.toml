@@ -13,6 +13,14 @@ thiserror = { workspace = true }
 
 [target.'cfg(windows)'.dependencies]
 tokio = { workspace = true }
+# WinRT-Toasts samt AUMID-Eintrag in der Registrierung
+windows = { workspace = true }
+windows-registry = { workspace = true }
+
+# Systemmeldungen über D-Bus (Linux) bzw. das Mitteilungszentrum (macOS)
+[target.'cfg(not(windows))'.dependencies]
+notify-rust = { workspace = true }
+tokio = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }

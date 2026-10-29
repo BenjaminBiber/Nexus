@@ -12,6 +12,7 @@ pub mod docs;
 pub mod docs_claude;
 pub mod events;
 pub mod health;
+pub mod notifications;
 pub mod questions;
 pub mod settings;
 pub mod spec;
@@ -67,6 +68,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     }
     if state.config.proxy_groups.enabled(RouteGroup::DocsClaude) {
         router = router.merge(docs_claude::routes());
+    }
+    if state.config.proxy_groups.enabled(RouteGroup::Notifications) {
+        router = router.merge(notifications::routes());
     }
     if state.config.proxy_groups.enabled(RouteGroup::Workflow) {
         router = router.merge(workflow::routes());

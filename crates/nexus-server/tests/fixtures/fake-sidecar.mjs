@@ -26,6 +26,7 @@ const server = createServer((request, response) => {
           sidecar: process.env.HARNESS_SIDECAR ?? null,
           publicPort: process.env.HARNESS_PUBLIC_PORT ?? null,
           home: process.env.HARNESS_HOME ?? null,
+          dbQuestionPollMs: process.env.HARNESS_DB_QUESTION_POLL_MS ?? null,
           args: process.argv.slice(2),
         };
   const text = JSON.stringify(body);
