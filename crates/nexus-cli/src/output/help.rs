@@ -93,9 +93,27 @@ fn option_items(cmd: &Command) -> Vec<Item> {
     cmd.get_arguments()
         .filter(|arg| !arg.is_positional() && !arg.is_hide_set())
         .filter(|arg| !matches!(arg.get_id().as_str(), "help" | "version"))
-        .map(|arg| (option_term(arg), text_of(arg.get_help())))
+        .map(|arg| (option_term(arg), option_description(arg)))
         .chain([(HELP_TERM.to_string(), HELP_DESCRIPTION.to_string())])
         .collect()
+}
+
+/// Beschreibung einer Option; einen Standardwert hängt commander wie in JavaScript an.
+/// Schalter zählen nicht: clap gibt ihnen „false“ als Standard, commander nennt dafür nichts.
+fn option_description(arg: &Arg) -> String {
+    let help = text_of(arg.get_help());
+    if !takes_value(arg) {
+        return help;
+    }
+    match arg.get_default_values().first() {
+        Some(value) => format!("{help} (default: \"{}\")", value.to_string_lossy()),
+        None => help,
+    }
+}
+
+/// Nimmt die Option einen eigenen Wert an?
+fn takes_value(arg: &Arg) -> bool {
+    arg.get_num_args().is_some_and(|range| range.takes_values())
 }
 
 /// Unterbefehle, die nicht versteckt sind
@@ -154,10 +172,7 @@ fn command_term(cmd: &Command) -> String {
 
 /// Platzhalter für den Wert einer Option, falls sie einen braucht
 fn value_placeholder(arg: &Arg) -> Option<String> {
-    let range = arg.get_num_args()?;
-    if !range.takes_values() {
-        return None;
-    }
+    let range = arg.get_num_args().filter(|range| range.takes_values())?;
     let name = arg
         .get_value_names()
         .and_then(|names| names.first())

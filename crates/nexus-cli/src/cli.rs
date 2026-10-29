@@ -146,6 +146,30 @@ pub enum Commands {
         no_node: bool,
     },
 
+    /// Kommentare zu Spec- und Plan-Dokumenten abarbeiten
+    #[command(
+        name = "spec",
+        about = commands::spec::SPEC_ABOUT,
+        disable_help_flag = true,
+        disable_help_subcommand = true
+    )]
+    Spec {
+        #[command(subcommand)]
+        sub: commands::spec::SpecCommands,
+    },
+
+    /// Den laufenden Server beenden
+    #[command(
+        name = "stop",
+        about = commands::stop::STOP_ABOUT,
+        after_help = commands::stop::STOP_EXAMPLES,
+        disable_help_flag = true
+    )]
+    Stop {
+        #[arg(long, help = "Startet den Server auf demselben Port neu, wenn er lief")]
+        restart: bool,
+    },
+
     /// `harness` im normalen Terminal verfügbar machen
     #[command(
         name = "install",
@@ -255,7 +279,7 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
         }
         Some(Commands::Init) => commands::init::run(&context),
         Some(Commands::Board { port, no_open, sub }) => match sub {
-            Some(sub) => commands::board::run(&context, &sub),
+            Some(sub) => commands::board::run(&context, port.as_deref(), &sub, root),
             None => commands::board::open::run(&context, port.as_deref(), !no_open),
         },
         Some(Commands::Serve {
@@ -272,6 +296,8 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
                 no_node,
             },
         ),
+        Some(Commands::Spec { sub }) => commands::spec::run(&context, &sub),
+        Some(Commands::Stop { restart }) => commands::stop::run(&context, restart),
         Some(Commands::Install { no_path }) => commands::install::run(&context, !no_path),
         Some(Commands::Customize(args)) => commands::customize::run(&context, args),
         Some(Commands::DispatchWorker { lauf }) => commands::dispatch_worker::run(&context, &lauf),

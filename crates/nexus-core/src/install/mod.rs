@@ -8,6 +8,7 @@ pub mod launcher_writer;
 pub mod plugin_switch;
 pub mod project_rule;
 pub mod project_rules;
+pub mod server_stopper;
 pub mod shell_profile_path;
 pub mod user_path;
 // Nur unter Windows: der Eintrag läuft über ein PowerShell-Skript auf der Registry
@@ -20,6 +21,7 @@ pub use launcher_writer::{LauncherWriter, BINARY_NAME};
 pub use plugin_switch::{ProjectPluginSwitch, PLUGIN_ID};
 pub use project_rule::{ProjectRule, ProjectRuleSpec, BOARD_RULE_PATH, DOCS_RULE_PATH};
 pub use project_rules::{ProjectRules, PROJECT_RULE_PATHS};
+pub use server_stopper::{ServerStopper, StopDeps};
 pub use shell_profile_path::ShellProfilePath;
 pub use user_path::UserPath;
 #[cfg(windows)]

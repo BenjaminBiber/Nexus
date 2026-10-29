@@ -8,6 +8,7 @@ pub mod clock;
 pub mod counter;
 pub mod customization;
 pub mod dispatch;
+pub mod docs;
 pub mod error;
 pub mod favorites;
 pub mod git;
