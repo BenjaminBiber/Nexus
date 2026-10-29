@@ -1,6 +1,19 @@
 //! Kleine Texthelfer für Meldungen und Längen. Wichtig: JavaScript zählt `string.length`
 //! und schneidet mit `slice` in UTF-16-Einheiten, `nvarchar(n)` in SQL Server ebenso.
 //! Rust zählt sonst Bytes oder Zeichen – deshalb die beiden Funktionen hier.
+//!
+//! Daneben die Texthelfer mit eigener Datei: Ausschnitte der Suche, Kurztitel und die
+//! Eingabe aus Datei oder Standardeingabe.
+
+pub mod search_snippet;
+pub mod slug_builder;
+pub mod text_source;
+
+use std::cmp::Ordering;
+
+pub use search_snippet::{SearchSnippet, Snippet, SnippetCut};
+pub use slug_builder::SlugBuilder;
+pub use text_source::TextSource;
 
 /// Länge in UTF-16-Einheiten, also die Zahl, die JavaScript als `value.length` liefert
 pub fn utf16_len(value: &str) -> usize {
@@ -47,6 +60,54 @@ pub fn utf16_slice(value: &str, start: usize, len: usize) -> &str {
 /// `None` statt -1, wenn der Text nicht vorkommt
 pub fn utf16_index_of(value: &str, needle: &str) -> Option<usize> {
     value.find(needle).map(|byte| utf16_len(&value[..byte]))
+}
+
+/// Vergleicht zwei IDs aufsteigend; Ziffernfolgen zählen als Zahl, alles andere zeichenweise –
+/// wie `localeCompare(…, { numeric: true })` in TypeScript (`ARC-0009` steht damit vor
+/// `ARC-0010`)
+pub fn natural_cmp(a: &str, b: &str) -> Ordering {
+    let (mut left, mut right) = (a.chars().peekable(), b.chars().peekable());
+    loop {
+        match (left.peek().copied(), right.peek().copied()) {
+            (None, None) => return Ordering::Equal,
+            (None, Some(_)) => return Ordering::Less,
+            (Some(_), None) => return Ordering::Greater,
+            (Some(x), Some(y)) if x.is_ascii_digit() && y.is_ascii_digit() => {
+                let a_digits = take_digits(&mut left);
+                let b_digits = take_digits(&mut right);
+                // Führende Nullen zählen nicht: erst die Zahl der Ziffern, dann die Ziffern
+                let a_value = a_digits.trim_start_matches('0');
+                let b_value = b_digits.trim_start_matches('0');
+                let order = a_value
+                    .len()
+                    .cmp(&b_value.len())
+                    .then_with(|| a_value.cmp(b_value));
+                if order != Ordering::Equal {
+                    return order;
+                }
+            }
+            (Some(x), Some(y)) => {
+                left.next();
+                right.next();
+                if x != y {
+                    return x.cmp(&y);
+                }
+            }
+        }
+    }
+}
+
+/// Die nächste Ziffernfolge
+fn take_digits(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> String {
+    let mut digits = String::new();
+    while let Some(c) = chars.peek().copied() {
+        if !c.is_ascii_digit() {
+            break;
+        }
+        digits.push(c);
+        chars.next();
+    }
+    digits
 }
 
 /// Zählt erlaubte Werte in Meldungen auf, wie JavaScript `array.join(', ')`

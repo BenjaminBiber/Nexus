@@ -13,6 +13,7 @@ pub mod dispatch_run_contract;
 pub mod fixtures;
 pub mod question_contract;
 pub mod recording_unit;
+pub mod search_contract;
 
 pub use board_fixture::BoardFixture;
 pub use fixtures::*;

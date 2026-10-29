@@ -30,6 +30,7 @@ pub mod repo_board_resolver;
 pub mod repo_file;
 pub mod repo_paths;
 pub mod search_match;
+pub mod search_service;
 pub mod search_types;
 pub mod services;
 pub mod spec_progress;
@@ -77,6 +78,7 @@ pub use repo_paths::{
     RepoPathTarget,
 };
 pub use search_match::{BoardSearchMatch, SearchExcerpt};
+pub use search_service::{BoardSearchService, SearchInput};
 pub use search_types::*;
 pub use services::BoardServices;
 pub use spec_progress::{SpecProgress, SpecProgressCount};
