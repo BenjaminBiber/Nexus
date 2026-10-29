@@ -14,6 +14,7 @@ pub mod merge_service;
 pub mod merge_step;
 pub mod notifier;
 pub mod plan_runner;
+pub mod prompt_catalog;
 pub mod prompt_values;
 pub mod research_runner;
 pub mod result_envelope;
@@ -37,8 +38,11 @@ pub use merge_git::{MergeGit, RealMergeGit};
 pub use merge_result::{MergeResultReader, MergeRetryOutcome, MergeRetryResult};
 pub use merge_service::MergeService;
 pub use merge_step::{AcceptOutcome, MergeStep, MergeStepReport, NoMergeStep};
-pub use notifier::{DispatchNotice, DispatchNoticeKind, DispatchNotify, NoDispatchNotify};
+pub use notifier::{
+    DispatchNotice, DispatchNoticeKind, DispatchNotify, NoDispatchNotify, ServerDispatchNotify,
+};
 pub use plan_runner::{PlanAutoReport, PlanOutcome, PlanRunner, PLANNING_RETRY_MINUTES};
+pub use prompt_catalog::{DispatchPromptInfo, PromptCatalog};
 pub use prompt_values::{PromptValues, SampleValues};
 pub use research_runner::{
     ResearchAutoReport, ResearchOutcome, ResearchRunner, StartMode, RESEARCH_RETRY_MINUTES,
@@ -54,7 +58,7 @@ pub use run_recorder::{AbortInfo, HandleOutcome, HandleResult, RunRecorder, Star
 pub use scheduler::{DispatchScheduler, DispatchTick, LogLine, STOP_WAIT};
 pub use service::{
     AliveCheck, DispatchReport, DispatchService, DispatchServiceDeps, EvaluatedRun,
-    MergeRetryReport,
+    MergeRetryReport, PromptPreview, PromptPreviewInput,
 };
 pub use status::{
     DispatchMergeInfo, DispatchPlanningInfo, DispatchResearchInfo, DispatchRunInfo, DispatchRunLog,
@@ -63,7 +67,7 @@ pub use status::{
 };
 pub use ticket_starter::{StartOutcome, TicketStarter};
 pub use worker::DispatchWorker;
-pub use worker_launcher::{ProcessWorkerLauncher, WorkerLauncher};
+pub use worker_launcher::{NoWorkerLauncher, ProcessWorkerLauncher, WorkerLauncher};
 pub use worktree_setup::{
     SetupFailure, SetupInput, SetupOutcome, WorktreeSetupRunner, WorktreeSetupStep,
 };

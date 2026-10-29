@@ -13,6 +13,7 @@ use std::time::Duration;
 use common::memory_board;
 use nexus_core::HarnessHome;
 use nexus_platform::Platform;
+use nexus_server::config::DispatchBackend;
 use nexus_server::config::ServerConfig;
 use nexus_server::sidecar::{NodeSidecar, SidecarSpec, PORT_LINE};
 
@@ -115,9 +116,16 @@ async fn liest_die_port_zeile_und_wartet_auf_health() {
     let dir = tempfile::tempdir().unwrap();
     let home = HarnessHome::at(dir.path());
 
-    let sidecar = NodeSidecar::start_waiting(&spec(), &home, 4710, PORT_WAIT, HEALTH_WAIT)
-        .await
-        .expect("Sidecar startet");
+    let sidecar = NodeSidecar::start_waiting(
+        &spec(),
+        &home,
+        4710,
+        DispatchBackend::Node,
+        PORT_WAIT,
+        HEALTH_WAIT,
+    )
+    .await
+    .expect("Sidecar startet");
     assert!(sidecar.port > 0, "Port {} gelesen", sidecar.port);
 
     // Der Ersatz nennt die Umgebung, die er bekommen hat: Sidecar-Modus, öffentlicher Port,
@@ -128,6 +136,8 @@ async fn liest_die_port_zeile_und_wartet_auf_health() {
     assert!(text.contains(r#""publicPort":"4710""#), "{text}");
     // Die Fragen der Board-Datenbank beobachtet nur der Rust-Server
     assert!(text.contains(r#""dbQuestionPollMs":"0""#), "{text}");
+    // Bei `node` dispatcht der Sidecar selbst; sein Takt bleibt deshalb unangetastet
+    assert!(text.contains(r#""dispatchTickMs":null"#), "{text}");
     assert!(
         text.contains(&format!("\"{}\"", dir.path().to_string_lossy())),
         "{text}"
@@ -142,6 +152,29 @@ async fn liest_die_port_zeile_und_wartet_auf_health() {
 }
 
 #[tokio::test]
+async fn mit_rust_als_dispatcher_startet_der_sidecar_ohne_takt() {
+    let Some(_) = node() else { return };
+    let dir = tempfile::tempdir().unwrap();
+    let home = HarnessHome::at(dir.path());
+
+    let sidecar = NodeSidecar::start_waiting(
+        &spec(),
+        &home,
+        4710,
+        DispatchBackend::Rust,
+        PORT_WAIT,
+        HEALTH_WAIT,
+    )
+    .await
+    .expect("Sidecar startet");
+    let (status, text) = fetch(sidecar.port, "/api/echo").await;
+    assert_eq!(status, 200, "{text}");
+    // Dispatcht der Rust-Server, taktet der Node-Server nicht mehr
+    assert!(text.contains(r#""dispatchTickMs":"0""#), "{text}");
+    sidecar.stop().await;
+}
+
+#[tokio::test]
 async fn der_rust_server_leitet_anfragen_an_den_sidecar_weiter() {
     let Some(_) = node() else { return };
     let dir = tempfile::tempdir().unwrap();
@@ -149,9 +182,16 @@ async fn der_rust_server_leitet_anfragen_an_den_sidecar_weiter() {
 
     let listener = nexus_server::bind("127.0.0.1", 0).await.expect("Port");
     let public = listener.local_addr().unwrap().port();
-    let sidecar = NodeSidecar::start_waiting(&spec(), &home, public, PORT_WAIT, HEALTH_WAIT)
-        .await
-        .expect("Sidecar startet");
+    let sidecar = NodeSidecar::start_waiting(
+        &spec(),
+        &home,
+        public,
+        DispatchBackend::Node,
+        PORT_WAIT,
+        HEALTH_WAIT,
+    )
+    .await
+    .expect("Sidecar startet");
 
     let mut config = ServerConfig::new(public, home.clone());
     config.version = "test".into();
@@ -181,9 +221,16 @@ async fn das_beenden_raeumt_den_kindprozess_ab() {
     let dir = tempfile::tempdir().unwrap();
     let home = HarnessHome::at(dir.path());
 
-    let sidecar = NodeSidecar::start_waiting(&spec(), &home, 4710, PORT_WAIT, HEALTH_WAIT)
-        .await
-        .expect("Sidecar startet");
+    let sidecar = NodeSidecar::start_waiting(
+        &spec(),
+        &home,
+        4710,
+        DispatchBackend::Node,
+        PORT_WAIT,
+        HEALTH_WAIT,
+    )
+    .await
+    .expect("Sidecar startet");
     let port = sidecar.port;
     let pid = sidecar.pid().expect("Prozessnummer");
     assert!(lebt(pid));
@@ -211,9 +258,16 @@ async fn ohne_port_zeile_endet_der_start_mit_einem_verstaendlichen_fehler() {
     // Der Ersatz schweigt; der Rust-Server kann den Port nicht erfahren
     let mut stumm = spec();
     stumm.args.push("--silent".to_string());
-    let error = NodeSidecar::start_waiting(&stumm, &home, 4710, PORT_WAIT, HEALTH_WAIT)
-        .await
-        .unwrap_err();
+    let error = NodeSidecar::start_waiting(
+        &stumm,
+        &home,
+        4710,
+        DispatchBackend::Node,
+        PORT_WAIT,
+        HEALTH_WAIT,
+    )
+    .await
+    .unwrap_err();
     assert_eq!(error.code(), Some("server-start-failed"));
     let message = error.to_string();
     assert!(message.contains(PORT_LINE), "{message}");

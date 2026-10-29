@@ -31,6 +31,17 @@ pub trait WorkerLauncher: std::fmt::Debug + Send + Sync {
     fn launch(&self, run_id: &str, env: &BTreeMap<String, String>) -> Result<Option<u32>>;
 }
 
+/// Startet nie einen Prozess und liefert keine Prozessnummer – der Vertragsmodus
+/// (`contract/README.md`: „es wird **nie** ein Prozess gestartet“).
+#[derive(Debug, Clone, Copy, Default)]
+pub struct NoWorkerLauncher;
+
+impl WorkerLauncher for NoWorkerLauncher {
+    fn launch(&self, _run_id: &str, _env: &BTreeMap<String, String>) -> Result<Option<u32>> {
+        Ok(None)
+    }
+}
+
 /// Startet dieselbe Programmdatei wie der Server mit `dispatch-worker <lauf>`.
 #[derive(Debug, Clone)]
 pub struct ProcessWorkerLauncher {

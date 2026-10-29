@@ -23,6 +23,7 @@ use nexus_core::{HarnessError, HarnessHome, Result};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 
+use crate::config::DispatchBackend;
 use crate::log::ServerLog;
 
 /// Zeile, mit der der Node-Server seinen gewählten Port meldet
@@ -119,8 +120,13 @@ impl NodeSidecar {
     /// `public_port` ist der Port des Rust-Servers; der Node-Server braucht ihn für die Links in
     /// seinen Meldungen. Antwortet er nicht rechtzeitig, kommt `server-start-failed` und der
     /// Kindprozess wird abgeräumt.
-    pub async fn start(spec: &SidecarSpec, home: &HarnessHome, public_port: u16) -> Result<Self> {
-        Self::start_waiting(spec, home, public_port, PORT_WAIT, HEALTH_WAIT).await
+    pub async fn start(
+        spec: &SidecarSpec,
+        home: &HarnessHome,
+        public_port: u16,
+        dispatch: DispatchBackend,
+    ) -> Result<Self> {
+        Self::start_waiting(spec, home, public_port, dispatch, PORT_WAIT, HEALTH_WAIT).await
     }
 
     /// Wie [`Self::start`], aber mit eigenen Fristen (Tests)
@@ -128,6 +134,7 @@ impl NodeSidecar {
         spec: &SidecarSpec,
         home: &HarnessHome,
         public_port: u16,
+        dispatch: DispatchBackend,
         port_wait: Duration,
         health_wait: Duration,
     ) -> Result<Self> {
@@ -150,6 +157,11 @@ impl NodeSidecar {
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
             .kill_on_drop(true);
+        // Dispatcht der Rust-Server, bleibt der Takt des Node-Servers aus; sonst schrieben
+        // zwei Dispatcher dieselben Läufe
+        if dispatch.is_rust() {
+            command.env("HARNESS_DISPATCH_TICK_MS", "0");
+        }
         let mut group = ProcessGroup::spawn(&mut command).map_err(|error| {
             HarnessError::new(
                 "server-start-failed",

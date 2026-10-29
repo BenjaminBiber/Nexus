@@ -16,6 +16,10 @@ use tokio_util::sync::CancellationToken;
 use crate::board_runtime::{BoardBackendFactory, BoardRuntimeHolder};
 use crate::config::ServerConfig;
 use crate::dispatch::claude_runner::ClaudeRunners;
+use crate::dispatch::{
+    DispatchScheduler, DispatchService, DispatchServiceDeps, NoWorkerLauncher,
+    ProcessWorkerLauncher, ServerDispatchNotify, WorkerLauncher,
+};
 use crate::docs::{
     DocQuestionService, DocRevisionService, DocTicketService, DocsRootResolver, DocsService,
     SavedTicketDrafts, TicketDraftService,
@@ -37,7 +41,11 @@ pub struct AppState {
     pub home: HarnessHome,
     pub guard: RequestGuard,
     pub projects: ProjectService,
-    pub board: BoardRuntimeHolder,
+    pub board: Arc<BoardRuntimeHolder>,
+    /// Der Dispatcher: Durchläufe, Steuerung, Merge und Review
+    pub dispatch: Arc<DispatchService>,
+    /// Takt des Dispatchers; [`crate::serve`] startet ihn, das Herunterfahren hält ihn an
+    pub dispatch_scheduler: Arc<DispatchScheduler>,
     /// Dokumente des Boards: lesen, durchsuchen, Abschnitte schreiben. Der Dienst gehört in
     /// den Zustand, weil er die laufenden Schreibvorgänge je Datei kennt
     pub docs: DocsService,
@@ -123,11 +131,41 @@ impl AppState {
         }));
         // Die Watcher fragen über den Zustand ab, in dem sie selbst liegen; sie halten ihn
         // deshalb nur schwach – sonst hielte sich der Zustand selbst am Leben
+        let board = Arc::new(BoardRuntimeHolder::new(board));
+        // Im Vertragsmodus startet nie ein Worker; sonst startet er dieselbe Programmdatei
+        let launcher: Arc<dyn WorkerLauncher> = match config.dispatch_launcher.clone() {
+            Some(launcher) => launcher,
+            None if config.is_contract() => Arc::new(NoWorkerLauncher),
+            None => Arc::new(ProcessWorkerLauncher::new()?),
+        };
+        let projects = ProjectService::new(config.home.clone());
+        // Der Dispatcher meldet über dieselben Benachrichtigungen wie der Server; die Adresse
+        // zeigt ins Projekt des Board-Repos
+        let dispatch = Arc::new(DispatchService::new(DispatchServiceDeps {
+            notifier: Arc::new(ServerDispatchNotify::new(
+                ProjectService::new(config.home.clone()),
+                notifications.clone(),
+            )),
+            clock: config.clock.clone(),
+            ..DispatchServiceDeps::new(config.home.clone(), board.clone(), launcher)
+        }));
+        let dispatch_scheduler = Arc::new(
+            DispatchScheduler::new(
+                dispatch.clone(),
+                std::time::Duration::from_millis(config.dispatch_tick_ms),
+            )
+            .with_log({
+                let log = ServerLog::new(&config.home);
+                Arc::new(move |line: &str| log.write(line))
+            }),
+        );
         Ok(Arc::new_cyclic(|weak: &std::sync::Weak<AppState>| Self {
             home: config.home.clone(),
             guard: RequestGuard::new(config.port),
-            projects: ProjectService::new(config.home.clone()),
-            board: BoardRuntimeHolder::new(board),
+            projects,
+            board,
+            dispatch,
+            dispatch_scheduler,
             docs: DocsService::new(),
             doc_drafts: SavedTicketDrafts::new(config.home.clone()),
             doc_tickets: DocTicketService::new(),

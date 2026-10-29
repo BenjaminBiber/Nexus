@@ -25,11 +25,12 @@ pub enum RouteGroup {
     Sessions,
     Workflow,
     Notifications,
+    Dispatch,
 }
 
 impl RouteGroup {
     /// Alle Gruppen in der Reihenfolge des Migrationsplans
-    pub const ALL: [RouteGroup; 12] = [
+    pub const ALL: [RouteGroup; 13] = [
         RouteGroup::Basis,
         RouteGroup::Settings,
         RouteGroup::DbBoards,
@@ -42,6 +43,7 @@ impl RouteGroup {
         RouteGroup::Sessions,
         RouteGroup::Workflow,
         RouteGroup::Notifications,
+        RouteGroup::Dispatch,
     ];
 
     /// Name der Gruppe, wie er in `NEXUS_PROXY_GROUPS` steht
@@ -59,6 +61,7 @@ impl RouteGroup {
             RouteGroup::Sessions => "sessions",
             RouteGroup::Workflow => "workflow",
             RouteGroup::Notifications => "notifications",
+            RouteGroup::Dispatch => "dispatch",
         }
     }
 
