@@ -29,6 +29,7 @@ use nexus_platform::Platform;
 use nexus_server::board_db::{ServerBoardDatabase, ServerBoardServices};
 use nexus_server::board_runtime::{BoardBackend, BoardBackendFactory, BoardBackendFuture};
 use nexus_server::config::ServerConfig;
+use nexus_server::dispatch::{ClaudeRunInput, ClaudeRunner, ClaudeRunners, RunResult};
 use nexus_server::groups::RouteGroups;
 use nexus_server::routes::build_router;
 use nexus_server::state::AppState;
@@ -85,6 +86,9 @@ pub struct TestServerOptions {
     /// Die Board-Laufzeit aus `board.yaml` statt der im Speicher: nur so prüfen Tests die
     /// Antworten ohne und mit kaputter Konfig
     pub board_from_config: bool,
+    /// Der Start von Claude; ohne Angabe der echte Prozess (Tests der Docs-Routen setzen hier
+    /// immer Attrappen ein, damit nie das echte `claude` startet)
+    pub claude: Option<ClaudeRunners>,
     /// Uhr des Servers; ohne Angabe die des Rechners
     pub clock: Option<Clock>,
 }
@@ -118,7 +122,8 @@ impl TestServer {
             }
         });
         let platform = options.platform.unwrap_or_else(Platform::fake);
-        let state = AppState::new(config, board, platform).expect("Zustand");
+        let claude = options.claude.unwrap_or_default();
+        let state = AppState::with_claude(config, board, platform, claude).expect("Zustand");
         TestServer {
             router: build_router(state.clone()),
             state,
@@ -648,4 +653,131 @@ pub fn memory_board() -> BoardBackendFactory {
     nexus_server::board_runtime::factory(|| -> BoardBackendFuture {
         Box::pin(async { Ok(MemoryBoardBackend::new("speicher") as Arc<dyn BoardBackend>) })
     })
+}
+
+/// Antwort von `claude -p --output-format json` mit diesem Text als Ergebnis; Gegenstück zu
+/// `reply()` in den TypeScript-Tests
+pub fn reply(result: &str, cost: f64) -> RunResult {
+    RunResult {
+        code: Some(0),
+        timed_out: false,
+        output: serde_json::json!({
+            "type": "result", "subtype": "success", "is_error": false,
+            "result": result, "total_cost_usd": cost,
+        })
+        .to_string(),
+    }
+}
+
+/// Ersatz für den Start von Claude: merkt sich die Läufe, antwortet der Reihe nach und kann den
+/// ersten Lauf hängen lassen (bis [`FakeClaude::release`] oder ein Abbruch kommt). Gegenstück zu
+/// den `run`-Attrappen in `TestServer.ts`.
+#[derive(Default)]
+pub struct FakeClaude {
+    /// Die Läufe in ihrer Reihenfolge (Anweisung, Argumente, Arbeitsordner)
+    calls: std::sync::Mutex<Vec<ClaudeRunInput>>,
+    /// Antworten der Reihe nach; ist keine mehr da, gilt die letzte noch einmal
+    replies: std::sync::Mutex<std::collections::VecDeque<RunResult>>,
+    /// Hängt der erste Lauf, bis er freigegeben oder abgebrochen wird?
+    hold: AtomicBool,
+    gate: tokio::sync::Notify,
+}
+
+impl FakeClaude {
+    /// Attrappe, die immer mit diesem Ergebnistext antwortet
+    pub fn replying(result: &str) -> Arc<Self> {
+        Arc::new(Self {
+            replies: std::sync::Mutex::new([reply(result, 0.02)].into()),
+            ..Self::default()
+        })
+    }
+
+    /// Attrappe, die der Reihe nach diese Ergebnisse liefert
+    pub fn with_replies(replies: Vec<RunResult>) -> Arc<Self> {
+        Arc::new(Self {
+            replies: std::sync::Mutex::new(replies.into()),
+            ..Self::default()
+        })
+    }
+
+    /// Lässt den ersten Lauf hängen, bis [`FakeClaude::release`] kommt oder er abgebrochen wird
+    pub fn hold_first(self: &Arc<Self>) -> Arc<Self> {
+        self.hold.store(true, Ordering::SeqCst);
+        self.clone()
+    }
+
+    /// Gibt den hängenden Lauf frei
+    pub fn release(&self) {
+        self.gate.notify_one();
+    }
+
+    /// Wartet, bis so viele Läufe begonnen haben (statt eines festen Schlafs)
+    pub async fn wait_for_calls(&self, count: usize) {
+        for _ in 0..2000 {
+            if self.calls() >= count {
+                return;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(5)).await;
+        }
+        panic!("Claude wurde nicht {count}-mal gerufen");
+    }
+
+    /// Wie oft Claude gerufen wurde
+    pub fn calls(&self) -> usize {
+        self.calls.lock().expect("Läufe").len()
+    }
+
+    /// Die Anweisung des letzten Laufs
+    pub fn last_prompt(&self) -> String {
+        self.last().prompt
+    }
+
+    /// Die Argumente des letzten Laufs
+    pub fn last_args(&self) -> Vec<String> {
+        self.last().args
+    }
+
+    /// Der letzte Lauf
+    pub fn last(&self) -> ClaudeRunInput {
+        self.calls
+            .lock()
+            .expect("Läufe")
+            .last()
+            .cloned()
+            .expect("ein Lauf")
+    }
+}
+
+#[async_trait]
+impl ClaudeRunner for FakeClaude {
+    async fn run(&self, input: ClaudeRunInput) -> RunResult {
+        let cancel = input.cancel.clone();
+        self.calls.lock().expect("Läufe").push(input);
+        if self.hold.swap(false, Ordering::SeqCst) {
+            match cancel {
+                Some(cancel) => {
+                    tokio::select! {
+                        _ = self.gate.notified() => {}
+                        _ = cancel.cancelled() => {}
+                    }
+                }
+                None => self.gate.notified().await,
+            }
+        }
+        let mut replies = self.replies.lock().expect("Antworten");
+        // Die letzte Antwort gilt weiter, damit spätere Läufe sofort antworten
+        if replies.len() > 1 {
+            replies.pop_front().expect("Antwort")
+        } else {
+            replies.front().cloned().unwrap_or_default()
+        }
+    }
+}
+
+/// Die Läufe des Zustands, beide über dieselbe Attrappe
+pub fn fake_runners(fake: Arc<FakeClaude>) -> ClaudeRunners {
+    ClaudeRunners {
+        ticket_draft: fake.clone(),
+        revise: fake,
+    }
 }

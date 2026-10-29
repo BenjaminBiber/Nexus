@@ -9,6 +9,7 @@ pub mod db_misc;
 pub mod db_tickets;
 pub mod doc_comments;
 pub mod docs;
+pub mod docs_claude;
 pub mod health;
 pub mod questions;
 pub mod settings;
@@ -59,6 +60,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
             .merge(docs::routes())
             .merge(doc_comments::routes())
             .merge(spec::routes());
+    }
+    if state.config.proxy_groups.enabled(RouteGroup::DocsClaude) {
+        router = router.merge(docs_claude::routes());
     }
     if state.config.proxy_groups.enabled(RouteGroup::Workflow) {
         router = router.merge(workflow::routes());
