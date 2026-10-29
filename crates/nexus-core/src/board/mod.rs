@@ -21,9 +21,12 @@ pub mod note_service;
 pub mod note_similarity;
 pub mod project_service;
 pub mod question_blocking;
+pub mod question_concern;
 pub mod question_ids;
+pub mod question_service;
 pub mod question_ticket_cleanup;
 pub mod question_types;
+pub mod question_views;
 pub mod repo_board_resolver;
 pub mod repo_file;
 pub mod repo_paths;
@@ -63,9 +66,15 @@ pub use note_service::{AddNoteOptions, NewNoteText, NoteService, TakeNoteOptions
 pub use note_similarity::{note_title, NoteSimilarity};
 pub use project_service::ProjectService;
 pub use question_blocking::BoardQuestionBlocking;
+pub use question_concern::{ConcernSubject, QuestionConcern};
 pub use question_ids::QuestionIds;
+pub use question_service::{
+    BoardQuestionChanges, BoardQuestionCounts, BoardQuestionList, BoardQuestionListFilter,
+    BoardQuestionListItem, BoardQuestionService, BoardQuestionWriteOptions, NewBoardQuestionInput,
+};
 pub use question_ticket_cleanup::{DeletedTicket, QuestionTicketCleanup};
 pub use question_types::*;
+pub use question_views::BoardQuestionViews;
 pub use repo_board_resolver::{RepoBoardOwner, RepoBoardResolver};
 pub use repo_file::{BoardRepoEntries, BoardRepoFile};
 pub use repo_paths::{

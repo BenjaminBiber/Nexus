@@ -36,6 +36,12 @@ export type BoardQuestionActor = { kind: AuthorKind, session: string | null, use
 export type BoardQuestionComment = { id: number, questionId: string, authorId: string, authorName: string, authorKind: AuthorKind, body: string, createdAt: string, };
 
 /**
+ * Zähler je Zustand über alle Fragen des Projekts (ohne Filter); `mine` = offene Fragen, die
+ * den Betrachter betreffen
+ */
+export type BoardQuestionCounts = { open: number, answered: number, discarded: number, mine: number, };
+
+/**
  * Entscheidung eines Menschen (beantwortet oder verworfen) mit Begründung
  */
 export type BoardQuestionDecision = { outcome: BoardQuestionDecisionOutcome, option: string | null, text: string | null, reason: string, byId: string, byName: string, at: string, };
@@ -72,6 +78,25 @@ type: BoardQuestionHistoryType, text: string, };
  * Arten von Verlaufseinträgen einer Frage
  */
 export type BoardQuestionHistoryType = "created" | "title" | "description" | "tags" | "occasion" | "tickets" | "depends" | "research" | "decided" | "discarded" | "reopened" | "ticket-deleted";
+
+/**
+ * Die Fragen eines Projekts samt Zählern
+ */
+export type BoardQuestionList = { questions: Array<BoardQuestionListItem>, counts: BoardQuestionCounts, };
+
+/**
+ * Frage der Liste mit Kennzeichnung „betrifft den Betrachter“ (eigene Frage, siehe
+ * [`QuestionConcern`])
+ */
+export type BoardQuestionListItem = { mine: boolean, projectKey: string, tickets: Array<BoardQuestionTicketRef>, waitingOn: Array<BoardQuestionWaiting>, ready: boolean, researched: boolean, optionCount: number, id: string, projectId: number, number: number, title: string, description: string, state: QuestionState, occasion: string | null, originKind: AuthorKind, originName: string, originSession: string | null, tags: Array<string>, 
+/**
+ * Betroffene Tickets, sortiert
+ */
+ticketIds: Array<string>, 
+/**
+ * Fragen oder Tickets, von denen die Klärung abhängt (Reihenfolge der Eingabe)
+ */
+dependsOn: Array<string>, decision: BoardQuestionDecision | null, createdAt: string, createdById: string, updatedAt: string, rev: number, };
 
 /**
  * Ein Lösungsvorschlag einer Recherche; Nummer fortlaufend je Frage (O1, O2, …)
