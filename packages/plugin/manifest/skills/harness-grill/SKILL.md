@@ -9,8 +9,8 @@ Du befragst den Benutzer so lange, bis ihr ein gemeinsames Verständnis habt. Da
 
 ## 0. Voraussetzungen prüfen
 
-- Lies, was im Projekt schon vorliegt: `GLOSSARY.md`, `docs/adr/`, vorhandene Specs unter `docs/superpowers/specs/`, die Tickets mit `harness board list --md`.
-- Meldet ein Befehl, dass das Projekt nicht eingerichtet ist, bitte den Benutzer, einmal `harness init` auszuführen, und warte.
+- Lies, was im Projekt schon vorliegt: `GLOSSARY.md`, `docs/adr/`, vorhandene Specs unter `docs/superpowers/specs/`, die Tickets mit `nexus board list --md`.
+- Meldet ein Befehl, dass das Projekt nicht eingerichtet ist, bitte den Benutzer, einmal `nexus init` auszuführen, und warte.
 
 ## 1. Befragung in Runden
 
@@ -42,9 +42,9 @@ Während des Gesprächs, nicht erst am Ende:
 
 Der Benutzer kommentiert die Superpowers-Dokumente, Glossar und ADRs in den Docs des Boards. Bevor du am Dokument arbeitest:
 
-1. `harness spec comments <dokument>` (ohne Angabe: alle Dokumente; sonst ein Dokumentpfad oder ein Thema) listet die offenen Kommentare mit Datei, Abschnitt, Stelle und Text.
+1. `nexus spec comments <dokument>` (ohne Angabe: alle Dokumente; sonst ein Dokumentpfad oder ein Thema) listet die offenen Kommentare mit Datei, Abschnitt, Stelle und Text.
 2. Arbeite jeden Kommentar in das genannte Dokument ein. Ist er unklar oder widerspricht er einem anderen Kommentar, frage den Benutzer, statt zu raten.
-3. Markiere ihn danach mit `harness spec resolve K-… "Was du geändert hast, in einem Satz"`. Die `*.comments.json`-Dateien bearbeitest du nie von Hand.
+3. Markiere ihn danach mit `nexus spec resolve K-… "Was du geändert hast, in einem Satz"`. Die `*.comments.json`-Dateien bearbeitest du nie von Hand.
 4. Nenne dem Benutzer am Ende, welche Kommentare du eingearbeitet hast.
 
 ## 3. Übergabe an die Spezifikation
@@ -53,7 +53,7 @@ Nach der bestätigten Zusammenfassung:
 
 1. Gib das Ergebnis kompakt aus: Ziel, Entscheidungen, Randfälle, geklärte Begriffe, offene Punkte.
 2. Weise auf den nächsten Schritt hin: Die Zusammenfassung wird die Spec unter `docs/superpowers/specs/JJJJ-MM-TT-<thema>-design.md` (committet), denn `/superpowers:writing-plans` plant aus einer Spec. Schreibe sie erst, wenn der Benutzer zustimmt, und starte `/superpowers:writing-plans` nicht selbst; der Benutzer entscheidet.
-3. Nenne danach den weiteren Weg: `/superpowers:writing-plans` schreibt den Plan unter `docs/superpowers/plans/`. Dann „Lege für die Tasks des Plans Tickets an“: Claude legt je Task ein Ticket an und plant es (Skill `ai-harness:board`, „Tickets aus einem Superpowers-Plan“). Danach folgt `/ai-harness:harness-implement` oder der Dispatcher.
+3. Nenne danach den weiteren Weg: `/superpowers:writing-plans` schreibt den Plan unter `docs/superpowers/plans/`. Dann „Lege für die Tasks des Plans Tickets an“: Claude legt je Task ein Ticket an und plant es (Skill `nexus:board`, „Tickets aus einem Superpowers-Plan“). Danach folgt `/nexus:harness-implement` oder der Dispatcher.
 4. Weise auf die Seite „Docs“ der Oberfläche hin: Dort sieht der Benutzer Spec und Plan und kann eine markierte Stelle kommentieren, mit „Bearbeiten“ ändern, mit „Mit Claude ändern“ umschreiben lassen oder mit „Zur Ticket-Auswahl“ für Ticket-Entwürfe sammeln.
 
 ## Regeln

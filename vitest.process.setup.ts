@@ -72,10 +72,10 @@ export async function setup(): Promise<void> {
   const dbGrund = await ProcessPreflight.unreachableTestDb(process.env.HARNESS_TEST_DB);
   if (dbGrund) throw new Error(dbGrund);
   // Eigener Plugin-Ausgabeordner je Lauf: weder `npm run build:plugin` noch eine Claude-Session
-  // können den Tests den geteilten Ordner packages/plugin/dist/ai-harness unter den Füßen wegziehen.
+  // können den Tests den geteilten Ordner packages/plugin/dist/nexus unter den Füßen wegziehen.
   laufOrdner = mkdtempSync(join(tmpdir(), 'harness-prozesslauf-'));
-  process.env.HARNESS_PLUGIN_OUT = join(laufOrdner, 'ai-harness');
-  process.env.HARNESS_NO_CUSTOM_DIR = join(laufOrdner, 'keine-anpassungen');
+  process.env.NEXUS_PLUGIN_OUT = join(laufOrdner, 'nexus');
+  process.env.NEXUS_NO_CUSTOM_DIR = join(laufOrdner, 'keine-anpassungen');
 }
 
 // globalSetup: räumt den Ordner dieses Laufs wieder weg

@@ -14,9 +14,14 @@ describe('ProjectRules', () => {
 
   afterEach(() => repo.dispose());
 
-  it('kennt die Orte beider Rules', () => {
-    expect(PROJECT_RULE_PATHS).toEqual(['.claude/rules/ai-harness-docs.md', '.claude/rules/ai-harness-board.md']);
-    expect(rules.all().map((r) => r.path)).toEqual([...PROJECT_RULE_PATHS]);
+  it('kennt die Orte beider Rules unter altem und neuem Namen', () => {
+    expect(PROJECT_RULE_PATHS).toEqual([
+      '.claude/rules/ai-harness-docs.md',
+      '.claude/rules/ai-harness-board.md',
+      '.claude/rules/nexus-docs.md',
+      '.claude/rules/nexus-board.md',
+    ]);
+    expect(rules.all().map((r) => r.path)).toEqual(PROJECT_RULE_PATHS.slice(0, 2));
   });
 
   it('schreibt beide Rules und meldet bei Wiederholung nichts Neues', async () => {

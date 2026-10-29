@@ -1,3 +1,6 @@
-#!/usr/bin/env node
-// Startskript des Plugins: macht `harness` in der Bash verfügbar und lädt das gebündelte CLI.
-import('../lib/cli.mjs');
+#!/bin/sh
+# Alias des Plugins: `harness` in der Bash von Claude Code startet das Binary `nexus` daneben
+# und meldet über NEXUS_INVOKED_AS den alten Namen, damit `nexus` einmal darauf hinweist.
+NEXUS_INVOKED_AS=harness
+export NEXUS_INVOKED_AS
+exec "$(dirname "$0")/nexus" "$@"

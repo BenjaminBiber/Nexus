@@ -532,8 +532,8 @@ async fn legt_im_neuen_worktree_die_rules_fur_doku_und_board_regeln_an() {
     let first = start(&e, "ARC-0001").await.unwrap();
 
     let rules = Path::new(&first.path).join(".claude").join("rules");
-    assert!(rules.join("ai-harness-docs.md").exists());
-    let board = fs::read_to_string(rules.join("ai-harness-board.md")).unwrap();
+    assert!(rules.join("nexus-docs.md").exists());
+    let board = fs::read_to_string(rules.join("nexus-board.md")).unwrap();
     assert!(board.ends_with("rules/board.md\n"), "{board}");
     assert!(board.contains('@'), "{board}");
     // Die Rules sind über `info/exclude` aus Git herausgenommen; offen bleibt nur die

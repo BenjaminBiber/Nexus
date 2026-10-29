@@ -16,7 +16,7 @@ describe('ProcessPreflight', () => {
     expect(ProcessPreflight.missingBuildArtifacts('/repo', () => true)).toEqual([]);
   });
 
-  it('nennt alle drei Artefakte, die auch der Plugin-Build voraussetzt', () => {
+  it('nennt alle drei Artefakte der Prozess-Suite; der Plugin-Build braucht Server und Oberfläche davon', () => {
     expect(BUILD_ARTIFACTS).toEqual(['packages/cli/dist/main.js', 'packages/server/dist/main.js', 'packages/web/dist/index.html']);
   });
 
@@ -44,7 +44,7 @@ describe('ProcessPreflight', () => {
   });
 
   it('baut das Plugin in einen lauf-eigenen Ordner, nicht in den geteilten Repo-Ordner', () => {
-    expect(process.env.HARNESS_PLUGIN_OUT, 'globalSetup hat die Umgebung nicht an die Testdateien gereicht').toBeTruthy();
+    expect(process.env.NEXUS_PLUGIN_OUT, 'globalSetup hat die Umgebung nicht an die Testdateien gereicht').toBeTruthy();
     expect(PLUGIN_OUT.startsWith(join(ROOT, 'packages/plugin/dist'))).toBe(false);
   });
 });
