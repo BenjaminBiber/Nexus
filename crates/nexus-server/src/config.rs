@@ -4,6 +4,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use nexus_core::clock::Clock;
 use nexus_core::registry::DEFAULT_SERVER_PORT;
 use nexus_core::{HarnessError, HarnessHome, Result};
 
@@ -50,6 +51,8 @@ pub struct ServerConfig {
     pub db_question_poll_ms: u64,
     /// Takt des Dispatchers in Millisekunden (0 = aus)
     pub dispatch_tick_ms: u64,
+    /// Uhr des Servers; Tests setzen eine feste, damit Zeiträume nachrechenbar sind
+    pub clock: Clock,
 }
 
 /// Version, die den Vertragsmodus kennzeichnet (`NEXUS_SERVER_VERSION=contract`)
@@ -87,6 +90,7 @@ impl ServerConfig {
             docs_poll_ms: DEFAULT_DOCS_POLL_MS,
             db_question_poll_ms: DEFAULT_DB_QUESTION_POLL_MS,
             dispatch_tick_ms: DEFAULT_DISPATCH_TICK_MS,
+            clock: Clock::system(),
         }
     }
 }

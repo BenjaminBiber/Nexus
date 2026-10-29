@@ -5,6 +5,7 @@
 //! und liefert sonst die Oberfläche bzw. 404 als JSON.
 
 pub mod db_boards;
+pub mod db_misc;
 pub mod db_tickets;
 pub mod doc_comments;
 pub mod docs;
@@ -45,6 +46,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     }
     if state.config.proxy_groups.enabled(RouteGroup::DbTickets) {
         router = router.merge(db_tickets::routes());
+    }
+    if state.config.proxy_groups.enabled(RouteGroup::DbMisc) {
+        router = router.merge(db_misc::routes());
     }
     if state.config.proxy_groups.enabled(RouteGroup::Docs) {
         router = router
