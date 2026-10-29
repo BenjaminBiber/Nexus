@@ -23,7 +23,12 @@ fn by_path(list: &Value) -> std::collections::HashMap<String, Value> {
         .as_array()
         .expect("Dokumente")
         .iter()
-        .map(|doc| (doc["path"].as_str().unwrap_or_default().to_string(), doc.clone()))
+        .map(|doc| {
+            (
+                doc["path"].as_str().unwrap_or_default().to_string(),
+                doc.clone(),
+            )
+        })
         .collect()
 }
 
@@ -130,7 +135,9 @@ async fn liefert_inhalt_hash_und_abschnitte_freigegebener_dateien() {
         .contains("Das Ticket wird angelegt."));
     let hash = doc["hash"].as_str().unwrap_or_default();
     assert_eq!(hash.len(), 64);
-    assert!(hash.bytes().all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase()));
+    assert!(hash
+        .bytes()
+        .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase()));
     assert_eq!(
         doc["sections"],
         json!([

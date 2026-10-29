@@ -570,7 +570,11 @@ impl DocsFixture {
             "0001-entscheidung.md",
             "# Entscheidung\n\nTickets liegen im Git-Verzeichnis.\n",
         );
-        self.write(".", "GLOSSARY.md", "# Glossar\n\n**Ticket**: Arbeitseinheit\n");
+        self.write(
+            ".",
+            "GLOSSARY.md",
+            "# Glossar\n\n**Ticket**: Arbeitseinheit\n",
+        );
         self.write("specs/001-login", "spec.md", "alte Spec-Kit-Datei");
         self.write(".", "geheim.md", "geheim");
     }
@@ -593,8 +597,18 @@ pub fn encode(value: &str) -> String {
     value
         .bytes()
         .map(|byte| match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'!' | b'~' | b'*'
-            | b'\'' | b'(' | b')' => char::from(byte).to_string(),
+            b'A'..=b'Z'
+            | b'a'..=b'z'
+            | b'0'..=b'9'
+            | b'-'
+            | b'_'
+            | b'.'
+            | b'!'
+            | b'~'
+            | b'*'
+            | b'\''
+            | b'('
+            | b')' => char::from(byte).to_string(),
             _ => format!("%{byte:02X}"),
         })
         .collect()

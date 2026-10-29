@@ -84,7 +84,10 @@ async fn meldet_missing_folder_wenn_der_repo_pfad_des_boards_nicht_mehr_existier
     let path = fixture.repo.path().to_string_lossy().into_owned();
     fixture.repo.remove();
 
-    let found = resolver(&fixture.server).resolve(&path).await.expect("Quelle");
+    let found = resolver(&fixture.server)
+        .resolve(&path)
+        .await
+        .expect("Quelle");
 
     assert_eq!(found.root, None);
     assert_eq!(found.board_id, Some(fixture.board_id));
@@ -95,7 +98,9 @@ async fn meldet_missing_folder_wenn_der_repo_pfad_des_boards_nicht_mehr_existier
 async fn liefert_mit_board_aus_der_query_das_genannte_board_auch_bei_fremdem_ordner() {
     let fixture = DocsFixture::start(false).await;
     let (other, _pid) = fixture.server.add_project();
-    fixture.backend.set_repo_path(fixture.board_id, other.path());
+    fixture
+        .backend
+        .set_repo_path(fixture.board_id, other.path());
 
     let found = resolver(&fixture.server)
         .resolve_for(
@@ -145,7 +150,9 @@ async fn liest_uber_die_docs_route_mit_board_die_dokumente_aus_dem_repo_des_gena
         "# Fremd — Design-Spec\n",
     )
     .expect("Datei");
-    fixture.backend.set_repo_path(fixture.board_id, other.path());
+    fixture
+        .backend
+        .set_repo_path(fixture.board_id, other.path());
 
     let res = fixture
         .server
@@ -185,4 +192,3 @@ async fn meldet_no_board_ohne_board_laufzeit() {
 
     assert_eq!(found, DocsSource::no_board());
 }
-
