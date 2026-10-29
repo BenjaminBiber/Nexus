@@ -23,11 +23,11 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/api/workflow",
-            get(workflow).fallback(crate::proxy::proxy_or_static),
+            get(workflow).fallback(crate::routes::static_or_not_found),
         )
         .route(
             "/api/customizations",
-            get(customizations).fallback(crate::proxy::proxy_or_static),
+            get(customizations).fallback(crate::routes::static_or_not_found),
         )
 }
 

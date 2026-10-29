@@ -2,9 +2,7 @@
 // das Hauptfenster auf die Oberfläche schicken und den selbst gestarteten Server beim Beenden wieder stoppen.
 // Ein fremder Server auf demselben Port bleibt unangetastet.
 //
-// Gestartet wird der Rust-Server (`nexus serve`); er nimmt den Port an und hält den Node-Server als
-// eigenen Kindprozess dahinter. Beim Beenden genügt deshalb das Signal an `nexus serve` – es räumt
-// den Node-Server selbst ab.
+// Gestartet wird der Rust-Server (`nexus serve`); er nimmt den Port an und beantwortet alles selbst.
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -19,8 +17,6 @@ use tauri_plugin_shell::ShellExt;
 pub const DEFAULT_SERVER_PORT: u16 = 4710;
 // Name des Rust-Servers aus bundle.externalBin; er nimmt den öffentlichen Port an
 const NEXUS: &str = "nexus";
-// Name des Node-Servers aus bundle.externalBin; er läuft als Kindprozess hinter dem Rust-Server
-const SIDECAR: &str = "harness-sidecar";
 // Daran erkennt sich der eigene Server in der Antwort von /api/health
 const HEALTH_NAME: &str = "ai-harness";
 // Prozessangaben des laufenden Servers im Harness-Ordner
@@ -380,7 +376,7 @@ pub fn open_path<R: Runtime>(app: &AppHandle<R>, path: &str) {
     }
 }
 
-// Startet den gebündelten Rust-Server samt Node-Server dahinter und wartet, bis er antwortet
+// Startet den gebündelten Rust-Server und wartet, bis er antwortet
 async fn start<R: Runtime>(
     app: &AppHandle<R>,
     connector: &ServerConnector,
@@ -390,12 +386,6 @@ async fn start<R: Runtime>(
         .sidecar(NEXUS)
         .map_err(|error| ServerError::StartFailed(format!("{NEXUS}: {error}")))?
         .args(["serve", "--port", &connector.port().to_string()]);
-    // Den Node-Server gibt die App ausdrücklich mit; gefunden wird er wie jedes Sidecar neben dem
-    // Programm. Ohne Fund sucht `nexus serve` selbst und meldet sonst einen Fehler.
-    match node_sidecar() {
-        Some(path) => command = command.args(["--node-sidecar", &path.to_string_lossy()]),
-        None => log::warn!("{SIDECAR} liegt nicht neben dem Programm; nexus serve sucht selbst."),
-    }
     for (name, dir) in resource_dirs(app) {
         command = command.env(name, dir);
     }
@@ -424,21 +414,8 @@ async fn start<R: Runtime>(
     ))
 }
 
-// Pfad des Node-Servers, so wie Tauri Sidecars auflöst: die Datei aus bundle.externalBin liegt
-// ohne Zielsuffix neben dem Programm. `None`, wenn es sie dort nicht gibt.
-fn node_sidecar() -> Option<PathBuf> {
-    let exe = tauri::utils::platform::current_exe().ok()?;
-    let dir = exe.parent()?;
-    let file = dir.join(if cfg!(windows) {
-        format!("{SIDECAR}.exe")
-    } else {
-        SIDECAR.to_string()
-    });
-    file.is_file().then_some(file)
-}
-
-// Oberfläche, Benachrichtigungsbilder und SQL-Skripte liegen als Ressourcen neben der App;
-// findet die App sie nicht, suchen die Server selbst neben ihrem Programm
+// Oberfläche und Benachrichtigungsbilder liegen als Ressourcen neben der App; findet die App sie
+// nicht, sucht der Server selbst neben seinem Programm
 fn resource_dirs<R: Runtime>(app: &AppHandle<R>) -> Vec<(&'static str, PathBuf)> {
     let base = match app.path().resource_dir() {
         Ok(dir) => dir,
@@ -457,7 +434,6 @@ fn resource_dirs<R: Runtime>(app: &AppHandle<R>) -> Vec<(&'static str, PathBuf)>
     vec![
         ("HARNESS_WEB_DIR", base.join("web")),
         ("HARNESS_TOAST_DIR", base.join("toast")),
-        ("HARNESS_SQL_DIR", base.join("sql")),
     ]
 }
 
@@ -859,10 +835,9 @@ mod tests {
         assert_eq!(adressen, ["http://*", "https://*", "vscode://*"]);
     }
 
-    // Beide Programme werden mitgeliefert: der Rust-Server, den die App startet, und der Node-Server,
-    // den er als Kindprozess dahinter hält
+    // Mitgeliefert wird genau ein Programm: der Rust-Server, den die App startet
     #[test]
-    fn beide_server_sind_als_externalbin_eingetragen() {
+    fn der_server_ist_als_externalbin_eingetragen() {
         let datei: serde_json::Value =
             serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
         let bins: Vec<&str> = datei["bundle"]["externalBin"]
@@ -871,10 +846,7 @@ mod tests {
             .iter()
             .map(|eintrag| eintrag.as_str().unwrap())
             .collect();
-        assert_eq!(
-            bins,
-            [format!("binaries/{NEXUS}"), format!("binaries/{SIDECAR}")]
-        );
+        assert_eq!(bins, [format!("binaries/{NEXUS}")]);
     }
 
     // Das Hauptfenster darf nicht gedrosselt werden, sonst schläft der Ereignisstrom im Hintergrund ein

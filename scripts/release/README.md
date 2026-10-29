@@ -158,19 +158,19 @@ Der zweite Job `build` hängt am Tag aus `version` und baut je Plattform in eine
 | `ubuntu-22.04` | `x86_64-unknown-linux-gnu` | `appimage`, `deb`, `rpm` |
 
 Jeder Eintrag checkt das Tag aus, richtet Rust (Version wie in `rust-toolchain.toml`) und Node 26 ein, installiert
-unter Linux die Systempakete von Tauri samt `rpm`, baut dann Oberfläche (`npm run build`) und Sidecar
-(`npm run build:sidecar -- --target <ziel>`) und ruft `tauri-apps/tauri-action` mit `releaseId` auf. Die Action lädt
+unter Linux die Systempakete von Tauri samt `rpm`, baut dann Oberfläche (`npm run build`) und das Binary
+(`cargo build --release -p nexus-cli --bin nexus --target <ziel>`) und ruft `tauri-apps/tauri-action` mit
+`releaseId` auf. Die Action lädt
 dmg, NSIS-Installer, AppImage, deb und rpm an den Entwurf; `includeUpdaterJson` bleibt aus (P6-7). Der Job läuft in
 der Umgebung `release`, nutzt aber noch keine Secrets – gebaut wird unsigniert, die Signatur kommt mit P6-6.
 
-**x64-macOS baut nativ** auf `macos-15-intel` statt als Cross-Build. Das Sidecar ist eine Node Single Executable
-Application und braucht das Node-Programm der Zielarchitektur; `build-sidecar.mjs` bricht für ein fremdes Ziel ohne
-`--node-binary` ab. ARM-Linux gibt es nicht; die Entscheidung dazu ist offen.
+**x64-macOS baut nativ** auf `macos-15-intel` statt als Cross-Build: So braucht keine Plattform eine fremde
+Rust-Toolchain. ARM-Linux gibt es nicht; die Entscheidung dazu ist offen.
 
 `projectPath` zeigt auf `apps/desktop`, denn dort liegt `@tauri-apps/cli`. Version und Produktname der Dateien
-kommen aus dem Crate (`Nexus_<version>_aarch64.dmg`), nicht aus dem Workflow. Dass der Tauri-Build das Sidecar
-über `beforeBuildCommand` (`npm run prepare-sidecar`) ein zweites Mal baut, ist gewollt: der eigene Schritt davor
-zeigt einen Fehler am Sidecar früh und baut für genau das gewählte Ziel.
+kommen aus dem Crate (`Nexus_<version>_aarch64.dmg`), nicht aus dem Workflow. Dass der Tauri-Build das Binary
+über `beforeBuildCommand` (`npm run prepare-binaries`) ein zweites Mal baut, ist gewollt: der eigene Schritt davor
+zeigt einen Fehler am Binary früh und baut für genau das gewählte Ziel.
 
 ### `cli-archive.mjs`
 
@@ -182,25 +182,23 @@ node scripts/release/cli-archive.mjs --version 0.2.0 [--target <rust-ziel>] [--o
 ```
 
 Ergebnis: `dist/release/nexus-cli-<version>-<ziel>.tar.gz` (Windows-Ziel: `.zip`, geschrieben mit `tar -a`). Im
-Archiv liegen `bin/harness[.exe]` – das SEA-Programm aus `dist/sidecar/`, das ohne `serve` die CLI startet –, das
-gebündelte Plugin unter `plugin/` (`build-plugin.mjs` mit `HARNESS_PLUGIN_OUT`) und eine kurze `LIESMICH.md`.
-Voraussetzung sind `npm run build` und `npm run build:sidecar -- --target <ziel>`; fehlt das Sidecar, bricht das
-Skript mit diesem Hinweis ab. Die Namensbildung steckt in `lib/CliArchive.mjs` und hat eigene Tests.
+Archiv liegen `bin/nexus[.exe]` – das Rust-Programm, das Server und CLI in einem ist –, das gebündelte Plugin
+unter `plugin/` (`build-plugin.mjs` mit `NEXUS_PLUGIN_OUT`) und eine kurze `LIESMICH.md`.
+Voraussetzung sind `npm run build` und `cargo build --release -p nexus-cli --bin nexus --target <ziel>`; fehlt
+das Binary, bricht das Skript mit diesem Hinweis ab. Die Namensbildung steckt in `lib/CliArchive.mjs` und hat
+eigene Tests.
 
 ### Lokal prüfen (macOS arm64)
 
 ```sh
 npm ci && npm run build
-npm run build:sidecar -- --target aarch64-apple-darwin
+cargo build --release -p nexus-cli --bin nexus --target aarch64-apple-darwin
 (cd apps/desktop && npx tauri build --target aarch64-apple-darwin --bundles dmg)
 ls target/aarch64-apple-darwin/release/bundle/dmg/
 node scripts/release/cli-archive.mjs --version 0.0.0-test --target aarch64-apple-darwin
 ```
 
-Der Sidecar-Build braucht ein eigenständiges Node von nodejs.org; mit dem Node aus Homebrew bricht er mit
-`SEA_DISABLED` ab (siehe `scripts/sidecar/build-sidecar.mjs`). Dasselbe gilt für `tauri build`, weil dessen
-`beforeBuildCommand` das Sidecar baut – deshalb lokal mit dem passenden Node im `PATH` bauen. Der lokale Build ist
-unsigniert; Gatekeeper-Warnungen sind dabei erwartet.
+Der lokale Build ist unsigniert; Gatekeeper-Warnungen sind dabei erwartet.
 
 ## Dateien
 

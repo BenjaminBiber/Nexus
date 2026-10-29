@@ -2,7 +2,7 @@
 //! die Regeln nach `~/.nexus/rules`, die Anpassungen nach `~/.nexus/customizations`, legt
 //! die Startdateien an und trägt den Startordner in den Benutzer-PATH ein.
 //! Portiert aus `packages/core/src/install/CliInstaller.ts`; statt `lib/cli.mjs` wird das
-//! Rust-Binary kopiert, `lib/` und `web/` nur noch, solange es den Node-Server gibt.
+//! Rust-Binary kopiert, dazu die gebaute Oberfläche nach `<home>/app/web`.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -14,8 +14,8 @@ use crate::install::launcher_writer::{LauncherWriter, BINARY_NAME};
 use crate::install::user_path::UserPath;
 use crate::registry::HarnessHome;
 
-/// Ordner des Plugins, die neben dem Binary mitkopiert werden (für den Node-Server bis Phase 5)
-const APP_DIRS: &[&str] = &["lib", "web"];
+/// Ordner des Plugins, die neben dem Binary mitkopiert werden (die gebaute Oberfläche)
+const APP_DIRS: &[&str] = &["web"];
 
 /// Datei, an der eine Plugin-Wurzel zu erkennen ist
 const PLUGIN_MANIFEST: [&str; 2] = [".claude-plugin", "plugin.json"];
@@ -139,8 +139,8 @@ impl<'a> CliInstaller<'a> {
         Ok(())
     }
 
-    /// Kopiert `lib/` und `web/` frisch nach `<home>/app`, falls das Plugin sie mitbringt
-    /// (Node-Server und Oberfläche bis Phase 5); alte Dateien verschwinden dabei
+    /// Kopiert `web/` frisch nach `<home>/app`, falls das Plugin den Ordner mitbringt;
+    /// alte Dateien verschwinden dabei
     fn copy_app(&self, root: &Path, app_dir: &Path) -> Result<()> {
         if is_same(root, app_dir) {
             return Ok(());
@@ -283,7 +283,7 @@ mod tests {
         }
     }
 
-    /// Minimales gebautes Plugin: `bin/nexus`, `.claude-plugin/plugin.json`, `lib/`, `web/`,
+    /// Minimales gebautes Plugin: `bin/nexus`, `.claude-plugin/plugin.json`, `web/`,
     /// `rules/docs.md`
     struct Plugin {
         base: tempfile::TempDir,
@@ -296,7 +296,7 @@ mod tests {
                 .tempdir()
                 .unwrap();
             let plugin = base.path().join("plugin");
-            for dir in ["bin", "lib", "web", "rules", ".claude-plugin"] {
+            for dir in ["bin", "web", "rules", ".claude-plugin"] {
                 fs::create_dir_all(plugin.join(dir)).unwrap();
             }
             fs::write(plugin.join("bin").join(BINARY_NAME), b"binary").unwrap();
@@ -305,7 +305,6 @@ mod tests {
                 "{\"name\":\"ai-harness\"}",
             )
             .unwrap();
-            fs::write(plugin.join("lib").join("server.mjs"), "console.log(1);").unwrap();
             fs::write(plugin.join("web").join("index.html"), "<html></html>").unwrap();
             fs::write(plugin.join("rules").join("docs.md"), "# Regeln").unwrap();
             Self { base }
@@ -335,7 +334,7 @@ mod tests {
     }
 
     #[test]
-    fn kopiert_binary_server_und_oberflache_und_legt_beide_startdateien_an() {
+    fn kopiert_binary_und_oberflache_und_legt_beide_startdateien_an() {
         let plugin = Plugin::new();
         let path = FakeUserPath::new(true);
         let home = plugin.home();
@@ -345,10 +344,6 @@ mod tests {
             .unwrap();
 
         assert!(Path::new(&result.bin_dir).join(BINARY_NAME).exists());
-        assert!(Path::new(&result.app_dir)
-            .join("lib")
-            .join("server.mjs")
-            .exists());
         assert!(Path::new(&result.app_dir)
             .join("web")
             .join("index.html")
@@ -460,7 +455,7 @@ mod tests {
         let first = installer
             .install(&plugin.root(), InstallOptions::default())
             .unwrap();
-        fs::write(Path::new(&first.app_dir).join("lib").join("alt.mjs"), "alt").unwrap();
+        fs::write(Path::new(&first.app_dir).join("web").join("alt.js"), "alt").unwrap();
         fs::write(plugin.root().join("bin").join(BINARY_NAME), b"neu").unwrap();
 
         installer
@@ -468,8 +463,8 @@ mod tests {
             .unwrap();
 
         assert!(!Path::new(&first.app_dir)
-            .join("lib")
-            .join("alt.mjs")
+            .join("web")
+            .join("alt.js")
             .exists());
         assert_eq!(
             fs::read(Path::new(&first.bin_dir).join(BINARY_NAME)).unwrap(),

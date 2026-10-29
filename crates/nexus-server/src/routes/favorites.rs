@@ -13,7 +13,7 @@ use nexus_core::HarnessError;
 use crate::error::{json, ApiResult};
 use crate::extract::JsonBody;
 use crate::favorites::FavoriteDto;
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 
 /// Länge, ab der eine Notiz gekürzt wird
@@ -25,11 +25,11 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/api/projects/{pid}/favorites",
-            get(list).fallback(proxy_or_static),
+            get(list).fallback(static_or_not_found),
         )
         .route(
             "/api/projects/{pid}/favorites/{sid}",
-            put(mark).delete(unmark).fallback(proxy_or_static),
+            put(mark).delete(unmark).fallback(static_or_not_found),
         )
 }
 

@@ -9,7 +9,7 @@ import { SettingsSection } from './settings/SettingRow.js';
 const COMMAND = '/ai-harness:harness-customize';
 const WORKFLOW = { standard: 'Standard', custom: 'angepasst', fallback: 'Rückfall auf Standard' } as const;
 
-// Anpassungen des Devs (Workflow, Skills, Output-Styles), nur lesend; geändert wird über den Skill und npm run setup.
+// Anpassungen des Devs (Workflow, Skills, Output-Styles), nur lesend; geändert wird über den Skill, npm run build:plugin und nexus install.
 export function CustomizationsPanel() {
   const api = useApi();
   const { state } = useAsync(() => api.getCustomizations(), [api]);
@@ -18,13 +18,13 @@ export function CustomizationsPanel() {
       <SettingsSection
         title="Aktiver Stand"
         description="Nur zur Ansicht. Geändert wird mit Claude."
-        info="Der Skill legt eigene Workflows, Skills oder Output-Styles neben den Standard. Sie wirken erst, wenn du danach im Harness-Ordner npm run setup ausführst."
+        info="Der Skill legt eigene Workflows, Skills oder Output-Styles neben den Standard. Sie wirken erst, wenn du danach im Harness-Ordner npm run build:plugin und nexus install ausführst."
       >
         {state.status === 'loading' && <p className="settings-card-body muted">Wird geladen …</p>}
         {state.status === 'error' && <Notice tone="error">Die Anpassungen ließen sich nicht laden: {state.message}</Notice>}
         {state.status === 'ready' && <Content data={state.data} />}
       </SettingsSection>
-      <SettingsSection title="Ändern" description="In einer Claude-Session aufrufen; wirkt erst nach npm run setup im Harness-Ordner." bare>
+      <SettingsSection title="Ändern" description="In einer Claude-Session aufrufen; wirkt erst nach npm run build:plugin und nexus install im Harness-Ordner." bare>
         <CopyCommand command={COMMAND} />
       </SettingsSection>
     </SettingsPanel>
@@ -33,7 +33,7 @@ export function CustomizationsPanel() {
 
 // Inhalt je nach Stand: unbekannt, keine Anpassungen oder Übersicht
 function Content({ data }: { data: CustomizationsDto }) {
-  if ('state' in data) return <p className="settings-card-body">Noch keine Übersicht. Führe im Harness-Ordner einmal npm run setup aus.</p>;
+  if ('state' in data) return <p className="settings-card-body">Noch keine Übersicht. Führe im Harness-Ordner einmal npm run build:plugin und nexus install aus.</p>;
   if (!data.entries.length) return <p className="settings-card-body">Keine Anpassungen, überall gilt der Standard.</p>;
   return <Overview overview={data} />;
 }

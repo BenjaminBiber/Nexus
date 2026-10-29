@@ -4,8 +4,8 @@
   "identifier": "cc.biber.nexus",
   "build": {
     "frontendDist": "../splash",
-    "beforeBuildCommand": "npm run prepare-sidecar",
-    "beforeDevCommand": "npm run prepare-sidecar"
+    "beforeBuildCommand": "npm run prepare-binaries",
+    "beforeDevCommand": "npm run prepare-binaries"
   },
   "app": {
     "windows": [
@@ -53,11 +53,10 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["binaries/nexus", "binaries/harness-sidecar"],
+    "externalBin": ["binaries/nexus"],
     "resources": {
-      "../../../dist/sidecar/web/": "web/",
-      "../../../dist/sidecar/toast/": "toast/",
-      "../../../dist/sidecar/sql/": "sql/"
+      "../../../packages/web/dist/": "web/",
+      "../../../crates/nexus-server/assets/toast/": "toast/"
     },
     "macOS": {
       "minimumSystemVersion": "11.0",

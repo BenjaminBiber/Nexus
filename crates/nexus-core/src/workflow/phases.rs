@@ -4,9 +4,11 @@
 //! weil TS und Rust dieselbe Basis in `custom/.base/workflow.json` vergleichen.
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 /// Gleichwertige Alternative eines Schritts; die Oberfläche zeigt sie als Umschalter
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "workflow.ts")]
 pub struct WorkflowOption {
     pub label: String,
     pub command: String,
@@ -14,24 +16,29 @@ pub struct WorkflowOption {
 }
 
 /// Ein Schritt einer Phase: Befehl oder Ort, dazu der Hinweis, wann er gilt
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "workflow.ts")]
 pub struct WorkflowStep {
     pub step: String,
     /// Befehl der ersten (Standard-)Wahl, wenn `options` gesetzt ist; fehlt, wenn der
     /// Schritt keinen Befehl hat
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub command: Option<String>,
     /// Statt eines Befehls: Ort in der Oberfläche oder ein Satz, den man Claude sagt
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub place: Option<String>,
     pub when: String,
     /// Gleichwertige Alternativen für diesen Schritt
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub options: Option<Vec<WorkflowOption>>,
 }
 
 /// Eine Phase des Ablaufs mit ihren Schritten
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "workflow.ts")]
 pub struct WorkflowPhase {
     pub id: String,
     pub title: String,
@@ -165,6 +172,29 @@ mod tests {
         let phasen = workflow_phases();
         let ids: Vec<&str> = phasen.iter().map(|p| p.id.as_str()).collect();
         assert_eq!(ids, vec!["planen", "umsetzen"]);
+    }
+
+    /// Übernommen aus dem früheren Web-Test `GuideWorkflow.test.tsx`, der den
+    /// Standard-Ablauf noch gegen das TypeScript-Literal geprüft hat.
+    #[test]
+    fn die_phase_planen_fuehrt_durch_superpowers() {
+        let planen = workflow_phases()
+            .into_iter()
+            .find(|p| p.id == "planen")
+            .expect("Phase planen");
+        let schritte: Vec<&str> = planen.steps.iter().map(|s| s.step.as_str()).collect();
+        assert_eq!(
+            schritte,
+            vec![
+                "Anforderungen klären",
+                "Plan schreiben",
+                "Tickets anlegen",
+                "Für den Dispatcher vorbereiten",
+            ]
+        );
+        let json = serde_json::to_string(&workflow_phases()).unwrap();
+        assert!(!json.contains("/speckit-"));
+        assert!(!json.contains("harness-tasks"));
     }
 
     #[test]

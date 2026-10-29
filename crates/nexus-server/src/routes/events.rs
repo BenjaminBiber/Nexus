@@ -21,10 +21,10 @@ use tokio_util::sync::CancellationToken;
 
 use crate::error::ApiResult;
 use crate::events::hub::LiveEvent;
-use crate::events::{Bridge, Subscription, Watched, WatchedDocs};
+use crate::events::{Subscription, Watched, WatchedDocs};
 use crate::extract::QueryMap;
 use crate::notices::AttachedTab;
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 
 /// Herzschlag des Stroms; er hält Proxys und Browser bei der Stange
@@ -35,7 +35,7 @@ const PING: &[u8] = b": ping\n\n";
 pub fn routes() -> Router<Arc<AppState>> {
     Router::new().route(
         "/api/projects/{pid}/events",
-        get(events).fallback(proxy_or_static),
+        get(events).fallback(static_or_not_found),
     )
 }
 
@@ -56,19 +56,7 @@ async fn events(
         _questions: watched_id(&query, "dbProject")
             .map(|id| state.question_changes.watch(id, sender.clone())),
         _docs: state.spec_docs.watch(&pid, sender.clone()),
-        _tab: notify.then(|| state.notice_tabs.attach(sender.clone())),
-        // Sessions und die Meldungen des Node-Dispatchers entstehen noch dort
-        _bridge: state.upstream.clone().map(|upstream| {
-            Bridge::start(
-                upstream,
-                &pid,
-                notify,
-                state.bridged_events.clone(),
-                sender,
-                state.log.clone(),
-                &state.shutdown,
-            )
-        }),
+        _tab: notify.then(|| state.notice_tabs.attach(sender)),
     };
     Ok(stream(receiver, guards, &state))
 }
@@ -132,7 +120,6 @@ struct Guards {
     _questions: Option<Watched>,
     _docs: WatchedDocs,
     _tab: Option<AttachedTab>,
-    _bridge: Option<Bridge>,
 }
 
 #[cfg(test)]

@@ -12,7 +12,7 @@ use nexus_core::HarnessError;
 
 use crate::error::{json, ApiResult};
 use crate::extract::JsonBody;
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::sessions::{SessionDto, TicketInfo};
 use crate::state::AppState;
 
@@ -22,11 +22,11 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/api/projects/{pid}/sessions",
-            get(list).fallback(proxy_or_static),
+            get(list).fallback(static_or_not_found),
         )
         .route(
             "/api/projects/{pid}/sessions/{sid}/claim",
-            post(claim).fallback(proxy_or_static),
+            post(claim).fallback(static_or_not_found),
         )
 }
 

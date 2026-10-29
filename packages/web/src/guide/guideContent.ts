@@ -1,5 +1,6 @@
-// Inhalt der Anleitung. Den Ablauf (planen, umsetzen) liefert der Core, damit Anleitung und Agent denselben Stand haben.
-import { WORKFLOW_PHASES, type WorkflowOption, type WorkflowPhase, type WorkflowStep } from '../../../core/src/workflow/WorkflowPhases.js';
+// Inhalt der Anleitung. Den Ablauf (planen, umsetzen) liefert der Server aus Rust (GET /api/workflow),
+// damit Anleitung und Agent denselben Stand haben.
+import type { WorkflowOption, WorkflowPhase, WorkflowStep } from '../api/generated/workflow.js';
 
 export type GuideOption = WorkflowOption;
 export type GuideStep = WorkflowStep;
@@ -40,8 +41,9 @@ export const EXTRA_PHASES: GuidePhase[] = [
   },
 ];
 
-// Ablauf (Standard oder angewendet) gefolgt von den Oberflächenhilfen
-export function guidePhases(workflow: GuidePhase[] = WORKFLOW_PHASES): GuidePhase[] {
+// Ablauf (Standard oder angewendet) gefolgt von den Oberflächenhilfen.
+// Solange der Server den Ablauf noch nicht geliefert hat, stehen nur die Oberflächenhilfen da.
+export function guidePhases(workflow: GuidePhase[] = []): GuidePhase[] {
   return [...workflow, ...EXTRA_PHASES];
 }
 
@@ -83,7 +85,7 @@ export const DISPATCHER_OUTCOMES: GuideTerm[] = [
 
 export const DISPATCHER_SETUP: GuideStep[] = [
   { step: 'Repo dem Board zuordnen', command: 'harness board boards repo 7 C:\\Projekte\\Demo', when: 'Ohne deinen eigenen, existierenden Repo-Pfad nimmt der Dispatcher keine Tickets des Boards; der Pfad ist je Person lokal.' },
-  { step: 'Claude Code bereitstellen', place: 'Terminal', when: 'Claude Code installiert und angemeldet (Abo). API-Keys entfernt der Dispatcher aus der Umgebung des Laufs (useSubscription, Standard an). Unter Windows ist Git for Windows nötig: Die Git Bash sucht er selbst, sonst den Pfad im Feld „Git Bash“ eintragen (claude.gitBashPath). Der Agent ruft harness in der Git Bash auf; es muss dort auf dem PATH sein (nach npm run setup ein neues Terminal öffnen).' },
+  { step: 'Claude Code bereitstellen', place: 'Terminal', when: 'Claude Code installiert und angemeldet (Abo). API-Keys entfernt der Dispatcher aus der Umgebung des Laufs (useSubscription, Standard an). Unter Windows ist Git for Windows nötig: Die Git Bash sucht er selbst, sonst den Pfad im Feld „Git Bash“ eintragen (claude.gitBashPath). Der Agent ruft harness in der Git Bash auf; es muss dort auf dem PATH sein (nach nexus install ein neues Terminal öffnen).' },
   { step: 'Einschalten und einstellen', place: 'Einstellungen → Dispatcher', when: 'Einschalten, Gleichzeitig (WIP), Zeitfenster, Profile und Regeln, Zurückmergen (Merge-Commit oder Squash), Worktrees (einer je Ticket oder je Spec gebündelt), Recherchen. Gespeichert in ~/.harness/dispatch.yaml.' },
   { step: 'Worktrees einrichten', place: 'Einstellungen → Dispatcher → Einrichtung neuer Worktrees', when: 'Befehle wie npm ci (Ordner relativ zum Worktree, z. B. BackofficeNextGen) führt der Dispatcher in jedem neu angelegten Worktree vor Claude aus, protokolliert im Reiter „Agent“; ein fortgesetztes Ticket wird nicht erneut eingerichtet. Scheitert ein Befehl, startet Claude nicht und das Ticket geht nach Blockiert mit „Einrichtung fehlgeschlagen: …“ (zählt nicht als Versuch). Links oder Junctions auf den Hauptordner legen Agents nicht an.' },
   { step: 'Prompts anpassen', place: 'Einstellungen → Dispatcher → Prompts', when: 'Je Laufart (Umsetzung, Planung, Recherche, Merge) eine eigene Vorlage statt der mitgelieferten; leer heißt: der Standard gilt und zieht mit neuen Versionen des Harness mit, „Auf Standard zurücksetzen“ stellt das wieder her. Pflichtteile wie die Board-Befehle müssen drin bleiben, sonst lehnt der Server die Vorlage ab. „Vorschau“ zeigt den fertigen Prompt der noch ungespeicherten Vorlage – mit Beispielwerten oder, mit einer Ticket- bzw. Frage-ID, mit deren echten Werten; „Unterschiede zum Standard“ stellt ihn dem Standard-Prompt zeilenweise gegenüber. Eine eigene Vorlage geht in den configHash eines Laufs ein: Läufe davor und danach sind im Dashboard unterscheidbar.' },
@@ -142,7 +144,7 @@ export const FAQ: GuideFaq[] = [
   { question: 'Wo liegen die Tickets?', answer: 'In der gemeinsamen Board-Datenbank (SQL Server). Gesichert wird sie vom Datenbank-Betrieb; der Harness legt keine eigenen Kopien an. Alte Ticketdateien unter .git/harness bleiben unberührt liegen.' },
   { question: 'Was bedeutet „Wartet“?', answer: 'Das Ticket hat eine offene Voraussetzung oder eine offene Frage. Der Hinweis entfällt von selbst, sobald sie erledigt bzw. entschieden ist.' },
   { question: 'Warum nimmt der Dispatcher mein Ticket nicht?', answer: 'Bereit ist es nur, wenn alles zutrifft: Geplant, ohne Zuständigen und ohne Planungsbedarf; Label auto, nicht manuell; Plan, Handbuch und Abnahme ausgefüllt; keine offene Voraussetzung oder Frage, und erledigte Voraussetzungen sind schon gemergt; gültige Labels profil:, model: und effort:; das Board gehört dir und hat deinen Repo-Pfad, den es gibt. Außerdem muss der Dispatcher eingeschaltet sein, nicht pausieren, im Zeitfenster liegen und unter der WIP-Grenze sein, und das Board muss in seiner Einstellung boards stehen (ohne Auswahl: das aktive Board). Den ersten fehlenden Punkt nennen die Übersicht „Dispatcher: …“ am Board und harness board dispatch status.' },
-  { question: 'Warum sehe ich keine Sessions?', answer: 'Das Plugin ai-harness muss installiert sein (npm run setup im Harness-Ordner), das Projekt braucht harness init und danach /reload-plugins in Claude Code. Das Repo muss einem Board zugeordnet sein, und zwar mit deinem eigenen Repo-Pfad (harness board boards repo <id> <pfad> oder „Mein Repo-Pfad“ in der Verwaltung): der Pfad ist je Person lokal, der eines Kollegen gilt bei dir nicht. Die Session muss in diesem Projekt laufen. Sessions ohne erkennbares Ticket erscheinen unter „Nicht zugeordnet“; mit harness board claim ordnest du sie zu.' },
-  { question: 'Wie aktualisiere ich den Harness?', answer: 'Im Ordner des Harness-Repositories npm run setup ausführen. Danach in laufenden Sessions /reload-plugins eingeben und harness board starten. Bestehende Projekte brauchen einmal harness init, damit die Board-Regel ankommt.' },
+  { question: 'Warum sehe ich keine Sessions?', answer: 'Das Plugin ai-harness muss installiert sein (npm run build:plugin und nexus install im Harness-Ordner), das Projekt braucht harness init und danach /reload-plugins in Claude Code. Das Repo muss einem Board zugeordnet sein, und zwar mit deinem eigenen Repo-Pfad (harness board boards repo <id> <pfad> oder „Mein Repo-Pfad“ in der Verwaltung): der Pfad ist je Person lokal, der eines Kollegen gilt bei dir nicht. Die Session muss in diesem Projekt laufen. Sessions ohne erkennbares Ticket erscheinen unter „Nicht zugeordnet“; mit harness board claim ordnest du sie zu.' },
+  { question: 'Wie aktualisiere ich den Harness?', answer: 'Im Ordner des Harness-Repositories git pull, npm run build, npm run build:plugin und zuletzt nexus install ausführen. Danach in laufenden Sessions /reload-plugins eingeben und harness board starten. Bestehende Projekte brauchen einmal harness init, damit die Board-Regel ankommt.' },
   { question: 'Wie setze ich eine Session fort?', answer: 'Markiere die Session in der Übersicht mit „Als Favorit merken“. In der Favoritenliste findest du den fertigen Befehl (cd in das Arbeitsverzeichnis, dann claude --resume mit der Kennung). Kopiere ihn in ein Terminal. Der Harness startet kein Terminal selbst.' },
 ];

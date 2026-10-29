@@ -1,10 +1,9 @@
 //! Gemeinsamer Zustand aller Routen; Gegenstück zu den `decorate`-Aufrufen in
 //! `packages/server/src/ServerApp.ts`.
 //!
-//! Jede Routengruppe der Phase 4 bekommt von hier, was sie braucht: Benutzerordner, Schutz,
-//! Projekte, Board-Laufzeit, Systemfunktionen, Protokoll, Upstream und das Abbruch-Signal.
+//! Jede Routengruppe bekommt von hier, was sie braucht: Benutzerordner, Schutz, Projekte,
+//! Board-Laufzeit, Systemfunktionen, Protokoll und das Abbruch-Signal.
 
-use std::collections::HashSet;
 use std::sync::Arc;
 
 use nexus_core::docs::SuperpowersDocScanner;
@@ -18,17 +17,16 @@ use crate::config::ServerConfig;
 use crate::dispatch::claude_runner::ClaudeRunners;
 use crate::dispatch::{
     DispatchScheduler, DispatchService, DispatchServiceDeps, DispatchSuggestionService,
-    HttpSidecarStatus, NoWorkerLauncher, ProcessWorkerLauncher, ServerDispatchNotify, ShadowDeps,
-    ShadowService, ShadowWatcher, SuggestionAnalyzer, WorkerLauncher,
+    NoWorkerLauncher, ProcessWorkerLauncher, ServerDispatchNotify, SuggestionAnalyzer,
+    WorkerLauncher,
 };
 use crate::docs::{
     DocQuestionService, DocRevisionService, DocTicketService, DocsRootResolver, DocsService,
     SavedTicketDrafts, TicketDraftService,
 };
 use crate::events::watcher::MarkerOf;
-use crate::events::{ChangeWatcher, EventHub, SpecDocWatcher, BRIDGED_EVENTS, SESSIONS_EVENT};
+use crate::events::{ChangeWatcher, EventHub, SpecDocWatcher};
 use crate::favorites::FavoriteService;
-use crate::groups::RouteGroup;
 use crate::guard::RequestGuard;
 use crate::log::ServerLog;
 use crate::notices::BrowserNoticeHub;
@@ -36,32 +34,8 @@ use crate::notifications::{
     DbQuestionWatch, NotificationService, NotificationSetup, NtfySender, Query,
 };
 use crate::projects::ProjectService;
-use crate::proxy::Upstream;
 use crate::sessions::{SessionService, TicketInfoLookup, TicketSummaries};
 use crate::usage::ClaudeUsageService;
-
-/// Der Schattenbetrieb im Zustand: der Dienst, sein Takt und der Beobachter auf
-/// `dispatch/runs`
-pub struct ShadowParts {
-    pub service: Arc<ShadowService>,
-    pub scheduler: Arc<DispatchScheduler>,
-    pub watcher: Arc<ShadowWatcher>,
-}
-
-impl ShadowParts {
-    /// Startet Takt und Beobachter
-    pub async fn start(&self, log: Arc<dyn Fn(&str) + Send + Sync>) {
-        self.scheduler.start().await;
-        let dir = self.service.runs_dir();
-        self.watcher.start(self.service.clone(), dir, log).await;
-    }
-
-    /// Hält Beobachter und Takt an
-    pub async fn stop(&self) {
-        self.watcher.stop().await;
-        self.scheduler.stop().await;
-    }
-}
 
 /// Alles, was die Routen des Servers teilen
 pub struct AppState {
@@ -74,8 +48,6 @@ pub struct AppState {
     pub dispatch: Arc<DispatchService>,
     /// Takt des Dispatchers; [`crate::serve`] startet ihn, das Herunterfahren hält ihn an
     pub dispatch_scheduler: Arc<DispatchScheduler>,
-    /// Der Schattenbetrieb samt Takt und Beobachter; nur mit `NEXUS_DISPATCH=shadow`
-    pub shadow: Option<ShadowParts>,
     /// Optimierungs-Vorschläge zur Dispatcher-Einstellung
     pub suggestions: Arc<DispatchSuggestionService>,
     /// Die Claude-Analyse der Vorschläge; sie lässt nur eine Analyse gleichzeitig zu und
@@ -120,10 +92,6 @@ pub struct AppState {
     pub notifications: Arc<NotificationService>,
     /// Beobachtet die offenen eigenen Fragen der Board-Datenbank
     pub db_questions: Arc<DbQuestionWatch>,
-    /// Ereignisse, die noch im Node-Server entstehen und deshalb gebrückt werden
-    pub bridged_events: HashSet<&'static str>,
-    /// Node-Server, an den alles Unbekannte geht; `None` = kein Proxy
-    pub upstream: Option<Upstream>,
     /// Wird beim Beenden ausgelöst; eigene und durchgeleitete Ereignisströme enden daran
     pub shutdown: CancellationToken,
     /// Prozessnummer, wie `GET /api/health` sie meldet
@@ -164,11 +132,6 @@ impl AppState {
         claude: ClaudeRunners,
         usage: Option<ClaudeUsageService>,
     ) -> nexus_core::Result<Arc<Self>> {
-        let upstream = config
-            .upstream
-            .as_deref()
-            .map(Upstream::parse)
-            .transpose()?;
         // Offene Tabs zeigen Meldungen selbst (der Klick bleibt im Tab); nur ohne Tab geht
         // die Meldung den Weg des Betriebssystems
         let notice_tabs = BrowserNoticeHub::new();
@@ -225,37 +188,6 @@ impl AppState {
                 Arc::new(move |line: &str| log.write(line))
             }),
         );
-        // Der Schattenbetrieb läuft statt des Dispatchers: Node dispatcht, Rust vergleicht
-        // nur. Ohne Node-Server dahinter gäbe es keine Gegenseite, also auch keinen Vergleich
-        let shadow = (config.dispatch.is_shadow() && upstream.is_some()).then(|| {
-            let log: Arc<dyn Fn(&str) + Send + Sync> = {
-                let file = ServerLog::new(&config.home);
-                Arc::new(move |line: &str| file.write(line))
-            };
-            let service = Arc::new(ShadowService::new(ShadowDeps {
-                home: config.home.clone(),
-                boards: board.clone(),
-                clock: config.clock.clone(),
-                env: std::env::vars().collect(),
-                platform: crate::dispatch::context::node_platform().to_string(),
-                sidecar: Arc::new(HttpSidecarStatus::new(
-                    upstream.as_ref().expect("Upstream").base(),
-                )),
-                log: log.clone(),
-            }));
-            let scheduler = Arc::new(
-                DispatchScheduler::new(
-                    service.clone(),
-                    std::time::Duration::from_millis(config.dispatch_tick_ms),
-                )
-                .with_log(log),
-            );
-            ShadowParts {
-                service,
-                scheduler,
-                watcher: Arc::new(ShadowWatcher::new()),
-            }
-        });
         let suggestions = Arc::new(DispatchSuggestionService::new(
             board.clone(),
             config.home.clone(),
@@ -274,7 +206,6 @@ impl AppState {
             board,
             dispatch,
             dispatch_scheduler,
-            shadow,
             suggestions,
             suggestion_analyzer,
             docs: DocsService::new(),
@@ -328,8 +259,6 @@ impl AppState {
             ),
             notifications,
             notice_tabs,
-            bridged_events: bridged_events(&config),
-            upstream,
             shutdown: CancellationToken::new(),
             pid: std::process::id(),
             config,
@@ -345,16 +274,6 @@ impl AppState {
         self.spec_docs.close();
         self.notice_tabs.close();
     }
-}
-
-/// Die Ereignisse, die vom Node-Server kommen: `notice` immer, `sessions` nur, wenn der
-/// Notschalter die Gruppe `sessions` wieder dorthin schickt (dann entstehen sie auch dort)
-fn bridged_events(config: &ServerConfig) -> HashSet<&'static str> {
-    let mut events: HashSet<&'static str> = BRIDGED_EVENTS.into_iter().collect();
-    if config.proxy_groups.contains(RouteGroup::Sessions) {
-        events.insert(SESSIONS_EVENT);
-    }
-    events
 }
 
 /// Die Kurzangaben der Tickets aus der Board-Datenbank; hält den Zustand nur schwach

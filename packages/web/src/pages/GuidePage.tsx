@@ -88,9 +88,9 @@ export function GuidePage() {
 
       <section id="einrichten" className="panel">
         <h2>Einrichten</h2>
-        <p>Einmal pro Rechner, im Ordner des Harness-Repositories. Das installiert das Plugin und den Befehl harness im Terminal:</p>
+        <p>Einmal pro Rechner, im Ordner des Harness-Repositories. Das baut Oberfläche und Plugin (npm run build, npm run build:plugin); der letzte Befehl installiert das Plugin und den Befehl harness im Terminal:</p>
         <p>
-          <CopyCommand command="npm run setup" />
+          <CopyCommand command="packages/plugin/dist/nexus/bin/nexus install" />
         </p>
         <p>Danach ein neues Terminal öffnen. Das Plugin ist zunächst ausgeschaltet und belastet Projekte ohne Harness nicht.</p>
         <p>Einmal pro Projekt, im Projektordner. Das richtet das Projekt ein, schaltet das Plugin dafür ein und bindet Doku- und Board-Regel ein:</p>
@@ -116,9 +116,9 @@ export function GuidePage() {
 
       <section id="aktualisieren" className="panel">
         <h2>Aktualisieren</h2>
-        <p>Im Ordner des Harness-Repositories. Das holt Änderungen, baut neu und aktualisiert Plugin, Terminal-Befehl und Server:</p>
+        <p>Im Ordner des Harness-Repositories: Änderungen holen (git pull), neu bauen (npm run build, npm run build:plugin) und Plugin, Terminal-Befehl und Server aktualisieren:</p>
         <p>
-          <CopyCommand command="npm run setup" />
+          <CopyCommand command="packages/plugin/dist/nexus/bin/nexus install" />
         </p>
         <p>Danach in laufenden Sessions /reload-plugins eingeben und harness board starten. Bestehende Projekte brauchen danach einmal harness init, damit die Board-Regel (.claude/rules/ai-harness-board.md) ankommt:</p>
         <p>
@@ -132,9 +132,9 @@ export function GuidePage() {
         <p>
           <CopyCommand command="/ai-harness:harness-customize" />
         </p>
-        <p>Anpassungen wirken erst, nachdem du sie im Ordner des Harness-Repositories anwendest (ohne Update):</p>
+        <p>Anpassungen wirken erst, nachdem du sie im Ordner des Harness-Repositories anwendest: npm run build:plugin baut das Plugin mit den Anpassungen, danach:</p>
         <p>
-          <CopyCommand command="npm run setup -- --no-pull" />
+          <CopyCommand command="packages/plugin/dist/nexus/bin/nexus install" />
         </p>
         <p>Danach eine neue Session starten oder /reload-plugins eingeben. Welche Anpassungen gelten, zeigen die Einstellungen im Abschnitt „Anpassungen“.</p>
       </section>

@@ -20,7 +20,7 @@ use nexus_core::{HarnessError, HarnessProject};
 use crate::error::ApiResult;
 use crate::extract::JsonBody;
 use crate::notifications::{SessionChange, TicketRef};
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 
 /// Kopf mit dem Token des Projekts
@@ -40,7 +40,7 @@ const TEXTS: [&str; 7] = [
 /// Meldet die Route an; andere Methoden auf demselben Pfad fallen in den Rückfall, damit
 /// axum kein 405 liefert
 pub fn routes() -> Router<Arc<AppState>> {
-    Router::new().route("/api/hook", post(hook).fallback(proxy_or_static))
+    Router::new().route("/api/hook", post(hook).fallback(static_or_not_found))
 }
 
 /// Nimmt ein Hook-Ereignis an: Token prüfen, Zustand anwenden, Favoriten nachführen, melden

@@ -19,7 +19,7 @@ export class BenchProject {
     this.hookCmd = hookCmd;
     this.log = log;
     // realpathSync.native löst auch 8.3-Kurznamen unter Windows auf; git meldet den Langpfad, sonst passt die
-    // Repo-Zuordnung des Boards nicht zum Ordner (wie in packages/cli/tests/integration/helpers/TempProject.ts)
+    // Repo-Zuordnung des Boards nicht zum Ordner
     this.base = realpathSync.native(mkdtempSync(join(tmpdir(), 'harness-bench-hook-')));
     this.repo = join(this.base, 'projekt');
     this.pluginDir = join(this.base, 'plugin');

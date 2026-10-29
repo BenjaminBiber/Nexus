@@ -1,5 +1,5 @@
 import type { DbColumnId, DbStatus } from './dbTypes.js';
-import type { WorkflowPhase } from '../../../core/src/workflow/WorkflowPhases.js';
+import type { WorkflowPhase } from './generated/workflow.js';
 // Antwortformate des Servers
 
 export interface ProjectDto {

@@ -24,7 +24,7 @@ use crate::board_runtime::BoardRuntimeHolder;
 use crate::error::{json, ApiResult};
 use crate::extract::{JsonBody, QueryMap};
 use crate::input::{DbInput, Nullable};
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 
 /// Benutzer aus `board.yaml` und sein aktives Board
@@ -51,44 +51,44 @@ pub fn routes() -> Router<Arc<AppState>> {
             "/api/db/projects",
             get(list_projects)
                 .post(create_project)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         // Nur der genaue Pfad: `/api/db/projects/{key}/questions` gehört zu einer anderen
         // Gruppe und muss weiter in den Rückfall laufen
         .route(
             "/api/db/projects/{key}",
-            axum::routing::patch(rename_project).fallback(proxy_or_static),
+            axum::routing::patch(rename_project).fallback(static_or_not_found),
         )
         .route(
             "/api/db/boards",
             get(list_boards)
                 .post(create_board)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/db/boards/{id}",
             axum::routing::patch(update_board)
                 .delete(delete_board)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/db/pick-folder",
-            post(pick_folder).fallback(proxy_or_static),
+            post(pick_folder).fallback(static_or_not_found),
         )
         .route(
             "/api/db/boards/{id}/activate",
-            post(activate_board).fallback(proxy_or_static),
+            post(activate_board).fallback(static_or_not_found),
         )
-        .route("/api/db/active", get(active).fallback(proxy_or_static))
+        .route("/api/db/active", get(active).fallback(static_or_not_found))
         .route(
             "/api/db/boards/{id}/view",
-            get(board_view).fallback(proxy_or_static),
+            get(board_view).fallback(static_or_not_found),
         )
         .route(
             "/api/db/boards/{id}/branches",
             get(list_branches)
                 .post(create_branch)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
 }
 

@@ -26,7 +26,7 @@ use crate::conflict;
 use crate::error::{json, ApiResult};
 use crate::extract::{JsonBody, QueryMap, QueryValue};
 use crate::input::{Body, DbInput, Nullable};
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 
 /// Meldet die zehn Routen der Gruppe an. Der Rückfall der Methoden gehört zu jeder Route: hat
@@ -37,37 +37,37 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/api/db/projects/{key}/questions",
-            get(list).post(create).fallback(proxy_or_static),
+            get(list).post(create).fallback(static_or_not_found),
         )
         .route(
             "/api/db/questions/{id}",
             get(get_question)
                 .patch(patch_question)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/db/questions/{id}/tickets",
-            put(set_tickets).fallback(proxy_or_static),
+            put(set_tickets).fallback(static_or_not_found),
         )
         .route(
             "/api/db/questions/{id}/depends",
-            put(set_depends).fallback(proxy_or_static),
+            put(set_depends).fallback(static_or_not_found),
         )
         .route(
             "/api/db/questions/{id}/comments",
-            post(add_comment).fallback(proxy_or_static),
+            post(add_comment).fallback(static_or_not_found),
         )
         .route(
             "/api/db/questions/{id}/decision",
-            post(decide).fallback(proxy_or_static),
+            post(decide).fallback(static_or_not_found),
         )
         .route(
             "/api/db/questions/{id}/discard",
-            post(discard).fallback(proxy_or_static),
+            post(discard).fallback(static_or_not_found),
         )
         .route(
             "/api/db/questions/{id}/reopen",
-            post(reopen).fallback(proxy_or_static),
+            post(reopen).fallback(static_or_not_found),
         )
 }
 

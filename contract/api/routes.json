@@ -1,596 +1,596 @@
 [
   {
-    "file": "packages/server/src/routes/BoardConfigRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/board-config"
-  },
-  {
-    "file": "packages/server/src/routes/BoardConfigRoutes.ts",
-    "method": "PUT",
-    "pattern": "/api/board-config"
-  },
-  {
-    "file": "packages/server/src/routes/BoardConfigRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/board-config/test"
-  },
-  {
-    "file": "packages/server/src/routes/CustomizationRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/customizations"
-  },
-  {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "GET",
     "pattern": "/api/db/active"
   },
   {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "GET",
     "pattern": "/api/db/boards"
   },
   {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "POST",
     "pattern": "/api/db/boards"
   },
   {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "DELETE",
     "pattern": "/api/db/boards/:id"
   },
   {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "PATCH",
     "pattern": "/api/db/boards/:id"
   },
   {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "POST",
     "pattern": "/api/db/boards/:id/activate"
   },
   {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "GET",
     "pattern": "/api/db/boards/:id/branches"
   },
   {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "POST",
     "pattern": "/api/db/boards/:id/branches"
   },
   {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "GET",
     "pattern": "/api/db/boards/:id/view"
   },
   {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "POST",
     "pattern": "/api/db/pick-folder"
   },
   {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "GET",
     "pattern": "/api/db/projects"
   },
   {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "POST",
     "pattern": "/api/db/projects"
   },
   {
-    "file": "packages/server/src/routes/DbBoardRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "PATCH",
     "pattern": "/api/db/projects/:key"
   },
   {
-    "file": "packages/server/src/routes/DbGraphRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_misc.rs",
+    "method": "GET",
+    "pattern": "/api/db/boards/:id/notes"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/db_misc.rs",
+    "method": "POST",
+    "pattern": "/api/db/boards/:id/notes"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/db_misc.rs",
     "method": "GET",
     "pattern": "/api/db/boards/:id/spec-progress"
   },
   {
-    "file": "packages/server/src/routes/DbGraphRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_misc.rs",
     "method": "GET",
     "pattern": "/api/db/graph"
   },
   {
-    "file": "packages/server/src/routes/DbInboxRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_misc.rs",
     "method": "GET",
     "pattern": "/api/db/inbox"
   },
   {
-    "file": "packages/server/src/routes/DbInboxRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_misc.rs",
     "method": "DELETE",
     "pattern": "/api/db/inbox/order"
   },
   {
-    "file": "packages/server/src/routes/DbInboxRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_misc.rs",
     "method": "PUT",
     "pattern": "/api/db/inbox/order"
   },
   {
-    "file": "packages/server/src/routes/DbNoteRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/db/boards/:id/notes"
-  },
-  {
-    "file": "packages/server/src/routes/DbNoteRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/db/boards/:id/notes"
-  },
-  {
-    "file": "packages/server/src/routes/DbNoteRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_misc.rs",
     "method": "POST",
     "pattern": "/api/db/notes/:id/drop"
   },
   {
-    "file": "packages/server/src/routes/DbNoteRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_misc.rs",
     "method": "POST",
     "pattern": "/api/db/notes/:id/seen"
   },
   {
-    "file": "packages/server/src/routes/DbNoteRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_misc.rs",
     "method": "POST",
     "pattern": "/api/db/notes/:id/take"
   },
   {
-    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/db/projects/:key/questions"
-  },
-  {
-    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/db/projects/:key/questions"
-  },
-  {
-    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/db/questions/:id"
-  },
-  {
-    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
-    "method": "PATCH",
-    "pattern": "/api/db/questions/:id"
-  },
-  {
-    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/db/questions/:id/comments"
-  },
-  {
-    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/db/questions/:id/decision"
-  },
-  {
-    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
-    "method": "PUT",
-    "pattern": "/api/db/questions/:id/depends"
-  },
-  {
-    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/db/questions/:id/discard"
-  },
-  {
-    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/db/questions/:id/reopen"
-  },
-  {
-    "file": "packages/server/src/routes/DbQuestionRoutes.ts",
-    "method": "PUT",
-    "pattern": "/api/db/questions/:id/tickets"
-  },
-  {
-    "file": "packages/server/src/routes/DbSearchRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_misc.rs",
     "method": "GET",
     "pattern": "/api/db/search"
   },
   {
-    "file": "packages/server/src/routes/DbStatsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_misc.rs",
     "method": "GET",
     "pattern": "/api/db/stats/dispatch"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "POST",
     "pattern": "/api/db/boards/:id/import"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "POST",
     "pattern": "/api/db/boards/:id/tickets"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "DELETE",
     "pattern": "/api/db/tickets/:id"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "GET",
     "pattern": "/api/db/tickets/:id"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "PATCH",
     "pattern": "/api/db/tickets/:id"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "POST",
     "pattern": "/api/db/tickets/:id/comments"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "POST",
     "pattern": "/api/db/tickets/:id/move"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "POST",
     "pattern": "/api/db/tickets/:id/steps"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "DELETE",
     "pattern": "/api/db/tickets/:id/steps/:n"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "PATCH",
     "pattern": "/api/db/tickets/:id/steps/:n"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "POST",
     "pattern": "/api/db/tickets/:id/steps/:n"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "POST",
     "pattern": "/api/db/tickets/:id/steps/:n/move"
   },
   {
-    "file": "packages/server/src/routes/DbTicketRoutes.ts",
+    "file": "crates/nexus-server/src/routes/db_tickets.rs",
     "method": "GET",
     "pattern": "/api/db/tickets/:id/timeline"
   },
   {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/dispatch/accept/:id"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/dispatch/config"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "PUT",
-    "pattern": "/api/dispatch/config"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/dispatch/disable"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/dispatch/enable"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/dispatch/logs"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/dispatch/logs/:name"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/dispatch/merge/:id"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/dispatch/pause"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/dispatch/plan/:ticketId"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/dispatch/plan/:ticketId"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/dispatch/prompts/preview"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/dispatch/research/:questionId"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/dispatch/research/:questionId"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/dispatch/resume"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/dispatch/return/:id"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/dispatch/review/:id"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/dispatch/review/:id/file"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/dispatch/run"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/dispatch/runs"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/dispatch/runs/:name"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/dispatch/status"
-  },
-  {
-    "file": "packages/server/src/routes/DispatchSuggestionRoutes.ts",
+    "file": "crates/nexus-server/src/routes/dispatch_suggestions.rs",
     "method": "GET",
     "pattern": "/api/dispatch/suggestions"
   },
   {
-    "file": "packages/server/src/routes/DispatchSuggestionRoutes.ts",
+    "file": "crates/nexus-server/src/routes/dispatch_suggestions.rs",
     "method": "POST",
     "pattern": "/api/dispatch/suggestions/:id/apply"
   },
   {
-    "file": "packages/server/src/routes/DispatchSuggestionRoutes.ts",
+    "file": "crates/nexus-server/src/routes/dispatch_suggestions.rs",
     "method": "DELETE",
     "pattern": "/api/dispatch/suggestions/:id/dismiss"
   },
   {
-    "file": "packages/server/src/routes/DispatchSuggestionRoutes.ts",
+    "file": "crates/nexus-server/src/routes/dispatch_suggestions.rs",
     "method": "POST",
     "pattern": "/api/dispatch/suggestions/:id/dismiss"
   },
   {
-    "file": "packages/server/src/routes/DispatchSuggestionRoutes.ts",
+    "file": "crates/nexus-server/src/routes/dispatch_suggestions.rs",
     "method": "POST",
     "pattern": "/api/dispatch/suggestions/analyze"
   },
   {
-    "file": "packages/server/src/routes/DocCommentsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "POST",
+    "pattern": "/api/dispatch/accept/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/config"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "PUT",
+    "pattern": "/api/dispatch/config"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "POST",
+    "pattern": "/api/dispatch/disable"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "POST",
+    "pattern": "/api/dispatch/enable"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/logs"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/logs/:name"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "POST",
+    "pattern": "/api/dispatch/merge/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "POST",
+    "pattern": "/api/dispatch/pause"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/plan/:ticket_id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "POST",
+    "pattern": "/api/dispatch/plan/:ticket_id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "POST",
+    "pattern": "/api/dispatch/prompts/preview"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/research/:question_id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "POST",
+    "pattern": "/api/dispatch/research/:question_id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "POST",
+    "pattern": "/api/dispatch/resume"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "POST",
+    "pattern": "/api/dispatch/return/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/review/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/review/:id/file"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "POST",
+    "pattern": "/api/dispatch/run"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/runs"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/runs/:name"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/status"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/doc_comments.rs",
     "method": "GET",
     "pattern": "/api/projects/:pid/docs/comments"
   },
   {
-    "file": "packages/server/src/routes/DocCommentsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/doc_comments.rs",
     "method": "POST",
     "pattern": "/api/projects/:pid/docs/comments"
   },
   {
-    "file": "packages/server/src/routes/DocCommentsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/doc_comments.rs",
     "method": "DELETE",
     "pattern": "/api/projects/:pid/docs/comments/:id"
   },
   {
-    "file": "packages/server/src/routes/DocCommentsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/doc_comments.rs",
     "method": "PATCH",
     "pattern": "/api/projects/:pid/docs/comments/:id"
   },
   {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/projects/:pid/docs"
-  },
-  {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/projects/:pid/docs/file"
-  },
-  {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/projects/:pid/docs/open"
-  },
-  {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/docs_claude.rs",
     "method": "DELETE",
     "pattern": "/api/projects/:pid/docs/question-drafts"
   },
   {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/docs_claude.rs",
     "method": "POST",
     "pattern": "/api/projects/:pid/docs/question-drafts"
   },
   {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/docs_claude.rs",
     "method": "POST",
     "pattern": "/api/projects/:pid/docs/questions"
   },
   {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/docs_claude.rs",
     "method": "POST",
     "pattern": "/api/projects/:pid/docs/revise"
   },
   {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/docs_claude.rs",
+    "method": "DELETE",
+    "pattern": "/api/projects/:pid/docs/ticket-drafts"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/docs_claude.rs",
+    "method": "POST",
+    "pattern": "/api/projects/:pid/docs/ticket-drafts"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/docs.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/docs"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/docs.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/docs/file"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/docs.rs",
+    "method": "POST",
+    "pattern": "/api/projects/:pid/docs/open"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/docs.rs",
     "method": "GET",
     "pattern": "/api/projects/:pid/docs/search"
   },
   {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/docs.rs",
     "method": "PUT",
     "pattern": "/api/projects/:pid/docs/section"
   },
   {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
-    "method": "DELETE",
-    "pattern": "/api/projects/:pid/docs/ticket-drafts"
-  },
-  {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/projects/:pid/docs/ticket-drafts"
-  },
-  {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/docs.rs",
     "method": "DELETE",
     "pattern": "/api/projects/:pid/docs/ticket-drafts/saved"
   },
   {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/docs.rs",
     "method": "GET",
     "pattern": "/api/projects/:pid/docs/ticket-drafts/saved"
   },
   {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/docs.rs",
     "method": "PUT",
     "pattern": "/api/projects/:pid/docs/ticket-drafts/saved"
   },
   {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/docs.rs",
     "method": "GET",
     "pattern": "/api/projects/:pid/docs/tickets"
   },
   {
-    "file": "packages/server/src/routes/DocsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/docs.rs",
     "method": "POST",
     "pattern": "/api/projects/:pid/docs/tickets"
   },
   {
-    "file": "packages/server/src/routes/EventRoutes.ts",
+    "file": "crates/nexus-server/src/routes/events.rs",
     "method": "GET",
     "pattern": "/api/projects/:pid/events"
   },
   {
-    "file": "packages/server/src/routes/FavoriteRoutes.ts",
+    "file": "crates/nexus-server/src/routes/favorites.rs",
     "method": "GET",
     "pattern": "/api/projects/:pid/favorites"
   },
   {
-    "file": "packages/server/src/routes/FavoriteRoutes.ts",
+    "file": "crates/nexus-server/src/routes/favorites.rs",
     "method": "DELETE",
     "pattern": "/api/projects/:pid/favorites/:sid"
   },
   {
-    "file": "packages/server/src/routes/FavoriteRoutes.ts",
+    "file": "crates/nexus-server/src/routes/favorites.rs",
     "method": "PUT",
     "pattern": "/api/projects/:pid/favorites/:sid"
   },
   {
-    "file": "packages/server/src/routes/HealthRoutes.ts",
+    "file": "crates/nexus-server/src/routes/health.rs",
     "method": "GET",
     "pattern": "/api/health"
   },
   {
-    "file": "packages/server/src/routes/HookRoutes.ts",
+    "file": "crates/nexus-server/src/routes/hook.rs",
     "method": "POST",
     "pattern": "/api/hook"
   },
   {
-    "file": "packages/server/src/routes/ProjectRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/projects"
-  },
-  {
-    "file": "packages/server/src/routes/ProjectRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/projects"
-  },
-  {
-    "file": "packages/server/src/routes/SessionRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/projects/:pid/sessions"
-  },
-  {
-    "file": "packages/server/src/routes/SessionRoutes.ts",
-    "method": "POST",
-    "pattern": "/api/projects/:pid/sessions/:sid/claim"
-  },
-  {
-    "file": "packages/server/src/routes/SettingsRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/projects/:pid/settings"
-  },
-  {
-    "file": "packages/server/src/routes/SpecRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/projects/:pid/spec-progress"
-  },
-  {
-    "file": "packages/server/src/routes/StaticRoutes.ts",
+    "file": "crates/nexus-server/src/routes/mod.rs",
     "method": "GET",
     "pattern": "/"
   },
   {
-    "file": "packages/server/src/routes/StaticRoutes.ts",
+    "file": "crates/nexus-server/src/routes/mod.rs",
     "method": "GET",
     "pattern": "/*"
   },
   {
-    "file": "packages/server/src/routes/UsageRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/claude-usage"
-  },
-  {
-    "file": "packages/server/src/routes/UserSettingsRoutes.ts",
-    "method": "GET",
-    "pattern": "/api/user-settings"
-  },
-  {
-    "file": "packages/server/src/routes/UserSettingsRoutes.ts",
-    "method": "PUT",
-    "pattern": "/api/user-settings"
-  },
-  {
-    "file": "packages/server/src/routes/UserSettingsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/notifications.rs",
     "method": "POST",
     "pattern": "/api/user-settings/test-notification"
   },
   {
-    "file": "packages/server/src/routes/UserSettingsRoutes.ts",
+    "file": "crates/nexus-server/src/routes/notifications.rs",
     "method": "POST",
     "pattern": "/api/user-settings/test-ntfy"
   },
   {
-    "file": "packages/server/src/routes/WorkflowRoutes.ts",
+    "file": "crates/nexus-server/src/routes/questions.rs",
+    "method": "GET",
+    "pattern": "/api/db/projects/:key/questions"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/questions.rs",
+    "method": "POST",
+    "pattern": "/api/db/projects/:key/questions"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/questions.rs",
+    "method": "GET",
+    "pattern": "/api/db/questions/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/questions.rs",
+    "method": "PATCH",
+    "pattern": "/api/db/questions/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/questions.rs",
+    "method": "POST",
+    "pattern": "/api/db/questions/:id/comments"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/questions.rs",
+    "method": "POST",
+    "pattern": "/api/db/questions/:id/decision"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/questions.rs",
+    "method": "PUT",
+    "pattern": "/api/db/questions/:id/depends"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/questions.rs",
+    "method": "POST",
+    "pattern": "/api/db/questions/:id/discard"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/questions.rs",
+    "method": "POST",
+    "pattern": "/api/db/questions/:id/reopen"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/questions.rs",
+    "method": "PUT",
+    "pattern": "/api/db/questions/:id/tickets"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/sessions.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/sessions"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/sessions.rs",
+    "method": "POST",
+    "pattern": "/api/projects/:pid/sessions/:sid/claim"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/settings.rs",
+    "method": "GET",
+    "pattern": "/api/board-config"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/settings.rs",
+    "method": "PUT",
+    "pattern": "/api/board-config"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/settings.rs",
+    "method": "POST",
+    "pattern": "/api/board-config/test"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/settings.rs",
+    "method": "GET",
+    "pattern": "/api/projects"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/settings.rs",
+    "method": "POST",
+    "pattern": "/api/projects"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/settings.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/settings"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/settings.rs",
+    "method": "GET",
+    "pattern": "/api/user-settings"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/settings.rs",
+    "method": "PUT",
+    "pattern": "/api/user-settings"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/spec.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/spec-progress"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/usage.rs",
+    "method": "GET",
+    "pattern": "/api/claude-usage"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/workflow.rs",
+    "method": "GET",
+    "pattern": "/api/customizations"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/workflow.rs",
     "method": "GET",
     "pattern": "/api/workflow"
   }

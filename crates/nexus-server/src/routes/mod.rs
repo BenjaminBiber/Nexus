@@ -1,8 +1,7 @@
-//! Der Router des Servers: Schutz, Routengruppen und der Rückfall zum Node-Server.
+//! Der Router des Servers: Schutz, Routen und der Rückfall auf die Oberfläche.
 //!
-//! Reihenfolge: Kennzeichnung → Panik-Fang → Schutz → registrierte Rust-Routen → Rückfall.
-//! Der Rückfall leitet `/api`-Pfade an den Node-Server weiter (falls einer eingerichtet ist)
-//! und liefert sonst die Oberfläche bzw. 404 als JSON.
+//! Reihenfolge: Kennzeichnung → Panik-Fang → Schutz → Routen → Rückfall. Der Rückfall
+//! beantwortet unbekannte `/api`-Pfade mit 404 als JSON und liefert sonst die Oberfläche.
 
 pub mod db_boards;
 pub mod db_misc;
@@ -34,69 +33,39 @@ use axum::response::Response;
 use axum::Router;
 use tower_http::catch_panic::CatchPanicLayer;
 
-use crate::groups::RouteGroup;
 use crate::guard::guard_middleware;
-use crate::proxy::{proxy_or_static, BACKEND_HEADER, BACKEND_RUST};
 use crate::state::AppState;
 
-/// Baut den Router zum Zustand. Jede Routengruppe wird nur registriert, wenn sie aktiv ist;
-/// steht ihr Name in `NEXUS_PROXY_GROUPS`, beantwortet sie weiter der Node-Server.
+/// Kopf, der sagt, wer geantwortet hat; seit dem Wegfall des Node-Servers immer `rust`
+pub const BACKEND_HEADER: &str = "x-nexus-backend";
+/// Wert des Kopfes
+pub const BACKEND_RUST: &str = "rust";
+
+/// Baut den Router zum Zustand.
 ///
-/// **Neue Routengruppen hier eintragen** – dazu in [`RouteGroup`].
+/// **Neue Routengruppen hier eintragen.**
 pub fn build_router(state: Arc<AppState>) -> Router {
-    let mut router = Router::new();
-    if state.config.proxy_groups.enabled(RouteGroup::Basis) {
-        router = router.merge(health::routes());
-    }
-    if state.config.proxy_groups.enabled(RouteGroup::Settings) {
-        router = router.merge(settings::routes());
-    }
-    if state.config.proxy_groups.enabled(RouteGroup::DbBoards) {
-        router = router.merge(db_boards::routes());
-    }
-    if state.config.proxy_groups.enabled(RouteGroup::DbTickets) {
-        router = router.merge(db_tickets::routes());
-    }
-    if state.config.proxy_groups.enabled(RouteGroup::DbMisc) {
-        router = router.merge(db_misc::routes());
-    }
-    if state.config.proxy_groups.enabled(RouteGroup::Questions) {
-        router = router.merge(questions::routes());
-    }
-    if state.config.proxy_groups.enabled(RouteGroup::Events) {
-        router = router.merge(events::routes());
-    }
-    if state.config.proxy_groups.enabled(RouteGroup::Docs) {
-        router = router
-            .merge(docs::routes())
-            .merge(doc_comments::routes())
-            .merge(spec::routes());
-    }
-    if state.config.proxy_groups.enabled(RouteGroup::DocsClaude) {
-        router = router.merge(docs_claude::routes());
-    }
-    if state.config.proxy_groups.enabled(RouteGroup::Sessions) {
-        router = router
-            .merge(hook::routes())
-            .merge(sessions::routes())
-            .merge(favorites::routes())
-            .merge(usage::routes());
-    }
-    if state.config.proxy_groups.enabled(RouteGroup::Notifications) {
-        router = router.merge(notifications::routes());
-    }
-    if state.config.proxy_groups.enabled(RouteGroup::Workflow) {
-        router = router.merge(workflow::routes());
-    }
-    // Die Dispatch-Routen beantwortet Rust nur, wenn der Umschalter auf `rust` steht; bei
-    // `node` bleibt der Dispatcher samt Routen beim Sidecar
-    if state.config.dispatch.is_rust() && state.config.proxy_groups.enabled(RouteGroup::Dispatch) {
-        router = router
-            .merge(dispatch::routes())
-            .merge(dispatch_suggestions::routes());
-    }
-    router
-        .fallback(proxy_or_static)
+    Router::new()
+        .merge(health::routes())
+        .merge(settings::routes())
+        .merge(db_boards::routes())
+        .merge(db_tickets::routes())
+        .merge(db_misc::routes())
+        .merge(questions::routes())
+        .merge(events::routes())
+        .merge(docs::routes())
+        .merge(doc_comments::routes())
+        .merge(spec::routes())
+        .merge(docs_claude::routes())
+        .merge(hook::routes())
+        .merge(sessions::routes())
+        .merge(favorites::routes())
+        .merge(usage::routes())
+        .merge(notifications::routes())
+        .merge(workflow::routes())
+        .merge(dispatch::routes())
+        .merge(dispatch_suggestions::routes())
+        .fallback(static_or_not_found)
         .layer(middleware::from_fn_with_state(
             state.clone(),
             guard_middleware,
@@ -106,9 +75,20 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .with_state(state)
 }
 
-/// Setzt `x-nexus-backend: rust` auf jede Antwort, die nicht vom Node-Server kommt (der
-/// Proxy trägt dort `node` ein). Damit ist in Protokollen und beim Prüfen sichtbar, wer
-/// geantwortet hat.
+/// Rückfall des Routers: unbekannte `/api`-Pfade sind 404 als JSON, alles andere geht an die
+/// statische Auslieferung der Oberfläche
+pub async fn static_or_not_found(
+    axum::extract::State(state): axum::extract::State<Arc<AppState>>,
+    request: Request,
+) -> Response {
+    if request.uri().path().starts_with("/api") {
+        return crate::error::not_found_response();
+    }
+    static_files::serve(state, request).await
+}
+
+/// Setzt `x-nexus-backend: rust` auf jede Antwort. Damit ist in Protokollen und beim Prüfen
+/// sichtbar, wer geantwortet hat.
 async fn mark_backend(request: Request, next: Next) -> Response {
     let mut response = next.run(request).await;
     if !response.headers().contains_key(BACKEND_HEADER) {

@@ -113,7 +113,7 @@ async fn verweigert_die_laufe_des_dispatchers_mit_hinweis_auf_das_skript() {
         assert!(
             fehler
                 .to_string()
-                .contains("packages/db/sql/004_dispatch_runs.sql"),
+                .contains("crates/nexus-db/sql/004_dispatch_runs.sql"),
             "{fehler}"
         );
         // Die Meldung nennt die Datenbank und verspricht, dass alles andere weiterläuft
@@ -141,7 +141,7 @@ async fn verweigert_die_laufe_auch_wenn_nur_die_lauf_details_fehlen() {
     assert!(
         fehler
             .to_string()
-            .contains("packages/db/sql/006_dispatch_run_details.sql"),
+            .contains("crates/nexus-db/sql/006_dispatch_run_details.sql"),
         "{fehler}"
     );
 }

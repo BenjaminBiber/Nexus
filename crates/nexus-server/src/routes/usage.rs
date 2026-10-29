@@ -13,14 +13,17 @@ use axum::Router;
 use nexus_core::settings::UserSettingsStore;
 
 use crate::error::{json, ApiResult};
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 use crate::usage::ClaudeUsageDto;
 
 /// Meldet die Route an; andere Methoden auf demselben Pfad fallen in den Rückfall, damit
 /// axum kein 405 liefert
 pub fn routes() -> Router<Arc<AppState>> {
-    Router::new().route("/api/claude-usage", get(usage).fallback(proxy_or_static))
+    Router::new().route(
+        "/api/claude-usage",
+        get(usage).fallback(static_or_not_found),
+    )
 }
 
 /// Die Auslastung der Abo-Limits, solange die Einstellung sie erlaubt

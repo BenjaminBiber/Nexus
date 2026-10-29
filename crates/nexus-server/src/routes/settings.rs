@@ -9,7 +9,7 @@
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
-use axum::http::{Method, StatusCode};
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::Router;
@@ -26,7 +26,7 @@ use serde_yaml_ng::{Mapping, Value as Yaml};
 
 use crate::error::{json, ApiResult};
 use crate::extract::JsonBody;
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 
 /// Adresse des ntfy-Servers: http oder https, danach mindestens ein Zeichen ohne Leerraum
@@ -46,27 +46,27 @@ pub fn routes() -> Router<Arc<AppState>> {
             "/api/projects",
             get(list_projects)
                 .post(register_project)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/projects/{pid}/settings",
-            get(project_settings).fallback(proxy_or_static),
+            get(project_settings).fallback(static_or_not_found),
         )
         .route(
             "/api/user-settings",
             get(read_user_settings)
                 .put(write_user_settings)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/board-config",
             get(read_board_config)
                 .put(write_board_config)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/board-config/test",
-            post(test_board_config).fallback(proxy_or_static),
+            post(test_board_config).fallback(static_or_not_found),
         )
 }
 
@@ -209,8 +209,7 @@ async fn read_board_config(State(state): State<Arc<AppState>>) -> ApiResult<Resp
     Ok(json(&board_config_dto(&state, &store, config.as_ref())))
 }
 
-/// Speichert die Verbindung, verwirft die eigene Board-Laufzeit und reicht den Körper an den
-/// Node-Server nach (der hält seine eigene Laufzeit)
+/// Speichert die Verbindung und verwirft die Board-Laufzeit, damit sie neu entsteht
 async fn write_board_config(
     State(state): State<Arc<AppState>>,
     JsonBody(body): JsonBody,
@@ -220,16 +219,6 @@ async fn write_board_config(
     let config = merge_board_config(&store, current.as_ref(), &body)?;
     store.write(&config)?;
     state.board.reset().await;
-    if let Some(upstream) = &state.upstream {
-        let body = serde_json::to_vec(&body).unwrap_or_else(|_| b"{}".to_vec());
-        upstream.replay(
-            Method::PUT,
-            "/api/board-config",
-            body,
-            state.log.clone(),
-            &state.shutdown,
-        );
-    }
     Ok(json(&board_config_dto(&state, &store, Some(&config))))
 }
 

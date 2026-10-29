@@ -9,8 +9,8 @@ use std::sync::Arc;
 
 use crate::error::{json, ApiResult};
 use crate::extract::JsonBody;
-use crate::proxy::proxy_or_static;
 use crate::routes::dispatch::config_view;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 use axum::extract::{Path as UrlPath, State};
 use axum::response::Response;
@@ -23,19 +23,21 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/api/dispatch/suggestions",
-            get(list).fallback(proxy_or_static),
+            get(list).fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/suggestions/{id}/apply",
-            post(apply).fallback(proxy_or_static),
+            post(apply).fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/suggestions/{id}/dismiss",
-            post(dismiss).delete(undismiss).fallback(proxy_or_static),
+            post(dismiss)
+                .delete(undismiss)
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/suggestions/analyze",
-            post(analyze).fallback(proxy_or_static),
+            post(analyze).fallback(static_or_not_found),
         )
 }
 

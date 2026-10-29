@@ -28,8 +28,8 @@ describe('nexus install', () => {
     expect(result.stdout).toContain('Plugin in Claude Code nicht angemeldet (--no-plugin).');
     expect(result.stdout).toContain('PATH nicht geändert (--no-path).');
     expect(existsSync(join(home, 'bin', BINARY))).toBe(true);
-    expect(existsSync(join(home, 'app', 'lib', 'server.mjs'))).toBe(true);
     expect(existsSync(join(home, 'app', 'web', 'index.html'))).toBe(true);
+    expect(existsSync(join(home, 'app', 'lib')), 'der Node-Server entfällt mit dem Binary').toBe(false);
     expect(existsSync(join(home, 'bin', 'harness.cmd'))).toBe(true);
     expect(existsSync(join(home, 'bin', 'harness'))).toBe(true);
     expect(existsSync(join(home, 'rules', 'docs.md'))).toBe(true);

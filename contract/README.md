@@ -1,7 +1,7 @@
 # Vertragstest von HTTP-API, CLI und Hooks
 
 Die HTTP-API des Servers und das Verhalten von `nexus` und seinen Hooks sind der Vertrag, den jede
-Umsetzung erfüllen muss – heute der TypeScript-Server und die Rust-CLI, später beide in Rust.
+Umsetzung erfüllen muss – geprüft werden der Rust-Server und die Rust-CLI.
 Dieser Ordner enthält das Werkzeug dafür: Es startet einen Server mit frischem `HARNESS_HOME`, spielt
 Anfragen und CLI-Aufrufe aus Szenario-Dateien ab, ersetzt die je Lauf wechselnden Werte durch Platzhalter
 und vergleicht das Ergebnis mit einer Golden-Datei – oder zeichnet sie neu auf.
@@ -11,14 +11,14 @@ Es gibt drei Sammlungen von Szenarien: `api/` für einzelne Anfragen, `sse/` fü
 `--suite` laufen alle drei.
 
 Alles hier ist plain Node (ESM, `.mjs`), ohne zusätzliche Abhängigkeiten und ohne eigenen Build-Schritt.
-Nur der geprüfte Server und die geprüfte CLI müssen gebaut sein: `npm run build` für den Server, `cargo
-build -p nexus-cli --bin nexus` für die CLI.
+Nur die Oberfläche und das geprüfte Binary müssen gebaut sein: `npm run build` für die Oberfläche,
+`cargo build -p nexus-cli --bin nexus` für Server und CLI.
 
 ## Aufrufe
 
 ```sh
-npm run build                      # Voraussetzung: packages/*/dist und packages/web/dist
-cargo build -p nexus-cli --bin nexus  # Voraussetzung: target/debug/nexus (die geprüfte CLI)
+npm run build                      # Voraussetzung: packages/web/dist
+cargo build -p nexus-cli --bin nexus  # Voraussetzung: target/debug/nexus (Server und CLI)
 npm run contract                   # alles vergleichen (= node contract/run.mjs)
 node contract/run.mjs --update     # Golden-Dateien neu aufzeichnen
 node contract/run.mjs --only basis/projects
@@ -30,9 +30,6 @@ node contract/run.mjs --suite cli --only cli/board   # alle board-Unterbefehle
 node contract/run.mjs --suite cli --only cli/board/boards-projects \
   --step "board --no-open,board mit unbekanntem Unterbefehl,board mit kaputtem Port"
                                    # nur einzelne Schritte eines Szenarios
-node contract/run.mjs --suite cli --cli-cmd "node packages/cli/dist/main.js" \
-  --init-cmd "node packages/cli/dist/main.js"
-                                   # die alte TypeScript-CLI prüfen (erfüllt die Suite nicht mehr)
 node contract/lib/gen-help-scenarios.mjs      # Szenario der Hilfetexte neu erzeugen
 npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lader, Variablen,
                                    # Home-Dateien, Strom, CLI-Schritt, Commit, Home-Datei, Generator)
@@ -44,7 +41,7 @@ npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lad
 | `--only <teilstring>` | Nur Szenarien, deren Pfad den Teilstring enthält (z. B. `basis/health`). |
 | `--step <teilstrings>` | Nur Schritte, deren Name einen der kommagetrennten Teilstrings enthält; verglichen wird dann nur mit diesen Einträgen der Golden-Datei. Schritte mit `record: false` bauen nur den Zustand auf (Projekt, Board, Tickets) und laufen immer mit. Gedacht für eine Umsetzung, die erst einen Teil der Befehle kennt. Geht nicht mit `--update` zusammen. |
 | `--suite <name>` | Ordner unter `contract/` mit den Szenarien (Standard: alle, also `api`, `sse` und `cli`). |
-| `--server-cmd "<cmd {port}>"` | Eigener Startbefehl statt des TS-Servers; `{port}` wird ersetzt. Relative Pfade gelten ab der Projektwurzel. |
+| `--server-cmd "<cmd {port}>"` | Eigener Startbefehl statt des Rust-Servers; `{port}` wird ersetzt. Relative Pfade gelten ab der Projektwurzel. |
 | `--base <url> --home <ordner>` | Gegen einen schon laufenden Server prüfen (siehe unten). |
 | `--cli-cmd "<cmd>"` | Befehl der CLI für `harnessInit` und die `cli`-Schritte (Standard `target/debug/nexus`, das Rust-Binary – gegen es sind die Golden-Dateien der Suite `cli` aufgezeichnet). Auch als JSON-Array: `'["node","/Mein Ordner/main.js"]'` – der sichere Weg für Pfade mit Leerzeichen. Relative Pfade gelten ab der Projektwurzel. |
 | `--init-cmd "<cmd>"` | Eigener Befehl nur für die Fixture `harnessInit` (Standard: `--cli-cmd`). Nötig, solange die geprüfte CLI noch kein `init` kennt. |
@@ -65,7 +62,7 @@ Ticket-IDs (`BEN-0001`) deterministisch und müssen nicht normalisiert werden. D
 1. Szenarien unter `contract/<suite>/**` suchen, nach `--only` und `platforms` filtern.
 2. Je Szenario: temporäres `HARNESS_HOME`, temporäre `CLAUDE_CONFIG_DIR`, freier Port, Fixture-Repos und
    Fixture-Dateien im Home (`homeFiles`) anlegen.
-3. Server starten (Standard `node contract/servers/ts-server.mjs --port {port}`) und auf `GET /api/health`
+3. Server starten (Standard `node contract/servers/rust-server.mjs --port {port}`) und auf `GET /api/health`
    warten (höchstens 15 s).
 4. Fixture `boardConfig` anwenden, dann die Schritte ausführen und normalisieren.
 5. Server beenden (unter Windows mit `taskkill /T /F`), Home, Repos und Claude-Konfiguration löschen.
@@ -74,7 +71,7 @@ Ticket-IDs (`BEN-0001`) deterministisch und müssen nicht normalisiert werden. D
 ## Vertragsmodus des Servers
 
 Jede Umsetzung des Servers muss diesen Modus anbieten; nur so sind die Antworten reproduzierbar.
-Beim TypeScript-Server macht das `contract/servers/ts-server.mjs`.
+Beim Rust-Server macht das `contract/servers/rust-server.mjs` (`NEXUS_SERVER_VERSION=contract`).
 
 - Version in `GET /api/health` ist `contract`.
 - Kein Takt des Dispatchers von selbst, und es wird **nie** ein Prozess gestartet: der Starter des Workers
@@ -97,20 +94,11 @@ Der Server wird mit `HARNESS_HOME`, `HARNESS_PORT`, `CLAUDE_CONFIG_DIR` und den 
 Umgebung gestartet und hört auf `127.0.0.1`. Er schreibt `server.json` wie der normale Start und beendet sich
 bei `SIGTERM`/`SIGINT` sauber.
 
-### Rust vorn, Node dahinter
+### Der geprüfte Weg
 
-Im Betrieb nimmt der Rust-Server den Port an und hält den Node-Server als Kindprozess dahinter. Genau diesen
-Weg prüft der ganze Vertrag mit:
-
-```sh
-npm run build && cargo build -p nexus-cli --bin nexus
-node contract/run.mjs --server-cmd "node scripts/contract/rust-vor-node.mjs --port {port}"
-```
-
-Das Skript startet `nexus serve` mit dem Vertragsserver als Sidecar. Dafür kennt `contract/servers/ts-server.mjs`
-denselben Sidecar-Modus wie der echte Node-Server: Mit `HARNESS_SIDECAR=1` ist Port 0 erlaubt (freier Port), der
-gewählte Port geht als Zeile `HARNESS_SIDECAR_PORT=<port>` auf stdout, es entsteht keine `server.json` (die gehört
-dem Rust-Prozess), Links in Meldungen zeigen auf `HARNESS_PUBLIC_PORT`, und ein Ende der stdin beendet ihn.
+`contract/servers/rust-server.mjs` startet `target/debug/nexus serve` mit dem Port des Szenarios und der
+gebauten Oberfläche aus `packages/web/dist`. Genau diesen Weg nimmt auch der Betrieb; einen Node-Server
+gibt es nicht mehr.
 
 ## Szenario-Format (`*.scenario.json`)
 
@@ -178,7 +166,7 @@ Vertragsmodus. Szenarien mit Ereignisstrom drücken damit den Takt, damit sie in
 - `claudeEnvFile: true`: setzt `CLAUDE_ENV_FILE` auf `<CLAUDE>/claude-env.sh` und zeichnet den Inhalt dieser
   Datei nach jedem `cli`-Schritt als `response.envFile` auf. `session-start` schreibt dort Session und
   Ticket unter beiden Namen (`NEXUS_SESSION` und `HARNESS_SESSION`, ebenso `…_TICKET`; `EnvFileWriter` in
-  `crates/nexus-core/src/hooks/` bzw. `packages/core/src/hooks/`) – je Variable nur, solange sie nicht schon
+  `crates/nexus-core/src/hooks/`) – je Variable nur, solange sie nicht schon
   in der Umgebung steht. Ohne die Fixture gibt es kein
   `CLAUDE_ENV_FILE` und kein `envFile` in der Golden-Datei.
 - `homeFiles`: Dateien, die **vor dem Start des Servers** im `HARNESS_HOME` liegen (`lib/HomeFiles.mjs`).
@@ -278,7 +266,7 @@ Leerzeichen in Pfaden sicher sind. Die Umgebung ist die geerbte, aber:
   eine geerbte Zuordnung gilt nicht für den Vertrag. Wer sie braucht, setzt sie im `env` des Schritts.
 
 Der Szenario-Server läuft schon auf `HARNESS_PORT`; `session-start` erkennt ihn und startet keinen zweiten
-(`probe` in `packages/cli/src/hooks/HookRunner.ts`). `HARNESS_SERVER_ENTRY` wird deshalb nicht gesetzt.
+(`probe` in `crates/nexus-cli/src/hooks/runner.rs`).
 
 Aufgezeichnet wird `{ code, stdout | json, stderr }`, dazu `envFile` mit der Fixture `claudeEnvFile`.
 Ist die Standardausgabe ein JSON-Objekt oder eine JSON-Liste, steht sie als `json` statt als `stdout` –
@@ -427,10 +415,10 @@ nimmt der Server den Weg des Betriebssystems (Systemmeldung). Deshalb löst `not
 immer nur bei offenem Strom aus.
 
 Ohne offenen Strom hängt die Antwort von `POST /api/user-settings/test-notification` am Rechner: Der
-TypeScript-Server meldet außerhalb von Windows „Windows-Benachrichtigungen gibt es nur unter Windows.“, der
-Rust-Server zeigt dort über `notify-rust` eine echte Meldung und antwortet mit `error: null`. Der Schritt
-„Testmeldung“ in `api/misc/notify.scenario.json` vergleicht deshalb mit `compare: "status"` nur den Status;
-die Form `{ ok: boolean, error: string | null }` ist durch die Routentests beider Umsetzungen abgedeckt.
+Server zeigt über `notify-rust` eine echte Meldung und antwortet mit `error: null`, auf einem Rechner ohne
+Meldedienst steht der Grund in `error`. Der Schritt „Testmeldung“ in `api/misc/notify.scenario.json`
+vergleicht deshalb mit `compare: "status"` nur den Status; die Form `{ ok: boolean, error: string | null }`
+ist durch die Routentests abgedeckt.
 
 ## Golden-Format (`*.golden.json`)
 
@@ -494,15 +482,16 @@ Jede Regel ist eine eigene Methode in `lib/Normalizer.mjs` und einzeln getestet
 ## Routenliste und Abdeckung
 
 `api/routes.json` enthält alle Routen des Servers (Methode, Muster, Quelldatei) und wird aus
-`packages/server/src/routes/*.ts` erzeugt:
+`crates/nexus-server/src/routes/*.rs` erzeugt:
 
 ```sh
 node contract/lib/extract-routes.mjs
 ```
 
-Der Rückfall der Oberfläche hat kein Muster im Quellcode (`app.setNotFoundHandler`); er steht als `GET /*`
-in der Liste und deckt alles ab, was `StaticRoutes.ts` neben `/` beantwortet: Seiten der Oberfläche, Dateien
-unter `assets/` und unbekannte Adressen.
+Der Rückfall der Oberfläche hat kein Muster im Quellcode (`.fallback(static_or_not_found)` in
+`routes/mod.rs`); er steht als `GET /` und `GET /*` in der Liste und deckt alles ab, was
+`routes/static_files.rs` beantwortet: Seiten der Oberfläche, Dateien unter `assets/` und unbekannte
+Adressen.
 
 `--coverage` liest die Golden-Dateien (es läuft kein Server), ordnet jeden aufgezeichneten Schritt über
 Methode und Pfad einem Muster zu (`:param` → ein Pfadabschnitt, `*` → Rest des Pfades, Abfrageteil
@@ -555,20 +544,20 @@ Board, dessen `repoPath` auf `{{REPO1}}` zeigt – nur so findet ein Befehl aus 
 `boards-projects` braucht ein zweites Repo für den Repo-Pfad eines fremden Boards, `spec-stop` kommt ohne
 Board-Datenbank aus und braucht drei Repos (Kommentare, beschädigte Kommentardatei, nicht eingerichtet).
 
-| Szenario | Unterbefehle | Quelle unter `packages/cli/src/commands/` |
+| Szenario | Unterbefehle | Quelle unter `crates/nexus-cli/src/commands/` |
 | --- | --- | --- |
-| `tickets-read` | `list`, `show` (mit `--md`, `--json`, `--field`, `--history`, `--all-comments`, Filtern) | `board/BoardTicketReadCommands.ts` |
-| `tickets-write` | `create`, `set`, `move`, `delete` (Labels, Voraussetzungen, `--rev`) | `board/BoardTicketWriteCommands.ts` |
-| `steps` | `step <id> <nummer>`, `step done`, `step add`, `step edit`, `step rm`, `step move` | `board/BoardStepCommands.ts` |
-| `comments` | `comment` | `board/BoardCommentCommand.ts` |
-| `notes` | `note add`, `note seen`, `note list`, `note show`, `note take`, `note drop` | `board/BoardNoteCommands.ts` |
-| `inbox` | `inbox` | `board/BoardInboxCommands.ts` |
-| `planning` | `plan`, `plan-json`, `next-planning` | `board/BoardPlanningCommands.ts` |
-| `boards-projects` | `project list/create/rename`, `boards list/create/rename/use/repo/delete`, `board --no-open` | `board/BoardProjectCommands.ts`, `board/BoardBoardsCommands.ts`, `BoardCommand.ts` |
-| `questions` | `question add/research/comment/list/show/link/depends/answer/reopen/discard` | `board/BoardQuestionCommands.ts` |
-| `claim-work` | `claim`, `release`, `start`, `done`, `merge`, `accept` | `board/BoardClaimCommands.ts`, `board/BoardWorkCommands.ts`, `board/BoardDispatchCommands.ts` |
-| `dispatch` | `dispatch status/run/pause/resume/enable/disable`, `dispatch-runs backfill`, `plan-start`, `question research-start` | `board/BoardDispatchCommands.ts` |
-| `spec-stop` | `spec comments`, `spec resolve`, `stop` | `SpecCommentsCommand.ts`, `SpecResolveCommand.ts`, `StopCommand.ts` |
+| `tickets-read` | `list`, `show` (mit `--md`, `--json`, `--field`, `--history`, `--all-comments`, Filtern) | `board/tickets_read.rs` |
+| `tickets-write` | `create`, `set`, `move`, `delete` (Labels, Voraussetzungen, `--rev`) | `board/tickets_write.rs` |
+| `steps` | `step <id> <nummer>`, `step done`, `step add`, `step edit`, `step rm`, `step move` | `board/step.rs` |
+| `comments` | `comment` | `board/comment.rs` |
+| `notes` | `note add`, `note seen`, `note list`, `note show`, `note take`, `note drop` | `board/note.rs` |
+| `inbox` | `inbox` | `board/inbox.rs` |
+| `planning` | `plan`, `plan-json`, `next-planning` | `board/planning.rs` |
+| `boards-projects` | `project list/create/rename`, `boards list/create/rename/use/repo/delete`, `board --no-open` | `board/project.rs`, `board/boards.rs`, `board/open.rs` |
+| `questions` | `question add/research/comment/list/show/link/depends/answer/reopen/discard` | `board/question.rs` |
+| `claim-work` | `claim`, `release`, `start`, `done`, `merge`, `accept` | `board/claim.rs`, `board/work.rs`, `board/merge.rs` |
+| `dispatch` | `dispatch status/run/pause/resume/enable/disable`, `dispatch-runs backfill`, `plan-start`, `question research-start` | `board/dispatch.rs` |
+| `spec-stop` | `spec comments`, `spec resolve`, `stop` | `spec.rs`, `stop.rs` |
 
 Was beim Aufzeichnen zu beachten ist:
 
@@ -629,22 +618,21 @@ Zwei Dinge gehören zum Vertrag und sind leicht zu übersehen:
 - **Der Programmname `nexus`** steht in jedem Hilfetext (`Aufruf: nexus board …`) und wird **nicht**
   normalisiert: Der Name gehört zum Vertrag. Szenario und Golden-Datei sind gegen das Rust-Binary
   aufgezeichnet, deshalb heißen die Schritte `nexus …`; den Namen nimmt der Generator aus der Aufruf-Zeile
-  der Hilfe (`--cli-cmd`). Die alte TypeScript-CLI sagt weiter `harness` und erfüllt die Suite `cli/help`
-  nicht mehr – sie kennt `serve`, `migrate` und `customize` auch nicht.
+  der Hilfe (`--cli-cmd`).
 
 ## Gegen einen fremden Server prüfen
 
 ```sh
 H=$(mktemp -d)
-HARNESS_HOME=$H node contract/servers/ts-server.mjs --port 47999 &
+HARNESS_HOME=$H node contract/servers/rust-server.mjs --port 47999 &
 node contract/run.mjs --base http://127.0.0.1:47999 --home $H --only basis/health
 kill %1
 ```
 
 Der fremde Server muss mit genau diesem leeren Home gestartet sein. Weil sein Zustand nicht zurückgesetzt
 werden kann, ist **genau ein** Szenario erlaubt: `--only` muss eindeutig passen, sonst bricht der Lauf ab.
-Dieselbe Form nimmt später der Server in Rust: entweder `--base` auf einen von Hand gestarteten Server oder
-`--server-cmd "target/debug/nexus-server --port {port}"`, damit `run.mjs` ihn selbst startet.
+Dieselbe Form nimmt jede andere Umsetzung: entweder `--base` auf einen von Hand gestarteten Server oder
+`--server-cmd "<befehl> --port {port}"`, damit `run.mjs` ihn selbst startet.
 
 ## Dateien
 
@@ -678,7 +666,7 @@ contract/
 │  ├─ extract-routes.mjs      # erzeugt api/routes.json
 │  └─ gen-help-scenarios.mjs  # erzeugt cli/help/help.scenario.json
 ├─ servers/
-│  └─ ts-server.mjs           # TS-Server im Vertragsmodus
+│  └─ rust-server.mjs         # Rust-Server im Vertragsmodus
 ├─ api/
 │  ├─ routes.json             # alle Routen des Servers
 │  ├─ basis/                  # Beispielszenarien

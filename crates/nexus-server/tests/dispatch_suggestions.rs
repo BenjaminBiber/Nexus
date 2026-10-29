@@ -2,7 +2,6 @@
 //! `packages/server/tests/unit/DispatchSuggestionRoutes.test.ts` und
 //! `packages/server/tests/unit/DispatchSuggestionAnalysis.test.ts`.
 //!
-//! Der Testserver steht auf `NEXUS_DISPATCH=rust`, denn nur dann beantwortet Rust diese
 //! Routen. Claude startet nie: an seiner Stelle antwortet eine Attrappe.
 
 mod common;
@@ -11,7 +10,6 @@ use std::sync::Arc;
 
 use nexus_core::dispatch::{DispatchConfigNormalizer, DispatchConfigStore};
 use nexus_core::testing::fixtures::run_fixture;
-use nexus_server::config::DispatchBackend;
 use nexus_server::dispatch::RunResult;
 use serde_json::{json, Value};
 
@@ -46,7 +44,6 @@ fn raw() -> Value {
 async fn start(claude: Option<Arc<FakeClaude>>) -> (TestServer, Arc<BoardBackendWithServices>) {
     let claude = claude.map(fake_runners);
     let (server, backend) = TestServer::start_with_board_and(TestServerOptions {
-        dispatch: DispatchBackend::Rust,
         claude,
         ..TestServerOptions::default()
     })

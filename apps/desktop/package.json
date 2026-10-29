@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
-    "prepare-sidecar": "npm run build --prefix ../.. && npm run build:sidecar --prefix ../.. && node scripts/copy-sidecar.mjs",
+    "prepare-binaries": "npm run build --prefix ../.. && node scripts/copy-server.mjs",
     "smoke": "node scripts/smoke-app.mjs"
   },
   "devDependencies": {

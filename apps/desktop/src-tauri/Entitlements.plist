@@ -3,20 +3,15 @@
 <!--
   Entitlements für Hardened Runtime (macOS). Ohne Hardened Runtime notarisiert Apple nicht.
 
-  allow-jit und allow-unsigned-executable-memory braucht das Node-Sidecar (Single Executable
-  Application): die V8-Engine erzeugt Maschinencode zur Laufzeit. Fehlen die Schlüssel, stürzt
-  der Sidecar nach der Notarisierung beim Start ab. Sobald Phase 5 das Sidecar ersetzt (kein
-  Node mehr), können beide Schlüssel entfallen.
+  allow-jit und allow-unsigned-executable-memory sind entfallen: sie waren nur für das
+  Node-Sidecar nötig, dessen V8-Engine Maschinencode zur Laufzeit erzeugte. Seit Phase 5
+  liefert die App nur noch den Rust-Server mit.
 
   Die Netzwerk-Schlüssel wirken nur in der App-Sandbox, die Nexus nicht nutzt. Sie stehen hier,
   weil der Plan „nur Netzwerk“ vorsieht, und schaden ohne Sandbox nicht.
 -->
 <plist version="1.0">
   <dict>
-    <key>com.apple.security.cs.allow-jit</key>
-    <true/>
-    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-    <true/>
     <key>com.apple.security.network.client</key>
     <true/>
     <key>com.apple.security.network.server</key>

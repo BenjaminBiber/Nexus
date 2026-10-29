@@ -23,7 +23,6 @@ pub mod review_service;
 pub mod run_recorder;
 pub mod scheduler;
 pub mod service;
-pub mod shadow;
 pub mod status;
 pub mod suggestion_analyzer;
 pub mod suggestion_service;
@@ -60,10 +59,6 @@ pub use scheduler::{DispatchScheduler, DispatchTick, LogLine, STOP_WAIT};
 pub use service::{
     AliveCheck, DispatchReport, DispatchService, DispatchServiceDeps, EvaluatedRun,
     MergeRetryReport, PromptPreview, PromptPreviewInput,
-};
-pub use shadow::{
-    EvaluationStatus, HttpSidecarStatus, ShadowDecisionMaker, ShadowDeps, ShadowEvaluator,
-    ShadowReadinessCheck, ShadowService, ShadowWatcher, SidecarStatus,
 };
 pub use status::{
     DispatchMergeInfo, DispatchPlanningInfo, DispatchResearchInfo, DispatchRunInfo, DispatchRunLog,

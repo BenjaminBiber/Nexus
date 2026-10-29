@@ -13,10 +13,10 @@ import { mean, median, p95, round1 } from './lib/Stats.mjs';
 
 // Version des Ausgabeformats von contract/baseline.json
 const SCHEMA = 1;
-// Startbefehl des heutigen TypeScript-Servers; `{port}` wird durch den freien Port ersetzt
-const DEFAULT_SERVER_CMD = 'node packages/server/dist/main.js --port {port}';
+// Startbefehl des Rust-Servers; `{port}` wird durch den freien Port ersetzt
+const DEFAULT_SERVER_CMD = 'target/release/nexus serve --port {port}';
 // Programmdatei, die der Standardbefehl braucht (nur dann geprüft)
-const DEFAULT_ENTRY = join('packages', 'server', 'dist', 'main.js');
+const DEFAULT_ENTRY = join('target', 'release', process.platform === 'win32' ? 'nexus.exe' : 'nexus');
 // Umfang einer vollen Messung und der schnellen Messung (--quick, für Tests und Rauchtest)
 const FULL = { tickets: 500, runs: 10, loads: 100, hookRuns: 30, sseRuns: 20, dbRuns: 10 };
 const QUICK = { tickets: 50, runs: 3, loads: 10, hookRuns: 5, sseRuns: 5, dbRuns: 3 };
@@ -217,7 +217,7 @@ async function measureSse(server, project, boardId, ticketId, options) {
 // Ganze Messung: befüllen, Testprojekt einrichten, Kaltstarts, warme Ladezeiten, Speicher, Hooks, Ereignisstrom
 async function run(options) {
   if (options.serverCmd === DEFAULT_SERVER_CMD && !existsSync(DEFAULT_ENTRY)) {
-    throw new Error(`${DEFAULT_ENTRY} fehlt – bitte zuerst „npm run build“ ausführen (oder --server-cmd angeben).`);
+    throw new Error(`${DEFAULT_ENTRY} fehlt – bitte zuerst „cargo build --release -p nexus-cli --bin nexus“ ausführen (oder --server-cmd angeben).`);
   }
   const home = mkdtempSync(join(tmpdir(), 'harness-bench-'));
   const server = new ServerProcess({ cmd: options.serverCmd, home });

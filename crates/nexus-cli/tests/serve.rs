@@ -1,36 +1,16 @@
-//! `nexus serve` von außen: freier Port, Health, `server.json` mit der Rust-Prozessnummer und
-//! dem öffentlichen Port, Weiterleitung an den Node-Server und ein geordnetes Ende mit SIGTERM.
+//! `nexus serve` von außen: freier Port, Health, `server.json` mit Prozessnummer und Port und
+//! ein geordnetes Ende mit SIGTERM.
 //!
-//! Der Test braucht den gebauten Node-Server (`npm run build`); fehlt er, meldet er das und tut
-//! nichts. Das Beenden mit Signal gibt es nur unter Unix (`#[cfg(unix)]`).
+//! Das Beenden mit Signal gibt es nur unter Unix (`#[cfg(unix)]`).
 
 use std::net::{TcpListener, TcpStream};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
 use assert_cmd::prelude::*;
 use nexus_core::registry::ServerInfoFile;
 use nexus_core::HarnessHome;
-
-/// Wurzel des Projekts (zwei Ebenen über dem Crate)
-fn repo_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("..")
-        .canonicalize()
-        .unwrap()
-}
-
-/// Programmdatei des gebauten TypeScript-Servers; ohne `npm run build` gibt es sie nicht
-fn node_server() -> Option<PathBuf> {
-    let entry = repo_root()
-        .join("packages")
-        .join("server")
-        .join("dist")
-        .join("main.js");
-    entry.is_file().then_some(entry)
-}
 
 /// Ein Port, auf dem gerade niemand hört
 fn freier_port() -> u16 {
@@ -41,7 +21,7 @@ fn freier_port() -> u16 {
 }
 
 /// Startet `nexus serve` mit frischem Benutzerordner
-fn serve(home: &Path, port: u16, node: Option<&Path>) -> std::process::Child {
+fn serve(home: &Path, port: u16) -> std::process::Child {
     let mut command = Command::cargo_bin("nexus").unwrap();
     command
         .args(["serve", "--port", &port.to_string()])
@@ -52,10 +32,6 @@ fn serve(home: &Path, port: u16, node: Option<&Path>) -> std::process::Child {
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
-    match node {
-        Some(node) => command.args(["--node-sidecar", &node.to_string_lossy()]),
-        None => command.arg("--no-node"),
-    };
     command.spawn().expect("nexus serve startet")
 }
 
@@ -110,41 +86,30 @@ fn lebt(pid: u32) -> bool {
 }
 
 #[test]
-fn serve_startet_rust_und_node_und_schreibt_server_json() {
-    let Some(node) = node_server() else {
-        eprintln!("übersprungen: packages/server/dist/main.js fehlt – vorher `npm run build`");
-        return;
-    };
+fn serve_startet_den_server_und_schreibt_server_json() {
     let home = tempfile::Builder::new()
         .prefix("nexus-serve-")
         .tempdir()
         .unwrap();
     let port = freier_port();
-    let mut kind = serve(home.path(), port, Some(&node));
+    let mut kind = serve(home.path(), port);
 
     let health = warte_auf_health(port).expect("Health des Servers");
-    // Die Antwort kommt von Rust, nicht vom Node-Server dahinter
+    // Jede Antwort ist als Rust-Antwort gekennzeichnet
     assert!(
         health.to_lowercase().contains("x-nexus-backend: rust"),
         "{health}"
     );
 
-    // `server.json` nennt den Rust-Prozess und den öffentlichen Port, nicht den internen
+    // `server.json` nennt den Prozess und den Port des Servers
     let info = ServerInfoFile::new(HarnessHome::at(home.path()))
         .read()
         .expect("server.json");
     assert_eq!(info.port, port);
-    assert_eq!(info.pid, kind.id(), "die PID des Rust-Prozesses");
+    assert_eq!(info.pid, kind.id(), "die PID des Serverprozesses");
     assert!(
         health.contains(&format!("\"pid\":{}", info.pid)),
         "{health}"
-    );
-
-    // Eine noch nicht portierte Route kommt beim Node-Server an
-    let tickets = fetch(port, "/api/db/tickets").expect("Antwort auf /api/db/tickets");
-    assert!(
-        tickets.to_lowercase().contains("x-nexus-backend: node"),
-        "{tickets}"
     );
 
     let _ = kind.kill();
@@ -163,7 +128,7 @@ fn ein_belegter_port_endet_mit_port_busy_und_code_1() {
 
     let mut command = Command::cargo_bin("nexus").unwrap();
     let out = command
-        .args(["serve", "--port", &port.to_string(), "--no-node"])
+        .args(["serve", "--port", &port.to_string()])
         .env("HARNESS_HOME", home.path())
         .env("NEXUS_HOME", home.path())
         .output()
@@ -177,30 +142,14 @@ fn ein_belegter_port_endet_mit_port_busy_und_code_1() {
 
 #[test]
 #[cfg(unix)]
-fn sigterm_beendet_rust_und_node_und_loescht_server_json() {
-    let Some(node) = node_server() else {
-        eprintln!("übersprungen: packages/server/dist/main.js fehlt – vorher `npm run build`");
-        return;
-    };
+fn sigterm_beendet_den_server_und_loescht_server_json() {
     let home = tempfile::Builder::new()
         .prefix("nexus-serve-")
         .tempdir()
         .unwrap();
     let port = freier_port();
-    let mut kind = serve(home.path(), port, Some(&node));
+    let mut kind = serve(home.path(), port);
     warte_auf_health(port).expect("Health des Servers");
-
-    // Der interne Port des Node-Servers steht im Protokoll
-    let protokoll = std::fs::read_to_string(home.path().join("server.log")).unwrap_or_default();
-    let intern: u16 = protokoll
-        .lines()
-        .find_map(|line| line.rsplit_once("Node-Server hört auf 127.0.0.1:"))
-        .and_then(|(_, port)| port.trim().parse().ok())
-        .unwrap_or_else(|| panic!("Port des Node-Servers im Protokoll: {protokoll}"));
-    assert_ne!(
-        intern, port,
-        "der Node-Server hört nicht auf dem öffentlichen Port"
-    );
 
     let pid = kind.id();
     let status = Command::new("kill")
@@ -209,12 +158,11 @@ fn sigterm_beendet_rust_und_node_und_loescht_server_json() {
         .unwrap();
     assert!(status.success());
 
-    let ende = kind.wait().expect("Ende des Rust-Prozesses");
+    let ende = kind.wait().expect("Ende des Serverprozesses");
     assert!(ende.success(), "{ende}");
     assert!(!lebt(pid));
-    // Beide Ports sind frei und `server.json` ist weg
+    // Der Port ist frei und `server.json` ist weg
     assert!(warte_auf_freien_port(port, Duration::from_secs(20)));
-    assert!(warte_auf_freien_port(intern, Duration::from_secs(20)));
     assert!(
         !home.path().join("server.json").exists(),
         "server.json ist gelöscht"

@@ -1,10 +1,7 @@
 //! Server von Nexus: HTTP-API, Dispatch-Worker und Benachrichtigungen.
 //!
-//! Der Server ist eine axum-Anwendung, die an die Stelle des Fastify-Servers treten kann. Sie
-//! beantwortet selbst nur, was in Rust schon umgesetzt ist (heute `/api/health` und die
-//! Oberfläche), und leitet alles andere an den Node-Server weiter
-//! ([`proxy`]). Spätere Tickets schalten Routengruppe für Routengruppe
-//! um, indem sie in [`routes::build_router`] Handler registrieren.
+//! Der Server ist eine axum-Anwendung und beantwortet die ganze API selbst; alles, was keine
+//! Route kennt, geht an die statische Auslieferung der Oberfläche bzw. endet als 404.
 
 pub mod board_db;
 pub mod board_runtime;
@@ -16,17 +13,14 @@ pub mod error;
 pub mod events;
 pub mod extract;
 pub mod favorites;
-pub mod groups;
 pub mod guard;
 pub mod input;
 pub mod log;
 pub mod notices;
 pub mod notifications;
 pub mod projects;
-pub mod proxy;
 pub mod routes;
 pub mod sessions;
-pub mod sidecar;
 pub mod state;
 pub mod timeline;
 pub mod usage;
@@ -70,9 +64,6 @@ impl ServerHandle {
         self.state.shutdown.cancel();
         // Vor dem Abbau der Board-Laufzeit anhalten, damit kein Durchlauf sie neu aufbaut
         self.state.dispatch_scheduler.stop().await;
-        if let Some(shadow) = &self.state.shadow {
-            shadow.stop().await;
-        }
         self.state.db_questions.stop();
         // Ausstehende Änderungen der Sessions landen noch in `sessions.json`
         self.state.sessions.close().await;
@@ -109,8 +100,8 @@ pub async fn serve(
 
 /// Öffnet den Port, bevor etwas anderes startet.
 ///
-/// `nexus serve` bindet damit zuerst den öffentlichen Port: Ist er belegt, fällt das sofort auf
-/// und es bleibt kein Node-Prozess übrig.
+/// `nexus serve` bindet damit zuerst den Port: Ist er belegt, fällt das sofort auf, bevor
+/// irgendetwas anderes hochkommt.
 pub async fn bind(host: &str, port: u16) -> Result<TcpListener> {
     TcpListener::bind(format!("{host}:{port}"))
         .await
@@ -166,48 +157,14 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
         "Server läuft auf http://{}:{port}",
         state.config.host
     ));
-    if let Some(upstream) = &state.upstream {
-        state
-            .log
-            .write(&format!("Unbekannte Routen gehen an {}", upstream.base()));
-    }
-    let proxied = state.config.proxy_groups.names();
-    if !proxied.is_empty() {
-        state.log.write(&format!(
-            "Routengruppen am Node-Server: {}",
-            proxied.join(", ")
-        ));
-    }
-
     // Meldungen für neue Fragen und Recherchen der Board-Datenbank (Abstand 0 = aus)
     state.db_questions.start();
-    // Getaktet wird nur, wenn der Umschalter `NEXUS_DISPATCH` auf `rust` steht; sonst
-    // dispatcht der Node-Sidecar und nur er
-    if state.config.dispatch.is_rust() {
-        state.log.write(&format!(
-            "Dispatcher: Rust, Takt {} ms",
-            state.config.dispatch_tick_ms
-        ));
-        state.dispatch_scheduler.start().await;
-    }
-    // Im Schattenbetrieb dispatcht der Node-Sidecar, und Rust rechnet jede Entscheidung und
-    // jede Auswertung nach – Takt und Beobachter laufen, geschrieben wird nur unter
-    // `dispatch/shadow/`
-    if let Some(shadow) = &state.shadow {
-        state.log.write(&format!(
-            "Dispatcher: Node, Rust vergleicht im Schattenbetrieb (Takt {} ms, Ordner {})",
-            state.config.dispatch_tick_ms,
-            shadow.service.shadow_dir().to_string_lossy()
-        ));
-        let log = state.log.clone();
-        shadow
-            .start(Arc::new(move |line: &str| log.write(line)))
-            .await;
-    } else if state.config.dispatch.is_shadow() {
-        state.log.write(
-            "Schattenbetrieb ohne Node-Server: es gibt keine Gegenseite, also kein Vergleich.",
-        );
-    }
+    // Dispatch läuft immer in Rust; ein Takt von 0 schaltet ihn ab
+    state.log.write(&format!(
+        "Dispatcher: Takt {} ms",
+        state.config.dispatch_tick_ms
+    ));
+    state.dispatch_scheduler.start().await;
 
     let router = routes::build_router(state.clone());
     let shutdown = state.shutdown.clone();

@@ -22,7 +22,7 @@ pub mod workflow;
 pub mod workflow_validator;
 
 pub use applier::{CheckResult, CustomizationApplier, CustomizationInput};
-pub use args::{CustomizeArgs, CustomizeCommand, NEXUS_USAGE, NPM_USAGE};
+pub use args::{CustomizeArgs, CustomizeCommand, NEXUS_USAGE};
 pub use base_snapshot::{BaseCheck, BaseSnapshot};
 pub use clone_workflow_tools::CloneWorkflowTools;
 pub use copier::{CopyTarget, CustomizationCopier};

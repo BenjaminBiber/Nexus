@@ -14,8 +14,8 @@ use serde_json::Value;
 
 use crate::error::{json, ApiResult};
 use crate::extract::{JsonBody, QueryMap};
-use crate::proxy::proxy_or_static;
 use crate::routes::docs::source;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 
 /// Höchstlänge der markierten Stelle eines Kommentars
@@ -28,13 +28,13 @@ pub fn routes() -> Router<Arc<AppState>> {
             "/api/projects/{pid}/docs/comments",
             get(list_comments)
                 .post(add_comment)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/projects/{pid}/docs/comments/{id}",
             axum::routing::patch(update_comment)
                 .delete(remove_comment)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
 }
 

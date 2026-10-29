@@ -26,7 +26,7 @@ use crate::conflict;
 use crate::error::{json, ApiResult};
 use crate::extract::JsonBody;
 use crate::input::{Body, DbInput, Nullable};
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 use crate::timeline::TicketTimelineAssembler;
 
@@ -43,45 +43,45 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/api/db/boards/{id}/tickets",
-            post(create).fallback(proxy_or_static),
+            post(create).fallback(static_or_not_found),
         )
         .route(
             "/api/db/boards/{id}/import",
-            post(import).fallback(proxy_or_static),
+            post(import).fallback(static_or_not_found),
         )
         .route(
             "/api/db/tickets/{id}",
             get(get_ticket)
                 .patch(patch_ticket)
                 .delete(delete_ticket)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/db/tickets/{id}/timeline",
-            get(timeline).fallback(proxy_or_static),
+            get(timeline).fallback(static_or_not_found),
         )
         .route(
             "/api/db/tickets/{id}/move",
-            post(move_ticket).fallback(proxy_or_static),
+            post(move_ticket).fallback(static_or_not_found),
         )
         .route(
             "/api/db/tickets/{id}/comments",
-            post(add_comment).fallback(proxy_or_static),
+            post(add_comment).fallback(static_or_not_found),
         )
         .route(
             "/api/db/tickets/{id}/steps",
-            post(add_step).fallback(proxy_or_static),
+            post(add_step).fallback(static_or_not_found),
         )
         .route(
             "/api/db/tickets/{id}/steps/{n}",
             post(set_step)
                 .patch(edit_step)
                 .delete(remove_step)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/db/tickets/{id}/steps/{n}/move",
-            post(move_step).fallback(proxy_or_static),
+            post(move_step).fallback(static_or_not_found),
         )
 }
 

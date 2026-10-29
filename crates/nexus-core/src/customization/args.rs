@@ -5,11 +5,8 @@ use crate::error::{HarnessError, Result};
 use super::copier::CopyTarget;
 use super::overview::ExtensionPoint;
 
-/// Aufruftext des Rust-Befehls; `scripts/customize.mjs` setzt stattdessen den npm-Aufruf
+/// Aufruftext des Befehls
 pub const NEXUS_USAGE: &str = "Aufruf: nexus customize check | copy workflow|skill <name>|output-style <name> [--rebase] | reset workflow|skill <name>|output-style <name>";
-
-/// Aufruftext von `npm run customize -- …` (wortgleich wie in TypeScript)
-pub const NPM_USAGE: &str = "Aufruf: npm run customize -- check | copy workflow|skill <name>|output-style <name> [--rebase] | reset workflow|skill <name>|output-style <name>";
 
 /// Befehl mit Ziel, wie ihn die Argumente nennen
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -19,7 +16,7 @@ pub enum CustomizeCommand {
     Reset { target: CopyTarget },
 }
 
-/// Liest die Argumente von `nexus customize …` bzw. `npm run customize -- …`.
+/// Liest die Argumente von `nexus customize …`.
 #[derive(Debug, Clone)]
 pub struct CustomizeArgs {
     usage: String,
@@ -37,7 +34,7 @@ impl CustomizeArgs {
         Self::with_usage(NEXUS_USAGE)
     }
 
-    /// Leser mit einem eigenen Aufruftext (für `scripts/customize.mjs`)
+    /// Leser mit einem eigenen Aufruftext
     pub fn with_usage(usage: impl Into<String>) -> Self {
         Self {
             usage: usage.into(),
@@ -194,9 +191,10 @@ mod tests {
 
     #[test]
     fn nennt_den_aufruftext_des_aufrufers() {
-        let error = CustomizeArgs::with_usage(NPM_USAGE)
+        let eigener = "Aufruf: mein-werkzeug check";
+        let error = CustomizeArgs::with_usage(eigener)
             .parse(&argumente(&["löschen"]))
             .unwrap_err();
-        assert_eq!(error.to_string(), NPM_USAGE);
+        assert_eq!(error.to_string(), eigener);
     }
 }

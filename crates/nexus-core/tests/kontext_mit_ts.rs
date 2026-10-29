@@ -2,10 +2,10 @@
 //! Hook-Vertrag und landet in jeder Claude-Session. Er muss in Rust Zeichen für Zeichen
 //! derselbe sein wie in TypeScript.
 //!
-//! Die Vergleichstexte in `tests/fixtures/context/*.txt` hat
-//! `tests/fixtures/context/make.mjs` mit `packages/core/dist` erzeugt (siehe Kopf des
-//! Skripts). Hier werden dieselben drei Zustände auf der Datenbank im Speicher aufgebaut
-//! und mit den Dateien verglichen.
+//! Die Vergleichstexte in `tests/fixtures/context/*.txt` stammen aus dem alten
+//! TypeScript-Stand und sind eingecheckt; sie werden nie neu erzeugt. Hier werden
+//! dieselben drei Zustände auf der Datenbank im Speicher aufgebaut und mit den
+//! Dateien verglichen.
 
 use std::sync::Arc;
 

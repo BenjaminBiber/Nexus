@@ -4,7 +4,6 @@
 //! In TypeScript startet der Test zwei Kindprozesse. In Rust übernehmen das zwei Aufgaben mit
 //! je **einer eigenen** [`SqliteBoardDatabase`] auf derselben Datei: dieselben Transaktionen,
 //! dieselben Sperren, nur ohne den Umweg über einen zweiten Prozess. Dass auch zwei echte
-//! Prozesse zusammen schreiben, zeigt `sqlite_crosscheck.rs` gegen das Node-Skript.
 
 mod common;
 

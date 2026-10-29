@@ -1,4 +1,4 @@
-// Entwicklungsstart: baut core, startet Harness-Server (4710) und Vite (5173) in einem Terminal.
+// Entwicklungsstart: startet den Rust-Server (4710) und Vite (5173) in einem Terminal.
 import { spawn, spawnSync } from 'node:child_process';
 
 const SHELL = process.platform === 'win32';
@@ -24,12 +24,8 @@ function stopAll(code) {
   process.exit(code);
 }
 
-console.log('Baue core …');
-const build = spawnSync('npx', ['tsc', '-b', 'packages/core'], { stdio: 'inherit', shell: SHELL, windowsHide: true });
-if (build.status !== 0) process.exit(build.status ?? 1);
-
 console.log('Starte Server (http://127.0.0.1:4710) und Oberfläche (http://localhost:5173) …');
-start('server', 'npx', ['tsx', 'packages/server/src/main.ts']);
+start('server', 'cargo', ['run', '-q', '-p', 'nexus-cli', '--', 'serve']);
 start('web', 'npm', ['run', 'dev', '-w', 'packages/web']);
 
 process.on('SIGINT', () => stopAll(0));

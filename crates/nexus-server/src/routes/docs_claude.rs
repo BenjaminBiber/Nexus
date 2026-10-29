@@ -15,8 +15,8 @@ use crate::docs::doc_revision_service::valid_revise;
 use crate::docs::ticket_draft_service::valid_request;
 use crate::error::{json, ApiResult};
 use crate::extract::{JsonBody, QueryMap};
-use crate::proxy::proxy_or_static;
 use crate::routes::docs::source;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 
 /// Meldet die Routen der Gruppe an. Der Rückfall der Methoden gehört zu jeder Route: hat eine
@@ -27,21 +27,21 @@ pub fn routes() -> Router<Arc<AppState>> {
             "/api/projects/{pid}/docs/ticket-drafts",
             post(create_drafts)
                 .delete(cancel_drafts)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/projects/{pid}/docs/question-drafts",
             post(create_question_drafts)
                 .delete(cancel_question_drafts)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/projects/{pid}/docs/questions",
-            post(create_questions).fallback(proxy_or_static),
+            post(create_questions).fallback(static_or_not_found),
         )
         .route(
             "/api/projects/{pid}/docs/revise",
-            post(revise).fallback(proxy_or_static),
+            post(revise).fallback(static_or_not_found),
         )
 }
 

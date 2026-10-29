@@ -256,16 +256,7 @@ fn hilfe_von_init_wie_aufgezeichnet() {
 
 #[test]
 fn hilfe_von_install_wie_aufgezeichnet() {
-    // `install` hat seit der Umstellung des Plugins zwei Optionen mehr als die Aufzeichnung
-    // (`--no-plugin`, `--marketplace <ordner>`). Die Golden-Datei bleibt, wie sie ist; geprüft
-    // wird hier der aufgezeichnete Stand, damit das Layout des Renderers vergleichbar bleibt.
-    let install = befehl("install")
-        .about("Macht den Befehl nexus im normalen Terminal verfügbar (Kopie unter ~/.nexus, Eintrag im PATH des Benutzers).")
-        .arg(flag("no-path", "PATH nicht ändern, nur kopieren"))
-        .after_help(
-            "\nBeispiel:\n  nexus install\n\nWiederholbar; aktualisiert die Kopie nach einem Plugin-Update.",
-        );
-    assert_eq!(gerendert("nexus install", install), golden("nexus install"));
+    wie_aufgezeichnet(&["install"]);
 }
 
 #[test]
