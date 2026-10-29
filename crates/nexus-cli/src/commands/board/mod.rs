@@ -1,4 +1,191 @@
-//! Die Befehle rund um `board`. Ohne Unterbefehl startet `board` den Server und öffnet das
-//! Board; die Unterbefehle der Board-Datenbank folgen in den weiteren Tickets der Phase 3.
+//! Die Unterbefehle von `board`: das Board im Browser öffnen und die Board-Datenbank bedienen.
 
+pub mod claim;
+pub mod comment;
+pub mod dispatch;
 pub mod open;
+pub mod question;
+pub mod tickets_read;
+pub mod tickets_write;
+
+use clap::{Command, Subcommand};
+use nexus_core::{HarnessError, Result};
+
+use crate::context::CliContext;
+
+/// Die Unterbefehle von `board`, die die Board-Datenbank bedienen oder den Dispatcher im
+/// lokalen Server steuern. Die übrigen (`project`, `boards`, `start`, `done`, `step`, `note`,
+/// die restlichen `question …`, `merge`, `accept` …) kommen in den weiteren Tickets der Phase 3
+/// dazu.
+// Die Varianten tragen die Optionen von clap; sie dürfen unterschiedlich groß sein
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug, Subcommand)]
+pub enum BoardCommands {
+    #[command(
+        name = "list",
+        about = tickets_read::LIST_ABOUT,
+        after_help = tickets_read::LIST_EXAMPLES,
+        disable_help_flag = true
+    )]
+    List(tickets_read::ListArgs),
+
+    #[command(
+        name = "show",
+        about = tickets_read::SHOW_ABOUT,
+        after_help = tickets_read::SHOW_EXAMPLES,
+        disable_help_flag = true
+    )]
+    Show(tickets_read::ShowArgs),
+
+    #[command(
+        name = "create",
+        about = tickets_write::CREATE_ABOUT,
+        after_help = tickets_write::CREATE_EXAMPLES,
+        disable_help_flag = true
+    )]
+    Create(tickets_write::CreateArgs),
+
+    #[command(
+        name = "set",
+        about = tickets_write::SET_ABOUT,
+        after_help = tickets_write::SET_EXAMPLES,
+        disable_help_flag = true
+    )]
+    Set(tickets_write::SetArgs),
+
+    #[command(
+        name = "move",
+        about = tickets_write::MOVE_ABOUT,
+        after_help = tickets_write::MOVE_EXAMPLES,
+        disable_help_flag = true
+    )]
+    Move(tickets_write::MoveArgs),
+
+    #[command(
+        name = "delete",
+        about = tickets_write::DELETE_ABOUT,
+        after_help = tickets_write::DELETE_EXAMPLE,
+        disable_help_flag = true
+    )]
+    Delete(tickets_write::DeleteArgs),
+
+    #[command(
+        name = "claim",
+        about = claim::CLAIM_ABOUT,
+        after_help = claim::CLAIM_EXAMPLE,
+        disable_help_flag = true
+    )]
+    Claim(claim::ClaimArgs),
+
+    #[command(
+        name = "release",
+        about = claim::RELEASE_ABOUT,
+        after_help = claim::RELEASE_EXAMPLE,
+        disable_help_flag = true
+    )]
+    Release(claim::ReleaseArgs),
+
+    #[command(
+        name = "comment",
+        about = comment::COMMENT_ABOUT,
+        after_help = comment::COMMENT_EXAMPLE,
+        disable_help_flag = true
+    )]
+    Comment(comment::CommentArgs),
+
+    #[command(
+        name = "dispatch",
+        about = dispatch::DISPATCH_ABOUT,
+        disable_help_flag = true,
+        disable_help_subcommand = true
+    )]
+    Dispatch {
+        #[command(subcommand)]
+        sub: dispatch::DispatchCommands,
+    },
+
+    #[command(
+        name = "dispatch-runs",
+        about = dispatch::RUNS_ABOUT,
+        disable_help_flag = true,
+        disable_help_subcommand = true
+    )]
+    DispatchRuns {
+        #[command(subcommand)]
+        sub: dispatch::RunsCommands,
+    },
+
+    #[command(
+        name = "plan-start",
+        about = dispatch::PLAN_START_ABOUT,
+        after_help = dispatch::PLAN_START_EXAMPLE,
+        disable_help_flag = true
+    )]
+    PlanStart(dispatch::IdArgs),
+
+    #[command(
+        name = "question",
+        about = question::QUESTION_ABOUT,
+        disable_help_flag = true,
+        subcommand_required = true,
+        arg_required_else_help = false
+    )]
+    Question {
+        #[command(subcommand)]
+        sub: question::QuestionCommands,
+    },
+
+    /// Alles, was kein angemeldeter Unterbefehl ist; wird mit `command-unknown` abgewiesen
+    #[command(external_subcommand)]
+    Unbekannt(Vec<String>),
+}
+
+/// Führt einen Unterbefehl von `board` aus; `port` ist die Option `--port` von `board`,
+/// `root` der aufgebaute Befehlsbaum für die Hilfe
+pub fn run(
+    context: &CliContext,
+    port: Option<&str>,
+    command: &BoardCommands,
+    root: &Command,
+) -> Result<u8> {
+    match command {
+        BoardCommands::List(args) => tickets_read::list(context, args),
+        BoardCommands::Show(args) => tickets_read::show(context, args),
+        BoardCommands::Create(args) => tickets_write::create(context, args),
+        BoardCommands::Set(args) => tickets_write::set(context, args),
+        BoardCommands::Move(args) => tickets_write::move_to(context, args),
+        BoardCommands::Delete(args) => tickets_write::delete(context, args),
+        BoardCommands::Claim(args) => claim::claim(context, args),
+        BoardCommands::Release(args) => claim::release(context, args),
+        BoardCommands::Comment(args) => comment::comment(context, args),
+        BoardCommands::Dispatch { sub } => dispatch::dispatch(context, port, sub),
+        BoardCommands::DispatchRuns { sub } => dispatch::runs(context, sub),
+        BoardCommands::PlanStart(args) => dispatch::plan_start(context, port, &args.id),
+        BoardCommands::Question { sub } => question::run(context, port, sub, root),
+        BoardCommands::Unbekannt(words) => Err(unknown(words)),
+    }
+}
+
+/// Ein unbekannter Unterbefehl von `board question`
+pub fn unknown_question(words: &[String]) -> nexus_core::Error {
+    HarnessError::new(
+        "command-unknown",
+        format!(
+            "Unbekannter Befehl „board question {}“. Hilfe: harness board question --help",
+            words.join(" ")
+        ),
+    )
+    .into()
+}
+
+/// Ein unbekannter Unterbefehl wird ohne Datenbankzugriff abgewiesen
+pub fn unknown(words: &[String]) -> nexus_core::Error {
+    HarnessError::new(
+        "command-unknown",
+        format!(
+            "Unbekannter Befehl „board {}“. Hilfe: harness board --help",
+            words.join(" ")
+        ),
+    )
+    .into()
+}

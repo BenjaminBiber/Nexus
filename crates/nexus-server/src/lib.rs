@@ -22,6 +22,7 @@ pub mod proxy;
 pub mod routes;
 pub mod sidecar;
 pub mod state;
+pub mod timeline;
 
 use std::net::SocketAddr;
 use std::sync::Arc;

@@ -4,6 +4,7 @@
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
+use serde::Serialize;
 
 use crate::board::database::{BoardDatabase, TicketFilter};
 use crate::board::dispatch_run_types::{
@@ -17,7 +18,8 @@ use crate::error::Result;
 use crate::tx;
 
 /// Was ein Nachtragen gefunden und angelegt hat
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BackfillResult {
     /// Rekonstruierte Läufe insgesamt
     pub found: usize,

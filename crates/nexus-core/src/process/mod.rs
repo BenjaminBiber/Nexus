@@ -26,6 +26,31 @@ pub fn hide_console(command: &mut std::process::Command) {
     }
 }
 
+/// Bittet einen einzelnen Prozess um ein geordnetes Ende (SIGTERM unter Unix, unter Windows
+/// `taskkill`). Ein Prozess, den es nicht mehr gibt, ist kein Fehler – wie `process.kill` in
+/// TypeScript, dessen Fehler der Aufrufer verschluckt.
+pub fn terminate(pid: u32) {
+    #[cfg(unix)]
+    {
+        use nix::sys::signal::{kill, Signal};
+        use nix::unistd::Pid;
+
+        if let Ok(number) = i32::try_from(pid) {
+            let _ = kill(Pid::from_raw(number), Signal::SIGTERM);
+        }
+    }
+    #[cfg(windows)]
+    {
+        let mut taskkill = std::process::Command::new("taskkill");
+        taskkill.args(["/pid", &pid.to_string(), "/T", "/F"]);
+        taskkill.stdin(std::process::Stdio::null());
+        taskkill.stdout(std::process::Stdio::null());
+        taskkill.stderr(std::process::Stdio::null());
+        hide_console(&mut taskkill);
+        let _ = taskkill.status();
+    }
+}
+
 /// Läuft ein Prozess mit dieser Nummer? Gehört er jemand anderem, zählt er als laufend.
 #[cfg(unix)]
 pub(crate) fn is_alive(pid: u32) -> bool {

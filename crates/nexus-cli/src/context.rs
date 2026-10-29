@@ -5,8 +5,9 @@ use std::path::{Path, PathBuf};
 
 use nexus_core::git::{GitCommands, GitRunner};
 use nexus_core::{
-    Actor, AuthorKind, HarnessError, HarnessHome, HarnessProject, QuestionActor, Result,
+    Actor, AuthorKind, Error, HarnessError, HarnessHome, HarnessProject, QuestionActor, Result,
 };
+use nexus_db::{BoardRuntime, ConnectOptions};
 
 use crate::output::Printer;
 
@@ -61,6 +62,31 @@ impl CliContext {
     /// Benutzerweiter Harness-Ordner (`HARNESS_HOME` oder `~/.harness`)
     pub fn home(&self) -> HarnessHome {
         HarnessHome::from_process_env()
+    }
+
+    /// Die Kennung der Session, in der der Befehl läuft (`HARNESS_SESSION`)
+    pub fn session(&self) -> Option<&str> {
+        self.session.as_deref()
+    }
+
+    /// Öffnet das Board aus `<HARNESS_HOME>/board.yaml`, führt die Arbeit aus und schließt die
+    /// Verbindung. Die Board-Dienste sind asynchron, die Befehle der CLI nicht: deshalb läuft
+    /// die Arbeit in einer eigenen, einfädigen Laufzeit.
+    pub fn with_board<T, W>(&self, work: W) -> Result<T>
+    where
+        W: AsyncFnOnce(&BoardRuntime) -> Result<T>,
+    {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .map_err(Error::unexpected)?;
+        runtime.block_on(async {
+            let board = BoardRuntime::open(&self.home(), ConnectOptions::default()).await?;
+            let result = work(&board).await;
+            let closed = board.close().await;
+            // Der Fehler der Arbeit zählt; erst wenn sie geklappt hat, zählt das Schließen
+            result.and_then(|value| closed.map(|()| value))
+        })
     }
 
     /// Wer handelt: Art (Standard: „session“ innerhalb einer Session, sonst Mensch) und Name

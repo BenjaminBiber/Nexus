@@ -31,13 +31,14 @@ export class CliStep {
   }
 
   // Führt den Schritt aus; `context.cli` ist das Programm als Liste, `context.home`/`port`/`claudeConfig`
-  // die Umgebung des Szenarios und `context.envFile` die Datei der Fixture `claudeEnvFile`
+  // die Umgebung des Szenarios und `context.envFile` die Datei der Fixture `claudeEnvFile`.
+  // Ein Schritt mit `record: false` baut nur den Zustand auf und nimmt dafür `context.setupCli`.
   async run(step, context) {
     const args = context.variables.apply(step.args);
     const cwd = step.cwd === undefined ? context.home : context.variables.apply(step.cwd);
     const stdin = step.stdin === undefined ? null : context.variables.apply(step.stdin);
     const declared = context.variables.apply(step.env ?? {});
-    const [command, ...prefix] = context.cli;
+    const [command, ...prefix] = step.record === false ? context.setupCli ?? context.cli : context.cli;
     const result = await CliStep.execute(command, [...prefix, ...args], {
       cwd,
       env: CliStep.env(context, declared),

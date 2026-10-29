@@ -77,6 +77,133 @@ fn aus_dem_baum(name: &str) -> Command {
         .clone()
 }
 
+/// Ein Unterbefehl aus dem echten Befehlsbaum, über seinen Pfad (z. B. `board list`)
+fn aus_dem_baum_tief(pfad: &[&str]) -> Command {
+    let mut cmd = aus_dem_baum(pfad[0]);
+    for name in &pfad[1..] {
+        cmd.build();
+        cmd = cmd
+            .find_subcommand(name)
+            .unwrap_or_else(|| panic!("Befehl „{}“ fehlt im Befehlsbaum", pfad.join(" ")))
+            .clone();
+    }
+    cmd
+}
+
+/// Vergleicht die Hilfe eines Unterbefehls aus dem Baum mit der Golden-Datei. Ein Datum im
+/// Beispielpfad ersetzt der Vergleich beidseitig: der Vertragslauf schreibt es als `<DATE-n>`
+/// auf, wobei `n` die Tage bis zum Tag der Aufzeichnung zählt.
+fn wie_aufgezeichnet(pfad: &[&str]) {
+    let name = format!("harness {}", pfad.join(" "));
+    assert_eq!(
+        ohne_datum(&gerendert(&name, aus_dem_baum_tief(pfad))),
+        ohne_datum(&golden(&name)),
+        "{name}"
+    );
+}
+
+/// Ersetzt `JJJJ-MM-TT` und `<DATE-n>` durch `<DATUM>`
+fn ohne_datum(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let zeichen: Vec<char> = text.chars().collect();
+    let mut index = 0;
+    while index < zeichen.len() {
+        if let Some(laenge) = datum_laenge(&zeichen[index..]) {
+            out.push_str("<DATUM>");
+            index += laenge;
+        } else {
+            out.push(zeichen[index]);
+            index += 1;
+        }
+    }
+    out
+}
+
+/// Länge eines Datums am Anfang der Zeichen, sonst `None`
+fn datum_laenge(zeichen: &[char]) -> Option<usize> {
+    if zeichen.len() >= 10
+        && [0, 1, 2, 3, 5, 6, 8, 9]
+            .iter()
+            .all(|i| zeichen[*i].is_ascii_digit())
+        && [4, 7].iter().all(|i| zeichen[*i] == '-')
+    {
+        return Some(10);
+    }
+    let rest = zeichen.strip_prefix(&['<', 'D', 'A', 'T', 'E', '-'])?;
+    let ziffern = rest.iter().take_while(|c| c.is_ascii_digit()).count();
+    (ziffern > 0 && rest.get(ziffern) == Some(&'>')).then_some(6 + ziffern + 1)
+}
+
+#[test]
+fn hilfe_der_ticketbefehle_wie_aufgezeichnet() {
+    // Die Blätter aus `LEAVES` in `packages/cli/tests/integration/help.test.ts`, die dieses
+    // Ticket portiert
+    for pfad in [
+        ["board", "list"],
+        ["board", "show"],
+        ["board", "create"],
+        ["board", "set"],
+        ["board", "move"],
+        ["board", "delete"],
+        ["board", "claim"],
+        ["board", "release"],
+        ["board", "comment"],
+    ] {
+        wie_aufgezeichnet(&pfad);
+    }
+}
+
+#[test]
+fn hilfe_der_dispatcher_befehle_wie_aufgezeichnet() {
+    // Die Blätter aus `LEAVES`, die dieses Ticket portiert
+    for pfad in [
+        vec!["board", "dispatch"],
+        vec!["board", "dispatch", "status"],
+        vec!["board", "dispatch", "run"],
+        vec!["board", "dispatch", "pause"],
+        vec!["board", "dispatch", "resume"],
+        vec!["board", "dispatch", "enable"],
+        vec!["board", "dispatch", "disable"],
+        vec!["board", "dispatch-runs"],
+        vec!["board", "dispatch-runs", "backfill"],
+        vec!["board", "plan-start"],
+        vec!["board", "question", "research-start"],
+    ] {
+        wie_aufgezeichnet(&pfad);
+    }
+}
+
+#[test]
+fn hilfe_von_spec_und_stop_wie_aufgezeichnet() {
+    for pfad in [
+        vec!["spec"],
+        vec!["spec", "comments"],
+        vec!["spec", "resolve"],
+        vec!["stop"],
+    ] {
+        wie_aufgezeichnet(&pfad);
+    }
+}
+
+#[test]
+fn hilfe_der_fragenbefehle_wie_aufgezeichnet() {
+    // Die Blätter aus `LEAVES` zu `board question`; `research-start` kommt aus diesem Ticket
+    for pfad in [
+        ["board", "question", "add"],
+        ["board", "question", "research"],
+        ["board", "question", "comment"],
+        ["board", "question", "list"],
+        ["board", "question", "show"],
+        ["board", "question", "answer"],
+        ["board", "question", "discard"],
+        ["board", "question", "reopen"],
+        ["board", "question", "link"],
+        ["board", "question", "depends"],
+    ] {
+        wie_aufgezeichnet(&pfad);
+    }
+}
+
 #[test]
 fn hilfe_von_init_wie_aufgezeichnet() {
     assert_eq!(

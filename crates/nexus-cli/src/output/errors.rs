@@ -23,6 +23,7 @@ pub fn translate(error: &clap::Error, cmd: &Command) -> String {
             None => fallback(error),
         },
         ErrorKind::MissingRequiredArgument => match context(error, ContextKind::InvalidArg) {
+            Some(term) if term.starts_with('-') => missing_option(&term),
             Some(name) => missing_argument(&argument_name(cmd, &name)),
             None => fallback(error),
         },
@@ -58,6 +59,13 @@ pub fn unknown_option(flag: &str, candidates: &[String]) -> String {
 /// `Fehler: Das Pflichtargument '<name>' fehlt.`
 pub fn missing_argument(name: &str) -> String {
     format!("Fehler: Das Pflichtargument '{name}' fehlt.")
+}
+
+/// `Fehler: required option '--agent <name>' not specified` – für eine fehlende Pflichtoption hat
+/// `GermanErrors.ts` keine Regel, deshalb bleibt die Meldung von commander englisch stehen. Der
+/// Text ist Vertrag und wird wortgleich übernommen.
+pub fn missing_option(term: &str) -> String {
+    format!("Fehler: required option '{term}' not specified")
 }
 
 /// clap meldet den Platzhalter eines Arguments (`<CODE>`), commander seinen angemeldeten Namen
@@ -275,6 +283,21 @@ mod tests {
         assert_eq!(
             missing_argument("antwort"),
             "Fehler: Das Pflichtargument 'antwort' fehlt."
+        );
+    }
+
+    #[test]
+    fn eine_fehlende_pflichtoption_behalt_den_text_von_commander() {
+        let cmd = clap::Command::new("claim").arg(
+            clap::Arg::new("agent")
+                .long("agent")
+                .value_name("name")
+                .required(true),
+        );
+        let error = cmd.try_get_matches_from(["claim"]).unwrap_err();
+        assert_eq!(
+            translate(&error, &clap::Command::new("claim")),
+            "Fehler: required option '--agent <name>' not specified"
         );
     }
 
