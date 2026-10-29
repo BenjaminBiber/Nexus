@@ -36,6 +36,15 @@ describe('ExpectedAssets', () => {
     expect(updaterEnabled({})).toBe(false);
   });
 
+  it('erkennt den Updater auch, wenn ihn erst die Release-Konfig aktiviert', () => {
+    const basis = { bundle: { targets: ['app'] } };
+    const release = { bundle: { createUpdaterArtifacts: true } };
+    expect(updaterEnabled(basis, release)).toBe(true);
+    expect(updaterEnabled(basis, {})).toBe(false);
+    expect(updaterEnabled(basis, undefined)).toBe(false);
+    expect(updaterEnabled()).toBe(false);
+  });
+
   it('liefert ohne Updater nur die Grundliste', () => {
     expect(assetNames('1.2.3')).toEqual(baseAssetNames('1.2.3'));
     expect(assetNames('1.2.3', { updater: false })).toEqual(baseAssetNames('1.2.3'));
