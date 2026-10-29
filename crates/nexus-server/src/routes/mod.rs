@@ -7,6 +7,7 @@
 pub mod db_boards;
 pub mod db_tickets;
 pub mod health;
+pub mod questions;
 pub mod settings;
 pub mod static_files;
 pub mod workflow;
@@ -42,6 +43,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     }
     if state.config.proxy_groups.enabled(RouteGroup::DbTickets) {
         router = router.merge(db_tickets::routes());
+    }
+    if state.config.proxy_groups.enabled(RouteGroup::Questions) {
+        router = router.merge(questions::routes());
     }
     if state.config.proxy_groups.enabled(RouteGroup::Workflow) {
         router = router.merge(workflow::routes());

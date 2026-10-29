@@ -18,10 +18,11 @@ use nexus_core::board::ticket_service::{
     AddStepOptions, MoveOptions, NewTicketInput, TicketPatch, WriteOptions,
 };
 use nexus_core::board::ticket_step_edits::{StepChange, StepGuard};
-use nexus_core::{Error, HarnessError, Result};
+use nexus_core::{HarnessError, Result};
 use serde::Serialize;
 
 use crate::board_runtime::BoardBackend;
+use crate::conflict;
 use crate::error::{json, ApiResult};
 use crate::extract::JsonBody;
 use crate::input::{Body, DbInput, Nullable};
@@ -443,7 +444,7 @@ fn nullable(value: Nullable<String>) -> Option<Option<String>> {
 
 /// Führt die Arbeit auf der Board-Laufzeit aus und antwortet mit `status`. Meldet der Dienst
 /// `conflict` (veraltete Version oder geänderter Schritt), wird daraus 409 mit dem aktuellen
-/// Stand des Tickets unter `current`.
+/// Stand des Tickets unter `current` ([`conflict::with_conflict`]).
 async fn with_conflict<T, F, Fut>(
     state: &Arc<AppState>,
     id: &str,
@@ -456,22 +457,8 @@ where
     Fut: Future<Output = Result<T>> + Send,
 {
     let ticket = id.to_string();
-    let (status, body) = state
-        .board
-        .run(|b| async move {
-            match work(b.clone()).await {
-                Ok(value) => Ok((status, serde_json::to_value(value).map_err(Error::unexpected)?)),
-                Err(error) if error.code() == Some("conflict") => {
-                    let message = error.to_string();
-                    let current = b.services().tickets.get(&ticket).await?;
-                    Ok((
-                        StatusCode::CONFLICT,
-                        serde_json::json!({ "code": "conflict", "message": message, "current": current }),
-                    ))
-                }
-                Err(error) => Err(error),
-            }
-        })
-        .await?;
-    Ok((status, json(&body)).into_response())
+    conflict::with_conflict(state, status, work, move |b| async move {
+        b.services().tickets.get(&ticket).await
+    })
+    .await
 }

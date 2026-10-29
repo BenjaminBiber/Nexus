@@ -9,6 +9,7 @@
 pub mod board_db;
 pub mod board_runtime;
 pub mod config;
+pub mod conflict;
 pub mod dispatch;
 pub mod error;
 pub mod extract;
