@@ -7,6 +7,7 @@ pub mod board_lookup;
 pub mod cli;
 pub mod commands;
 pub mod context;
+pub mod hooks;
 pub mod http;
 pub mod output;
 pub mod server;
