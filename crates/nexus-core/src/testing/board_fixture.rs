@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Duration, Utc};
 
+use crate::actors::AuthorKind;
 use crate::board::basics::BoardActor;
 use crate::board::board_service::BoardService;
 use crate::board::comment_service::CommentService;
@@ -15,7 +16,8 @@ use crate::board::in_memory::InMemoryBoardDatabase;
 use crate::board::note_service::NoteService;
 use crate::board::planning_service::PlanningService;
 use crate::board::project_service::ProjectService;
-use crate::board::question_types::BoardQuestion;
+use crate::board::question_service::BoardQuestionService;
+use crate::board::question_types::{BoardQuestion, BoardQuestionActor};
 use crate::board::repo_paths::{BoardRepoPaths, MemoryBoardRepoStore};
 use crate::board::ticket_service::TicketService;
 use crate::board::types::Ticket;
@@ -40,6 +42,10 @@ pub struct BoardFixture {
     pub planning: PlanningService<InMemoryBoardDatabase>,
     pub comments: CommentService<InMemoryBoardDatabase>,
     pub notes: NoteService<InMemoryBoardDatabase>,
+    pub questions: BoardQuestionService<InMemoryBoardDatabase>,
+    /// Session-Agent und Mensch als Handelnde bei Fragen
+    pub agent: BoardQuestionActor,
+    pub human: BoardQuestionActor,
     pub views: BoardViewService<InMemoryBoardDatabase>,
     pub graph: DependencyGraphService<InMemoryBoardDatabase>,
     /// Das Board „Sprint“ des Projekts ARC
@@ -71,6 +77,23 @@ impl BoardFixture {
             planning: PlanningService::new(db.clone(), clock.clone()),
             comments: CommentService::new(db.clone(), clock.clone()),
             notes: NoteService::new(db.clone(), clock.clone()),
+            questions: BoardQuestionService::new(db.clone(), clock.clone(), repo_paths.clone()),
+            agent: BoardQuestionActor {
+                actor: BoardActor {
+                    user_id: USER_ID.into(),
+                    name: "claude".into(),
+                },
+                kind: AuthorKind::Session,
+                session: Some("s-1".into()),
+            },
+            human: BoardQuestionActor {
+                actor: BoardActor {
+                    user_id: USER_ID.into(),
+                    name: "Florian".into(),
+                },
+                kind: AuthorKind::Human,
+                session: None,
+            },
             views: BoardViewService::new(db.clone(), clock.clone()),
             graph: DependencyGraphService::new(db.clone(), clock.clone()),
             repo_store,

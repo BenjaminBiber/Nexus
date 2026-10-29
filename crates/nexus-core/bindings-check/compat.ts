@@ -11,6 +11,9 @@ import type * as GenInbox from '../../../packages/web/src/api/generated/inbox';
 import type * as CoreBoard from '../../../packages/core/src/board/BoardTypes.js';
 import type * as CoreQuestion from '../../../packages/core/src/board/BoardQuestionTypes.js';
 import type * as CoreDispatch from '../../../packages/core/src/board/DispatchRunTypes.js';
+import type * as CoreConfig from '../../../packages/core/src/dispatch/DispatchConfig.js';
+import type * as CorePromptCheck from '../../../packages/core/src/dispatch/PromptTemplateCheck.js';
+import type * as CorePromptDefaults from '../../../packages/core/src/dispatch/DispatchPromptDefaults.js';
 import type * as CoreSearch from '../../../packages/core/src/board/BoardSearchTypes.js';
 import type * as CoreInbox from '../../../packages/core/src/board/inbox/InboxTypes.js';
 import type * as CoreActor from '../../../packages/core/src/actors/Actor.js';
@@ -94,6 +97,26 @@ ok<Same<GenDispatch.DispatchSeriesUnit, CoreDispatch.DispatchStats['series']['un
 ok<Same<GenDispatch.DispatchSeriesPoint, CoreDispatch.DispatchStats['series']['points'][number]>>();
 ok<Same<GenDispatch.DispatchLadder, CoreDispatch.DispatchStats['ladder']>>();
 ok<Same<GenDispatch.DispatchAbortReason, CoreDispatch.DispatchStats['abortReasons'][number]>>();
+
+// ---------------------------------------------------------------------------
+// dispatch.ts ↔ packages/core/src/dispatch/DispatchConfig.ts
+// ---------------------------------------------------------------------------
+ok<Same<GenDispatch.TimeWindow, CoreConfig.TimeWindow>>();
+ok<Same<GenDispatch.ClaudeSettings, CoreConfig.ClaudeSettings>>();
+ok<Same<GenDispatch.Profile, CoreConfig.Profile>>();
+ok<Same<GenDispatch.RuleCondition, CoreConfig.RuleCondition>>();
+ok<Same<GenDispatch.Rule, CoreConfig.Rule>>();
+ok<Same<GenDispatch.RunSettings, CoreConfig.RunSettings>>();
+ok<Same<GenDispatch.ResearchSettings, CoreConfig.ResearchSettings>>();
+ok<Same<GenDispatch.PlanningSettings, CoreConfig.PlanningSettings>>();
+ok<Same<GenDispatch.JoinWorktrees, CoreConfig.JoinWorktrees>>();
+ok<Same<GenDispatch.WorktreeSetupStep, CoreConfig.WorktreeSetupStep>>();
+ok<Same<GenDispatch.PromptTemplates, CoreConfig.PromptTemplates>>();
+ok<Same<GenDispatch.PromptProblem, CoreConfig.PromptProblem>>();
+ok<Same<GenDispatch.DispatchConfig, CoreConfig.DispatchConfig>>();
+ok<Same<GenDispatch.PromptKind, CorePromptCheck.PromptKind>>();
+ok<Same<GenDispatch.RequiredPart, CorePromptCheck.RequiredPart>>();
+ok<Same<GenDispatch.PromptPlaceholder, CorePromptDefaults.PromptPlaceholder>>();
 
 // ---------------------------------------------------------------------------
 // search.ts ↔ packages/core/src/board/BoardSearchTypes.ts

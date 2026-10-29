@@ -6,7 +6,7 @@ use std::str::FromStr;
 
 use crate::board::basics::{is_human_interaction, Priority, TicketStatus};
 use crate::board::inbox::types::{InboxItem, InboxKind, INBOX_KINDS};
-use crate::dispatch::markers::{MERGE_REASON_PREFIX, SETUP_REASON_PREFIX};
+use crate::dispatch::config::{MERGE_REASON_PREFIX, SETUP_REASON_PREFIX};
 
 /// Art und Dringlichkeit der Einträge.
 #[derive(Debug, Clone, Copy, Default)]

@@ -53,6 +53,11 @@ tempfile = "3"
 # Schnittstelle: unter Unix `nix`, unter Windows `sysinfo`.
 getrandom = "0.3"
 sha1_smol = "1"
+# SHA-256 für den Fingerabdruck der Dispatcher-Einstellung (16 Hex-Zeichen wie in TypeScript)
+sha2 = "0.10"
+# Karte mit erhaltener Reihenfolge: die Profile der Dispatcher-Einstellung stehen in der
+# Reihenfolge der Datei (defaultProfile und die Eskalationsleiter hängen daran)
+indexmap = { version = "2", features = ["serde"] }
 nix = { version = "0.31", default-features = false, features = ["signal"] }
 sysinfo = { version = "0.39", default-features = false, features = ["system"] }
 # Job-Objekte unter Windows (Prozessbaum beenden) mit sicherer Schnittstelle, damit der

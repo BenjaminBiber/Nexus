@@ -1,0 +1,2 @@
+   - acceptance: Abnahme des Tickets – prüfbare Kriterien als Stichpunkte, woran man sieht, dass es fertig ist
+     (Verhalten, Tests, Oberfläche); eine vorhandene Abnahme wird geschärft und ergänzt, nicht verworfen.

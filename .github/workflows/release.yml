@@ -60,7 +60,7 @@ jobs:
   build:
     name: Installer (${{ matrix.target }})
     needs: version
-    # „release“ trägt die Signatur-Secrets (Apple, Azure); P6-7 (Updater) liest sie später ebenfalls hier
+    # „release“ trägt die Signatur-Secrets: Apple, Azure und den privaten Schlüssel des Updaters
     environment: release
     strategy:
       # Jede Plattform läuft zu Ende, damit ein Fehler auf einer die anderen nicht verdeckt
@@ -122,9 +122,14 @@ jobs:
       # Baut die App und lädt dmg, NSIS-Installer, AppImage, deb und rpm an den Entwurf des Releases.
       # Die Signatur-Variablen dürfen auf allen Plattformen gesetzt sein: sind sie leer (Fork, Probelauf),
       # baut tauri-action unsigniert und sign-windows.mjs überspringt die Signatur.
+      # Der Updater-Schlüssel ist davon getrennt (M4): mit ihm entstehen über
+      # src-tauri/tauri.release.conf.json die Updater-Artefakte und je Matrix-Job ein Stück von
+      # latest.json, das tauri-action am Entwurf zusammenführt.
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
@@ -139,8 +144,10 @@ jobs:
         with:
           projectPath: apps/desktop
           releaseId: ${{ needs.version.outputs.release_id }}
-          args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
-          includeUpdaterJson: false
+          args: --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --config src-tauri/tauri.release.conf.json
+          includeUpdaterJson: true
+          # Unter Windows wird nur der NSIS-Installer gebaut; latest.json soll auf ihn zeigen
+          updaterJsonPreferNsis: true
       # CLI und Plugin für den Betrieb ohne App
       - name: CLI-Archiv
         shell: bash

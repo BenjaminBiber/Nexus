@@ -3,6 +3,7 @@ mod instance;
 mod lifecycle;
 mod server;
 mod tray;
+mod updater;
 
 use tauri_plugin_window_state::StateFlags;
 
@@ -33,7 +34,9 @@ pub fn run() {
         // Datei im Dateimanager zeigen, VS Code und den Standardbrowser öffnen
         .plugin(tauri_plugin_opener::init())
         // Systemmeldungen der Oberfläche (bereite Sessions, Meldungen des Servers)
-        .plugin(tauri_plugin_notification::init());
+        .plugin(tauri_plugin_notification::init())
+        // Selbstaktualisierung; geprüft wird aus updater::init, nicht aus dem Fenster
+        .plugin(tauri_plugin_updater::Builder::new().build());
     // Folge-Tickets hängen hier je Funktion genau eine Zeile an (tray::init, …)
     let builder = builder
         .on_page_load(server::on_page_load)
@@ -46,6 +49,7 @@ pub fn run() {
             server::init(app.handle());
             tray::init(app.handle());
             instance::setup(app.handle());
+            updater::init(app.handle());
             Ok(())
         });
     // Auf macOS ersetzt ein eigenes Menü das vorgefertigte „Quit“, damit Cmd+Q die Rückfrage auslöst

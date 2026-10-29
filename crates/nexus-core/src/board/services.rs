@@ -12,6 +12,7 @@ use crate::board::inbox::service::InboxService;
 use crate::board::note_service::NoteService;
 use crate::board::planning_service::PlanningService;
 use crate::board::project_service::ProjectService;
+use crate::board::question_service::BoardQuestionService;
 use crate::board::repo_paths::BoardRepoPaths;
 use crate::board::search_service::BoardSearchService;
 use crate::board::ticket_service::TicketService;
@@ -24,7 +25,8 @@ use crate::clock::Clock;
 /// Benutzers (Standard: im Speicher ohne Benutzer, für Tests; die Laufzeit gibt
 /// `board-repos.yaml` und die eigene GUID mit).
 ///
-/// Das Feld `questions` ergänzt P3-3, sobald es den Fragen-Dienst gibt.
+/// Das Feld `questions` kommt aus P3-3; die Felder `planning`, `search`, `dispatch_runs`,
+/// `inbox` und die Zeitleiste (`timeline(names)`) aus P3-4.
 #[derive(Debug, Clone)]
 pub struct BoardServices<D: BoardDatabase> {
     pub db: Arc<D>,
@@ -35,6 +37,7 @@ pub struct BoardServices<D: BoardDatabase> {
     pub planning: PlanningService<D>,
     pub comments: CommentService<D>,
     pub notes: NoteService<D>,
+    pub questions: BoardQuestionService<D>,
     pub views: BoardViewService<D>,
     pub search: BoardSearchService<D>,
     pub dispatch_runs: DispatchRunService<D>,
@@ -52,6 +55,7 @@ impl<D: BoardDatabase> BoardServices<D> {
             planning: PlanningService::new(db.clone(), clock.clone()),
             comments: CommentService::new(db.clone(), clock.clone()),
             notes: NoteService::new(db.clone(), clock.clone()),
+            questions: BoardQuestionService::new(db.clone(), clock.clone(), repo_paths.clone()),
             views: BoardViewService::new(db.clone(), clock.clone()),
             search: BoardSearchService::new(db.clone()),
             dispatch_runs: DispatchRunService::new(db.clone()),

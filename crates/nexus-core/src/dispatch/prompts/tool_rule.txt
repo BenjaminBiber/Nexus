@@ -1,0 +1,4 @@
+- Dateien mit Read lesen und mit Edit bzw. Write ändern – nicht über cat/sed/head oder node-/python-Skripte.
+  Bash/PowerShell nur für Befehle (Tests, Build, git, harness), jeweils mit kurzer description.
+- Befehle immer im Vordergrund ausführen (kein run_in_background, kein Monitor/ScheduleWakeup), lange mit timeout: 1800000.
+  Landet ein Befehl doch im Hintergrund, nicht darauf warten: im Vordergrund neu starten und das Ergebnis abwarten.
