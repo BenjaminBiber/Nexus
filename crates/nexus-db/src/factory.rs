@@ -2,8 +2,8 @@
 //! `packages/db/src/BoardDatabaseFactory.ts` samt dem Datenbank-Teil von
 //! `BoardRuntime.connect` (`packages/db/src/BoardRuntime.ts`).
 //!
-//! Die Laufzeit selbst (`BoardRuntime` mit Konfigdatei, Diensten und Handelndem) entsteht erst
-//! in Phase 3; hier steht nur, was CLI und Server zum Öffnen brauchen: Anbieterwahl,
+//! Die Laufzeit selbst (`BoardRuntime` mit Konfigdatei, Diensten und Handelndem) steht in
+//! [`crate::runtime`]; hier steht nur, was CLI und Server zum Öffnen brauchen: Anbieterwahl,
 //! Schema-Prüfung, fehlende Erweiterungen und der eigene Benutzer.
 
 use nexus_core::board::config::{BoardConfig, BoardProvider};

@@ -42,12 +42,23 @@ impl LocalHttp {
 
     /// `GET <path>` auf dem Port
     pub fn get(&self, port: u16, path: &str) -> io::Result<LocalResponse> {
-        self.request(port, "GET", path, None)
+        self.request(port, "GET", path, None, &[])
     }
 
     /// `POST <path>` mit JSON-Rumpf auf dem Port
     pub fn post_json(&self, port: u16, path: &str, body: &str) -> io::Result<LocalResponse> {
-        self.request(port, "POST", path, Some(body))
+        self.request(port, "POST", path, Some(body), &[])
+    }
+
+    /// Wie [`LocalHttp::post_json`], dazu eigene Kopfzeilen (z. B. das Token eines Projekts)
+    pub fn post_json_with(
+        &self,
+        port: u16,
+        path: &str,
+        body: &str,
+        headers: &[(&str, &str)],
+    ) -> io::Result<LocalResponse> {
+        self.request(port, "POST", path, Some(body), headers)
     }
 
     /// Schickt die Anfrage und liest die ganze Antwort; der Server schließt danach
@@ -57,12 +68,13 @@ impl LocalHttp {
         method: &str,
         path: &str,
         body: Option<&str>,
+        headers: &[(&str, &str)],
     ) -> io::Result<LocalResponse> {
         let address = SocketAddr::from((Ipv4Addr::LOCALHOST, port));
         let mut stream = TcpStream::connect_timeout(&address, self.timeout)?;
         stream.set_read_timeout(Some(self.timeout))?;
         stream.set_write_timeout(Some(self.timeout))?;
-        stream.write_all(&Self::head(port, method, path, body))?;
+        stream.write_all(&Self::head(port, method, path, body, headers))?;
         if let Some(body) = body {
             stream.write_all(body.as_bytes())?;
         }
@@ -73,10 +85,19 @@ impl LocalHttp {
     }
 
     /// Anfragezeile und Kopfzeilen
-    fn head(port: u16, method: &str, path: &str, body: Option<&str>) -> Vec<u8> {
+    fn head(
+        port: u16,
+        method: &str,
+        path: &str,
+        body: Option<&str>,
+        headers: &[(&str, &str)],
+    ) -> Vec<u8> {
         let mut head = format!(
             "{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\n{HARNESS_HEADER}: 1\r\nAccept: application/json\r\nConnection: close\r\n"
         );
+        for (name, value) in headers {
+            head.push_str(&format!("{name}: {value}\r\n"));
+        }
         if let Some(body) = body {
             head.push_str("content-type: application/json\r\n");
             head.push_str(&format!("content-length: {}\r\n", body.len()));
@@ -163,7 +184,8 @@ mod tests {
 
     #[test]
     fn die_anfrage_nennt_host_und_kopfzeile() {
-        let head = String::from_utf8(LocalHttp::head(4710, "GET", "/api/health", None)).unwrap();
+        let head =
+            String::from_utf8(LocalHttp::head(4710, "GET", "/api/health", None, &[])).unwrap();
         assert!(head.starts_with("GET /api/health HTTP/1.1\r\n"));
         assert!(head.contains("Host: 127.0.0.1:4710\r\n"));
         assert!(head.contains("x-harness: 1\r\n"));
@@ -177,9 +199,11 @@ mod tests {
             "POST",
             "/api/projects",
             Some("{\"a\":1}"),
+            &[("x-harness-token", "geheim")],
         ))
         .unwrap();
         assert!(head.contains("content-type: application/json\r\n"));
         assert!(head.contains("content-length: 7\r\n"));
+        assert!(head.contains("x-harness-token: geheim\r\n"));
     }
 }
