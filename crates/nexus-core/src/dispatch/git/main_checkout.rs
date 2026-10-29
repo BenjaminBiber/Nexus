@@ -190,3 +190,118 @@ fn resolved(root: &Path, path: &str) -> PathBuf {
         root.join(candidate)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::test_support::TempRepo;
+
+    /// Projekt mit einer verfolgten Datei
+    fn repo() -> TempRepo {
+        let repo = TempRepo::without_commit();
+        repo.commit("tracked.txt", "a");
+        repo
+    }
+
+    /// Zustand des Hauptordners
+    fn inspect(repo: &TempRepo) -> CheckoutState {
+        MainCheckout::new().inspect(repo.path()).unwrap()
+    }
+
+    #[test]
+    fn meldet_branch_und_einen_sauberen_ordner() {
+        let repo = repo();
+        let branch = repo.git(&["rev-parse", "--abbrev-ref", "HEAD"]);
+        assert_eq!(
+            inspect(&repo),
+            CheckoutState {
+                branch: Some(branch),
+                busy: None,
+                blocking_files: vec![],
+                staged_files: vec![],
+            }
+        );
+    }
+
+    #[test]
+    fn listet_geanderte_und_neue_dateien_ausser_der_plugin_einstellung() {
+        let repo = repo();
+        repo.write("tracked.txt", "b");
+        repo.write("config/app.yaml", "x");
+        repo.write("neu ä.txt", "x");
+        repo.write(".claude/settings.local.json", "{}");
+        assert_eq!(
+            inspect(&repo).blocking_files,
+            ["config/app.yaml", "neu ä.txt", "tracked.txt"]
+        );
+    }
+
+    #[test]
+    fn lasst_den_spec_zeiger_durch_solange_er_nicht_gestaged_ist() {
+        let repo = repo();
+        repo.write(".specify/feature.json", "{}");
+        assert!(inspect(&repo).blocking_files.is_empty());
+        repo.git(&["add", ".specify/feature.json"]);
+        assert_eq!(inspect(&repo).blocking_files, [".specify/feature.json"]);
+    }
+
+    #[test]
+    fn erkennt_detached_head_und_laufenden_merge() {
+        let repo = repo();
+        repo.git(&["checkout", "-q", "--detach"]);
+        assert_eq!(inspect(&repo).branch, None);
+        repo.git(&["checkout", "-q", "-"]);
+        let head = repo.git(&["rev-parse", "HEAD"]);
+        std::fs::write(repo.path().join(".git").join("MERGE_HEAD"), head).unwrap();
+        assert_eq!(
+            inspect(&repo).busy.as_deref(),
+            Some("Im Hauptordner läuft gerade ein Merge.")
+        );
+    }
+
+    #[test]
+    fn nennt_die_gestagten_dateien_gesondert() {
+        let repo = repo();
+        repo.write("tracked.txt", "b");
+        repo.write("gestagt.txt", "x");
+        repo.git(&["add", "gestagt.txt"]);
+        let state = inspect(&repo);
+        assert_eq!(state.blocking_files, ["gestagt.txt", "tracked.txt"]);
+        assert_eq!(state.staged_files, ["gestagt.txt"]);
+    }
+
+    #[test]
+    fn nennt_bei_umbenennung_den_neuen_pfad() {
+        let repo = repo();
+        repo.commit("alt.yaml", "inhalt");
+        repo.git(&["mv", "alt.yaml", "neu.yaml"]);
+        assert_eq!(inspect(&repo).blocking_files, ["neu.yaml"]);
+    }
+
+    #[test]
+    fn lasst_die_plugin_einstellung_immer_durch_auch_gestagt() {
+        let repo = repo();
+        repo.write(".claude/settings.local.json", "{}");
+        repo.git(&["add", "-f", ".claude/settings.local.json"]);
+        assert!(inspect(&repo).blocking_files.is_empty());
+    }
+
+    #[test]
+    fn lasst_die_rules_fur_doku_und_board_regeln_durch() {
+        let repo = repo();
+        repo.write(".claude/rules/ai-harness-docs.md", "x");
+        repo.write(".claude/rules/ai-harness-board.md", "x");
+        assert!(inspect(&repo).blocking_files.is_empty());
+    }
+
+    #[test]
+    fn nennt_alle_geanderten_dateien_ohne_ausnahmen() {
+        let repo = repo();
+        repo.write("tracked.txt", "b");
+        repo.write(".claude/settings.local.json", "{}");
+        let mut changed = MainCheckout::new().changed(repo.path()).unwrap();
+        changed.sort();
+        assert_eq!(changed, [".claude/settings.local.json", "tracked.txt"]);
+    }
+}

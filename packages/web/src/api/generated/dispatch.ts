@@ -389,6 +389,39 @@ maxPerDay: number,
 profile: string | null, };
 
 /**
+ * Eine geänderte Datei des Ticket-Branches
+ */
+export type ReviewFile = { path: string, 
+/**
+ * Bisheriger Pfad bei Umbenennung oder Kopie
+ */
+oldPath?: string, 
+/**
+ * A, M, D, R, C, T … (erster Buchstabe von --name-status)
+ */
+status: string, additions: number, deletions: number, binary: boolean, };
+
+/**
+ * Dateiliste des Ticket-Branches gegen den Zielbranch des Tickets, sonst gegen den
+ * ausgecheckten Branch des Hauptordners
+ */
+export type ReviewFileList = { 
+/**
+ * Zielbranch des Tickets, sonst ausgecheckter Branch des Hauptordners; „HEAD“ bei
+ * Detached HEAD
+ */
+target: string, 
+/**
+ * Merge-Basis (Commit)
+ */
+base: string, files: Array<ReviewFile>, };
+
+/**
+ * Patch einer Datei, notfalls gekürzt
+ */
+export type ReviewPatch = { patch: string, truncated: boolean, };
+
+/**
  * Eine Regel: trifft `when` zu, gilt `profile`
  */
 export type Rule = { when: RuleCondition, profile: string, };
