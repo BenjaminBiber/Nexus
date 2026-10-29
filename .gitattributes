@@ -1,0 +1,4 @@
+# Die Standardvorlagen der Dispatcher-Prompts sind Vertrag zwischen Dispatcher und Agent und
+# werden Zeichen für Zeichen verglichen. Ein Checkout unter Windows darf ihre Zeilenenden
+# deshalb nicht auf CRLF umstellen.
+crates/nexus-core/src/dispatch/prompts/*.txt text eol=lf
