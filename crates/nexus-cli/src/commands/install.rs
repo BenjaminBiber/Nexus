@@ -3,6 +3,7 @@
 //! `packages/cli/src/commands/InstallCommand.ts`.
 
 use nexus_core::install::{platform_user_path, CliInstaller, InstallOptions, InstallResult};
+use nexus_core::registry::{harness_dir, process_lookup};
 use nexus_core::{HarnessError, Result};
 
 use crate::context::CliContext;
@@ -18,7 +19,8 @@ pub fn run(context: &CliContext, register_path: bool) -> Result<u8> {
         .into());
     };
     let user_path = platform_user_path();
-    let installer = CliInstaller::new(context.home(), user_path.as_ref());
+    let installer = CliInstaller::new(context.home(), user_path.as_ref())
+        .with_legacy_home(harness_dir(process_lookup));
     let result = installer.install(&root, InstallOptions { register_path })?;
     let lines = lines(&result, register_path);
     context.printer().result(&result, &lines);
