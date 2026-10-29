@@ -4,18 +4,21 @@
 use std::path::PathBuf;
 
 use clap::{Command, CommandFactory, FromArgMatches, Parser, Subcommand};
-use nexus_core::Result;
+use nexus_core::{HomeSource, NexusHome, Result};
 
 use crate::commands;
 use crate::context::CliContext;
 use crate::notices;
-use crate::output::{errors, help};
+use crate::output::{errors, help, Printer};
 
 /// Name in Hilfe, Beispielen und Fehlermeldungen
 pub const PROGRAM: &str = "harness";
 
 /// Name des Hook-Befehls; er bleibt still (keine Hinweise, keine Migration)
 const HOOK: &str = "hook";
+
+/// Name des Umzugsbefehls; er migriert selbst und nicht noch einmal vorab
+const MIGRATE: &str = "migrate";
 
 /// Beschreibung des Programms auf der Hauptseite der Hilfe
 const ABOUT: &str =
@@ -186,6 +189,20 @@ pub enum Commands {
         no_path: bool,
     },
 
+    /// Daten aus dem alten Ordner holen
+    #[command(
+        name = MIGRATE,
+        about = commands::migrate::MIGRATE_ABOUT,
+        after_help = commands::migrate::MIGRATE_EXAMPLES,
+        disable_help_flag = true
+    )]
+    Migrate {
+        #[arg(long, value_name = "pfad", help = commands::migrate::FROM_HELP)]
+        from: Option<PathBuf>,
+        #[arg(long = "dry-run", help = commands::migrate::DRY_RUN_HELP)]
+        dry_run: bool,
+    },
+
     /// Hook-Ereignis von Claude Code verarbeiten
     #[command(
         name = "hook",
@@ -246,6 +263,9 @@ pub fn run(args: &[String]) -> Result<u8> {
     // Hooks bleiben still: ihre Ausgabe gehört Claude Code
     if walk.command() != Some(HOOK) {
         notices::print_once();
+    }
+    if migrates(&walk) {
+        commands::migrate::migrate_on_first_run(&Printer::from_args(args));
     }
 
     if walk.help {
@@ -331,6 +351,9 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
         Some(Commands::Spec { sub }) => commands::spec::run(&context, &sub),
         Some(Commands::Stop { restart }) => commands::stop::run(&context, restart),
         Some(Commands::Install { no_path }) => commands::install::run(&context, !no_path),
+        Some(Commands::Migrate { from, dry_run }) => {
+            commands::migrate::run(&context, from.as_deref(), dry_run)
+        }
         Some(Commands::Hook { ereignis }) => commands::hook::run(&ereignis),
         Some(Commands::Customize(args)) => commands::customize::run(&context, args),
         Some(Commands::DispatchWorker { lauf }) => commands::dispatch_worker::run(&context, &lauf),
@@ -390,6 +413,19 @@ pub fn group_help(path: &[&str], name: Option<&str>) -> Result<u8> {
             eprintln!("{}", errors::unknown_command(name, &subcommand_names(&cmd)));
             Ok(1)
         }
+    }
+}
+
+/// Soll dieser Aufruf vorab den Umzug nach `~/.nexus` versuchen? Nur ein echter Befehl, nie
+/// `hook` (die Ausgabe gehört Claude Code), nie `migrate` (der migriert selbst), nie eine
+/// Hilfeseite – und nur, wenn die Auflösung noch auf `~/.harness` zurückgefallen ist.
+fn migrates(walk: &Walk<'_>) -> bool {
+    if walk.help {
+        return false;
+    }
+    match walk.command() {
+        None | Some(HOOK) | Some(MIGRATE) => false,
+        Some(_) => NexusHome::from_process_env().source() == HomeSource::HarnessFallback,
     }
 }
 

@@ -223,6 +223,28 @@ impl NexusHome {
     }
 }
 
+/// Quelle eines Umzugs: `HARNESS_HOME`, sonst `~/.harness` – unabhängig davon, ob es den
+/// Ordner gibt
+pub fn harness_dir(lookup: impl Fn(&str) -> Option<String>) -> PathBuf {
+    match lookup("HARNESS_HOME").filter(|value| !value.is_empty()) {
+        Some(dir) => PathBuf::from(dir),
+        None => home_dir().join(HARNESS_DIR),
+    }
+}
+
+/// Ziel eines Umzugs: `NEXUS_HOME`, sonst `~/.nexus` – unabhängig davon, ob es den Ordner gibt
+pub fn nexus_dir(lookup: impl Fn(&str) -> Option<String>) -> PathBuf {
+    match lookup("NEXUS_HOME").filter(|value| !value.is_empty()) {
+        Some(dir) => PathBuf::from(dir),
+        None => home_dir().join(NEXUS_DIR),
+    }
+}
+
+/// Die Umgebung dieses Prozesses als Suche für [`harness_dir`] und [`nexus_dir`]
+pub fn process_lookup(name: &str) -> Option<String> {
+    std::env::var(name).ok()
+}
+
 /// Benutzerordner des angemeldeten Benutzers, wie `os.homedir()` in Node
 fn home_dir() -> PathBuf {
     #[allow(deprecated)]
@@ -297,6 +319,21 @@ mod tests {
 
         assert_eq!(home.dir(), base.path().join(".nexus"));
         assert_eq!(home.source(), HomeSource::New);
+    }
+
+    #[test]
+    fn quelle_und_ziel_eines_umzugs_kommen_aus_den_variablen() {
+        let env = env(&[("NEXUS_HOME", "/x/n"), ("HARNESS_HOME", "/x/h")]);
+        let lookup = |name: &str| env.get(name).cloned();
+        assert_eq!(harness_dir(lookup), Path::new("/x/h"));
+        assert_eq!(nexus_dir(lookup), Path::new("/x/n"));
+    }
+
+    #[test]
+    fn ohne_variablen_liegen_quelle_und_ziel_im_benutzerordner() {
+        let leer = |_: &str| None;
+        assert_eq!(harness_dir(leer), home_dir().join(HARNESS_DIR));
+        assert_eq!(nexus_dir(leer), home_dir().join(NEXUS_DIR));
     }
 
     #[test]

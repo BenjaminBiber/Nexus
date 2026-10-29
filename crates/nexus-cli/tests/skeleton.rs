@@ -14,13 +14,17 @@ struct Lauf {
     stderr: String,
 }
 
-/// Ruft `nexus` in einem leeren Ordner auf, ohne Session in der Umgebung
+/// Ruft `nexus` in einem leeren Ordner auf, ohne Session in der Umgebung. `NEXUS_HOME` zeigt
+/// auf einen eigenen Ordner, damit der Lauf den echten Benutzerordner nicht anfasst (sonst
+/// würde der erste Start dort den Umzug von `~/.harness` versuchen).
 fn run(args: &[&str]) -> Lauf {
     let dir = TempDir::new().expect("Temp-Ordner");
     let output: Output = std::process::Command::cargo_bin("nexus")
         .expect("Binary nexus")
         .args(args)
         .current_dir(dir.path())
+        .env("NEXUS_HOME", dir.path().join("home"))
+        .env_remove("HARNESS_HOME")
         .env_remove("HARNESS_SESSION")
         .output()
         .expect("nexus startet");
