@@ -17,6 +17,11 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 dirs = "6"
 log = "0.4"
+# Der Server läuft seit P5-2 im Prozess der App; dazu kommen der Benutzerordner aus nexus-core
+# und die Systemfunktionen aus nexus-platform
+nexus-core = { workspace = true }
+nexus-server = { workspace = true }
+nexus-platform = { workspace = true }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
