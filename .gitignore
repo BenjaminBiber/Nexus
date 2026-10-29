@@ -20,6 +20,8 @@ apps/desktop/src-tauri/binaries/
 .vitest/
 *.log
 npm-debug.log*
+# Golden-Protokolle der Tests gehören ins Repo
+!crates/*/tests/fixtures/*.golden.log
 
 # Umgebungsvariablen und Geheimnisse
 .env

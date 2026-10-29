@@ -12,6 +12,8 @@ futures = { workspace = true }
 http-body-util = { workspace = true }
 hyper = { workspace = true }
 hyper-util = { workspace = true }
+# Pfadmuster der freigegebenen Dokumente und die Quellenzeile der Docs-Tickets
+regex = { workspace = true }
 nexus-core = { workspace = true }
 nexus-db = { workspace = true }
 nexus-platform = { workspace = true }
@@ -32,6 +34,8 @@ uuid = { workspace = true }
 nix = { workspace = true, features = ["process"] }
 
 [dev-dependencies]
+# Die Standardwerte für Läufe des Dispatchers stecken im Merkmal `testing` des Fachkerns.
+nexus-core = { workspace = true, features = ["testing"] }
 tempfile = { workspace = true }
 # Der Golden-Vergleich des Lauf-Protokolls ersetzt Zeitstempel und Pfade
 regex = { workspace = true }
