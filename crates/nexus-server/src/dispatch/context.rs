@@ -222,6 +222,12 @@ impl DispatchContext {
         &self.actor
     }
 
+    /// Der Handelnde eines Agenten des Dispatchers: Recherchen, Pläne und ihre Kommentare tragen
+    /// seinen Namen unter dem eigenen Benutzer
+    pub fn agent_actor(&self, name: &str) -> BoardActor {
+        self.backend.actor(Some(name))
+    }
+
     /// Aktuelle Zeit des Dispatchers
     pub fn now(&self) -> chrono::DateTime<chrono::Utc> {
         self.clock.now()
