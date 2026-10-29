@@ -3,8 +3,10 @@
 
 pub mod doc_comment;
 pub mod doc_comment_store;
+pub mod spec_commit_check;
 
 pub use doc_comment::{
     DocComment, DocCommentPatch, DocCommentStatus, NewDocComment, OpenDocComment,
 };
 pub use doc_comment_store::DocCommentStore;
+pub use spec_commit_check::SpecCommitCheck;

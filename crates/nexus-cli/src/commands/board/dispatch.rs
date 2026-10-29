@@ -1,8 +1,8 @@
 //! `nexus board dispatch …`, `board dispatch-runs backfill`, `board plan-start` und
 //! `board question research-start`: den Dispatcher im lokalen Server steuern und seine Läufe
 //! nachtragen.
-//! Portiert aus `packages/cli/src/commands/board/BoardDispatchCommands.ts` (ohne `merge` und
-//! `accept`, die mit P3-11 dazukommen).
+//! Portiert aus `packages/cli/src/commands/board/BoardDispatchCommands.ts`; `merge` und
+//! `accept` liegen in `merge.rs`.
 
 use clap::{Args, Subcommand};
 use nexus_core::{HarnessError, Result};
@@ -333,7 +333,7 @@ where
 }
 
 /// Client für den Port aus `--port` von `board`, sonst `HARNESS_PORT`, sonst Standard
-fn client(port: Option<&str>) -> Result<DispatchClient> {
+pub fn client(port: Option<&str>) -> Result<DispatchClient> {
     let env = std::env::var(PORT_ENV).ok().filter(|raw| !raw.is_empty());
     Ok(DispatchClient::new(
         DispatchOptionParser.port(port, env.as_deref())?,

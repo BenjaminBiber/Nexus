@@ -27,9 +27,11 @@ use crate::clock::Clock;
 ///
 /// Das Feld `questions` kommt aus P3-3; die Felder `planning`, `search`, `dispatch_runs`,
 /// `inbox` und die Zeitleiste (`timeline(names)`) aus P3-4.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct BoardServices<D: BoardDatabase> {
     pub db: Arc<D>,
+    /// Uhr aller Dienste (für [`Clone`], das die Dienste neu aufbaut)
+    pub clock: Clock,
     pub repo_paths: BoardRepoPaths,
     pub projects: ProjectService<D>,
     pub boards: BoardService<D>,
@@ -59,9 +61,10 @@ impl<D: BoardDatabase> BoardServices<D> {
             views: BoardViewService::new(db.clone(), clock.clone()),
             search: BoardSearchService::new(db.clone()),
             dispatch_runs: DispatchRunService::new(db.clone()),
-            graph: DependencyGraphService::new(db.clone(), clock),
+            graph: DependencyGraphService::new(db.clone(), clock.clone()),
             inbox: InboxService::new(db.clone()),
             repo_paths,
+            clock,
             db,
         }
     }
@@ -69,6 +72,12 @@ impl<D: BoardDatabase> BoardServices<D> {
     /// Die Dienste ohne lokale Zuordnung der Repo-Pfade (der Standardwert aus TypeScript)
     pub fn with_memory_paths(db: Arc<D>, clock: Clock) -> Self {
         Self::new(db, clock, BoardRepoPaths::memory())
+    }
+
+    /// Dieselben Dienste noch einmal; die Datenbank wird geteilt. Von Hand geschrieben,
+    /// weil `derive(Clone)` sonst `D: Clone` verlangen würde.
+    pub fn duplicate(&self) -> Self {
+        Self::new(self.db.clone(), self.clock.clone(), self.repo_paths.clone())
     }
 
     /// Zeitleiste eines Tickets; `names` aus der Dispatch-Konfiguration erkennt Agenten
