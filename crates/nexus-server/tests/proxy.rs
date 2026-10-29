@@ -310,3 +310,51 @@ async fn statische_adressen_gehen_nie_zum_upstream() {
     assert_eq!(upstream.calls(), 0);
     task.abort();
 }
+
+#[tokio::test]
+async fn die_claude_routen_der_docs_bleiben_beim_node_server() {
+    let (server, upstream, _base, task) = with_upstream().await;
+
+    // Die sechs Routen aus P4-8b; `…/docs/ticket-drafts` ist ein anderer Pfad als
+    // `…/docs/ticket-drafts/saved`, das Rust beantwortet
+    for (method, path) in [
+        ("POST", "/api/projects/p1/docs/ticket-drafts"),
+        ("DELETE", "/api/projects/p1/docs/ticket-drafts"),
+        ("POST", "/api/projects/p1/docs/question-drafts"),
+        ("DELETE", "/api/projects/p1/docs/question-drafts"),
+        ("POST", "/api/projects/p1/docs/questions"),
+        ("POST", "/api/projects/p1/docs/revise"),
+    ] {
+        let reply = server.request(method, path, Some("{}"), &[]).await;
+        assert_eq!(
+            reply.header("x-nexus-backend"),
+            Some("node"),
+            "{method} {path}"
+        );
+        assert_eq!(reply.json().unwrap()["path"], serde_json::json!(path));
+    }
+    assert_eq!(upstream.calls(), 6);
+    task.abort();
+}
+
+#[tokio::test]
+async fn der_notschalter_schickt_auch_die_gruppe_docs_zum_node_server() {
+    let (upstream, base, task) = start_upstream().await;
+    let server = TestServer::with(TestServerOptions {
+        upstream: Some(base),
+        proxy_groups: RouteGroups::from_env(Some("docs")),
+        ..TestServerOptions::default()
+    });
+
+    for path in [
+        "/api/projects/p1/docs",
+        "/api/projects/p1/docs/file?path=GLOSSARY.md",
+        "/api/projects/p1/docs/comments",
+        "/api/projects/p1/spec-progress",
+    ] {
+        let reply = server.get(path).await;
+        assert_eq!(reply.header("x-nexus-backend"), Some("node"), "{path}");
+    }
+    assert_eq!(upstream.calls(), 4);
+    task.abort();
+}

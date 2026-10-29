@@ -62,6 +62,15 @@ impl ServerConfig {
         self.version == CONTRACT_VERSION
     }
 
+    /// Trägt den Node-Server dahinter ein und lässt damit den Notschalter
+    /// `NEXUS_PROXY_GROUPS` gelten. Nötig, weil der Port des Sidecars erst nach dem Laden
+    /// feststeht, der Notschalter aber nur mit Upstream wirkt: ohne ihn gäbe es niemanden,
+    /// der die abgeschaltete Gruppe stattdessen beantwortet.
+    pub fn set_upstream(&mut self, url: String, env: &dyn Fn(&str) -> Option<String>) {
+        self.upstream = Some(url);
+        self.proxy_groups = RouteGroups::from_env(value(env, &["NEXUS_PROXY_GROUPS"]).as_deref());
+    }
+
     /// Einstellungen mit den Standardwerten für einen Benutzerordner (Tests und Aufrufer,
     /// die Port und Ordner schon kennen)
     pub fn new(port: u16, home: HarnessHome) -> Self {
@@ -114,21 +123,18 @@ impl ServerConfigLoader {
         let upstream = argument(args, "--upstream")
             .or_else(|| value(env, &["NEXUS_UPSTREAM"]))
             .filter(|url| !url.is_empty());
-        Ok(ServerConfig {
+        let mut config = ServerConfig {
             port: port(args, env)?,
             web_dir,
             version: value(env, &["NEXUS_SERVER_VERSION", "HARNESS_BUNDLED_VERSION"])
                 .filter(|version| !version.is_empty())
                 .unwrap_or_else(default_version),
-            // Der Notschalter wirkt nur mit Upstream: ohne ihn gibt es niemanden, der die
-            // Gruppe stattdessen beantworten könnte
-            proxy_groups: match &upstream {
-                Some(_) => RouteGroups::from_env(value(env, &["NEXUS_PROXY_GROUPS"]).as_deref()),
-                None => RouteGroups::none(),
-            },
-            upstream,
             ..ServerConfig::new(0, home)
-        })
+        };
+        if let Some(upstream) = upstream {
+            config.set_upstream(upstream, env);
+        }
+        Ok(config)
     }
 }
 
@@ -276,6 +282,21 @@ mod tests {
 
         let ohne = load(&[], &[("NEXUS_PROXY_GROUPS", "basis")]).unwrap();
         assert!(!ohne.proxy_groups.contains(RouteGroup::Basis));
+    }
+
+    #[test]
+    fn ein_nachtraglicher_upstream_lasst_den_notschalter_gelten() {
+        // So startet `nexus serve`: der Port des Node-Servers steht erst nach dem Laden fest
+        let mut config = load(&[], &[("NEXUS_PROXY_GROUPS", "db-tickets")]).unwrap();
+        assert!(config.proxy_groups.enabled(RouteGroup::DbTickets));
+
+        let umgebung = |name: &str| match name {
+            "NEXUS_PROXY_GROUPS" => Some("db-tickets".to_string()),
+            _ => None,
+        };
+        config.set_upstream("http://127.0.0.1:4711".to_string(), &umgebung);
+        assert_eq!(config.upstream.as_deref(), Some("http://127.0.0.1:4711"));
+        assert!(config.proxy_groups.contains(RouteGroup::DbTickets));
     }
 
     #[test]

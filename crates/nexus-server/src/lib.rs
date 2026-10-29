@@ -10,6 +10,7 @@ pub mod board_db;
 pub mod board_runtime;
 pub mod config;
 pub mod dispatch;
+pub mod docs;
 pub mod error;
 pub mod extract;
 pub mod groups;
@@ -21,6 +22,7 @@ pub mod proxy;
 pub mod routes;
 pub mod sidecar;
 pub mod state;
+pub mod timeline;
 
 use std::net::SocketAddr;
 use std::sync::Arc;

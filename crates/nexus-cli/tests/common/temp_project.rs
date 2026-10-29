@@ -134,8 +134,22 @@ impl TempProject {
         });
     }
 
+    /// Legt einen weiteren Worktree neben dem Projekt an und liefert seinen Pfad
+    pub fn add_worktree(&self, name: &str) -> PathBuf {
+        let path = self.base().join(name);
+        self.git(&[
+            "worktree",
+            "add",
+            "-q",
+            "-b",
+            &format!("branch-{name}"),
+            &path.to_string_lossy(),
+        ]);
+        path
+    }
+
     /// Öffnet das Board dieses Homes, führt die Arbeit aus und schließt es wieder
-    fn am_board<T, W>(&self, work: W) -> T
+    pub fn am_board<T, W>(&self, work: W) -> T
     where
         W: AsyncFnOnce(&BoardRuntime) -> T,
     {
@@ -200,30 +214,54 @@ impl TempProject {
         self.spawn(&self.path.clone(), &self.home(), args, Some(input))
     }
 
+    /// Ruft `nexus <args>` mit eigenem Arbeitsordner, eigener Eingabe und zusätzlichen
+    /// Umgebungsvariablen auf (die Hooks lesen Frist, Port und Env-Datei aus der Umgebung)
+    pub fn run_with_env(
+        &self,
+        cwd: &Path,
+        args: &[&str],
+        env: &[(&str, &str)],
+        input: Option<&str>,
+    ) -> Lauf {
+        self.spawn_with(cwd, &self.home(), args, input, env)
+    }
+
     /// Wie [`TempProject::run`], aber innerhalb einer Session (`HARNESS_SESSION`)
     pub fn run_in_session(&self, session: &str, args: &[&str]) -> Lauf {
-        self.spawn_with(&self.path.clone(), &self.home(), args, None, Some(session))
+        self.spawn_with(
+            &self.path.clone(),
+            &self.home(),
+            args,
+            None,
+            &[("HARNESS_SESSION", session)],
+        )
     }
 
     /// Wie [`TempProject::run_in_session`], aber mit einem anderen `HARNESS_HOME`
     pub fn run_in_session_in_home(&self, home: &Path, session: &str, args: &[&str]) -> Lauf {
-        self.spawn_with(&self.path.clone(), home, args, None, Some(session))
-    }
-
-    /// Startet das Binary ohne Session
-    fn spawn(&self, cwd: &Path, home: &Path, args: &[&str], input: Option<&str>) -> Lauf {
-        self.spawn_with(cwd, home, args, input, None)
+        self.spawn_with(
+            &self.path.clone(),
+            home,
+            args,
+            None,
+            &[("HARNESS_SESSION", session)],
+        )
     }
 
     /// Startet das Binary; `HARNESS_SESSION` und `HARNESS_TICKET` werden nicht geerbt, sonst
     /// gilt der Testlauf als innerhalb einer Session bzw. einem Ticket zugeordnet
+    fn spawn(&self, cwd: &Path, home: &Path, args: &[&str], input: Option<&str>) -> Lauf {
+        self.spawn_with(cwd, home, args, input, &[])
+    }
+
+    /// Wie [`TempProject::spawn`], dazu zusätzliche Umgebungsvariablen (auch `HARNESS_SESSION`)
     fn spawn_with(
         &self,
         cwd: &Path,
         home: &Path,
         args: &[&str],
         input: Option<&str>,
-        session: Option<&str>,
+        extra: &[(&str, &str)],
     ) -> Lauf {
         let mut command = Command::cargo_bin("nexus").expect("Binary nexus");
         command
@@ -232,8 +270,8 @@ impl TempProject {
             .env("HARNESS_HOME", home)
             .env_remove("HARNESS_SESSION")
             .env_remove("HARNESS_TICKET");
-        if let Some(session) = session {
-            command.env("HARNESS_SESSION", session);
+        for (name, value) in extra {
+            command.env(name, value);
         }
         let output = match input {
             None => command.output().expect("nexus startet"),
