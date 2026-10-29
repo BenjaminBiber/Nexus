@@ -2,7 +2,7 @@
 //! und (nur Menschen) entscheiden.
 //! Portiert aus `packages/cli/src/commands/board/BoardQuestionCommands.ts`.
 
-use clap::{ArgAction, Args, Subcommand};
+use clap::{ArgAction, Args, Command, Subcommand};
 use nexus_core::board::question_service::{
     BoardQuestionListFilter, BoardQuestionWriteOptions, NewBoardQuestionInput,
 };
@@ -76,6 +76,9 @@ pub const DEPENDS_ABOUT: &str =
 pub const DEPENDS_EXAMPLE: &str =
     "\nBeispiel:\n  harness board question depends ARC-F0002 --add ARC-F0001";
 
+/// Beschreibung des Befehls `help` der Gruppe
+pub const HELP_ABOUT: &str = "Hilfe zu einem Befehl anzeigen";
+
 /// Die Unterbefehle von `board question`. `research-start` läuft über den Server und kommt in
 /// P3-12 dazu.
 // Die Varianten tragen die Optionen von clap; sie dürfen unterschiedlich groß sein
@@ -111,6 +114,10 @@ pub enum QuestionCommands {
 
     #[command(name = "depends", about = DEPENDS_ABOUT, after_help = DEPENDS_EXAMPLE, disable_help_flag = true)]
     Depends(DependsArgs),
+
+    /// Hilfe zu einem Befehl anzeigen
+    #[command(name = "help", about = HELP_ABOUT, disable_help_flag = true)]
+    Help { befehl: Option<String> },
 
     /// Alles, was kein angemeldeter Unterbefehl ist; wird mit `command-unknown` abgewiesen
     #[command(external_subcommand)]
@@ -279,8 +286,9 @@ pub struct DependsArgs {
 }
 
 /// Führt einen Unterbefehl von `board question` aus
-pub fn run(context: &CliContext, command: &QuestionCommands) -> Result<u8> {
+pub fn run(context: &CliContext, command: &QuestionCommands, root: &Command) -> Result<u8> {
     match command {
+        QuestionCommands::Help { befehl } => help(root, befehl.as_deref()),
         QuestionCommands::Add(args) => add(context, args),
         QuestionCommands::Research(args) => research(context, args),
         QuestionCommands::Comment(args) => comment(context, args),
@@ -292,6 +300,39 @@ pub fn run(context: &CliContext, command: &QuestionCommands) -> Result<u8> {
         QuestionCommands::Link(args) => link(context, args),
         QuestionCommands::Depends(args) => depends(context, args),
         QuestionCommands::Unbekannt(words) => Err(super::unknown_question(words)),
+    }
+}
+
+/// `board question help [befehl]`: Hilfe der Gruppe oder eines ihrer Befehle. Wie in commander
+/// landet die Hilfe bei einem unbekannten Befehl auf stderr und der Aufruf endet mit Code 1.
+fn help(root: &Command, name: Option<&str>) -> Result<u8> {
+    let group = root
+        .find_subcommand("board")
+        .and_then(|board| board.find_subcommand("question"))
+        .expect("board question steht im Befehlsbaum");
+    let gewaehlt = name.and_then(|name| group.find_subcommand(name));
+    match (name, gewaehlt) {
+        (Some(name), Some(sub)) => {
+            print!(
+                "{}",
+                crate::output::help::render(&format!("harness board question {name}"), sub)
+            );
+            Ok(0)
+        }
+        (None, _) => {
+            print!(
+                "{}",
+                crate::output::help::render("harness board question", group)
+            );
+            Ok(0)
+        }
+        (Some(_), None) => {
+            eprint!(
+                "{}",
+                crate::output::help::render("harness board question", group)
+            );
+            Ok(1)
+        }
     }
 }
 

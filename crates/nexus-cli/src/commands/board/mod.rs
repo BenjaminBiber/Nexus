@@ -7,7 +7,7 @@ pub mod question;
 pub mod tickets_read;
 pub mod tickets_write;
 
-use clap::Subcommand;
+use clap::{Command, Subcommand};
 use nexus_core::{HarnessError, Result};
 
 use crate::context::CliContext;
@@ -108,8 +108,8 @@ pub enum BoardCommands {
     Unbekannt(Vec<String>),
 }
 
-/// Führt einen Unterbefehl von `board` aus
-pub fn run(context: &CliContext, command: &BoardCommands) -> Result<u8> {
+/// Führt einen Unterbefehl von `board` aus; `root` ist der aufgebaute Befehlsbaum für die Hilfe
+pub fn run(context: &CliContext, command: &BoardCommands, root: &Command) -> Result<u8> {
     match command {
         BoardCommands::List(args) => tickets_read::list(context, args),
         BoardCommands::Show(args) => tickets_read::show(context, args),
@@ -120,7 +120,7 @@ pub fn run(context: &CliContext, command: &BoardCommands) -> Result<u8> {
         BoardCommands::Claim(args) => claim::claim(context, args),
         BoardCommands::Release(args) => claim::release(context, args),
         BoardCommands::Comment(args) => comment::comment(context, args),
-        BoardCommands::Question { sub } => question::run(context, sub),
+        BoardCommands::Question { sub } => question::run(context, sub, root),
         BoardCommands::Unbekannt(words) => Err(unknown(words)),
     }
 }

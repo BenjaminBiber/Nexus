@@ -40,6 +40,49 @@ fn zeigt_die_unterbefehle_in_der_hilfe() {
 }
 
 #[test]
+fn der_hilfe_befehl_zeigt_die_gruppe_und_einzelne_befehle() {
+    let projekt = TempProject::new();
+
+    let gruppe = projekt.run(&["board", "question", "help"]);
+    assert_eq!(gruppe.code, 0, "{}", gruppe.stderr);
+    assert!(
+        gruppe.stdout.starts_with("Aufruf: harness board question"),
+        "{}",
+        gruppe.stdout
+    );
+    assert!(
+        gruppe.stdout.contains("help [befehl]"),
+        "der Hilfe-Befehl steht in der Liste: {}",
+        gruppe.stdout
+    );
+
+    let blatt = projekt.run(&["board", "question", "help", "add"]);
+    assert_eq!(blatt.code, 0, "{}", blatt.stderr);
+    assert!(
+        blatt
+            .stdout
+            .starts_with("Aufruf: harness board question add [options] <titel>"),
+        "{}",
+        blatt.stdout
+    );
+}
+
+#[test]
+fn der_hilfe_befehl_zeigt_bei_unbekanntem_namen_die_gruppe_auf_stderr() {
+    let projekt = TempProject::new();
+
+    let lauf = projekt.run(&["board", "question", "help", "quatsch"]);
+
+    assert_eq!(lauf.code, 1);
+    assert_eq!(lauf.stdout, "");
+    assert!(
+        lauf.stderr.starts_with("Aufruf: harness board question"),
+        "{}",
+        lauf.stderr
+    );
+}
+
+#[test]
 fn verweigert_das_entscheiden_innerhalb_einer_session_ohne_datenbankzugriff() {
     let projekt = TempProject::new();
     let home = home_ohne_konfig();
