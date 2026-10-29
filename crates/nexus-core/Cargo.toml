@@ -48,5 +48,11 @@ name = "in_memory_contract"
 path = "tests/in_memory_contract.rs"
 required-features = ["testing"]
 
+# Die Gegenprobe zum Hook-Kontext baut ihre Zustände mit `BoardFixture`.
+[[test]]
+name = "kontext_mit_ts"
+path = "tests/kontext_mit_ts.rs"
+required-features = ["testing"]
+
 [lints]
 workspace = true

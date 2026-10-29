@@ -28,7 +28,7 @@ pub use comments::CommentLike;
 pub use config::{
     limit_pause, ClaudeSettings, DispatchConfig, JoinWorktrees, PlanningSettings, Profile,
     PromptProblem, PromptTemplates, ResearchSettings, Rule, RuleCondition, RunSettings, TimeWindow,
-    WorktreeSetupStep,
+    WorktreeSetupStep, JOIN_WORKTREES, MERGE_REASON_PREFIX,
 };
 pub use config_normalizer::DispatchConfigNormalizer;
 pub use config_store::{DispatchConfigRead, DispatchConfigStore};

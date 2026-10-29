@@ -54,6 +54,60 @@ pub fn join_names(names: impl IntoIterator<Item = &'static str>) -> String {
     names.into_iter().collect::<Vec<_>>().join(", ")
 }
 
+/// Höchstlänge eines Kurztitels
+const SLUG_MAX_LENGTH: usize = 40;
+
+/// Baut aus einem Titel einen Kurztitel, der als Git-Branch und Ordnername taugt.
+/// Portiert aus `packages/core/src/text/SlugBuilder.ts`.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct SlugBuilder;
+
+impl SlugBuilder {
+    /// Neuer Baumeister (hält keinen Zustand)
+    pub fn new() -> Self {
+        Self
+    }
+
+    /// Kleinschreibung, Umlaute umschreiben, Sonderzeichen zu Bindestrichen, höchstens
+    /// 40 Zeichen
+    pub fn build(&self, text: &str) -> String {
+        let mut dashed = String::new();
+        for zeichen in text.chars().flat_map(|zeichen| zeichen.to_lowercase()) {
+            match zeichen {
+                'ä' => dashed.push_str("ae"),
+                'ö' => dashed.push_str("oe"),
+                'ü' => dashed.push_str("ue"),
+                'ß' => dashed.push_str("ss"),
+                _ if zeichen.is_ascii_lowercase() || zeichen.is_ascii_digit() => {
+                    dashed.push(zeichen)
+                }
+                // Alles andere wird ein Bindestrich; mehrere in Folge zählen als einer
+                _ if !dashed.ends_with('-') => dashed.push('-'),
+                _ => {}
+            }
+        }
+        let slug = shorten(dashed.trim_matches('-'));
+        if slug.is_empty() {
+            "ticket".to_string()
+        } else {
+            slug
+        }
+    }
+}
+
+/// Kürzt am letzten Bindestrich innerhalb der Höchstlänge, damit kein Wort zerschnitten wird
+fn shorten(slug: &str) -> String {
+    if slug.len() <= SLUG_MAX_LENGTH {
+        return slug.to_string();
+    }
+    let cut = &slug[..SLUG_MAX_LENGTH];
+    let shortened = match cut.rfind('-') {
+        Some(position) if position > 0 => &cut[..position],
+        _ => cut,
+    };
+    shortened.trim_end_matches('-').to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -103,6 +157,42 @@ mod tests {
         // vor der Fundstelle steht ein Emoji: zwei UTF-16-Einheiten, vier Bytes
         assert_eq!(utf16_index_of("🙂abc", "abc"), Some(2));
         assert_eq!(utf16_index_of("", ""), Some(0));
+    }
+
+    /// Kurztitel eines Titels
+    fn slug(text: &str) -> String {
+        SlugBuilder::new().build(text)
+    }
+
+    #[test]
+    fn schreibt_klein_und_ersetzt_leerzeichen_durch_bindestriche() {
+        assert_eq!(slug("Login Formular bauen"), "login-formular-bauen");
+    }
+
+    #[test]
+    fn schreibt_umlaute_und_scharfes_s_um() {
+        assert_eq!(
+            slug("Größe Änderung für Übung"),
+            "groesse-aenderung-fuer-uebung"
+        );
+    }
+
+    #[test]
+    fn entfernt_sonderzeichen_und_fasst_bindestriche_zusammen() {
+        assert_eq!(slug("  Token: prüfen!!! (v2) "), "token-pruefen-v2");
+    }
+
+    #[test]
+    fn kurzt_auf_vierzig_zeichen_am_wortende() {
+        let result = slug("eine sehr lange Überschrift die weit über vierzig Zeichen hinausgeht");
+        assert!(result.len() <= 40, "{result}");
+        assert!(!result.ends_with('-'), "{result}");
+        assert_eq!(result, "eine-sehr-lange-ueberschrift-die-weit");
+    }
+
+    #[test]
+    fn liefert_ticket_bei_leerem_ergebnis() {
+        assert_eq!(slug("???"), "ticket");
     }
 
     #[test]

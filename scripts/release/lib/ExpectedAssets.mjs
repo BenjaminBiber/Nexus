@@ -32,9 +32,12 @@ export function updaterAssetNames(version) {
   ];
 }
 
-// true, wenn die Tauri-Konfig den Updater aktiviert hat (`bundle.createUpdaterArtifacts`)
-export function updaterEnabled(tauriConf) {
-  return tauriConf?.bundle?.createUpdaterArtifacts === true;
+// true, wenn eine der übergebenen Tauri-Konfigs den Updater aktiviert hat
+// (`bundle.createUpdaterArtifacts`). Der Schalter steht in `tauri.release.conf.json` und nicht in
+// `tauri.conf.json`, weil sonst jeder lokale Build ohne Signierschlüssel abbrechen würde; der
+// Release-Workflow gibt diese Datei über `--config` dazu.
+export function updaterEnabled(...tauriConfs) {
+  return tauriConfs.some((conf) => conf?.bundle?.createUpdaterArtifacts === true);
 }
 
 // Alle erwarteten Dateinamen: Grundliste, bei aktiviertem Updater zusätzlich dessen Dateien

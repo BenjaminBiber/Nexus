@@ -466,4 +466,18 @@ mod tests {
         assert_eq!(MERGE_REASON_PREFIX, "Merge:");
         assert_eq!(limit_pause(), "[dispatch] Pause: Nutzungslimit");
     }
+
+    #[test]
+    fn join_worktrees_schreibt_die_werte_wie_typescript() {
+        assert_eq!(
+            serde_json::to_string(&JoinWorktrees::SameSpec).unwrap(),
+            "\"sameSpec\""
+        );
+        assert_eq!(JoinWorktrees::None.as_str(), "none");
+        assert_eq!(
+            serde_json::from_str::<JoinWorktrees>("\"none\"").unwrap(),
+            JoinWorktrees::None
+        );
+        assert_eq!(JOIN_WORKTREES.len(), 2);
+    }
 }

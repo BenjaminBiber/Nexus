@@ -9,7 +9,9 @@ pub mod counter;
 pub mod customization;
 pub mod dispatch;
 pub mod error;
+pub mod favorites;
 pub mod git;
+pub mod hooks;
 pub mod install;
 pub mod locking;
 pub mod process;
@@ -23,6 +25,7 @@ pub mod settings;
 pub mod testing;
 pub mod text;
 pub mod workflow;
+pub mod worktrees;
 
 mod random;
 
