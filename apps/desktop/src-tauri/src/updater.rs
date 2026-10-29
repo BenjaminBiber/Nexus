@@ -228,7 +228,12 @@ mod tests {
             )]
         );
         assert_eq!(updater["windows"]["installMode"], "passive");
-        assert!(updater["pubkey"].is_string(), "pubkey fehlt in der Konfig");
+        let schluessel = include_str!("../../../../.github/release/tauri-updater.pub");
+        assert_eq!(
+            updater["pubkey"].as_str().unwrap(),
+            schluessel.trim(),
+            "pubkey weicht von .github/release/tauri-updater.pub ab"
+        );
     }
 
     // Die Updater-Artefakte stehen nur in der Release-Konfig: in tauri.conf.json würde jeder lokale
