@@ -57,6 +57,12 @@ impl Reply {
         serde_json::from_str(&self.text).ok()
     }
 
+    /// Der Körper als JSON; unbrauchbare Antworten brechen den Test ab
+    pub fn body(&self) -> serde_json::Value {
+        self.json()
+            .unwrap_or_else(|| panic!("Antwort ist kein JSON: {}", self.text))
+    }
+
     /// Ein Kopf der Antwort als Text
     pub fn header(&self, name: &str) -> Option<&str> {
         self.headers.get(name).and_then(|value| value.to_str().ok())
@@ -902,10 +908,11 @@ impl ClaudeRunner for FakeClaude {
     }
 }
 
-/// Die Läufe des Zustands, beide über dieselbe Attrappe
+/// Die Läufe des Zustands, alle über dieselbe Attrappe
 pub fn fake_runners(fake: Arc<FakeClaude>) -> ClaudeRunners {
     ClaudeRunners {
         ticket_draft: fake.clone(),
-        revise: fake,
+        revise: fake.clone(),
+        suggestion: fake,
     }
 }

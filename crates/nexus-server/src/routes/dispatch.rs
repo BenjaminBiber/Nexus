@@ -106,14 +106,14 @@ pub fn routes() -> Router<Arc<AppState>> {
 /// Fehlermeldung
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct DispatchConfigView {
-    file: String,
-    exists: bool,
-    raw: Value,
-    config: Option<Value>,
-    error: Option<String>,
+pub struct DispatchConfigView {
+    pub file: String,
+    pub exists: bool,
+    pub raw: Value,
+    pub config: Option<Value>,
+    pub error: Option<String>,
     /// Standardvorlage, Platzhalter und Pflichtteile je Laufart – unabhängig von der Datei
-    prompt_info: Vec<DispatchPromptInfo>,
+    pub prompt_info: Vec<DispatchPromptInfo>,
 }
 
 /// `GET /api/dispatch/config`
@@ -396,7 +396,7 @@ async fn log_text(
 /// Die Einstellung für die Oberfläche; eine kaputte Datei liefert das Beispiel mit
 /// Fehlermeldung. Die Vorlagen stehen auch im Fehlerfall dabei, damit die Oberfläche sie bei
 /// kaputter `dispatch.yaml` noch anzeigen kann.
-fn config_view(state: &Arc<AppState>) -> ApiResult<DispatchConfigView> {
+pub fn config_view(state: &Arc<AppState>) -> ApiResult<DispatchConfigView> {
     let store = nexus_core::dispatch::DispatchConfigStore::new(state.home.clone());
     let file = store.file().display().to_string();
     let prompt_info = PromptCatalog::new().list();

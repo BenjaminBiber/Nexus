@@ -6,6 +6,11 @@
 export type AbortCategory = "timeout" | "max-turns" | "context" | "exit-code" | "claude-error" | "no-outcome" | "usage-limit" | "start-failed" | "vanished" | "other";
 
 /**
+ * Ergebnis des Regelkatalogs: Vorschläge und Profile mit zu wenig Daten
+ */
+export type AdvisorResult = { suggestions: Array<Suggestion>, insufficient: Array<InsufficientData>, };
+
+/**
  * Zustand des Hauptordners vor einem Merge
  */
 export type CheckoutState = { 
@@ -55,6 +60,24 @@ useSubscription: boolean, extraArgs: Array<string>,
  * Pfad der bash.exe von Git for Windows; null = automatisch suchen (nur Windows)
  */
 gitBashPath: string | null, };
+
+/**
+ * Eine Änderung an der Dispatcher-Einstellung; `from` ist der wirksame Wert, auf dem der
+ * Vorschlag beruht.
+ *
+ * `from` fehlt (`None`), wenn es den Wert nicht gibt – in TypeScript steht dort `undefined`,
+ * und genau dieser Unterschied zu `null` entscheidet beim Prüfen des Ausgangswerts.
+ */
+export type ConfigPatchOp = { 
+/**
+ * profiles.&lt;name&gt;.maxTurns|timeoutMinutes|model|effort, defaultProfile,
+ * rules.&lt;index ab 0&gt;.profile oder escalation
+ */
+path: string, from?: unknown, 
+/**
+ * Neuer Wert; fehlt er, wird `null` geschrieben (die Prüfung lehnt das in der Regel ab)
+ */
+to: unknown, };
 
 /**
  * Abbrüche einer Kategorie mit Anzeigetext und Anzahl
@@ -306,6 +329,16 @@ firstTryRate: number | null,
 escalationRate: number | null, finalFailures: number, };
 
 /**
+ * Ein Eskalationsweg Basisprofil → Zielprofil
+ */
+export type EscalationPath = { from: string, to: string, count: number, };
+
+/**
+ * Ein genutztes Profil mit zu wenig Läufen für ein Urteil
+ */
+export type InsufficientData = { profile: string, runs: number, needed: number, };
+
+/**
  * Worktrees des Dispatchers: ein Worktree je Ticket oder Tickets einer Spec in einem
  * gemeinsamen Worktree (alt)
  */
@@ -350,6 +383,24 @@ export type MergePhase = "pending" | "waiting" | "session";
  * Wie ein Ticket-Branch in seinen Zielbranch kommt
  */
 export type MergeStrategy = "merge" | "squash";
+
+/**
+ * Grundlage der Auswertung: Zahl der Läufe, Projekte und Beginn des Zeitraums
+ */
+export type OptimizationBasis = { 
+/**
+ * ausgewertete Arbeitsläufe
+ */
+runs: number, projects: number, 
+/**
+ * Beginn des Zeitraums (ISO)
+ */
+since: string, };
+
+/**
+ * Die verdichteten Kennzahlen aller Läufe
+ */
+export type OptimizationFacts = { basis: OptimizationBasis, profiles: Array<ProfileFacts>, rules: Array<RuleFacts>, paths: Array<EscalationPath>, };
 
 /**
  * Zustand der Planungs-Automatik
@@ -408,6 +459,47 @@ profile: string | null, };
  * Modell, Effort und Grenzen eines Profils
  */
 export type Profile = { model: string | null, effort: string | null, maxTurns: number, timeoutMinutes: number, };
+
+/**
+ * Kennzahlen eines Profils über die Läufe mit seinen aktuellen Limits
+ */
+export type ProfileFacts = { profile: string, maxTurns: number, timeoutMinutes: number, 
+/**
+ * Läufe mit den aktuellen Limits
+ */
+runs: number, 
+/**
+ * davon Starts eines Tickets (ohne Eskalation, erster Versuch)
+ */
+starts: number, 
+/**
+ * Starts, deren Ticket danach von diesem Profil weg eskaliert wurde
+ */
+escalatedStarts: number, 
+/**
+ * Läufe, die per Eskalation auf dieses Profil kamen
+ */
+viaEscalation: number, 
+/**
+ * Häufigstes Basisprofil dieser Eskalationen
+ */
+topOrigin: string | null, 
+/**
+ * Abbruch-Kategorie → Anzahl
+ */
+aborts: Record<string, number>, 
+/**
+ * Starts mit Ergebnis done oder review
+ */
+firstTrySuccess: number, 
+/**
+ * 90. Perzentil der Schritte; null ohne Angaben
+ */
+turnsP90: number | null, startSources: Array<StartSource>, 
+/**
+ * Letzter Lauf mit diesem Profil (egal welche Limits); null ohne Lauf im Zeitraum
+ */
+lastRunAt: string | null, };
 
 /**
  * Laufart einer Prompt-Vorlage
@@ -576,6 +668,19 @@ filesMin?: number,
 planMinChars?: number, };
 
 /**
+ * Kennzahlen einer Regel über die Starts, die sie in ihrer aktuellen Fassung ausgelöst hat
+ */
+export type RuleFacts = { 
+/**
+ * 1-basiert wie in der Oberfläche
+ */
+index: number, profile: string, runs: number, 
+/**
+ * davon eskaliert oder endgültig gescheitert
+ */
+failed: number, };
+
+/**
  * Ergebnis eines Laufs samt Endzeit; schreibt nur der Worker
  */
 export type RunEnd = { endedAt: string, 
@@ -731,6 +836,77 @@ export type RunState = "finished" | "running";
  * Gescheiterter Einrichtungsbefehl eines neuen Worktrees
  */
 export type SetupFailure = { cwd: string, run: string, code: number | null, timedOut: boolean, output: string, };
+
+/**
+ * Wie die Starts eines Profils zustande kamen (Grund und Regel), häufigste zuerst
+ */
+export type StartSource = { reason: DispatchProfileReason | null, ruleIndex: number | null, count: number, };
+
+/**
+ * Letztes Ergebnis der Claude-Analyse
+ */
+export type StoredAnalysis = { at: string, 
+/**
+ * Hash der Einstellung, gegen die analysiert wurde
+ * ([`crate::dispatch::DispatchConfigFingerprint`])
+ */
+configHash: string, costUsd: number | null, suggestions: Array<Suggestion>, 
+/**
+ * Antworten, die Claude geliefert hat, die aber nicht als Vorschlag taugten (kein
+ * Titel); fehlt in älteren Dateien
+ */
+skipped?: number, };
+
+/**
+ * Ein Vorschlag zur Dispatcher-Einstellung
+ */
+export type Suggestion = { 
+/**
+ * Kurzer Hash des Fingerabdrucks; Schlüssel für Übernehmen und Ausblenden
+ */
+id: string, 
+/**
+ * Regel, Ziel und betroffene Werte – ändert sich mit dem Profil, damit Ausgeblendetes
+ * nach einer Änderung wiederkommt
+ */
+fingerprint: string, source: SuggestionSource, kind: SuggestionKind, title: string, reason: string, target: SuggestionTarget, 
+/**
+ * null = nur Hinweis
+ */
+patch: Array<ConfigPatchOp> | null, 
+/**
+ * Sortierung: betroffene Läufe × Quote
+ */
+weight: number, evidence: SuggestionEvidence | null, };
+
+/**
+ * Belege eines Vorschlags: betroffene Läufe, Treffer und Quote
+ */
+export type SuggestionEvidence = { runs: number, hits: number, rate: number, };
+
+/**
+ * Regel, aus der ein Vorschlag stammt
+ */
+export type SuggestionKind = "turns-too-low" | "timeout-too-low" | "profile-overtaken" | "escalation-target-dominates" | "rule-fails" | "profile-oversized" | "context-full" | "profile-unused" | "claude";
+
+/**
+ * Herkunft eines Vorschlags: feste Regel des Advisors oder Claude-Analyse
+ */
+export type SuggestionSource = "rule" | "claude";
+
+/**
+ * Ausblendungen und letzte Analyse
+ */
+export type SuggestionState = { 
+/**
+ * IDs ausgeblendeter Vorschläge
+ */
+dismissed: Array<string>, analysis: StoredAnalysis | null, };
+
+/**
+ * Ziel eines Vorschlags: Profil und – bei Regeln – deren 1-basierte Nummer
+ */
+export type SuggestionTarget = { profile?: string, ruleIndex?: number, };
 
 /**
  * Ein Testlauf des Agenten, wie das Review ihn zeigt; `ok: null` = Ausgang unklar

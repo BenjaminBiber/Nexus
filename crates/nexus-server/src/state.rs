@@ -17,8 +17,9 @@ use crate::board_runtime::{BoardBackendFactory, BoardRuntimeHolder};
 use crate::config::ServerConfig;
 use crate::dispatch::claude_runner::ClaudeRunners;
 use crate::dispatch::{
-    DispatchScheduler, DispatchService, DispatchServiceDeps, NoWorkerLauncher,
-    ProcessWorkerLauncher, ServerDispatchNotify, WorkerLauncher,
+    DispatchScheduler, DispatchService, DispatchServiceDeps, DispatchSuggestionService,
+    NoWorkerLauncher, ProcessWorkerLauncher, ServerDispatchNotify, SuggestionAnalyzer,
+    WorkerLauncher,
 };
 use crate::docs::{
     DocQuestionService, DocRevisionService, DocTicketService, DocsRootResolver, DocsService,
@@ -50,6 +51,11 @@ pub struct AppState {
     pub dispatch: Arc<DispatchService>,
     /// Takt des Dispatchers; [`crate::serve`] startet ihn, das Herunterfahren hält ihn an
     pub dispatch_scheduler: Arc<DispatchScheduler>,
+    /// Optimierungs-Vorschläge zur Dispatcher-Einstellung
+    pub suggestions: Arc<DispatchSuggestionService>,
+    /// Die Claude-Analyse der Vorschläge; sie lässt nur eine Analyse gleichzeitig zu und
+    /// gehört deshalb in den Zustand
+    pub suggestion_analyzer: Arc<SuggestionAnalyzer>,
     /// Dokumente des Boards: lesen, durchsuchen, Abschnitte schreiben. Der Dienst gehört in
     /// den Zustand, weil er die laufenden Schreibvorgänge je Datei kennt
     pub docs: DocsService,
@@ -194,6 +200,17 @@ impl AppState {
                 Arc::new(move |line: &str| log.write(line))
             }),
         );
+        let suggestions = Arc::new(DispatchSuggestionService::new(
+            board.clone(),
+            config.home.clone(),
+            config.clock.clone(),
+        ));
+        let suggestion_analyzer = Arc::new(SuggestionAnalyzer::new(
+            suggestions.clone(),
+            claude.suggestion.clone(),
+            config.home.clone(),
+            config.clock.clone(),
+        ));
         Ok(Arc::new_cyclic(|weak: &std::sync::Weak<AppState>| Self {
             home: config.home.clone(),
             guard: RequestGuard::new(config.port),
@@ -201,6 +218,8 @@ impl AppState {
             board,
             dispatch,
             dispatch_scheduler,
+            suggestions,
+            suggestion_analyzer,
             docs: DocsService::new(),
             doc_drafts: SavedTicketDrafts::new(config.home.clone()),
             doc_tickets: DocTicketService::new(),
