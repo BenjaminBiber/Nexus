@@ -30,9 +30,13 @@ tauri-plugin-opener = "2"
 tauri-plugin-shell = "2"
 # deep-link: der zweite Start gibt seine nexus://-Links an die laufende Instanz weiter
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+# updater: Selbstaktualisierung über latest.json des neuesten Releases; der Neustart danach ist
+# tauri::AppHandle::restart, darum braucht es tauri-plugin-process nicht
+tauri-plugin-updater = "2"
 tauri-plugin-window-state = "2"
 thiserror = "2"
-tokio = { version = "1", features = ["time", "signal", "macros"] }
+# sync: die Rückfrage des Updaters meldet ihre Antwort über einen oneshot-Kanal zurück
+tokio = { version = "1", features = ["time", "signal", "macros", "sync"] }
 
 [features]
 # Von `tauri dev` gesetzt, wenn eine eigene Schutzschicht aktiv sein soll.

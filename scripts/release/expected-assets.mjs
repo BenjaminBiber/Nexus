@@ -1,14 +1,17 @@
 // Listet die erwarteten Dateinamen eines Releases oder prüft eine vorhandene Liste dagegen.
-// Liest `apps/desktop/src-tauri/tauri.conf.json`, um zu erkennen, ob der Updater aktiv ist
-// (`bundle.createUpdaterArtifacts`, P6-7) – nur dann gehören `latest.json` und die `.sig`-Dateien dazu.
+// Liest `apps/desktop/src-tauri/tauri.conf.json` und die Release-Konfig daneben
+// (`tauri.release.conf.json`, die der Workflow über `--config` dazugibt), um zu erkennen, ob der
+// Updater aktiv ist (`bundle.createUpdaterArtifacts`) – nur dann gehören `latest.json` und die
+// `.sig`-Dateien dazu.
 // Aufruf: node scripts/release/expected-assets.mjs <version> [--check <datei mit Namen je Zeile>]
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assetNames, missingAssets, updaterEnabled } from './lib/ExpectedAssets.mjs';
 
 const HIER = dirname(fileURLToPath(import.meta.url));
 const TAURI_CONF = resolve(HIER, '../../apps/desktop/src-tauri/tauri.conf.json');
+const TAURI_RELEASE_CONF = resolve(HIER, '../../apps/desktop/src-tauri/tauri.release.conf.json');
 
 // Bricht mit Meldung ab
 function fail(message) {
@@ -26,9 +29,14 @@ function options(argv) {
   return { version, check };
 }
 
+// Liest eine Tauri-Konfig; eine fehlende Datei zählt als leere Konfig
+function konfig(pfad) {
+  return existsSync(pfad) ? JSON.parse(readFileSync(pfad, 'utf8')) : {};
+}
+
 const { version, check } = options(process.argv.slice(2));
-const tauriConf = JSON.parse(readFileSync(TAURI_CONF, 'utf8'));
-const expected = assetNames(version, { updater: updaterEnabled(tauriConf) });
+const updater = updaterEnabled(konfig(TAURI_CONF), konfig(TAURI_RELEASE_CONF));
+const expected = assetNames(version, { updater });
 
 if (!check) {
   console.log(expected.join('\n'));

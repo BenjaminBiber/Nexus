@@ -29,6 +29,13 @@
       "desktop": {
         "schemes": ["nexus"]
       }
+    },
+    "updater": {
+      "pubkey": "",
+      "endpoints": ["https://github.com/BenjaminBiber/Nexus/releases/latest/download/latest.json"],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   },
   "bundle": {
