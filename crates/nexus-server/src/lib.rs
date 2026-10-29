@@ -10,6 +10,7 @@ pub mod board_db;
 pub mod board_runtime;
 pub mod config;
 pub mod dispatch;
+pub mod docs;
 pub mod error;
 pub mod extract;
 pub mod groups;

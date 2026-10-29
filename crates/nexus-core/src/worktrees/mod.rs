@@ -11,8 +11,8 @@ pub mod touches;
 pub use cleaner::WorktreeCleaner;
 pub use links::{LinkRemoval, WorktreeLinks};
 pub use manager::{
-    FinishResult, RemoveMergedResult, RepoBoard, ResumeResult, StartOptions, StartResult,
-    WorktreeManager, WorktreeOptions,
+    FinishOptions, FinishResult, RemoveMergedResult, RepoBoard, ResumeResult, StartOptions,
+    StartResult, WorktreeManager, WorktreeOptions,
 };
 pub use registry::{SetupState, WorktreeEntry, WorktreeMap, WorktreeRegistry};
 pub use touches::TouchesChecker;

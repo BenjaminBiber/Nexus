@@ -1,9 +1,9 @@
 //! Systemfunktionen des Rechners, auf dem Nexus läuft: Ordnerdialog, Dateien im
 //! Explorer/Finder oder in VS Code öffnen und Systemmeldungen (Toasts).
 //!
-//! Hier stehen nur die Verträge samt einer „nicht verfügbar“-Umsetzung und Attrappen für
-//! Tests. Die echten Umsetzungen kommen später (Ordnerdialog, Öffnen, Windows-Toasts) und
-//! ersetzen nur die Trait-Objekte im Zustand des Servers. Vorlagen in TypeScript:
+//! Neben den Verträgen stehen hier die „nicht verfügbar“-Umsetzung, Attrappen für Tests und
+//! die Windows-Umsetzungen von Ordnerdialog und Öffnen; die Windows-Toasts kommen später und
+//! ersetzen nur das Trait-Objekt im Zustand des Servers. Vorlagen in TypeScript:
 //! `packages/server/src/dbboard/FolderPicker.ts`, `packages/server/src/docs/FileOpener.ts`
 //! und `packages/server/src/notifications/WindowsToastSender.ts`.
 
@@ -100,14 +100,20 @@ impl Platform {
         }
     }
 
-    /// Die Systemfunktionen dieses Rechners: unter Windows der Explorer-Ordnerdialog, sonst
-    /// die „nicht verfügbar“-Umsetzung (dort nutzt die App ab P1-4 den Tauri-Dialog)
+    /// Die Systemfunktionen dieses Rechners: unter Windows der Explorer-Ordnerdialog und das
+    /// Öffnen in Explorer bzw. VS Code, sonst die „nicht verfügbar“-Umsetzung (dort nutzt die
+    /// App ab P1-4 Tauri)
     pub fn local() -> Self {
         Self {
             #[cfg(windows)]
             folders: Box::new(crate::windows::folder_picker::WindowsFolderPicker::new()),
             #[cfg(not(windows))]
             folders: Box::new(UnavailableFolderPicker),
+            // Unter Windows öffnet der Server Explorer und VS Code selbst; sonst nutzt die App
+            // ab P1-4 den Tauri-Dialog
+            #[cfg(windows)]
+            files: Box::new(crate::windows::file_opener::WindowsFileOpener::new()),
+            #[cfg(not(windows))]
             files: Box::new(UnavailableFileOpener),
             notifier: Box::new(SilentNotifier),
         }
@@ -153,10 +159,7 @@ pub struct UnavailableFileOpener;
 #[async_trait]
 impl FileOpener for UnavailableFileOpener {
     async fn open(&self, _file: &Path, _target: OpenTarget) -> Result<()> {
-        Err(PlatformError::new(
-            "open-unavailable",
-            "Dateien öffnen gibt es nur unter Windows.",
-        ))
+        Err(crate::windows::file_opener::only_on_windows())
     }
 }
 
