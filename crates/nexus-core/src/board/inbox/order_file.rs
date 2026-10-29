@@ -6,20 +6,13 @@
 use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
-use std::sync::LazyLock;
 
-use regex::Regex;
 use serde_json::Value;
 
-use crate::board::inbox::types::{INBOX_KEY_PATTERN, MAX_INBOX_KEYS, MAX_INBOX_KEY_LENGTH};
+use crate::board::inbox::types::{is_inbox_key, MAX_INBOX_KEYS};
 use crate::error::{Error, Result};
 use crate::locking::AtomicWriter;
 use crate::registry::HarnessHome;
-use crate::text::utf16_len;
-
-/// Das Format gespeicherter Schlüssel als Muster
-static KEY: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(INBOX_KEY_PATTERN).expect("festes Muster"));
 
 /// Liest und schreibt `inbox-order.json`.
 #[derive(Debug, Clone)]
@@ -88,7 +81,7 @@ impl InboxOrderFile {
 fn clean(keys: impl IntoIterator<Item = String>) -> Vec<String> {
     let mut seen: HashSet<String> = HashSet::new();
     keys.into_iter()
-        .filter(|key| utf16_len(key) <= MAX_INBOX_KEY_LENGTH && KEY.is_match(key))
+        .filter(|key| is_inbox_key(key))
         .filter(|key| seen.insert(key.clone()))
         .take(MAX_INBOX_KEYS)
         .collect()
