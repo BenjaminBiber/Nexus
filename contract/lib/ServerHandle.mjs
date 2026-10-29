@@ -47,11 +47,14 @@ export class ServerHandle {
   // Startet den Server und wartet, bis er antwortet
   static async start(options) {
     const [command, ...args] = ServerHandle.split(options.command).map((part) => part.replace('{port}', String(options.port)));
+    // Unter Unix in eigener Prozessgruppe: `stop` beendet so auch Enkel (Rust-Server, Node-Sidecar),
+    // die ein Startskript wie `scripts/contract/rust-vor-node.mjs` sonst verwaist zurücklässt
     const child = spawn(command, args, {
       cwd: options.cwd,
       env: options.env,
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
+      detached: process.platform !== 'win32',
     });
     const lines = [];
     const collect = (chunk) => {
@@ -98,17 +101,44 @@ export class ServerHandle {
     throw new Error(`Der Server unter ${this.base} antwortet nicht (${last}).\n${this.output()}`);
   }
 
-  // Beendet den Server (unter Windows samt Kindprozessen)
+  // Beendet den Server samt allen Kindprozessen (unter Unix die ganze Prozessgruppe)
   async stop() {
     const child = this.child;
-    if (!child || child.exitCode !== null || child.signalCode !== null) return;
-    const done = new Promise((resolve) => child.once('exit', resolve));
-    if (process.platform === 'win32') spawnSync('taskkill', ['/T', '/F', '/PID', String(child.pid)], { windowsHide: true, stdio: 'ignore' });
-    else child.kill('SIGTERM');
-    const timer = new Promise((resolve) => setTimeout(resolve, STOP_TIMEOUT_MS));
-    if ((await Promise.race([done.then(() => 'exit'), timer.then(() => 'timeout')])) === 'timeout') {
-      child.kill('SIGKILL');
+    if (!child) return;
+    if (process.platform === 'win32') {
+      if (child.exitCode !== null || child.signalCode !== null) return;
+      const done = new Promise((resolve) => child.once('exit', resolve));
+      spawnSync('taskkill', ['/T', '/F', '/PID', String(child.pid)], { windowsHide: true, stdio: 'ignore' });
       await done;
+      return;
     }
+    const running = child.exitCode === null && child.signalCode === null;
+    const done = running ? new Promise((resolve) => child.once('exit', resolve)) : Promise.resolve();
+    ServerHandle.signalGroup(child.pid, 'SIGTERM');
+    if (!(await ServerHandle.groupGone(child.pid, STOP_TIMEOUT_MS))) ServerHandle.signalGroup(child.pid, 'SIGKILL');
+    await done;
+  }
+
+  // Schickt allen Prozessen der Gruppe ein Signal; eine schon leere Gruppe ist kein Fehler
+  static signalGroup(pid, signal) {
+    try {
+      process.kill(-pid, signal);
+    } catch {
+      // Gruppe gibt es nicht mehr
+    }
+  }
+
+  // Wartet höchstens `timeoutMs`, bis kein Prozess der Gruppe mehr läuft; `true`, wenn sie leer ist
+  static async groupGone(pid, timeoutMs) {
+    const until = Date.now() + timeoutMs;
+    while (Date.now() < until) {
+      try {
+        process.kill(-pid, 0);
+      } catch {
+        return true;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return false;
   }
 }

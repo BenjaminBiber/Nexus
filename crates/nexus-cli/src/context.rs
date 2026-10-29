@@ -3,6 +3,8 @@
 
 use std::path::{Path, PathBuf};
 
+use nexus_core::dispatch::config::JoinWorktrees;
+use nexus_core::dispatch::config_store::DispatchConfigStore;
 use nexus_core::git::{GitCommands, GitRunner};
 use nexus_core::{
     Actor, AuthorKind, Error, HarnessError, HarnessHome, HarnessProject, QuestionActor, Result,
@@ -62,6 +64,15 @@ impl CliContext {
     /// Benutzerweiter Harness-Ordner (`HARNESS_HOME` oder `~/.harness`)
     pub fn home(&self) -> HarnessHome {
         HarnessHome::from_process_env()
+    }
+
+    /// Worktrees des Dispatchers (`joinWorktrees` aus `~/.harness/dispatch.yaml`); ohne oder
+    /// mit kaputter Datei: ein Worktree je Ticket
+    pub fn join_worktrees(&self) -> JoinWorktrees {
+        DispatchConfigStore::new(self.home())
+            .read()
+            .map(|read| read.config.join_worktrees)
+            .unwrap_or(JoinWorktrees::None)
     }
 
     /// Die Kennung der Session, in der der Befehl läuft (`HARNESS_SESSION`)

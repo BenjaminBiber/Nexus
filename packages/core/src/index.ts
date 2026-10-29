@@ -162,6 +162,7 @@ export { RunOutputReader, type RunResult, type OutputSummary, type RunUsage, typ
 export { AbortReasonClassifier, type AbortCategory } from './dispatch/AbortReasonClassifier.js';
 export { DispatchRunBackfill, type BackfillInput } from './dispatch/DispatchRunBackfill.js';
 export { GitBashLocator } from './dispatch/GitBashLocator.js';
+export { OrphanSweeper, type ProcessInfo, type ProcessSystem } from './dispatch/OrphanSweeper.js';
 export { ClaudeInvocation } from './dispatch/ClaudeInvocation.js';
 export { DispatchPrompt, type AnsweredQuestion, type WorkPromptInput, type MergePromptInput, type ResearchPromptInput, type PlanPromptInput } from './dispatch/DispatchPrompt.js';
 export {

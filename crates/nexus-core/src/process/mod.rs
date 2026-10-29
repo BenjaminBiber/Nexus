@@ -4,8 +4,10 @@
 //! Der Workspace verbietet `unsafe`, deshalb kommen die Systemaufrufe aus Bibliotheken
 //! mit sicherer Schnittstelle: unter Unix `nix`, unter Windows `sysinfo` und `win32job`.
 
+pub mod orphan_sweeper;
 pub mod process_group;
 
+pub use orphan_sweeper::{OrphanSweeper, ProcessInfo, ProcessSystem, StopSignal};
 pub use process_group::ProcessGroup;
 
 /// `CREATE_NO_WINDOW`: Kindprozesse unter Windows ohne Konsolenfenster starten.
@@ -53,7 +55,7 @@ pub fn terminate(pid: u32) {
 
 /// Läuft ein Prozess mit dieser Nummer? Gehört er jemand anderem, zählt er als laufend.
 #[cfg(unix)]
-pub(crate) fn is_alive(pid: u32) -> bool {
+pub fn is_alive(pid: u32) -> bool {
     use nix::errno::Errno;
     use nix::sys::signal::kill;
     use nix::unistd::Pid;
@@ -72,7 +74,7 @@ pub(crate) fn is_alive(pid: u32) -> bool {
 /// Läuft ein Prozess mit dieser Nummer? Gefragt wird nur nach dieser einen Nummer,
 /// damit nicht die ganze Prozessliste eingelesen wird.
 #[cfg(windows)]
-pub(crate) fn is_alive(pid: u32) -> bool {
+pub fn is_alive(pid: u32) -> bool {
     use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System};
 
     let wanted = Pid::from_u32(pid);
