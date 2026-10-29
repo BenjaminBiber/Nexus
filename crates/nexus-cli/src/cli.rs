@@ -271,9 +271,20 @@ pub fn run(args: &[String]) -> Result<u8> {
 /// `subcommand_negates_reqs` wirkt nicht auf Pflichtargumente, deshalb sind beide im Baum zum
 /// Parsen freiwillig und `board step` prüft ohne Unterbefehl selbst, ob sie da sind. In der Hilfe
 /// stehen sie wie in commander als Pflicht, also `<id> <nummer>` statt `[id] [nummer]`.
+///
+/// Geändert wird mit `mut_subcommands` und nicht mit `mut_subcommand`: Letzteres hängt den
+/// geänderten Unterbefehl hinten an, und die Hilfe zeigt die Unterbefehle in genau dieser
+/// Reihenfolge – `board` stünde dann am Ende von `harness --help` und `step` am Ende von
+/// `harness board --help`.
 pub fn help_tree() -> Command {
-    Cli::command().mut_subcommand("board", |board| {
-        board.mut_subcommand("step", |step| {
+    Cli::command().mut_subcommands(|sub| {
+        if sub.get_name() != "board" {
+            return sub;
+        }
+        sub.mut_subcommands(|step| {
+            if step.get_name() != "step" {
+                return step;
+            }
             step.mut_arg("id", |arg| arg.required(true))
                 .mut_arg("nummer", |arg| arg.required(true))
         })

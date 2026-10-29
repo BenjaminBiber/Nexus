@@ -5,6 +5,7 @@ use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use serde::Serialize;
 use serde_json::json;
 
 use crate::board::basics::{BoardActor, TicketStatus};
@@ -27,25 +28,30 @@ use crate::worktrees::registry::{SetupState, WorktreeRegistry};
 use crate::worktrees::touches::TouchesChecker;
 
 /// Ergebnis von [`WorktreeManager::start`]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StartResult {
     pub id: String,
     pub branch: String,
     pub path: String,
     /// `true`, wenn das Ticket einem bestehenden Worktree beigetreten ist
     pub joined: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub warning: Option<String>,
     /// Pfade fertiger Worktrees, die dabei aufgeräumt wurden
     pub removed: Vec<String>,
     /// Hinweis, wenn der Zielbranch des Tickets dabei neu angelegt wurde (nennt den
     /// Startpunkt)
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub target_created: Option<String>,
 }
 
 /// Ergebnis von [`WorktreeManager::finish`] und [`WorktreeManager::accept`]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FinishResult {
     pub id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub branch: Option<String>,
     pub ready_to_merge: bool,
     pub warnings: Vec<String>,

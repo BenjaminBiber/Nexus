@@ -148,6 +148,10 @@ fn hilfe_der_ticketbefehle_wie_aufgezeichnet() {
         ["board", "claim"],
         ["board", "release"],
         ["board", "comment"],
+        ["board", "start"],
+        ["board", "done"],
+        ["board", "merge"],
+        ["board", "accept"],
     ] {
         wie_aufgezeichnet(&pfad);
     }
