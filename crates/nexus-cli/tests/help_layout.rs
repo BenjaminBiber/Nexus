@@ -90,14 +90,48 @@ fn aus_dem_baum_tief(pfad: &[&str]) -> Command {
     cmd
 }
 
-/// Vergleicht die Hilfe eines Unterbefehls aus dem Baum mit der Golden-Datei
+/// Vergleicht die Hilfe eines Unterbefehls aus dem Baum mit der Golden-Datei. Ein Datum im
+/// Beispielpfad ersetzt der Vergleich beidseitig: der Vertragslauf schreibt es als `<DATE-n>`
+/// auf, wobei `n` die Tage bis zum Tag der Aufzeichnung zählt.
 fn wie_aufgezeichnet(pfad: &[&str]) {
     let name = format!("harness {}", pfad.join(" "));
     assert_eq!(
-        gerendert(&name, aus_dem_baum_tief(pfad)),
-        golden(&name),
+        ohne_datum(&gerendert(&name, aus_dem_baum_tief(pfad))),
+        ohne_datum(&golden(&name)),
         "{name}"
     );
+}
+
+/// Ersetzt `JJJJ-MM-TT` und `<DATE-n>` durch `<DATUM>`
+fn ohne_datum(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let zeichen: Vec<char> = text.chars().collect();
+    let mut index = 0;
+    while index < zeichen.len() {
+        if let Some(laenge) = datum_laenge(&zeichen[index..]) {
+            out.push_str("<DATUM>");
+            index += laenge;
+        } else {
+            out.push(zeichen[index]);
+            index += 1;
+        }
+    }
+    out
+}
+
+/// Länge eines Datums am Anfang der Zeichen, sonst `None`
+fn datum_laenge(zeichen: &[char]) -> Option<usize> {
+    if zeichen.len() >= 10
+        && [0, 1, 2, 3, 5, 6, 8, 9]
+            .iter()
+            .all(|i| zeichen[*i].is_ascii_digit())
+        && [4, 7].iter().all(|i| zeichen[*i] == '-')
+    {
+        return Some(10);
+    }
+    let rest = zeichen.strip_prefix(&['<', 'D', 'A', 'T', 'E', '-'])?;
+    let ziffern = rest.iter().take_while(|c| c.is_ascii_digit()).count();
+    (ziffern > 0 && rest.get(ziffern) == Some(&'>')).then_some(6 + ziffern + 1)
 }
 
 #[test]
@@ -114,6 +148,38 @@ fn hilfe_der_ticketbefehle_wie_aufgezeichnet() {
         ["board", "claim"],
         ["board", "release"],
         ["board", "comment"],
+    ] {
+        wie_aufgezeichnet(&pfad);
+    }
+}
+
+#[test]
+fn hilfe_der_dispatcher_befehle_wie_aufgezeichnet() {
+    // Die Blätter aus `LEAVES`, die dieses Ticket portiert
+    for pfad in [
+        vec!["board", "dispatch"],
+        vec!["board", "dispatch", "status"],
+        vec!["board", "dispatch", "run"],
+        vec!["board", "dispatch", "pause"],
+        vec!["board", "dispatch", "resume"],
+        vec!["board", "dispatch", "enable"],
+        vec!["board", "dispatch", "disable"],
+        vec!["board", "dispatch-runs"],
+        vec!["board", "dispatch-runs", "backfill"],
+        vec!["board", "plan-start"],
+        vec!["board", "question", "research-start"],
+    ] {
+        wie_aufgezeichnet(&pfad);
+    }
+}
+
+#[test]
+fn hilfe_von_spec_und_stop_wie_aufgezeichnet() {
+    for pfad in [
+        vec!["spec"],
+        vec!["spec", "comments"],
+        vec!["spec", "resolve"],
+        vec!["stop"],
     ] {
         wie_aufgezeichnet(&pfad);
     }

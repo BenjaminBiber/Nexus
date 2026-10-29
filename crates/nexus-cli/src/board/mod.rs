@@ -3,12 +3,14 @@
 
 pub mod browser_opener;
 pub mod comment_author_kind;
+pub mod dispatch_option_parser;
 pub mod option_parser;
 pub mod selection;
 pub mod text_formatter;
 
 pub use browser_opener::BrowserOpener;
 pub use comment_author_kind::CommentAuthorKind;
+pub use dispatch_option_parser::DispatchOptionParser;
 pub use option_parser::BoardOptionParser;
 pub use selection::BoardSelection;
 pub use text_formatter::{BoardTextFormatter, ShowTextOptions};
