@@ -24,7 +24,8 @@ jobs:
   version:
     name: Version und Entwurf
     runs-on: ubuntu-latest
-    # „release“ trägt das RELEASE_TOKEN; über die Umgebung lässt sich der Start zusätzlich freigeben
+    # „release“ trägt das RELEASE_TOKEN und lässt nur den Branch „main“ zu.
+    # Die Freigabe ist der Start von Hand (workflow_dispatch mit patch/minor/major), keine Required reviewers
     environment: release
     timeout-minutes: 15
     outputs:
