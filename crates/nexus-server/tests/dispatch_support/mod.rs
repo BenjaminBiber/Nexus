@@ -1,19 +1,21 @@
 //! Testumgebung für Start und Auswertung eines Durchlaufs; Vorbild
 //! `packages/server/tests/helpers/DispatchFixture.ts` und `FakeLauncher.ts`.
 //!
-//! Anders als dort gibt es hier noch keine Tick-Schleife (die kommt in P4-14c): die Tests
-//! rufen [`DispatchFixture::start`] und [`DispatchFixture::evaluate`] selbst auf – genau die
-//! zwei Schritte, die der Tick je Ticket tut.
+//! Neben dem Kontext steht hier der ganze [`DispatchService`]: [`DispatchFixture::tick`] fährt
+//! einen Durchlauf wie im Betrieb (mit `dispatch.yaml` und `board.yaml` im Benutzerordner).
+//! [`DispatchFixture::start`] und [`DispatchFixture::evaluate`] bleiben für die Tests, die nur
+//! die zwei Schritte eines einzelnen Tickets prüfen.
 
 #![allow(dead_code)]
 
 use std::collections::BTreeMap;
-use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use nexus_core::board::basics::{BoardActor, TicketStatus};
+use nexus_core::board::config_store::BoardConfigStore;
 use nexus_core::board::dispatch_run_types::DispatchRun;
 use nexus_core::board::ticket_service::{
     NewTicketInput, TicketDetail, TicketPatch, TicketView, WriteOptions,
@@ -21,20 +23,21 @@ use nexus_core::board::ticket_service::{
 use nexus_core::board::types::Board;
 use nexus_core::clock::{iso, Clock};
 use nexus_core::dispatch::{
-    DispatchConfig, DispatchConfigNormalizer, DispatchLog, DispatchStateStore, ReviewStore, RunEnd,
-    RunRecord, RunResult, RunStore,
+    DispatchConfig, DispatchConfigNormalizer, DispatchConfigStore, DispatchLog, DispatchStateStore,
+    ReviewStore, RunEnd, RunRecord, RunResult, RunStore,
 };
 use nexus_core::{HarnessError, HarnessHome, Result};
-use nexus_server::board_runtime::BoardBackend;
+use nexus_server::board_runtime::{factory, BoardBackend, BoardBackendFuture, BoardRuntimeHolder};
 use nexus_server::dispatch::context::{DispatchContext, DispatchStores, RepoWork};
 use nexus_server::dispatch::notifier::{DispatchNotice, DispatchNotify};
 use nexus_server::dispatch::result_handler::ResultHandler;
 use nexus_server::dispatch::run_recorder::{HandleResult, RunRecorder};
+use nexus_server::dispatch::service::{DispatchReport, DispatchService, DispatchServiceDeps};
 use nexus_server::dispatch::ticket_starter::{StartOutcome, TicketStarter};
 use nexus_server::dispatch::worker_launcher::WorkerLauncher;
 use serde_json::{json, Value};
 
-use crate::common::{BoardBackendWithServices, TempRepo};
+use crate::common::{memory_config, BoardBackendWithServices, TempRepo};
 
 /// Ergebnis-Ereignis eines gelungenen Laufs (wie `OK_OUTPUT` in TypeScript)
 pub const OK_OUTPUT: &str =
@@ -145,6 +148,10 @@ pub struct DispatchFixture {
     pub notices: Arc<CollectedNotices>,
     pub ctx: DispatchContext,
     pub cfg: DispatchConfig,
+    /// Der ganze Dispatcher auf diesem Benutzerordner (liest `dispatch.yaml` und `board.yaml`)
+    pub service: Arc<DispatchService>,
+    /// Leben die Prozesse der Läufe noch? (wie `f.alive` in TypeScript)
+    alive: Arc<AtomicBool>,
     clock: Clock,
     now: Arc<Mutex<DateTime<Utc>>>,
 }
@@ -182,7 +189,20 @@ impl DispatchFixture {
             .await
             .expect("Repo-Pfad")
             .board;
-        let cfg = config(patch);
+        let raw = raw_config(patch);
+        let cfg = DispatchConfigNormalizer::new()
+            .normalize(&raw)
+            .expect("Einstellung");
+        // Der Service liest seine Einstellung aus der Datei, nicht aus dem Kontext
+        DispatchConfigStore::new(home.clone())
+            .write(&raw)
+            .expect("dispatch.yaml schreiben");
+        BoardConfigStore::new(home.clone())
+            .write(&nexus_core::board::config::BoardConfig {
+                active_board: Some(board.id),
+                ..memory_config()
+            })
+            .expect("board.yaml schreiben");
         let now = Arc::new(Mutex::new(Utc::now()));
         let clock = {
             let now = now.clone();
@@ -214,6 +234,27 @@ impl DispatchFixture {
             // Suche nach der Git Bash
             "linux",
         );
+        let alive = Arc::new(AtomicBool::new(true));
+        let holder = {
+            let shared = backend.clone();
+            Arc::new(BoardRuntimeHolder::new(factory(
+                move || -> BoardBackendFuture {
+                    let backend = shared.clone();
+                    Box::pin(async move { Ok(backend as Arc<dyn BoardBackend>) })
+                },
+            )))
+        };
+        let service = Arc::new(DispatchService::new(DispatchServiceDeps {
+            notifier: notices.clone(),
+            clock: clock.clone(),
+            alive: {
+                let alive = alive.clone();
+                Arc::new(move |_| alive.load(Ordering::SeqCst))
+            },
+            env: BTreeMap::new(),
+            platform: "linux".into(),
+            ..DispatchServiceDeps::new(home.clone(), holder, launcher.clone())
+        }));
         Self {
             _dir: dir,
             home,
@@ -224,8 +265,56 @@ impl DispatchFixture {
             notices,
             ctx,
             cfg,
+            service,
+            alive,
             clock,
             now,
+        }
+    }
+
+    /// Ein Durchlauf des ganzen Dispatchers (wie `f.service.tick()` in TypeScript)
+    pub async fn tick(&self) -> DispatchReport {
+        self.service.tick().await
+    }
+
+    /// Setzt, ob die Prozesse der Läufe noch leben (`false` = Worker verschwunden)
+    pub fn set_alive(&self, alive: bool) {
+        self.alive.store(alive, Ordering::SeqCst);
+    }
+
+    /// Schreibt einzelne Felder der Einstellung neu, wie ein Mensch in `dispatch.yaml`
+    pub fn write_config(&self, patch: Value) {
+        let store = DispatchConfigStore::new(self.home.clone());
+        let mut raw = store.read().expect("Einstellung lesen").raw;
+        let object = raw.as_object_mut().expect("Einstellung als Objekt");
+        for (key, value) in patch.as_object().expect("Änderung als Objekt") {
+            object.insert(key.clone(), value.clone());
+        }
+        store.write(&raw).expect("dispatch.yaml schreiben");
+    }
+
+    /// Schreibt das Protokoll eines Laufs, wie es sonst der Worker-Prozess tut (Kopf,
+    /// Arbeitsanweisung, Ausgabe)
+    pub fn write_log(&self, run_id: &str, prompt: &str, output: &str) -> String {
+        let dir = self.home.dispatch_logs_dir();
+        std::fs::create_dir_all(&dir).expect("Protokollordner");
+        let name = format!("{run_id}.log");
+        std::fs::write(
+            dir.join(&name),
+            format!(
+                "[dispatch] Start {run_id}\n{}\n{prompt}\n{}\n{output}\n",
+                nexus_core::dispatch::RUN_LOG_PROMPT_MARKER,
+                nexus_core::dispatch::RUN_LOG_OUTPUT_MARKER,
+            ),
+        )
+        .expect("Protokoll schreiben");
+        name
+    }
+
+    /// Entfernt alle eingetragenen Läufe (wie „Lauf-Datei verloren“ in TypeScript)
+    pub fn drop_all_runs(&self) {
+        for record in self.ctx.stores.runs.list().expect("Läufe") {
+            self.drop_run(&record.id);
         }
     }
 
@@ -483,6 +572,19 @@ impl DispatchFixture {
         *now += chrono::Duration::minutes(minutes);
     }
 
+    /// Stellt die Uhr auf diese Ortszeit des heutigen Tages (für das Zeitfenster, das in
+    /// Ortszeit gilt)
+    pub fn set_local_time(&self, hour: u32, minute: u32) {
+        use chrono::{Local, TimeZone};
+        let today = Local::now().date_naive();
+        let local = today.and_hms_opt(hour, minute, 0).expect("gültige Uhrzeit");
+        let at = Local
+            .from_local_datetime(&local)
+            .single()
+            .expect("eindeutige Ortszeit");
+        *self.now.lock().expect("Uhr") = at.with_timezone(&Utc);
+    }
+
     /// Die aktuelle Zeit des Dispatchers als ISO-Text
     pub fn now_iso(&self) -> String {
         iso(*self.now.lock().expect("Uhr"))
@@ -491,8 +593,14 @@ impl DispatchFixture {
 
 /// Die Beispiel-Einstellung, eingeschaltet, ohne Freigabe vor dem Merge und mit `patch`
 pub fn config(patch: Value) -> DispatchConfig {
-    let normalizer = DispatchConfigNormalizer::new();
-    let mut raw = normalizer.example();
+    DispatchConfigNormalizer::new()
+        .normalize(&raw_config(patch))
+        .expect("Einstellung")
+}
+
+/// Die rohe Beispiel-Einstellung, eingeschaltet, ohne Freigabe vor dem Merge und mit `patch`
+pub fn raw_config(patch: Value) -> Value {
+    let mut raw = DispatchConfigNormalizer::new().example();
     let object = raw.as_object_mut().expect("Einstellung als Objekt");
     object.insert("enabled".into(), json!(true));
     object.insert("reviewBeforeMerge".into(), json!(false));
@@ -501,5 +609,5 @@ pub fn config(patch: Value) -> DispatchConfig {
             object.insert(key.clone(), value.clone());
         }
     }
-    normalizer.normalize(&raw).expect("Einstellung")
+    raw
 }
