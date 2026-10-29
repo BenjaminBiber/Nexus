@@ -153,12 +153,10 @@ impl<D: BoardDatabase> BoardService<D> {
                     }
                 })
                 .collect();
-            // Wie `localeCompare` in TypeScript; Projektkeys sind ASCII, Namen vergleicht Rust
-            // nach Zeichen
+            // Wie `localeCompare` in TypeScript
             summaries.sort_by(|a, b| {
-                a.project_key
-                    .cmp(&b.project_key)
-                    .then_with(|| a.board.name.cmp(&b.board.name))
+                crate::text::locale_cmp(&a.project_key, &b.project_key)
+                    .then_with(|| crate::text::locale_cmp(&a.board.name, &b.board.name))
             });
             Ok(summaries)
         })

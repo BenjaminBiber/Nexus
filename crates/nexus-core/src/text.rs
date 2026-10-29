@@ -97,6 +97,59 @@ pub fn natural_cmp(a: &str, b: &str) -> Ordering {
     }
 }
 
+/// Vergleicht zwei Texte wie `localeCompare` ohne Optionen in TypeScript: zuerst die
+/// Grundbuchstaben ohne Akzent und ohne Groß-/Kleinschreibung („Später“ vor „Sprint“, weil a
+/// vor r kommt), bei Gleichstand die Akzente, zuletzt die Schreibweise (klein vor groß).
+///
+/// Berücksichtigt werden die lateinischen Buchstaben mit Akzent aus Latin-1 (deutsch,
+/// französisch, skandinavisch …). Zeichen außerhalb davon vergleicht die Funktion wie bisher
+/// zeichenweise.
+pub fn locale_cmp(a: &str, b: &str) -> Ordering {
+    grundform(a)
+        .cmp(&grundform(b))
+        .then_with(|| a.to_lowercase().cmp(&b.to_lowercase()))
+        .then_with(|| schreibweise(a).cmp(&schreibweise(b)))
+}
+
+/// Kleingeschrieben und ohne Akzente – die erste Stufe von [`locale_cmp`]
+fn grundform(value: &str) -> String {
+    let mut grund = String::with_capacity(value.len());
+    for c in value.to_lowercase().chars() {
+        match ohne_akzent(c) {
+            Some(buchstabe) => grund.push_str(buchstabe),
+            None => grund.push(c),
+        }
+    }
+    grund
+}
+
+/// Zeichen und ob es großgeschrieben ist; klein zählt vor groß wie in `localeCompare`
+fn schreibweise(value: &str) -> Vec<(char, bool)> {
+    value
+        .chars()
+        .map(|c| (c.to_lowercase().next().unwrap_or(c), c.is_uppercase()))
+        .collect()
+}
+
+/// Grundbuchstabe eines kleingeschriebenen Zeichens, sonst `None`
+fn ohne_akzent(c: char) -> Option<&'static str> {
+    Some(match c {
+        'à' | 'á' | 'â' | 'ã' | 'ä' | 'å' => "a",
+        'æ' => "ae",
+        'ç' => "c",
+        'è' | 'é' | 'ê' | 'ë' => "e",
+        'ì' | 'í' | 'î' | 'ï' => "i",
+        'ð' => "d",
+        'ñ' => "n",
+        'ò' | 'ó' | 'ô' | 'õ' | 'ö' | 'ø' => "o",
+        'ù' | 'ú' | 'û' | 'ü' => "u",
+        'ý' | 'ÿ' => "y",
+        'þ' => "th",
+        'ß' => "ss",
+        _ => return None,
+    })
+}
+
 /// Die nächste Ziffernfolge
 fn take_digits(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> String {
     let mut digits = String::new();
@@ -118,6 +171,22 @@ pub fn join_names(names: impl IntoIterator<Item = &'static str>) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn vergleicht_texte_wie_locale_compare() {
+        // Der Akzent zählt erst, wenn die Grundbuchstaben gleich sind: „Später“ vor „Sprint“
+        assert_eq!(locale_cmp("Später", "Sprint"), Ordering::Less);
+        assert_eq!(locale_cmp("Sprint", "Später"), Ordering::Greater);
+        // Groß und klein trennen erst in der letzten Stufe, klein kommt zuerst
+        assert_eq!(locale_cmp("arches", "Arches"), Ordering::Less);
+        assert_eq!(locale_cmp("Arches", "Backlog"), Ordering::Less);
+        // Gleiche Grundform, verschiedene Akzente
+        assert_eq!(locale_cmp("Muller", "Müller"), Ordering::Less);
+        assert_eq!(locale_cmp("Müller", "Müller"), Ordering::Equal);
+        // ß zählt wie ss
+        assert_eq!(locale_cmp("Straße", "Strasse"), Ordering::Greater);
+        assert_eq!(locale_cmp("Straße", "Strandweg"), Ordering::Greater);
+    }
 
     #[test]
     fn zahlt_erlaubte_werte_mit_komma_auf() {
