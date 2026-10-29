@@ -1,6 +1,19 @@
 //! Kleine Texthelfer für Meldungen und Längen. Wichtig: JavaScript zählt `string.length`
 //! und schneidet mit `slice` in UTF-16-Einheiten, `nvarchar(n)` in SQL Server ebenso.
 //! Rust zählt sonst Bytes oder Zeichen – deshalb die beiden Funktionen hier.
+//!
+//! Daneben die Texthelfer mit eigener Datei: Ausschnitte der Suche, Kurztitel und die
+//! Eingabe aus Datei oder Standardeingabe.
+
+pub mod search_snippet;
+pub mod slug_builder;
+pub mod text_source;
+
+use std::cmp::Ordering;
+
+pub use search_snippet::{SearchSnippet, Snippet, SnippetCut};
+pub use slug_builder::SlugBuilder;
+pub use text_source::TextSource;
 
 /// Länge in UTF-16-Einheiten, also die Zahl, die JavaScript als `value.length` liefert
 pub fn utf16_len(value: &str) -> usize {
@@ -49,63 +62,57 @@ pub fn utf16_index_of(value: &str, needle: &str) -> Option<usize> {
     value.find(needle).map(|byte| utf16_len(&value[..byte]))
 }
 
+/// Vergleicht zwei IDs aufsteigend; Ziffernfolgen zählen als Zahl, alles andere zeichenweise –
+/// wie `localeCompare(…, { numeric: true })` in TypeScript (`ARC-0009` steht damit vor
+/// `ARC-0010`)
+pub fn natural_cmp(a: &str, b: &str) -> Ordering {
+    let (mut left, mut right) = (a.chars().peekable(), b.chars().peekable());
+    loop {
+        match (left.peek().copied(), right.peek().copied()) {
+            (None, None) => return Ordering::Equal,
+            (None, Some(_)) => return Ordering::Less,
+            (Some(_), None) => return Ordering::Greater,
+            (Some(x), Some(y)) if x.is_ascii_digit() && y.is_ascii_digit() => {
+                let a_digits = take_digits(&mut left);
+                let b_digits = take_digits(&mut right);
+                // Führende Nullen zählen nicht: erst die Zahl der Ziffern, dann die Ziffern
+                let a_value = a_digits.trim_start_matches('0');
+                let b_value = b_digits.trim_start_matches('0');
+                let order = a_value
+                    .len()
+                    .cmp(&b_value.len())
+                    .then_with(|| a_value.cmp(b_value));
+                if order != Ordering::Equal {
+                    return order;
+                }
+            }
+            (Some(x), Some(y)) => {
+                left.next();
+                right.next();
+                if x != y {
+                    return x.cmp(&y);
+                }
+            }
+        }
+    }
+}
+
+/// Die nächste Ziffernfolge
+fn take_digits(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> String {
+    let mut digits = String::new();
+    while let Some(c) = chars.peek().copied() {
+        if !c.is_ascii_digit() {
+            break;
+        }
+        digits.push(c);
+        chars.next();
+    }
+    digits
+}
+
 /// Zählt erlaubte Werte in Meldungen auf, wie JavaScript `array.join(', ')`
 pub fn join_names(names: impl IntoIterator<Item = &'static str>) -> String {
     names.into_iter().collect::<Vec<_>>().join(", ")
-}
-
-/// Höchstlänge eines Kurztitels
-const SLUG_MAX_LENGTH: usize = 40;
-
-/// Baut aus einem Titel einen Kurztitel, der als Git-Branch und Ordnername taugt.
-/// Portiert aus `packages/core/src/text/SlugBuilder.ts`.
-#[derive(Debug, Clone, Copy, Default)]
-pub struct SlugBuilder;
-
-impl SlugBuilder {
-    /// Neuer Baumeister (hält keinen Zustand)
-    pub fn new() -> Self {
-        Self
-    }
-
-    /// Kleinschreibung, Umlaute umschreiben, Sonderzeichen zu Bindestrichen, höchstens
-    /// 40 Zeichen
-    pub fn build(&self, text: &str) -> String {
-        let mut dashed = String::new();
-        for zeichen in text.chars().flat_map(|zeichen| zeichen.to_lowercase()) {
-            match zeichen {
-                'ä' => dashed.push_str("ae"),
-                'ö' => dashed.push_str("oe"),
-                'ü' => dashed.push_str("ue"),
-                'ß' => dashed.push_str("ss"),
-                _ if zeichen.is_ascii_lowercase() || zeichen.is_ascii_digit() => {
-                    dashed.push(zeichen)
-                }
-                // Alles andere wird ein Bindestrich; mehrere in Folge zählen als einer
-                _ if !dashed.ends_with('-') => dashed.push('-'),
-                _ => {}
-            }
-        }
-        let slug = shorten(dashed.trim_matches('-'));
-        if slug.is_empty() {
-            "ticket".to_string()
-        } else {
-            slug
-        }
-    }
-}
-
-/// Kürzt am letzten Bindestrich innerhalb der Höchstlänge, damit kein Wort zerschnitten wird
-fn shorten(slug: &str) -> String {
-    if slug.len() <= SLUG_MAX_LENGTH {
-        return slug.to_string();
-    }
-    let cut = &slug[..SLUG_MAX_LENGTH];
-    let shortened = match cut.rfind('-') {
-        Some(position) if position > 0 => &cut[..position],
-        _ => cut,
-    };
-    shortened.trim_end_matches('-').to_string()
 }
 
 #[cfg(test)]
@@ -157,42 +164,6 @@ mod tests {
         // vor der Fundstelle steht ein Emoji: zwei UTF-16-Einheiten, vier Bytes
         assert_eq!(utf16_index_of("🙂abc", "abc"), Some(2));
         assert_eq!(utf16_index_of("", ""), Some(0));
-    }
-
-    /// Kurztitel eines Titels
-    fn slug(text: &str) -> String {
-        SlugBuilder::new().build(text)
-    }
-
-    #[test]
-    fn schreibt_klein_und_ersetzt_leerzeichen_durch_bindestriche() {
-        assert_eq!(slug("Login Formular bauen"), "login-formular-bauen");
-    }
-
-    #[test]
-    fn schreibt_umlaute_und_scharfes_s_um() {
-        assert_eq!(
-            slug("Größe Änderung für Übung"),
-            "groesse-aenderung-fuer-uebung"
-        );
-    }
-
-    #[test]
-    fn entfernt_sonderzeichen_und_fasst_bindestriche_zusammen() {
-        assert_eq!(slug("  Token: prüfen!!! (v2) "), "token-pruefen-v2");
-    }
-
-    #[test]
-    fn kurzt_auf_vierzig_zeichen_am_wortende() {
-        let result = slug("eine sehr lange Überschrift die weit über vierzig Zeichen hinausgeht");
-        assert!(result.len() <= 40, "{result}");
-        assert!(!result.ends_with('-'), "{result}");
-        assert_eq!(result, "eine-sehr-lange-ueberschrift-die-weit");
-    }
-
-    #[test]
-    fn liefert_ticket_bei_leerem_ergebnis() {
-        assert_eq!(slug("???"), "ticket");
     }
 
     #[test]

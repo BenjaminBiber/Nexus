@@ -71,3 +71,79 @@ impl SpecProgress {
         result.into_values().collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::testing::ticket_fixture;
+
+    /// Minimales Ticket mit Spec
+    fn ticket(id: &str, spec: Option<&str>, status: TicketStatus, deps: &[&str]) -> Ticket {
+        Ticket {
+            title: id.to_string(),
+            status,
+            depends_on: deps.iter().map(|id| id.to_string()).collect(),
+            needs_planning: false,
+            spec: spec.map(ToString::to_string),
+            created_at: String::new(),
+            updated_at: String::new(),
+            ..ticket_fixture(id, 1, 1, 1)
+        }
+    }
+
+    #[test]
+    fn ordnet_jedes_ticket_genau_einer_gruppe_zu_nicht_mehr_notig_zahlt_nicht_zur_summe() {
+        let tickets = [
+            ticket("A-1", Some("002-b"), TicketStatus::Done, &[]),
+            ticket("A-2", Some("001-a"), TicketStatus::Done, &[]),
+            ticket("A-3", Some("001-a"), TicketStatus::Blocked, &[]),
+            ticket("A-4", Some("001-a"), TicketStatus::Planned, &["A-5"]),
+            ticket("A-5", Some("001-a"), TicketStatus::Backlog, &[]),
+            ticket("A-6", Some("001-a"), TicketStatus::InProgress, &["A-5"]),
+            ticket("A-7", Some("001-a"), TicketStatus::NotNeeded, &[]),
+            ticket("A-8", None, TicketStatus::Planned, &[]),
+        ];
+        assert_eq!(
+            SpecProgress::count(&tickets, None),
+            [
+                SpecProgressCount {
+                    spec: "001-a".into(),
+                    total: 5,
+                    done: 1,
+                    blocked: 1,
+                    waiting: 1,
+                    in_progress: 1,
+                    open: 1,
+                    not_needed: 1,
+                },
+                SpecProgressCount {
+                    spec: "002-b".into(),
+                    total: 1,
+                    done: 1,
+                    blocked: 0,
+                    waiting: 0,
+                    in_progress: 0,
+                    open: 0,
+                    not_needed: 0,
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn lost_voraussetzungen_uber_alle_tickets_auf_auch_ausserhalb_der_gezahlten() {
+        let counted = [ticket(
+            "A-1",
+            Some("001-a"),
+            TicketStatus::Planned,
+            &["B-1"],
+        )];
+        let all = [
+            counted[0].clone(),
+            ticket("B-1", None, TicketStatus::InProgress, &[]),
+        ];
+        let count = SpecProgress::count(&counted, Some(&all));
+        assert_eq!(count[0].waiting, 1);
+        assert_eq!(count[0].open, 0);
+    }
+}

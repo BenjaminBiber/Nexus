@@ -7,11 +7,17 @@ use crate::board::board_service::BoardService;
 use crate::board::comment_service::CommentService;
 use crate::board::database::BoardDatabase;
 use crate::board::dependency_graph_service::DependencyGraphService;
+use crate::board::dispatch_run_service::DispatchRunService;
+use crate::board::inbox::service::InboxService;
 use crate::board::note_service::NoteService;
+use crate::board::planning_service::PlanningService;
 use crate::board::project_service::ProjectService;
 use crate::board::question_service::BoardQuestionService;
 use crate::board::repo_paths::BoardRepoPaths;
+use crate::board::search_service::BoardSearchService;
 use crate::board::ticket_service::TicketService;
+use crate::board::ticket_timeline::TimelineAgentNames;
+use crate::board::timeline_service::TicketTimelineService;
 use crate::board::view_service::BoardViewService;
 use crate::clock::Clock;
 
@@ -19,8 +25,8 @@ use crate::clock::Clock;
 /// Benutzers (Standard: im Speicher ohne Benutzer, für Tests; die Laufzeit gibt
 /// `board-repos.yaml` und die eigene GUID mit).
 ///
-/// Die Felder `planning`, `search`, `dispatch_runs`, `inbox` und die Zeitleiste
-/// (`timeline(names)`) ergänzen die Tickets P3-3 und P3-4, sobald es die Dienste gibt.
+/// Das Feld `questions` kommt aus P3-3; die Felder `planning`, `search`, `dispatch_runs`,
+/// `inbox` und die Zeitleiste (`timeline(names)`) aus P3-4.
 #[derive(Debug, Clone)]
 pub struct BoardServices<D: BoardDatabase> {
     pub db: Arc<D>,
@@ -28,11 +34,15 @@ pub struct BoardServices<D: BoardDatabase> {
     pub projects: ProjectService<D>,
     pub boards: BoardService<D>,
     pub tickets: TicketService<D>,
+    pub planning: PlanningService<D>,
     pub comments: CommentService<D>,
     pub notes: NoteService<D>,
     pub questions: BoardQuestionService<D>,
     pub views: BoardViewService<D>,
+    pub search: BoardSearchService<D>,
+    pub dispatch_runs: DispatchRunService<D>,
     pub graph: DependencyGraphService<D>,
+    pub inbox: InboxService<D>,
 }
 
 impl<D: BoardDatabase> BoardServices<D> {
@@ -42,11 +52,15 @@ impl<D: BoardDatabase> BoardServices<D> {
             projects: ProjectService::new(db.clone(), clock.clone()),
             boards: BoardService::new(db.clone(), clock.clone(), repo_paths.clone()),
             tickets: TicketService::new(db.clone(), clock.clone()),
+            planning: PlanningService::new(db.clone(), clock.clone()),
             comments: CommentService::new(db.clone(), clock.clone()),
             notes: NoteService::new(db.clone(), clock.clone()),
             questions: BoardQuestionService::new(db.clone(), clock.clone(), repo_paths.clone()),
             views: BoardViewService::new(db.clone(), clock.clone()),
+            search: BoardSearchService::new(db.clone()),
+            dispatch_runs: DispatchRunService::new(db.clone()),
             graph: DependencyGraphService::new(db.clone(), clock),
+            inbox: InboxService::new(db.clone()),
             repo_paths,
             db,
         }
@@ -55,6 +69,12 @@ impl<D: BoardDatabase> BoardServices<D> {
     /// Die Dienste ohne lokale Zuordnung der Repo-Pfade (der Standardwert aus TypeScript)
     pub fn with_memory_paths(db: Arc<D>, clock: Clock) -> Self {
         Self::new(db, clock, BoardRepoPaths::memory())
+    }
+
+    /// Zeitleiste eines Tickets; `names` aus der Dispatch-Konfiguration erkennt Agenten
+    /// (`None` = nur „claude“ und Art des Autors)
+    pub fn timeline(&self, names: Option<TimelineAgentNames>) -> TicketTimelineService<D> {
+        TicketTimelineService::new(self.db.clone(), names)
     }
 }
 
@@ -169,6 +189,122 @@ mod tests {
         assert_eq!(
             services.db.change_marker(board.board.id).await.unwrap(),
             db.change_marker(board.board.id).await.unwrap()
+        );
+    }
+
+    /// Planung, Suche, Zeitleiste, Arbeitsliste und Dispatcher-Läufe hängen an derselben
+    /// Datenbank wie die übrigen Dienste
+    #[tokio::test]
+    async fn stellt_planung_suche_zeitleiste_arbeitsliste_und_laufe_bereit() {
+        let db = Arc::new(InMemoryBoardDatabase::new());
+        let clock = Clock::fixed(
+            "2026-10-13T10:00:00.000Z"
+                .parse()
+                .expect("der Zeitpunkt ist gültig"),
+        );
+        tx!(db, |u| {
+            u.users()
+                .upsert(&BoardUser {
+                    id: USER_ID.into(),
+                    name: USER_NAME.into(),
+                })
+                .await
+        })
+        .await
+        .unwrap();
+        let services = BoardServices::with_memory_paths(db.clone(), clock);
+        let actor = crate::board::basics::BoardActor {
+            user_id: USER_ID.into(),
+            name: "claude".into(),
+        };
+        services
+            .projects
+            .create("ARC", "Arches", &actor)
+            .await
+            .unwrap();
+        let board = services
+            .boards
+            .create("ARC", "Sprint", &actor)
+            .await
+            .unwrap();
+        services
+            .tickets
+            .create(
+                board.board.id,
+                &NewTicketInput::titled("Login bauen"),
+                &actor,
+                &WriteOptions::default(),
+            )
+            .await
+            .unwrap();
+
+        // Planung: nächstes Ticket holen und planen
+        let geplant = services
+            .planning
+            .next(&[board.board.id], Some("claude"), &actor)
+            .await
+            .unwrap()
+            .expect("das Ticket braucht Planung");
+        assert_eq!(geplant.ticket.id, "ARC-0001");
+        assert_eq!(
+            services
+                .planning
+                .plan(
+                    "ARC-0001",
+                    &crate::board::planning_service::PlanInput {
+                        plan: Some("## Ziel".into()),
+                        ..Default::default()
+                    },
+                    &actor
+                )
+                .await
+                .unwrap()
+                .status,
+            crate::board::basics::TicketStatus::Planned
+        );
+
+        // Suche über alle Boards
+        assert_eq!(
+            services
+                .search
+                .search(&crate::board::search_service::SearchInput::query("login"))
+                .await
+                .unwrap()
+                .hits
+                .iter()
+                .map(|hit| hit.id.as_str())
+                .collect::<Vec<_>>(),
+            ["ARC-0001"]
+        );
+
+        // Zeitleiste des Tickets
+        let timeline = services.timeline(None).get("ARC-0001").await.unwrap();
+        assert_eq!(timeline.ticket_id, "ARC-0001");
+        assert!(timeline
+            .events
+            .iter()
+            .any(|event| event.event_type == "field:plan"));
+
+        // Arbeitsliste: das geplante Ticket wartet auf nichts
+        assert!(services
+            .inbox
+            .list(
+                USER_ID,
+                &crate::board::inbox::service::InboxFilter::default()
+            )
+            .await
+            .unwrap()
+            .is_empty());
+
+        // Dispatcher-Läufe: noch keiner erfasst
+        assert_eq!(
+            services
+                .dispatch_runs
+                .backfill(board.board.project_id, true)
+                .await
+                .unwrap()
+                .found,
+            0
         );
     }
 }
