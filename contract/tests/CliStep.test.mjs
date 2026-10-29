@@ -191,6 +191,35 @@ describe('CliStep', () => {
       }
     });
 
+    it('nimmt für einen Schritt mit record: false das Programm aus setupCli', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'harness-contract-clisetup-'));
+      try {
+        const geprueft = join(dir, 'geprueft.mjs');
+        const aufbau = join(dir, 'aufbau.mjs');
+        writeFileSync(geprueft, 'process.stdout.write("geprueft");');
+        writeFileSync(aufbau, 'process.stdout.write("aufbau");');
+        const umgebung = context({ cli: ['node', geprueft], setupCli: ['node', aufbau], home: dir });
+        const auf = await new CliStep().run({ args: ['x'], record: false }, umgebung);
+        expect(auf.response.stdout).toBe('aufbau');
+        const normal = await new CliStep().run({ args: ['x'] }, umgebung);
+        expect(normal.response.stdout).toBe('geprueft');
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it('nimmt ohne setupCli auch für record: false das geprüfte Programm', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'harness-contract-clisetup2-'));
+      try {
+        const script = join(dir, 'nur-eins.mjs');
+        writeFileSync(script, 'process.stdout.write("geprueft");');
+        const entry = await new CliStep().run({ args: ['x'], record: false }, context({ cli: ['node', script], home: dir }));
+        expect(entry.response.stdout).toBe('geprueft');
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     it('meldet ein Programm, das sich nicht starten lässt', async () => {
       const step = { args: ['x'] };
       await expect(new CliStep().run(step, context({ cli: ['gibt-es-nicht-harness-vertrag'] })))

@@ -226,13 +226,35 @@ impl TempProject {
         self.spawn_with(cwd, &self.home(), args, input, env)
     }
 
+    /// Wie [`TempProject::run`], aber innerhalb einer Session (`HARNESS_SESSION`)
+    pub fn run_in_session(&self, session: &str, args: &[&str]) -> Lauf {
+        self.spawn_with(
+            &self.path.clone(),
+            &self.home(),
+            args,
+            None,
+            &[("HARNESS_SESSION", session)],
+        )
+    }
+
+    /// Wie [`TempProject::run_in_session`], aber mit einem anderen `HARNESS_HOME`
+    pub fn run_in_session_in_home(&self, home: &Path, session: &str, args: &[&str]) -> Lauf {
+        self.spawn_with(
+            &self.path.clone(),
+            home,
+            args,
+            None,
+            &[("HARNESS_SESSION", session)],
+        )
+    }
+
     /// Startet das Binary; `HARNESS_SESSION` und `HARNESS_TICKET` werden nicht geerbt, sonst
     /// gilt der Testlauf als innerhalb einer Session bzw. einem Ticket zugeordnet
     fn spawn(&self, cwd: &Path, home: &Path, args: &[&str], input: Option<&str>) -> Lauf {
         self.spawn_with(cwd, home, args, input, &[])
     }
 
-    /// Wie [`TempProject::spawn`], dazu zusätzliche Umgebungsvariablen
+    /// Wie [`TempProject::spawn`], dazu zusätzliche Umgebungsvariablen (auch `HARNESS_SESSION`)
     fn spawn_with(
         &self,
         cwd: &Path,

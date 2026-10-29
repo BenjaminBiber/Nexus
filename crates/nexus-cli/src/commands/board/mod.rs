@@ -2,18 +2,21 @@
 
 pub mod claim;
 pub mod comment;
+pub mod dispatch;
 pub mod open;
+pub mod question;
 pub mod tickets_read;
 pub mod tickets_write;
 
-use clap::Subcommand;
+use clap::{Command, Subcommand};
 use nexus_core::{HarnessError, Result};
 
 use crate::context::CliContext;
 
-/// Die Unterbefehle von `board`, die die Board-Datenbank bedienen. Die übrigen (`project`,
-/// `boards`, `start`, `done`, `step`, `note`, `question`, `dispatch` …) kommen in den weiteren
-/// Tickets der Phase 3 dazu.
+/// Die Unterbefehle von `board`, die die Board-Datenbank bedienen oder den Dispatcher im
+/// lokalen Server steuern. Die übrigen (`project`, `boards`, `start`, `done`, `step`, `note`,
+/// die restlichen `question …`, `merge`, `accept` …) kommen in den weiteren Tickets der Phase 3
+/// dazu.
 // Die Varianten tragen die Optionen von clap; sie dürfen unterschiedlich groß sein
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Subcommand)]
@@ -90,13 +93,61 @@ pub enum BoardCommands {
     )]
     Comment(comment::CommentArgs),
 
+    #[command(
+        name = "dispatch",
+        about = dispatch::DISPATCH_ABOUT,
+        disable_help_flag = true,
+        disable_help_subcommand = true
+    )]
+    Dispatch {
+        #[command(subcommand)]
+        sub: dispatch::DispatchCommands,
+    },
+
+    #[command(
+        name = "dispatch-runs",
+        about = dispatch::RUNS_ABOUT,
+        disable_help_flag = true,
+        disable_help_subcommand = true
+    )]
+    DispatchRuns {
+        #[command(subcommand)]
+        sub: dispatch::RunsCommands,
+    },
+
+    #[command(
+        name = "plan-start",
+        about = dispatch::PLAN_START_ABOUT,
+        after_help = dispatch::PLAN_START_EXAMPLE,
+        disable_help_flag = true
+    )]
+    PlanStart(dispatch::IdArgs),
+
+    #[command(
+        name = "question",
+        about = question::QUESTION_ABOUT,
+        disable_help_flag = true,
+        subcommand_required = true,
+        arg_required_else_help = false
+    )]
+    Question {
+        #[command(subcommand)]
+        sub: question::QuestionCommands,
+    },
+
     /// Alles, was kein angemeldeter Unterbefehl ist; wird mit `command-unknown` abgewiesen
     #[command(external_subcommand)]
     Unbekannt(Vec<String>),
 }
 
-/// Führt einen Unterbefehl von `board` aus
-pub fn run(context: &CliContext, command: &BoardCommands) -> Result<u8> {
+/// Führt einen Unterbefehl von `board` aus; `port` ist die Option `--port` von `board`,
+/// `root` der aufgebaute Befehlsbaum für die Hilfe
+pub fn run(
+    context: &CliContext,
+    port: Option<&str>,
+    command: &BoardCommands,
+    root: &Command,
+) -> Result<u8> {
     match command {
         BoardCommands::List(args) => tickets_read::list(context, args),
         BoardCommands::Show(args) => tickets_read::show(context, args),
@@ -107,8 +158,24 @@ pub fn run(context: &CliContext, command: &BoardCommands) -> Result<u8> {
         BoardCommands::Claim(args) => claim::claim(context, args),
         BoardCommands::Release(args) => claim::release(context, args),
         BoardCommands::Comment(args) => comment::comment(context, args),
+        BoardCommands::Dispatch { sub } => dispatch::dispatch(context, port, sub),
+        BoardCommands::DispatchRuns { sub } => dispatch::runs(context, sub),
+        BoardCommands::PlanStart(args) => dispatch::plan_start(context, port, &args.id),
+        BoardCommands::Question { sub } => question::run(context, port, sub, root),
         BoardCommands::Unbekannt(words) => Err(unknown(words)),
     }
+}
+
+/// Ein unbekannter Unterbefehl von `board question`
+pub fn unknown_question(words: &[String]) -> nexus_core::Error {
+    HarnessError::new(
+        "command-unknown",
+        format!(
+            "Unbekannter Befehl „board question {}“. Hilfe: harness board question --help",
+            words.join(" ")
+        ),
+    )
+    .into()
 }
 
 /// Ein unbekannter Unterbefehl wird ohne Datenbankzugriff abgewiesen

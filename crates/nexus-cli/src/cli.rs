@@ -146,6 +146,30 @@ pub enum Commands {
         no_node: bool,
     },
 
+    /// Kommentare zu Spec- und Plan-Dokumenten abarbeiten
+    #[command(
+        name = "spec",
+        about = commands::spec::SPEC_ABOUT,
+        disable_help_flag = true,
+        disable_help_subcommand = true
+    )]
+    Spec {
+        #[command(subcommand)]
+        sub: commands::spec::SpecCommands,
+    },
+
+    /// Den laufenden Server beenden
+    #[command(
+        name = "stop",
+        about = commands::stop::STOP_ABOUT,
+        after_help = commands::stop::STOP_EXAMPLES,
+        disable_help_flag = true
+    )]
+    Stop {
+        #[arg(long, help = "Startet den Server auf demselben Port neu, wenn er lief")]
+        restart: bool,
+    },
+
     /// `harness` im normalen Terminal verfügbar machen
     #[command(
         name = "install",
@@ -251,7 +275,7 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
         }
         Some(Commands::Init) => commands::init::run(&context),
         Some(Commands::Board { port, no_open, sub }) => match sub {
-            Some(sub) => commands::board::run(&context, &sub),
+            Some(sub) => commands::board::run(&context, port.as_deref(), &sub, root),
             None => commands::board::open::run(&context, port.as_deref(), !no_open),
         },
         Some(Commands::Serve {
@@ -268,6 +292,8 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
                 no_node,
             },
         ),
+        Some(Commands::Spec { sub }) => commands::spec::run(&context, &sub),
+        Some(Commands::Stop { restart }) => commands::stop::run(&context, restart),
         Some(Commands::Install { no_path }) => commands::install::run(&context, !no_path),
         Some(Commands::Hook { ereignis }) => commands::hook::run(&ereignis),
         Some(Commands::Customize(args)) => commands::customize::run(&context, args),
@@ -293,6 +319,34 @@ fn help_command(root: &Command, name: Option<&str>) -> Result<u8> {
         }
         None => {
             eprintln!("{}", errors::unknown_command(name, &subcommand_names(root)));
+            Ok(1)
+        }
+    }
+}
+
+/// `harness <gruppe> help [befehl]`: Hilfe einer Gruppe oder eines ihrer Unterbefehle.
+/// commander meldet diesen Befehl in jeder Gruppe selbst an; im clap-Baum steht er als Variante.
+pub fn group_help(path: &[&str], name: Option<&str>) -> Result<u8> {
+    let mut root = Cli::command();
+    root.build();
+    let mut cmd = &root;
+    for part in path {
+        cmd = cmd
+            .find_subcommand(part)
+            .unwrap_or_else(|| panic!("Befehl „{part}“ fehlt im Befehlsbaum"));
+    }
+    let aufruf = format!("{PROGRAM} {}", path.join(" "));
+    let Some(name) = name else {
+        print!("{}", help::render(&aufruf, cmd));
+        return Ok(0);
+    };
+    match cmd.find_subcommand(name) {
+        Some(sub) => {
+            print!("{}", help::render(&format!("{aufruf} {name}"), sub));
+            Ok(0)
+        }
+        None => {
+            eprintln!("{}", errors::unknown_command(name, &subcommand_names(cmd)));
             Ok(1)
         }
     }
