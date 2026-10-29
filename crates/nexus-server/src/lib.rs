@@ -64,7 +64,7 @@ impl ServerHandle {
         self.state.shutdown.cancel();
         let _ = self.task.await;
         self.state.board.reset().await;
-        let _ = self.info.remove();
+        let _ = self.info.release(self.state.pid);
     }
 
     /// Wartet, bis der Server von selbst endet (nach [`crate::shutdown_signal`])
@@ -135,11 +135,16 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
     state.guard.allow_port(port);
 
     let info = ServerInfoFile::new(state.home.clone());
-    info.write(&ServerInfo {
+    let eingetragen = info.claim(&ServerInfo {
         pid: state.pid,
         port,
         started_at: now_iso(),
     })?;
+    if !eingetragen {
+        state
+            .log
+            .write("server.json gehört einem anderen laufenden Server und bleibt unverändert.");
+    }
     state.log.write(&format!(
         "Server läuft auf http://{}:{port}",
         state.config.host
