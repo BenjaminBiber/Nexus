@@ -144,7 +144,6 @@ pub struct WorktreeManager<D: BoardDatabase> {
     long_paths: LongPaths,
     merger: BranchMerger,
     targets: TargetBranches,
-    slugs: SlugBuilder,
     touches: TouchesChecker,
     links: WorktreeLinks,
     keys: PathKey,
@@ -171,7 +170,6 @@ impl<D: BoardDatabase> WorktreeManager<D> {
             long_paths: LongPaths::new(),
             merger: BranchMerger::new(),
             targets: TargetBranches::new(),
-            slugs: SlugBuilder::new(),
             touches: TouchesChecker::new(),
             links: WorktreeLinks::new(),
             keys: PathKey::new(),
@@ -943,7 +941,7 @@ angelegt.",
         actor: &BoardActor,
         force: bool,
     ) -> Result<StartResult> {
-        let branch = format!("ticket/{}-{}", ticket.id, self.slugs.build(&ticket.title));
+        let branch = format!("ticket/{}-{}", ticket.id, SlugBuilder::build(&ticket.title));
         let path = self.worktree_path(&ticket.id);
         self.assert_ready(&branch, &path, cwd)?;
         let target = ticket.target_branch.clone();

@@ -14,6 +14,7 @@ use crate::board::database::BoardDatabase;
 use crate::board::dependency_graph_service::DependencyGraphService;
 use crate::board::in_memory::InMemoryBoardDatabase;
 use crate::board::note_service::NoteService;
+use crate::board::planning_service::PlanningService;
 use crate::board::project_service::ProjectService;
 use crate::board::question_service::BoardQuestionService;
 use crate::board::question_types::{BoardQuestion, BoardQuestionActor};
@@ -38,6 +39,7 @@ pub struct BoardFixture {
     pub projects: ProjectService<InMemoryBoardDatabase>,
     pub boards: BoardService<InMemoryBoardDatabase>,
     pub tickets: TicketService<InMemoryBoardDatabase>,
+    pub planning: PlanningService<InMemoryBoardDatabase>,
     pub comments: CommentService<InMemoryBoardDatabase>,
     pub notes: NoteService<InMemoryBoardDatabase>,
     pub questions: BoardQuestionService<InMemoryBoardDatabase>,
@@ -72,6 +74,7 @@ impl BoardFixture {
             projects: ProjectService::new(db.clone(), clock.clone()),
             boards: BoardService::new(db.clone(), clock.clone(), repo_paths.clone()),
             tickets: TicketService::new(db.clone(), clock.clone()),
+            planning: PlanningService::new(db.clone(), clock.clone()),
             comments: CommentService::new(db.clone(), clock.clone()),
             notes: NoteService::new(db.clone(), clock.clone()),
             questions: BoardQuestionService::new(db.clone(), clock.clone(), repo_paths.clone()),

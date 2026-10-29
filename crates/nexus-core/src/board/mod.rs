@@ -12,13 +12,17 @@ pub mod dependency_cleanup;
 pub mod dependency_graph;
 pub mod dependency_graph_service;
 pub mod dependency_rules;
+pub mod dispatch_run_service;
 pub mod dispatch_run_types;
+pub mod dispatch_stats;
 pub mod in_memory;
 pub mod inbox;
 pub mod labels;
 pub mod limits;
 pub mod note_service;
 pub mod note_similarity;
+pub mod planning_candidate;
+pub mod planning_service;
 pub mod project_service;
 pub mod question_blocking;
 pub mod question_concern;
@@ -31,6 +35,7 @@ pub mod repo_board_resolver;
 pub mod repo_file;
 pub mod repo_paths;
 pub mod search_match;
+pub mod search_service;
 pub mod search_types;
 pub mod services;
 pub mod spec_progress;
@@ -40,6 +45,9 @@ pub mod ticket_ids;
 pub mod ticket_ordering;
 pub mod ticket_service;
 pub mod ticket_step_edits;
+pub mod ticket_timeline;
+pub mod timeline_classifier;
+pub mod timeline_service;
 pub mod types;
 pub mod view_service;
 
@@ -57,13 +65,18 @@ pub use dependency_graph_service::{
     DependencyGraphService, DependencyGraphView, GraphNodeView, GraphRequest,
 };
 pub use dependency_rules::{DependencyGraphMap, DependencyRules};
+pub use dispatch_run_service::{BackfillResult, DispatchRunService};
 pub use dispatch_run_types::*;
+pub use dispatch_stats::{DispatchStatsCalculator, DispatchStatsFacts};
 pub use in_memory::{InMemoryBoardDatabase, InMemoryBoardSearch, SearchableState};
 pub use inbox::types::*;
+pub use inbox::{InboxFilter, InboxOrder, InboxOrderFile, InboxRanking, InboxService};
 pub use labels::BoardLabels;
 pub use limits::BoardLimits;
 pub use note_service::{AddNoteOptions, NewNoteText, NoteService, TakeNoteOptions, TakenNote};
 pub use note_similarity::{note_title, NoteSimilarity};
+pub use planning_candidate::PlanningCandidate;
+pub use planning_service::{PlanInput, PlanningService};
 pub use project_service::ProjectService;
 pub use question_blocking::BoardQuestionBlocking;
 pub use question_concern::{ConcernSubject, QuestionConcern};
@@ -82,6 +95,7 @@ pub use repo_paths::{
     RepoPathTarget,
 };
 pub use search_match::{BoardSearchMatch, SearchExcerpt};
+pub use search_service::{BoardSearchService, SearchInput};
 pub use search_types::*;
 pub use services::BoardServices;
 pub use spec_progress::{SpecProgress, SpecProgressCount};
@@ -94,5 +108,11 @@ pub use ticket_service::{
     TicketPatch, TicketService, TicketSummary, TicketView, WriteOptions,
 };
 pub use ticket_step_edits::{StepChange, StepEdit, StepGuard, StepPosition, TicketStepEdits};
+pub use ticket_timeline::{
+    sort_timeline, TicketTimeline, TimelineActor, TimelineActorType, TimelineAgentNames,
+    TimelineEvent, TimelineKind, TimelineRef, TIMELINE_KINDS,
+};
+pub use timeline_classifier::TimelineClassifier;
+pub use timeline_service::TicketTimelineService;
 pub use types::*;
 pub use view_service::{BoardCard, BoardView, BoardViewColumn, BoardViewService};

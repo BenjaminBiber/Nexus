@@ -11,7 +11,7 @@ use crate::board::question_types::{BoardQuestion, BoardQuestionComment};
 use crate::board::search_match::BoardSearchMatch;
 use crate::board::search_types::{SearchField, SearchKind, SearchRequest, SearchRow, SearchRows};
 use crate::board::types::{Board, Comment, Note, Ticket};
-use crate::text::utf16_len;
+use crate::text::{natural_cmp, utf16_len};
 
 /// Die Daten, die die Suche im Speicher liest
 #[derive(Debug, Clone, Copy)]
@@ -288,52 +288,7 @@ fn question_row(question: &BoardQuestion) -> Candidate {
 /// Absteigend nach ID, Zahlen im Text numerisch – wie `localeCompare(…, { numeric: true })`
 /// in TypeScript (`ARC-0010` steht damit vor `ARC-0009`)
 fn natural_desc(a: &str, b: &str) -> Ordering {
-    natural_asc(b, a)
-}
-
-/// Aufsteigend nach ID; Ziffernfolgen zählen als Zahl, alles andere zeichenweise
-fn natural_asc(a: &str, b: &str) -> Ordering {
-    let (mut left, mut right) = (a.chars().peekable(), b.chars().peekable());
-    loop {
-        match (left.peek().copied(), right.peek().copied()) {
-            (None, None) => return Ordering::Equal,
-            (None, Some(_)) => return Ordering::Less,
-            (Some(_), None) => return Ordering::Greater,
-            (Some(x), Some(y)) if x.is_ascii_digit() && y.is_ascii_digit() => {
-                let a_digits = take_digits(&mut left);
-                let b_digits = take_digits(&mut right);
-                let a_value = a_digits.trim_start_matches('0');
-                let b_value = b_digits.trim_start_matches('0');
-                let order = a_value
-                    .len()
-                    .cmp(&b_value.len())
-                    .then_with(|| a_value.cmp(b_value));
-                if order != Ordering::Equal {
-                    return order;
-                }
-            }
-            (Some(x), Some(y)) => {
-                left.next();
-                right.next();
-                if x != y {
-                    return x.cmp(&y);
-                }
-            }
-        }
-    }
-}
-
-/// Die nächste Ziffernfolge
-fn take_digits(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> String {
-    let mut digits = String::new();
-    while let Some(c) = chars.peek().copied() {
-        if !c.is_ascii_digit() {
-            break;
-        }
-        digits.push(c);
-        chars.next();
-    }
-    digits
+    natural_cmp(b, a)
 }
 
 #[cfg(test)]
@@ -349,8 +304,8 @@ mod tests {
 
     #[test]
     fn zahlen_ohne_fuhrende_nullen_zahlen_numerisch() {
-        assert_eq!(natural_asc("x9", "x10"), Ordering::Less);
-        assert_eq!(natural_asc("x10", "x9"), Ordering::Greater);
-        assert_eq!(natural_asc("x007", "x7"), Ordering::Equal);
+        assert_eq!(natural_cmp("x9", "x10"), Ordering::Less);
+        assert_eq!(natural_cmp("x10", "x9"), Ordering::Greater);
+        assert_eq!(natural_cmp("x007", "x7"), Ordering::Equal);
     }
 }

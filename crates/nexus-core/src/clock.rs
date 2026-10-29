@@ -56,6 +56,14 @@ pub fn iso(at: DateTime<Utc>) -> String {
     at.to_rfc3339_opts(SecondsFormat::Millis, true)
 }
 
+/// Ein ISO-Zeitpunkt als Millisekunden seit der Epoche, wie `Date.parse(text)` in
+/// JavaScript; `None` statt `NaN`, wenn der Text kein Zeitpunkt ist
+pub fn parse_millis(text: &str) -> Option<i64> {
+    text.parse::<DateTime<Utc>>()
+        .ok()
+        .map(|at| at.timestamp_millis())
+}
+
 #[cfg(test)]
 mod tests {
     use std::sync::Mutex;
