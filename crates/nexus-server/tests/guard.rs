@@ -5,7 +5,8 @@ mod common;
 
 use axum::http::{HeaderMap, HeaderName, HeaderValue, Method};
 use common::TestServer;
-use nexus_server::guard::RequestGuard;
+use nexus_core::registry::AppToken;
+use nexus_server::guard::{RequestGuard, TAURI_ORIGINS};
 
 /// Pflichtköpfe eines Schreibzugriffs
 const OK: [(&str, &str); 2] = [("content-type", "application/json"), ("x-harness", "1")];
@@ -22,10 +23,28 @@ fn headers(entries: &[(&str, &str)]) -> HeaderMap {
 
 /// Der Code der Ablehnung, `None` wenn die Anfrage zulässig ist
 fn code(guard: &RequestGuard, method: &str, entries: &[(&str, &str)]) -> Option<&'static str> {
+    code_mit_abfrage(guard, method, entries, None)
+}
+
+/// Wie [`code`], aber mit einem Abfrageteil (dort steht das Token von `EventSource`)
+fn code_mit_abfrage(
+    guard: &RequestGuard,
+    method: &str,
+    entries: &[(&str, &str)],
+    query: Option<&str>,
+) -> Option<&'static str> {
     let method = Method::from_bytes(method.as_bytes()).unwrap();
     guard
-        .check(&method, &headers(entries))
+        .check(&method, &headers(entries), query)
         .map(|denial| denial.code)
+}
+
+/// Die Meldung der Ablehnung, `None` wenn die Anfrage zulässig ist
+fn meldung(guard: &RequestGuard, method: &str, entries: &[(&str, &str)]) -> Option<&'static str> {
+    let method = Method::from_bytes(method.as_bytes()).unwrap();
+    guard
+        .check(&method, &headers(entries), None)
+        .map(|denial| denial.message)
 }
 
 #[test]
@@ -124,6 +143,240 @@ fn ubernimmt_einen_spater_bekannten_port() {
     let guard = RequestGuard::new(0);
     guard.allow_port(5555);
     assert_eq!(code(&guard, "GET", &[("host", "127.0.0.1:5555")]), None);
+}
+
+/// Ein Schutz mit Start-Token, wie ihn der echte Server beim Start bekommt
+fn guard_mit_token(token: &str) -> RequestGuard {
+    let guard = RequestGuard::new(4710);
+    guard.allow_app_token(AppToken::from_text(token));
+    guard
+}
+
+/// Die Köpfe einer Anfrage aus der App: Host, Herkunft und das Token
+fn aus_der_app<'a>(origin: &'a str, token: &'a str) -> Vec<(&'a str, &'a str)> {
+    vec![
+        ("host", "127.0.0.1:4710"),
+        ("origin", origin),
+        ("x-nexus-token", token),
+    ]
+}
+
+#[test]
+fn laesst_die_app_mit_gueltigem_token_lesen_und_schreiben() {
+    let guard = guard_mit_token("geheim");
+    for origin in TAURI_ORIGINS {
+        assert_eq!(
+            code(&guard, "GET", &aus_der_app(origin, "geheim")),
+            None,
+            "{origin}"
+        );
+
+        // Schreibend: das Token ersetzt X-Harness, JSON bleibt Pflicht
+        let mut schreibend = aus_der_app(origin, "geheim");
+        schreibend.push(("content-type", "application/json"));
+        assert_eq!(code(&guard, "POST", &schreibend), None, "{origin}");
+        assert_eq!(code(&guard, "DELETE", &schreibend), None, "{origin}");
+    }
+}
+
+#[test]
+fn weist_die_app_ohne_oder_mit_falschem_token_ab() {
+    let guard = guard_mit_token("geheim");
+    let host = ("host", "127.0.0.1:4710");
+    for origin in TAURI_ORIGINS {
+        assert_eq!(
+            code(&guard, "GET", &[host, ("origin", origin)]),
+            Some("origin-denied"),
+            "{origin}"
+        );
+        assert_eq!(
+            code(&guard, "GET", &aus_der_app(origin, "falsch")),
+            Some("origin-denied"),
+            "{origin}"
+        );
+        assert_eq!(
+            code(&guard, "POST", &aus_der_app(origin, "falsch")),
+            Some("origin-denied"),
+            "{origin}"
+        );
+    }
+    assert_eq!(
+        meldung(&guard, "GET", &[host, ("origin", TAURI_ORIGINS[0])]),
+        Some("Die App hat sich nicht ausgewiesen.")
+    );
+}
+
+#[test]
+fn laesst_die_app_ohne_bekanntes_token_gar_nicht_durch() {
+    // Kein `allow_app_token`: dann gibt es keine Oberfläche der App, die sich ausweisen könnte
+    let guard = RequestGuard::new(4710);
+    assert_eq!(
+        code(&guard, "GET", &aus_der_app(TAURI_ORIGINS[0], "geheim")),
+        Some("origin-denied")
+    );
+}
+
+#[test]
+fn nimmt_das_token_bei_lesezugriffen_auch_aus_der_abfrage() {
+    // EventSource und der Abruf eines Protokolls können keine Köpfe setzen
+    let guard = guard_mit_token("geheim");
+    let app = [("host", "127.0.0.1:4710"), ("origin", TAURI_ORIGINS[0])];
+    assert_eq!(
+        code_mit_abfrage(&guard, "GET", &app, Some("notify=1&token=geheim")),
+        None
+    );
+    assert_eq!(
+        code_mit_abfrage(&guard, "HEAD", &app, Some("token=geheim")),
+        None
+    );
+    assert_eq!(
+        code_mit_abfrage(&guard, "GET", &app, Some("token=falsch")),
+        Some("origin-denied")
+    );
+    assert_eq!(
+        code_mit_abfrage(&guard, "GET", &app, Some("dbBoard=3")),
+        Some("origin-denied")
+    );
+    // Schreibend zählt nur der Kopf; sonst käme ein Link mit Token einem CSRF gleich
+    let mut schreibend = app.to_vec();
+    schreibend.push(("content-type", "application/json"));
+    assert_eq!(
+        code_mit_abfrage(&guard, "POST", &schreibend, Some("token=geheim")),
+        Some("origin-denied")
+    );
+}
+
+#[test]
+fn verlangt_auch_von_der_app_json_bei_schreibzugriffen() {
+    let guard = guard_mit_token("geheim");
+    let mut text = aus_der_app(TAURI_ORIGINS[0], "geheim");
+    text.push(("content-type", "text/plain"));
+    assert_eq!(code(&guard, "POST", &text), Some("header-missing"));
+    assert_eq!(
+        meldung(&guard, "POST", &text),
+        Some("Schreibende Anfragen brauchen den Inhaltstyp application/json.")
+    );
+}
+
+#[test]
+fn bleibt_bei_fremden_herkuenften_hart_auch_mit_token() {
+    let guard = guard_mit_token("geheim");
+    for origin in ["http://evil.example", "tauri://evil", "null"] {
+        assert_eq!(
+            code(
+                &guard,
+                "GET",
+                &[
+                    ("host", "127.0.0.1:4710"),
+                    ("origin", origin),
+                    ("x-nexus-token", "geheim")
+                ]
+            ),
+            Some("origin-denied"),
+            "{origin}"
+        );
+    }
+    assert_eq!(
+        meldung(
+            &guard,
+            "GET",
+            &[
+                ("host", "127.0.0.1:4710"),
+                ("origin", "http://evil.example")
+            ]
+        ),
+        Some("Anfragen von fremden Webseiten sind nicht erlaubt.")
+    );
+}
+
+#[tokio::test]
+async fn beantwortet_die_vorabfrage_der_app_mit_204_und_cors() {
+    let server = TestServer::start();
+    for origin in TAURI_ORIGINS {
+        let antwort = server
+            .request("OPTIONS", "/api/health", None, &[("origin", Some(origin))])
+            .await;
+        assert_eq!(antwort.status, 204, "{origin}");
+        assert_eq!(antwort.header("access-control-allow-origin"), Some(origin));
+        assert_eq!(
+            antwort.header("access-control-allow-methods"),
+            Some("GET, POST, PUT, PATCH, DELETE")
+        );
+        assert_eq!(
+            antwort.header("access-control-allow-headers"),
+            Some("content-type, x-harness, x-nexus-token")
+        );
+        assert_eq!(antwort.header("access-control-max-age"), Some("600"));
+        assert_eq!(antwort.header("vary"), Some("Origin"));
+        assert!(antwort.text.is_empty(), "{}", antwort.text);
+    }
+}
+
+#[tokio::test]
+async fn weist_die_vorabfrage_einer_fremden_herkunft_weiter_ab() {
+    let server = TestServer::start();
+    let antwort = server
+        .request(
+            "OPTIONS",
+            "/api/health",
+            None,
+            &[("origin", Some("http://evil.example"))],
+        )
+        .await;
+    assert_eq!(antwort.status, 403);
+    assert_eq!(antwort.code().as_deref(), Some("origin-denied"));
+    assert_eq!(antwort.header("access-control-allow-origin"), None);
+}
+
+#[tokio::test]
+async fn antwortet_der_app_mit_cors_koepfen_auch_bei_einer_ablehnung() {
+    let server = TestServer::start();
+    let origin = TAURI_ORIGINS[0];
+
+    let gut = server
+        .get_with(
+            "/api/health",
+            &[
+                ("origin", Some(origin)),
+                ("x-nexus-token", Some(&server.app_token())),
+            ],
+        )
+        .await;
+    assert_eq!(gut.status, 200);
+    assert_eq!(gut.header("access-control-allow-origin"), Some(origin));
+
+    let schlecht = server
+        .get_with("/api/health", &[("origin", Some(origin))])
+        .await;
+    assert_eq!(schlecht.status, 403);
+    assert_eq!(
+        schlecht.body(),
+        serde_json::json!({
+            "code": "origin-denied",
+            "message": "Die App hat sich nicht ausgewiesen.",
+        })
+    );
+    assert_eq!(
+        schlecht.header("access-control-allow-origin"),
+        Some(origin),
+        "sonst sieht die Oberfläche nur einen Netzwerkfehler"
+    );
+}
+
+#[tokio::test]
+async fn laesst_den_ereignisstrom_der_app_mit_token_in_der_abfrage_zu() {
+    let server = TestServer::start();
+    let origin = TAURI_ORIGINS[0];
+    let url = format!(
+        "/api/projects/unbekannt/events?token={}",
+        server.app_token()
+    );
+
+    let antwort = server.get_with(&url, &[("origin", Some(origin))]).await;
+
+    // Das Projekt gibt es nicht; entscheidend ist, dass der Schutz die Anfrage durchlässt
+    assert_ne!(antwort.code().as_deref(), Some("origin-denied"));
+    assert_eq!(antwort.header("access-control-allow-origin"), Some(origin));
 }
 
 #[tokio::test]

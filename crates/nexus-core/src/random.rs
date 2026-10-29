@@ -15,6 +15,13 @@ pub fn hex(count: usize) -> String {
         })
 }
 
+/// `count` Zufallsbytes, wie `randomBytes(n)` in TypeScript
+pub fn bytes(count: usize) -> Vec<u8> {
+    let mut bytes = vec![0u8; count];
+    fill(&mut bytes);
+    bytes
+}
+
 /// Zufallszahl zwischen 0 (einschließlich) und 1 (ausschließlich), wie `Math.random()`
 /// in der wachsenden Pause beim Warten auf eine Sperre
 pub(crate) fn fraction() -> f64 {

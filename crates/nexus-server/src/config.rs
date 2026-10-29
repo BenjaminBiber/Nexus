@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use nexus_core::clock::Clock;
-use nexus_core::registry::DEFAULT_SERVER_PORT;
+use nexus_core::registry::{AppToken, DEFAULT_SERVER_PORT};
 use nexus_core::{HarnessError, HarnessHome, Result};
 
 /// Host, auf dem der Server hört – immer nur die eigene Maschine
@@ -52,6 +52,9 @@ pub struct ServerConfig {
     pub dispatch_launcher: Option<std::sync::Arc<dyn crate::dispatch::WorkerLauncher>>,
     /// Uhr des Servers; Tests setzen eine feste, damit Zeiträume nachrechenbar sind
     pub clock: Clock,
+    /// Start-Token dieses Laufs: damit weist sich die Oberfläche der Desktop-App aus. Es
+    /// entsteht bei jedem Start neu und landet in `server.json`.
+    pub app_token: AppToken,
 }
 
 /// Version, die den Vertragsmodus kennzeichnet (`NEXUS_SERVER_VERSION=contract`)
@@ -81,6 +84,7 @@ impl ServerConfig {
             dispatch_tick_ms: DEFAULT_DISPATCH_TICK_MS,
             dispatch_launcher: None,
             clock: Clock::system(),
+            app_token: AppToken::new(),
         }
     }
 }
