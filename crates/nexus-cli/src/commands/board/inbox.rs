@@ -25,7 +25,7 @@ pub const INBOX_ABOUT: &str =
 
 /// Beispiele unter der Hilfe von `inbox`
 pub const INBOX_EXAMPLES: &str =
-    "\nBeispiele:\n  harness board inbox --md\n  harness board inbox --kind merge,accept";
+    "\nBeispiele:\n  nexus board inbox --md\n  nexus board inbox --kind merge,accept";
 
 /// Hilfe der Option `--kind`
 pub fn kind_help() -> String {
@@ -196,17 +196,14 @@ fn where_of(item: &InboxItem) -> String {
 fn action(item: &InboxItem) -> String {
     let ticket = item.ticket_id.clone().unwrap_or_default();
     match item.kind {
-        InboxKind::Merge => format!("harness board merge {ticket}"),
-        InboxKind::Accept => format!("harness board accept {ticket}"),
+        InboxKind::Merge => format!("nexus board merge {ticket}"),
+        InboxKind::Accept => format!("nexus board accept {ticket}"),
         InboxKind::Question => format!(
-            "harness board question show {}",
+            "nexus board question show {}",
             item.question_id.clone().unwrap_or_default()
         ),
-        InboxKind::Note => format!(
-            "harness board note take {}",
-            item.note_id.unwrap_or_default()
-        ),
-        _ => format!("harness board show {ticket}"),
+        InboxKind::Note => format!("nexus board note take {}", item.note_id.unwrap_or_default()),
+        _ => format!("nexus board show {ticket}"),
     }
 }
 

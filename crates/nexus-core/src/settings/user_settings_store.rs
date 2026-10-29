@@ -1,4 +1,4 @@
-//! Speichert die benutzerweiten Einstellungen in `~/.harness/settings.json` (atomar).
+//! Speichert die benutzerweiten Einstellungen in `~/.nexus/settings.json` (atomar).
 
 use std::fs;
 

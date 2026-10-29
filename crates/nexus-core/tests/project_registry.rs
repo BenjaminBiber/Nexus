@@ -69,7 +69,7 @@ fn lehnt_einen_ordner_ohne_git_oder_ohne_harness_init_ab() {
     let bare = TempRepo::new();
     let error = registry.add(bare.path()).unwrap_err();
     assert_eq!(error.code(), Some("not-initialized"));
-    assert!(error.to_string().contains("harness init"), "{error}");
+    assert!(error.to_string().contains("nexus init"), "{error}");
 }
 
 #[test]

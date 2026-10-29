@@ -51,7 +51,7 @@ impl CliContext {
         &self.dir
     }
 
-    /// Öffnet das eingerichtete Projekt (Fehler mit Hinweis auf `harness init`, wenn nicht eingerichtet)
+    /// Öffnet das eingerichtete Projekt (Fehler mit Hinweis auf `nexus init`, wenn nicht eingerichtet)
     pub fn open_project(&self) -> Result<HarnessProject> {
         HarnessProject::open(&self.dir)
     }
@@ -61,7 +61,7 @@ impl CliContext {
         HarnessHome::from_process_env()
     }
 
-    /// Worktrees des Dispatchers (`joinWorktrees` aus `~/.harness/dispatch.yaml`); ohne oder
+    /// Worktrees des Dispatchers (`joinWorktrees` aus `~/.nexus/dispatch.yaml`); ohne oder
     /// mit kaputter Datei: ein Worktree je Ticket
     pub fn join_worktrees(&self) -> JoinWorktrees {
         DispatchConfigStore::new(self.home())

@@ -1,5 +1,5 @@
-//! `harness install`: macht `harness` im normalen Terminal verfügbar (kopiert das Binary und
-//! die Startdateien nach `~/.harness`, ergänzt den PATH). Portiert aus
+//! `nexus install`: macht `nexus` im normalen Terminal verfügbar (kopiert das Binary und
+//! die Startdateien nach `~/.nexus`, ergänzt den PATH). Portiert aus
 //! `packages/cli/src/commands/InstallCommand.ts`.
 
 use nexus_core::install::{platform_user_path, CliInstaller, InstallOptions, InstallResult};
@@ -14,7 +14,7 @@ pub fn run(context: &CliContext, register_path: bool) -> Result<u8> {
     let Some(root) = CliInstaller::bundle_root(&exe) else {
         return Err(HarnessError::new(
             "install-not-bundled",
-            "harness install funktioniert nur aus dem gebauten Plugin oder einem Release-Archiv.",
+            "nexus install funktioniert nur aus dem gebauten Plugin oder einem Release-Archiv.",
         )
         .into());
     };
@@ -38,13 +38,12 @@ fn lines(result: &InstallResult, register_path: bool) -> Vec<String> {
         lines.push("PATH nicht geändert (--no-path).".to_string());
     } else if result.path_added {
         lines.push(
-            "PATH ergänzt. Bitte ein neues Terminal öffnen, dann funktioniert `harness` überall."
+            "PATH ergänzt. Bitte ein neues Terminal öffnen, dann funktioniert `nexus` überall."
                 .to_string(),
         );
     } else {
         lines.push(
-            "PATH war schon eingerichtet. Falls `harness` fehlt: neues Terminal öffnen."
-                .to_string(),
+            "PATH war schon eingerichtet. Falls `nexus` fehlt: neues Terminal öffnen.".to_string(),
         );
     }
     lines
@@ -83,11 +82,11 @@ mod tests {
     fn sagt_was_mit_dem_path_passiert_ist() {
         assert_eq!(
             lines(&ergebnis(true, false), true)[3],
-            "PATH ergänzt. Bitte ein neues Terminal öffnen, dann funktioniert `harness` überall."
+            "PATH ergänzt. Bitte ein neues Terminal öffnen, dann funktioniert `nexus` überall."
         );
         assert_eq!(
             lines(&ergebnis(false, false), true)[3],
-            "PATH war schon eingerichtet. Falls `harness` fehlt: neues Terminal öffnen."
+            "PATH war schon eingerichtet. Falls `nexus` fehlt: neues Terminal öffnen."
         );
         assert_eq!(
             lines(&ergebnis(false, true), false)[3],

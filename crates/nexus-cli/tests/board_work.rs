@@ -124,7 +124,7 @@ fn lehnt_start_und_done_fur_tickets_eines_anderen_boards_ab_und_nennt_beide_boar
         start.stderr
     );
     assert!(
-        start.stderr.contains("harness board boards repo"),
+        start.stderr.contains("nexus board boards repo"),
         "{}",
         start.stderr
     );
@@ -150,7 +150,7 @@ fn verlangt_fur_start_ein_dem_repo_zugeordnetes_board() {
 
     assert_eq!(start.code, 1, "{}", start.stdout);
     assert!(
-        start.stderr.contains("harness board boards repo"),
+        start.stderr.contains("nexus board boards repo"),
         "{}",
         start.stderr
     );

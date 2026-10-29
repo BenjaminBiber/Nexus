@@ -264,9 +264,9 @@ fn listet_die_eigenen_aufgaben_nummeriert_mit_aktionshinweis_als_markdown() {
     assert_eq!(
         lauf.stdout.lines().collect::<Vec<_>>(),
         [
-            format!("1. **Notiz** `Notiz {notiz}` Cache prüfen (ARC · Sprint) → `harness board note take {notiz}`"),
-            "2. **Abnahme** `ARC-0001` Fertig (ARC · Sprint) – Human Interaction: ansehen → `harness board accept ARC-0001`".to_string(),
-            "3. **Merge gescheitert** `ARC-0002` Konflikt (ARC · Sprint) – Merge: a.ts → `harness board merge ARC-0002`".to_string(),
+            format!("1. **Notiz** `Notiz {notiz}` Cache prüfen (ARC · Sprint) → `nexus board note take {notiz}`"),
+            "2. **Abnahme** `ARC-0001` Fertig (ARC · Sprint) – Human Interaction: ansehen → `nexus board accept ARC-0001`".to_string(),
+            "3. **Merge gescheitert** `ARC-0002` Konflikt (ARC · Sprint) – Merge: a.ts → `nexus board merge ARC-0002`".to_string(),
         ]
     );
 }

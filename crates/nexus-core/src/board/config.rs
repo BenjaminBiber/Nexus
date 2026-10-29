@@ -1,4 +1,4 @@
-//! Verbindung zur Board-Datenbank und Identität dieses Rechners (Datei `~/.harness/board.yaml`).
+//! Verbindung zur Board-Datenbank und Identität dieses Rechners (Datei `~/.nexus/board.yaml`).
 //! Hier stehen nur die Typen; gelesen und geschrieben wird die Datei später vom `BoardConfigStore`.
 
 use std::fmt;

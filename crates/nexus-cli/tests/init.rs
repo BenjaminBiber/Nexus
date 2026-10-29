@@ -111,7 +111,7 @@ fn richtet_das_projekt_ohne_ticket_ordner_ein_und_weist_auf_die_fehlende_board_d
     assert_eq!(lauf.stderr, "");
     assert_eq!(lauf.code, 0);
     assert!(
-        lauf.stdout.contains("Harness eingerichtet"),
+        lauf.stdout.contains("Nexus eingerichtet"),
         "{}",
         lauf.stdout
     );
@@ -342,7 +342,7 @@ fn wartet_hochstens_kurz_auf_die_board_datenbank_und_endet_mit_0() {
 
     assert_eq!(lauf.code, 0, "{}", lauf.stderr);
     assert!(
-        lauf.stdout.contains("Harness eingerichtet"),
+        lauf.stdout.contains("Nexus eingerichtet"),
         "{}",
         lauf.stdout
     );

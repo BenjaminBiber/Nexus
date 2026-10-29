@@ -56,13 +56,22 @@ describe('CliStep', () => {
       });
     });
 
+    it('setzt Home und Port auch unter den neuen Namen, damit die Rust-CLI keinen Hinweis schreibt', () => {
+      const env = CliStep.env(context(), {});
+      expect(env).toMatchObject({ NEXUS_HOME: '/tmp/home', NEXUS_PORT: '4711' });
+    });
+
     it('nimmt eine geerbte Session-, Ticket- und Umgebungsdatei-Zuordnung heraus', () => {
       const before = { ...process.env };
+      process.env.NEXUS_SESSION = 's-neu';
+      process.env.NEXUS_TICKET = 'ARC-9998';
       process.env.HARNESS_SESSION = 's-geerbt';
       process.env.HARNESS_TICKET = 'ARC-9999';
       process.env.CLAUDE_ENV_FILE = '/tmp/geerbt.sh';
       try {
         const env = CliStep.env(context(), {});
+        expect(env.NEXUS_SESSION).toBeUndefined();
+        expect(env.NEXUS_TICKET).toBeUndefined();
         expect(env.HARNESS_SESSION).toBeUndefined();
         expect(env.HARNESS_TICKET).toBeUndefined();
         expect(env.CLAUDE_ENV_FILE).toBeUndefined();

@@ -250,7 +250,7 @@ fn die_hilfe_nennt_die_unterbefehle() {
         .expect("nexus startet");
     let hilfe = String::from_utf8_lossy(&output.stdout);
     assert!(
-        hilfe.starts_with("Aufruf: harness customize [options] [command]\n"),
+        hilfe.starts_with("Aufruf: nexus customize [options] [command]\n"),
         "{hilfe}"
     );
     for teil in [

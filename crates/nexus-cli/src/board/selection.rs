@@ -41,7 +41,7 @@ impl BoardSelection {
         let Some(active) = config.active_board else {
             return Err(HarnessError::new(
                 "board-not-selected",
-                "Kein aktives Board. Mit „harness board boards use <id>“ wählen oder --board <id> angeben.",
+                "Kein aktives Board. Mit „nexus board boards use <id>“ wählen oder --board <id> angeben.",
             )
             .into());
         };
@@ -208,7 +208,7 @@ mod tests {
         assert_eq!(error.code(), Some("board-not-selected"));
         assert_eq!(
             error.to_string(),
-            "Kein aktives Board. Mit „harness board boards use <id>“ wählen oder --board <id> angeben."
+            "Kein aktives Board. Mit „nexus board boards use <id>“ wählen oder --board <id> angeben."
         );
     }
 }

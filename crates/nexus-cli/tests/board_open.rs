@@ -207,7 +207,7 @@ fn ein_unbekannter_unterbefehl_endet_mit_command_unknown() {
     assert_eq!(out.status.code(), Some(1));
     assert_eq!(
         String::from_utf8_lossy(&out.stderr).trim_end(),
-        "Unbekannter Befehl „board quatsch“. Hilfe: harness board --help [command-unknown]"
+        "Unbekannter Befehl „board quatsch“. Hilfe: nexus board --help [command-unknown]"
     );
 }
 

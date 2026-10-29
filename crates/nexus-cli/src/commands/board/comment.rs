@@ -12,7 +12,7 @@ pub const COMMENT_ABOUT: &str = "Hängt einen Kommentar an (Zwischenstand, Nachw
 
 /// Beispiel unter der Hilfe von `comment`
 pub const COMMENT_EXAMPLE: &str =
-    "\nBeispiel:\n  harness board comment ARC-0007 \"Schritt 2 von 4 fertig\" --author claude";
+    "\nBeispiel:\n  nexus board comment ARC-0007 \"Schritt 2 von 4 fertig\" --author claude";
 
 /// Optionen von `board comment`
 #[derive(Debug, Args)]

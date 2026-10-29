@@ -1,4 +1,4 @@
-//! Speichert die Favoriten aller Projekte in `~/.harness/favorites.json` (atomar).
+//! Speichert die Favoriten aller Projekte in `~/.nexus/favorites.json` (atomar).
 //! Portiert aus `packages/core/src/favorites/FavoritePersistence.ts`.
 
 use std::fs;

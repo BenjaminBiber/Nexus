@@ -1,4 +1,4 @@
-//! `nexus stop`: beendet den laufenden Harness-Server; `nexus board` startet ihn bei Bedarf neu.
+//! `nexus stop`: beendet den laufenden Nexus-Server; `nexus board` startet ihn bei Bedarf neu.
 //! Portiert aus `packages/cli/src/commands/StopCommand.ts`.
 
 use nexus_core::install::{ServerStopper, StopDeps};
@@ -11,10 +11,10 @@ use crate::server::{PortState, ServerLauncher};
 
 /// Beschreibung von `stop` (wortgleich zu `StopCommand.ts`)
 pub const STOP_ABOUT: &str =
-    "Beendet den laufenden Harness-Server (nach einem Update, damit die neue Version startet).";
+    "Beendet den laufenden Nexus-Server (nach einem Update, damit die neue Version startet).";
 
 /// Beispiele unter der Hilfe von `stop`
-pub const STOP_EXAMPLES: &str = "\nBeispiele:\n  harness stop\n  harness stop --restart\n\nDas Board startet mit `harness board` wieder.";
+pub const STOP_EXAMPLES: &str = "\nBeispiele:\n  nexus stop\n  nexus stop --restart\n\nDas Board startet mit `nexus board` wieder.";
 
 /// Das Ergebnis von `nexus stop` (`--json`)
 #[derive(Debug, Serialize)]

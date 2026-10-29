@@ -53,13 +53,13 @@ impl HarnessProject {
         Ok(project)
     }
 
-    /// Öffnet ein eingerichtetes Projekt; ohne `harness init` gibt es einen Hinweis
+    /// Öffnet ein eingerichtetes Projekt; ohne `nexus init` gibt es einen Hinweis
     pub fn open(cwd: &Path) -> Result<Self> {
         let project = Self::locate_cached(cwd)?;
         if !project.layout.counters_file().exists() && !project.layout.token_file().exists() {
             return Err(HarnessError::new(
                 "not-initialized",
-                "Dieses Projekt ist nicht eingerichtet. Bitte zuerst `harness init` ausführen.",
+                "Dieses Projekt ist nicht eingerichtet. Bitte zuerst `nexus init` ausführen.",
             )
             .into());
         }

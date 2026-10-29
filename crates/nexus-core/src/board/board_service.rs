@@ -218,7 +218,7 @@ impl<D: BoardDatabase> BoardService<D> {
             .pick(self.repo_paths.apply(boards)?, repo_root, me))
     }
 
-    /// Wie [`BoardService::for_repo`], ohne Treffer mit Hinweis auf „harness board boards repo“
+    /// Wie [`BoardService::for_repo`], ohne Treffer mit Hinweis auf „nexus board boards repo“
     pub async fn require_for_repo(
         &self,
         repo_root: &str,
@@ -227,7 +227,7 @@ impl<D: BoardDatabase> BoardService<D> {
         self.for_repo(repo_root, me).await?.ok_or_else(|| {
             HarnessError::new(
                 "board-repo-unknown",
-                format!("Kein Board ist dem Repo {repo_root} zugeordnet. Mit „harness board boards repo <id> {repo_root}“ zuordnen."),
+                format!("Kein Board ist dem Repo {repo_root} zugeordnet. Mit „nexus board boards repo <id> {repo_root}“ zuordnen."),
             )
             .into()
         })

@@ -12,7 +12,7 @@
     { "name": "project create mit ungültigem Key --json (Fehler)", "kind": "cli", "args": ["--json", "board", "project", "create", "a", "Zu kurz"], "cwd": "{{REPO1}}" },
     { "name": "project list", "kind": "cli", "args": ["board", "project", "list"], "cwd": "{{REPO1}}" },
     { "name": "project list --json", "kind": "cli", "args": ["--json", "board", "project", "list"], "cwd": "{{REPO1}}" },
-    { "name": "project list ohne eingerichtete Board-Datenbank (Fehler)", "kind": "cli", "args": ["board", "project", "list"], "cwd": "{{REPO1}}", "env": { "HARNESS_HOME": "{{HOME}}/ohne-board" } },
+    { "name": "project list ohne eingerichtete Board-Datenbank (Fehler)", "kind": "cli", "args": ["board", "project", "list"], "cwd": "{{REPO1}}", "env": { "NEXUS_HOME": "{{HOME}}/ohne-board", "HARNESS_HOME": "{{HOME}}/ohne-board" } },
     { "name": "project rename", "kind": "cli", "args": ["board", "project", "rename", "SHP", "Shop"], "cwd": "{{REPO1}}" },
     { "name": "project rename --json", "kind": "cli", "args": ["--json", "board", "project", "rename", "SHP", "Shopsystem"], "cwd": "{{REPO1}}" },
     { "name": "project rename unbekannt (Fehler)", "kind": "cli", "args": ["board", "project", "rename", "XYZ", "Fremd"], "cwd": "{{REPO1}}" },
@@ -29,7 +29,7 @@
     { "name": "boards list --json", "kind": "cli", "args": ["--json", "board", "boards", "list"], "cwd": "{{REPO1}}" },
     { "name": "boards list --project --mine", "kind": "cli", "args": ["board", "boards", "list", "--project", "ARC", "--mine"], "cwd": "{{REPO1}}" },
     { "name": "boards list --project unbekannt (Fehler)", "kind": "cli", "args": ["board", "boards", "list", "--project", "XYZ"], "cwd": "{{REPO1}}" },
-    { "name": "boards list ohne eingerichtete Board-Datenbank --json (Fehler)", "kind": "cli", "args": ["--json", "board", "boards", "list"], "cwd": "{{REPO1}}", "env": { "HARNESS_HOME": "{{HOME}}/ohne-board" } },
+    { "name": "boards list ohne eingerichtete Board-Datenbank --json (Fehler)", "kind": "cli", "args": ["--json", "board", "boards", "list"], "cwd": "{{REPO1}}", "env": { "NEXUS_HOME": "{{HOME}}/ohne-board", "HARNESS_HOME": "{{HOME}}/ohne-board" } },
 
     { "name": "boards rename", "kind": "cli", "args": ["board", "boards", "rename", "2", "Sprint 13"], "cwd": "{{REPO1}}" },
     { "name": "boards rename --json", "kind": "cli", "args": ["--json", "board", "boards", "rename", "2", "Später"], "cwd": "{{REPO1}}" },

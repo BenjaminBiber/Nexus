@@ -22,42 +22,42 @@ const MOVE_EXPECT_HELP: &str =
     "nur verschieben, wenn der Schritt an Nummer <von> noch diesen Text hat (sonst Konflikt)";
 
 /// Beschreibung von `step`
-pub const STEP_ABOUT: &str = "Hakt einen Schritt des Tickets ab (Nummer ab 1, siehe „harness board show“). Unterbefehle legen Schritte an, bearbeiten, löschen und verschieben sie.";
+pub const STEP_ABOUT: &str = "Hakt einen Schritt des Tickets ab (Nummer ab 1, siehe „nexus board show“). Unterbefehle legen Schritte an, bearbeiten, löschen und verschieben sie.";
 
 /// Beispiele unter der Hilfe von `step`
-pub const STEP_EXAMPLES: &str = "\nBeispiele:\n  harness board step ARC-0007 2 --by claude\n  harness board step ARC-0007 2 --undo\n  harness board step add ARC-0007 \"Test schreiben\" --detail \"Erwartet: rot\"\n  harness board step done ARC-0007 2";
+pub const STEP_EXAMPLES: &str = "\nBeispiele:\n  nexus board step ARC-0007 2 --by claude\n  nexus board step ARC-0007 2 --undo\n  nexus board step add ARC-0007 \"Test schreiben\" --detail \"Erwartet: rot\"\n  nexus board step done ARC-0007 2";
 
 /// Beschreibung von `step done`
-const DONE_ABOUT: &str = "Hakt einen Schritt ab (gleich wie „harness board step <id> <nummer>“).";
+const DONE_ABOUT: &str = "Hakt einen Schritt ab (gleich wie „nexus board step <id> <nummer>“).";
 
 /// Beispiele unter der Hilfe von `step done`
-const DONE_EXAMPLES: &str = "\nBeispiele:\n  harness board step done ARC-0007 2 --by claude\n  harness board step done ARC-0007 2 --undo\n  harness board step done ARC-0007 2 --expect \"Test schreiben\"";
+const DONE_EXAMPLES: &str = "\nBeispiele:\n  nexus board step done ARC-0007 2 --by claude\n  nexus board step done ARC-0007 2 --undo\n  nexus board step done ARC-0007 2 --expect \"Test schreiben\"";
 
 /// Beschreibung von `step add`
 const ADD_ABOUT: &str =
     "Hängt einen Schritt an (oder fügt ihn mit --at an dieser Nummer ein); optional mit Anleitung.";
 
 /// Beispiele unter der Hilfe von `step add`
-const ADD_EXAMPLES: &str = "\nBeispiele:\n  harness board step add ARC-0007 \"Test schreiben\" --detail \"npm test – erwartet: rot\" --by claude\n  harness board step add ARC-0007 \"Migration prüfen\" --at 2";
+const ADD_EXAMPLES: &str = "\nBeispiele:\n  nexus board step add ARC-0007 \"Test schreiben\" --detail \"npm test – erwartet: rot\" --by claude\n  nexus board step add ARC-0007 \"Migration prüfen\" --at 2";
 
 /// Beschreibung von `step edit`
 const EDIT_ABOUT: &str = "Ändert Text und/oder Anleitung eines Schritts; der Haken bleibt. Leere Anleitung („“) entfernt sie.";
 
 /// Beispiele unter der Hilfe von `step edit`
-const EDIT_EXAMPLES: &str = "\nBeispiele:\n  harness board step edit ARC-0007 2 --text \"Test für Login schreiben\"\n  harness board step edit ARC-0007 2 --detail \"\"\n  harness board step edit ARC-0007 2 --text \"Neu\" --expect \"Alt\" --rev 5";
+const EDIT_EXAMPLES: &str = "\nBeispiele:\n  nexus board step edit ARC-0007 2 --text \"Test für Login schreiben\"\n  nexus board step edit ARC-0007 2 --detail \"\"\n  nexus board step edit ARC-0007 2 --text \"Neu\" --expect \"Alt\" --rev 5";
 
 /// Beschreibung von `step rm`
 const RM_ABOUT: &str = "Löscht einen Schritt; die folgenden rücken eine Nummer nach vorn.";
 
 /// Beispiele unter der Hilfe von `step rm`
-const RM_EXAMPLES: &str = "\nBeispiele:\n  harness board step rm ARC-0007 3\n  harness board step rm ARC-0007 3 --expect \"Alter Schritt\"";
+const RM_EXAMPLES: &str = "\nBeispiele:\n  nexus board step rm ARC-0007 3\n  nexus board step rm ARC-0007 3 --expect \"Alter Schritt\"";
 
 /// Beschreibung von `step move`
 const MOVE_ABOUT: &str =
     "Verschiebt einen Schritt auf eine andere Nummer (samt Haken und Anleitung).";
 
 /// Beispiele unter der Hilfe von `step move`
-const MOVE_EXAMPLES: &str = "\nBeispiele:\n  harness board step move ARC-0007 4 1\n  harness board step move ARC-0007 4 1 --expect \"Committen\"";
+const MOVE_EXAMPLES: &str = "\nBeispiele:\n  nexus board step move ARC-0007 4 1\n  nexus board step move ARC-0007 4 1 --expect \"Committen\"";
 
 /// `board step <id> <nummer>` samt seiner Unterbefehle
 #[derive(Debug, Args)]

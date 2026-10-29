@@ -164,12 +164,13 @@
       ],
       "cwd": "<REPO1>",
       "env": {
-        "HARNESS_HOME": "<HOME>/ohne-board"
+        "HARNESS_HOME": "<HOME>/ohne-board",
+        "NEXUS_HOME": "<HOME>/ohne-board"
       }
     },
     "response": {
       "code": 1,
-      "stderr": "<HOME>/ohne-board/board.yaml fehlt – mit „harness board“ die Oberfläche öffnen und unter Einstellungen → Board-Datenbank anlegen. [board-config-missing]",
+      "stderr": "<HOME>/ohne-board/board.yaml fehlt – mit „nexus board“ die Oberfläche öffnen und unter Einstellungen → Board-Datenbank anlegen. [board-config-missing]",
       "stdout": ""
     }
   },
@@ -249,7 +250,7 @@
     "response": {
       "code": 0,
       "stderr": "",
-      "stdout": "Keine Boards. Mit „harness board boards create <projekt> <name>“ anlegen."
+      "stdout": "Keine Boards. Mit „nexus board boards create <projekt> <name>“ anlegen."
     }
   },
   {
@@ -424,7 +425,8 @@
       ],
       "cwd": "<REPO1>",
       "env": {
-        "HARNESS_HOME": "<HOME>/ohne-board"
+        "HARNESS_HOME": "<HOME>/ohne-board",
+        "NEXUS_HOME": "<HOME>/ohne-board"
       }
     },
     "response": {
@@ -432,7 +434,7 @@
       "json": {
         "error": {
           "code": "board-config-missing",
-          "message": "<HOME>/ohne-board/board.yaml fehlt – mit „harness board“ die Oberfläche öffnen und unter Einstellungen → Board-Datenbank anlegen."
+          "message": "<HOME>/ohne-board/board.yaml fehlt – mit „nexus board“ die Oberfläche öffnen und unter Einstellungen → Board-Datenbank anlegen."
         }
       },
       "stderr": ""
@@ -768,7 +770,7 @@
     "response": {
       "code": 0,
       "stderr": "",
-      "stdout": "Keine Boards. Mit „harness board boards create <projekt> <name>“ anlegen."
+      "stdout": "Keine Boards. Mit „nexus board boards create <projekt> <name>“ anlegen."
     }
   },
   {
@@ -823,7 +825,7 @@
     },
     "response": {
       "code": 1,
-      "stderr": "Unbekannter Befehl „board quatsch“. Hilfe: harness board --help [command-unknown]",
+      "stderr": "Unbekannter Befehl „board quatsch“. Hilfe: nexus board --help [command-unknown]",
       "stdout": ""
     }
   },

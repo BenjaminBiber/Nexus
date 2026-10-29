@@ -13,13 +13,13 @@ use crate::output::DispatchStatusFormatter;
 pub const MERGE_ABOUT: &str = "Stößt den Merge eines erledigten Tickets eines eigenen Boards erneut an (nach „Blockiert: Merge: …“), erlaubt dabei wieder eine Merge-Session und nennt das Ergebnis (gemergt, blockiert mit Grund, wartet, Merge-Session).";
 
 /// Beispiel unter der Hilfe von `merge`
-pub const MERGE_EXAMPLE: &str = "\nBeispiel:\n  harness board merge ARC-0009";
+pub const MERGE_EXAMPLE: &str = "\nBeispiel:\n  nexus board merge ARC-0009";
 
 /// Beschreibung von `accept`
-pub const ACCEPT_ABOUT: &str = "Nimmt ein Ticket ab, das mit Grund „Human Interaction: …“ blockiert ist (nur ein Mensch, nie ein Agent): setzt Erledigt (Abnahme-Text nötig), leert den Grund, vermerkt es im Verlauf und stößt auf einem eigenen Board den Merge an wie „harness board merge“. Nennt das Ergebnis.";
+pub const ACCEPT_ABOUT: &str = "Nimmt ein Ticket ab, das mit Grund „Human Interaction: …“ blockiert ist (nur ein Mensch, nie ein Agent): setzt Erledigt (Abnahme-Text nötig), leert den Grund, vermerkt es im Verlauf und stößt auf einem eigenen Board den Merge an wie „nexus board merge“. Nennt das Ergebnis.";
 
 /// Beispiel unter der Hilfe von `accept`
-pub const ACCEPT_EXAMPLE: &str = "\nBeispiel:\n  harness board accept ARC-0009 --by Florian";
+pub const ACCEPT_EXAMPLE: &str = "\nBeispiel:\n  nexus board accept ARC-0009 --by Florian";
 
 /// Das Ticket, dessen Merge erneut angestoßen wird
 #[derive(Debug, Args)]

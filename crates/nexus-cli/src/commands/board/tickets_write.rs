@@ -21,26 +21,26 @@ const SET_TARGET_BRANCH_HELP: &str = "Zielbranch, in den der Dispatcher mergt (f
 pub const CREATE_ABOUT: &str = "Legt ein Ticket auf dem Board dieses Repos an, sonst auf dem aktiven Board (Standard: Backlog, normal, braucht Planung).";
 
 /// Beispiele unter der Hilfe von `create`
-pub const CREATE_EXAMPLES: &str = "\nBeispiele:\n  harness board create \"Login bauen\" --desc \"Kontext\" --priority high --label backend --by claude\n  harness board create \"Export bauen\" --step \"Test schreiben\" --step \"Umsetzen\"";
+pub const CREATE_EXAMPLES: &str = "\nBeispiele:\n  nexus board create \"Login bauen\" --desc \"Kontext\" --priority high --label backend --by claude\n  nexus board create \"Export bauen\" --step \"Test schreiben\" --step \"Umsetzen\"";
 
 /// Beschreibung von `set`
 pub const SET_ABOUT: &str = "Ändert Felder eines Tickets. Texte nur ins Feld – Status, Planungsbedarf und Zuweisung bleiben, wenn nicht angegeben.";
 
 /// Beispiele unter der Hilfe von `set`
-pub const SET_EXAMPLES: &str = "\nBeispiele:\n  harness board set ARC-0007 --priority high --by claude\n  harness board set ARC-0007 --plan-file plan.md\n  harness board set ARC-0007 --status blockiert --blocked-reason \"Zugang fehlt\"\n  harness board set ARC-0007 --clear-branch";
+pub const SET_EXAMPLES: &str = "\nBeispiele:\n  nexus board set ARC-0007 --priority high --by claude\n  nexus board set ARC-0007 --plan-file plan.md\n  nexus board set ARC-0007 --status blockiert --blocked-reason \"Zugang fehlt\"\n  nexus board set ARC-0007 --clear-branch";
 
 /// Beschreibung von `move`
 pub const MOVE_ABOUT: &str = "Verschiebt in eine Spalte. Erledigt braucht eine Abnahme; In Arbeit/Erledigt keine offene Voraussetzung.";
 
 /// Beispiele unter der Hilfe von `move`
-pub const MOVE_EXAMPLES: &str = "\nBeispiele:\n  harness board move ARC-0007 erledigt --acceptance \"Test deckt den Fall ab\" --by claude\n  harness board move ARC-0007 geplant";
+pub const MOVE_EXAMPLES: &str = "\nBeispiele:\n  nexus board move ARC-0007 erledigt --acceptance \"Test deckt den Fall ab\" --by claude\n  nexus board move ARC-0007 geplant";
 
 /// Beschreibung von `delete`
 pub const DELETE_ABOUT: &str =
     "Löscht ein Ticket endgültig (wird protokolliert). Nur auf ausdrückliche Anweisung.";
 
 /// Beispiel unter der Hilfe von `delete`
-pub const DELETE_EXAMPLE: &str = "\nBeispiel:\n  harness board delete ARC-0007";
+pub const DELETE_EXAMPLE: &str = "\nBeispiel:\n  nexus board delete ARC-0007";
 
 /// Optionen von `board create`
 #[derive(Debug, Args)]

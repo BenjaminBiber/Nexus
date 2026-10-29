@@ -11,7 +11,7 @@
     "response": {
       "code": 0,
       "stderr": "",
-      "stdout": "1. [Frage] ARC-F0001  Welcher Speicher?  (ARC · Sprint, 1 Ticket(s) warten)\n   → harness board question show ARC-F0001\n2. [Abnahme] ARC-0001  Abnahme  (ARC · Sprint)\n   Human Interaction: Ergebnis ansehen\n   → harness board accept ARC-0001\n3. [In Planung] ARC-0003  Planen  (ARC · Zweites)\n   → harness board show ARC-0003\n4. [Notiz] Notiz 1  Suche findet Umlaute nicht  (ARC · Sprint)\n   → harness board note take 1\n5. [Merge gescheitert] ARC-0002  Merge  (ARC · Sprint)\n   Merge: Konflikt in board.ts\n   → harness board merge ARC-0002"
+      "stdout": "1. [Frage] ARC-F0001  Welcher Speicher?  (ARC · Sprint, 1 Ticket(s) warten)\n   → nexus board question show ARC-F0001\n2. [Abnahme] ARC-0001  Abnahme  (ARC · Sprint)\n   Human Interaction: Ergebnis ansehen\n   → nexus board accept ARC-0001\n3. [In Planung] ARC-0003  Planen  (ARC · Zweites)\n   → nexus board show ARC-0003\n4. [Notiz] Notiz 1  Suche findet Umlaute nicht  (ARC · Sprint)\n   → nexus board note take 1\n5. [Merge gescheitert] ARC-0002  Merge  (ARC · Sprint)\n   Merge: Konflikt in board.ts\n   → nexus board merge ARC-0002"
     }
   },
   {
@@ -27,7 +27,7 @@
     "response": {
       "code": 0,
       "stderr": "",
-      "stdout": "1. **Frage** `ARC-F0001` Welcher Speicher? (ARC · Sprint, 1 Ticket(s) warten) → `harness board question show ARC-F0001`\n2. **Abnahme** `ARC-0001` Abnahme (ARC · Sprint) – Human Interaction: Ergebnis ansehen → `harness board accept ARC-0001`\n3. **In Planung** `ARC-0003` Planen (ARC · Zweites) → `harness board show ARC-0003`\n4. **Notiz** `Notiz 1` Suche findet Umlaute nicht (ARC · Sprint) → `harness board note take 1`\n5. **Merge gescheitert** `ARC-0002` Merge (ARC · Sprint) – Merge: Konflikt in board.ts → `harness board merge ARC-0002`"
+      "stdout": "1. **Frage** `ARC-F0001` Welcher Speicher? (ARC · Sprint, 1 Ticket(s) warten) → `nexus board question show ARC-F0001`\n2. **Abnahme** `ARC-0001` Abnahme (ARC · Sprint) – Human Interaction: Ergebnis ansehen → `nexus board accept ARC-0001`\n3. **In Planung** `ARC-0003` Planen (ARC · Zweites) → `nexus board show ARC-0003`\n4. **Notiz** `Notiz 1` Suche findet Umlaute nicht (ARC · Sprint) → `nexus board note take 1`\n5. **Merge gescheitert** `ARC-0002` Merge (ARC · Sprint) – Merge: Konflikt in board.ts → `nexus board merge ARC-0002`"
     }
   },
   {
@@ -141,7 +141,7 @@
     "response": {
       "code": 0,
       "stderr": "",
-      "stdout": "1. [Abnahme] ARC-0001  Abnahme  (ARC · Sprint)\n   Human Interaction: Ergebnis ansehen\n   → harness board accept ARC-0001\n2. [Merge gescheitert] ARC-0002  Merge  (ARC · Sprint)\n   Merge: Konflikt in board.ts\n   → harness board merge ARC-0002"
+      "stdout": "1. [Abnahme] ARC-0001  Abnahme  (ARC · Sprint)\n   Human Interaction: Ergebnis ansehen\n   → nexus board accept ARC-0001\n2. [Merge gescheitert] ARC-0002  Merge  (ARC · Sprint)\n   Merge: Konflikt in board.ts\n   → nexus board merge ARC-0002"
     }
   },
   {
@@ -158,7 +158,7 @@
     "response": {
       "code": 0,
       "stderr": "",
-      "stdout": "1. [In Planung] ARC-0003  Planen  (ARC · Zweites)\n   → harness board show ARC-0003"
+      "stdout": "1. [In Planung] ARC-0003  Planen  (ARC · Zweites)\n   → nexus board show ARC-0003"
     }
   },
   {

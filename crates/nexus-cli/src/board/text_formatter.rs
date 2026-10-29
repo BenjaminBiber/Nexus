@@ -49,7 +49,7 @@ impl BoardTextFormatter {
     pub fn boards_text(&self, boards: &[BoardSummary], active: Option<i32>) -> Vec<String> {
         if boards.is_empty() {
             return vec![
-                "Keine Boards. Mit „harness board boards create <projekt> <name>“ anlegen."
+                "Keine Boards. Mit „nexus board boards create <projekt> <name>“ anlegen."
                     .to_string(),
             ];
         }

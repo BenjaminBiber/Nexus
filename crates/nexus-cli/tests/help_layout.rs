@@ -94,7 +94,7 @@ fn aus_dem_baum_tief(pfad: &[&str]) -> Command {
 /// Beispielpfad ersetzt der Vergleich beidseitig: der Vertragslauf schreibt es als `<DATE-n>`
 /// auf, wobei `n` die Tage bis zum Tag der Aufzeichnung zählt.
 fn wie_aufgezeichnet(pfad: &[&str]) {
-    let name = format!("harness {}", pfad.join(" "));
+    let name = format!("{} {}", nexus_cli::PROGRAM, pfad.join(" "));
     assert_eq!(
         ohne_datum(&gerendert(&name, aus_dem_baum_tief(pfad))),
         ohne_datum(&golden(&name)),
@@ -249,16 +249,16 @@ fn hilfe_der_fragenbefehle_wie_aufgezeichnet() {
 #[test]
 fn hilfe_von_init_wie_aufgezeichnet() {
     assert_eq!(
-        gerendert("harness init", aus_dem_baum("init")),
-        golden("harness init")
+        gerendert("nexus init", aus_dem_baum("init")),
+        golden("nexus init")
     );
 }
 
 #[test]
 fn hilfe_von_install_wie_aufgezeichnet() {
     assert_eq!(
-        gerendert("harness install", aus_dem_baum("install")),
-        golden("harness install")
+        gerendert("nexus install", aus_dem_baum("install")),
+        golden("nexus install")
     );
 }
 
@@ -267,8 +267,8 @@ fn hilfe_eines_blattbefehls_ohne_optionen() {
     let hook = befehl("hook")
         .about("Wird von Claude Code aufgerufen (session-start, user-prompt, notification, stop, subagent-start, subagent-stop, session-end); liest die Hook-Meldung von der Standardeingabe.")
         .arg(pflicht("ereignis"))
-        .after_help("\nBeispiel:\n  echo '{\"session_id\":\"abc\",\"cwd\":\".\"}' | harness hook session-start");
-    assert_eq!(gerendert("harness hook", hook), golden("harness hook"));
+        .after_help("\nBeispiel:\n  echo '{\"session_id\":\"abc\",\"cwd\":\".\"}' | nexus hook session-start");
+    assert_eq!(gerendert("nexus hook", hook), golden("nexus hook"));
 }
 
 #[test]
@@ -291,7 +291,7 @@ fn hilfe_einer_gruppe_mit_unterbefehlen_und_hilfe_befehl() {
                 .about("Hilfe zu einem Befehl anzeigen")
                 .arg(frei("befehl")),
         );
-    assert_eq!(gerendert("harness spec", spec), golden("harness spec"));
+    assert_eq!(gerendert("nexus spec", spec), golden("nexus spec"));
 }
 
 #[test]
@@ -313,17 +313,17 @@ fn hilfe_mit_vielen_optionen_bricht_wie_commander_um() {
         .arg(option("board", "id", "Board (Standard: Board dieses Repos, sonst aktives Board)"))
         .arg(flag("force", "trotz offenem Ticket mit gleichem Titel anlegen; Sperren für Voraussetzungen und „nicht mehr nötig“ übergehen"))
         .arg(option("by", "name", "wer anlegt (z. B. claude)"))
-        .after_help("\nBeispiele:\n  harness board create \"Login bauen\" --desc \"Kontext\" --priority high --label backend --by claude\n  harness board create \"Export bauen\" --step \"Test schreiben\" --step \"Umsetzen\"");
+        .after_help("\nBeispiele:\n  nexus board create \"Login bauen\" --desc \"Kontext\" --priority high --label backend --by claude\n  nexus board create \"Export bauen\" --step \"Test schreiben\" --step \"Umsetzen\"");
     assert_eq!(
-        gerendert("harness board create", create),
-        golden("harness board create")
+        gerendert("nexus board create", create),
+        golden("nexus board create")
     );
 }
 
 #[test]
 fn hilfe_mit_optionen_und_unterbefehlen_teilt_sich_eine_spaltenbreite() {
     let step = befehl("step")
-        .about("Hakt einen Schritt des Tickets ab (Nummer ab 1, siehe „harness board show“). Unterbefehle legen Schritte an, bearbeiten, löschen und verschieben sie.")
+        .about("Hakt einen Schritt des Tickets ab (Nummer ab 1, siehe „nexus board show“). Unterbefehle legen Schritte an, bearbeiten, löschen und verschieben sie.")
         .arg(pflicht("id"))
         .arg(pflicht("nummer"))
         .arg(flag("undo", "nimmt den Haken zurück"))
@@ -332,7 +332,7 @@ fn hilfe_mit_optionen_und_unterbefehlen_teilt_sich_eine_spaltenbreite() {
         .arg(option("expect", "text", EXPECT_HELP))
         .subcommand(
             befehl("done")
-                .about("Hakt einen Schritt ab (gleich wie „harness board step <id> <nummer>“).")
+                .about("Hakt einen Schritt ab (gleich wie „nexus board step <id> <nummer>“).")
                 .arg(pflicht("id"))
                 .arg(pflicht("nummer"))
                 .arg(flag("undo", "nimmt den Haken zurück"))
@@ -367,9 +367,9 @@ fn hilfe_mit_optionen_und_unterbefehlen_teilt_sich_eine_spaltenbreite() {
                 .arg(pflicht("nach"))
                 .arg(option("by", "name", "wer verschiebt")),
         )
-        .after_help("\nBeispiele:\n  harness board step ARC-0007 2 --by claude\n  harness board step ARC-0007 2 --undo\n  harness board step add ARC-0007 \"Test schreiben\" --detail \"Erwartet: rot\"\n  harness board step done ARC-0007 2");
+        .after_help("\nBeispiele:\n  nexus board step ARC-0007 2 --by claude\n  nexus board step ARC-0007 2 --undo\n  nexus board step add ARC-0007 \"Test schreiben\" --detail \"Erwartet: rot\"\n  nexus board step done ARC-0007 2");
     assert_eq!(
-        gerendert("harness board step", step),
-        golden("harness board step")
+        gerendert("nexus board step", step),
+        golden("nexus board step")
     );
 }

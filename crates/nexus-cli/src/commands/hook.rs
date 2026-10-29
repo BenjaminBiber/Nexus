@@ -1,4 +1,4 @@
-//! `harness hook <ereignis>`: wird von den Hooks des Plugins aufgerufen; blockiert nie und
+//! `nexus hook <ereignis>`: wird von den Hooks des Plugins aufgerufen; blockiert nie und
 //! bleibt still. Portiert aus `packages/cli/src/commands/HookCommand.ts`.
 
 use std::collections::HashMap;
@@ -34,7 +34,7 @@ pub fn about() -> String {
 
 /// Beispiel unter der Hilfe von `hook`
 pub const EXAMPLE: &str =
-    "\nBeispiel:\n  echo '{\"session_id\":\"abc\",\"cwd\":\".\"}' | harness hook session-start";
+    "\nBeispiel:\n  echo '{\"session_id\":\"abc\",\"cwd\":\".\"}' | nexus hook session-start";
 
 /// Liest die Eingabe, führt den Hook aus und gibt höchstens den Kontext aus; endet spätestens
 /// nach der Frist (3 s). Ein unbekanntes Ereignis endet still mit Code 0.

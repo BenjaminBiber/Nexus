@@ -18,6 +18,11 @@ const COMMAND_HEADING = /^(?:Befehle|Commands):$/;
 const COMMAND_LINE = /^ {2}(\S+)/;
 // Der eingebaute Befehl `help` zeigt die Hilfe des übergeordneten Befehls – kein eigener Hilfetext
 const BUILTIN_HELP = 'help';
+// Erste Zeile jeder Hilfe: „Aufruf: <programm> …“. Daraus kommt der Name der Schritte, damit das
+// Szenario zum geprüften Programm passt (`harness` bei der TypeScript-CLI, `nexus` bei Rust).
+const USAGE_LINE = /^(?:Aufruf|Usage):\s+(\S+)/;
+// Name, solange die Hilfe keine Aufruf-Zeile hat
+const FALLBACK_PROGRAM = 'nexus';
 
 // Fehlerfälle von commander, übersetzt in GermanErrors.ts; sie gehören genauso zum Vertrag wie die Hilfe.
 // „Zu viele Argumente“ fehlt hier, weil die CLI überzählige Argumente nicht ablehnt (kein allowExcessArguments(false)).
@@ -76,7 +81,7 @@ export class HelpScenarios {
     const [command, ...prefix] = this.cli;
     const args = [...prefix, ...path, '--help'];
     const env = { ...process.env, NO_COLOR: '1', LANG: 'C.UTF-8' };
-    if (this.home) Object.assign(env, { HARNESS_HOME: this.home, CLAUDE_CONFIG_DIR: this.home });
+    if (this.home) Object.assign(env, { NEXUS_HOME: this.home, HARNESS_HOME: this.home, CLAUDE_CONFIG_DIR: this.home });
     const result = spawnSync(command, args, { cwd: REPO_ROOT, encoding: 'utf8', windowsHide: true, env });
     if (result.error) throw new Error(`\`${[command, ...args].join(' ')}\` lässt sich nicht starten (${result.error.message}).`);
     if (result.status !== 0) {
@@ -85,10 +90,17 @@ export class HelpScenarios {
     return CliStep.clean(result.stdout);
   }
 
+  // Programmname aus der Aufruf-Zeile der Hauptseite der Hilfe
+  program() {
+    const match = USAGE_LINE.exec(this.help([]));
+    return match ? match[1] : FALLBACK_PROGRAM;
+  }
+
   // Das vollständige Szenario: ein Schritt je Befehl, danach die Fehlerfälle
   scenario() {
+    const program = this.program();
     const steps = this.paths().map((path) => ({
-      name: ['harness', ...path].join(' '),
+      name: [program, ...path].join(' '),
       kind: 'cli',
       args: [...path, '--help'],
     }));

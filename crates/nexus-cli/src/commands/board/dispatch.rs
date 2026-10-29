@@ -16,38 +16,38 @@ use crate::server::DispatchClient;
 const PORT_ENV: &str = "PORT";
 
 /// Beschreibung der Gruppe `dispatch`
-pub const DISPATCH_ABOUT: &str = "Dispatcher: übernimmt bereite Tickets (Label auto) der eigenen Boards und lässt sie von claude -p umsetzen. Einstellungen in der Oberfläche oder ~/.harness/dispatch.yaml.";
+pub const DISPATCH_ABOUT: &str = "Dispatcher: übernimmt bereite Tickets (Label auto) der eigenen Boards und lässt sie von claude -p umsetzen. Einstellungen in der Oberfläche oder ~/.nexus/dispatch.yaml.";
 
 /// Beschreibung von `dispatch status`
 pub const STATUS_ABOUT: &str = "Zeigt Zustand, laufende Worker, Merges und warum Geplant-Tickets (noch) nicht bereit sind. Ändert nichts.";
 /// Beispiel unter der Hilfe von `dispatch status`
-pub const STATUS_EXAMPLE: &str = "\nBeispiel:\n  harness board dispatch status --board 3";
+pub const STATUS_EXAMPLE: &str = "\nBeispiel:\n  nexus board dispatch status --board 3";
 
 /// Beschreibung von `dispatch run`
 pub const RUN_ABOUT: &str = "Führt sofort einen Durchlauf aus (sonst jede Minute).";
 /// Beispiel unter der Hilfe von `dispatch run`
-pub const RUN_EXAMPLE: &str = "\nBeispiel:\n  harness board dispatch run";
+pub const RUN_EXAMPLE: &str = "\nBeispiel:\n  nexus board dispatch run";
 
 /// Beschreibung von `dispatch pause`
 pub const PAUSE_ABOUT: &str =
     "Startet für eine Weile nichts Neues (laufende Worker laufen weiter).";
 /// Beispiel unter der Hilfe von `dispatch pause`
-pub const PAUSE_EXAMPLE: &str = "\nBeispiel:\n  harness board dispatch pause --minutes 30";
+pub const PAUSE_EXAMPLE: &str = "\nBeispiel:\n  nexus board dispatch pause --minutes 30";
 
 /// Beschreibung von `dispatch resume`
 pub const RESUME_ABOUT: &str = "Hebt eine Pause auf.";
 /// Beispiel unter der Hilfe von `dispatch resume`
-pub const RESUME_EXAMPLE: &str = "\nBeispiel:\n  harness board dispatch resume";
+pub const RESUME_EXAMPLE: &str = "\nBeispiel:\n  nexus board dispatch resume";
 
 /// Beschreibung von `dispatch enable`
 pub const ENABLE_ABOUT: &str = "Schaltet den Dispatcher ein.";
 /// Beispiel unter der Hilfe von `dispatch enable`
-pub const ENABLE_EXAMPLE: &str = "\nBeispiel:\n  harness board dispatch enable";
+pub const ENABLE_EXAMPLE: &str = "\nBeispiel:\n  nexus board dispatch enable";
 
 /// Beschreibung von `dispatch disable`
 pub const DISABLE_ABOUT: &str = "Schaltet den Dispatcher aus (laufende Worker laufen zu Ende).";
 /// Beispiel unter der Hilfe von `dispatch disable`
-pub const DISABLE_EXAMPLE: &str = "\nBeispiel:\n  harness board dispatch disable";
+pub const DISABLE_EXAMPLE: &str = "\nBeispiel:\n  nexus board dispatch disable";
 
 /// Beschreibung der Gruppe `dispatch-runs`
 pub const RUNS_ABOUT: &str = "Läufe des Dispatchers für die Auswertung (Dashboard).";
@@ -55,18 +55,18 @@ pub const RUNS_ABOUT: &str = "Läufe des Dispatchers für die Auswertung (Dashbo
 /// Beschreibung von `dispatch-runs backfill`
 pub const BACKFILL_ABOUT: &str = "Trägt Läufe aus den [dispatch]-Kommentaren nach (Profil, Modell-Alias, Effort, Versuch, Eskalation, Abbruchgrund; ohne Kosten). Schon nachgetragene Läufe bleiben unverändert – beliebig oft ausführbar.";
 /// Beispiele unter der Hilfe von `dispatch-runs backfill`
-pub const BACKFILL_EXAMPLES: &str = "\nBeispiele:\n  harness board dispatch-runs backfill --project ARC --dry-run\n  harness board dispatch-runs backfill";
+pub const BACKFILL_EXAMPLES: &str = "\nBeispiele:\n  nexus board dispatch-runs backfill --project ARC --dry-run\n  nexus board dispatch-runs backfill";
 
 /// Beschreibung von `plan-start`
 pub const PLAN_START_ABOUT: &str = "Lässt ein Ticket eines eigenen Boards sofort von einer Claude-Session planen (claude -p, nur lesend, eigener losgelöster Worktree; wie „Planen“ im Ticket). Der Plan landet über plan-json am Ticket; fehlt eine Entscheidung, entsteht eine Frage. Läuft über den lokalen Server, unabhängig davon, ob der Dispatcher eingeschaltet ist.";
 /// Beispiel unter der Hilfe von `plan-start`
-pub const PLAN_START_EXAMPLE: &str = "\nBeispiel:\n  harness board plan-start ARC-0007";
+pub const PLAN_START_EXAMPLE: &str = "\nBeispiel:\n  nexus board plan-start ARC-0007";
 
 /// Beschreibung von `question research-start`
 pub const RESEARCH_START_ABOUT: &str = "Lässt eine offene Frage sofort von einer Claude-Session (claude -p, nur lesend, eigener losgelöster Worktree) recherchieren; das Ergebnis landet als Recherche an der Frage. Läuft über den lokalen Server, unabhängig davon, ob der Dispatcher eingeschaltet ist.";
 /// Beispiel unter der Hilfe von `question research-start`
 pub const RESEARCH_START_EXAMPLE: &str =
-    "\nBeispiel:\n  harness board question research-start ARC-F0007";
+    "\nBeispiel:\n  nexus board question research-start ARC-F0007";
 
 /// Option `--board` von `dispatch status`
 #[derive(Debug, Args)]

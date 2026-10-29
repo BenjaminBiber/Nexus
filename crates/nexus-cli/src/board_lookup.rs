@@ -65,7 +65,7 @@ pub fn find_board(home: &HarnessHome, root: &str) -> BoardInfo {
         match tokio::time::timeout(limit, lookup(home, root)).await {
             Ok(info) => info,
             Err(_) => BoardInfo::hint(format!(
-                "Board-Datenbank antwortet nicht innerhalb von {} s; das Board dieses Repos zeigt „harness board boards list“.",
+                "Board-Datenbank antwortet nicht innerhalb von {} s; das Board dieses Repos zeigt „nexus board boards list“.",
                 BOARD_TIMEOUT_MS / 1000
             )),
         }
@@ -78,7 +78,7 @@ async fn lookup(home: &HarnessHome, root: &str) -> BoardInfo {
         Ok(Some(config)) => config,
         Ok(None) => {
             return BoardInfo::hint(
-                "Board-Datenbank ist noch nicht eingerichtet: mit „harness board“ die Oberfläche öffnen, Einstellungen → Board-Datenbank.",
+                "Board-Datenbank ist noch nicht eingerichtet: mit „nexus board“ die Oberfläche öffnen, Einstellungen → Board-Datenbank.",
             )
         }
         Err(error) => return BoardInfo::hint(unavailable(&error.to_string())),
@@ -89,7 +89,7 @@ async fn lookup(home: &HarnessHome, root: &str) -> BoardInfo {
             hint: None,
         },
         Ok(None) => BoardInfo::hint(format!(
-            "Diesem Repo ist kein Board zugeordnet. Mit „harness board boards repo <id> {root}“ zuordnen."
+            "Diesem Repo ist kein Board zugeordnet. Mit „nexus board boards repo <id> {root}“ zuordnen."
         )),
         Err(error) => BoardInfo::hint(unavailable(&error.to_string())),
     }

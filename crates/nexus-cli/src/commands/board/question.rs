@@ -38,43 +38,43 @@ const PROJECT_HELP: &str =
 
 pub const ADD_ABOUT: &str =
     "Stellt eine Frage; betroffene Tickets warten, bis sie entschieden ist.";
-pub const ADD_EXAMPLE: &str = "\nBeispiel:\n  harness board question add \"Welcher Speicher?\" --ticket ARC-0007 --occasion \"Planung ARC-0007\" --kind session --author claude";
+pub const ADD_EXAMPLE: &str = "\nBeispiel:\n  nexus board question add \"Welcher Speicher?\" --ticket ARC-0007 --occasion \"Planung ARC-0007\" --kind session --author claude";
 
 pub const RESEARCH_ABOUT: &str =
     "Ergänzt eine Recherche mit Kontext und Optionen; frühere Recherchen bleiben erhalten.";
-pub const RESEARCH_EXAMPLE: &str = "\nDatei: {\"context\": \"…\", \"options\": [{\"title\": \"…\", \"text\": \"…\", \"pros\": [\"…\"], \"cons\": [\"…\"], \"recommended\": true}]}\nBeispiel:\n  harness board question research ARC-F0001 --from recherche.json --kind session --author claude";
+pub const RESEARCH_EXAMPLE: &str = "\nDatei: {\"context\": \"…\", \"options\": [{\"title\": \"…\", \"text\": \"…\", \"pros\": [\"…\"], \"cons\": [\"…\"], \"recommended\": true}]}\nBeispiel:\n  nexus board question research ARC-F0001 --from recherche.json --kind session --author claude";
 
 pub const COMMENT_ABOUT: &str =
     "Hängt einen Kommentar an eine Frage (Rückfrage, Zwischenstand, Hinweis).";
-pub const COMMENT_EXAMPLE: &str = "\nBeispiel:\n  harness board question comment ARC-F0001 \"Neuer Befund: …\" --kind session --author claude";
+pub const COMMENT_EXAMPLE: &str = "\nBeispiel:\n  nexus board question comment ARC-F0001 \"Neuer Befund: …\" --kind session --author claude";
 
 pub const LIST_ABOUT: &str =
     "Listet Fragen eines Projekts (bereite zuerst, älteste zuerst); ohne --state nur offene.";
-pub const LIST_EXAMPLES: &str = "\nBeispiele:\n  harness board question list --md\n  harness board question list --state alle --ticket ARC-0007";
+pub const LIST_EXAMPLES: &str = "\nBeispiele:\n  nexus board question list --md\n  nexus board question list --state alle --ticket ARC-0007";
 
 pub const SHOW_ABOUT: &str =
     "Zeigt eine Frage mit Beschreibung, Tickets, Recherchen, Entscheidung, Kommentaren und Verlauf.";
-pub const SHOW_EXAMPLE: &str = "\nBeispiel:\n  harness board question show ARC-F0001";
+pub const SHOW_EXAMPLE: &str = "\nBeispiel:\n  nexus board question show ARC-F0001";
 
 pub const ANSWER_ABOUT: &str = "Beantwortet eine Frage mit einer Option der neuesten Recherche oder eigenem Text; Begründung freiwillig. Nur Menschen.";
-pub const ANSWER_EXAMPLE: &str = "\nBeispiel:\n  harness board question answer ARC-F0001 --option O2 --reason \"Passt zum Betrieb\"";
+pub const ANSWER_EXAMPLE: &str = "\nBeispiel:\n  nexus board question answer ARC-F0001 --option O2 --reason \"Passt zum Betrieb\"";
 
 pub const DISCARD_ABOUT: &str = "Verwirft eine Frage mit Begründung. Nur Menschen.";
-pub const DISCARD_EXAMPLE: &str = "\nBeispiel:\n  harness board question discard ARC-F0001 --reason \"erledigt sich mit ARC-F0002\"";
+pub const DISCARD_EXAMPLE: &str = "\nBeispiel:\n  nexus board question discard ARC-F0001 --reason \"erledigt sich mit ARC-F0002\"";
 
 pub const REOPEN_ABOUT: &str =
     "Öffnet eine beantwortete oder verworfene Frage wieder. Nur Menschen.";
 pub const REOPEN_EXAMPLE: &str =
-    "\nBeispiel:\n  harness board question reopen ARC-F0001 --reason \"neue Lage\"";
+    "\nBeispiel:\n  nexus board question reopen ARC-F0001 --reason \"neue Lage\"";
 
 pub const LINK_ABOUT: &str = "Fügt betroffene Tickets hinzu oder entfernt sie.";
 pub const LINK_EXAMPLE: &str =
-    "\nBeispiel:\n  harness board question link ARC-F0001 --add ARC-0008 --remove ARC-0007";
+    "\nBeispiel:\n  nexus board question link ARC-F0001 --add ARC-0008 --remove ARC-0007";
 
 pub const DEPENDS_ABOUT: &str =
     "Fügt Abhängigkeiten (Fragen oder Tickets) hinzu oder entfernt sie; Kreise werden abgelehnt.";
 pub const DEPENDS_EXAMPLE: &str =
-    "\nBeispiel:\n  harness board question depends ARC-F0002 --add ARC-F0001";
+    "\nBeispiel:\n  nexus board question depends ARC-F0002 --add ARC-F0001";
 
 /// Beschreibung des Befehls `help` der Gruppe
 pub const HELP_ABOUT: &str = "Hilfe zu einem Befehl anzeigen";
@@ -330,21 +330,21 @@ fn help(root: &Command, name: Option<&str>) -> Result<u8> {
         (Some(name), Some(sub)) => {
             print!(
                 "{}",
-                crate::output::help::render(&format!("harness board question {name}"), sub)
+                crate::output::help::render(&format!("nexus board question {name}"), sub)
             );
             Ok(0)
         }
         (None, _) => {
             print!(
                 "{}",
-                crate::output::help::render("harness board question", group)
+                crate::output::help::render("nexus board question", group)
             );
             Ok(0)
         }
         (Some(_), None) => {
             eprint!(
                 "{}",
-                crate::output::help::render("harness board question", group)
+                crate::output::help::render("nexus board question", group)
             );
             Ok(1)
         }

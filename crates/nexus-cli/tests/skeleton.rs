@@ -40,7 +40,7 @@ fn zeigt_die_hilfe_auf_deutsch_und_endet_mit_code_0() {
     let lauf = run(&["--help"]);
     assert_eq!(lauf.stderr, "");
     assert_eq!(lauf.code, 0);
-    assert!(lauf.stdout.contains("AI Harness"), "{}", lauf.stdout);
+    assert!(lauf.stdout.contains("Nexus:"), "{}", lauf.stdout);
     assert!(lauf.stdout.contains("--json"), "{}", lauf.stdout);
 }
 
@@ -49,7 +49,7 @@ fn die_hauptseite_hat_den_aufrufkopf_und_deutsche_uberschriften() {
     let lauf = run(&["--help"]);
     assert!(
         lauf.stdout
-            .starts_with("Aufruf: harness [options] [command]\n"),
+            .starts_with("Aufruf: nexus [options] [command]\n"),
         "{}",
         lauf.stdout
     );
@@ -93,7 +93,7 @@ fn der_hilfe_befehl_zeigt_die_hauptseite_und_einzelne_befehle() {
     assert!(
         einzeln
             .stdout
-            .starts_with("Aufruf: harness help [options] [befehl]\n"),
+            .starts_with("Aufruf: nexus help [options] [befehl]\n"),
         "{}",
         einzeln.stdout
     );
@@ -106,7 +106,7 @@ fn ohne_befehl_zeigt_das_programm_die_hilfe_auf_stderr_und_endet_mit_code_1() {
     assert_eq!(lauf.stdout, "");
     assert!(
         lauf.stderr
-            .starts_with("Aufruf: harness [options] [command]\n"),
+            .starts_with("Aufruf: nexus [options] [command]\n"),
         "{}",
         lauf.stderr
     );

@@ -1,5 +1,5 @@
-//! Richtet `harness` für das normale Terminal ein: kopiert das Binary nach `~/.harness/bin`,
-//! die Regeln nach `~/.harness/rules`, die Anpassungen nach `~/.harness/customizations`, legt
+//! Richtet `nexus` für das normale Terminal ein: kopiert das Binary nach `~/.nexus/bin`,
+//! die Regeln nach `~/.nexus/rules`, die Anpassungen nach `~/.nexus/customizations`, legt
 //! die Startdateien an und trägt den Startordner in den Benutzer-PATH ein.
 //! Portiert aus `packages/core/src/install/CliInstaller.ts`; statt `lib/cli.mjs` wird das
 //! Rust-Binary kopiert, `lib/` und `web/` nur noch, solange es den Node-Server gibt.
@@ -162,14 +162,14 @@ impl<'a> CliInstaller<'a> {
         Ok(())
     }
 
-    /// Legt die Regeln des Plugins frisch unter `~/.harness/rules` ab, dem festen Importziel der
+    /// Legt die Regeln des Plugins frisch unter `~/.nexus/rules` ab, dem festen Importziel der
     /// Projekte. Der Ordner des Plugins in Claude Code taugt dafür nicht, er wechselt mit jeder
     /// Version.
     fn copy_rules(&self, root: &Path) -> Result<()> {
         self.copy_into(&root.join("rules"), &self.home.rules_dir())
     }
 
-    /// Legt die angewendeten Anpassungen frisch unter `~/.harness/customizations` ab; Hook und
+    /// Legt die angewendeten Anpassungen frisch unter `~/.nexus/customizations` ab; Hook und
     /// Server lesen dort
     fn copy_customizations(&self, root: &Path) -> Result<()> {
         self.copy_into(

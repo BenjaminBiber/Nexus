@@ -156,7 +156,7 @@ impl<O: BoardOpener, L: Launcher> HookRunner<O, L> {
             board_budget,
         } = self;
         let deadline = Instant::now() + board_budget;
-        // Ohne `harness init` endet der Hook still
+        // Ohne `nexus init` endet der Hook still
         let project = HarnessProject::open(&cwd)?;
         let cwd_text = cwd.to_string_lossy().into_owned();
 

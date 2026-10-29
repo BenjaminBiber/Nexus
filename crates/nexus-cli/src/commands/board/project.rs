@@ -13,19 +13,19 @@ pub const PROJECT_ABOUT: &str = "Projekte des Boards verwalten (Projekt → Boar
 const LIST_ABOUT: &str = "Listet alle Projekte mit Key und Namen.";
 
 /// Beispiel unter der Hilfe von `project list`
-const LIST_EXAMPLE: &str = "\nBeispiel:\n  harness board project list";
+const LIST_EXAMPLE: &str = "\nBeispiel:\n  nexus board project list";
 
 /// Beschreibung von `project create`
 const CREATE_ABOUT: &str = "Legt ein Projekt an. Der Key (2–6 Zeichen) wird Präfix der Ticket-IDs.";
 
 /// Beispiel unter der Hilfe von `project create`
-const CREATE_EXAMPLE: &str = "\nBeispiel:\n  harness board project create ARC \"Arches\"";
+const CREATE_EXAMPLE: &str = "\nBeispiel:\n  nexus board project create ARC \"Arches\"";
 
 /// Beschreibung von `project rename`
 const RENAME_ABOUT: &str = "Benennt ein Projekt um (der Key bleibt).";
 
 /// Beispiel unter der Hilfe von `project rename`
-const RENAME_EXAMPLE: &str = "\nBeispiel:\n  harness board project rename ARC \"Arches Shop\"";
+const RENAME_EXAMPLE: &str = "\nBeispiel:\n  nexus board project rename ARC \"Arches Shop\"";
 
 /// Die Unterbefehle von `board project`
 #[derive(Debug, Subcommand)]

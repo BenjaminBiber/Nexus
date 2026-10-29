@@ -75,10 +75,15 @@ export class CliStep {
   }
 
   // Umgebung des Aufrufs: die geerbte ohne Session- und Ticket-Zuordnung, dazu Home, Port und eine leere
-  // Claude-Konfiguration, feste Ausgabe ohne Farben – zuletzt die Variablen des Schritts
+  // Claude-Konfiguration, feste Ausgabe ohne Farben – zuletzt die Variablen des Schritts.
+  // Home und Port stehen unter beiden Namen: `NEXUS_*` liest die Rust-CLI, `HARNESS_*` die alte
+  // TypeScript-CLI. Ohne `NEXUS_HOME` schriebe die Rust-CLI zu jedem Schritt den Hinweis auf die
+  // veraltete Variable nach stderr, und der stünde in jeder Golden-Datei.
   static env(context, declared) {
     const env = {
       ...process.env,
+      NEXUS_HOME: context.home,
+      NEXUS_PORT: String(context.port),
       HARNESS_HOME: context.home,
       HARNESS_PORT: String(context.port),
       CLAUDE_CONFIG_DIR: context.claudeConfig,
@@ -86,6 +91,8 @@ export class CliStep {
       LANG: 'C.UTF-8',
     };
     // Eine geerbte Zuordnung oder Umgebungsdatei gilt nicht für den Vertrag
+    delete env.NEXUS_SESSION;
+    delete env.NEXUS_TICKET;
     delete env.HARNESS_SESSION;
     delete env.HARNESS_TICKET;
     delete env.CLAUDE_ENV_FILE;

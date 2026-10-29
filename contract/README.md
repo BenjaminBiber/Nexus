@@ -176,8 +176,10 @@ Vertragsmodus. Szenarien mit Ereignisstrom drücken damit den Takt, damit sie in
   `{ provider: "sqlite", dbFile: "<HOME>/board.db", userId: "11111111-1111-1111-1111-111111111111", userName: "Vertrag" }`.
   Dieser Aufruf wird **nicht** aufgezeichnet.
 - `claudeEnvFile: true`: setzt `CLAUDE_ENV_FILE` auf `<CLAUDE>/claude-env.sh` und zeichnet den Inhalt dieser
-  Datei nach jedem `cli`-Schritt als `response.envFile` auf. `session-start` schreibt dort `HARNESS_SESSION`
-  und `HARNESS_TICKET` (`EnvFileWriter` in `packages/core/src/hooks/`). Ohne die Fixture gibt es kein
+  Datei nach jedem `cli`-Schritt als `response.envFile` auf. `session-start` schreibt dort Session und
+  Ticket unter beiden Namen (`NEXUS_SESSION` und `HARNESS_SESSION`, ebenso `…_TICKET`; `EnvFileWriter` in
+  `crates/nexus-core/src/hooks/` bzw. `packages/core/src/hooks/`) – je Variable nur, solange sie nicht schon
+  in der Umgebung steht. Ohne die Fixture gibt es kein
   `CLAUDE_ENV_FILE` und kein `envFile` in der Golden-Datei.
 - `homeFiles`: Dateien, die **vor dem Start des Servers** im `HARNESS_HOME` liegen (`lib/HomeFiles.mjs`).
   Schlüssel ist der Pfad relativ zum Home, immer mit `/` getrennt und ohne `..`; fehlende Ordner entstehen
@@ -266,11 +268,14 @@ Ruft die CLI als eigenen Prozess auf und zeichnet Rückgabecode, Standardausgabe
 Das Programm kommt aus `--cli-cmd` und wird in Programm und Argumente zerlegt – **ohne Shell**, damit
 Leerzeichen in Pfaden sicher sind. Die Umgebung ist die geerbte, aber:
 
-- **gesetzt**: `HARNESS_HOME` (Home des Laufs), `HARNESS_PORT` (Port des Szenario-Servers),
-  `CLAUDE_CONFIG_DIR` (leerer temporärer Ordner – der echte `~/.claude` wird nie angefasst),
-  `NO_COLOR=1`, `LANG=C.UTF-8`;
-- **entfernt**: `HARNESS_SESSION`, `HARNESS_TICKET`, `CLAUDE_ENV_FILE` – eine geerbte Zuordnung gilt nicht
-  für den Vertrag. Wer sie braucht, setzt sie im `env` des Schritts.
+- **gesetzt**: `NEXUS_HOME` und `HARNESS_HOME` (Home des Laufs), `NEXUS_PORT` und `HARNESS_PORT` (Port des
+  Szenario-Servers), `CLAUDE_CONFIG_DIR` (leerer temporärer Ordner – der echte `~/.claude` wird nie
+  angefasst), `NO_COLOR=1`, `LANG=C.UTF-8`. Home und Port stehen unter beiden Namen: `NEXUS_*` liest die
+  Rust-CLI, `HARNESS_*` die alte TypeScript-CLI. Ohne `NEXUS_HOME` schriebe die Rust-CLI zu jedem Schritt
+  den Hinweis auf die veraltete Variable nach stderr, und der stünde in jeder Golden-Datei. Wer in einem
+  Schritt ein anderes Home braucht, setzt deshalb **beide** Namen in seinem `env`;
+- **entfernt**: `NEXUS_SESSION`, `NEXUS_TICKET`, `HARNESS_SESSION`, `HARNESS_TICKET`, `CLAUDE_ENV_FILE` –
+  eine geerbte Zuordnung gilt nicht für den Vertrag. Wer sie braucht, setzt sie im `env` des Schritts.
 
 Der Szenario-Server läuft schon auf `HARNESS_PORT`; `session-start` erkennt ihn und startet keinen zweiten
 (`probe` in `packages/cli/src/hooks/HookRunner.ts`). `HARNESS_SERVER_ENTRY` wird deshalb nicht gesetzt.
@@ -439,7 +444,7 @@ Ein `cli`-Schritt sieht so aus:
   { "name": "session-start",
     "request": { "args": ["hook", "session-start"], "cwd": "<REPO1>",
                  "env": { "HARNESS_HOOK_DEADLINE_MS": "60000" }, "stdin": { "cwd": "<REPO1>", "session_id": "s1" } },
-    "response": { "code": 0, "envFile": "export HARNESS_SESSION='s1'\n",
+    "response": { "code": 0, "envFile": "export NEXUS_SESSION='s1'\nexport HARNESS_SESSION='s1'\n",
                   "json": { "hookSpecificOutput": { "hookEventName": "SessionStart" } }, "stderr": "" } }
 ]
 ```
@@ -519,7 +524,7 @@ den Server im Vertrag.
 
 | Szenario | Was es festhält |
 | --- | --- |
-| `session-start` | Leitfaden und Kommentar als `additionalContext`, `HARNESS_SESSION` in der Umgebungsdatei, Session am Server. Beim zweiten Aufruf fehlt der Kommentar: er gilt als gelesen. |
+| `session-start` | Leitfaden und Kommentar als `additionalContext`, Session und Ticket in der Umgebungsdatei (`NEXUS_*` und `HARNESS_*`), Session am Server. Beim zweiten Aufruf fehlt der Kommentar: er gilt als gelesen. |
 | `user-prompt` | Kommentar genau einmal, Session-Name aus dem Prompt (`SE-001: …`). |
 | `notification`, `stop`, `subagent-start`, `subagent-stop`, `session-end` | still (kein `additionalContext`), aber gemeldet: Zustand, Subagenten und Ende der Session. |
 | `stille-eingaben` | kaputtes JSON, leere Eingabe, `[]`, `null`, fehlende und nicht-textuelle Sitzungskennung, unbekanntes Ereignis – alle Exit 0, keine Ausgabe, keine Session. |
@@ -615,9 +620,11 @@ Zwei Dinge gehören zum Vertrag und sind leicht zu übersehen:
 
 - **Zeilenumbruch bei 80 Zeichen.** Die Ausgabe geht in eine Pipe, nicht auf ein Terminal; commander bricht
   dann bei 80 Zeichen um. Der Port muss genauso umbrechen.
-- **Der Programmname `harness`** steht in jedem Hilfetext (`Aufruf: harness board …`) und wird **nicht**
-  normalisiert: Der Alias `harness` bleibt Vertrag. Wird der Port als `nexus` aufgerufen, darf er den Namen
-  tauschen; dann kommt hier eine Normalisierungsregel dazu – vorher nicht.
+- **Der Programmname `nexus`** steht in jedem Hilfetext (`Aufruf: nexus board …`) und wird **nicht**
+  normalisiert: Der Name gehört zum Vertrag. Szenario und Golden-Datei sind gegen das Rust-Binary
+  aufgezeichnet, deshalb heißen die Schritte `nexus …`; den Namen nimmt der Generator aus der Aufruf-Zeile
+  der Hilfe (`--cli-cmd`). Die alte TypeScript-CLI sagt weiter `harness` und erfüllt die Suite `cli/help`
+  nicht mehr – sie kennt `serve`, `migrate` und `customize` auch nicht.
 
 ## Gegen einen fremden Server prüfen
 

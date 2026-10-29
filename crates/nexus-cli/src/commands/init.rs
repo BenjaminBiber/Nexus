@@ -1,4 +1,4 @@
-//! `harness init`: richtet das Projekt einmalig ein (Token, Zähler, Plugin, Rules, Freigabe)
+//! `nexus init`: richtet das Projekt einmalig ein (Token, Zähler, Plugin, Rules, Freigabe)
 //! und nennt das Board des Repos (wiederholbar). Portiert aus
 //! `packages/cli/src/commands/InitCommand.ts`.
 
@@ -27,7 +27,7 @@ struct InitResult {
 
 /// Legt Ordner, Zähler und Token an, schaltet das Plugin für dieses Projekt ein, legt die Rules
 /// für Doku- und Board-Regeln an (fehlende werden bei Wiederholung ergänzt), gibt deren Import in
-/// Claude Code frei und nennt Harness-Ordner und Board
+/// Claude Code frei und nennt Nexus-Ordner und Board
 pub fn run(context: &CliContext) -> Result<u8> {
     let project = HarnessProject::init(context.project_dir())?;
     let root = Path::new(&project.root);
@@ -38,7 +38,7 @@ pub fn run(context: &CliContext) -> Result<u8> {
     let info = find_board(&context.home(), &project.root);
 
     let mut lines = vec![format!(
-        "Harness eingerichtet: {}",
+        "Nexus eingerichtet: {}",
         project.layout.dir().display()
     )];
     if switched {
@@ -86,7 +86,7 @@ fn approval_lines(approval: &ApprovalResult) -> Vec<String> {
             approval.file
         )],
         ApprovalStatus::NoConfig => vec![format!(
-            "Claude Code lief auf diesem Rechner noch nie ({} fehlt). Nach dem ersten Start bitte `harness init` wiederholen, sonst laden die Doku- und Board-Regeln nicht.",
+            "Claude Code lief auf diesem Rechner noch nie ({} fehlt). Nach dem ersten Start bitte `nexus init` wiederholen, sonst laden die Doku- und Board-Regeln nicht.",
             approval.file
         )],
         ApprovalStatus::Unchanged => Vec::new(),

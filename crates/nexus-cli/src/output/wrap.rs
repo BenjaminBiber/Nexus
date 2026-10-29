@@ -115,7 +115,7 @@ mod tests {
 
     #[test]
     fn lasst_von_hand_eingeruckte_texte_unverandert() {
-        let text = "Beispiele:\n  harness board\n  harness board --port 4800";
+        let text = "Beispiele:\n  nexus board\n  nexus board --port 4800";
         assert_eq!(wrap(text, 80, 0), text);
     }
 

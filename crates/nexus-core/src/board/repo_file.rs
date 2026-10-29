@@ -1,4 +1,4 @@
-//! Liest und schreibt `~/.harness/board-repos.yaml`: je Board-ID der eigene Repo-Pfad
+//! Liest und schreibt `~/.nexus/board-repos.yaml`: je Board-ID der eigene Repo-Pfad
 //! dieses Benutzers (None = ausdrücklich kein Pfad). Die Datei gehört dem Benutzer und
 //! steht bewusst nicht in der gemeinsamen Datenbank.
 
