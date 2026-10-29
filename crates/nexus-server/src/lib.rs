@@ -6,6 +6,7 @@
 //! ([`proxy`]). Spätere Tickets schalten Routengruppe für Routengruppe
 //! um, indem sie in [`routes::build_router`] Handler registrieren.
 
+pub mod board_db;
 pub mod board_runtime;
 pub mod config;
 pub mod dispatch;
@@ -27,12 +28,17 @@ use std::sync::Arc;
 use nexus_core::board::basics::BoardActor;
 use nexus_core::board::config::BoardConfig;
 use nexus_core::board::config_store::BoardConfigStore;
+use nexus_core::board::repo_file::BoardRepoFile;
+use nexus_core::board::repo_paths::BoardRepoPaths;
+use nexus_core::board::services::BoardServices;
+use nexus_core::clock::Clock;
 use nexus_core::registry::{ServerInfo, ServerInfoFile};
 use nexus_core::{HarnessError, HarnessHome, Result};
 use nexus_db::{AnyBoardDatabase, ConnectOptions};
 use nexus_platform::Platform;
 use tokio::net::TcpListener;
 
+use crate::board_db::{ServerBoardDatabase, ServerBoardServices};
 use crate::board_runtime::{BoardBackendFactory, BoardBackendFuture};
 use crate::config::ServerConfig;
 use crate::state::AppState;
@@ -196,12 +202,24 @@ pub fn board_from_config(home: HarnessHome) -> BoardBackendFactory {
     board_runtime::factory(move || open_board(home.clone()))
 }
 
-/// Liest `board.yaml` und öffnet die Datenbank daraus
+/// Liest `board.yaml`, öffnet die Datenbank daraus und baut die Dienste des Boards
 fn open_board(home: HarnessHome) -> BoardBackendFuture {
     Box::pin(async move {
-        let config = BoardConfigStore::new(home).require()?;
+        let config = BoardConfigStore::new(home.clone()).require()?;
         let db = open_database(config.clone()).await?;
-        Ok(Arc::new(OpenedBoardBackend { config, db }) as Arc<dyn board_runtime::BoardBackend>)
+        // Die eigenen Repo-Pfade des Benutzers stehen lokal in `board-repos.yaml`, nicht in
+        // der gemeinsamen Datenbank
+        let repo_paths = BoardRepoPaths::new(
+            Arc::new(BoardRepoFile::new(home)),
+            Some(config.user_id.clone()),
+        );
+        let services = BoardServices::new(
+            Arc::new(ServerBoardDatabase::Open(db)),
+            Clock::system(),
+            repo_paths,
+        );
+        Ok(Arc::new(OpenedBoardBackend { config, services })
+            as Arc<dyn board_runtime::BoardBackend>)
     })
 }
 
@@ -218,16 +236,18 @@ async fn open_database(config: BoardConfig) -> Result<AnyBoardDatabase> {
     )
 }
 
-/// Die geöffnete Board-Datenbank als Laufzeit des Servers. Die Dienste des Boards hängen an
-/// der Datenbank und kommen mit der `/api/db`-Gruppe dazu (P4-3); hier stehen Handelnder und
-/// Schließen.
+/// Die geöffnete Board-Datenbank als Laufzeit des Servers samt den Diensten des Boards
 struct OpenedBoardBackend {
     config: BoardConfig,
-    db: AnyBoardDatabase,
+    services: ServerBoardServices,
 }
 
 #[async_trait::async_trait]
 impl board_runtime::BoardBackend for OpenedBoardBackend {
+    fn services(&self) -> &ServerBoardServices {
+        &self.services
+    }
+
     fn actor(&self, name: Option<&str>) -> BoardActor {
         let name = name
             .map(str::trim)
@@ -241,7 +261,7 @@ impl board_runtime::BoardBackend for OpenedBoardBackend {
 
     async fn close(&self) -> Result<()> {
         use nexus_core::board::database::BoardDatabase as _;
-        self.db.close().await
+        self.services.db.close().await
     }
 }
 

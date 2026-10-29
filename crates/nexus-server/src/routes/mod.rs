@@ -4,6 +4,7 @@
 //! Der Rückfall leitet `/api`-Pfade an den Node-Server weiter (falls einer eingerichtet ist)
 //! und liefert sonst die Oberfläche bzw. 404 als JSON.
 
+pub mod db_boards;
 pub mod health;
 pub mod settings;
 pub mod static_files;
@@ -34,6 +35,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     }
     if state.config.proxy_groups.enabled(RouteGroup::Settings) {
         router = router.merge(settings::routes());
+    }
+    if state.config.proxy_groups.enabled(RouteGroup::DbBoards) {
+        router = router.merge(db_boards::routes());
     }
     if state.config.proxy_groups.enabled(RouteGroup::Workflow) {
         router = router.merge(workflow::routes());

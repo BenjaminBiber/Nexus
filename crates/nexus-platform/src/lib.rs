@@ -7,6 +7,8 @@
 //! `packages/server/src/dbboard/FolderPicker.ts`, `packages/server/src/docs/FileOpener.ts`
 //! und `packages/server/src/notifications/WindowsToastSender.ts`.
 
+pub mod windows;
+
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
@@ -94,6 +96,30 @@ impl Platform {
         Self {
             folders: Box::new(UnavailableFolderPicker),
             files: Box::new(UnavailableFileOpener),
+            notifier: Box::new(SilentNotifier),
+        }
+    }
+
+    /// Die Systemfunktionen dieses Rechners: unter Windows der Explorer-Ordnerdialog, sonst
+    /// die „nicht verfügbar“-Umsetzung (dort nutzt die App ab P1-4 den Tauri-Dialog)
+    pub fn local() -> Self {
+        Self {
+            #[cfg(windows)]
+            folders: Box::new(crate::windows::folder_picker::WindowsFolderPicker::new()),
+            #[cfg(not(windows))]
+            folders: Box::new(UnavailableFolderPicker),
+            files: Box::new(UnavailableFileOpener),
+            notifier: Box::new(SilentNotifier),
+        }
+    }
+
+    /// Systemfunktionen im Vertragsmodus: kein Ordnerdialog (die Auswahl gilt als
+    /// abgebrochen), kein Öffnen von Dateien, keine Systemmeldungen – wie
+    /// `contract/servers/ts-server.mjs` sie stellt
+    pub fn contract() -> Self {
+        Self {
+            folders: Box::new(FakeFolderPicker::new(None)),
+            files: Box::new(FakeFileOpener::default()),
             notifier: Box::new(SilentNotifier),
         }
     }

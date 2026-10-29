@@ -20,13 +20,18 @@ use nexus_db::mssql::error_map::MssqlErrorMap;
 use nexus_db::sqlite::error_map as sqlite_errors;
 use tokio::sync::Mutex;
 
+use crate::board_db::ServerBoardServices;
+
 /// Was der Server von einer Board-Laufzeit braucht.
 ///
 /// Die Dienste des Boards ([`nexus_core::board`]) hängen an der Datenbank und sind deshalb
-/// generisch; sie kommen mit der Rust-Board-Laufzeit dazu (P4-3), sobald die Routen der
-/// `/api/db`-Gruppe entstehen. Hier steht nur, was das Grundgerüst schon braucht.
+/// generisch; damit die Laufzeit hinter einem Trait-Objekt stehen kann, arbeiten sie auf
+/// genau einem Datenbanktyp ([`crate::board_db::ServerBoardDatabase`]).
 #[async_trait]
 pub trait BoardBackend: Send + Sync {
+    /// Die Dienste des Boards auf der Datenbank dieser Laufzeit
+    fn services(&self) -> &ServerBoardServices;
+
     /// Der Handelnde dieser Laufzeit; ohne Namen der eigene Benutzer
     fn actor(&self, name: Option<&str>) -> BoardActor;
 

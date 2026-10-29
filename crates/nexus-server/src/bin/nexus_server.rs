@@ -28,7 +28,8 @@ async fn main() -> ExitCode {
         config.web_dir = Some(repo_web_dir());
     }
     let board = nexus_server::board_from_config(config.home.clone());
-    let server = match nexus_server::serve(config, board, Platform::unavailable()).await {
+    let platform = platform(&config);
+    let server = match nexus_server::serve(config, board, platform).await {
         Ok(server) => server,
         Err(error) => {
             eprintln!("{error}");
@@ -53,4 +54,13 @@ fn repo_web_dir() -> std::path::PathBuf {
         .join("packages")
         .join("web")
         .join("dist")
+}
+
+/// Systemfunktionen zu diesen Einstellungen: im Vertragsmodus die des Vertrags, sonst die
+/// dieses Rechners
+fn platform(config: &nexus_server::config::ServerConfig) -> Platform {
+    match config.is_contract() {
+        true => Platform::contract(),
+        false => Platform::local(),
+    }
 }
