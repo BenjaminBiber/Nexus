@@ -9,44 +9,44 @@ Das Board ist der Aufgaben-Tracker – nicht GitHub, nicht GitLab und nicht die 
 Azure-DevOps-Servers (die werden nur gelesen, wenn der Nutzer ausdrücklich danach fragt).
 Alle Daten liegen in der Board-Datenbank – gemeinsam auf SQL Server (jeder Entwickler hat eigene
 Boards in Projekten, sieht aber alle) oder lokal als SQLite-Datei (nur dieser Rechner). Tickets und
-Notizen werden nie von Hand in der Datenbank geändert, sondern nur über `harness board …`.
+Notizen werden nie von Hand in der Datenbank geändert, sondern nur über `nexus board …`.
 
 ## Sieben Regeln für jede Aufgabe
 
 1. **Vor einer mehrschrittigen Aufgabe nachsehen**, ob es schon ein Ticket gibt
-   (`harness board list --q "stichwort" --md`), sonst eines anlegen. Kein doppeltes Ticket.
-2. **Vor der Umsetzung übernehmen** (`harness board claim <id> --agent claude`), Zwischenstände
+   (`nexus board list --q "stichwort" --md`), sonst eines anlegen. Kein doppeltes Ticket.
+2. **Vor der Umsetzung übernehmen** (`nexus board claim <id> --agent claude`), Zwischenstände
    als Kommentar festhalten, am Ende nach Erledigt mit Abnahme.
 3. **Ein freigegebener Plan gehört aufs Ticket** – vor der ersten Codeänderung (siehe *Planen*).
 4. **Ohne Abnahme kein Erledigt.** Am Ticket steht, *woran man sieht*, dass es fertig ist;
    sonst weist das Board den Wechsel ab.
 5. **Ein Blocker gehört ins Board**, mit Grund. Fehlt eine Entscheidung des Nutzers, wird daraus
-   eine **Frage** (`harness board question add … --ticket <id>`), kein Blockiert-Grund.
+   eine **Frage** (`nexus board question add … --ticket <id>`), kein Blockiert-Grund.
 6. **Reihenfolge gehört in die Voraussetzungen** (depends-on), nicht in den Beschreibungstext.
 7. **Befunde über etwas anderes werden eine Notiz**, kein Kommentar im laufenden Ticket und
    kein Ticket auf Verdacht. Gibt es den Befund schon, wird er hochgezählt (`note seen`), nicht neu notiert.
 
 ## Zugang
 
-Die Verbindung steht in `~/.harness/board.yaml` und wird in der Oberfläche unter
+Die Verbindung steht in `~/.nexus/board.yaml` und wird in der Oberfläche unter
 **Einstellungen → Board-Datenbank** gepflegt. Meldet ein Befehl, dass die Datei fehlt oder die
 Datenbank nicht erreichbar ist, sag das dem Nutzer und hör auf – nichts raten, keine
 Zugangsdaten selbst eintragen.
 
 Ohne `--board` arbeitet jeder Befehl im eingerichteten Repo auf dem **Board dieses Repos**
-(Zuordnung mit `harness board boards repo <id> <pfad>`), sonst auf dem **aktiven Board** dieses Rechners.
-Der Repo-Pfad ist **je Person lokal** (`~/.harness/board-repos.yaml`), nicht in der Board-Datenbank: jeder setzt
-seinen eigenen Ordner, `harness board boards repo <id>` zeigt ihn, `--clear` entfernt ihn. Einen fremden Pfad nie übernehmen.
-`harness board start` und `done` nehmen nur Tickets des Boards an, das dem Repo zugeordnet ist.
+(Zuordnung mit `nexus board boards repo <id> <pfad>`), sonst auf dem **aktiven Board** dieses Rechners.
+Der Repo-Pfad ist **je Person lokal** (`~/.nexus/board-repos.yaml`), nicht in der Board-Datenbank: jeder setzt
+seinen eigenen Ordner, `nexus board boards repo <id>` zeigt ihn, `--clear` entfernt ihn. Einen fremden Pfad nie übernehmen.
+`nexus board start` und `done` nehmen nur Tickets des Boards an, das dem Repo zugeordnet ist.
 
 ```bash
-harness board boards list
-harness board list --board all --md
+nexus board boards list
+nexus board list --board all --md
 ```
 
-Nur auf ausdrückliche Anweisung des Nutzers: `harness board boards use <id>`,
-`harness board boards create <projekt> <name>`, `harness board boards delete <id>`,
-`harness board project create <key> <name>`.
+Nur auf ausdrückliche Anweisung des Nutzers: `nexus board boards use <id>`,
+`nexus board boards create <projekt> <name>`, `nexus board boards delete <id>`,
+`nexus board project create <key> <name>`.
 
 ## Spalten
 
@@ -61,16 +61,16 @@ Nur auf ausdrückliche Anweisung des Nutzers: `harness board boards use <id>`,
 - **Wartet** ist abgeleitet: Tickets in Backlog, In Planung oder Geplant mit offener
   Voraussetzung. Dorthin verschieben kann man nichts.
 - Die Reihenfolge in einer Spalte ergibt sich aus der Priorität (`urgent` zuerst) und der
-  Ticketnummer. Soll etwas weiter oben stehen: `harness board set <id> --priority high`.
+  Ticketnummer. Soll etwas weiter oben stehen: `nexus board set <id> --priority high`.
 
 ## Abhängigkeiten
 
 ```bash
-harness board create "Fassade" --depends-on ARC-0001,ARC-0002
-harness board set ARC-0003 --depends-on-add ARC-0004
-harness board set ARC-0003 --depends-on-rm ARC-0001
-harness board set ARC-0003 --depends-on none
-harness board list --status wartet --md
+nexus board create "Fassade" --depends-on ARC-0001,ARC-0002
+nexus board set ARC-0003 --depends-on-add ARC-0004
+nexus board set ARC-0003 --depends-on-rm ARC-0001
+nexus board set ARC-0003 --depends-on none
+nexus board list --status wartet --md
 ```
 
 Solange eine Voraussetzung offen ist (nicht erledigt, nicht „nicht mehr nötig“), scheitern
@@ -80,13 +80,13 @@ Voraussetzungen dürfen auf Tickets anderer Boards zeigen; Kreise werden abgeleh
 ## Erst lesen, dann handeln
 
 ```bash
-harness board list --md
-harness board list --status geplant --md
-harness board list --needs-planning --md
-harness board show ARC-0003
-harness board show ARC-0003 --all-comments --history
-harness board show ARC-0003 --field plan
-harness --json board show ARC-0003
+nexus board list --md
+nexus board list --status geplant --md
+nexus board list --needs-planning --md
+nexus board show ARC-0003
+nexus board show ARC-0003 --all-comments --history
+nexus board show ARC-0003 --field plan
+nexus --json board show ARC-0003
 ```
 
 `--md` ist der Ausgang für Übersichten, `--json` liefert alles vollständig.
@@ -98,33 +98,33 @@ immer stehen). `--history` und `--all-comments` holen den Rest dazu; `--json` un
 Fragt der Nutzer, was auf ihn wartet, oder will er seinen Eingang sehen:
 
 ```bash
-harness board inbox --md
-harness board inbox --kind merge,accept --md
-harness board inbox --board 5 --md
+nexus board inbox --md
+nexus board inbox --kind merge,accept --md
+nexus board inbox --board 5 --md
 ```
 
 Die Liste umfasst alle **eigenen** Boards: gescheiterte Merges und Einrichtungen, offene Fragen (ein Ticket mit offener
 Frage erscheint nur über die Frage), Abnahmen (`Human Interaction`), sonst blockierte Tickets, Tickets in Planung und
 offene Notizen. Jeder Eintrag nennt den Befehl, mit dem es weitergeht. Die Reihenfolge legt der Nutzer in der Oberfläche
-fest (lokal in `~/.harness/inbox-order.json`); neue Einträge stehen oben. Abnehmen und Entscheiden bleiben beim Nutzer.
+fest (lokal in `~/.nexus/inbox-order.json`); neue Einträge stehen oben. Abnehmen und Entscheiden bleiben beim Nutzer.
 
 ## Aufgabe aufnehmen
 
 ```bash
-harness board create "Titel der Aufgabe" --desc "Kontext" --acceptance "Woran man es sieht" --priority high --label backend --by claude
+nexus board create "Titel der Aufgabe" --desc "Kontext" --acceptance "Woran man es sieht" --priority high --label backend --by claude
 ```
 
 `--label` und `--step "Text"` (Arbeitsschritt, in dieser Reihenfolge) dürfen mehrfach stehen. `--planned` setzt den
 Planungsbedarf nicht (wenn du direkt planst oder kein Plan nötig ist). Gibt es auf dem Board schon ein offenes Ticket mit gleichem Titel (Groß-/Kleinschreibung
 egal), lehnt `create` ab und nennt dessen ID (Code `ticket-duplicate`); nur wenn es wirklich ein eigenes Ticket sein
 soll: `--force`, mit Kommentar warum. Ähnliche, aber anders formulierte Tickets erkennt `create` nicht – vorher mit
-`harness board list` nachsehen.
+`nexus board list` nachsehen.
 
 ## Planen
 
 ```bash
-harness --json board next-planning --claim claude
-harness board plan-json ARC-0001 --file payload.json --by claude
+nexus --json board next-planning --claim claude
+nexus board plan-json ARC-0001 --file payload.json --by claude
 ```
 
 `payload.json` enthält `plan`, `handbook` und `diagram` (Mermaid **ohne** Code-Fence), optional `acceptance`
@@ -134,16 +134,16 @@ Geplant, löscht den Planungsbedarf und den Claim. Ein Claim verfällt nach 15 M
 Nur ein Feld schreiben, ohne die Planung als fertig zu melden:
 
 ```bash
-harness board set ARC-0001 --plan-file plan.md --by claude
+nexus board set ARC-0001 --plan-file plan.md --by claude
 ```
 
 **Tickets aus einem Superpowers-Plan:** Sagt der Nutzer „Lege für die Tasks des Plans Tickets an“, gilt der Plan unter
-`docs/superpowers/plans/…` (ohne Angabe der neueste). Zuerst mit `harness board list` auf Dubletten prüfen: Gibt es zu einer
+`docs/superpowers/plans/…` (ohne Angabe der neueste). Zuerst mit `nexus board list` auf Dubletten prüfen: Gibt es zu einer
 Task schon ein Ticket, keins anlegen, sondern es nennen. Dann je Task in der Reihenfolge des Plans:
 
 ```bash
-harness board create "<Task-Titel>" --desc "<Ziel der Task>" --acceptance "<woran man es sieht>" --step "<Task-Schritt 1>" --step "<Task-Schritt 2>" --depends-on <ID der vorigen Task> --by claude
-harness board plan-json <ID> --file payload.json --by claude
+nexus board create "<Task-Titel>" --desc "<Ziel der Task>" --acceptance "<woran man es sieht>" --step "<Task-Schritt 1>" --step "<Task-Schritt 2>" --depends-on <ID der vorigen Task> --by claude
+nexus board plan-json <ID> --file payload.json --by claude
 ```
 
 `--step` steht je Task-Schritt in dieser Reihenfolge; `--depends-on` nennt das Ticket der vorigen Task (beim ersten
@@ -154,13 +154,13 @@ ausgecheckte Branch des Hauptordners. Nach dem Start lässt sich der Zielbranch 
 Testbefehle des Plans, `diagram` ein kleines Mermaid-Diagramm **ohne** Code-Zaun. Auch dieser Plan endet mit
 `## Aufwand` (siehe „Aufwand schätzen“). `plan-json` setzt Geplant und löscht den Planungsbedarf. Plan und Handbuch stehen danach im
 Ticket; Worktrees und Agenten brauchen die Plan-Datei nicht. Für den Dispatcher danach wie unter „Für den Dispatcher
-vorbereiten“. Der Skill `ai-harness:harness-tasks` geht genau diesen Weg: Er schneidet die Aufgaben zu und legt sie
+vorbereiten“. Der Skill `nexus:harness-tasks` geht genau diesen Weg: Er schneidet die Aufgaben zu und legt sie
 hierüber als Tickets an.
 
 **Tickets aus einem Spec-Dokument:** Aus den Dokumenten unter `docs/superpowers` entstehen Tickets über die Seite
 „Docs“ im Web: Stellen markieren, Entwürfe erzeugen lassen, prüfen und anlegen (serverseitig `POST
 /api/projects/:pid/docs/tickets`). Die Tickets landen im **Backlog mit Planungsbedarf** und werden danach wie oben
-geplant (`next-planning` / `plan-json`); Labels wie `auto` ergänzt `harness board set <ID> --label …` (ersetzt die
+geplant (`next-planning` / `plan-json`); Labels wie `auto` ergänzt `nexus board set <ID> --label …` (ersetzt die
 Labels, bisherige mit angeben). Ist das Spec-Dokument nicht (vollständig) committet, warnt `board start`: Worktrees und
 Agenten sehen nur den letzten Commit – erst committen.
 
@@ -182,9 +182,9 @@ und Effort für die Umsetzung. Fehlt der Abschnitt, greifen nur seine groben Reg
 ## Umsetzen
 
 ```bash
-harness board claim ARC-0001 --agent claude
-harness board comment ARC-0001 "Schritt 2 von 4 fertig, Tests laufen." --author claude
-harness board move ARC-0001 erledigt --acceptance "Test deckt den Fall ab" --by claude
+nexus board claim ARC-0001 --agent claude
+nexus board comment ARC-0001 "Schritt 2 von 4 fertig, Tests laufen." --author claude
+nexus board move ARC-0001 erledigt --acceptance "Test deckt den Fall ab" --by claude
 ```
 
 Ist ein Ticket schon zugewiesen (auch an `claude`), endet `claim` mit Exit 1. Hast du es früher
@@ -193,29 +193,29 @@ oder frag nach. Nie `--force` ohne den Nutzer.
 
 ### Im eigenen Worktree (Repo mit Board)
 
-Gehört das Repo zu einem Board (`harness board boards repo <id> <pfad>`), arbeitet jedes Ticket in seinem Worktree:
+Gehört das Repo zu einem Board (`nexus board boards repo <id> <pfad>`), arbeitet jedes Ticket in seinem Worktree:
 
 ```bash
-harness board start ARC-0001 --by claude
-harness board step ARC-0001 1 --by claude
-harness board done ARC-0001 --acceptance "Test deckt den Fall ab" --by claude
+nexus board start ARC-0001 --by claude
+nexus board step ARC-0001 1 --by claude
+nexus board done ARC-0001 --acceptance "Test deckt den Fall ab" --by claude
 ```
 
-`start` legt einen eigenen Branch `ticket/<ID>-<Kurztitel>` vom Zielbranch des Tickets bzw. vom ausgecheckten Branch und einen eigenen Worktree an und setzt In Arbeit – mit denselben Sperren wie `move`. Mit `--join` tritt das Ticket stattdessen einem offenen Worktree derselben Spec bei, wenn sich die Bereiche nicht überschneiden (früheres Verhalten; `--in <ID>` wählt den Worktree selbst). `step` hakt Schritte ab, `done` setzt Erledigt (Abnahme Pflicht) und räumt fertige Worktrees auf. Gemergt wird nur vom Dispatcher (nach Erledigt eines von ihm umgesetzten Tickets, jedes Ticket einzeln, sobald die Tickets seines Worktrees fertig sind) oder vom Menschen. Gehören Branch und Worktree eines Tickets nicht mehr zu ihm, leert `harness board set <ID> --clear-branch` beide Felder (Branch und Ordner selbst bleiben).
+`start` legt einen eigenen Branch `ticket/<ID>-<Kurztitel>` vom Zielbranch des Tickets bzw. vom ausgecheckten Branch und einen eigenen Worktree an und setzt In Arbeit – mit denselben Sperren wie `move`. Mit `--join` tritt das Ticket stattdessen einem offenen Worktree derselben Spec bei, wenn sich die Bereiche nicht überschneiden (früheres Verhalten; `--in <ID>` wählt den Worktree selbst). `step` hakt Schritte ab, `done` setzt Erledigt (Abnahme Pflicht) und räumt fertige Worktrees auf. Gemergt wird nur vom Dispatcher (nach Erledigt eines von ihm umgesetzten Tickets, jedes Ticket einzeln, sobald die Tickets seines Worktrees fertig sind) oder vom Menschen. Gehören Branch und Worktree eines Tickets nicht mehr zu ihm, leert `nexus board set <ID> --clear-branch` beide Felder (Branch und Ordner selbst bleiben).
 
 ### Schritte
 
-Schritte sind die nummerierte Arbeitsliste eines Tickets (`harness board show` listet sie mit Nummer ab 1, optional mit
+Schritte sind die nummerierte Arbeitsliste eines Tickets (`nexus board show` listet sie mit Nummer ab 1, optional mit
 Anleitung). Jede Änderung erhöht die Version und steht im Verlauf.
 
 ```bash
-harness board step ARC-0001 2 --by claude                      # abhaken (gleich: step done ARC-0001 2)
-harness board step ARC-0001 2 --undo                           # Haken zurücknehmen
-harness board step add ARC-0001 "Test schreiben" --detail "npm test – erwartet: rot" --by claude
-harness board step add ARC-0001 "Migration prüfen" --at 2      # an Nummer 2 einfügen
-harness board step edit ARC-0001 2 --text "Neuer Text"         # --detail "" entfernt die Anleitung
-harness board step move ARC-0001 4 1                           # Schritt 4 an Nummer 1
-harness board step rm ARC-0001 3                               # löschen, folgende rücken nach
+nexus board step ARC-0001 2 --by claude                      # abhaken (gleich: step done ARC-0001 2)
+nexus board step ARC-0001 2 --undo                           # Haken zurücknehmen
+nexus board step add ARC-0001 "Test schreiben" --detail "npm test – erwartet: rot" --by claude
+nexus board step add ARC-0001 "Migration prüfen" --at 2      # an Nummer 2 einfügen
+nexus board step edit ARC-0001 2 --text "Neuer Text"         # --detail "" entfernt die Anleitung
+nexus board step move ARC-0001 4 1                           # Schritt 4 an Nummer 1
+nexus board step rm ARC-0001 3                               # löschen, folgende rücken nach
 ```
 
 Nummern sind nach `add --at`, `move` und `rm` neu – vor dem nächsten Befehl mit `show` nachsehen. Optional
@@ -232,11 +232,11 @@ schützt `--expect "<bisheriger Text>"` (bei `step`/`done`/`edit`/`rm`/`move`) b
 | `blockiert` + Grund | nicht fertig, es fehlt etwas anderes (Zugang, Umgebung) |
 
 ```bash
-harness board comment ARC-0001 "Umgesetzt. Zu prüfen: … Erwartung: … Nicht geprüft: …" --author claude
-harness board set ARC-0001 --status blockiert --blocked-reason "Human Interaction: Oberfläche ansehen" --by claude
+nexus board comment ARC-0001 "Umgesetzt. Zu prüfen: … Erwartung: … Nicht geprüft: …" --author claude
+nexus board set ARC-0001 --status blockiert --blocked-reason "Human Interaction: Oberfläche ansehen" --by claude
 ```
 
-Ein `Human Interaction` nimmt nur der Nutzer ab, nie ein Agent: `harness board accept <ID>` (im Panel „Abnehmen“) setzt
+Ein `Human Interaction` nimmt nur der Nutzer ab, nie ein Agent: `nexus board accept <ID>` (im Panel „Abnehmen“) setzt
 Erledigt, leert den Grund und stößt auf einem eigenen Board den Merge an.
 
 ## Für den Dispatcher vorbereiten
@@ -244,9 +244,9 @@ Erledigt, leert den Grund und stößt auf einem eigenen Board den Merge an.
 Sagt der Nutzer „bereite ARC-0007 für den Dispatcher vor“ (oder „mach ARC-0007 fertig für den Dispatcher“), bringst du
 das Ticket in den Zustand, in dem der Dispatcher es übernimmt, und legst das Profil fest. Ablauf:
 
-1. **Lesen:** `harness board show ARC-0007` (Kommentare, Plan, Handbuch, Abnahme, Labels, Abhängigkeiten, Fragen;
+1. **Lesen:** `nexus board show ARC-0007` (Kommentare, Plan, Handbuch, Abnahme, Labels, Abhängigkeiten, Fragen;
    ältere Agenten-Kommentare und Verlauf bei Bedarf mit `--all-comments --history`) und
-   `harness board dispatch status` (nennt den Grund, warum ein Ticket noch nicht bereit ist).
+   `nexus board dispatch status` (nennt den Grund, warum ein Ticket noch nicht bereit ist).
 2. **Prüfen, was fehlt.** Bereit ist ein Ticket nur, wenn alles davon erfüllt ist:
    - Status Geplant, kein Zuständiger, kein Planungsbedarf;
    - Plan, Handbuch und Abnahme vorhanden;
@@ -258,7 +258,7 @@ das Ticket in den Zustand, in dem der Dispatcher es übernimmt, und legst das Pr
    - Plan, Handbuch oder Diagramm fehlen: planen wie unter „Planen“ (`plan-json` setzt Geplant und löscht den
      Planungsbedarf), mit Abschnitt `## Aufwand` am Ende des Plans. Ein Ticket mit Plan nur ergänzen
      (`set --plan-file`), den vorhandenen Plan nicht wegwerfen.
-   - Abnahme fehlt: `harness board set ARC-0007 --acceptance "…" --by claude`, prüfbar formuliert.
+   - Abnahme fehlt: `nexus board set ARC-0007 --acceptance "…" --by claude`, prüfbar formuliert.
    - Schritte fehlen und der Plan hat erkennbare Arbeitsschritte: als Schritte anlegen (siehe „Schritte“).
    - Fehlt eine Entscheidung, die nur der Nutzer treffen kann: eine Frage anlegen (siehe „Fragen“) und dem Nutzer sagen,
      dass das Ticket bis zur Antwort wartet – nicht selbst entscheiden.
@@ -270,43 +270,43 @@ das Ticket in den Zustand, in dem der Dispatcher es übernimmt, und legst das Pr
 5. **Labels setzen.** Immer `auto` **und** `profil:<name>` zusammen. `set --label` ersetzt alle Labels: die bisherigen
    mitgeben, ein altes `profil:…` dabei weglassen:
    ```bash
-   harness board set ARC-0007 --label frontend --label auto --label profil:standard --by claude
+   nexus board set ARC-0007 --label frontend --label auto --label profil:standard --by claude
    ```
    `auto` nie ohne `profil:` setzen. `model:` und `effort:` nur, wenn der Nutzer es verlangt.
-6. **Begründen und prüfen.** Die Einschätzung als Kommentar: `harness board comment ARC-0007 "Für den Dispatcher
+6. **Begründen und prüfen.** Die Einschätzung als Kommentar: `nexus board comment ARC-0007 "Für den Dispatcher
    vorbereitet: profil:standard – <Begründung>; ergänzt: <was>" --author claude`. Dann noch einmal
-   `harness board dispatch status`: Das Ticket darf dort keinen Grund mehr haben. Dem Nutzer Profil, Begründung,
+   `nexus board dispatch status`: Das Ticket darf dort keinen Grund mehr haben. Dem Nutzer Profil, Begründung,
    Ergänztes und Offenes nennen.
 
 Mehrere Tickets („bereite ARC-0007 bis ARC-0010 vor“) nacheinander genauso. Starten musst du nichts – der Dispatcher
-prüft jede Minute (sofort: `harness board dispatch run`, nur wenn der Nutzer es will).
+prüft jede Minute (sofort: `nexus board dispatch run`, nur wenn der Nutzer es will).
 
 ## Vom Dispatcher gestartet
 
-Der Harness-Server übernimmt bereite Tickets (Geplant, Label `auto`, Plan, Handbuch und Abnahme vorhanden) der eigenen
+Der Nexus-Server übernimmt bereite Tickets (Geplant, Label `auto`, Plan, Handbuch und Abnahme vorhanden) der eigenen
 Boards und startet dafür `claude -p` im Worktree des Tickets. Wer so gestartet wurde, heißt `junior-<ID>` und hat sein
 Ticket schon:
 
 1. Das Ticket ist übernommen: **nicht erneut claimen**, kein anderes Ticket anfassen, nicht `start` aufrufen – Branch und
    Worktree stehen schon.
-2. Zuerst `harness board show <ID>` lesen (Kommentare, Plan, Handbuch; die Ausgabe ist kompakt, ältere
+2. Zuerst `nexus board show <ID>` lesen (Kommentare, Plan, Handbuch; die Ausgabe ist kompakt, ältere
    Agenten-Kommentare und der Verlauf kommen mit `--all-comments --history` dazu). Stehen in der Arbeitsanweisung Entscheidungen zu
    Fragen, gelten sie vor Plan und Handbuch. Vorhandene Commits auf dem Branch stammen aus einem früheren Lauf – dort
    weitermachen. Zwischenstände mit `step` und `comment --author junior-<ID>`.
 3. Genau ein Ausgang, immer mit `--by junior-<ID>`:
-   - **erledigt:** alles committet, Nachweis als Kommentar, dann `harness board done <ID> --acceptance "…" --by junior-<ID>`.
+   - **erledigt:** alles committet, Nachweis als Kommentar, dann `nexus board done <ID> --acceptance "…" --by junior-<ID>`.
      Danach mergt der Dispatcher in den Zielbranch des Tickets bzw. den Branch, der im Hauptordner ausgecheckt ist, und räumt Worktree und Branch auf.
      Je nach Einstellung `mergeStrategy` als Merge-Commit (alle Commits bleiben) oder als Squash (ein Commit je Ticket) –
      Zwischencommits sind also unbedenklich, die Commit-Nachrichten trotzdem aussagekräftig halten.
      Mit `reviewBeforeMerge` (Standard) wartet der Dispatcher vorher auf die Freigabe eines Menschen: Das Ticket steht
      dann auf Blockiert mit Grund `Human Interaction: Review vor dem Merge`, im Panel mit Diff und deinen Testläufen.
      Tests, Build und Lint deshalb mit Bash oder PowerShell ausführen – nur so erscheinen sie im Review.
-   - **Human Interaction:** `harness board set <ID> --status blockiert --blocked-reason "Human Interaction: …" --by junior-<ID>`.
-     Gemergt wird erst, wenn der Nutzer abnimmt (`harness board accept`); andere Tickets warten nicht darauf.
-   - **Frage:** `harness board question add "…" --description "…" --ticket <ID> --author junior-<ID>` (nach den Schreibregeln,
+   - **Human Interaction:** `nexus board set <ID> --status blockiert --blocked-reason "Human Interaction: …" --by junior-<ID>`.
+     Gemergt wird erst, wenn der Nutzer abnimmt (`nexus board accept`); andere Tickets warten nicht darauf.
+   - **Frage:** `nexus board question add "…" --description "…" --ticket <ID> --author junior-<ID>` (nach den Schreibregeln,
      siehe „Fragen“), dann den Lauf beenden.
      Das Ticket geht zurück nach Geplant und läuft nach der Entscheidung im selben Worktree weiter.
-   - **blockiert mit Grund** (Zugang, Umgebung): `harness board set <ID> --status blockiert --blocked-reason "…" --by junior-<ID>`.
+   - **blockiert mit Grund** (Zugang, Umgebung): `nexus board set <ID> --status blockiert --blocked-reason "…" --by junior-<ID>`.
 4. Steht in der Arbeitsanweisung eine **Rückmeldung aus dem Review**, hat ein Mensch die Umsetzung angesehen und
    zurückgegeben. Sie gilt vor Plan und Handbuch; es geht im selben Worktree und Branch weiter, danach wieder „erledigt“.
 5. Ohne Ausgang gilt der Lauf als abgebrochen: `[dispatch] Abbruch`, zurück nach Geplant, nächster Versuch eine Stufe
@@ -326,14 +326,14 @@ Für alle anderen gilt: Tickets mit Zuständigem `junior-…` gehören dem Dispa
 Versuche. Lokale Änderungen im Hauptordner halten den Merge nur an, wenn sie vorgemerkt sind (git add) oder Dateien
 betreffen, die auch der Branch ändert; dann wartet er (Kommentar „Merge wartet auf den Hauptordner“) und läuft von selbst,
 sobald sie committet oder verworfen sind. Steht ein Ticket auf Blockiert mit Grund `Merge: …`, ist der Merge gescheitert
-(z. B. Detached HEAD, ungelöster Konflikt); nach dem Beheben stößt `harness board merge <ID>` ihn erneut an (im Panel „Erneut mergen“).
+(z. B. Detached HEAD, ungelöster Konflikt); nach dem Beheben stößt `nexus board merge <ID>` ihn erneut an (im Panel „Erneut mergen“).
 Jedes Ticket bekommt einen eigenen Worktree und wird einzeln gemergt (Einstellung `joinWorktrees: none`; `sameSpec`
 bündelt wie früher die Tickets einer Spec in einem Worktree). Ein Ticket startet erst, wenn seine Voraussetzungen gemergt
 sind – so steckt deren Code in seinem neuen Branch. Gehört der eingetragene Worktree eines fortgesetzten Tickets einem
 anderen Ticket oder wurde er aufgeräumt, stellt der Dispatcher ihn nicht wieder her, sondern startet auf eigenem Branch
-(Hinweis im Start-Kommentar). Ein Ticket mit Grund `Human Interaction: …` nimmt der Nutzer mit `harness board accept <ID>`
+(Hinweis im Start-Kommentar). Ein Ticket mit Grund `Human Interaction: …` nimmt der Nutzer mit `nexus board accept <ID>`
 ab (im Panel „Abnehmen“): Erledigt, danach der Merge wie bei `merge`. Ein von Hand auf Erledigt gesetztes Ticket mergt
-man mit „Mergen“ im Panel oder `harness board merge <ID>`. Wartet ein Ticket mit Branch auf einem eigenen Board auf
+man mit „Mergen“ im Panel oder `nexus board merge <ID>`. Wartet ein Ticket mit Branch auf einem eigenen Board auf
 Freigabe (`Human Interaction: …`), zeigt das Panel den Review: Diff gegen den Zielbranch, Testläufe des Agenten,
 „Übernehmen“ (wie `accept`: Erledigt und Merge) und „Zurück an den Agenten“ mit Rückmeldung (zurück nach Geplant, der
 nächste Lauf setzt im selben Worktree fort, zählt nicht als Versuch). Das geht nur für Tickets eigener Boards; die Ausgabe nennt das Ergebnis für das Ticket
@@ -341,34 +341,34 @@ nächste Lauf setzt im selben Worktree fort, zählt nicht als Versuch). Das geht
 
 Die Arbeitsanweisung je Laufart (Umsetzung, Planung, Recherche, Merge) kommt aus einer Vorlage. Standard ist die
 mitgelieferte; unter Einstellungen → Dispatcher → Prompts lässt sich je Laufart eine eigene hinterlegen (gespeichert in
-`~/.harness/dispatch.yaml`), wobei die Pflichtteile wie die Board-Befehle drin bleiben müssen – sonst lehnt der Server
+`~/.nexus/dispatch.yaml`), wobei die Pflichtteile wie die Board-Befehle drin bleiben müssen – sonst lehnt der Server
 sie ab. „Vorschau“ rendert dort den fertigen Prompt der noch ungespeicherten Vorlage, mit Beispielwerten oder mit den
 echten Werten einer angegebenen Ticket- bzw. Frage-ID, und „Unterschiede zum Standard“ stellt ihn dem Standard-Prompt
 zeilenweise gegenüber. Eine eigene Vorlage geht in den Konfig-Hash eines Laufs ein, so bleiben Läufe davor und danach
 unterscheidbar.
 
 ```bash
-harness board dispatch status        # Zustand, laufende Worker, warum Tickets (noch) nicht bereit sind
-harness board dispatch run           # sofort prüfen (sonst jede Minute)
-harness board dispatch pause --minutes 60
-harness board dispatch resume        # enable / disable schalten den Dispatcher ein und aus
-harness board merge ARC-0009
-harness board accept ARC-0010 --by Florian   # Human Interaction abnehmen (nur der Nutzer)
+nexus board dispatch status        # Zustand, laufende Worker, warum Tickets (noch) nicht bereit sind
+nexus board dispatch run           # sofort prüfen (sonst jede Minute)
+nexus board dispatch pause --minutes 60
+nexus board dispatch resume        # enable / disable schalten den Dispatcher ein und aus
+nexus board merge ARC-0009
+nexus board accept ARC-0010 --by Florian   # Human Interaction abnehmen (nur der Nutzer)
 ```
 
 ## Vom Planen-Knopf gestartet
 
-„Planen“ im Ticket-Panel (oder `harness board plan-start <ID>`) startet sofort eine Claude-Session `planner-<ID>` in einem
+„Planen“ im Ticket-Panel (oder `nexus board plan-start <ID>`) startet sofort eine Claude-Session `planner-<ID>` in einem
 losgelösten Worktree `<repo>-worktrees/plan-<ID>` – unabhängig davon, ob der Dispatcher eingeschaltet ist; nur auf eigenen
 Boards mit Repo-Pfad, in Backlog, In Planung, Geplant oder Blockiert, nicht bei offener Frage. Wer so gestartet wurde:
 
 1. Das Ticket ist für die Planung beansprucht (Planungs-Claim): **nicht claimen, nicht verschieben, keine Labels setzen**.
-2. Zuerst `harness board show <ID>` und `harness board question list --ticket <ID> --state alle --md` lesen;
+2. Zuerst `nexus board show <ID>` und `nexus board question list --ticket <ID> --state alle --md` lesen;
    Entscheidungen gelten vor allem anderen. Dann im Code recherchieren (nur lesen).
 3. Genau ein Ausgang, immer mit `--by`/`--author planner-<ID>`:
    - **Plan:** `plan.json` mit `plan`, `handbook`, `diagram` schreiben (Plan endet mit `## Aufwand`), dann
-     `harness board plan-json <ID> --file plan.json --by planner-<ID>`. Das setzt Geplant.
-   - **Frage:** fehlt eine Entscheidung des Nutzers, `harness board question add "…" --description "…" --ticket <ID> --author planner-<ID>`
+     `nexus board plan-json <ID> --file plan.json --by planner-<ID>`. Das setzt Geplant.
+   - **Frage:** fehlt eine Entscheidung des Nutzers, `nexus board question add "…" --description "…" --ticket <ID> --author planner-<ID>`
      (nach den Schreibregeln, siehe „Fragen“) und den Lauf beenden.
 4. Ohne Plan und ohne Frage schreibt der Dispatcher `[dispatch] Planung ohne Ergebnis: …` ans Ticket; einen automatischen
    Neuversuch gibt es nicht. Planungen zählen nicht zum WIP; ein Ticket startet nicht zur Umsetzung, solange es geplant wird.
@@ -386,31 +386,31 @@ Schreibregeln im Skill `board-question` (Abschnitt „Schreibregeln“): eine En
 Ticketnummer, Beschreibung mit **Worum es geht**, **Heute** und **Zu entscheiden**.
 
 ```bash
-harness board question add "Wo speichert der Export seine Zwischenstände?" --ticket ARC-0007 --description "**Worum es geht** …" --occasion "Planung ARC-0007" --kind session --author claude
-harness board question list --md
-harness board question list --ticket ARC-0007 --state alle --md
-harness board question show ARC-F0001
-harness board question comment ARC-F0001 "Neuer Befund: …" --kind session --author claude
-harness board question link ARC-F0001 --add ARC-0008
+nexus board question add "Wo speichert der Export seine Zwischenstände?" --ticket ARC-0007 --description "**Worum es geht** …" --occasion "Planung ARC-0007" --kind session --author claude
+nexus board question list --md
+nexus board question list --ticket ARC-0007 --state alle --md
+nexus board question show ARC-F0001
+nexus board question comment ARC-F0001 "Neuer Befund: …" --kind session --author claude
+nexus board question link ARC-F0001 --add ARC-0008
 ```
 
 Varianten und Empfehlung gehören als Recherche an die Frage (Vorgehen wie im Skill `board-question`:
-`harness board question research ARC-F0001 --from recherche.json --kind session --author claude`),
+`nexus board question research ARC-F0001 --from recherche.json --kind session --author claude`),
 nicht in einen Ticket-Kommentar. Ist die Frage entschieden, steht das im Verlauf des Tickets. Wer ein
 Ticket aufnimmt, liest zuerst dessen Kommentare und die Fragen dazu
-(`harness board question list --ticket ARC-0007 --state alle --md`) – eine Entscheidung gilt vor Plan und Handbuch.
+(`nexus board question list --ticket ARC-0007 --state alle --md`) – eine Entscheidung gilt vor Plan und Handbuch.
 
 ## Notizen
 
 ```bash
-harness board note list --md
-harness board note add "Core-Unit-Tests scheitern, wenn TEMP ein Windows-Kurzpfad ist" \
+nexus board note list --md
+nexus board note add "Core-Unit-Tests scheitern, wenn TEMP ein Windows-Kurzpfad ist" \
   --details "GitPaths, LongPaths, WorktreeManagerDispatch: TEMP liefert C:/Users/BENJAM~1.BIB, git den langen Namen. Vorschlag: Pfade im Test mit realpath normalisieren." \
   --from ARC-0009 --label tests --author claude
-harness board note seen 12 --from ARC-0014
-harness board note list --state alle --md
-harness board note take 12 --priority high
-harness board note drop 12 --reason "erledigt sich mit ARC-0020"
+nexus board note seen 12 --from ARC-0014
+nexus board note list --state alle --md
+nexus board note take 12 --priority high
+nexus board note drop 12 --reason "erledigt sich mit ARC-0020"
 ```
 
 | Was du hast | Wohin |
@@ -445,7 +445,7 @@ entscheiden. Mehrere Entwickler arbeiten auf derselben Datenbank.
 
 ## Regeln
 
-1. **Nichts löschen.** `harness board delete` entfernt endgültig – nur auf ausdrückliche Anweisung.
+1. **Nichts löschen.** `nexus board delete` entfernt endgültig – nur auf ausdrückliche Anweisung.
 2. **Von Hand geschriebene Inhalte nicht überschreiben.** Erst lesen, im Zweifel kommentieren.
 3. **Status ehrlich pflegen.** Kein Erledigt, solange etwas fehlt oder ungetestet ist.
 4. **`--by claude` / `--author claude` / `--agent claude` setzen**, damit der Verlauf zeigt, wer gehandelt hat.

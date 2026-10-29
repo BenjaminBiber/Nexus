@@ -189,11 +189,75 @@ fn schaltet_das_plugin_fur_das_projekt_ein_und_weist_auf_das_neuladen_hin() {
     )
     .unwrap();
     assert_eq!(
-        settings["enabledPlugins"]["ai-harness@ai-harness-local"],
+        settings["enabledPlugins"]["nexus@nexus-local"],
         serde_json::Value::Bool(true)
     );
     // Wiederholung bleibt ohne Hinweis
     assert!(!projekt.run(&["init"]).stdout.contains("reload-plugins"));
+}
+
+#[test]
+fn stellt_ein_projekt_vom_alten_plugin_auf_nexus_um() {
+    let projekt = TempProject::new();
+    // Ein Projekt, wie `harness init` es hinterlassen hat
+    projekt.run(&["init"]);
+    let claude = projekt.path.join(".claude");
+    let rules = claude.join("rules");
+    fs::write(
+        claude.join("settings.local.json"),
+        "{\n  \"enabledPlugins\": {\n    \"ai-harness@ai-harness-local\": true,\n    \"fremd@markt\": true\n  }\n}\n",
+    )
+    .unwrap();
+    for (name, neu) in [
+        ("ai-harness-docs.md", "nexus-docs.md"),
+        ("ai-harness-board.md", "nexus-board.md"),
+    ] {
+        let alt = fs::read_to_string(rules.join(neu)).unwrap();
+        fs::write(
+            rules.join(name),
+            alt.replace("`nexus init`", "`harness init`"),
+        )
+        .unwrap();
+        fs::remove_file(rules.join(neu)).unwrap();
+    }
+
+    let wert = json(&projekt.run(&["--json", "init"]));
+
+    assert_eq!(wert["migratedFrom"], "ai-harness@ai-harness-local");
+    let settings: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(claude.join("settings.local.json")).unwrap())
+            .unwrap();
+    let plugins = &settings["enabledPlugins"];
+    assert_eq!(plugins["nexus@nexus-local"], serde_json::Value::Bool(true));
+    assert!(
+        plugins.get("ai-harness@ai-harness-local").is_none(),
+        "{plugins}"
+    );
+    // Fremde Einträge bleiben
+    assert_eq!(plugins["fremd@markt"], serde_json::Value::Bool(true));
+    // Die alten Rules sind abgelöst, die neuen da
+    assert!(!rules.join("ai-harness-docs.md").exists());
+    assert!(!rules.join("ai-harness-board.md").exists());
+    assert!(rules.join("nexus-docs.md").exists());
+    assert!(rules.join("nexus-board.md").exists());
+}
+
+#[test]
+fn eine_von_hand_geanderte_alte_rule_bleibt_liegen() {
+    let projekt = TempProject::new();
+    projekt.run(&["init"]);
+    let rules = projekt.path.join(".claude").join("rules");
+    fs::write(rules.join("ai-harness-board.md"), "# Meine eigene Regel\n").unwrap();
+
+    let lauf = projekt.run(&["init"]);
+
+    assert_eq!(lauf.code, 0, "{}", lauf.stderr);
+    assert!(rules.join("ai-harness-board.md").exists());
+    assert!(lauf.stdout.contains("bleiben liegen"), "{}", lauf.stdout);
+    assert_eq!(
+        fs::read_to_string(rules.join("ai-harness-board.md")).unwrap(),
+        "# Meine eigene Regel\n"
+    );
 }
 
 #[test]
@@ -204,7 +268,7 @@ fn legt_die_rule_fur_die_doku_regeln_an_ohne_sie_zu_versionieren() {
 
     let docs_rule = wert["docsRule"].as_str().unwrap().replace('\\', "/");
     assert!(
-        docs_rule.ends_with("/Demo Projekt ä/.claude/rules/ai-harness-docs.md"),
+        docs_rule.ends_with("/Demo Projekt ä/.claude/rules/nexus-docs.md"),
         "{docs_rule}"
     );
     let text = fs::read_to_string(
@@ -212,13 +276,13 @@ fn legt_die_rule_fur_die_doku_regeln_an_ohne_sie_zu_versionieren() {
             .path
             .join(".claude")
             .join("rules")
-            .join("ai-harness-docs.md"),
+            .join("nexus-docs.md"),
     )
     .unwrap();
     assert!(text.contains('@'), "{text}");
     assert!(!projekt
         .git(&["status", "--porcelain", "--untracked-files=all"])
-        .contains("ai-harness-docs.md"));
+        .contains("nexus-docs.md"));
 }
 
 #[test]
@@ -229,7 +293,7 @@ fn legt_die_immer_geladene_board_regel_an_und_erganzt_sie_in_schon_eingerichtete
         .path
         .join(".claude")
         .join("rules")
-        .join("ai-harness-board.md");
+        .join("nexus-board.md");
     fs::remove_file(&board_rule).unwrap();
 
     let lauf = projekt.run(&["init"]);
@@ -237,7 +301,7 @@ fn legt_die_immer_geladene_board_regel_an_und_erganzt_sie_in_schon_eingerichtete
     assert_eq!(lauf.code, 0, "{}", lauf.stderr);
     assert!(
         lauf.stdout
-            .contains("Board-Regel eingebunden: .claude/rules/ai-harness-board.md"),
+            .contains("Board-Regel eingebunden: .claude/rules/nexus-board.md"),
         "{}",
         lauf.stdout
     );
@@ -249,13 +313,13 @@ fn legt_die_immer_geladene_board_regel_an_und_erganzt_sie_in_schon_eingerichtete
     );
     assert!(!projekt
         .git(&["status", "--porcelain", "--untracked-files=all"])
-        .contains("ai-harness-board.md"));
+        .contains("nexus-board.md"));
     let wert = json(&projekt.run(&["--json", "init"]));
     assert!(wert["boardRule"]
         .as_str()
         .unwrap()
         .replace('\\', "/")
-        .ends_with("/.claude/rules/ai-harness-board.md"));
+        .ends_with("/.claude/rules/nexus-board.md"));
     assert!(!projekt
         .run(&["init"])
         .stdout

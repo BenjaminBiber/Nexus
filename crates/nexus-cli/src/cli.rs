@@ -186,6 +186,17 @@ pub enum Commands {
     Install {
         #[arg(long = "no-path", help = "PATH nicht ändern, nur kopieren")]
         no_path: bool,
+        #[arg(
+            long = "no-plugin",
+            help = "Plugin nicht bei Claude Code anmelden, nur kopieren"
+        )]
+        no_plugin: bool,
+        #[arg(
+            long,
+            value_name = "ordner",
+            help = "Ordner mit .claude-plugin/marketplace.json (Standard: über dem gebauten Plugin)"
+        )]
+        marketplace: Option<PathBuf>,
     },
 
     /// Daten aus dem alten Ordner holen
@@ -349,7 +360,18 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
         ),
         Some(Commands::Spec { sub }) => commands::spec::run(&context, &sub),
         Some(Commands::Stop { restart }) => commands::stop::run(&context, restart),
-        Some(Commands::Install { no_path }) => commands::install::run(&context, !no_path),
+        Some(Commands::Install {
+            no_path,
+            no_plugin,
+            marketplace,
+        }) => commands::install::run(
+            &context,
+            &commands::install::Options {
+                register_path: !no_path,
+                register_plugin: !no_plugin,
+                marketplace,
+            },
+        ),
         Some(Commands::Migrate { from, dry_run }) => {
             commands::migrate::run(&context, from.as_deref(), dry_run)
         }

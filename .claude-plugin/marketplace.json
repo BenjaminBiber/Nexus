@@ -1,16 +1,16 @@
 {
-  "name": "ai-harness-local",
-  "description": "Lokaler Marktplatz des AI Harness: stellt das gebaute Plugin aus diesem Repository bereit",
+  "name": "nexus-local",
+  "description": "Lokaler Marktplatz von Nexus: stellt das gebaute Plugin aus diesem Repository bereit",
   "owner": {
-    "name": "AI Harness"
+    "name": "Nexus"
   },
   "plugins": [
     {
-      "name": "ai-harness",
+      "name": "nexus",
       "version": "0.1.0",
-      "source": "./packages/plugin/dist/ai-harness",
+      "source": "./packages/plugin/dist/nexus",
       "defaultEnabled": false,
-      "description": "Tickets, Sessions und Board für parallele Claude-Code-Sessions (Hooks, Skills, harness-Befehl)"
+      "description": "Tickets, Sessions und Board für parallele Claude-Code-Sessions (Hooks, Skills, nexus-Befehl)"
     }
   ]
 }

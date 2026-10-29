@@ -3,11 +3,11 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
-import { buildPlugin, PLUGIN_OUT, ROOT } from './helpers/pluginBuild.js';
+import { buildPlugin, PLUGIN_BIN, ROOT } from './helpers/pluginBuild.js';
 
 const SKILLS_SRC = join(ROOT, 'packages/plugin/manifest/skills');
 const EXPECTED = ['board', 'board-question', 'harness-customize', 'harness-grill', 'harness-implement', 'harness-setup', 'harness-tasks', 'harness-wayfinder'];
-// Skills ohne harness-Aufrufe (arbeiten mit npm im Harness-Clone)
+// Skills ohne nexus-Aufrufe (arbeiten mit npm im Clone)
 const NPM_ONLY = ['harness-customize'];
 
 interface Skill {
@@ -27,9 +27,9 @@ function load(dir: string): Skill {
   return { dir, name: field('name'), description: field('description'), body: match[2], text };
 }
 
-// Führt das gebaute CLI aus
+// Führt das Binary des gebauten Plugins aus
 function cli(args: string[]): { code: number; out: string } {
-  const r = spawnSync(process.execPath, [join(PLUGIN_OUT, 'lib/cli.mjs'), ...args], { encoding: 'utf8', windowsHide: true });
+  const r = spawnSync(PLUGIN_BIN, args, { encoding: 'utf8', windowsHide: true });
   return { code: r.status ?? -1, out: `${r.stdout}${r.stderr}` };
 }
 
@@ -43,12 +43,12 @@ function helpOf(path: string[]): { code: number; out: string } {
   return helpCache.get(key)!;
 }
 
-// Alle `harness …`-Aufrufe in Code-Spannen und Codeblöcken
-function harnessCalls(text: string): string[] {
+// Alle `nexus …`-Aufrufe in Code-Spannen und Codeblöcken
+function nexusCalls(text: string): string[] {
   const calls: string[] = [];
-  for (const m of text.matchAll(/`(harness [^`\n]+)`/g)) calls.push(m[1]);
+  for (const m of text.matchAll(/`(nexus [^`\n]+)`/g)) calls.push(m[1]);
   for (const block of text.matchAll(/```[a-z]*\n([\s\S]*?)```/g)) {
-    for (const line of block[1].split('\n')) if (/^\s*(\$ )?harness /.test(line)) calls.push(line.replace(/^\s*\$? ?/, '').trim());
+    for (const line of block[1].split('\n')) if (/^\s*(\$ )?nexus /.test(line)) calls.push(line.replace(/^\s*\$? ?/, '').trim());
   }
   return calls;
 }
@@ -81,10 +81,10 @@ describe('Skills des Plugins', () => {
     }
   });
 
-  it('nennt nur existierende harness-Befehle und Optionen', () => {
+  it('nennt nur existierende nexus-Befehle und Optionen', () => {
     const root = helpOf([]).out;
     for (const s of skills) {
-      const calls = harnessCalls(s.text);
+      const calls = nexusCalls(s.text);
       if (!NPM_ONLY.includes(s.dir)) expect(calls.length, s.dir).toBeGreaterThan(2);
       for (const call of calls) {
         // Die globale Option --json darf vor dem Unterbefehl stehen
@@ -98,7 +98,7 @@ describe('Skills des Plugins', () => {
         expect(help.code, `${s.dir}: ${call}`).toBe(0);
         expect(help.out, `${s.dir}: ${call}`).toContain('Aufruf:');
         // Unbekannte Unterbefehle zeigen die Hilfe des Elternbefehls: der Kopf muss zum genauen Pfad passen
-        if (path.length > 0) expect(help.out, `${s.dir}: ${call} (Hilfe gehört nicht zu diesem Befehl)`).toContain(`Aufruf: harness ${path.join(' ')} `);
+        if (path.length > 0) expect(help.out, `${s.dir}: ${call} (Hilfe gehört nicht zu diesem Befehl)`).toContain(`Aufruf: nexus ${path.join(' ')} `);
         for (const flag of call.match(/--[a-z-]+/g) ?? []) {
           expect(help.out.includes(flag) || root.includes(flag), `${s.dir}: ${call} → ${flag}`).toBe(true);
         }
@@ -169,7 +169,7 @@ describe('Skills des Plugins', () => {
     it('legt keine Tickets, Specs oder Worktrees an', () => {
       const t = get().text;
       expect(t).toMatch(/Lege keine Tickets, Specs/);
-      expect(t).not.toMatch(/harness (--json )?ticket new|harness spec new/);
+      expect(t).not.toMatch(/nexus (--json )?ticket new|nexus spec new/);
     });
   });
 
@@ -178,7 +178,7 @@ describe('Skills des Plugins', () => {
 
     it('fordert kurze Titel und beschreibt Dateien, Schnittstellen und Schritte', () => {
       const t = get().text;
-      for (const part of ['Dateien:', 'Nutzt:', 'Liefert:', '- [ ] Test schreiben', 'docs/superpowers/plans/', 'harness board create', 'harness board plan-json']) {
+      for (const part of ['Dateien:', 'Nutzt:', 'Liefert:', '- [ ] Test schreiben', 'docs/superpowers/plans/', 'nexus board create', 'nexus board plan-json']) {
         expect(t, part).toContain(part);
       }
       expect(t).toMatch(/höchstens etwa 60 Zeichen/);
@@ -215,7 +215,7 @@ describe('Skills des Plugins', () => {
     it('legt keine Tickets, Specs, Branches oder Worktrees an und nennt die Quelle', () => {
       const t = get().text;
       expect(t).toMatch(/Lege keine Tickets, Specs, Branches/);
-      expect(t).not.toMatch(/harness (--json )?ticket new|harness spec new/);
+      expect(t).not.toMatch(/nexus (--json )?ticket new|nexus spec new/);
       expect(t).toMatch(/MIT/);
     });
   });
@@ -225,17 +225,17 @@ describe('Skills des Plugins', () => {
 
     it('nutzt die Befehle des Harness für Auswahl, Start, Schritte, Kommentar und Abschluss', () => {
       const t = get().text;
-      for (const part of ['harness board list --status geplant --md', 'harness board show', 'harness board claim', 'harness board start', 'harness board step', 'harness board comment', 'harness board done']) {
+      for (const part of ['nexus board list --status geplant --md', 'nexus board show', 'nexus board claim', 'nexus board start', 'nexus board step', 'nexus board comment', 'nexus board done']) {
         expect(t, part).toContain(part);
       }
-      expect(t).not.toMatch(/harness ticket |harness question /);
+      expect(t).not.toMatch(/nexus ticket |nexus question /);
     });
 
     it('arbeitet test-first, schließt nach dem Review mit Done ab', () => {
       const t = get().text;
       expect(t).toMatch(/Test zuerst|test-first|zuerst (einen|den) Test/i);
       expect(t).toMatch(/Review/);
-      expect(t).toMatch(/harness board done/);
+      expect(t).toMatch(/nexus board done/);
       expect(t).not.toMatch(/Done.{0,80}(setzt der Benutzer|ausdrücklich)/s);
     });
 
@@ -251,7 +251,7 @@ describe('Skills des Plugins', () => {
 
     it('nennt die Regeln des Boards', () => {
       const t = get().text;
-      for (const part of ['Ohne Abnahme kein', 'harness board claim', '--agent', 'harness board note add', 'Nicht mehr nötig', 'depends', 'Human Interaction', 'harness board list']) {
+      for (const part of ['Ohne Abnahme kein', 'nexus board claim', '--agent', 'nexus board note add', 'Nicht mehr nötig', 'depends', 'Human Interaction', 'nexus board list']) {
         expect(t, part).toContain(part);
       }
     });
@@ -263,7 +263,7 @@ describe('Skills des Plugins', () => {
 
     it('nutzt Fragen statt „Blockiert/Rückfrage“', () => {
       const t = get().text;
-      for (const part of ['harness board question add', 'harness board question show', 'board-question', 'wartet auf Frage', '--ticket']) {
+      for (const part of ['nexus board question add', 'nexus board question show', 'board-question', 'wartet auf Frage', '--ticket']) {
         expect(t, part).toContain(part);
       }
       expect(t).not.toMatch(/blocked-reason "Rückfrage"/);
@@ -273,12 +273,12 @@ describe('Skills des Plugins', () => {
   describe('board-question', () => {
     const get = () => skills.find((s) => s.dir === 'board-question')!;
 
-    it('recherchiert über harness board question und entscheidet nie', () => {
+    it('recherchiert über nexus board question und entscheidet nie', () => {
       const t = get().text;
-      for (const part of ['harness board question show', 'harness board question research', '--from', 'höchstens fünf', 'entscheidest nie', 'harness board question answer']) {
+      for (const part of ['nexus board question show', 'nexus board question research', '--from', 'höchstens fünf', 'entscheidest nie', 'nexus board question answer']) {
         expect(t, part).toContain(part);
       }
-      expect(t).not.toMatch(/harness question /);
+      expect(t).not.toMatch(/nexus question /);
     });
 
     it('hat Schreibregeln für Außenstehende: eine Entscheidung je Frage, feste Abschnitte, Fundstellen getrennt', () => {
@@ -293,7 +293,8 @@ describe('Skills des Plugins', () => {
   describe('alle Skills', () => {
     it('nennen keine entfallenen Befehle des Datei-Boards', () => {
       for (const s of skills) {
-        expect(s.text, s.dir).not.toMatch(/harness (--json )?(ticket|question|export)/);
+        expect(s.text, s.dir).not.toMatch(/harness (--json )?(ticket|question|export)/);
+        // Platzhalter/);
         expect(s.text, s.dir).not.toMatch(/harness-open-question/);
       }
     });
@@ -309,14 +310,14 @@ describe('Skills des Plugins', () => {
   describe('board', () => {
     it('beschreibt den eigenen Worktree mit start, step und done', () => {
       const t = skills.find((s) => s.dir === 'board')!.text;
-      for (const part of ['harness board start', 'harness board step', 'harness board done', '--acceptance']) expect(t, part).toContain(part);
+      for (const part of ['nexus board start', 'nexus board step', 'nexus board done', '--acceptance']) expect(t, part).toContain(part);
     });
 
     it('beschreibt den Dispatcher für Worker und Planer', () => {
       const t = skills.find((s) => s.dir === 'board')!.text;
       for (const part of [
-        '## Vom Dispatcher gestartet', 'junior-', '[dispatch]', 'nicht erneut claimen', 'harness board done', 'Human Interaction',
-        'harness board question add', '## Aufwand', 'klein', 'standard', 'schwer', 'harness board dispatch status', 'harness board merge',
+        '## Vom Dispatcher gestartet', 'junior-', '[dispatch]', 'nicht erneut claimen', 'nexus board done', 'Human Interaction',
+        'nexus board question add', '## Aufwand', 'klein', 'standard', 'schwer', 'nexus board dispatch status', 'nexus board merge',
       ]) expect(t, part).toContain(part);
       expect(t).not.toContain('Gemergt wird nie automatisch');
     });
@@ -329,7 +330,7 @@ describe('Skills des Plugins', () => {
 
     it('beschreibt Worktree je Ticket, Merge der Voraussetzungen, Abnahme und Leeren des Branches', () => {
       const t = skills.find((s) => s.dir === 'board')!.text;
-      for (const part of ['--join', 'wartet auf Merge von', 'harness board accept', 'Abnehmen', '--clear-branch', 'joinWorktrees', 'Keine Links, Junctions oder Symlinks', 'worktreeSetup', 'Einrichtung fehlgeschlagen']) expect(t, part).toContain(part);
+      for (const part of ['--join', 'wartet auf Merge von', 'nexus board accept', 'Abnehmen', '--clear-branch', 'joinWorktrees', 'Keine Links, Junctions oder Symlinks', 'worktreeSetup', 'Einrichtung fehlgeschlagen']) expect(t, part).toContain(part);
     });
   });
 });

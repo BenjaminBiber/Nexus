@@ -3,8 +3,12 @@ import { BOARD_RULE_PATH, ProjectBoardRule } from './ProjectBoardRule.js';
 import { DOCS_RULE_PATH, ProjectDocsRule } from './ProjectDocsRule.js';
 import type { ProjectRule } from './ProjectRule.js';
 
-// Orte aller Rules, die der Harness im Projekt anlegt; sie zählen bei Sauberkeitsprüfungen nie als Änderung
-export const PROJECT_RULE_PATHS: readonly string[] = [DOCS_RULE_PATH, BOARD_RULE_PATH];
+// Orte der Rules, die `nexus init` (Rust) anlegt; der TypeScript-Code schreibt weiter die alten
+export const NEXUS_DOCS_RULE_PATH = '.claude/rules/nexus-docs.md';
+export const NEXUS_BOARD_RULE_PATH = '.claude/rules/nexus-board.md';
+
+// Orte aller Rules, die Nexus im Projekt anlegt – alte und neue Namen; sie zählen bei Sauberkeitsprüfungen nie als Änderung
+export const PROJECT_RULE_PATHS: readonly string[] = [DOCS_RULE_PATH, BOARD_RULE_PATH, NEXUS_DOCS_RULE_PATH, NEXUS_BOARD_RULE_PATH];
 
 // Alle Rules, die `harness init` und das Anlegen eines Worktrees ins Projekt schreiben
 export class ProjectRules {

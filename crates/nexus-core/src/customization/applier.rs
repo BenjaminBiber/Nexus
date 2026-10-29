@@ -78,9 +78,14 @@ impl CustomizationApplier {
         input: &CustomizationInput<'_>,
         plugin_dir: &Path,
     ) -> Result<CustomizationOverview> {
+        let paths = CustomizationPaths::new(&input.custom_dir, &input.standard_dir);
+        // Ein kaputter Ordner der Anpassungen (z. B. custom/skills als Datei) darf nicht
+        // stillschweigend als „keine Anpassungen“ durchgehen: der Aufrufer fällt dann sichtbar
+        // auf den Standard zurück, statt die Anpassungen des Devs einfach zu verlieren
+        muss_ordner_sein(&paths.skills_dir())?;
+        muss_ordner_sein(&paths.output_styles_dir())?;
         let CheckResult { overview, phases } = self.check(input);
         // Gültige Skills und Output-Styles überlagern das gebaute Plugin
-        let paths = CustomizationPaths::new(&input.custom_dir, &input.standard_dir);
         SkillCustomization::new(&paths).apply(&overview.entries, plugin_dir)?;
         OutputStyleCustomization::new(&paths).apply(&overview.entries, plugin_dir)?;
         // Alter Ordner aus einem früheren Lauf wird vollständig ersetzt
@@ -125,6 +130,17 @@ impl CustomizationApplier {
             entries,
         }
     }
+}
+
+/// Fehler, wenn der Pfad vorhanden, aber kein Ordner ist; fehlt er, ist alles in Ordnung
+fn muss_ordner_sein(dir: &Path) -> Result<()> {
+    if dir.exists() && !dir.is_dir() {
+        return Err(Error::unexpected(std::io::Error::new(
+            std::io::ErrorKind::NotADirectory,
+            format!("{} ist kein Ordner", dir.display()),
+        )));
+    }
+    Ok(())
 }
 
 /// Namen der mitgelieferten Skills (Ordner mit SKILL.md)
@@ -239,6 +255,22 @@ mod tests {
 
     fn codes(problems: &[Problem]) -> Vec<&str> {
         problems.iter().map(|p| p.code.as_str()).collect()
+    }
+
+    #[test]
+    fn ein_kaputter_ordner_der_anpassungen_ist_ein_fehler_und_kein_leeres_ergebnis() {
+        for name in ["skills", "output-styles"] {
+            let beispiel = Beispiel::neu();
+            std::fs::create_dir_all(beispiel.root().join("custom")).unwrap();
+            // Statt eines Ordners liegt dort eine Datei
+            std::fs::write(beispiel.root().join("custom").join(name), "kein Ordner").unwrap();
+            let tools = Fake(Value::Null);
+            let input = beispiel.eingabe(&tools);
+
+            let fehler = CustomizationApplier::new().apply(&input, &beispiel.plugin());
+
+            assert!(fehler.is_err(), "{name}");
+        }
     }
 
     #[test]
