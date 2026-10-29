@@ -1,8 +1,8 @@
 //! Die gespeicherten Ticket-Entwürfe eines Dokuments; portiert aus den Claude-freien Fällen
 //! von `packages/server/tests/unit/DocTicketDrafts.test.ts`.
 //!
-//! Das Erzeugen der Entwürfe (`POST …/docs/ticket-drafts`) ruft Claude und bleibt bis P4-8b
-//! beim Node-Server; hier wird deshalb über `PUT …/docs/ticket-drafts/saved` gespeichert.
+//! Das Erzeugen der Entwürfe (`POST …/docs/ticket-drafts`) ruft Claude und steht in
+//! `doc_ticket_drafts.rs`; hier wird deshalb über `PUT …/docs/ticket-drafts/saved` gespeichert.
 
 mod common;
 
