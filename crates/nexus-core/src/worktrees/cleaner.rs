@@ -13,7 +13,7 @@ use crate::worktrees::registry::{WorktreeEntry, WorktreeRegistry};
 /// Lokale Dateien, die der Harness selbst im Worktree anlegt (Plugin-Einstellung, Rules für
 /// Doku- und Board-Regeln); sie zählen nicht als Änderung, auch wenn ein älteres Projekt sie
 /// noch nicht in `info/exclude` führt.
-pub(crate) fn harness_files() -> BTreeSet<String> {
+fn harness_files() -> BTreeSet<String> {
     let mut files = BTreeSet::new();
     files.insert(".claude/settings.local.json".to_string());
     for path in PROJECT_RULE_PATHS {
