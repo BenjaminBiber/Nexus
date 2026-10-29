@@ -5,8 +5,11 @@
 //! und liefert sonst die Oberfläche bzw. 404 als JSON.
 
 pub mod db_boards;
+pub mod doc_comments;
+pub mod docs;
 pub mod health;
 pub mod settings;
+pub mod spec;
 pub mod static_files;
 pub mod workflow;
 
@@ -38,6 +41,12 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     }
     if state.config.proxy_groups.enabled(RouteGroup::DbBoards) {
         router = router.merge(db_boards::routes());
+    }
+    if state.config.proxy_groups.enabled(RouteGroup::Docs) {
+        router = router
+            .merge(docs::routes())
+            .merge(doc_comments::routes())
+            .merge(spec::routes());
     }
     if state.config.proxy_groups.enabled(RouteGroup::Workflow) {
         router = router.merge(workflow::routes());

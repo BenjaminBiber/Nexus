@@ -12,6 +12,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::board_runtime::{BoardBackendFactory, BoardRuntimeHolder};
 use crate::config::ServerConfig;
+use crate::docs::{DocTicketService, DocsService, SavedTicketDrafts};
 use crate::guard::RequestGuard;
 use crate::log::ServerLog;
 use crate::projects::ProjectService;
@@ -24,6 +25,13 @@ pub struct AppState {
     pub guard: RequestGuard,
     pub projects: ProjectService,
     pub board: BoardRuntimeHolder,
+    /// Dokumente des Boards: lesen, durchsuchen, Abschnitte schreiben. Der Dienst gehört in
+    /// den Zustand, weil er die laufenden Schreibvorgänge je Datei kennt
+    pub docs: DocsService,
+    /// Gespeicherte Ticket-Entwürfe je Dokument
+    pub doc_drafts: SavedTicketDrafts,
+    /// Tickets aus Dokumenten anlegen und auflisten
+    pub doc_tickets: DocTicketService,
     pub platform: Platform,
     pub log: ServerLog,
     /// Node-Server, an den alles Unbekannte geht; `None` = kein Proxy
@@ -51,6 +59,9 @@ impl AppState {
             guard: RequestGuard::new(config.port),
             projects: ProjectService::new(config.home.clone()),
             board: BoardRuntimeHolder::new(board),
+            docs: DocsService::new(),
+            doc_drafts: SavedTicketDrafts::new(config.home.clone()),
+            doc_tickets: DocTicketService::new(),
             platform,
             log: ServerLog::new(&config.home),
             upstream,

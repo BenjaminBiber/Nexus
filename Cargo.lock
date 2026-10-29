@@ -2767,6 +2767,7 @@ dependencies = [
  "nexus-db",
  "nexus-platform",
  "nix",
+ "regex",
  "rusqlite",
  "serde",
  "serde_json",
