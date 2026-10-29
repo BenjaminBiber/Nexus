@@ -334,6 +334,11 @@ impl OrderedMerge {
         self.order.lock().expect("Reihenfolge").clone()
     }
 
+    /// Vergisst die bisherigen Aufrufe; in TypeScript wird die Attrappe erst hier gesetzt
+    pub fn forget(&self) {
+        self.order.lock().expect("Reihenfolge").clear();
+    }
+
     /// Schreibt einen Aufruf mit
     fn note(&self, what: &str) {
         self.order.lock().expect("Reihenfolge").push(what.into());
