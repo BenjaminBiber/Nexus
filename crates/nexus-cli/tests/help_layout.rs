@@ -120,6 +120,26 @@ fn hilfe_der_ticketbefehle_wie_aufgezeichnet() {
 }
 
 #[test]
+fn hilfe_der_fragenbefehle_wie_aufgezeichnet() {
+    // Die Blätter aus `LEAVES` zu `board question`; `research-start` läuft über den Server und
+    // kommt in P3-12 dazu
+    for pfad in [
+        ["board", "question", "add"],
+        ["board", "question", "research"],
+        ["board", "question", "comment"],
+        ["board", "question", "list"],
+        ["board", "question", "show"],
+        ["board", "question", "answer"],
+        ["board", "question", "discard"],
+        ["board", "question", "reopen"],
+        ["board", "question", "link"],
+        ["board", "question", "depends"],
+    ] {
+        wie_aufgezeichnet(&pfad);
+    }
+}
+
+#[test]
 fn hilfe_von_init_wie_aufgezeichnet() {
     assert_eq!(
         gerendert("harness init", aus_dem_baum("init")),

@@ -3,6 +3,7 @@
 pub mod claim;
 pub mod comment;
 pub mod open;
+pub mod question;
 pub mod tickets_read;
 pub mod tickets_write;
 
@@ -90,6 +91,18 @@ pub enum BoardCommands {
     )]
     Comment(comment::CommentArgs),
 
+    #[command(
+        name = "question",
+        about = question::QUESTION_ABOUT,
+        disable_help_flag = true,
+        subcommand_required = true,
+        arg_required_else_help = false
+    )]
+    Question {
+        #[command(subcommand)]
+        sub: question::QuestionCommands,
+    },
+
     /// Alles, was kein angemeldeter Unterbefehl ist; wird mit `command-unknown` abgewiesen
     #[command(external_subcommand)]
     Unbekannt(Vec<String>),
@@ -107,8 +120,21 @@ pub fn run(context: &CliContext, command: &BoardCommands) -> Result<u8> {
         BoardCommands::Claim(args) => claim::claim(context, args),
         BoardCommands::Release(args) => claim::release(context, args),
         BoardCommands::Comment(args) => comment::comment(context, args),
+        BoardCommands::Question { sub } => question::run(context, sub),
         BoardCommands::Unbekannt(words) => Err(unknown(words)),
     }
+}
+
+/// Ein unbekannter Unterbefehl von `board question`
+pub fn unknown_question(words: &[String]) -> nexus_core::Error {
+    HarnessError::new(
+        "command-unknown",
+        format!(
+            "Unbekannter Befehl „board question {}“. Hilfe: harness board question --help",
+            words.join(" ")
+        ),
+    )
+    .into()
 }
 
 /// Ein unbekannter Unterbefehl wird ohne Datenbankzugriff abgewiesen
