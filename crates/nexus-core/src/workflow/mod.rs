@@ -2,8 +2,10 @@
 //! Die Anleitung im Board, der Hinweis an den Agenten und die Prüfung eines eigenen
 //! Workflows lesen alle hieraus.
 
+pub mod hint;
 pub mod phases;
 pub mod source;
 
+pub use hint::{HintTicket, WorkflowHint, SIDE_TASKS};
 pub use phases::{workflow_phases, WorkflowOption, WorkflowPhase, WorkflowStep};
 pub use source::{WorkflowOrigin, WorkflowSelection, WorkflowSource};
