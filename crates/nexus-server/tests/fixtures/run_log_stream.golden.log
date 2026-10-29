@@ -1,0 +1,16 @@
+[dispatch] <iso> junior-ARC-0004-x startet in <cwd> (Umsetzung)
+[dispatch] Profil standard: Modell opus, Effort high, 80 Schritte, 1 min (Standardprofil standard)
+[dispatch] <claude> -p
+[dispatch] Arbeitsanweisung:
+Zeile 1
+
+Zeile 3
+
+[dispatch] Ausgabe:
+<zeit>  [start] Claude startet (fake-opus)
+<zeit>  [say] Ich lese das Ticket.
+<zeit>  [run] liest Ticket ARC-0004	"$ harness board show ARC-0004"
+<zeit>  [fail] abgelehnt	"abgelehnt"
+<zeit>  [done] fertig, 3 Schritte, 1 min
+
+[dispatch] <iso> Ende: Exit-Code 0
