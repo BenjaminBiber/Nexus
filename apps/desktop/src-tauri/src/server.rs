@@ -123,19 +123,40 @@ impl ServerConnector {
     }
 }
 
-// Harness-Ordner: HARNESS_HOME, sonst ~/.harness (wie HarnessHome in packages/core)
+// Nexus-Ordner in derselben Reihenfolge wie `NexusHome` in `crates/nexus-core/src/registry/home.rs`
+// und `HarnessHome` in `packages/core`: NEXUS_HOME, HARNESS_HOME (veraltet), vorhandenes ~/.nexus,
+// vorhandenes ~/.harness (Rückfall), sonst ~/.nexus. Nur so nehmen App, CLI und Server dieselbe board.db.
 pub fn harness_home(env: &HashMap<String, String>) -> PathBuf {
-    match env.get("HARNESS_HOME") {
-        Some(dir) if !dir.is_empty() => PathBuf::from(dir),
-        _ => dirs::home_dir().unwrap_or_default().join(".harness"),
+    if let Some(dir) = var(env, "HOME") {
+        return PathBuf::from(dir);
     }
+    let base = dirs::home_dir().unwrap_or_default();
+    let nexus = base.join(".nexus");
+    if nexus.is_dir() {
+        return nexus;
+    }
+    let harness = base.join(".harness");
+    if harness.is_dir() {
+        return harness;
+    }
+    nexus
 }
 
-// Port des Servers: HARNESS_PORT, sonst 4710. CLI und Hooks kennen nur diesen Port, darum kein zufälliger.
+// Wert aus der Umgebung: `NEXUS_<NAME>`, sonst `HARNESS_<NAME>`; leere Werte zählen wie keine
+fn var(env: &HashMap<String, String>, name: &str) -> Option<String> {
+    [format!("NEXUS_{name}"), format!("HARNESS_{name}")]
+        .into_iter()
+        .filter_map(|full| env.get(&full).cloned())
+        .find(|value| !value.trim().is_empty())
+}
+
+// Port des Servers: NEXUS_PORT, sonst HARNESS_PORT, sonst 4710. CLI und Hooks kennen nur diesen Port,
+// darum kein zufälliger.
 pub fn port_from_env(env: &HashMap<String, String>) -> Result<u16, ServerError> {
-    let raw = match env.get("HARNESS_PORT") {
-        Some(value) if !value.trim().is_empty() => value.trim(),
-        _ => return Ok(DEFAULT_SERVER_PORT),
+    let found = var(env, "PORT");
+    let raw = match &found {
+        Some(value) => value.trim(),
+        None => return Ok(DEFAULT_SERVER_PORT),
     };
     match raw.parse::<u16>() {
         Ok(port) if port > 0 => Ok(port),
@@ -378,6 +399,9 @@ async fn start<R: Runtime>(
     for (name, dir) in resource_dirs(app) {
         command = command.env(name, dir);
     }
+    // Der Server bekommt den hier aufgelösten Ordner ausdrücklich mit; sonst löste er selbst auf und
+    // könnte nach einem Umzug auf einer anderen board.db landen als die App.
+    command = command.env("NEXUS_HOME", connector.home().to_string_lossy().as_ref());
     let (events, child) = command
         .spawn()
         .map_err(|error| ServerError::StartFailed(format!("{NEXUS}: {error}")))?;
@@ -648,12 +672,31 @@ mod tests {
 
     #[test]
     fn harness_home_aus_umgebung() {
-        let gesetzt = harness_home(&env(&[("HARNESS_HOME", "/tmp/eigener-ordner")]));
+        let gesetzt = harness_home(&env(&[("NEXUS_HOME", "/tmp/eigener-ordner")]));
         assert_eq!(gesetzt, PathBuf::from("/tmp/eigener-ordner"));
+        let alt = harness_home(&env(&[("HARNESS_HOME", "/tmp/alter-ordner")]));
+        assert_eq!(alt, PathBuf::from("/tmp/alter-ordner"));
+        let neu_gewinnt = harness_home(&env(&[
+            ("NEXUS_HOME", "/tmp/neuer-ordner"),
+            ("HARNESS_HOME", "/tmp/alter-ordner"),
+        ]));
+        assert_eq!(neu_gewinnt, PathBuf::from("/tmp/neuer-ordner"));
         let standard = harness_home(&env(&[]));
         assert!(
-            standard.ends_with(".harness"),
-            "{standard:?} sollte auf .harness enden"
+            standard.ends_with(".nexus") || standard.ends_with(".harness"),
+            "{standard:?} sollte auf .nexus oder (als Rückfall) auf .harness enden"
+        );
+    }
+
+    #[test]
+    fn der_neue_port_gewinnt_gegen_den_alten() {
+        assert_eq!(
+            port_from_env(&env(&[("NEXUS_PORT", "4813"), ("HARNESS_PORT", "4812")])).unwrap(),
+            4813
+        );
+        assert_eq!(
+            port_from_env(&env(&[("NEXUS_PORT", ""), ("HARNESS_PORT", "4812")])).unwrap(),
+            4812
         );
     }
 

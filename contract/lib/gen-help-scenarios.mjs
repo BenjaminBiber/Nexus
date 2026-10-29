@@ -9,7 +9,9 @@ import { ServerHandle } from './ServerHandle.mjs';
 
 const CONTRACT_DIR = fileURLToPath(new URL('..', import.meta.url));
 const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
-const DEFAULT_CLI_CMD = 'node packages/cli/dist/main.js';
+// Die CLI und die Hooks gibt es in Rust; die Golden-Dateien der Suite `cli` sind gegen dieses Binary
+// aufgezeichnet. Die alte TypeScript-CLI nennt sich weiter `harness` und erfüllt sie nicht mehr.
+const DEFAULT_CLI_CMD = 'target/debug/nexus';
 const TARGET = join(CONTRACT_DIR, 'cli', 'help', 'help.scenario.json');
 
 // Überschrift der Unterbefehle (deutsch aus GermanHelp.ts, englisch als Rückfall)

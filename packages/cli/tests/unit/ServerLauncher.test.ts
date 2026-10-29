@@ -53,6 +53,17 @@ describe('ServerLauncher', () => {
     expect(spawn.mock.calls[0][2].env.HARNESS_WEB_DIR).toBeUndefined();
   });
 
+  it('gibt dem Server den aufgelösten Ordner als NEXUS_HOME mit', async () => {
+    process.env.HARNESS_HOME = '/wo/.harness';
+    delete process.env.NEXUS_HOME;
+    try {
+      await new ServerLauncher(false).start(PORT);
+      expect(spawn.mock.calls[0][2].env.NEXUS_HOME).toBe('/wo/.harness');
+    } finally {
+      delete process.env.HARNESS_HOME;
+    }
+  });
+
   it('meldet einen Fehler, wenn der Server nicht antwortet', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed', { cause: { code: 'ECONNREFUSED' } }); }));
     await expect(new ServerLauncher(false).start(PORT, 300)).rejects.toMatchObject({ code: 'server-start-failed' });

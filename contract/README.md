@@ -1,7 +1,7 @@
 # Vertragstest von HTTP-API, CLI und Hooks
 
-Die HTTP-API des Servers und das Verhalten von `harness` und seinen Hooks sind der Vertrag, den jede
-Umsetzung erfüllen muss – heute der TypeScript-Server und die TypeScript-CLI, später beide in Rust.
+Die HTTP-API des Servers und das Verhalten von `nexus` und seinen Hooks sind der Vertrag, den jede
+Umsetzung erfüllen muss – heute der TypeScript-Server und die Rust-CLI, später beide in Rust.
 Dieser Ordner enthält das Werkzeug dafür: Es startet einen Server mit frischem `HARNESS_HOME`, spielt
 Anfragen und CLI-Aufrufe aus Szenario-Dateien ab, ersetzt die je Lauf wechselnden Werte durch Platzhalter
 und vergleicht das Ergebnis mit einer Golden-Datei – oder zeichnet sie neu auf.
@@ -11,12 +11,14 @@ Es gibt drei Sammlungen von Szenarien: `api/` für einzelne Anfragen, `sse/` fü
 `--suite` laufen alle drei.
 
 Alles hier ist plain Node (ESM, `.mjs`), ohne zusätzliche Abhängigkeiten und ohne eigenen Build-Schritt.
-Nur der geprüfte Server und die geprüfte CLI müssen gebaut sein (`npm run build`).
+Nur der geprüfte Server und die geprüfte CLI müssen gebaut sein: `npm run build` für den Server, `cargo
+build -p nexus-cli --bin nexus` für die CLI.
 
 ## Aufrufe
 
 ```sh
 npm run build                      # Voraussetzung: packages/*/dist und packages/web/dist
+cargo build -p nexus-cli --bin nexus  # Voraussetzung: target/debug/nexus (die geprüfte CLI)
 npm run contract                   # alles vergleichen (= node contract/run.mjs)
 node contract/run.mjs --update     # Golden-Dateien neu aufzeichnen
 node contract/run.mjs --only basis/projects
@@ -26,13 +28,11 @@ node contract/run.mjs --suite cli             # Hooks, board-Befehle und Hilfete
 node contract/run.mjs --suite cli --only cli/hooks
 node contract/run.mjs --suite cli --only cli/board   # alle board-Unterbefehle
 node contract/run.mjs --suite cli --only cli/board/boards-projects \
-  --cli-cmd target/debug/nexus --init-cmd "node packages/cli/dist/main.js" \
   --step "board --no-open,board mit unbekanntem Unterbefehl,board mit kaputtem Port"
-                                   # nur die schon portierten board-Fälle gegen das Rust-Binary
-node contract/run.mjs --suite cli --only cli/board/dispatch \
-  --cli-cmd target/debug/nexus --init-cmd "node packages/cli/dist/main.js" \
-  --setup-cmd "node packages/cli/dist/main.js"
-                                   # Aufbau mit der TS-CLI, geprüft wird das Rust-Binary
+                                   # nur einzelne Schritte eines Szenarios
+node contract/run.mjs --suite cli --cli-cmd "node packages/cli/dist/main.js" \
+  --init-cmd "node packages/cli/dist/main.js"
+                                   # die alte TypeScript-CLI prüfen (erfüllt die Suite nicht mehr)
 node contract/lib/gen-help-scenarios.mjs      # Szenario der Hilfetexte neu erzeugen
 npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lader, Variablen,
                                    # Home-Dateien, Strom, CLI-Schritt, Commit, Home-Datei, Generator)
@@ -46,7 +46,7 @@ npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lad
 | `--suite <name>` | Ordner unter `contract/` mit den Szenarien (Standard: alle, also `api`, `sse` und `cli`). |
 | `--server-cmd "<cmd {port}>"` | Eigener Startbefehl statt des TS-Servers; `{port}` wird ersetzt. Relative Pfade gelten ab der Projektwurzel. |
 | `--base <url> --home <ordner>` | Gegen einen schon laufenden Server prüfen (siehe unten). |
-| `--cli-cmd "<cmd>"` | Befehl der CLI für `harnessInit` und die `cli`-Schritte (Standard `node packages/cli/dist/main.js`). Auch als JSON-Array: `'["node","/Mein Ordner/main.js"]'` – der sichere Weg für Pfade mit Leerzeichen. Relative Pfade gelten ab der Projektwurzel. |
+| `--cli-cmd "<cmd>"` | Befehl der CLI für `harnessInit` und die `cli`-Schritte (Standard `target/debug/nexus`, das Rust-Binary – gegen es sind die Golden-Dateien der Suite `cli` aufgezeichnet). Auch als JSON-Array: `'["node","/Mein Ordner/main.js"]'` – der sichere Weg für Pfade mit Leerzeichen. Relative Pfade gelten ab der Projektwurzel. |
 | `--init-cmd "<cmd>"` | Eigener Befehl nur für die Fixture `harnessInit` (Standard: `--cli-cmd`). Nötig, solange die geprüfte CLI noch kein `init` kennt. |
 | `--setup-cmd "<cmd>"` | Eigener Befehl nur für `cli`-Schritte mit `record: false` (Standard: `--cli-cmd`). Diese Schritte bauen nur den Zustand auf; nötig, solange die geprüfte CLI die dafür benutzten Befehle noch nicht kennt. |
 | `--coverage` | Routen aus `api/routes.json` auflisten, Exit 0. |
@@ -154,7 +154,7 @@ Vertragsmodus. Szenarien mit Ereignisstrom drücken damit den Takt, damit sie in
   `git` (Standard `true`) legt ein Repo mit erstem Commit an, `files` schreibt Dateien (Pfade mit `/`),
   `harnessInit` führt `<cli> init` im Repo aus (nötig, damit sich das Projekt anmelden lässt).
   Benutzer und Zeitpunkt des ersten Commits stehen fest (`Vertrag <vertrag@example.invalid>`, `2020-03-02`),
-  deshalb ist sein Hash in jedem Lauf derselbe. Das zählt, sobald ein Befehl ihn ausgibt – `harness board
+  deshalb ist sein Hash in jedem Lauf derselbe. Das zählt, sobald ein Befehl ihn ausgibt – `nexus board
   merge` meldet „… gemergt in main (6f07eff)“.
   Der Ordner heißt `<temp>/<NAME>/Mein Projekt ä` – Leerzeichen und Umlaut gehören zum Test.
   `branches` legt Arbeitsbranches an, die vor dem Hauptbranch `main` stehen – je Branch `name` (nicht `main`),
@@ -517,7 +517,7 @@ node contract/run.mjs --suite cli --only cli/help
 
 ### Hooks (`cli/hooks/`)
 
-Je Hook-Ereignis ein Szenario: Fixture-Repo mit `harness init`, SQLite-Board, Board dem Repo zugeordnet,
+Je Hook-Ereignis ein Szenario: Fixture-Repo mit `nexus init`, SQLite-Board, Board dem Repo zugeordnet,
 ein Ticket in Arbeit mit einem ungelesenen Kommentar. Das Szenario ruft den Hook auf und liest danach
 `GET /api/projects/<pid>/sessions` – so steht sowohl die Ausgabe an Claude Code als auch die Wirkung auf
 den Server im Vertrag.
@@ -528,7 +528,7 @@ den Server im Vertrag.
 | `user-prompt` | Kommentar genau einmal, Session-Name aus dem Prompt (`SE-001: …`). |
 | `notification`, `stop`, `subagent-start`, `subagent-stop`, `session-end` | still (kein `additionalContext`), aber gemeldet: Zustand, Subagenten und Ende der Session. |
 | `stille-eingaben` | kaputtes JSON, leere Eingabe, `[]`, `null`, fehlende und nicht-textuelle Sitzungskennung, unbekanntes Ereignis – alle Exit 0, keine Ausgabe, keine Session. |
-| `ohne-board` | Ohne `board.yaml` gibt es keinen Kontext, die Session wird trotzdem gemeldet. Im Repo ohne `harness init` passiert nichts. |
+| `ohne-board` | Ohne `board.yaml` gibt es keinen Kontext, die Session wird trotzdem gemeldet. Im Repo ohne `nexus init` passiert nichts. |
 | `zuordnung` | Ohne `HARNESS_TICKET` erst „keinem Ticket zugeordnet“, dann über die verknüpfte Session; ein unbekanntes `HARNESS_TICKET` fällt darauf zurück. |
 | `worktree` | Hook aus `<REPO1>-worktrees/ARC-0001`: das Projekt bleibt das Hauptrepo (gemeinsames Git-Verzeichnis), das Ticket kommt aus dem Ordner. |
 
@@ -537,7 +537,7 @@ Vertragsbestandteil – sie ist nur hoch, damit ein langsamer CI-Rechner den Hoo
 
 ### Board-Befehle (`cli/board/`)
 
-Agenten und Skills arbeiten über `harness board …`; deren Ausgaben und Fehlermeldungen sind Vertrag. Jedes
+Agenten und Skills arbeiten über `nexus board …`; deren Ausgaben und Fehlermeldungen sind Vertrag. Jedes
 Szenario legt sich seinen Stand selbst an (Projekt, Board, Tickets – als `http`-Schritte mit `record: false`)
 und ruft danach die Unterbefehle auf: jeden mit mindestens einem Erfolgsfall je Ausgabeart, die er anbietet
 (Text, `--md`, `--json`), und mindestens einem Fehlerfall. Ein Fehler meldet Exit-Code 1 und schreibt den
@@ -566,10 +566,10 @@ Board-Datenbank aus und braucht drei Repos (Kommentare, beschädigte Kommentarda
 
 Was beim Aufzeichnen zu beachten ist:
 
-- **Kein Browser.** `harness board` ohne Unterbefehl öffnet das Board im Browser (`BrowserOpener`). Im
-  Vertrag steht er deshalb nur als `harness board --no-open`: Server prüfen, Projekt anmelden, Adresse
+- **Kein Browser.** `nexus board` ohne Unterbefehl öffnet das Board im Browser (`BrowserOpener`). Im
+  Vertrag steht er deshalb nur als `nexus board --no-open`: Server prüfen, Projekt anmelden, Adresse
   ausgeben. Ohne `--no-open` wird er in keinem Szenario aufgerufen.
-- **Nie ein Port, auf dem nichts läuft.** `harness board` und die `dispatch`-Befehle starten den Server
+- **Nie ein Port, auf dem nichts läuft.** `nexus board` und die `dispatch`-Befehle starten den Server
   selbst, wenn der Port frei ist – ein solcher Prozess überlebte das Szenario. Die Fehlerfälle nehmen
   deshalb immer einen ungültigen Port (`--port abc`), der schon beim Prüfen auffällt.
 - **Worktrees und Branches.** `start`, `done`, `merge`, `plan-start` und `question research-start` legen
@@ -578,7 +578,7 @@ Was beim Aufzeichnen zu beachten ist:
   Commits feststehen, ist auch der Hash in der Merge-Meldung in jedem Lauf derselbe.
 - **Immer `--by`, `--author` oder `--agent` angeben.** Ohne sie nimmt die CLI den Git-Benutzernamen des
   Rechners – der steht nicht im Vertrag.
-- **`stop` zuletzt.** `harness stop` beendet den Server des Szenarios. Danach folgt nur noch ein zweiter
+- **`stop` zuletzt.** `nexus stop` beendet den Server des Szenarios. Danach folgt nur noch ein zweiter
   Aufruf, der „Es läuft kein Server.“ meldet; der Läufer merkt, dass der Server schon weg ist, und meldet
   deshalb keinen Fehler.
 - **Keine Spaltenbreite.** Die Board-Ausgaben rechnen nicht mit der Breite des Terminals, nur commander
@@ -597,7 +597,7 @@ Vertragsbestandteil ist und sich nicht ersetzen lässt (der Normalisierer kennt 
 | `question research-start` | dasselbe für die Recherche | `--json` mit `save` → `<var:recherche>` |
 
 Sobald ein Name des Laufs mit `save` gemerkt ist, ersetzt ihn der Normalisierer auch in den Textausgaben der
-folgenden Schritte – `dispatch status` nennt ihn deshalb als `<var:lauf>`. Genauso hat `harness stop` keinen
+folgenden Schritte – `dispatch status` nennt ihn deshalb als `<var:lauf>`. Genauso hat `nexus stop` keinen
 Fehlerfall: ohne laufenden Server meldet er „Es läuft kein Server.“ mit Exit-Code 0.
 
 ### Hilfetexte (`cli/help/`)
@@ -614,7 +614,7 @@ Der Generator ruft `<cli> --help` auf, liest aus dem Abschnitt „Befehle“ rek
 Dazu kommen die Fehlermeldungen von commander (`GermanErrors`): unbekannter Befehl, mit Vorschlag
 „Meinten Sie …?“, unbekannter Unterbefehl, fehlendes Pflichtargument, unbekannte Option am Programm und an
 einem Befehl, Option ohne Wert. Der eingebaute Befehl `help` bekommt keinen eigenen Schritt – er zeigt die
-Hilfe des übergeordneten Befehls; stattdessen prüft ein Schritt `harness help board`.
+Hilfe des übergeordneten Befehls; stattdessen prüft ein Schritt `nexus help board`.
 
 Zwei Dinge gehören zum Vertrag und sind leicht zu übersehen:
 
@@ -638,7 +638,7 @@ kill %1
 Der fremde Server muss mit genau diesem leeren Home gestartet sein. Weil sein Zustand nicht zurückgesetzt
 werden kann, ist **genau ein** Szenario erlaubt: `--only` muss eindeutig passen, sonst bricht der Lauf ab.
 Dieselbe Form nimmt später der Server in Rust: entweder `--base` auf einen von Hand gestarteten Server oder
-`--server-cmd "target/debug/harness-server --port {port}"`, damit `run.mjs` ihn selbst startet.
+`--server-cmd "target/debug/nexus-server --port {port}"`, damit `run.mjs` ihn selbst startet.
 
 ## Dateien
 
@@ -686,7 +686,7 @@ contract/
 ├─ sse/                       # Szenarien des Ereignisstroms
 ├─ cli/
 │  ├─ hooks/                  # je Hook-Ereignis ein Szenario
-│  ├─ board/                  # alle Unterbefehle von `harness board`, dazu `spec` und `stop`
+│  ├─ board/                  # alle Unterbefehle von `nexus board`, dazu `spec` und `stop`
 │  └─ help/                   # Hilfetexte aller Befehle (erzeugt)
 └─ tests/                     # Einheitentests (vitest, siehe vitest.config.ts)
 ```
