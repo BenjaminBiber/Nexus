@@ -8,7 +8,7 @@ import type { ServerConfig } from './ServerConfig.js';
 export const DEFAULT_PORT = DEFAULT_SERVER_PORT;
 
 // Liest die Einstellungen aus Argumenten und Umgebung (--port, HARNESS_PORT, HARNESS_WEB_DIR, HARNESS_TOAST_DIR,
-// HARNESS_HOME, HARNESS_SIDECAR, HARNESS_PUBLIC_PORT).
+// HARNESS_HOME, HARNESS_SIDECAR, HARNESS_PUBLIC_PORT, HARNESS_DB_QUESTION_POLL_MS).
 export class ServerConfigLoader {
   // sea: läuft der Server als gebündeltes Sidecar (Single Executable Application)? Dann liegen Oberfläche und
   // Bilder neben dem Programm, denn es gibt keine Paketordner. Tests setzen den Wert selbst.
@@ -25,7 +25,20 @@ export class ServerConfigLoader {
       toastDir: env.HARNESS_TOAST_DIR ?? this.toastDir(),
       sidecar: env.HARNESS_SIDECAR === '1',
       publicPort: this.publicPort(env),
+      dbQuestionPollMs: this.dbQuestionPollMs(env),
     };
+  }
+
+  // Abstand der Fragen-Beobachtung aus HARNESS_DB_QUESTION_POLL_MS; 0 schaltet sie ab. Hinter dem
+  // Rust-Server steht hier 0, denn dort beobachtet der Rust-Server die Fragen und nichts soll doppelt melden.
+  private dbQuestionPollMs(env: Record<string, string | undefined>): number | undefined {
+    const raw = env.HARNESS_DB_QUESTION_POLL_MS;
+    if (raw === undefined || raw.trim() === '') return undefined;
+    const ms = Number(raw);
+    if (!Number.isInteger(ms) || ms < 0) {
+      throw new HarnessError('config-invalid', `HARNESS_DB_QUESTION_POLL_MS „${raw}“ ist ungültig. Erlaubt sind ganze Zahlen ab 0.`);
+    }
+    return ms;
   }
 
   // Basis-Adresse der Links in Meldungen (Windows-Toast, ntfy): hinter dem Rust-Server der

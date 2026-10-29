@@ -140,6 +140,9 @@ impl NodeSidecar {
             .env("HARNESS_PUBLIC_PORT", public_port.to_string())
             // Rust löst `NEXUS_HOME` und `HARNESS_HOME` auf; Node kennt nur `HARNESS_HOME`
             .env("HARNESS_HOME", home.dir())
+            // Die Fragen der Board-Datenbank beobachtet nur der Rust-Server; sonst käme
+            // jede neue Frage zweimal als Meldung
+            .env("HARNESS_DB_QUESTION_POLL_MS", "0")
             // stdin bleibt offen und wird nie beschrieben: endet die Pipe, endet der Node-Server
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())

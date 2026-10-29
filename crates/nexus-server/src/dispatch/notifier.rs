@@ -20,6 +20,19 @@ pub enum DispatchNoticeKind {
     Review,
 }
 
+impl DispatchNoticeKind {
+    /// Der Anlass, wie er im JSON und in der Kennung einer Meldung steht
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Merged => "merged",
+            Self::Blocked => "blocked",
+            Self::Question => "question",
+            Self::Paused => "paused",
+            Self::Review => "review",
+        }
+    }
+}
+
 /// Eine Meldung des Dispatchers
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

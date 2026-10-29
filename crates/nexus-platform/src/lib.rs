@@ -1,16 +1,20 @@
 //! Systemfunktionen des Rechners, auf dem Nexus läuft: Ordnerdialog, Dateien im
 //! Explorer/Finder oder in VS Code öffnen und Systemmeldungen (Toasts).
 //!
-//! Neben den Verträgen stehen hier die „nicht verfügbar“-Umsetzung, Attrappen für Tests und
-//! die Windows-Umsetzungen von Ordnerdialog und Öffnen; die Windows-Toasts kommen später und
-//! ersetzen nur das Trait-Objekt im Zustand des Servers. Vorlagen in TypeScript:
-//! `packages/server/src/dbboard/FolderPicker.ts`, `packages/server/src/docs/FileOpener.ts`
-//! und `packages/server/src/notifications/WindowsToastSender.ts`.
+//! Neben den Verträgen stehen hier die „nicht verfügbar“-Umsetzung, Attrappen für Tests, die
+//! Windows-Umsetzungen von Ordnerdialog und Öffnen sowie die Systemmeldungen je Plattform
+//! ([`notifier`]). Vorlagen in TypeScript: `packages/server/src/dbboard/FolderPicker.ts`,
+//! `packages/server/src/docs/FileOpener.ts` und
+//! `packages/server/src/notifications/WindowsToastSender.ts`.
 
+pub mod notifier;
 pub mod windows;
 
+pub use crate::notifier::fake::FakeNotifier;
+pub use crate::notifier::{Notifier, SilentNotifier, ToastRequest};
+
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use nexus_core::HarnessError;
@@ -52,18 +56,6 @@ pub enum OpenTarget {
     Vscode,
 }
 
-/// Eine Systemmeldung: Titel, Text, Ziel beim Klick und die Gruppe, in der sich Meldungen
-/// gegenseitig ersetzen
-#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
-pub struct ToastRequest {
-    pub title: String,
-    pub body: String,
-    /// Adresse, die der Klick öffnet (leer: nichts öffnen)
-    pub url: Option<String>,
-    /// Gleiche Kennung ersetzt eine frühere Meldung (Standard `attention`)
-    pub tag: Option<String>,
-}
-
 /// Ordnerdialog auf diesem Rechner; `None` = abgebrochen
 #[async_trait]
 pub trait FolderPicker: Send + Sync {
@@ -76,17 +68,12 @@ pub trait FileOpener: Send + Sync {
     async fn open(&self, file: &Path, target: OpenTarget) -> Result<()>;
 }
 
-/// Systemmeldung zeigen; `None` = gezeigt, `Some(text)` = nicht gezeigt mit Grund
-#[async_trait]
-pub trait Notifier: Send + Sync {
-    async fn show(&self, toast: &ToastRequest) -> Option<String>;
-}
-
 /// Alle Systemfunktionen zusammen, wie der Server sie hält
 pub struct Platform {
     pub folders: Box<dyn FolderPicker>,
     pub files: Box<dyn FileOpener>,
-    pub notifier: Box<dyn Notifier>,
+    /// Geteilt, weil die Benachrichtigungen des Servers denselben Melder brauchen
+    pub notifier: Arc<dyn Notifier>,
 }
 
 impl Platform {
@@ -96,7 +83,7 @@ impl Platform {
         Self {
             folders: Box::new(UnavailableFolderPicker),
             files: Box::new(UnavailableFileOpener),
-            notifier: Box::new(SilentNotifier),
+            notifier: Arc::new(SilentNotifier),
         }
     }
 
@@ -115,7 +102,8 @@ impl Platform {
             files: Box::new(crate::windows::file_opener::WindowsFileOpener::new()),
             #[cfg(not(windows))]
             files: Box::new(UnavailableFileOpener),
-            notifier: Box::new(SilentNotifier),
+            // Systemmeldungen gibt es auf allen drei Plattformen: WinRT bzw. notify-rust
+            notifier: notifier::local().into(),
         }
     }
 
@@ -126,7 +114,8 @@ impl Platform {
         Self {
             folders: Box::new(FakeFolderPicker::new(None)),
             files: Box::new(FakeFileOpener::default()),
-            notifier: Box::new(SilentNotifier),
+            // Der Vertragslauf darf nie eine echte Meldung zeigen
+            notifier: Arc::new(FakeNotifier::default()),
         }
     }
 
@@ -135,7 +124,7 @@ impl Platform {
         Self {
             folders: Box::new(FakeFolderPicker::new(None)),
             files: Box::new(FakeFileOpener::default()),
-            notifier: Box::new(FakeNotifier::default()),
+            notifier: Arc::new(FakeNotifier::default()),
         }
     }
 }
@@ -160,16 +149,6 @@ pub struct UnavailableFileOpener;
 impl FileOpener for UnavailableFileOpener {
     async fn open(&self, _file: &Path, _target: OpenTarget) -> Result<()> {
         Err(crate::windows::file_opener::only_on_windows())
-    }
-}
-
-/// Zeigt keine Systemmeldungen (z. B. außerhalb von Windows)
-pub struct SilentNotifier;
-
-#[async_trait]
-impl Notifier for SilentNotifier {
-    async fn show(&self, _toast: &ToastRequest) -> Option<String> {
-        Some("Windows-Benachrichtigungen gibt es nur unter Windows.".into())
     }
 }
 
@@ -218,23 +197,6 @@ impl FileOpener for FakeFileOpener {
     }
 }
 
-/// Systemmeldungen für Tests: merkt sie sich, statt sie zu zeigen
-#[derive(Default)]
-pub struct FakeNotifier {
-    pub shown: Mutex<Vec<ToastRequest>>,
-}
-
-#[async_trait]
-impl Notifier for FakeNotifier {
-    async fn show(&self, toast: &ToastRequest) -> Option<String> {
-        self.shown
-            .lock()
-            .expect("Sperre der Meldungen")
-            .push(toast.clone());
-        None
-    }
-}
-
 /// Name des Crates, wie er in Protokollen und Diagnoseausgaben erscheint.
 pub const CRATE_NAME: &str = "nexus-platform";
 
@@ -259,7 +221,7 @@ mod tests {
         let toast = platform.notifier.show(&ToastRequest::default()).await;
         assert_eq!(
             toast.as_deref(),
-            Some("Windows-Benachrichtigungen gibt es nur unter Windows.")
+            Some("Systemmeldungen gibt es auf diesem Rechner nicht.")
         );
     }
 
