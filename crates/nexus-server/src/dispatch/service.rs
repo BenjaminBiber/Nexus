@@ -21,11 +21,12 @@ use nexus_core::board::ticket_service::{TicketListFilter, TicketView};
 use nexus_core::board::types::Board;
 use nexus_core::clock::{iso, parse_millis, Clock};
 use nexus_core::dispatch::{
-    DispatchConfig, DispatchConfigStore, DispatchLog, DispatchStateStore, MergeEntry,
-    ReadinessBoard, ReadinessTicket, ReviewStore, RunEnd, RunKind, RunLogSplitter, RunRecord,
-    RunResult, RunStore, TimeWindowCheck,
+    DispatchConfig, DispatchConfigNormalizer, DispatchConfigStore, DispatchLog, DispatchPrompt,
+    DispatchStateStore, MergeEntry, PromptKind, ReadinessBoard, ReadinessTicket, ReviewStore,
+    RunEnd, RunKind, RunLogSplitter, RunRecord, RunResult, RunStore, TimeWindowCheck,
 };
 use nexus_core::{HarnessError, HarnessHome, Result};
+use serde::{Deserialize, Serialize};
 use tokio::sync::watch;
 
 use crate::board_runtime::{BoardBackend, BoardRuntimeHolder};
@@ -35,6 +36,7 @@ use crate::dispatch::merge_service::MergeService;
 use crate::dispatch::merge_step::MergeStep;
 use crate::dispatch::notifier::{DispatchNotify, NoDispatchNotify};
 use crate::dispatch::plan_runner::PlanRunner;
+use crate::dispatch::prompt_values::PromptValues;
 use crate::dispatch::research_runner::{hhmm, ResearchRunner, StartMode};
 use crate::dispatch::result_handler::{MergeSessionEnd, ResultHandler, ReviewGate};
 use crate::dispatch::review_service::{ReviewFilePatch, ReviewService, ReviewView};
@@ -106,6 +108,28 @@ impl DispatchReport {
 pub struct MergeRetryReport {
     pub report: DispatchReport,
     pub result: MergeRetryResult,
+}
+
+/// Anfrage an die Vorschau einer Arbeitsanweisung
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PromptPreviewInput {
+    pub kind: PromptKind,
+    /// Eigene Vorlage, die nur für diese Vorschau gilt; `None` = die der Einstellung
+    pub template: Option<String>,
+    /// Ticket- bzw. Fragen-ID; `None` = Beispielwerte
+    pub id: Option<String>,
+}
+
+/// Eine gerenderte Arbeitsanweisung für die Oberfläche
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PromptPreview {
+    pub kind: PromptKind,
+    /// Ticket- bzw. Fragen-ID der echten Werte; `None` bei Beispielwerten
+    pub id: Option<String>,
+    /// Steht die Vorschau auf Beispielwerten?
+    pub sample: bool,
+    pub prompt: String,
 }
 
 /// Was der Dispatch-Service braucht; alles, was Tests ersetzen (Uhr, Prozessprüfung, Umgebung,
@@ -535,6 +559,82 @@ impl DispatchService {
             name: name.to_string(),
             parts: RunLogSplitter::new().split(&text),
         })
+    }
+
+    /// Vorschau einer Arbeitsanweisung: ohne ID mit Beispielwerten, mit ID mit den echten
+    /// Werten des Tickets bzw. der Frage. Eine mitgegebene eigene Vorlage wird geprüft, aber
+    /// nicht gespeichert.
+    pub async fn preview_prompt(&self, input: &PromptPreviewInput) -> Result<PromptPreview> {
+        let kind = input.kind;
+        // Leer gilt wie in der Datei als „Standardvorlage“; Zeilenenden wie beim Speichern
+        // vereinheitlichen
+        let template = input
+            .template
+            .as_deref()
+            .filter(|text| !text.trim().is_empty())
+            .map(|text| text.replace("\r\n", "\n"));
+        if let Some(template) = &template {
+            let normalizer = DispatchConfigNormalizer::new();
+            let raw = serde_json::json!({ "prompts": { kind.as_str(): template } });
+            let problems = normalizer.prompt_problems(&raw)?;
+            if !problems.is_empty() {
+                return Err(DispatchConfigNormalizer::prompt_error(&problems).into());
+            }
+        }
+        // Über die Einstellung rendern, nicht an ihr vorbei: so gilt dieselbe Fallback-Logik
+        // wie im Lauf
+        let mut cfg = self.configs.read()?.config;
+        cfg.prompts.set(kind, template);
+        let id = input
+            .id
+            .as_deref()
+            .map(str::trim)
+            .filter(|id| !id.is_empty())
+            .map(str::to_string);
+        let prompts = DispatchPrompt::new();
+        let Some(id) = id else {
+            let sample = crate::dispatch::prompt_values::sample(&cfg);
+            let prompt = match kind {
+                PromptKind::Work => prompts.work(&sample.work.input(&cfg)),
+                PromptKind::Plan => prompts.plan(&sample.plan.input(&cfg)),
+                PromptKind::Research => prompts.research(&sample.research.input(&cfg)),
+                PromptKind::Merge => prompts.merge(&sample.merge.input(&cfg)),
+            };
+            return Ok(PromptPreview {
+                kind,
+                id: None,
+                sample: true,
+                prompt,
+            });
+        };
+        self.with_context(cfg.clone(), |ctx| async move {
+            let values = PromptValues::new(&ctx);
+            if kind == PromptKind::Research {
+                let canonical = QuestionIds::canonical(&id)?;
+                let question = ctx.services().questions.get(&canonical).await?;
+                let question = question.view.question;
+                let rendered = values.research(&question.id, &question.title);
+                return Ok(PromptPreview {
+                    kind,
+                    id: Some(question.id),
+                    sample: false,
+                    prompt: prompts.research(&rendered.input(&cfg)),
+                });
+            }
+            let detail = ctx.services().tickets.get(&id.to_uppercase()).await?;
+            let prompt = match kind {
+                PromptKind::Work => prompts.work(&values.work(&detail).await?.input(&cfg)),
+                PromptKind::Plan => prompts.plan(&values.plan(&detail).input(&cfg)),
+                _ => prompts.merge(&values.merge(&detail).input(&cfg)),
+            };
+            Ok(PromptPreview {
+                kind,
+                id: Some(detail.ticket.id.clone()),
+                sample: false,
+                prompt,
+            })
+        })
+        .await
     }
 
     /// Ein ausdrücklich genanntes Board muss es geben (`board-not-found` wie bei den anderen

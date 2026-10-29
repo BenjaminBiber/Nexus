@@ -30,8 +30,10 @@ use nexus_core::{tx, HarnessError, HarnessHome, Result};
 use nexus_platform::Platform;
 use nexus_server::board_db::{ServerBoardDatabase, ServerBoardServices};
 use nexus_server::board_runtime::{BoardBackend, BoardBackendFactory, BoardBackendFuture};
-use nexus_server::config::ServerConfig;
-use nexus_server::dispatch::{ClaudeRunInput, ClaudeRunner, ClaudeRunners, RunResult};
+use nexus_server::config::{DispatchBackend, ServerConfig};
+use nexus_server::dispatch::{
+    ClaudeRunInput, ClaudeRunner, ClaudeRunners, RunResult, WorkerLauncher,
+};
 use nexus_server::groups::RouteGroups;
 use nexus_server::routes::build_router;
 use nexus_server::state::AppState;
@@ -99,11 +101,29 @@ pub struct TestServerOptions {
     pub claude: Option<ClaudeRunners>,
     /// Uhr des Servers; ohne Angabe die des Rechners
     pub clock: Option<Clock>,
+    /// Wer dispatcht; ohne Angabe wie im Betrieb der Node-Sidecar
+    pub dispatch: DispatchBackend,
+    /// Start der Worker; ohne Angabe eine Attrappe, die nichts startet
+    pub dispatch_launcher: Option<Arc<dyn WorkerLauncher>>,
     /// Die Abo-Limits von Claude; ohne Angabe der echte Dienst (den Tests nie fragen)
     pub usage: Option<ClaudeUsageService>,
     /// Benutzerordner eines schon laufenden Servers (Neustart mit demselben Bestand);
     /// ohne Angabe ein frischer
     pub home: Option<HarnessHome>,
+}
+
+/// Startet nichts und liefert keine Prozessnummer; so startet in Tests nie ein echter Worker
+#[derive(Debug, Default)]
+pub struct NoWorkerLauncher;
+
+impl WorkerLauncher for NoWorkerLauncher {
+    fn launch(
+        &self,
+        _run_id: &str,
+        _env: &std::collections::BTreeMap<String, String>,
+    ) -> Result<Option<u32>> {
+        Ok(None)
+    }
 }
 
 impl TestServer {
@@ -141,6 +161,12 @@ impl TestServer {
         if let Some(clock) = options.clock {
             config.clock = clock;
         }
+        config.dispatch = options.dispatch;
+        config.dispatch_launcher = Some(
+            options
+                .dispatch_launcher
+                .unwrap_or_else(|| Arc::new(NoWorkerLauncher)),
+        );
         let board = options.board.unwrap_or_else(|| {
             if options.board_from_config {
                 nexus_server::board_from_config(home.clone())

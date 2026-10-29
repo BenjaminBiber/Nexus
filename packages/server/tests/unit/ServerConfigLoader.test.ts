@@ -91,6 +91,19 @@ describe('ServerConfigLoader', () => {
     );
   });
 
+  it('nimmt den Takt des Dispatchers aus HARNESS_DISPATCH_TICK_MS, 0 schaltet ihn ab', () => {
+    expect(loader.load([], {}).dispatchTickMs).toBeUndefined();
+    expect(loader.load([], { HARNESS_DISPATCH_TICK_MS: '' }).dispatchTickMs).toBeUndefined();
+    expect(loader.load([], { HARNESS_DISPATCH_TICK_MS: '0' }).dispatchTickMs).toBe(0);
+    expect(loader.load([], { HARNESS_DISPATCH_TICK_MS: '60000' }).dispatchTickMs).toBe(60000);
+  });
+
+  it.each(['abc', '-1', '1.5'])('weist den Takt des Dispatchers %j ab', (raw) => {
+    expect(() => loader.load([], { HARNESS_DISPATCH_TICK_MS: raw })).toThrowError(
+      expect.objectContaining({ code: 'config-invalid' }),
+    );
+  });
+
   it('schickt Links in Meldungen auf den öffentlichen Port', () => {
     const hinter = loader.load(['--port', '0'], { HARNESS_SIDECAR: '1', HARNESS_PUBLIC_PORT: '4710' });
     expect(ServerConfigLoader.noticeBaseUrl({ ...hinter, port: 51234 })).toBe('http://127.0.0.1:4710');

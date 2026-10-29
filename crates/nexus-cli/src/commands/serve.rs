@@ -90,7 +90,7 @@ async fn serve(
                 &|name| std::env::var(name).ok(),
                 exe_dir().as_deref(),
             )?;
-            Some(NodeSidecar::start(&spec, &config.home, public).await?)
+            Some(NodeSidecar::start(&spec, &config.home, public, config.dispatch).await?)
         }
     };
     if let Some(sidecar) = &sidecar {

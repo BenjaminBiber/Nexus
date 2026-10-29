@@ -69,6 +69,7 @@ impl ServerHandle {
         self.state.log.write("Server wird beendet.");
         self.state.shutdown.cancel();
         // Vor dem Abbau der Board-Laufzeit anhalten, damit kein Durchlauf sie neu aufbaut
+        self.state.dispatch_scheduler.stop().await;
         self.state.db_questions.stop();
         // Ausstehende Änderungen der Sessions landen noch in `sessions.json`
         self.state.sessions.close().await;
@@ -177,6 +178,15 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
 
     // Meldungen für neue Fragen und Recherchen der Board-Datenbank (Abstand 0 = aus)
     state.db_questions.start();
+    // Getaktet wird nur, wenn der Umschalter `NEXUS_DISPATCH` auf `rust` steht; sonst
+    // dispatcht der Node-Sidecar und nur er
+    if state.config.dispatch.is_rust() {
+        state.log.write(&format!(
+            "Dispatcher: Rust, Takt {} ms",
+            state.config.dispatch_tick_ms
+        ));
+        state.dispatch_scheduler.start().await;
+    }
 
     let router = routes::build_router(state.clone());
     let shutdown = state.shutdown.clone();

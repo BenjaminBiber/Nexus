@@ -24,6 +24,47 @@ pub const DEFAULT_DB_QUESTION_POLL_MS: u64 = 10_000;
 /// Takt des Dispatchers (0 = aus)
 pub const DEFAULT_DISPATCH_TICK_MS: u64 = 60_000;
 
+/// Wer dispatcht: der Node-Sidecar oder der Rust-Server (`NEXUS_DISPATCH`).
+///
+/// So schreibt immer nur ein Dispatcher. Bei [`DispatchBackend::Node`] (Vorgabe) gehen die
+/// Routen unter `/api/dispatch` an den Sidecar und der Rust-Takt bleibt aus; bei
+/// [`DispatchBackend::Rust`] antwortet Rust, der Rust-Takt läuft und der Sidecar startet mit
+/// `HARNESS_DISPATCH_TICK_MS=0`.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum DispatchBackend {
+    #[default]
+    Node,
+    Rust,
+}
+
+impl DispatchBackend {
+    /// Der Wert, wie er in `NEXUS_DISPATCH` steht
+    pub fn as_str(self) -> &'static str {
+        match self {
+            DispatchBackend::Node => "node",
+            DispatchBackend::Rust => "rust",
+        }
+    }
+
+    /// Dispatcht der Rust-Server?
+    pub fn is_rust(self) -> bool {
+        self == DispatchBackend::Rust
+    }
+
+    /// Der Umschalter aus der Umgebung; ein unbekannter Wert bricht den Start ab
+    pub fn parse(raw: &str) -> Result<Self> {
+        match raw.trim() {
+            "node" => Ok(DispatchBackend::Node),
+            "rust" => Ok(DispatchBackend::Rust),
+            other => Err(HarnessError::new(
+                "dispatch-backend-invalid",
+                format!("NEXUS_DISPATCH „{other}“ ist ungültig. Erlaubt sind node und rust."),
+            )
+            .into()),
+        }
+    }
+}
+
 /// Einstellungen des Servers
 #[derive(Debug, Clone)]
 pub struct ServerConfig {
@@ -53,6 +94,11 @@ pub struct ServerConfig {
     pub db_question_poll_ms: u64,
     /// Takt des Dispatchers in Millisekunden (0 = aus)
     pub dispatch_tick_ms: u64,
+    /// Wer dispatcht: der Node-Sidecar (Vorgabe) oder der Rust-Server
+    pub dispatch: DispatchBackend,
+    /// Start der Worker eines Laufs; ohne Angabe [`crate::dispatch::ProcessWorkerLauncher`]
+    /// (Tests setzen hier Attrappen ein)
+    pub dispatch_launcher: Option<std::sync::Arc<dyn crate::dispatch::WorkerLauncher>>,
     /// Uhr des Servers; Tests setzen eine feste, damit Zeiträume nachrechenbar sind
     pub clock: Clock,
 }
@@ -93,6 +139,8 @@ impl ServerConfig {
             docs_poll_ms: DEFAULT_DOCS_POLL_MS,
             db_question_poll_ms: DEFAULT_DB_QUESTION_POLL_MS,
             dispatch_tick_ms: DEFAULT_DISPATCH_TICK_MS,
+            dispatch: DispatchBackend::default(),
+            dispatch_launcher: None,
             clock: Clock::system(),
         }
     }
@@ -147,8 +195,14 @@ impl ServerConfigLoader {
         let upstream = argument(args, "--upstream")
             .or_else(|| value(env, &["NEXUS_UPSTREAM"]))
             .filter(|url| !url.is_empty());
+        // Unbekannte Werte brechen den Start mit einer klaren Meldung ab
+        let dispatch = match value(env, &["NEXUS_DISPATCH"]).filter(|raw| !raw.trim().is_empty()) {
+            Some(raw) => DispatchBackend::parse(&raw)?,
+            None => DispatchBackend::default(),
+        };
         let mut config = ServerConfig {
             port: port(args, env)?,
+            dispatch,
             web_dir,
             version: value(env, &["NEXUS_SERVER_VERSION", "HARNESS_BUNDLED_VERSION"])
                 .filter(|version| !version.is_empty())
@@ -158,6 +212,13 @@ impl ServerConfigLoader {
             heartbeat_ms: millis(env, "CONTRACT_HEARTBEAT_MS", DEFAULT_HEARTBEAT_MS),
             db_poll_ms: millis(env, "CONTRACT_POLL_MS", DEFAULT_DB_POLL_MS),
             docs_poll_ms: millis(env, "CONTRACT_POLL_MS", DEFAULT_DOCS_POLL_MS),
+            // 0 schaltet den Takt ab; der Vertragstest drückt ihn, damit seine Szenarien in
+            // Sekunden fertig sind
+            dispatch_tick_ms: count(
+                env,
+                &["NEXUS_DISPATCH_TICK_MS", "HARNESS_DISPATCH_TICK_MS"],
+                DEFAULT_DISPATCH_TICK_MS,
+            ),
             // 0 schaltet die Fragen-Beobachtung ab und ist deshalb ein erlaubter Wert
             db_question_poll_ms: count(
                 env,
@@ -169,9 +230,11 @@ impl ServerConfigLoader {
         if let Some(dir) = toast_dir {
             config.toast_dir = dir;
         }
-        // Im Vertragsmodus gibt es keine Meldungen über neue Fragen (siehe contract/README.md)
+        // Im Vertragsmodus gibt es keine Meldungen über neue Fragen und keinen Takt des
+        // Dispatchers von selbst (siehe contract/README.md)
         if config.is_contract() {
             config.db_question_poll_ms = 0;
+            config.dispatch_tick_ms = 0;
         }
         if let Some(upstream) = upstream {
             config.set_upstream(upstream, env);
@@ -395,6 +458,59 @@ mod tests {
         .unwrap();
         assert!(config.is_contract());
         assert_eq!(config.db_question_poll_ms, 0);
+        assert_eq!(config.dispatch_tick_ms, 0);
+    }
+
+    #[test]
+    fn nimmt_den_umschalter_des_dispatchers_aus_der_umgebung_und_weist_unbekannte_werte_ab() {
+        // Vorgabe bleibt der Node-Sidecar
+        assert_eq!(load(&[], &[]).unwrap().dispatch, DispatchBackend::Node);
+        assert_eq!(
+            load(&[], &[("NEXUS_DISPATCH", "node")]).unwrap().dispatch,
+            DispatchBackend::Node
+        );
+        let rust = load(&[], &[("NEXUS_DISPATCH", " rust ")]).unwrap();
+        assert_eq!(rust.dispatch, DispatchBackend::Rust);
+        assert!(rust.dispatch.is_rust());
+        assert_eq!(rust.dispatch.as_str(), "rust");
+        // Ein leerer Wert zählt wie keiner
+        assert_eq!(
+            load(&[], &[("NEXUS_DISPATCH", "")]).unwrap().dispatch,
+            DispatchBackend::Node
+        );
+
+        let error = load(&[], &[("NEXUS_DISPATCH", "shadow")]).unwrap_err();
+        let harness = error.harness().expect("Fehler");
+        assert_eq!(harness.code, "dispatch-backend-invalid");
+        assert_eq!(
+            harness.message,
+            "NEXUS_DISPATCH „shadow“ ist ungültig. Erlaubt sind node und rust."
+        );
+    }
+
+    #[test]
+    fn nimmt_den_takt_des_dispatchers_aus_der_umgebung_und_laesst_0_zu() {
+        assert_eq!(
+            load(&[], &[("HARNESS_DISPATCH_TICK_MS", "0")])
+                .unwrap()
+                .dispatch_tick_ms,
+            0
+        );
+        assert_eq!(
+            load(&[], &[("NEXUS_DISPATCH_TICK_MS", "500")])
+                .unwrap()
+                .dispatch_tick_ms,
+            500
+        );
+        for raw in ["", "abc", "-1"] {
+            assert_eq!(
+                load(&[], &[("HARNESS_DISPATCH_TICK_MS", raw)])
+                    .unwrap()
+                    .dispatch_tick_ms,
+                DEFAULT_DISPATCH_TICK_MS,
+                "{raw}"
+            );
+        }
     }
 
     #[test]
