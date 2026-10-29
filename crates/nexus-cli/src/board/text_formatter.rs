@@ -88,9 +88,7 @@ impl BoardTextFormatter {
                     } else {
                         String::new()
                     },
-                    t.ticket
-                        .assignee
-                        .as_ref()
+                    Self::text(&t.ticket.assignee)
                         .map(|name| format!("@{name}"))
                         .unwrap_or_default(),
                     if t.ticket.priority == Priority::Normal {
@@ -120,7 +118,7 @@ impl BoardTextFormatter {
                         Self::questions(t).join("; ")
                     ));
                 }
-                if let Some(reason) = &t.ticket.blocked_reason {
+                if let Some(reason) = Self::text(&t.ticket.blocked_reason) {
                     lines.push(format!("  - Blockiert: {reason}"));
                 }
                 if !t.ticket.acceptance.is_empty() {
@@ -141,7 +139,7 @@ impl BoardTextFormatter {
             ),
             format!("Prio {}", t.view.ticket.priority),
             format!("rev {}", t.view.ticket.rev),
-            match &t.view.ticket.assignee {
+            match Self::text(&t.view.ticket.assignee) {
                 Some(name) => format!("@{name}"),
                 None => "nicht zugewiesen".to_string(),
             },
@@ -156,7 +154,7 @@ impl BoardTextFormatter {
             format!("{}  {}", t.view.ticket.id, t.view.ticket.title),
             head.join(" | "),
         ];
-        if let Some(reason) = &t.view.ticket.blocked_reason {
+        if let Some(reason) = Self::text(&t.view.ticket.blocked_reason) {
             lines.push(format!("Blockiert: {reason}"));
         }
         if !t.view.ticket.acceptance.is_empty() {
@@ -191,25 +189,17 @@ impl BoardTextFormatter {
                 Self::questions(&t.view).join("; ")
             ));
         }
-        if let Some(spec) = &t.view.ticket.spec {
-            let task = t
-                .view
-                .ticket
-                .spec_task
-                .as_ref()
+        if let Some(spec) = Self::text(&t.view.ticket.spec) {
+            let task = Self::text(&t.view.ticket.spec_task)
                 .map(|task| format!(" / {task}"))
                 .unwrap_or_default();
             lines.push(format!("Spec: {spec}{task}"));
         }
-        if let Some(target) = &t.view.ticket.target_branch {
+        if let Some(target) = Self::text(&t.view.ticket.target_branch) {
             lines.push(format!("Zielbranch: {target}"));
         }
-        if let Some(branch) = &t.view.ticket.branch {
-            let worktree = t
-                .view
-                .ticket
-                .worktree
-                .as_ref()
+        if let Some(branch) = Self::text(&t.view.ticket.branch) {
+            let worktree = Self::text(&t.view.ticket.worktree)
                 .map(|w| format!(" (Worktree {w})"))
                 .unwrap_or_default();
             lines.push(format!("Branch: {branch}{worktree}"));
@@ -345,7 +335,7 @@ impl BoardTextFormatter {
         if t.ticket.needs_planning {
             marks.push("[planung]".to_string());
         }
-        if let Some(assignee) = &t.ticket.assignee {
+        if let Some(assignee) = Self::text(&t.ticket.assignee) {
             marks.push(format!("@{assignee}"));
         }
         if t.ticket.priority != Priority::Normal {
@@ -371,6 +361,11 @@ impl BoardTextFormatter {
     /// Die Tickets einer Spalte in der Reihenfolge der Liste
     fn in_column(tickets: &[TicketView], column: BoardColumn) -> Vec<&TicketView> {
         tickets.iter().filter(|t| t.column == column).collect()
+    }
+
+    /// Ein gesetztes Feld, das nicht leer ist (`if (t.feld)` in TypeScript)
+    fn text(value: &Option<String>) -> Option<&str> {
+        value.as_deref().filter(|text| !text.is_empty())
     }
 
     /// Leere Angaben fallen weg (`.filter(Boolean)` in TypeScript)

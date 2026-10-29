@@ -8,6 +8,7 @@ import { GoldenStore } from './lib/GoldenStore.mjs';
 import { ScenarioLoader } from './lib/ScenarioLoader.mjs';
 import { ScenarioRunner } from './lib/ScenarioRunner.mjs';
 import { ServerHandle } from './lib/ServerHandle.mjs';
+import { StepFilter } from './lib/StepFilter.mjs';
 
 const CONTRACT_DIR = fileURLToPath(new URL('.', import.meta.url));
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -21,7 +22,8 @@ const HELP = `Vertragstest von HTTP-API, CLI und Hooks.
   --update              Golden-Dateien neu aufzeichnen (nur geänderte werden geschrieben)
   --only <teilstring>   nur Szenarien, deren Pfad den Teilstring enthält
   --step <teilstrings>  nur Schritte, deren Name einen der Teilstrings enthält (kommagetrennt);
-                        verglichen wird dann nur mit diesen Einträgen der Golden-Datei
+                        verglichen wird dann nur mit diesen Einträgen der Golden-Datei. Schritte
+                        mit record: false bauen nur den Zustand auf und laufen immer mit
   --suite <name>        Ordner unter contract/ (Standard: alle, also api und sse)
   --server-cmd "<cmd>"  eigener Startbefehl, {port} wird ersetzt
   --base <url>          fremder, laufender Server (braucht --home und genau ein Szenario)
@@ -42,6 +44,7 @@ export class ContractRun {
     this.options = options;
     this.golden = new GoldenStore();
     this.loader = new ScenarioLoader(CONTRACT_DIR);
+    this.steps = new StepFilter(options.step);
   }
 
   // Liest die Argumente; wirft bei unbekannten Optionen
@@ -110,7 +113,7 @@ export class ContractRun {
       const at = Date.now();
       let entries;
       try {
-        entries = await runner.run(this.chosen(scenario));
+        entries = await runner.run(this.steps.scenario(scenario));
       } catch (error) {
         failed += 1;
         console.log(`  FEHLER ${scenario.name}`);
@@ -133,25 +136,10 @@ export class ContractRun {
     return failed ? 1 : 0;
   }
 
-  // Das Szenario mit den Schritten, die `--step` ausgewählt hat (ohne die Option: unverändert).
-  // So lässt sich eine Teilmenge der Befehle prüfen, solange die anderen noch nicht portiert sind.
-  chosen(scenario) {
-    const parts = this.stepFilters();
-    if (!parts) return scenario;
-    return { ...scenario, steps: scenario.steps.filter((step) => parts.some((part) => step.name.includes(part))) };
-  }
-
-  // Die Teilstrings aus `--step`, oder null ohne die Option
-  stepFilters() {
-    if (this.options.step === null) return null;
-    const parts = this.options.step.split(',').map((part) => part.trim()).filter(Boolean);
-    return parts.length ? parts : null;
-  }
-
   // Schreibt die Golden-Datei (--update) oder vergleicht sie; liefert die Abweichungen
   settle(scenario, entries) {
     this.written = false;
-    if (this.options.update && this.stepFilters()) {
+    if (this.options.update && this.steps.active) {
       return ['--update und --step gehen nicht zusammen: die Golden-Datei würde auf die gewählten Schritte zusammenschrumpfen.'];
     }
     if (this.options.update) {
@@ -168,9 +156,7 @@ export class ContractRun {
       return [`Es gibt noch keine Golden-Datei (${this.relative(scenario.golden)}). Mit \`node contract/run.mjs --update\` aufzeichnen.`];
     }
     // Mit `--step` wurden nur einzelne Schritte ausgeführt; verglichen wird dann nur mit ihren Einträgen
-    const parts = this.stepFilters();
-    if (parts) expected = expected.filter((entry) => parts.some((part) => entry.name.includes(part)));
-    return GoldenStore.compare(expected, entries);
+    return GoldenStore.compare(this.steps.entries(expected), entries);
   }
 
   // Ein fremder Server behält seinen Zustand: dann ist genau ein Szenario erlaubt

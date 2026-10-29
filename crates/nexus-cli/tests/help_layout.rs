@@ -77,6 +77,48 @@ fn aus_dem_baum(name: &str) -> Command {
         .clone()
 }
 
+/// Ein Unterbefehl aus dem echten Befehlsbaum, über seinen Pfad (z. B. `board list`)
+fn aus_dem_baum_tief(pfad: &[&str]) -> Command {
+    let mut cmd = aus_dem_baum(pfad[0]);
+    for name in &pfad[1..] {
+        cmd.build();
+        cmd = cmd
+            .find_subcommand(name)
+            .unwrap_or_else(|| panic!("Befehl „{}“ fehlt im Befehlsbaum", pfad.join(" ")))
+            .clone();
+    }
+    cmd
+}
+
+/// Vergleicht die Hilfe eines Unterbefehls aus dem Baum mit der Golden-Datei
+fn wie_aufgezeichnet(pfad: &[&str]) {
+    let name = format!("harness {}", pfad.join(" "));
+    assert_eq!(
+        gerendert(&name, aus_dem_baum_tief(pfad)),
+        golden(&name),
+        "{name}"
+    );
+}
+
+#[test]
+fn hilfe_der_ticketbefehle_wie_aufgezeichnet() {
+    // Die Blätter aus `LEAVES` in `packages/cli/tests/integration/help.test.ts`, die dieses
+    // Ticket portiert
+    for pfad in [
+        ["board", "list"],
+        ["board", "show"],
+        ["board", "create"],
+        ["board", "set"],
+        ["board", "move"],
+        ["board", "delete"],
+        ["board", "claim"],
+        ["board", "release"],
+        ["board", "comment"],
+    ] {
+        wie_aufgezeichnet(&pfad);
+    }
+}
+
 #[test]
 fn hilfe_von_init_wie_aufgezeichnet() {
     assert_eq!(

@@ -38,7 +38,7 @@ npx vitest run contract            # Einheitentests (Normalisierer, Szenario-Lad
 | --- | --- |
 | `--update` | Golden-Dateien neu schreiben; nur Dateien mit geändertem Inhalt werden angefasst. |
 | `--only <teilstring>` | Nur Szenarien, deren Pfad den Teilstring enthält (z. B. `basis/health`). |
-| `--step <teilstrings>` | Nur Schritte, deren Name einen der kommagetrennten Teilstrings enthält; verglichen wird dann nur mit diesen Einträgen der Golden-Datei. Gedacht für eine Umsetzung, die erst einen Teil der Befehle kennt. Geht nicht mit `--update` zusammen. |
+| `--step <teilstrings>` | Nur Schritte, deren Name einen der kommagetrennten Teilstrings enthält; verglichen wird dann nur mit diesen Einträgen der Golden-Datei. Schritte mit `record: false` bauen nur den Zustand auf (Projekt, Board, Tickets) und laufen immer mit. Gedacht für eine Umsetzung, die erst einen Teil der Befehle kennt. Geht nicht mit `--update` zusammen. |
 | `--suite <name>` | Ordner unter `contract/` mit den Szenarien (Standard: alle, also `api`, `sse` und `cli`). |
 | `--server-cmd "<cmd {port}>"` | Eigener Startbefehl statt des TS-Servers; `{port}` wird ersetzt. Relative Pfade gelten ab der Projektwurzel. |
 | `--base <url> --home <ordner>` | Gegen einen schon laufenden Server prüfen (siehe unten). |

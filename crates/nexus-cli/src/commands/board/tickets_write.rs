@@ -331,9 +331,11 @@ pub fn set(context: &CliContext, args: &SetArgs) -> Result<u8> {
 
 /// Führt `board move` aus
 pub fn move_to(context: &CliContext, args: &MoveArgs) -> Result<u8> {
-    let status = BoardOptionParser.status(&args.status)?;
-    let rev = BoardOptionParser.rev(args.rev.as_deref())?;
     context.with_board(async |rt| {
+        // Wie in TypeScript erst nach dem Öffnen des Boards: eine fehlende `board.yaml` meldet
+        // sich vor einem falschen Status
+        let status = BoardOptionParser.status(&args.status)?;
+        let rev = BoardOptionParser.rev(args.rev.as_deref())?;
         let moved = rt
             .services
             .tickets

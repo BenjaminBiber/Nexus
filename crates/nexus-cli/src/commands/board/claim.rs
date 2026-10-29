@@ -57,12 +57,13 @@ pub struct ReleaseArgs {
 
 /// Führt `board claim` aus
 pub fn claim(context: &CliContext, args: &ClaimArgs) -> Result<u8> {
-    let status = match &args.status {
-        Some(status) => Some(BoardOptionParser.status(status)?),
-        None => None,
-    };
     let session = context.session().map(ToString::to_string);
     let claimed = context.with_board(async |rt| {
+        // Wie in TypeScript erst nach dem Öffnen des Boards
+        let status = match &args.status {
+            Some(status) => Some(BoardOptionParser.status(status)?),
+            None => None,
+        };
         rt.services
             .tickets
             .claim(
@@ -95,11 +96,12 @@ pub fn claim(context: &CliContext, args: &ClaimArgs) -> Result<u8> {
 
 /// Führt `board release` aus
 pub fn release(context: &CliContext, args: &ReleaseArgs) -> Result<u8> {
-    let status = match &args.status {
-        Some(status) => Some(BoardOptionParser.status(status)?),
-        None => None,
-    };
     context.with_board(async |rt| {
+        // Wie in TypeScript erst nach dem Öffnen des Boards
+        let status = match &args.status {
+            Some(status) => Some(BoardOptionParser.status(status)?),
+            None => None,
+        };
         let released = rt
             .services
             .tickets

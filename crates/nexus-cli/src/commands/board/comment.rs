@@ -31,16 +31,18 @@ pub struct CommentArgs {
 
 /// Führt `board comment` aus
 pub fn comment(context: &CliContext, args: &CommentArgs) -> Result<u8> {
-    let body = TextSource::read(args.text.as_deref(), args.body_file.as_deref())?;
-    let Some(body) = body else {
-        return Err(
-            HarnessError::new("usage", "Kommentartext fehlt (Argument oder --body-file).").into(),
-        );
-    };
     // Aus einer Session geschrieben: gilt sofort als gelesen und wird nicht in die Session
     // zurückgespeist
     let read_by_agent = context.session().is_some();
     context.with_board(async |rt| {
+        // Wie in TypeScript erst nach dem Öffnen des Boards
+        let Some(body) = TextSource::read(args.text.as_deref(), args.body_file.as_deref())? else {
+            return Err(HarnessError::new(
+                "usage",
+                "Kommentartext fehlt (Argument oder --body-file).",
+            )
+            .into());
+        };
         let comment = rt
             .services
             .comments
