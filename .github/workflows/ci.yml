@@ -1,4 +1,4 @@
-# Baut das Projekt und führt Typcheck, Unit- und Prozess-Tests auf macOS, Windows und Linux aus.
+# Baut die Oberfläche und führt Typcheck und Tests auf macOS, Windows und Linux aus.
 # Name und Dateiname sind fest: der Release-Workflow prüft über sie, ob die CI für den Release-Commit grün ist.
 name: CI
 on:
@@ -35,12 +35,18 @@ jobs:
         with:
           node-version: '26'
           cache: npm
+      # Plugin-Tests und Vertrag brauchen das Binary: der Vertragsserver und die geprüfte CLI
+      # sind `nexus`. Version absichtlich wie in rust-toolchain.toml.
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.99.1'
+      - uses: Swatinem/rust-cache@v2
       - run: npm ci
-      # Der Build muss vor den Prozess-Tests laufen; vitest.process.setup.ts prüft das
+      # Die Plugin-Tests bauen das Plugin und brauchen dafür die gebaute Oberfläche
       - run: npm run build
       - run: npm run typecheck
-      - run: npm run test:unit
-      - run: npm run test:process
+      - run: cargo build -p nexus-cli --bin nexus
+      - run: npm test
       # Läuft erst, sobald es die Vertragstests im Repo gibt
       - name: Vertragstests
         if: hashFiles('contract/run.mjs') != ''
@@ -74,8 +80,7 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
       # Die TypeScript-Typen aus ts-rs sind eingecheckt: neu erzeugen und prüfen, dass sich
-      # nichts ändert. Danach prüft tsc, dass sie zu den heutigen Typen in packages/ passen.
-      # Reicht auf einer Plattform, weil das Ergebnis überall gleich ist.
+      # nichts ändert. Reicht auf einer Plattform, weil das Ergebnis überall gleich ist.
       - name: Erzeugte TypeScript-Typen prüfen
         if: runner.os == 'Linux'
         run: cargo test -p nexus-core export_bindings
@@ -89,22 +94,3 @@ jobs:
           if [ -n "$neu" ]; then
             echo "Nicht eingecheckte erzeugte Typen:"; echo "$neu"; exit 1
           fi
-      - uses: actions/setup-node@v4
-        if: runner.os == 'Linux'
-        with:
-          node-version: '26'
-          cache: npm
-      - run: npm ci
-        if: runner.os == 'Linux'
-      - name: Erzeugte Typen passen zu packages/core und packages/web
-        if: runner.os == 'Linux'
-        run: npm run check:bindings
-      # Gegenprobe auf derselben board.db: TypeScript schreibt, Rust liest und umgekehrt.
-      # Das Node-Skript arbeitet über packages/db/dist, deshalb vorher bauen; die Fälle sind
-      # #[ignore] und laufen nur mit --ignored. Reicht auf einer Plattform.
-      - name: TypeScript für die Gegenprobe bauen
-        if: runner.os == 'Linux'
-        run: npm run build
-      - name: Gegenprobe TypeScript ↔ Rust auf derselben SQLite-Datei
-        if: runner.os == 'Linux'
-        run: cargo test -p nexus-db --test sqlite_crosscheck -- --ignored

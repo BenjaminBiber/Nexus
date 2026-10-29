@@ -6,24 +6,30 @@ Bestandteile: CLI `harness`, lokaler Server mit Weboberfläche und das Claude-Co
 
 ## Einrichten (einmal pro Rechner)
 
-Voraussetzungen: Node.js 22.13 oder neuer, Git 2.5 oder neuer, Claude Code.
+Voraussetzungen: Rust (stable) und cargo, Node.js 22.13 oder neuer (nur für den Bau der Oberfläche), Git 2.5 oder neuer, Claude Code.
 
 ```sh
 git clone https://github.com/BenjaminBiber/Nexus.git harness
 cd harness
 npm install
-npm run setup
+npm run build          # Oberfläche
+npm run build:plugin   # Binary und Plugin nach packages/plugin/dist/nexus
+packages/plugin/dist/nexus/bin/nexus install
 ```
 
-`npm run setup` baut alles, installiert das Plugin in Claude Code (lokaler Marktplatz `ai-harness-local`), macht `harness` im Terminal verfügbar (`~/.harness`, Benutzer-PATH) und legt die Doku-Regeln unter `~/.harness/rules` ab. Das Plugin ist danach **ausgeschaltet** und wird nur in Projekten mit `harness init` eingeschaltet. Danach ein **neues** Terminal öffnen.
+`nexus install` installiert das Plugin in Claude Code (lokaler Marktplatz), macht `nexus` (und den Alias `harness`) im Terminal verfügbar (`~/.nexus`, Benutzer-PATH) und legt die Doku-Regeln unter `~/.nexus/rules` ab. Das Plugin ist danach **ausgeschaltet** und wird nur in Projekten mit `harness init` eingeschaltet. Danach ein **neues** Terminal öffnen.
 
 ## Aktualisieren
 
 ```sh
-npm run setup
+git pull
+npm install            # nur bei geänderter package.json
+npm run build
+npm run build:plugin
+packages/plugin/dist/nexus/bin/nexus install
 ```
 
-Holt Änderungen (`git pull`, nur bei sauberem Arbeitsordner), baut neu, aktualisiert Plugin, `harness` und Doku-Regeln und startet den Server neu. Danach in laufenden Sessions `/reload-plugins` eingeben; bestehende Projekte brauchen einmal `harness init` (Board-Regel). Bei geänderter `package.json` vorher `npm install`.
+Baut neu und aktualisiert Plugin, `nexus` und Doku-Regeln. Danach in laufenden Sessions `/reload-plugins` eingeben; bestehende Projekte brauchen einmal `harness init` (Board-Regel).
 
 ## Verwenden
 
@@ -69,9 +75,9 @@ Hinweise:
 - Skills (`/ai-harness:…`) und Hooks gibt es nur in Projekten mit `harness init`; `harness` im Terminal überall.
 - Claude Code im Projektstamm starten (bei Worktrees im Worktree-Ordner). `harness board start` richtet neue Worktrees selbst ein (Plugin-Einstellung, Doku- und Board-Rule); ältere Worktrees bekommen `.claude/settings.local.json` durch Kopieren aus dem Hauptprojekt.
 - `harness init` schreibt `.claude/settings.local.json` und die Rules `.claude/rules/ai-harness-docs.md` (lädt die Doku-Regeln beim Zugriff auf `docs/`) und `.claude/rules/ai-harness-board.md` (immer geladen: Tickets, Board, Fragen, Notizen und IDs wie `ARC-0042` meinen immer das AI-Harness-Board, nie ein altes Kanban oder GitHub/GitLab-Issues); alles ist lokal und wird nicht committet. Die persönliche `CLAUDE.md` bleibt unberührt. Hintergrund zu den Doku-Regeln: [ADR 0004](docs/adr/0004-doku-regeln-zentral-per-rule-import.md).
-- Schon eingerichtete Repos und ihre Hauptordner bekommen die Board-Regel durch einmaliges erneutes `harness init` (wiederholbar, ergänzt nur Fehlendes); `npm run setup` aktualisiert nur den zentralen Inhalt unter `~/.harness/rules`, legt aber keine Rules in Projekten an. Neue Worktrees aus `harness board start` bekommen beide Rules automatisch.
-- Kontrolle: `claude plugin list` in einem Projekt ohne Harness muss `ai-harness@ai-harness-local` als ausgeschaltet zeigen; sonst einmal `claude plugin disable ai-harness@ai-harness-local --scope user` (macht auch `npm run setup`).
-- Doku-Regeln ändern nur in `packages/plugin/manifest/rules/docs.md`, die Board-Regel nur in `packages/plugin/manifest/rules/board.md`, danach `npm run setup`. Projektspezifisches gehört in die `CLAUDE.md` des Projekts.
+- Schon eingerichtete Repos und ihre Hauptordner bekommen die Board-Regel durch einmaliges erneutes `harness init` (wiederholbar, ergänzt nur Fehlendes); `nexus install` aktualisiert nur den zentralen Inhalt unter `~/.nexus/rules`, legt aber keine Rules in Projekten an. Neue Worktrees aus `harness board start` bekommen beide Rules automatisch.
+- Kontrolle: `claude plugin list` in einem Projekt ohne Harness muss `ai-harness@ai-harness-local` als ausgeschaltet zeigen; sonst einmal `claude plugin disable ai-harness@ai-harness-local --scope user` (macht auch `nexus install`).
+- Doku-Regeln ändern nur in `packages/plugin/manifest/rules/docs.md`, die Board-Regel nur in `packages/plugin/manifest/rules/board.md`, danach `npm run build:plugin` und `nexus install`. Projektspezifisches gehört in die `CLAUDE.md` des Projekts.
 
 ### Board-Datenbank
 
@@ -79,14 +85,14 @@ Zwei Varianten: **SQL Server** für das Team (Standard) oder **SQLite** für ein
 
 #### Variante A: SQL Server (Team)
 
-1. Einmalig (Administrator): `packages/db/sql/000_create_databases.sql` und danach
-   `packages/db/sql/001_initial.sql` in `AiHarness` und `AiHarness_Test` ausführen
-   (Details in `packages/db/sql/README.md`).
+1. Einmalig (Administrator): `crates/nexus-db/sql/000_create_databases.sql` und danach
+   `crates/nexus-db/sql/001_initial.sql` in `AiHarness` und `AiHarness_Test` ausführen
+   (Details in `crates/nexus-db/sql/README.md`).
 2. Pro Rechner: `harness board` öffnen → **Einstellungen → Board-Datenbank**: Server, Benutzer,
    Passwort, eigenen Namen eintragen, „Verbindung testen“, „Speichern“. Die Benutzer-ID (GUID)
    wird vorgeschlagen und kann im Team abgestimmt werden.
 
-Schema-Änderungen kommen als neues Skript `packages/db/sql/00N_….sql`; `harness` meldet, welches fehlt.
+Schema-Änderungen kommen als neues Skript `crates/nexus-db/sql/00N_….sql`; `harness` meldet, welches fehlt.
 
 #### Variante B: SQLite (Einzelplatz)
 
@@ -192,11 +198,12 @@ In einer Claude-Session in einem eingerichteten Projekt:
 Der Skill kopiert den Standard als Ausgangspunkt, legt Neues an, prüft und setzt auf Wunsch zurück. Anpassungen wirken erst nach dem Anwenden in diesem Ordner (Pflicht), danach `/reload-plugins`:
 
 ```sh
-npm run setup -- --no-pull     # nur anwenden, ohne Update
-npm run customize -- check     # prüfen, ohne etwas zu ändern
+nexus customize check          # prüfen, ohne etwas zu ändern
+npm run build:plugin           # anwenden: baut das Plugin mit den Anpassungen
+packages/plugin/dist/nexus/bin/nexus install
 ```
 
-Ungültige Anpassungen fallen mit Warnung auf den Standard zurück; die Ausgabe von `setup` und das Panel „Anpassungen“ in den Einstellungen des Boards zeigen, was gilt. Was stabil bleibt, steht in `CHANGELOG.md`.
+Ungültige Anpassungen fallen mit Warnung auf den Standard zurück; die Ausgabe von `build:plugin` und das Panel „Anpassungen“ in den Einstellungen des Boards zeigen, was gilt. Was stabil bleibt, steht in `CHANGELOG.md`.
 
 ## Daten und Einstellungen
 
@@ -219,12 +226,12 @@ Umgebungsvariablen: `HARNESS_HOME` (statt `~/.harness`), `HARNESS_PORT` (statt 4
 
 | Symptom | Abhilfe |
 |---|---|
-| `harness` im Terminal „nicht gefunden“ | `npm run setup`, neues Terminal öffnen, `node --version` prüfen |
+| `harness` im Terminal „nicht gefunden“ | `nexus install` aus dem gebauten Plugin ausführen, neues Terminal öffnen |
 | Hooks oder Skills fehlen | Im Projekt `harness init`, dann `/reload-plugins`; prüfen mit `claude plugin list` (`ai-harness@ai-harness-local`) |
 | `git worktree add` scheitert mit „Filename too long“ (Windows) | Der Harness schaltet dafür `core.longpaths` in der lokalen Konfiguration des Repos ein (Hinweis beim Anlegen); notfalls von Hand `git config core.longpaths true` im Repo |
 | Hooks fehlen in einem Worktree | `harness init` im Hauptprojekt oder `.claude/settings.local.json` aus dem Hauptprojekt kopieren; neue Worktrees legt `harness board start` richtig an |
 | Doku-Regeln greifen nicht | Werden erst beim Lesen oder Schreiben einer Datei unter `docs/` geladen. `harness init` ausführen und neue Session starten; in `~/.claude.json` müssen für das Projekt `hasClaudeMdExternalIncludesApproved` und `hasClaudeMdExternalIncludesWarningShown` auf `true` stehen |
-| Anpassung wirkt nicht | `npm run customize -- check` ausführen, dann `npm run setup -- --no-pull` und `/reload-plugins` |
+| Anpassung wirkt nicht | `nexus customize check` ausführen, dann `npm run build:plugin`, `nexus install` und `/reload-plugins` |
 | „Port 4710 ist belegt“ | Es läuft schon ein Server; beenden (`harness stop`) oder `HARNESS_PORT` setzen |
 | Projektliste im Board leer | `harness board` im Projektordner ausführen |
 | „Kein Board ist dem Repo … zugeordnet“ oder „… gehört aber zu Board …“ | `harness board boards list`, dann `harness board boards repo <id> <pfad>`; oder das Ticket im Repo seines Boards bearbeiten |
@@ -235,24 +242,29 @@ Für ein Projekt ausschalten: `claude plugin disable ai-harness@ai-harness-local
 ## Entwicklung am Harness
 
 ```sh
-npm run dev                # Server (4710) und Vite (5173) zusammen; Strg+C beendet beide
-npm run build              # core, server, cli, Weboberfläche
-npm run lint               # Typprüfung aller Pakete ohne Bündeln (= npm run typecheck)
-npm run build:plugin       # Plugin nach packages/plugin/dist/ai-harness
-npm test                   # Unit- und Prozesstests nacheinander (über eine Minute)
-npm run test:concurrency   # Nummernvergabe und Sperren
+npm run dev                # Rust-Server (4710) und Vite (5173) zusammen; Strg+C beendet beide
+npm run build              # Weboberfläche (Typprüfung und Bündeln)
+npm run lint               # Typprüfung der Oberfläche (= npm run typecheck)
+npm test                   # Tests der Oberfläche und des Plugins
+npm run build:plugin       # Binary und Plugin nach packages/plugin/dist/nexus
+npm run contract           # Vertrag (API, SSE, CLI, Hooks) gegen das Rust-Binary
+cargo fmt --all --check    # Rust: Format
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace     # Rust: alle Tests (Fachlogik, Datenbank, Server, CLI)
 ```
 
-Plugin ohne Installation laden: `claude --plugin-dir packages/plugin/dist/ai-harness`.
+Plugin ohne Installation laden: `claude --plugin-dir packages/plugin/dist/nexus`.
 
-Regeln: Tickets nie direkt in der Datenbank ändern (nur über CLI, Server oder `core`); neue Features mit Spec und Tests zuerst; eine Klasse je Datei, kurzer Kommentar an jeder Methode, deutsche Texte für Menschen; `packages/cli/src` importiert kein `node:fs` (Dateizugriff liegt in `core`).
+Regeln: Tickets nie direkt in der Datenbank ändern (nur über CLI, Server oder `nexus-core`); neue Features mit Spec und Tests zuerst; deutsche Kommentare und Texte für Menschen; die Oberfläche bezieht ihre Typen aus den erzeugten Bindings unter `packages/web/src/api/generated` (ts-rs, `cargo test`).
 
 ```text
-packages/core     Fachlogik: Board-Dienste, Zähler, Sperren, Worktrees, Sessions, Favoriten, Dispatcher, Installation, Anpassungen
-packages/db       Board-Datenbank (SQL Server mit SQL-Skripten, SQLite mit eingebautem Schema)
-packages/cli      Befehl harness
-packages/server   Fastify-Server auf 127.0.0.1 mit Livemeldungen
-packages/web      React-Oberfläche (Vite)
-packages/plugin   Manifest, Hooks, Skills, Output-Styles, Doku-Regeln und Build des Plugins
-GLOSSARY.md       Begriffe
+crates/nexus-core      Fachlogik: Board-Dienste, Zähler, Sperren, Worktrees, Sessions, Favoriten, Dispatcher, Installation, Anpassungen
+crates/nexus-db        Board-Datenbank (SQL Server mit SQL-Skripten, SQLite mit eingebautem Schema)
+crates/nexus-server    HTTP-Server auf 127.0.0.1 mit Livemeldungen
+crates/nexus-cli       Befehl nexus (Alias harness)
+crates/nexus-platform  Systemfunktionen je Betriebssystem
+apps/desktop           Tauri-App (Nexus)
+packages/web           React-Oberfläche (Vite)
+packages/plugin        Manifest, Hooks, Skills, Output-Styles, Doku-Regeln und Build des Plugins
+GLOSSARY.md            Begriffe
 ```

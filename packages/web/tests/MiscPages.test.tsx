@@ -103,15 +103,16 @@ describe('GuidePage', () => {
     const section = screen.getByRole('heading', { name: 'Anpassen' }).closest('section')!;
     expect(within(section).getByText(/Workflow, Skills und Output-Styles/)).toBeTruthy();
     expect(within(section).getByRole('button', { name: 'Befehl kopieren: /ai-harness:harness-customize' })).toBeTruthy();
-    expect(within(section).getByRole('button', { name: 'Befehl kopieren: npm run setup -- --no-pull' })).toBeTruthy();
+    expect(within(section).getByRole('button', { name: 'Befehl kopieren: packages/plugin/dist/nexus/bin/nexus install' })).toBeTruthy();
   });
 
-  it('zeigt den Ablauf in Phasen mit kopierbaren Claude-Befehlen', () => {
+  it('zeigt den Ablauf in Phasen mit kopierbaren Claude-Befehlen', async () => {
     open();
     const phases: Array<[string, string[]]> = [
       ['Neue Funktion planen', ['/superpowers:brainstorming', '/superpowers:writing-plans']],
       ['Ticket umsetzen', ['/ai-harness:harness-implement']],
     ];
+    await screen.findByRole('list', { name: 'Neue Funktion planen' });
     for (const [title, commands] of phases) {
       const list = screen.getByRole('list', { name: title });
       for (const command of commands) {
@@ -127,7 +128,7 @@ describe('GuidePage', () => {
 
   it('bietet beim Umsetzen ein Ticket oder den ganzen Plan an und verweist auf den Dispatcher', async () => {
     open();
-    const list = screen.getByRole('list', { name: 'Ticket umsetzen' });
+    const list = await screen.findByRole('list', { name: 'Ticket umsetzen' });
     await userEvent.click(within(list).getByRole('button', { name: 'Ganzer Plan' }));
     expect(within(list).getByRole('button', { name: 'Befehl kopieren: /superpowers:subagent-driven-development' })).toBeTruthy();
     expect(within(list).getByText(/Abschnitt „Dispatcher“ der Anleitung/)).toBeTruthy();
@@ -150,7 +151,7 @@ describe('GuidePage', () => {
 
   it('bietet Brainstorming, Grill und Wayfinder als Umschalter in Schritt 1', async () => {
     open();
-    const list = screen.getByRole('list', { name: 'Neue Funktion planen' });
+    const list = await screen.findByRole('list', { name: 'Neue Funktion planen' });
     expect(within(list).getByText('/superpowers:brainstorming')).toBeTruthy();
     await userEvent.click(within(list).getByRole('button', { name: 'Grill' }));
     expect(within(list).getByText('/ai-harness:harness-grill')).toBeTruthy();
@@ -160,8 +161,9 @@ describe('GuidePage', () => {
     expect(within(list).queryByText('/ai-harness:harness-grill')).toBeNull();
   });
 
-  it('zeigt die Terminal-Befehle getrennt vom Ablauf', () => {
+  it('zeigt die Terminal-Befehle getrennt vom Ablauf', async () => {
     open();
+    await screen.findByRole('list', { name: 'Ticket umsetzen' });
     const list = screen.getByRole('list', { name: 'Terminal' });
     for (const command of ['harness board', 'harness board list', 'harness spec comments spec-docs-rework']) {
       expect(within(list).getByText(command), command).toBeTruthy();

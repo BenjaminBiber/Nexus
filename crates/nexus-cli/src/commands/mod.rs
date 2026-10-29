@@ -3,7 +3,6 @@
 
 pub mod board;
 pub mod customize;
-pub mod dispatch_compare;
 pub mod dispatch_worker;
 pub mod hook;
 pub mod init;

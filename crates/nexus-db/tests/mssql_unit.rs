@@ -1,6 +1,6 @@
 //! Prüfungen der SQL-Server-Schicht, die ohne Datenbank auskommen: Umschreiben der benannten
 //! Parameter, Werte und Zeilen, Feature-Gate, Schema-Runner, Fehlerübersetzung, die Skripte
-//! unter `packages/db/sql` und die Meldung einer nicht erreichbaren Datenbank.
+//! unter `crates/nexus-db/sql` und die Meldung einer nicht erreichbaren Datenbank.
 //!
 //! Portiert aus `packages/db/tests/MssqlSchemaRunner.test.ts`, `MssqlFeatureGate.test.ts`
 //! (nur der Teil, der ohne Repositories auskommt), `SqlErrorMapper.test.ts` (SQL-Server-Teil)
@@ -238,7 +238,7 @@ fn verweigert_den_zugriff_mit_hinweis_auf_das_skript() {
     assert_eq!(error.code(), Some("board-schema-outdated"));
     let message = error.to_string();
     assert!(
-        message.contains("packages/db/sql/005_note_structure.sql"),
+        message.contains("crates/nexus-db/sql/005_note_structure.sql"),
         "{message}"
     );
     // Die Datenbank wird genannt und die übrigen Befehle laufen weiter
@@ -257,7 +257,7 @@ fn nennt_die_erste_fehlende_erweiterung_in_der_reihenfolge_der_angabe() {
     assert!(
         error
             .to_string()
-            .contains("packages/db/sql/006_dispatch_run_details.sql"),
+            .contains("crates/nexus-db/sql/006_dispatch_run_details.sql"),
         "{error}"
     );
 }
@@ -424,7 +424,7 @@ fn bettet_zu_jeder_verlangten_erweiterung_das_skript_ein() {
     for (feature, datei) in nexus_db::REQUIRED_SCHEMA_FEATURES {
         let text = script_text(feature).unwrap_or_else(|| panic!("Skript zu {feature} fehlt"));
         assert_eq!(SchemaVersionGuard::script(feature), datei);
-        // Eingebettet ist genau die Datei aus packages/db/sql, nur ohne das GO
+        // Eingebettet ist genau die Datei aus crates/nexus-db/sql, nur ohne das GO
         assert_eq!(go_zeilen(&text), 0, "{feature}");
         assert_eq!(text, ohne_erstes_go(&script(datei)), "{feature}");
     }
@@ -483,13 +483,13 @@ fn erkennt_doppelte_schlussel_an_2627_und_2601() {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Die Skripte unter packages/db/sql (Port von SqlScripts.test.ts)
+// Die Skripte unter crates/nexus-db/sql (Port von SqlScripts.test.ts)
 // ---------------------------------------------------------------------------------------------
 
 /// Ordner der SQL-Skripte, von diesem Crate aus
-const SQL_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../packages/db/sql/");
+const SQL_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../crates/nexus-db/sql/");
 
-/// Inhalt eines Skripts aus `packages/db/sql`
+/// Inhalt eines Skripts aus `crates/nexus-db/sql`
 fn script(name: &str) -> String {
     std::fs::read_to_string(format!("{SQL_DIR}{name}"))
         .unwrap_or_else(|error| panic!("{name} konnte nicht gelesen werden: {error}"))

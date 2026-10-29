@@ -1,6 +1,7 @@
 import type { DispatchProfileDto, DispatchPromptKindDto, DispatchRuleDto, RawDispatchConfigDto } from '../../api/dispatchTypes.js';
 
-// Laufarten der Prompt-Vorlagen in der Reihenfolge der Oberfläche (wie PROMPT_KINDS in @harness/core)
+// Laufarten der Prompt-Vorlagen in der Reihenfolge der Oberfläche
+// (wie PROMPT_KINDS in crates/nexus-core/src/dispatch/config.rs)
 export const PROMPT_KINDS = ['work', 'plan', 'research', 'merge'] as const;
 export type PromptKind = DispatchPromptKindDto;
 // Kurze Beschriftungen der Editoren; RUN_KIND_LABELS (dispatchTypes.ts) beschreibt dagegen Läufe und sagt „Merge-Session“

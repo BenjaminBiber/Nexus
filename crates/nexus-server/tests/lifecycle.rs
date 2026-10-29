@@ -4,12 +4,7 @@
 mod common;
 
 use std::sync::Arc;
-use std::time::Duration;
 
-use axum::body::Body;
-use axum::response::IntoResponse;
-use axum::routing::get;
-use axum::Router;
 use common::{memory_board, MemoryBoardBackend};
 use nexus_core::registry::ServerInfoFile;
 use nexus_core::HarnessHome;
@@ -118,51 +113,4 @@ async fn schliesst_die_board_laufzeit_beim_beenden() {
     assert!(!backend.closed());
     server.stop().await;
     assert!(backend.closed());
-}
-
-#[tokio::test]
-async fn beendet_offene_strome_des_upstreams_beim_beenden() {
-    // Upstream mit einem Ereignisstrom, der von selbst nie endet
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let upstream_port = listener.local_addr().unwrap().port();
-    let upstream = tokio::spawn(async move {
-        let router = Router::new().route(
-            "/api/events",
-            get(|| async {
-                let stream = futures::stream::unfold((), |_| async {
-                    tokio::time::sleep(Duration::from_millis(100)).await;
-                    Some((Ok::<_, std::io::Error>("data: tick\n\n"), ()))
-                });
-                (
-                    [("content-type", "text/event-stream")],
-                    Body::from_stream(stream),
-                )
-                    .into_response()
-            }),
-        );
-        let _ = axum::serve(listener, router).await;
-    });
-
-    let dir = tempfile::tempdir().unwrap();
-    let home = HarnessHome::at(dir.path());
-    let mut config = config(&home);
-    config.upstream = Some(format!("http://127.0.0.1:{upstream_port}"));
-    let server = nexus_server::serve(config, memory_board(), Platform::fake())
-        .await
-        .unwrap();
-    let port = server.port;
-
-    // Einen Strom öffnen und das erste Ereignis abwarten
-    let reader = tokio::spawn(async move { fetch(port, "/api/events").await });
-    tokio::time::sleep(Duration::from_millis(300)).await;
-
-    // Das Beenden darf nicht am offenen Strom hängen
-    let stopped = tokio::time::timeout(Duration::from_secs(5), server.stop()).await;
-    assert!(stopped.is_ok(), "Beenden hing am offenen Ereignisstrom");
-    let (_status, text) = tokio::time::timeout(Duration::from_secs(5), reader)
-        .await
-        .expect("der Strom endet")
-        .unwrap();
-    assert!(text.contains("data: tick"), "{text}");
-    upstream.abort();
 }

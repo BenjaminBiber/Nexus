@@ -150,30 +150,3 @@ async fn antwortet_ohne_board_datenbank_mit_503_und_hinweis() {
     assert_eq!(reply.status, 503);
     assert_eq!(code(&reply), "board-config-missing");
 }
-
-/// Der Notschalter: steht `db-misc` in `NEXUS_PROXY_GROUPS`, meldet Rust die Routen der
-/// Gruppe nicht an und der Rückfall übernimmt
-#[tokio::test]
-async fn lasst_die_gruppe_mit_dem_notschalter_zum_node_server_gehen() {
-    let (server, _backend) = TestServer::start_with_board_and(common::TestServerOptions {
-        proxy_groups: nexus_server::groups::RouteGroups::from_env(Some(
-            nexus_server::groups::RouteGroup::DbMisc.as_str(),
-        )),
-        ..common::TestServerOptions::default()
-    })
-    .await;
-    // Ohne Node-Server beantwortet der Rückfall die Anfrage – entscheidend ist, dass keine
-    // Rust-Route mehr greift
-    for url in [
-        "/api/db/search?q=export",
-        "/api/db/inbox",
-        "/api/db/graph?ticket=ARC-0001",
-        "/api/db/stats/dispatch?project=ARC",
-        "/api/db/boards/1/notes",
-        "/api/db/boards/1/spec-progress",
-    ] {
-        let reply = server.get(url).await;
-        assert_eq!(reply.status, 404, "{url}");
-        assert_eq!(reply.code().as_deref(), Some("not-found"), "{url}");
-    }
-}

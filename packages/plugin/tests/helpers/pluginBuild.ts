@@ -2,13 +2,15 @@ import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { BUILD_ARTIFACTS } from '../../../../vitest.process.setup.js';
+import { BUILD_ARTIFACTS } from '../../../../vitest.globalSetup.js';
 
 export const ROOT = resolve(__dirname, '../../../..');
 
-// Ausgabeordner des Builds: im Testlauf der lauf-eigene Ordner aus vitest.process.setup.ts,
-// sonst (einzelner Aufruf ohne globalSetup) der Vorgabeordner des Repos
-export const PLUGIN_OUT = process.env.NEXUS_PLUGIN_OUT ?? join(ROOT, 'packages/plugin/dist/nexus');
+// Ausgabeordner des Builds: im Testlauf ein eigener Ordner je Testdatei im lauf-eigenen Ordner
+// aus vitest.globalSetup.ts, sonst (einzelner Aufruf ohne globalSetup) der Vorgabeordner des Repos.
+// Je Testdatei ein eigener Ordner, weil die Dateien nebenläufig laufen.
+const RUN_DIR = process.env.NEXUS_PLUGIN_RUN_DIR;
+export const PLUGIN_OUT = RUN_DIR ? join(RUN_DIR, `nexus-${process.pid}`) : join(ROOT, 'packages/plugin/dist/nexus');
 
 // Name des Binaries im gebauten Plugin (unter Windows mit Endung)
 export const BINARY = process.platform === 'win32' ? 'nexus.exe' : 'nexus';
@@ -19,7 +21,7 @@ export const PLUGIN_BIN = join(PLUGIN_OUT, 'bin', BINARY);
 // Ordner, den es nicht gibt: Build ohne Anpassungen, unabhängig von custom/ im Repo
 const NO_CUSTOM = process.env.NEXUS_NO_CUSTOM_DIR ?? join(tmpdir(), `nexus-no-custom-dir-${process.pid}`);
 
-// Baut das Plugin (setzt gebauten Server und Oberfläche voraus; `npm run build`, dazu cargo für das
+// Baut das Plugin (setzt die gebaute Oberfläche voraus; `npm run build`, dazu cargo für das
 // Binary); `customDir` für Tests mit Anpassungen, `env` ergänzt die Umgebung des Builds
 export function buildPlugin(customDir: string = NO_CUSTOM, env: NodeJS.ProcessEnv = {}): { ok: boolean; message: string } {
   for (const needed of BUILD_ARTIFACTS) {

@@ -22,7 +22,7 @@ use crate::dispatch::prompt_catalog::{DispatchPromptInfo, PromptCatalog};
 use crate::dispatch::service::{DispatchService, PromptPreviewInput};
 use crate::error::{json, ApiError, ApiResult};
 use crate::extract::{JsonBody, QueryMap};
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 
 /// Standard-Pause in Minuten, wenn der Körper keine nennt
@@ -34,71 +34,80 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/api/dispatch/config",
-            get(config).put(save_config).fallback(proxy_or_static),
+            get(config).put(save_config).fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/prompts/preview",
-            post(preview).fallback(proxy_or_static),
+            post(preview).fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/status",
-            get(status).fallback(proxy_or_static),
+            get(status).fallback(static_or_not_found),
         )
-        .route("/api/dispatch/run", post(run).fallback(proxy_or_static))
-        .route("/api/dispatch/pause", post(pause).fallback(proxy_or_static))
+        .route("/api/dispatch/run", post(run).fallback(static_or_not_found))
+        .route(
+            "/api/dispatch/pause",
+            post(pause).fallback(static_or_not_found),
+        )
         .route(
             "/api/dispatch/resume",
-            post(resume).fallback(proxy_or_static),
+            post(resume).fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/enable",
-            post(enable).fallback(proxy_or_static),
+            post(enable).fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/disable",
-            post(disable).fallback(proxy_or_static),
+            post(disable).fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/merge/{id}",
-            post(retry_merge).fallback(proxy_or_static),
+            post(retry_merge).fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/accept/{id}",
-            post(accept).fallback(proxy_or_static),
+            post(accept).fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/review/{id}",
-            get(review).fallback(proxy_or_static),
+            get(review).fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/review/{id}/file",
-            get(review_file).fallback(proxy_or_static),
+            get(review_file).fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/return/{id}",
-            post(return_to_agent).fallback(proxy_or_static),
+            post(return_to_agent).fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/research/{question_id}",
             get(research_status)
                 .post(start_research)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
         .route(
             "/api/dispatch/plan/{ticket_id}",
             get(planning_status)
                 .post(start_planning)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
-        .route("/api/dispatch/runs", get(runs).fallback(proxy_or_static))
+        .route(
+            "/api/dispatch/runs",
+            get(runs).fallback(static_or_not_found),
+        )
         .route(
             "/api/dispatch/runs/{name}",
-            get(run_log).fallback(proxy_or_static),
+            get(run_log).fallback(static_or_not_found),
         )
-        .route("/api/dispatch/logs", get(logs).fallback(proxy_or_static))
+        .route(
+            "/api/dispatch/logs",
+            get(logs).fallback(static_or_not_found),
+        )
         .route(
             "/api/dispatch/logs/{name}",
-            get(log_text).fallback(proxy_or_static),
+            get(log_text).fallback(static_or_not_found),
         )
 }
 

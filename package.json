@@ -7,23 +7,16 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "tsc -b packages/core packages/db packages/server packages/cli && tsc --noEmit -p packages/web && npm run build -w packages/web",
-    "typecheck": "tsc -b packages/core packages/db packages/server packages/cli && tsc --noEmit -p packages/web",
+    "build": "tsc --noEmit -p packages/web && npm run build -w packages/web",
+    "typecheck": "tsc --noEmit -p packages/web",
     "lint": "npm run typecheck",
-    "check:bindings": "tsc -p crates/nexus-core/bindings-check/tsconfig.json",
-    "test": "vitest run && vitest run -c vitest.process.config.ts",
-    "test:concurrency": "vitest run -c vitest.concurrency.config.ts",
+    "test": "vitest run",
     "dev": "node scripts/dev.mjs",
     "desktop": "npm run tauri -w apps/desktop --",
     "dev:web": "npm run dev -w packages/web",
-    "dev:server": "tsx packages/server/src/main.ts",
     "build:plugin": "node packages/plugin/scripts/build-plugin.mjs",
-    "build:sidecar": "node scripts/sidecar/build-sidecar.mjs",
-    "setup": "node scripts/setup.mjs",
-    "customize": "node scripts/customize.mjs",
     "contract": "node contract/run.mjs",
-    "test:unit": "vitest run",
-    "test:process": "vitest run -c vitest.process.config.ts"
+    "test:unit": "vitest run"
   },
   "engines": {
     "node": ">=22.13"
@@ -31,8 +24,8 @@
   "devDependencies": {
     "@types/node": "^26.6.5",
     "esbuild": "^0.28.2",
-    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.3",
+    "yaml": "^2.5.0"
   }
 }

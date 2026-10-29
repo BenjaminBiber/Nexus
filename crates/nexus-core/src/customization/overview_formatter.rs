@@ -134,7 +134,7 @@ impl OverviewFormatter {
         lines.extend(diff.iter().take(max).map(|line| format!("      {line}")));
         if diff.len() > max {
             lines.push(format!(
-                "      … {} weitere Zeilen: npm run customize -- check",
+                "      … {} weitere Zeilen: nexus customize check",
                 diff.len() - max
             ));
         }
@@ -238,7 +238,7 @@ mod tests {
         ));
         assert!(text.contains("      +zeile 39"));
         assert!(!text.contains("+zeile 40"));
-        assert!(text.contains("      … 10 weitere Zeilen: npm run customize -- check"));
+        assert!(text.contains("      … 10 weitere Zeilen: nexus customize check"));
         assert!(text.contains(
             "  ✗ Output-Style kurz: Im Kopf fehlt description. (custom/output-styles/kurz.md)"
         ));

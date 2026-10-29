@@ -1,9 +1,9 @@
 //! Die JSON-Form des Dispatcher-Zustands ist Vertrag: Oberfläche und Kommandozeile lesen
 //! genau die Schlüssel aus `packages/server/src/dispatch/DispatchStatus.ts`.
 //!
-//! Die erwarteten Schlüssel stehen in `tests/fixtures/dispatch_status_keys.golden.json`;
-//! erzeugt hat sie `tests/fixtures/dispatch_status_keys.mts` aus den TypeScript-Typen (die
-//! Objekte dort sind annotiert, ein fehlendes oder zusätzliches Feld fällt beim Typecheck auf).
+//! Die erwarteten Schlüssel stehen in `tests/fixtures/dispatch_status_keys.golden.json`. Sie
+//! stammen aus den TypeScript-Typen des alten Stands, sind eingecheckt und werden nie neu
+//! erzeugt: Weicht etwas ab, ist der Vertrag gebrochen.
 
 mod common;
 mod dispatch_support;

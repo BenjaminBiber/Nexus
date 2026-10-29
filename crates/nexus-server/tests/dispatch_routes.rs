@@ -1,8 +1,7 @@
 //! Die Routen unter `/api/dispatch`; portiert aus
 //! `packages/server/tests/unit/dispatch/DispatchRoutes.test.ts`.
 //!
-//! Der Testserver steht auf `NEXUS_DISPATCH=rust`, denn nur dann beantwortet Rust diese
-//! Routen. Gestartet wird nie ein echter Worker: die Attrappe des Testservers liefert keine
+//! Gestartet wird nie ein echter Worker: die Attrappe des Testservers liefert keine
 //! Prozessnummer.
 
 mod common;
@@ -19,7 +18,6 @@ use nexus_core::board::ticket_service::{NewTicketInput, TicketPatch, TicketView,
 use nexus_core::board::types::BoardUser;
 use nexus_core::dispatch::{DispatchStateStore, PromptKind};
 use nexus_core::tx;
-use nexus_server::config::DispatchBackend;
 use serde_json::{json, Value};
 
 use common::{
@@ -41,7 +39,6 @@ const WORK: &str = concat!(
 /// Testserver mit Board im Speicher, auf dem Rust dispatcht
 async fn server() -> (TestServer, std::sync::Arc<BoardBackendWithServices>) {
     TestServer::start_with_board_and(TestServerOptions {
-        dispatch: DispatchBackend::Rust,
         ..TestServerOptions::default()
     })
     .await
@@ -1314,13 +1311,4 @@ async fn rendert_die_eigene_vorlage_prueft_sie_und_speichert_nichts() {
     let view = body(&server.get("/api/dispatch/config").await);
     assert_eq!(view["exists"], false);
     assert_eq!(view["config"]["prompts"]["plan"], Value::Null);
-}
-
-#[tokio::test]
-async fn ohne_umschalter_beantwortet_rust_die_dispatch_routen_nicht() {
-    // Vorgabe ist `node`: dann gehen die Routen zum Sidecar; ohne Sidecar bleibt 404
-    let (server, _backend) = TestServer::start_with_board().await;
-    let status = server.get("/api/dispatch/status").await;
-    assert_eq!(status.status, 404);
-    assert_eq!(status.code().as_deref(), Some("not-found"));
 }

@@ -21,7 +21,7 @@ pub const SERVER_NAME: &str = "ai-harness";
 pub fn routes() -> Router<Arc<AppState>> {
     Router::new().route(
         "/api/health",
-        get(health).fallback(crate::proxy::proxy_or_static),
+        get(health).fallback(crate::routes::static_or_not_found),
     )
 }
 

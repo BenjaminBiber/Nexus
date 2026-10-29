@@ -126,19 +126,3 @@ async fn ein_zustandswechsel_running_waiting_meldet_der_benachrichtigung() {
     let shown = notifier.shown();
     assert_eq!(shown.len(), 1, "{shown:?}");
 }
-
-#[tokio::test]
-async fn sessions_steht_nicht_mehr_in_der_brucke_zum_node_server() {
-    assert_eq!(nexus_server::events::BRIDGED_EVENTS, ["notice"]);
-    let server = TestServer::start();
-    assert!(!server.state.bridged_events.contains("sessions"));
-    assert!(server.state.bridged_events.contains("notice"));
-
-    // Nur der Notschalter schickt die Hooks wieder zum Node-Server – dann kommen auch die
-    // Sessions von dort
-    let proxied = TestServer::with(TestServerOptions {
-        proxy_groups: nexus_server::groups::RouteGroups::from_env(Some("sessions")),
-        ..TestServerOptions::default()
-    });
-    assert!(proxied.state.bridged_events.contains("sessions"));
-}

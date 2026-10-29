@@ -1,11 +1,10 @@
-// Baut das eigenständige Plugin: baut das Rust-Binary `nexus`, bündelt den Node-Server mit esbuild,
-// kopiert die Oberfläche und das Manifest.
-// Voraussetzung: `npm run build` (erzeugt packages/*/dist). Ergebnis: packages/plugin/dist/nexus/
+// Baut das eigenständige Plugin: baut das Rust-Binary `nexus`, kopiert die Oberfläche, die Bilder
+// der Systemmeldung und das Manifest.
+// Voraussetzung: `npm run build` (erzeugt packages/web/dist). Ergebnis: packages/plugin/dist/nexus/
 import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { bundleForNode } from '../../../scripts/nodeBundle.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 // Zielordner: Vorgabe im Repo, für Testläufe über NEXUS_PLUGIN_OUT (alt: HARNESS_PLUGIN_OUT) umstellbar
@@ -18,17 +17,12 @@ const BINARY = process.platform === 'win32' ? 'nexus.exe' : 'nexus';
 
 // Prüft, ob alle Eingaben gebaut sind
 function assertInputs() {
-  for (const file of ['packages/server/dist/main.js', 'packages/web/dist/index.html']) {
+  for (const file of ['packages/web/dist/index.html']) {
     if (!existsSync(join(ROOT, file))) {
       console.error(`Fehlt: ${file}. Bitte zuerst "npm run build" ausführen.`);
       process.exit(1);
     }
   }
-}
-
-// Bündelt eine Programmdatei zu einer einzelnen ESM-Datei
-async function bundle(entry, outfile) {
-  await bundleForNode({ entry: join(ROOT, entry), outfile: join(OUT, outfile) });
 }
 
 // Baut das Rust-Binary und legt es als bin/nexus[.exe] ins Plugin
@@ -55,14 +49,13 @@ rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 cpSync(join(ROOT, 'packages/plugin/manifest'), OUT, { recursive: true });
 buildBinary();
-await bundle('packages/server/dist/main.js', 'lib/server.mjs');
 cpSync(join(ROOT, 'packages/web/dist'), join(OUT, 'web'), { recursive: true });
-cpSync(join(ROOT, 'packages/server/assets/toast'), join(OUT, 'toast'), { recursive: true });
+cpSync(join(ROOT, 'crates/nexus-server/assets/toast'), join(OUT, 'toast'), { recursive: true });
 chmodSync(join(OUT, 'bin/harness'), 0o755);
 
-// Version aus dem Serverpaket; die dritte Stelle ist ein Build-Zeitstempel (Sekunden), damit
+// Version aus dem Cargo-Workspace; die dritte Stelle ist ein Build-Zeitstempel (Sekunden), damit
 // `claude plugin update` jeden neuen Build als neuere Version erkennt und den Plugin-Cache erneuert
-const [major, minor] = JSON.parse(readFileSync(join(ROOT, 'packages/server/package.json'), 'utf8')).version.split('.');
+const [major, minor] = readFileSync(join(ROOT, 'Cargo.toml'), 'utf8').match(/^version = "([^"]+)"$/m)[1].split('.');
 const version = `${major}.${minor}.${Math.floor(Date.now() / 1000)}`;
 const manifestPath = join(OUT, '.claude-plugin/plugin.json');
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));

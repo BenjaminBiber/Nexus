@@ -107,7 +107,7 @@ async fn verweigert_notizen_mit_hinweis_auf_das_skript() {
         assert!(
             error
                 .to_string()
-                .contains("packages/db/sql/005_note_structure.sql"),
+                .contains("crates/nexus-db/sql/005_note_structure.sql"),
             "Meldung ohne Skript: {error}"
         );
     }

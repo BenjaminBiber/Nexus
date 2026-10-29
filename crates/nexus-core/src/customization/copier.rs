@@ -64,7 +64,7 @@ impl<'a> CustomizationCopier<'a> {
             }
             self.save_base(target)?;
             return Ok(format!(
-                "Basis von {label} auf den aktuellen Standard gesetzt. Wirkt nach npm run setup."
+                "Basis von {label} auf den aktuellen Standard gesetzt. Wirkt nach dem Bau des Plugins und nexus install."
             ));
         }
         if custom.exists() {
@@ -91,12 +91,12 @@ impl<'a> CustomizationCopier<'a> {
         }
         self.save_base(target)?;
         Ok(format!(
-            "{label} nach {} kopiert. Wirkt nach npm run setup.",
+            "{label} nach {} kopiert. Wirkt nach dem Bau des Plugins und nexus install.",
             self.paths.display(&custom)
         ))
     }
 
-    /// Löscht Anpassung und Basis; danach gilt nach npm run setup wieder der Standard
+    /// Löscht Anpassung und Basis; danach gilt nach dem Bau des Plugins wieder der Standard
     pub fn reset(&self, target: &CopyTarget) -> Result<String> {
         self.check_name(target)?;
         let custom = self.paths.custom_of(target.point, &target.name);
@@ -111,7 +111,7 @@ impl<'a> CustomizationCopier<'a> {
         remove_path(&custom)?;
         remove_path(&self.paths.base_of(target.point, &target.name))?;
         Ok(format!(
-            "{label} gelöscht. Wirkt nach npm run setup: dann gilt wieder der Standard."
+            "{label} gelöscht. Wirkt nach dem Bau des Plugins und nexus install: dann gilt wieder der Standard."
         ))
     }
 
@@ -166,7 +166,7 @@ impl<'a> CustomizationCopier<'a> {
         Ok([
             "import type { WorkflowPhase } from '@harness/core';",
             "",
-            "// Eigener Workflow: ersetzt den Standard vollständig. Pflicht-Phasen: planen, umsetzen. Reserviert: fragen, nebenbei. Wirkt nach npm run setup.",
+            "// Eigener Workflow: ersetzt den Standard vollständig. Pflicht-Phasen: planen, umsetzen. Reserviert: fragen, nebenbei. Wirkt nach dem Bau des Plugins und nexus install.",
             &format!("export default {phases} satisfies WorkflowPhase[];"),
             "",
         ]
@@ -221,7 +221,7 @@ mod tests {
         assert!(copier
             .copy(&workflow(), false)
             .unwrap()
-            .contains("Wirkt nach npm run setup"));
+            .contains("Wirkt nach dem Bau des Plugins"));
         let source = std::fs::read_to_string(beispiel.paths.workflow_file()).unwrap();
         assert!(source.contains("import type { WorkflowPhase } from '@harness/core';"));
         assert!(source.contains("satisfies WorkflowPhase[]"));
@@ -318,7 +318,10 @@ mod tests {
         let beispiel = Beispiel::neu();
         let copier = CustomizationCopier::new(&beispiel.paths);
         copier.copy(&grill(), false).unwrap();
-        assert!(copier.reset(&grill()).unwrap().contains("npm run setup"));
+        assert!(copier
+            .reset(&grill())
+            .unwrap()
+            .contains("Wirkt nach dem Bau des Plugins"));
         assert!(!beispiel
             .paths
             .custom_of(ExtensionPoint::Skill, "harness-grill")

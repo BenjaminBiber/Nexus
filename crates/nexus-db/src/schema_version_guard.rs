@@ -5,7 +5,7 @@
 use nexus_core::board::BoardProvider;
 use nexus_core::{HarnessError, Result};
 
-/// Schema-Version, die dieser Stand von Nexus erwartet (`packages/db/sql/00N_….sql`)
+/// Schema-Version, die dieser Stand von Nexus erwartet (`crates/nexus-db/sql/00N_….sql`)
 pub const EXPECTED_SCHEMA_VERSION: i32 = 3;
 
 /// Additive Erweiterungen (`board.SchemaFeatures`), die dieser Stand verlangt, mit ihrem Skript.
@@ -46,7 +46,7 @@ impl SchemaVersionGuard {
                 if sqlite {
                     format!("In der SQLite-Datei {database} fehlt das Board-Schema, obwohl der Harness es beim Öffnen selbst anlegt. Die Datei ist vermutlich keine Board-Datei – unter Einstellungen → Board-Datenbank einen anderen Pfad wählen.")
                 } else {
-                    format!("In der Datenbank {database} fehlt das Schema „board“. Skript packages/db/sql/001_initial.sql ausführen.")
+                    format!("In der Datenbank {database} fehlt das Schema „board“. Skript crates/nexus-db/sql/001_initial.sql ausführen.")
                 },
             )
             .into());
@@ -58,7 +58,7 @@ impl SchemaVersionGuard {
                 if sqlite {
                     format!("SQLite-Datei {database} hat Schema-Version {actual}, erwartet {EXPECTED_SCHEMA_VERSION}. Der Harness spielt fehlende Stufen beim Öffnen selbst ein – Befehl bzw. Server neu starten; bleibt die Meldung, ist die Datei beschädigt.")
                 } else {
-                    format!("Datenbank {database} hat Schema-Version {actual}, erwartet {EXPECTED_SCHEMA_VERSION}. Skript packages/db/sql/{next}_….sql (und folgende) ausführen.")
+                    format!("Datenbank {database} hat Schema-Version {actual}, erwartet {EXPECTED_SCHEMA_VERSION}. Skript crates/nexus-db/sql/{next}_….sql (und folgende) ausführen.")
                 },
             )
             .into());
@@ -67,9 +67,9 @@ impl SchemaVersionGuard {
             return Err(HarnessError::new(
                 "board-schema-newer",
                 if sqlite {
-                    format!("SQLite-Datei {database} hat Schema-Version {actual}, dieser Harness kennt nur {EXPECTED_SCHEMA_VERSION}. Im Harness-Ordner „npm run setup“ ausführen.")
+                    format!("SQLite-Datei {database} hat Schema-Version {actual}, dieser Harness kennt nur {EXPECTED_SCHEMA_VERSION}. Im Harness-Ordner das Plugin neu bauen und „nexus install“ ausführen.")
                 } else {
-                    format!("Datenbank {database} hat Schema-Version {actual}, dieser Harness kennt nur {EXPECTED_SCHEMA_VERSION}. Im Harness-Ordner „npm run setup“ ausführen.")
+                    format!("Datenbank {database} hat Schema-Version {actual}, dieser Harness kennt nur {EXPECTED_SCHEMA_VERSION}. Im Harness-Ordner das Plugin neu bauen und „nexus install“ ausführen.")
                 },
             )
             .into());
@@ -102,7 +102,7 @@ impl SchemaVersionGuard {
             format!("Dafür fehlt der SQLite-Datei {database} die Erweiterung {feature}. Der Harness spielt sie beim Öffnen selbst ein – Befehl bzw. Server neu starten; bleibt die Meldung, ist die Datei beschädigt.")
         } else {
             format!(
-                "Dafür fehlt der Datenbank {database} die Erweiterung {feature}. Skript packages/db/sql/{} ausführen (als Administrator). Die übrigen Board-Befehle laufen weiter.",
+                "Dafür fehlt der Datenbank {database} die Erweiterung {feature}. Skript crates/nexus-db/sql/{} ausführen (als Administrator). Die übrigen Board-Befehle laufen weiter.",
                 Self::script(feature)
             )
         }
@@ -224,7 +224,7 @@ mod tests {
     fn nennt_im_meldungstext_eines_gesperrten_zugriffs_datenbank_und_skript() {
         assert!(
             SchemaVersionGuard::feature_message("note-structure", "AiHarness", Mssql)
-                .contains("packages/db/sql/005_note_structure.sql")
+                .contains("crates/nexus-db/sql/005_note_structure.sql")
         );
         assert!(
             SchemaVersionGuard::feature_message("note-structure", "AiHarness", Mssql)
@@ -236,7 +236,7 @@ mod tests {
         );
         assert!(
             SchemaVersionGuard::feature_message("dispatch-run-details", "AiHarness", Mssql)
-                .contains("packages/db/sql/006_dispatch_run_details.sql")
+                .contains("crates/nexus-db/sql/006_dispatch_run_details.sql")
         );
         assert_eq!(
             SchemaVersionGuard::script("note-structure"),
@@ -244,7 +244,7 @@ mod tests {
         );
         assert!(
             SchemaVersionGuard::feature_message("target-branch", "AiHarness", Mssql)
-                .contains("packages/db/sql/007_target_branch.sql")
+                .contains("crates/nexus-db/sql/007_target_branch.sql")
         );
         assert_eq!(SchemaVersionGuard::script("gibt-es-nicht"), "");
     }
@@ -261,7 +261,7 @@ mod tests {
             )
             .unwrap_err();
         assert_eq!(fehler.code(), Some("board-schema-newer"));
-        assert!(fehler.to_string().contains("npm run setup"));
+        assert!(fehler.to_string().contains("nexus install"));
     }
 
     mod bei_sqlite_ohne_hinweis_auf_die_sql_skripte {
@@ -286,9 +286,8 @@ mod tests {
             let fehler = guard.check(None, FILE, &features(), Sqlite).unwrap_err();
             assert_eq!(fehler.code(), Some("board-schema-missing"));
             assert!(fehler.to_string().contains(FILE));
-            assert!(
-                !message(guard.check(None, FILE, &features(), Sqlite)).contains("packages/db/sql")
-            );
+            assert!(!message(guard.check(None, FILE, &features(), Sqlite))
+                .contains("crates/nexus-db/sql"));
         }
 
         #[test]
@@ -298,7 +297,7 @@ mod tests {
             assert_eq!(fehler.code(), Some("board-schema-outdated"));
             assert!(fehler.to_string().contains("neu starten"));
             assert!(!message(guard.check(Some(2), FILE, &features(), Sqlite))
-                .contains("packages/db/sql"));
+                .contains("crates/nexus-db/sql"));
         }
 
         #[test]
@@ -332,7 +331,7 @@ mod tests {
                 .check(Some(EXPECTED_SCHEMA_VERSION + 1), FILE, &features(), Sqlite)
                 .unwrap_err();
             assert_eq!(fehler.code(), Some("board-schema-newer"));
-            assert!(fehler.to_string().contains("npm run setup"));
+            assert!(fehler.to_string().contains("nexus install"));
         }
     }
 }

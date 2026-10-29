@@ -9,9 +9,6 @@ rust-version.workspace = true
 axum = { workspace = true }
 chrono = { workspace = true }
 futures = { workspace = true }
-http-body-util = { workspace = true }
-hyper = { workspace = true }
-hyper-util = { workspace = true }
 # Pfadmuster der freigegebenen Dokumente und die Quellenzeile der Docs-Tickets
 regex = { workspace = true }
 nexus-core = { workspace = true }
@@ -32,8 +29,6 @@ uuid = { workspace = true }
 reqwest = { workspace = true }
 # Reihenfolge des ersten Auftretens wie bei einer `Map` in JavaScript
 indexmap = { workspace = true }
-# Beobachter auf dispatch/runs im Schattenbetrieb
-notify = { workspace = true }
 
 # Der Test-Ersatz nexus-fake-claude legt sich für einen Modus in eine eigene Prozessgruppe
 [target.'cfg(unix)'.dependencies]
@@ -51,7 +46,7 @@ regex = { workspace = true }
 # Laufzeit als verloren gilt (SQLite-Dateifehler, Socket des SQL Servers)
 rusqlite = { workspace = true }
 tiberius = { workspace = true }
-# Die Proxy-Tests starten einen Test-Upstream und lesen dessen Strom Stück für Stück
+# Die Tests der Ereignisströme lesen den Körper der Antwort Stück für Stück
 futures = { workspace = true }
 http-body-util = { workspace = true }
 tower = { workspace = true }
@@ -61,7 +56,7 @@ tower = { workspace = true }
 name = "nexus-fake-claude"
 path = "src/bin/nexus_fake_claude.rs"
 
-# Entwicklungs-Binary: startet den Rust-Server mit --port, --upstream und --web-dir
+# Entwicklungs-Binary: startet den Rust-Server mit --port und --web-dir
 [[bin]]
 name = "nexus-server"
 path = "src/bin/nexus_server.rs"

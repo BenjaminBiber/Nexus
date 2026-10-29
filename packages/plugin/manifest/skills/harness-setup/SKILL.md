@@ -17,7 +17,7 @@ nexus install
 
 Der Befehl kopiert das Binary nach `~/.nexus/bin`, legt die Startdateien dort an und ergänzt den PATH des Benutzers (nur Benutzerebene, nie systemweit). Er richtet außerdem das Plugin in Claude Code ein. Er ist wiederholbar und aktualisiert die Kopie nach einem Plugin-Update.
 
-- Meldet er, dass er nur aus dem gebauten Plugin läuft, kommt der Aufruf nicht aus dem installierten Plugin. Sage dem Benutzer, dass er im Repository einmal `npm run setup` ausführen soll, und beende.
+- Meldet er, dass er nur aus dem gebauten Plugin läuft, kommt der Aufruf nicht aus dem installierten Plugin. Sage dem Benutzer, dass er im Repository einmal `nexus install` ausführen soll, und beende.
 - Meldet er einen Fehler beim PATH, führe `nexus install --no-path` aus und nenne dem Benutzer den Ordner `~/.nexus/bin`, den er selbst in den PATH aufnehmen muss.
 
 ## 2. Ergebnis prüfen

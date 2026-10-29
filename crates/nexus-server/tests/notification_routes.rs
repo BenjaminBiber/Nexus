@@ -11,7 +11,6 @@ use std::sync::{Arc, Mutex};
 use common::{TestServer, TestServerOptions};
 use nexus_core::settings::{UserSettings, UserSettingsStore};
 use nexus_platform::Platform;
-use nexus_server::groups::{RouteGroup, RouteGroups};
 
 /// Eine Attrappe des ntfy-Servers: antwortet mit festem Status und merkt sich die Anfragen
 struct NtfyStub {
@@ -151,18 +150,4 @@ async fn ein_fehler_des_ntfy_servers_steht_im_fehlertext() {
             .starts_with("ntfy antwortete mit 500"),
         "{json}"
     );
-}
-
-#[tokio::test]
-async fn der_notschalter_schiebt_die_gruppe_zurueck_zum_node_server() {
-    // Ohne Rust-Route fällt der Pfad in den Rückfall; ohne Upstream endet er als 404 aus Rust
-    let server = TestServer::with(TestServerOptions {
-        platform: Some(Platform::fake()),
-        proxy_groups: RouteGroups::from_env(Some(RouteGroup::Notifications.as_str())),
-        ..TestServerOptions::default()
-    });
-    let reply = server
-        .post("/api/user-settings/test-notification", "{}")
-        .await;
-    assert_eq!(reply.status, 404, "{}", reply.text);
 }

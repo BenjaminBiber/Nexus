@@ -23,6 +23,33 @@ pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(120);
 /// Das Skript, das `custom/workflow.ts` mit dem esbuild des Clones bündelt und lädt
 const LOAD_SCRIPT: &str = include_str!("workflow_load.mjs");
 
+/// Die Typen, die `custom/workflow.ts` aus `@harness/core` importiert. Sie stehen hier, weil
+/// es das TypeScript-Paket nicht mehr gibt: `WORKFLOW_PHASES` kommt aus
+/// [`crate::workflow::workflow_phases`], die Typen aus den Strukturen daneben.
+const CORE_TYPES: &str = r#"export interface WorkflowOption {
+  label: string;
+  command: string;
+  when: string;
+}
+
+export interface WorkflowStep {
+  step: string;
+  command?: string;
+  place?: string;
+  when: string;
+  options?: WorkflowOption[];
+}
+
+export interface WorkflowPhase {
+  id: string;
+  title: string;
+  hint: string;
+  steps: WorkflowStep[];
+}
+
+export declare const WORKFLOW_PHASES: WorkflowPhase[];
+"#;
+
 /// Prüft und lädt `custom/workflow.ts` mit TypeScript und esbuild aus dem Clone.
 #[derive(Debug, Clone)]
 pub struct CloneWorkflowTools {
@@ -44,12 +71,30 @@ impl CloneWorkflowTools {
         }
     }
 
-    /// Schreibt check.ts und tsconfig.json; @harness/core zeigt auf die gebauten Typen des Clones
+    /// Schreibt den Ersatz für `@harness/core`: die Typen als `.d.ts` und die Phasen als
+    /// `.mjs`. Beides entsteht aus dem Fachkern, damit `custom/workflow.ts` weiterhin
+    /// `import { WORKFLOW_PHASES, type WorkflowPhase } from '@harness/core'` schreiben kann.
+    fn write_core_shim(&self, dir: &Path) -> Result<(PathBuf, PathBuf)> {
+        let types = dir.join("harness-core.d.ts");
+        std::fs::write(&types, CORE_TYPES).map_err(Error::unexpected)?;
+        let phases = serde_json::to_string(&crate::workflow::workflow_phases())
+            .map_err(Error::unexpected)?;
+        let module = dir.join("harness-core.mjs");
+        std::fs::write(
+            &module,
+            format!("export const WORKFLOW_PHASES = {phases};\n"),
+        )
+        .map_err(Error::unexpected)?;
+        Ok((types, module))
+    }
+
+    /// Schreibt check.ts und tsconfig.json; @harness/core zeigt auf die Typen aus dem Fachkern
     fn write_check(&self, dir: &Path, file: &Path) -> Result<()> {
         // Absoluter Importpfad mit `/` (ein relativer scheitert unter Windows, wenn Temp und
         // Clone auf verschiedenen Laufwerken liegen)
         let target = absolute(file).to_string_lossy().replace('\\', "/");
         let import = serde_json::to_string(&target).map_err(Error::unexpected)?;
+        let (types, _) = self.write_core_shim(dir)?;
         std::fs::write(
             dir.join("check.ts"),
             [
@@ -71,7 +116,7 @@ impl CloneWorkflowTools {
                 "allowImportingTsExtensions": true,
                 "skipLibCheck": true,
                 "types": [],
-                "paths": { "@harness/core": [self.core_file("index.d.ts").to_string_lossy()] },
+                "paths": { "@harness/core": [types.to_string_lossy()] },
             },
             "files": ["check.ts"],
         });
@@ -129,15 +174,6 @@ impl CloneWorkflowTools {
         }
         problems
     }
-
-    /// Datei im gebauten core-Paket des Clones
-    fn core_file(&self, name: &str) -> PathBuf {
-        self.clone_dir
-            .join("packages")
-            .join("core")
-            .join("dist")
-            .join(name)
-    }
 }
 
 impl WorkflowTools for CloneWorkflowTools {
@@ -188,11 +224,15 @@ impl WorkflowTools for CloneWorkflowTools {
             .map_err(|error| error.to_string())?;
         let script = dir.path().join("load.mjs");
         std::fs::write(&script, LOAD_SCRIPT).map_err(|error| error.to_string())?;
+        let (_, core) = self
+            .write_core_shim(dir.path())
+            .map_err(|error| error.to_string())?;
         let mut command = Command::new("node");
         command
             .arg(&script)
             .arg(&self.clone_dir)
             .arg(file)
+            .arg(&core)
             .current_dir(&self.clone_dir);
         match run_with_stdout(command, self.timeout) {
             Outcome::Timeout => Err("Das Laden hat zu lange gedauert.".to_string()),

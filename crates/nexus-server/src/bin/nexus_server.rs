@@ -1,11 +1,10 @@
-//! Entwicklungs-Binary des Rust-Servers: startet ihn mit `--port`, `--upstream` und
-//! `--web-dir`.
+//! Entwicklungs-Binary des Rust-Servers: startet ihn mit `--port` und `--web-dir`.
 //!
 //! Später startet die Tauri-App denselben Server im eigenen Prozess; dieses Binary gibt es,
 //! damit der Vertrag und die Handarbeit ihn ohne die App starten können:
 //!
 //! ```sh
-//! cargo run -p nexus-server -- --port 4710 --upstream http://127.0.0.1:4711
+//! cargo run -p nexus-server -- --port 4710
 //! ```
 
 use std::process::ExitCode;

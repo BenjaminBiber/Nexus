@@ -7,7 +7,7 @@
 //! (`HARNESS_SQL_DIR`, neben dem Programm, im Paket). In Rust liegen die Texte über
 //! [`include_str!`] fest im Programm: ein Sidecar bringt dann kein zusätzliches `sql/`-Verzeichnis
 //! mit und es gibt keinen Pfad, der auf einer der drei Plattformen anders aussieht. Die Quelle
-//! bleibt dieselbe Datei unter `packages/db/sql`, damit alte und neue Fassung dasselbe einspielen.
+//! bleibt dieselbe Datei unter `crates/nexus-db/sql`, damit alte und neue Fassung dasselbe einspielen.
 
 use async_trait::async_trait;
 
@@ -127,7 +127,7 @@ impl<R: SchemaBatchRunner> MssqlSchemaRunner<R> {
             || hat_rechtetext(&error.message);
         if kein_recht {
             (self.warn)(&format!(
-                "Erweiterung {feature} konnte nicht eingespielt werden, es fehlt das Recht ALTER auf dem Schema board. Skript packages/db/sql/{} als Administrator ausführen.",
+                "Erweiterung {feature} konnte nicht eingespielt werden, es fehlt das Recht ALTER auf dem Schema board. Skript crates/nexus-db/sql/{} als Administrator ausführen.",
                 SchemaVersionGuard::script(feature)
             ));
             return false;
@@ -159,12 +159,12 @@ fn hat_rechtetext(message: &str) -> bool {
 /// darf es nicht enthalten. Entfernt wird wie in TypeScript nur das erste Vorkommen.
 pub fn script_text(feature: &str) -> Option<String> {
     let text = match feature {
-        "dispatch-runs" => include_str!("../../../../packages/db/sql/004_dispatch_runs.sql"),
-        "note-structure" => include_str!("../../../../packages/db/sql/005_note_structure.sql"),
+        "dispatch-runs" => include_str!("../../sql/004_dispatch_runs.sql"),
+        "note-structure" => include_str!("../../sql/005_note_structure.sql"),
         "dispatch-run-details" => {
-            include_str!("../../../../packages/db/sql/006_dispatch_run_details.sql")
+            include_str!("../../sql/006_dispatch_run_details.sql")
         }
-        "target-branch" => include_str!("../../../../packages/db/sql/007_target_branch.sql"),
+        "target-branch" => include_str!("../../sql/007_target_branch.sql"),
         _ => return None,
     };
     Some(without_first_go(text))

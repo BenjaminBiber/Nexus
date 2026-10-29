@@ -20,8 +20,8 @@ use crate::context::CliContext;
 /// Ordner mit den mitgelieferten Skills und Output-Styles im Clone
 const MANIFEST: [&str; 3] = ["packages", "plugin", "manifest"];
 
-/// Datei, aus der die Fassung des Harness kommt
-const VERSION_FILE: [&str; 3] = ["packages", "server", "package.json"];
+/// Datei, aus der die Fassung des Harness kommt: der Cargo-Workspace
+const VERSION_FILE: [&str; 1] = ["Cargo.toml"];
 
 /// Gemeinsame Optionen und der Unterbefehl von `nexus customize`
 #[derive(Debug, Args)]
@@ -38,15 +38,11 @@ pub struct CustomizeCli {
         help = "Ordner der Anpassungen (Standard: NEXUS_CUSTOM_DIR, sonst <clone>/custom)"
     )]
     pub custom: Option<PathBuf>,
-    // Nur für `scripts/customize.mjs`: dort heißt der Aufruf „npm run customize -- …“
-    #[arg(long = "aufruf", value_name = "text", hide = true)]
-    pub aufruf: Option<String>,
     #[command(subcommand)]
     pub command: Option<CustomizeCommands>,
 }
 
-/// Die Unterbefehle; `check`, `copy` und `reset` lesen ihre Argumente wie
-/// `npm run customize -- …` und melden Aufruffehler als `customize-usage`
+/// Die Unterbefehle; `check`, `copy` und `reset` melden Aufruffehler als `customize-usage`
 #[derive(Debug, Subcommand)]
 pub enum CustomizeCommands {
     /// Anpassungen auf den Standard anwenden (für den Bau des Plugins)
@@ -73,7 +69,7 @@ pub enum CustomizeCommands {
         #[arg(
             long,
             value_name = "fassung",
-            help = "Fassung des Harness für die Übersicht (Standard: aus packages/server/package.json)"
+            help = "Fassung des Harness für die Übersicht (Standard: aus Cargo.toml)"
         )]
         version: Option<String>,
     },
@@ -109,26 +105,15 @@ pub fn run(context: &CliContext, cli: CustomizeCli) -> Result<u8> {
             version,
         }) => apply(context, &clone, &custom, &standard, &out, version),
         Some(CustomizeCommands::Overview { file }) => overview(context, file.as_deref()),
-        Some(CustomizeCommands::Weitere(args)) => {
-            weitere(context, &clone, &custom, &args, cli.aufruf.as_deref())
-        }
+        Some(CustomizeCommands::Weitere(args)) => weitere(context, &clone, &custom, &args),
         // Ohne Unterbefehl gilt dasselbe wie bei einem leeren Aufruf
-        None => weitere(context, &clone, &custom, &[], cli.aufruf.as_deref()),
+        None => weitere(context, &clone, &custom, &[]),
     }
 }
 
 /// `check`, `copy` und `reset`
-fn weitere(
-    context: &CliContext,
-    clone: &Path,
-    custom: &Path,
-    args: &[String],
-    aufruf: Option<&str>,
-) -> Result<u8> {
-    let parser = match aufruf {
-        Some(text) => CustomizeArgs::with_usage(usage(text)),
-        None => CustomizeArgs::new(),
-    };
+fn weitere(context: &CliContext, clone: &Path, custom: &Path, args: &[String]) -> Result<u8> {
+    let parser = CustomizeArgs::new();
     let standard = manifest_dir(clone);
     let paths = CustomizationPaths::new(custom, &standard);
     match parser.parse(args)? {
@@ -279,11 +264,6 @@ fn zeilen(text: &str) -> Vec<String> {
     text.split('\n').map(ToString::to_string).collect()
 }
 
-/// Aufruftext für Fehlermeldungen, aus dem Namen des Aufrufs
-fn usage(aufruf: &str) -> String {
-    format!("Aufruf: {aufruf} check | copy workflow|skill <name>|output-style <name> [--rebase] | reset workflow|skill <name>|output-style <name>")
-}
-
 /// Clone des Harness: `--clone`, sonst die Wurzel des Git-Repos, sonst der Projektordner
 fn clone_dir(context: &CliContext, option: Option<&Path>) -> PathBuf {
     if let Some(dir) = option {
@@ -315,16 +295,25 @@ fn manifest_dir(clone: &Path) -> PathBuf {
         .fold(clone.to_path_buf(), |dir, teil| dir.join(teil))
 }
 
-/// Fassung des Harness aus `packages/server/package.json`; fehlt sie, bleibt sie leer
+/// Fassung des Harness aus dem Cargo-Workspace (`Cargo.toml`, erste `version = "…"`-Zeile);
+/// fehlt sie, bleibt sie leer
 fn harness_version(clone: &Path) -> String {
     let file = VERSION_FILE
         .iter()
         .fold(clone.to_path_buf(), |dir, teil| dir.join(teil));
     std::fs::read_to_string(file)
         .ok()
-        .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
-        .and_then(|json| json["version"].as_str().map(ToString::to_string))
+        .and_then(|text| version_from_cargo(&text))
         .unwrap_or_default()
+}
+
+/// Erste `version = "…"`-Zeile eines Cargo-Manifests
+fn version_from_cargo(text: &str) -> Option<String> {
+    text.lines()
+        .map(str::trim)
+        .find_map(|line| line.strip_prefix("version = \""))
+        .and_then(|rest| rest.split('"').next())
+        .map(ToString::to_string)
 }
 
 #[cfg(test)]
@@ -332,8 +321,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn der_aufruftext_nennt_den_aufrufer() {
-        assert!(usage("npm run customize --").starts_with("Aufruf: npm run customize -- check |"));
+    fn die_fassung_kommt_aus_der_ersten_version_zeile_des_manifests() {
+        let text = "[workspace.package]\nedition = \"2021\"\nversion = \"0.3.1\"\n";
+        assert_eq!(version_from_cargo(text).as_deref(), Some("0.3.1"));
+        assert_eq!(version_from_cargo("[package]\nname = \"x\"\n"), None);
     }
 
     #[test]

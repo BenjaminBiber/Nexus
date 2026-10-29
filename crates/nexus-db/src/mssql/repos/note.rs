@@ -3,7 +3,7 @@
 //!
 //! Jeder Zugriff hier verlangt die Erweiterung `note-structure` (Titel und Zähler der Notiz);
 //! das Feature-Gate meldet sonst `board-schema-outdated` mit Hinweis auf
-//! `packages/db/sql/005_note_structure.sql`.
+//! `crates/nexus-db/sql/005_note_structure.sql`.
 //!
 //! `Labels` und `SeenIn` stehen als kommagetrennter Text in der Spalte (Labels und Ticket-IDs
 //! enthalten nie Kommas).

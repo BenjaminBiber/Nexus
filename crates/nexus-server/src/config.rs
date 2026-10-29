@@ -8,8 +8,6 @@ use nexus_core::clock::Clock;
 use nexus_core::registry::DEFAULT_SERVER_PORT;
 use nexus_core::{HarnessError, HarnessHome, Result};
 
-use crate::groups::RouteGroups;
-
 /// Host, auf dem der Server hört – immer nur die eigene Maschine
 pub const HOST: &str = "127.0.0.1";
 
@@ -23,60 +21,6 @@ pub const DEFAULT_DOCS_POLL_MS: u64 = 10_000;
 pub const DEFAULT_DB_QUESTION_POLL_MS: u64 = 10_000;
 /// Takt des Dispatchers (0 = aus)
 pub const DEFAULT_DISPATCH_TICK_MS: u64 = 60_000;
-
-/// Wer dispatcht: der Node-Sidecar oder der Rust-Server (`NEXUS_DISPATCH`).
-///
-/// So schreibt immer nur ein Dispatcher. Bei [`DispatchBackend::Node`] (Vorgabe) gehen die
-/// Routen unter `/api/dispatch` an den Sidecar und der Rust-Takt bleibt aus; bei
-/// [`DispatchBackend::Rust`] antwortet Rust, der Rust-Takt läuft und der Sidecar startet mit
-/// `HARNESS_DISPATCH_TICK_MS=0`. [`DispatchBackend::Shadow`] ist der Parallelbetrieb: Node
-/// dispatcht und schreibt wie bei `node`, und Rust rechnet jede Entscheidung und jede
-/// Auswertung nach, ohne irgendetwas außerhalb von `dispatch/shadow/` zu schreiben.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub enum DispatchBackend {
-    #[default]
-    Node,
-    Rust,
-    Shadow,
-}
-
-impl DispatchBackend {
-    /// Der Wert, wie er in `NEXUS_DISPATCH` steht
-    pub fn as_str(self) -> &'static str {
-        match self {
-            DispatchBackend::Node => "node",
-            DispatchBackend::Rust => "rust",
-            DispatchBackend::Shadow => "shadow",
-        }
-    }
-
-    /// Dispatcht der Rust-Server? Nur dann beantwortet er die Dispatch-Routen und schreibt
-    /// selbst – im Schattenbetrieb nicht
-    pub fn is_rust(self) -> bool {
-        self == DispatchBackend::Rust
-    }
-
-    /// Läuft der Schattenbetrieb?
-    pub fn is_shadow(self) -> bool {
-        self == DispatchBackend::Shadow
-    }
-
-    /// Der Umschalter aus der Umgebung; ein unbekannter Wert bricht den Start ab
-    pub fn parse(raw: &str) -> Result<Self> {
-        match raw.trim() {
-            "node" => Ok(DispatchBackend::Node),
-            "rust" => Ok(DispatchBackend::Rust),
-            "shadow" => Ok(DispatchBackend::Shadow),
-            other => Err(HarnessError::new(
-                "dispatch-backend-invalid",
-                format!(
-                    "NEXUS_DISPATCH „{other}“ ist ungültig. Erlaubt sind node, rust und shadow."
-                ),
-            )
-            .into()),
-        }
-    }
-}
 
 /// Einstellungen des Servers
 #[derive(Debug, Clone)]
@@ -93,10 +37,6 @@ pub struct ServerConfig {
     pub toast_dir: PathBuf,
     /// Version in `GET /api/health`
     pub version: String,
-    /// Node-Server, an den alles geht, was Rust noch nicht beantwortet; `None` = kein Proxy
-    pub upstream: Option<String>,
-    /// Routengruppen, die trotz Rust-Umsetzung zum Node-Server gehen (Notschalter)
-    pub proxy_groups: RouteGroups,
     /// Abstand der Herzschlag-Meldungen in Millisekunden
     pub heartbeat_ms: u64,
     /// Abstand der Abfrage des Änderungskennwerts in Millisekunden
@@ -107,8 +47,6 @@ pub struct ServerConfig {
     pub db_question_poll_ms: u64,
     /// Takt des Dispatchers in Millisekunden (0 = aus)
     pub dispatch_tick_ms: u64,
-    /// Wer dispatcht: der Node-Sidecar (Vorgabe) oder der Rust-Server
-    pub dispatch: DispatchBackend,
     /// Start der Worker eines Laufs; ohne Angabe [`crate::dispatch::ProcessWorkerLauncher`]
     /// (Tests setzen hier Attrappen ein)
     pub dispatch_launcher: Option<std::sync::Arc<dyn crate::dispatch::WorkerLauncher>>,
@@ -126,15 +64,6 @@ impl ServerConfig {
         self.version == CONTRACT_VERSION
     }
 
-    /// Trägt den Node-Server dahinter ein und lässt damit den Notschalter
-    /// `NEXUS_PROXY_GROUPS` gelten. Nötig, weil der Port des Sidecars erst nach dem Laden
-    /// feststeht, der Notschalter aber nur mit Upstream wirkt: ohne ihn gäbe es niemanden,
-    /// der die abgeschaltete Gruppe stattdessen beantwortet.
-    pub fn set_upstream(&mut self, url: String, env: &dyn Fn(&str) -> Option<String>) {
-        self.upstream = Some(url);
-        self.proxy_groups = RouteGroups::from_env(value(env, &["NEXUS_PROXY_GROUPS"]).as_deref());
-    }
-
     /// Einstellungen mit den Standardwerten für einen Benutzerordner (Tests und Aufrufer,
     /// die Port und Ordner schon kennen)
     pub fn new(port: u16, home: HarnessHome) -> Self {
@@ -145,14 +74,11 @@ impl ServerConfig {
             web_dir: None,
             toast_dir: default_toast_dir(),
             version: default_version(),
-            upstream: None,
-            proxy_groups: RouteGroups::none(),
             heartbeat_ms: DEFAULT_HEARTBEAT_MS,
             db_poll_ms: DEFAULT_DB_POLL_MS,
             docs_poll_ms: DEFAULT_DOCS_POLL_MS,
             db_question_poll_ms: DEFAULT_DB_QUESTION_POLL_MS,
             dispatch_tick_ms: DEFAULT_DISPATCH_TICK_MS,
-            dispatch: DispatchBackend::default(),
             dispatch_launcher: None,
             clock: Clock::system(),
         }
@@ -205,17 +131,8 @@ impl ServerConfigLoader {
         let toast_dir = value(env, &["NEXUS_TOAST_DIR", "HARNESS_TOAST_DIR"])
             .filter(|dir| !dir.is_empty())
             .map(PathBuf::from);
-        let upstream = argument(args, "--upstream")
-            .or_else(|| value(env, &["NEXUS_UPSTREAM"]))
-            .filter(|url| !url.is_empty());
-        // Unbekannte Werte brechen den Start mit einer klaren Meldung ab
-        let dispatch = match value(env, &["NEXUS_DISPATCH"]).filter(|raw| !raw.trim().is_empty()) {
-            Some(raw) => DispatchBackend::parse(&raw)?,
-            None => DispatchBackend::default(),
-        };
         let mut config = ServerConfig {
             port: port(args, env)?,
-            dispatch,
             web_dir,
             version: value(env, &["NEXUS_SERVER_VERSION", "HARNESS_BUNDLED_VERSION"])
                 .filter(|version| !version.is_empty())
@@ -227,11 +144,7 @@ impl ServerConfigLoader {
             docs_poll_ms: millis(env, "CONTRACT_POLL_MS", DEFAULT_DOCS_POLL_MS),
             // 0 schaltet den Takt ab; der Vertragstest drückt ihn, damit seine Szenarien in
             // Sekunden fertig sind
-            dispatch_tick_ms: count(
-                env,
-                &["NEXUS_DISPATCH_TICK_MS", "HARNESS_DISPATCH_TICK_MS"],
-                DEFAULT_DISPATCH_TICK_MS,
-            ),
+            dispatch_tick_ms: count(env, &["NEXUS_DISPATCH_TICK_MS"], DEFAULT_DISPATCH_TICK_MS),
             // 0 schaltet die Fragen-Beobachtung ab und ist deshalb ein erlaubter Wert
             db_question_poll_ms: count(
                 env,
@@ -248,9 +161,6 @@ impl ServerConfigLoader {
         if config.is_contract() {
             config.db_question_poll_ms = 0;
             config.dispatch_tick_ms = 0;
-        }
-        if let Some(upstream) = upstream {
-            config.set_upstream(upstream, env);
         }
         Ok(config)
     }
@@ -310,7 +220,6 @@ pub fn env_map(entries: &[(&str, &str)]) -> HashMap<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::groups::RouteGroup;
 
     /// Lädt mit Argumenten und einer Tabelle als Umgebung
     fn load(args: &[&str], env: &[(&str, &str)]) -> Result<ServerConfig> {
@@ -349,14 +258,13 @@ mod tests {
     }
 
     #[test]
-    fn nimmt_benutzerordner_weboberflache_und_upstream_mit_ruckfall() {
+    fn nimmt_benutzerordner_und_weboberflache_mit_ruckfall() {
         let config = load(
             &[],
             &[
                 ("NEXUS_HOME", "/n/home"),
                 ("HARNESS_HOME", "/h/home"),
                 ("HARNESS_WEB_DIR", "/h/web"),
-                ("NEXUS_UPSTREAM", "http://127.0.0.1:4711"),
             ],
         )
         .unwrap();
@@ -365,26 +273,19 @@ mod tests {
             config.web_dir.as_deref(),
             Some(std::path::Path::new("/h/web"))
         );
-        assert_eq!(config.upstream.as_deref(), Some("http://127.0.0.1:4711"));
         assert_eq!(config.host, HOST);
 
         let nur_harness = load(&[], &[("HARNESS_HOME", "/h/home")]).unwrap();
         assert_eq!(nur_harness.home.dir(), std::path::Path::new("/h/home"));
 
-        let argumente = load(
-            &["--web-dir", "/a/web", "--upstream", "http://127.0.0.1:9"],
-            &[("NEXUS_WEB_DIR", "/n/web")],
-        )
-        .unwrap();
+        let argumente = load(&["--web-dir", "/a/web"], &[("NEXUS_WEB_DIR", "/n/web")]).unwrap();
         assert_eq!(
             argumente.web_dir.as_deref(),
             Some(std::path::Path::new("/a/web"))
         );
-        assert_eq!(argumente.upstream.as_deref(), Some("http://127.0.0.1:9"));
 
         let ohne = load(&[], &[]).unwrap();
         assert_eq!(ohne.web_dir, None);
-        assert_eq!(ohne.upstream, None);
     }
 
     #[test]
@@ -402,35 +303,6 @@ mod tests {
             "9.9.9"
         );
         assert_eq!(load(&[], &[]).unwrap().version, env!("CARGO_PKG_VERSION"));
-    }
-
-    #[test]
-    fn der_notschalter_der_routengruppen_wirkt_nur_mit_upstream() {
-        let mit = load(
-            &["--upstream", "http://127.0.0.1:4711"],
-            &[("NEXUS_PROXY_GROUPS", "basis,docs")],
-        )
-        .unwrap();
-        assert!(mit.proxy_groups.contains(RouteGroup::Basis));
-        assert!(mit.proxy_groups.contains(RouteGroup::Docs));
-
-        let ohne = load(&[], &[("NEXUS_PROXY_GROUPS", "basis")]).unwrap();
-        assert!(!ohne.proxy_groups.contains(RouteGroup::Basis));
-    }
-
-    #[test]
-    fn ein_nachtraglicher_upstream_lasst_den_notschalter_gelten() {
-        // So startet `nexus serve`: der Port des Node-Servers steht erst nach dem Laden fest
-        let mut config = load(&[], &[("NEXUS_PROXY_GROUPS", "db-tickets")]).unwrap();
-        assert!(config.proxy_groups.enabled(RouteGroup::DbTickets));
-
-        let umgebung = |name: &str| match name {
-            "NEXUS_PROXY_GROUPS" => Some("db-tickets".to_string()),
-            _ => None,
-        };
-        config.set_upstream("http://127.0.0.1:4711".to_string(), &umgebung);
-        assert_eq!(config.upstream.as_deref(), Some("http://127.0.0.1:4711"));
-        assert!(config.proxy_groups.contains(RouteGroup::DbTickets));
     }
 
     #[test]
@@ -475,43 +347,9 @@ mod tests {
     }
 
     #[test]
-    fn nimmt_den_umschalter_des_dispatchers_aus_der_umgebung_und_weist_unbekannte_werte_ab() {
-        // Vorgabe bleibt der Node-Sidecar
-        assert_eq!(load(&[], &[]).unwrap().dispatch, DispatchBackend::Node);
-        assert_eq!(
-            load(&[], &[("NEXUS_DISPATCH", "node")]).unwrap().dispatch,
-            DispatchBackend::Node
-        );
-        let rust = load(&[], &[("NEXUS_DISPATCH", " rust ")]).unwrap();
-        assert_eq!(rust.dispatch, DispatchBackend::Rust);
-        assert!(rust.dispatch.is_rust());
-        assert_eq!(rust.dispatch.as_str(), "rust");
-        // Ein leerer Wert zählt wie keiner
-        assert_eq!(
-            load(&[], &[("NEXUS_DISPATCH", "")]).unwrap().dispatch,
-            DispatchBackend::Node
-        );
-
-        // Der Schattenbetrieb dispatcht nicht selbst: die Routen bleiben beim Sidecar
-        let shadow = load(&[], &[("NEXUS_DISPATCH", "shadow")]).unwrap();
-        assert_eq!(shadow.dispatch, DispatchBackend::Shadow);
-        assert!(shadow.dispatch.is_shadow());
-        assert!(!shadow.dispatch.is_rust());
-        assert_eq!(shadow.dispatch.as_str(), "shadow");
-
-        let error = load(&[], &[("NEXUS_DISPATCH", "beides")]).unwrap_err();
-        let harness = error.harness().expect("Fehler");
-        assert_eq!(harness.code, "dispatch-backend-invalid");
-        assert_eq!(
-            harness.message,
-            "NEXUS_DISPATCH „beides“ ist ungültig. Erlaubt sind node, rust und shadow."
-        );
-    }
-
-    #[test]
     fn nimmt_den_takt_des_dispatchers_aus_der_umgebung_und_laesst_0_zu() {
         assert_eq!(
-            load(&[], &[("HARNESS_DISPATCH_TICK_MS", "0")])
+            load(&[], &[("NEXUS_DISPATCH_TICK_MS", "0")])
                 .unwrap()
                 .dispatch_tick_ms,
             0
@@ -524,7 +362,7 @@ mod tests {
         );
         for raw in ["", "abc", "-1"] {
             assert_eq!(
-                load(&[], &[("HARNESS_DISPATCH_TICK_MS", raw)])
+                load(&[], &[("NEXUS_DISPATCH_TICK_MS", raw)])
                     .unwrap()
                     .dispatch_tick_ms,
                 DEFAULT_DISPATCH_TICK_MS,

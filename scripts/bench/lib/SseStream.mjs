@@ -1,6 +1,5 @@
 // Liest einen Ereignisstrom (Server-Sent Events) und merkt sich, wann jedes Ereignis angekommen ist.
-// Blöcke werden an `\n\n` getrennt, Zeilen mit `data:` als JSON gelesen, Kommentare (`: ping`) übergangen –
-// wie in packages/server/tests/helpers/LiveServer.ts.
+// Blöcke werden an `\n\n` getrennt, Zeilen mit `data:` als JSON gelesen, Kommentare (`: ping`) übergangen.
 export class SseStream {
   constructor(controller, reader) {
     this.controller = controller;

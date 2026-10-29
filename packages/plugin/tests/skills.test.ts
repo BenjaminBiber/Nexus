@@ -125,10 +125,10 @@ describe('Skills des Plugins', () => {
   describe('harness-customize', () => {
     const get = () => skills.find((s) => s.dir === 'harness-customize')!;
 
-    // Findet den Clone über overview.json und ruft npm im Clone auf
-    it('findet den Clone über overview.json und nutzt npm im Clone', () => {
+    // Findet den Clone über overview.json und ruft nexus customize im Clone auf
+    it('findet den Clone über overview.json und nutzt nexus customize im Clone', () => {
       const t = get().text;
-      for (const part of ['overview.json', 'cloneDir', 'npm --prefix', 'run customize -- check', 'run customize -- copy workflow', '--rebase', 'run setup -- --no-pull', 'planen', 'umsetzen']) {
+      for (const part of ['overview.json', 'cloneDir', 'nexus customize --clone', 'check', 'copy workflow', '--rebase', 'run build:plugin', 'bin/nexus install', 'planen', 'umsetzen']) {
         expect(t, part).toContain(part);
       }
     });
@@ -140,17 +140,17 @@ describe('Skills des Plugins', () => {
       expect(t).toMatch(/bestätigen lassen/);
     });
 
-    // Das Anwenden baut alles neu und braucht mehr als die üblichen zwei Minuten: Zeitgrenze oder Hintergrund, dann auf „Fertig.“ warten
-    it('nennt bei jedem Aufruf von setup die Zeitgrenze, den Hintergrund und das Warten auf „Fertig.“', () => {
+    // Das Anwenden baut alles neu und braucht mehr als die üblichen zwei Minuten: Zeitgrenze oder Hintergrund, dann auf das gebaute Plugin warten
+    it('nennt bei jedem Aufruf des Plugin-Baus die Zeitgrenze, den Hintergrund und das Warten auf das Ergebnis', () => {
       const t = get().text;
       expect(t).toContain('600000');
       expect(t).toMatch(/im Hintergrund/);
-      expect(t).toContain('Fertig.');
+      expect(t).toContain('Plugin gebaut:');
       expect(t).toMatch(/mehrere Minuten/);
-      // Jede Zeile, die setup aufruft, trägt den Hinweis selbst oder verweist auf die Regel dazu
-      const calls = t.split('\n').filter((line) => line.includes('run setup -- --no-pull'));
+      // Jede Zeile, die den Plugin-Bau aufruft, trägt den Hinweis selbst oder verweist auf die Regel dazu
+      const calls = t.split('\n').filter((line) => line.includes('run build:plugin'));
       expect(calls.length).toBeGreaterThan(0);
-      for (const line of calls) expect(line, line).toMatch(/600000|Fertig\.|Zeitgrenze/);
+      for (const line of calls) expect(line, line).toMatch(/600000|Plugin gebaut:|Zeitgrenze|siehe Regeln/);
     });
   });
 

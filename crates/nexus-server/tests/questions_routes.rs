@@ -6,7 +6,7 @@ mod common;
 
 use std::sync::Arc;
 
-use common::{BoardBackendWithServices, Reply, TestServer, TestServerOptions};
+use common::{BoardBackendWithServices, Reply, TestServer};
 use nexus_core::actors::AuthorKind;
 use nexus_core::board::basics::BoardActor;
 use nexus_core::board::database::BoardDatabase as _;
@@ -16,7 +16,6 @@ use nexus_core::board::ticket_service::{NewTicketInput, WriteOptions};
 use nexus_core::board::types::BoardUser;
 use nexus_core::questions::{ResearchInput, ResearchOptionInput};
 use nexus_core::tx;
-use nexus_server::groups::{RouteGroup, RouteGroups};
 use serde_json::{json, Value};
 
 /// Server mit Projekt ARC, Board „Sprint“ und dem Ticket ARC-0001
@@ -547,20 +546,4 @@ async fn lehnt_die_schreibrouten_der_gruppe_ohne_pflichtkopf_ab() {
     assert_eq!(question.view.question.title, "A");
     assert_eq!(question.view.question.rev, 1);
     assert!(question.comments.is_empty());
-}
-
-/// Der Notschalter: steht `questions` in `NEXUS_PROXY_GROUPS`, meldet Rust die Routen nicht an
-/// und der Rückfall übernimmt
-#[tokio::test]
-async fn lasst_die_gruppe_mit_dem_notschalter_zum_node_server_gehen() {
-    let (server, _backend) = TestServer::start_with_board_and(TestServerOptions {
-        proxy_groups: RouteGroups::from_env(Some(RouteGroup::Questions.as_str())),
-        ..TestServerOptions::default()
-    })
-    .await;
-    // Ohne Node-Server beantwortet der Rückfall die Anfrage – entscheidend ist, dass keine
-    // Rust-Route mehr greift
-    let reply = server.get("/api/db/questions/ARC-F0001").await;
-    assert_eq!(reply.status, 404);
-    assert_eq!(reply.code().as_deref(), Some("not-found"));
 }

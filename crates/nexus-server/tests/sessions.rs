@@ -243,15 +243,3 @@ async fn schreibt_sessions_json_auch_ohne_beenden_entprellt() {
     let file: Value = serde_json::from_str(&text).expect("JSON");
     assert_eq!(file["sessions"][0]["id"], "s1");
 }
-
-#[tokio::test]
-async fn lasst_die_gruppe_sessions_mit_dem_notschalter_zum_node_server() {
-    let server = TestServer::with(TestServerOptions {
-        proxy_groups: nexus_server::groups::RouteGroups::from_env(Some("sessions")),
-        ..TestServerOptions::default()
-    });
-    let (_repo, pid) = server.add_project();
-    // Ohne Upstream fällt die Gruppe auf 404 des Rückfalls – Rust beantwortet sie nicht mehr
-    let reply = server.get(&format!("/api/projects/{pid}/sessions")).await;
-    assert_eq!(reply.code().as_deref(), Some("not-found"));
-}

@@ -26,7 +26,6 @@ pub mod prompt_template;
 pub mod readiness;
 pub mod review_feedback;
 pub mod run_backfill;
-pub mod shadow;
 pub mod state;
 pub mod time_window;
 pub mod types;
@@ -67,10 +66,6 @@ pub use prompt_template::{PromptTemplate, PromptValue, PromptValues};
 pub use readiness::{DispatchReadiness, ReadinessBoard, ReadinessTicket};
 pub use review_feedback::ReviewFeedback;
 pub use run_backfill::{BackfillInput, DispatchRunBackfill};
-pub use shadow::{
-    ShadowDecision, ShadowDiff, ShadowEvaluation, ShadowReadiness, ShadowReport, ShadowStore,
-    ShadowSummary,
-};
 pub use state::{
     DispatchLog, DispatchState, DispatchStateStore, MergeEntry, MergePhase, PlanningAutoState,
     PlanningEntry, ResearchAutoState, ResearchEntry, ReviewEntry, ReviewStore, RunEnd, RunLogEntry,

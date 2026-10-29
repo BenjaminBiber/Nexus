@@ -1,4 +1,4 @@
-// Prüft das gebaute macOS-Bundle: Sidecar, Ressourcen und Symbol im .app, dazu die Größe des .dmg.
+// Prüft das gebaute macOS-Bundle: Programm, Ressourcen und Symbol im .app, dazu die Größe des .dmg.
 // Sucht unter <target>/[<rust-ziel>/]release/bundle/{macos,dmg}/ und nimmt den jüngsten Treffer; als target
 // kommen das gemeinsame target/ des Cargo-Workspace und ein einzeln gebautes apps/desktop/src-tauri/target/ infrage.
 // Aufruf: node apps/desktop/scripts/check-bundle.mjs [rust-ziel]
@@ -62,13 +62,6 @@ function pruefeDatei(wurzel, relativ, exec = false) {
   }
 }
 
-// Prüft, dass es den Ordner gibt und er nicht leer ist
-function pruefeOrdner(wurzel, relativ) {
-  const pfad = join(wurzel, relativ);
-  if (!existsSync(pfad) || !statSync(pfad).isDirectory()) return bemaengeln(`Fehlt im Bundle: ${relativ}/`);
-  if (readdirSync(pfad).length === 0) bemaengeln(`Leer im Bundle: ${relativ}/`);
-}
-
 // Name des Hauptprogramms aus CFBundleExecutable der Info.plist; ohne Angabe der Ordnername ohne „.app“
 function hauptprogramm(wurzel) {
   const plist = join(wurzel, 'Contents/Info.plist');
@@ -85,10 +78,8 @@ console.log(`App: ${app}`);
 
 pruefeDatei(app, 'Contents/Info.plist');
 pruefeDatei(app, `Contents/MacOS/${hauptprogramm(app)}`, true);
-pruefeDatei(app, 'Contents/MacOS/harness-sidecar', true);
 pruefeDatei(app, 'Contents/Resources/web/index.html');
 pruefeDatei(app, 'Contents/Resources/toast/logo-app.png');
-pruefeOrdner(app, 'Contents/Resources/sql');
 pruefeDatei(app, 'Contents/Resources/icon.icns');
 
 const dmg = juengstes('dmg', '.dmg');

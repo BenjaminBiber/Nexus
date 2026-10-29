@@ -17,8 +17,9 @@ const APP_NAME = process.platform === 'win32' ? 'nexus-desktop.exe' : 'nexus-des
 // Die App liegt im gemeinsamen target/ des Cargo-Workspace; wer src-tauri einzeln baut, findet sie daneben
 const APP_ORTE = [join(ROOT, 'target/debug', APP_NAME), join(ROOT, 'apps/desktop/src-tauri/target/debug', APP_NAME)];
 const APP = APP_ORTE.find((ort) => existsSync(ort)) ?? APP_ORTE[0];
-const SERVER_ENTRY = join(ROOT, 'packages/server/dist/main.js');
-// Die App öffnet ein Fenster und startet ein Sidecar von über 100 MB; beim ersten Lauf dauert das
+// Der Rust-Server; der zweite Lauf startet ihn selbst, damit auf dem Port schon einer läuft
+const SERVER = join(ROOT, 'target/debug', process.platform === 'win32' ? 'nexus.exe' : 'nexus');
+// Die App öffnet ein Fenster und startet den Server; beim ersten Lauf dauert das
 const START_MS = 60000;
 const STOP_MS = 20000;
 // Nur dort lässt sich die App von außen geordnet beenden
@@ -114,7 +115,7 @@ function start(command, args, env) {
 // Umgebung der App: eigener Ordner, eigener Port, keine Einstellungen des Entwicklers
 function appEnv(home, port) {
   const env = { ...process.env, HARNESS_HOME: home, HARNESS_PORT: String(port) };
-  for (const name of ['HARNESS_WEB_DIR', 'HARNESS_TOAST_DIR', 'HARNESS_SQL_DIR', 'HARNESS_SERVER_ENTRY']) delete env[name];
+  for (const name of ['HARNESS_WEB_DIR', 'HARNESS_TOAST_DIR']) delete env[name];
   return env;
 }
 
@@ -129,7 +130,7 @@ async function waitForHealth(port, run) {
   return null;
 }
 
-// Erster Lauf: Der Port ist frei, die App startet den Sidecar und nimmt ihn beim Beenden mit
+// Erster Lauf: Der Port ist frei, die App startet den Server und nimmt ihn beim Beenden mit
 async function appStartetDenServer() {
   const label = 'App startet den Server';
   const home = mkdtempSync(join(tmpdir(), 'nexus-smoke-eigen-'));
@@ -144,7 +145,7 @@ async function appStartetDenServer() {
     const written = await waitForInfo(home);
     server = written?.pid;
     check(written?.port === port, `${label}: server.json nennt den Port der App`, JSON.stringify(written));
-    check(typeof server === 'number' && server !== app.child.pid, `${label}: server.json nennt den Sidecar, nicht die App`, `pid ${server}, App ${app.child.pid}`);
+    check(typeof server === 'number' && server !== app.child.pid, `${label}: server.json nennt den Server, nicht die App`, `pid ${server}, App ${app.child.pid}`);
     check(await waitFor(() => /Das Fenster lädt http:\/\/127\.0\.0\.1:/.test(app.output), 10000), `${label}: das Fenster lädt die Oberfläche vom Server`);
 
     if (!GRACEFUL) {
@@ -169,7 +170,7 @@ async function serverLaeuftSchon() {
   const home = mkdtempSync(join(tmpdir(), 'nexus-smoke-fremd-'));
   const port = await freePort();
   const env = appEnv(home, port);
-  const server = start(process.execPath, [SERVER_ENTRY, '--port', String(port)], env);
+  const server = start(SERVER, ['serve', '--port', String(port)], env);
   let app = null;
   try {
     const answer = await waitForHealth(port, server);
@@ -237,8 +238,8 @@ if (!existsSync(APP)) {
   console.error(`Fehlt: ${APP}. Bitte zuerst "npm run tauri -w apps/desktop -- build --debug --no-bundle" ausführen.`);
   process.exit(1);
 }
-if (!existsSync(SERVER_ENTRY)) {
-  console.error(`Fehlt: ${SERVER_ENTRY}. Bitte zuerst "npm run build" ausführen.`);
+if (!existsSync(SERVER)) {
+  console.error(`Fehlt: ${SERVER}. Bitte zuerst "cargo build -p nexus-cli --bin nexus" ausführen.`);
   process.exit(1);
 }
 

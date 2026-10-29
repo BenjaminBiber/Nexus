@@ -47,8 +47,8 @@ export class ServerHandle {
   // Startet den Server und wartet, bis er antwortet
   static async start(options) {
     const [command, ...args] = ServerHandle.split(options.command).map((part) => part.replace('{port}', String(options.port)));
-    // Unter Unix in eigener Prozessgruppe: `stop` beendet so auch Enkel (Rust-Server, Node-Sidecar),
-    // die ein Startskript wie `scripts/contract/rust-vor-node.mjs` sonst verwaist zurücklässt
+    // Unter Unix in eigener Prozessgruppe: `stop` beendet so auch Enkel, die ein Startskript
+    // wie `contract/servers/rust-server.mjs` sonst verwaist zurücklässt
     const child = spawn(command, args, {
       cwd: options.cwd,
       env: options.env,

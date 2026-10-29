@@ -34,7 +34,7 @@ use serde_json::{json, Value};
 use crate::error::{json as json_response, ApiError, ApiResult};
 use crate::extract::{JsonBody, QueryMap, QueryValue};
 use crate::input::DbInput;
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 
 use stats_range::{day_text, StatsQuery, StatsRange};
@@ -56,36 +56,36 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/api/db/boards/{id}/notes",
-            get(list_notes).post(add_note).fallback(proxy_or_static),
+            get(list_notes).post(add_note).fallback(static_or_not_found),
         )
         .route(
             "/api/db/notes/{id}/seen",
-            post(seen_note).fallback(proxy_or_static),
+            post(seen_note).fallback(static_or_not_found),
         )
         .route(
             "/api/db/notes/{id}/take",
-            post(take_note).fallback(proxy_or_static),
+            post(take_note).fallback(static_or_not_found),
         )
         .route(
             "/api/db/notes/{id}/drop",
-            post(drop_note).fallback(proxy_or_static),
+            post(drop_note).fallback(static_or_not_found),
         )
-        .route("/api/db/search", get(search).fallback(proxy_or_static))
+        .route("/api/db/search", get(search).fallback(static_or_not_found))
         .route(
             "/api/db/stats/dispatch",
-            get(dispatch_stats).fallback(proxy_or_static),
+            get(dispatch_stats).fallback(static_or_not_found),
         )
-        .route("/api/db/graph", get(graph).fallback(proxy_or_static))
+        .route("/api/db/graph", get(graph).fallback(static_or_not_found))
         .route(
             "/api/db/boards/{id}/spec-progress",
-            get(spec_progress).fallback(proxy_or_static),
+            get(spec_progress).fallback(static_or_not_found),
         )
-        .route("/api/db/inbox", get(inbox).fallback(proxy_or_static))
+        .route("/api/db/inbox", get(inbox).fallback(static_or_not_found))
         .route(
             "/api/db/inbox/order",
             put(write_order)
                 .delete(clear_order)
-                .fallback(proxy_or_static),
+                .fallback(static_or_not_found),
         )
 }
 

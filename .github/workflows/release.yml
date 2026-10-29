@@ -67,7 +67,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # x64-macOS baut nativ: das Sidecar ist eine Node-SEA und braucht das Node der Zielarchitektur
           - { runner: macos-14, target: aarch64-apple-darwin, bundles: 'app,dmg' }
           - { runner: macos-15-intel, target: x86_64-apple-darwin, bundles: 'app,dmg' }
           - { runner: windows-latest, target: x86_64-pc-windows-msvc, bundles: 'nsis' }
@@ -87,7 +86,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
-      # Node von nodejs.org: nur damit lässt sich eine Single Executable Application bauen
+      # Node baut die Oberfläche und das Plugin
       - uses: actions/setup-node@v4
         with:
           node-version: '26'
@@ -100,8 +99,9 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev patchelf rpm
       - run: npm ci
       - run: npm run build
-      # Sidecar für genau dieses Ziel; der Tauri-Build selbst ruft es über beforeBuildCommand erneut auf
-      - run: npm run build:sidecar -- --target ${{ matrix.target }}
+      # Der Server für genau dieses Ziel; das CLI-Archiv nimmt ihn von hier, der Tauri-Build
+      # baut ihn über beforeBuildCommand selbst noch einmal
+      - run: cargo build --release -p nexus-cli --bin nexus --target ${{ matrix.target }}
       # Der Notarisierungs-Schlüssel muss als Datei vorliegen; ohne Secret entfällt die Notarisierung
       - name: API-Key für Notarisierung
         if: runner.os == 'macOS'

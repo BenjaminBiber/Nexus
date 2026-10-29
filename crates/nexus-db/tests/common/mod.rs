@@ -7,7 +7,6 @@
 //! Jede Testdatei bindet nur ein, was sie braucht – ungenutzte Helfer sind deshalb erlaubt.
 #![allow(dead_code)]
 
-pub mod crosscheck;
 pub mod schema_inspect;
 pub mod temp_sqlite;
 pub mod test_db;

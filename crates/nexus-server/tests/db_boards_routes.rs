@@ -18,7 +18,6 @@ use nexus_core::board::ticket_service::{NewTicketInput, WriteOptions};
 use nexus_core::board::types::BoardUser;
 use nexus_core::tx;
 use nexus_platform::{FakeFolderPicker, Platform};
-use nexus_server::groups::{RouteGroup, RouteGroups};
 use serde_json::{json, Value};
 
 /// Legt (falls nötig) Projekt ARC und ein Board an und liefert dessen Nummer
@@ -603,20 +602,6 @@ async fn meldet_ein_unbekanntes_board_als_nicht_gefunden() {
             .as_deref(),
         Some("id-invalid")
     );
-}
-
-#[tokio::test]
-async fn gibt_die_gruppe_am_notschalter_an_den_node_server_ab() {
-    let (server, _backend) = TestServer::start_with_board_and(TestServerOptions {
-        proxy_groups: RouteGroups::from_env(Some(RouteGroup::DbBoards.as_str())),
-        ..TestServerOptions::default()
-    })
-    .await;
-    // Ohne Node-Server beantwortet der Rückfall die Anfrage – entscheidend ist, dass keine
-    // Rust-Route mehr greift
-    let reply = server.get("/api/db/projects").await;
-    assert_eq!(reply.status, 404);
-    assert_eq!(reply.code().as_deref(), Some("not-found"));
 }
 
 /// Die Zeilen dieser Gruppe aus der Sicherheitsmatrix (`packages/server/tests/security/

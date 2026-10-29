@@ -7,7 +7,7 @@ import {
   type DbQuestionDetailDto, type DbQuestionDto, type DbQuestionListDto, type DbStatus, type DbTicketDetailDto,
   type DbHistoryDto, type DbTicketTimelineDto,
 } from '../../src/api/dbTypes.js';
-import { WORKFLOW_PHASES } from '../../../core/src/workflow/WorkflowPhases.js';
+import { TEST_WORKFLOW_PHASES } from './workflowPhases.js';
 import { INBOX_KINDS, type InboxItemDto, type InboxListDto } from '../../src/api/inboxTypes.js';
 
 export const projects: ProjectDto[] = [
@@ -123,7 +123,7 @@ export function fakeApi(overrides: Partial<Record<keyof ApiClient, unknown>> = {
     getFavorites: async () => [],
     getUserSettings: async () => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, hideInPlanning: false }),
     getDbQuestions: async () => dbQuestionList([]),
-    getWorkflow: async () => ({ source: 'standard', phases: WORKFLOW_PHASES }),
+    getWorkflow: async () => ({ source: 'standard', phases: TEST_WORKFLOW_PHASES }),
     getCustomizations: async () => ({ state: 'unknown' }),
     openEvents: () => new FakeEventSource(),
   };

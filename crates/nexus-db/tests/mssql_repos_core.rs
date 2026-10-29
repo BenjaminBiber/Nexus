@@ -153,7 +153,7 @@ async fn ein_gesetzter_zielbranch_verlangt_ohne_erweiterung_das_skript() {
         assert!(
             fehler
                 .to_string()
-                .contains("packages/db/sql/007_target_branch.sql"),
+                .contains("crates/nexus-db/sql/007_target_branch.sql"),
             "{fall}: {fehler}"
         );
     }

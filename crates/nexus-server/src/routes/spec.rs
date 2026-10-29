@@ -16,14 +16,14 @@ use nexus_core::board::spec_progress::SpecProgressCount;
 use nexus_core::Result;
 
 use crate::error::{json, ApiResult};
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 
 /// Meldet die Route des Spec-Fortschritts an
 pub fn routes() -> Router<Arc<AppState>> {
     Router::new().route(
         "/api/projects/{pid}/spec-progress",
-        get(spec_progress).fallback(proxy_or_static),
+        get(spec_progress).fallback(static_or_not_found),
     )
 }
 

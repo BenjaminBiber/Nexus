@@ -13,7 +13,7 @@ use axum::routing::post;
 use axum::Router;
 
 use crate::error::{json, ApiResult};
-use crate::proxy::proxy_or_static;
+use crate::routes::static_or_not_found;
 use crate::state::AppState;
 
 /// Meldet die beiden Routen der Gruppe an; andere Methoden auf denselben Pfaden fallen in
@@ -22,11 +22,11 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/api/user-settings/test-notification",
-            post(test_notification).fallback(proxy_or_static),
+            post(test_notification).fallback(static_or_not_found),
         )
         .route(
             "/api/user-settings/test-ntfy",
-            post(test_ntfy).fallback(proxy_or_static),
+            post(test_ntfy).fallback(static_or_not_found),
         )
 }
 

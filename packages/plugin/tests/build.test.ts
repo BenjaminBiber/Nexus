@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { buildPlugin, BINARY, PLUGIN_BIN, PLUGIN_OUT, ROOT } from './helpers/pluginBuild.js';
@@ -59,11 +59,11 @@ describe('Plugin-Build', () => {
     expect(hilfe.stdout).toContain('Aufruf: nexus');
   });
 
-  it('enthält das Binary, den Alias bin/harness, Server und Oberfläche', () => {
-    for (const file of [`bin/${BINARY}`, 'bin/harness', 'lib/server.mjs', 'web/index.html', 'skills/harness-grill/SKILL.md', 'skills/harness-implement/SKILL.md']) {
+  it('enthält das Binary, den Alias bin/harness und die Oberfläche', () => {
+    for (const file of [`bin/${BINARY}`, 'bin/harness', 'web/index.html', 'skills/harness-grill/SKILL.md', 'skills/harness-implement/SKILL.md']) {
       expect(existsSync(join(PLUGIN_OUT, file)), file).toBe(true);
     }
-    expect(existsSync(join(PLUGIN_OUT, 'lib/cli.mjs')), 'lib/cli.mjs entfällt mit dem Binary').toBe(false);
+    expect(existsSync(join(PLUGIN_OUT, 'lib')), 'der Node-Server entfällt mit dem Binary').toBe(false);
     const alias = readFileSync(join(PLUGIN_OUT, 'bin/harness'), 'utf8');
     expect(alias.startsWith('#!/bin/sh')).toBe(true);
     expect(alias).toContain('NEXUS_INVOKED_AS=harness');
@@ -79,10 +79,11 @@ describe('Plugin-Build', () => {
     expect(result.stderr).toContain('`harness` heißt jetzt `nexus`');
   });
 
-  it('bündelt die Abhängigkeiten des Servers, ohne auf node_modules zu verweisen', () => {
-    const server = readFileSync(join(PLUGIN_OUT, 'lib/server.mjs'), 'utf8');
-    expect(server).not.toMatch(/from ['"]fastify['"]/);
-    expect(server).not.toMatch(/from ['"]@harness\/core['"]/);
+  it('kommt ohne Node-Dateien aus: keine .mjs und keine node_modules im Plugin', () => {
+    for (const eintrag of readdirSync(PLUGIN_OUT, { recursive: true, encoding: 'utf8' })) {
+      expect(eintrag.endsWith('.mjs'), eintrag).toBe(false);
+      expect(eintrag.includes('node_modules'), eintrag).toBe(false);
+    }
   });
 
   it('baut nach NEXUS_PLUGIN_OUT und lässt den geteilten Repo-Ordner unberührt', () => {

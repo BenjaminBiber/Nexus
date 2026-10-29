@@ -30,11 +30,10 @@ use nexus_core::{tx, HarnessError, HarnessHome, Result};
 use nexus_platform::Platform;
 use nexus_server::board_db::{ServerBoardDatabase, ServerBoardServices};
 use nexus_server::board_runtime::{BoardBackend, BoardBackendFactory, BoardBackendFuture};
-use nexus_server::config::{DispatchBackend, ServerConfig};
+use nexus_server::config::ServerConfig;
 use nexus_server::dispatch::{
     ClaudeRunInput, ClaudeRunner, ClaudeRunners, RunResult, WorkerLauncher,
 };
-use nexus_server::groups::RouteGroups;
 use nexus_server::routes::build_router;
 use nexus_server::state::AppState;
 use nexus_server::usage::ClaudeUsageService;
@@ -90,8 +89,6 @@ pub struct TestServer {
 #[derive(Default)]
 pub struct TestServerOptions {
     pub web_dir: Option<PathBuf>,
-    pub upstream: Option<String>,
-    pub proxy_groups: RouteGroups,
     pub board: Option<BoardBackendFactory>,
     /// Systemfunktionen des Servers; ohne Angabe die Attrappen
     pub platform: Option<Platform>,
@@ -107,8 +104,6 @@ pub struct TestServerOptions {
     pub claude: Option<ClaudeRunners>,
     /// Uhr des Servers; ohne Angabe die des Rechners
     pub clock: Option<Clock>,
-    /// Wer dispatcht; ohne Angabe wie im Betrieb der Node-Sidecar
-    pub dispatch: DispatchBackend,
     /// Start der Worker; ohne Angabe eine Attrappe, die nichts startet
     pub dispatch_launcher: Option<Arc<dyn WorkerLauncher>>,
     /// Die Abo-Limits von Claude; ohne Angabe der echte Dienst (den Tests nie fragen)
@@ -155,8 +150,6 @@ impl TestServer {
         let mut config = ServerConfig::new(PORT, home.clone());
         config.version = "test".into();
         config.web_dir = options.web_dir;
-        config.upstream = options.upstream;
-        config.proxy_groups = options.proxy_groups;
         if let Some(heartbeat_ms) = options.heartbeat_ms {
             config.heartbeat_ms = heartbeat_ms;
         }
@@ -167,7 +160,6 @@ impl TestServer {
         if let Some(clock) = options.clock {
             config.clock = clock;
         }
-        config.dispatch = options.dispatch;
         config.dispatch_launcher = Some(
             options
                 .dispatch_launcher

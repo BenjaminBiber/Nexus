@@ -79,10 +79,11 @@ const BOARD_ABOUT: &str = "Ohne Unterbefehl: startet bei Bedarf den Server und �
 const BOARD_PORT_HELP: &str = "Port des Servers (Standard 4710 oder NEXUS_PORT)";
 
 /// Beschreibung von `serve` auf der Hilfeseite
-const SERVE_ABOUT: &str = "Startet den Server im Vordergrund: Rust nimmt den Port an, der Node-Server läuft als Kindprozess dahinter.";
+const SERVE_ABOUT: &str = "Startet den Server im Vordergrund.";
 
 /// Beispiele unter der Hilfe von `serve`
-const SERVE_EXAMPLES: &str = "\nBeispiele:\n  nexus serve\n  nexus serve --port 4800\n  nexus serve --node-sidecar packages/server/dist/main.js\n\nBeendet wird mit Strg+C; der Node-Server geht dabei mit.";
+const SERVE_EXAMPLES: &str =
+    "\nBeispiele:\n  nexus serve\n  nexus serve --port 4800\n\nBeendet wird mit Strg+C.";
 
 /// Beispiele unter der Hilfe von `board`
 const BOARD_EXAMPLES: &str = "\nBeispiele:\n  nexus board\n  nexus board --port 4800 --no-open";
@@ -123,7 +124,7 @@ pub enum Commands {
         sub: Option<commands::board::BoardCommands>,
     },
 
-    /// Server im Vordergrund starten (Rust vorn, Node-Server dahinter)
+    /// Server im Vordergrund starten
     #[command(
         name = "serve",
         about = SERVE_ABOUT,
@@ -139,17 +140,6 @@ pub enum Commands {
             help = "Ordner der gebauten Oberfläche (Standard: web neben dem Programm oder HARNESS_WEB_DIR)"
         )]
         web_dir: Option<PathBuf>,
-        #[arg(
-            long = "node-sidecar",
-            value_name = "pfad",
-            help = "Programmdatei des Node-Servers (Standard: neben dem Programm oder NEXUS_NODE_SIDECAR)"
-        )]
-        node_sidecar: Option<String>,
-        #[arg(
-            long = "no-node",
-            help = "Ohne Node-Server starten; nicht portierte Routen antworten dann mit 404"
-        )]
-        no_node: bool,
     },
 
     /// Kommentare zu Spec- und Plan-Dokumenten abarbeiten
@@ -248,24 +238,6 @@ pub enum Commands {
         lauf: String,
     },
 
-    /// Bericht des Schattenbetriebs; ihn braucht nur, wer den Parallelbetrieb auswertet,
-    /// deshalb steht der Befehl nicht in der Hilfe.
-    #[command(
-        name = "dispatch-compare",
-        about = commands::dispatch_compare::COMPARE_ABOUT,
-        after_help = commands::dispatch_compare::COMPARE_EXAMPLES,
-        hide = true,
-        disable_help_flag = true
-    )]
-    DispatchCompare {
-        #[arg(long, value_name = "tag", help = commands::dispatch_compare::SINCE_HELP)]
-        since: Option<String>,
-        #[arg(long, value_name = "tag", help = commands::dispatch_compare::UNTIL_HELP)]
-        until: Option<String>,
-        #[arg(long, help = "Ausgabe als JSON")]
-        json: bool,
-    },
-
     /// Hilfe zu einem Befehl anzeigen
     #[command(
         name = "help",
@@ -362,20 +334,9 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
             Some(sub) => commands::board::run(&context, port.as_deref(), &sub, root),
             None => commands::board::open::run(&context, port.as_deref(), !no_open),
         },
-        Some(Commands::Serve {
-            port,
-            web_dir,
-            node_sidecar,
-            no_node,
-        }) => commands::serve::run(
-            &context,
-            &commands::serve::ServeOptions {
-                port,
-                web_dir,
-                node_sidecar,
-                no_node,
-            },
-        ),
+        Some(Commands::Serve { port, web_dir }) => {
+            commands::serve::run(&context, &commands::serve::ServeOptions { port, web_dir })
+        }
         Some(Commands::Spec { sub }) => commands::spec::run(&context, &sub),
         Some(Commands::Stop { restart }) => commands::stop::run(&context, restart),
         Some(Commands::Install {
@@ -396,10 +357,6 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
         Some(Commands::Hook { ereignis }) => commands::hook::run(&ereignis),
         Some(Commands::Customize(args)) => commands::customize::run(&context, args),
         Some(Commands::DispatchWorker { lauf }) => commands::dispatch_worker::run(&context, &lauf),
-        Some(Commands::DispatchCompare { since, until, json }) => commands::dispatch_compare::run(
-            &context,
-            &commands::dispatch_compare::CompareOptions { since, until, json },
-        ),
         Some(Commands::Help { befehl }) => help_command(root, befehl.as_deref()),
         #[cfg(debug_assertions)]
         Some(Commands::SelbsttestFehler { code, meldung }) => {

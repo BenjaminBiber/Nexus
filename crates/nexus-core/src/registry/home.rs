@@ -212,17 +212,6 @@ impl NexusHome {
         self.dir.join("dispatch-logs")
     }
 
-    /// Einziger Ordner, in den der Schattenbetrieb schreibt (`NEXUS_DISPATCH=shadow`)
-    pub fn dispatch_shadow_dir(&self) -> PathBuf {
-        self.dispatch_dir().join("shadow")
-    }
-
-    /// Kopien der Lauf- und Ergebnisdateien, die der Schattenbetrieb auswertet, bevor der
-    /// Node-Dispatcher sie entfernt
-    pub fn dispatch_shadow_runs_dir(&self) -> PathBuf {
-        self.dispatch_shadow_dir().join("runs")
-    }
-
     /// Zentrale Regeln, die die Projekte über ihre Rule importieren (z. B. `docs.md`)
     pub fn rules_dir(&self) -> PathBuf {
         self.dir.join("rules")
@@ -422,14 +411,6 @@ mod tests {
         assert_eq!(
             home.dispatch_logs_dir(),
             Path::new("h").join("dispatch-logs")
-        );
-        assert_eq!(
-            home.dispatch_shadow_dir(),
-            Path::new("h").join("dispatch").join("shadow")
-        );
-        assert_eq!(
-            home.dispatch_shadow_runs_dir(),
-            Path::new("h").join("dispatch").join("shadow").join("runs")
         );
         assert_eq!(home.rules_dir(), Path::new("h").join("rules"));
     }

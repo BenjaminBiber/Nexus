@@ -1,15 +1,15 @@
-// Packt die CLI für den Betrieb ohne App: das SEA-Programm aus dist/sidecar (es ist zugleich die CLI)
-// und das gebündelte Plugin für Claude Code. Ergebnis: dist/release/nexus-cli-<version>-<ziel>.tar.gz
-// (Windows: .zip). Der Pfad des Archivs geht auf stdout, alles andere auf stderr – so lässt er sich
-// im Release-Workflow direkt in eine Variable übernehmen.
-// Voraussetzung: `npm run build` und `npm run build:sidecar -- --target <ziel>`.
+// Packt die CLI für den Betrieb ohne App: das Rust-Programm `nexus` und das gebündelte Plugin
+// für Claude Code. Ergebnis: dist/release/nexus-cli-<version>-<ziel>.tar.gz (Windows: .zip).
+// Der Pfad des Archivs geht auf stdout, alles andere auf stderr – so lässt er sich im
+// Release-Workflow direkt in eine Variable übernehmen.
+// Voraussetzung: `npm run build` und `cargo build --release -p nexus-cli --bin nexus --target <ziel>`.
 // Aufruf: node scripts/release/cli-archive.mjs --version <X.Y.Z> [--target <rust-ziel>] [--out <ordner>] [--root <dir>]
 import { spawnSync } from 'node:child_process';
 import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { binaryName as sidecarBinaryName, hostTarget } from '../sidecar/targets.mjs';
+import { hostTarget } from '../targets.mjs';
 import { archiveName, archiveStem, binaryName, isWindowsTarget } from './lib/CliArchive.mjs';
 
 const HIER = dirname(fileURLToPath(import.meta.url));
@@ -64,10 +64,10 @@ function readme(version, target) {
 
 const { version, target, root, out } = options(process.argv.slice(2));
 
-// Das Sidecar ist zugleich die CLI: ohne „serve“ und ohne --dispatch-worker startet es die CLI (scripts/sidecar/entry.mjs)
-const quelle = join(root, 'dist/sidecar', sidecarBinaryName(target));
+// Das Rust-Programm ist zugleich die CLI und der Server (`nexus serve`)
+const quelle = join(root, 'target', target, 'release', isWindowsTarget(target) ? 'nexus.exe' : 'nexus');
 if (!existsSync(quelle)) {
-  fail(`Fehlt: ${quelle}. Bitte zuerst "npm run build" und "npm run build:sidecar -- --target ${target}" ausführen.`);
+  fail(`Fehlt: ${quelle}. Bitte zuerst "cargo build --release -p nexus-cli --bin nexus --target ${target}" ausführen.`);
 }
 
 const stem = archiveStem(version, target);

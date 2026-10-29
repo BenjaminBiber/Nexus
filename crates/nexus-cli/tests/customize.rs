@@ -44,12 +44,8 @@ impl Clone {
             "---\nname: software-engineer\ndescription: Standard\n---\n",
         );
         datei(
-            &clone
-                .root()
-                .join("packages")
-                .join("server")
-                .join("package.json"),
-            "{ \"version\": \"0.2.0\" }",
+            &clone.root().join("Cargo.toml"),
+            "[workspace.package]\nversion = \"0.2.0\"\n",
         );
         clone
     }
@@ -152,19 +148,6 @@ fn kopiert_bei_einer_unbekannten_option_nichts() {
     assert_eq!(lauf.code, 1);
     assert!(lauf.ausgabe().contains("Aufruf: nexus customize check |"));
     assert!(!clone.custom().join("skills").join("harness-grill").exists());
-}
-
-#[test]
-fn der_aufruftext_lasst_sich_austauschen() {
-    let clone = Clone::neu();
-    let lauf = clone.run(&["--aufruf", "npm run customize --", "löschen"]);
-    assert_eq!(lauf.code, 1);
-    assert!(
-        lauf.ausgabe()
-            .contains("Aufruf: npm run customize -- check |"),
-        "{}",
-        lauf.ausgabe()
-    );
 }
 
 #[test]

@@ -41,7 +41,7 @@ pub struct ProjectRuleSpec {
 }
 
 /// Eine Rule im Projekt, die nur einen Import auf eine zentrale Regeldatei enthält.
-/// Den Inhalt dort aktualisiert `npm run setup`. Die Rule ist lokal wie die Plugin-Einstellung
+/// Den Inhalt dort aktualisiert `nexus install`. Die Rule ist lokal wie die Plugin-Einstellung
 /// und wird über `info/exclude` aus Git herausgenommen.
 #[derive(Debug, Clone)]
 pub struct ProjectRule {
@@ -131,7 +131,7 @@ impl ProjectRule {
     pub fn content(&self) -> String {
         let mut lines = vec![
             "---".to_string(),
-            format!("{RULE_MARKER}, nicht versioniert. Die Regeln liegen zentral und kommen mit `npm run setup`."),
+            format!("{RULE_MARKER}, nicht versioniert. Die Regeln liegen zentral und kommen mit `nexus install`."),
         ];
         if !self.spec.paths.is_empty() {
             lines.push("paths:".to_string());
