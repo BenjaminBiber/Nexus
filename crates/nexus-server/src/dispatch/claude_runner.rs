@@ -5,11 +5,9 @@
 //! Trait auf. Im Server steht dahinter [`ClaudeProcess`], in Tests eine Attrappe – so startet
 //! kein Test das echte `claude`.
 
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use nexus_core::{Error, HarnessHome, Result};
 
 use super::claude_process::{ClaudeProcess, ClaudeRunInput, RunResult};
 
@@ -34,12 +32,14 @@ impl ClaudeRunner for ProcessClaudeRunner {
 }
 
 /// Die Läufe, die der Zustand des Servers bereithält: einer für die Entwürfe (Tickets und
-/// Fragen), einer für das Umschreiben. Zwei Einträge, damit Tests sie getrennt ersetzen können
-/// (wie `ticketDraftClaude` und `reviseClaude` in `TestServer.ts`).
+/// Fragen), einer für das Umschreiben, einer für die Analyse der Optimierungs-Vorschläge.
+/// Getrennte Einträge, damit Tests sie einzeln ersetzen können (wie `ticketDraftClaude`,
+/// `reviseClaude` und `suggestionClaude` in `TestServer.ts`).
 #[derive(Clone)]
 pub struct ClaudeRunners {
     pub ticket_draft: Arc<dyn ClaudeRunner>,
     pub revise: Arc<dyn ClaudeRunner>,
+    pub suggestion: Arc<dyn ClaudeRunner>,
 }
 
 impl Default for ClaudeRunners {
@@ -47,6 +47,7 @@ impl Default for ClaudeRunners {
         Self {
             ticket_draft: Arc::new(ProcessClaudeRunner),
             revise: Arc::new(ProcessClaudeRunner),
+            suggestion: Arc::new(ProcessClaudeRunner),
         }
     }
 }
@@ -83,21 +84,13 @@ impl ClaudeRunner for FixedClaudeRunner {
 }
 
 impl ClaudeRunners {
-    /// Die Läufe des Vertragsmodus: Entwürfe (Tickets und Fragen) sind leer, das Umschreiben
-    /// liefert „Ersatztext“ – nie startet ein echtes Claude
+    /// Die Läufe des Vertragsmodus: Entwürfe (Tickets und Fragen) und die Analyse sind leer,
+    /// das Umschreiben liefert „Ersatztext“ – nie startet ein echtes Claude
     pub fn contract() -> Self {
         Self {
             ticket_draft: Arc::new(FixedClaudeRunner::new("[]")),
             revise: Arc::new(FixedClaudeRunner::new("Ersatztext")),
+            suggestion: Arc::new(FixedClaudeRunner::new("[]")),
         }
     }
-}
-
-/// Arbeitsordner der Claude-Analyse (`~/.harness/dispatch/analysis`): absichtlich leer, damit
-/// Claude dort kein Projekt vorfindet. Portiert aus
-/// `packages/core/src/dispatch/optimization/AnalysisWorkspace.ts`.
-pub fn analysis_dir(home: &HarnessHome) -> Result<PathBuf> {
-    let dir = home.dispatch_analysis_dir();
-    std::fs::create_dir_all(&dir).map_err(Error::unexpected)?;
-    Ok(dir)
 }

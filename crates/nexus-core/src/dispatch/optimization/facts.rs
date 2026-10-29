@@ -256,7 +256,10 @@ fn sources(starts: &[&DispatchRun]) -> Vec<StartSource> {
     let mut counts: HashMap<(Option<String>, Option<i64>), i64> = HashMap::new();
     for run in starts {
         let rule_index = run.rule_index.map(i64::from);
-        let key = (run.profile_reason.map(|r| r.as_str().to_string()), rule_index);
+        let key = (
+            run.profile_reason.map(|r| r.as_str().to_string()),
+            rule_index,
+        );
         let entry = counts.entry(key).or_insert(0);
         if *entry == 0 {
             order.push((run.profile_reason, rule_index));
@@ -418,7 +421,9 @@ mod tests {
     fn zahlt_je_profil_nur_laufe_mit_den_aktuellen_limits_den_letzten_lauf_aber_unabhangig_davon() {
         let facts = collect(
             vec![
-                run("a", |r| r.started_at = "2026-10-01T00:00:00.000Z".to_string()),
+                run("a", |r| {
+                    r.started_at = "2026-10-01T00:00:00.000Z".to_string()
+                }),
                 run("b", |r| {
                     r.max_turns = Some(20);
                     r.started_at = "2026-10-02T00:00:00.000Z".to_string();
@@ -456,7 +461,12 @@ mod tests {
         assert_eq!((standard.starts, standard.escalated_starts), (2, 1));
         let gross = of(&facts, "gross");
         assert_eq!(
-            (gross.runs, gross.starts, gross.via_escalation, gross.top_origin),
+            (
+                gross.runs,
+                gross.starts,
+                gross.via_escalation,
+                gross.top_origin
+            ),
             (1, 0, 1, Some("standard".to_string()))
         );
         assert_eq!(
@@ -492,7 +502,10 @@ mod tests {
             .collect();
         let standard = of(&collect(runs, vec![]), "standard");
         assert_eq!(standard.runs, 10);
-        assert_eq!(standard.aborts, BTreeMap::from([("max-turns".to_string(), 3)]));
+        assert_eq!(
+            standard.aborts,
+            BTreeMap::from([("max-turns".to_string(), 3)])
+        );
         assert_eq!(standard.first_try_success, 7);
         assert_eq!(standard.turns_p90, Some(9));
         assert_eq!(

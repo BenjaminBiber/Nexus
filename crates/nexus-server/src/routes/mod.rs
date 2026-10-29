@@ -8,6 +8,7 @@ pub mod db_boards;
 pub mod db_misc;
 pub mod db_tickets;
 pub mod dispatch;
+pub mod dispatch_suggestions;
 pub mod doc_comments;
 pub mod docs;
 pub mod docs_claude;
@@ -90,7 +91,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     // Die Dispatch-Routen beantwortet Rust nur, wenn der Umschalter auf `rust` steht; bei
     // `node` bleibt der Dispatcher samt Routen beim Sidecar
     if state.config.dispatch.is_rust() && state.config.proxy_groups.enabled(RouteGroup::Dispatch) {
-        router = router.merge(dispatch::routes());
+        router = router
+            .merge(dispatch::routes())
+            .merge(dispatch_suggestions::routes());
     }
     router
         .fallback(proxy_or_static)

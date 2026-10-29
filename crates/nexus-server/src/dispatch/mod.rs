@@ -24,15 +24,15 @@ pub mod run_recorder;
 pub mod scheduler;
 pub mod service;
 pub mod status;
+pub mod suggestion_analyzer;
+pub mod suggestion_service;
 pub mod ticket_starter;
 pub mod worker;
 pub mod worker_launcher;
 pub mod worktree_setup;
 
 pub use claude_process::{ClaudeProcess, ClaudeRunInput, OutputSource, RunResult};
-pub use claude_runner::{
-    analysis_dir, ClaudeRunner, ClaudeRunners, FixedClaudeRunner, ProcessClaudeRunner,
-};
+pub use claude_runner::{ClaudeRunner, ClaudeRunners, FixedClaudeRunner, ProcessClaudeRunner};
 pub use context::{DispatchContext, DispatchStores, LaunchInput, RepoWork};
 pub use merge_git::{MergeGit, RealMergeGit};
 pub use merge_result::{MergeResultReader, MergeRetryOutcome, MergeRetryResult};
@@ -64,6 +64,10 @@ pub use status::{
     DispatchMergeInfo, DispatchPlanningInfo, DispatchResearchInfo, DispatchRunInfo, DispatchRunLog,
     DispatchRunLogText, DispatchStateKind, DispatchStatus, DispatchTicketRow,
     QuestionResearchStatus, TicketPlanningStatus,
+};
+pub use suggestion_analyzer::SuggestionAnalyzer;
+pub use suggestion_service::{
+    AnalysisDto, ApplyResult, DispatchSuggestionService, SuggestionContext, SuggestionListDto,
 };
 pub use ticket_starter::{StartOutcome, TicketStarter};
 pub use worker::DispatchWorker;

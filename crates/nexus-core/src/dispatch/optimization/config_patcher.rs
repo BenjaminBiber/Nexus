@@ -27,9 +27,7 @@ impl ConfigPatcher {
     pub fn allowed(&self, path: &str) -> bool {
         let parts: Vec<&str> = path.split('.').collect();
         match parts.as_slice() {
-            ["profiles", name, key] => {
-                !name.is_empty() && ALLOWED_PROFILE_KEYS.contains(key)
-            }
+            ["profiles", name, key] => !name.is_empty() && ALLOWED_PROFILE_KEYS.contains(key),
             ["defaultProfile"] | ["escalation"] => true,
             ["rules", index, "profile"] => {
                 !index.is_empty() && index.chars().all(|c| c.is_ascii_digit())
@@ -188,7 +186,10 @@ mod tests {
             "rules".to_string(),
             json!([{ "when": { "labels": ["doku"] }, "profile": "klein" }]),
         );
-        object.insert("research".to_string(), json!({ "auto": false, "profile": null }));
+        object.insert(
+            "research".to_string(),
+            json!({ "auto": false, "profile": null }),
+        );
         object.insert("planning".to_string(), json!({ "profile": null }));
         raw
     }
@@ -213,7 +214,11 @@ mod tests {
     fn setzt_profilwerte_ohne_andere_felder_oder_die_vorlage_zu_verandern() {
         let (raw, config) = fixture();
         let next = ConfigPatcher::new()
-            .apply(&raw, &config, &[op("profiles.standard.maxTurns", json!(30), json!(45))])
+            .apply(
+                &raw,
+                &config,
+                &[op("profiles.standard.maxTurns", json!(30), json!(45))],
+            )
             .unwrap();
         assert_eq!(
             next["profiles"]["standard"],
@@ -257,7 +262,11 @@ mod tests {
     fn lehnt_veraltete_ausgangswerte_als_konflikt_ab() {
         let (raw, config) = fixture();
         let error = ConfigPatcher::new()
-            .apply(&raw, &config, &[op("profiles.standard.maxTurns", json!(25), json!(45))])
+            .apply(
+                &raw,
+                &config,
+                &[op("profiles.standard.maxTurns", json!(25), json!(45))],
+            )
             .unwrap_err();
         assert_eq!(error.code(), Some("conflict"));
         assert_eq!(
@@ -272,7 +281,11 @@ mod tests {
         let patcher = ConfigPatcher::new();
         assert!(!patcher.allowed("claude.command"));
         let fremd = patcher
-            .apply(&raw, &config, &[op("claude.command", json!("claude"), json!("x"))])
+            .apply(
+                &raw,
+                &config,
+                &[op("claude.command", json!("claude"), json!("x"))],
+            )
             .unwrap_err();
         assert_eq!(fremd.code(), Some("input-invalid"));
         // `from` fehlt wie `undefined` in TypeScript: der Ausgangswert stimmt, erst das Setzen

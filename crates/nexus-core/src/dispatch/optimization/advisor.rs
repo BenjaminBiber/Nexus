@@ -13,11 +13,11 @@ use sha2::{Digest, Sha256};
 
 use crate::dispatch::config::DispatchConfig;
 use crate::dispatch::optimization::config_patcher::js_stringify;
+use crate::dispatch::optimization::types::StartSource;
 use crate::dispatch::optimization::types::{
     AdvisorResult, ConfigPatchOp, InsufficientData, OptimizationFacts, ProfileFacts, RuleFacts,
     Suggestion, SuggestionEvidence, SuggestionKind, SuggestionSource, SuggestionTarget, MIN_RUNS,
 };
-use crate::dispatch::optimization::types::StartSource;
 use crate::text::locale_cmp;
 
 /// Ab diesem Anteil Abbrüche an den Schritten ist das Schrittlimit zu knapp
@@ -588,11 +588,7 @@ fn kind_text(kind: SuggestionKind) -> String {
 /// Gleiche Änderung aus zwei Regeln (z. B. „überholt“ und „Eskalationsziel“): nur die
 /// gewichtigere bleibt
 fn dedupe(list: Vec<Suggestion>) -> Vec<Suggestion> {
-    let hints: Vec<Suggestion> = list
-        .iter()
-        .filter(|s| s.patch.is_none())
-        .cloned()
-        .collect();
+    let hints: Vec<Suggestion> = list.iter().filter(|s| s.patch.is_none()).cloned().collect();
     let mut order: Vec<String> = vec![];
     let mut best: HashMap<String, Suggestion> = HashMap::new();
     for suggestion in list.into_iter().filter(|s| s.patch.is_some()) {
@@ -774,7 +770,10 @@ mod tests {
         );
         assert!(s.reason.contains("2 von 10 Läufen (20 %)"), "{}", s.reason);
         assert_eq!(s.id.len(), 16);
-        assert!(s.id.chars().all(|c| c.is_ascii_hexdigit() && !c.is_uppercase()));
+        assert!(s
+            .id
+            .chars()
+            .all(|c| c.is_ascii_hexdigit() && !c.is_uppercase()));
         let knapp = facts(
             vec![pf("standard", |f| {
                 f.aborts = BTreeMap::from([("max-turns".to_string(), 1)]);
@@ -852,10 +851,7 @@ mod tests {
             vec![pf("standard", |f| f.escalated_starts = 5)],
             vec![],
         ));
-        assert_eq!(
-            result.suggestions[0].kind,
-            SuggestionKind::ProfileOvertaken
-        );
+        assert_eq!(result.suggestions[0].kind, SuggestionKind::ProfileOvertaken);
         assert_eq!(
             result.suggestions[0].patch,
             Some(vec![ConfigPatchOp {
@@ -895,11 +891,11 @@ mod tests {
 
     #[test]
     fn gibt_fur_die_oberste_stufe_der_leiter_nur_einen_hinweis() {
-        let result = advise(&facts(vec![pf("gross", |f| f.escalated_starts = 8)], vec![]));
-        assert_eq!(
-            result.suggestions[0].kind,
-            SuggestionKind::ProfileOvertaken
-        );
+        let result = advise(&facts(
+            vec![pf("gross", |f| f.escalated_starts = 8)],
+            vec![],
+        ));
+        assert_eq!(result.suggestions[0].kind, SuggestionKind::ProfileOvertaken);
         assert_eq!(result.suggestions[0].patch, None);
     }
 
@@ -984,10 +980,7 @@ mod tests {
             })],
             vec![],
         ));
-        assert_eq!(
-            result.suggestions[0].kind,
-            SuggestionKind::ProfileOversized
-        );
+        assert_eq!(result.suggestions[0].kind, SuggestionKind::ProfileOversized);
         assert_eq!(result.suggestions[0].patch, None);
         let zu_viele_schritte = facts(
             vec![pf("gross", |f| {
@@ -1035,9 +1028,12 @@ mod tests {
     /// Referenzwerte aus dem TypeScript-Stand; erzeugt mit einem einmaligen tsx-Skript, das
     /// `OptimizationAdvisor.advise` über dieselben Kennzahlen laufen ließ und je Vorschlag
     /// Regel, Fingerabdruck und ID ausgab
+    /// Erwartung je Szenario: Regel, Fingerabdruck und ID eines Vorschlags
+    type Referenz = (&'static str, &'static str, &'static str);
+
     #[test]
     fn erzeugt_dieselben_fingerabdrucke_und_ids_wie_typescript() {
-        let szenarien: Vec<(OptimizationFacts, Vec<(&str, &str, &str)>)> = vec![
+        let szenarien: Vec<(OptimizationFacts, Vec<Referenz>)> = vec![
             (
                 facts(
                     vec![pf("standard", |f| {
@@ -1127,7 +1123,11 @@ mod tests {
                     })],
                     vec![],
                 ),
-                vec![("profile-unused", "rule:profile-unused:alt:", "4e9deb44a6a4cf40")],
+                vec![(
+                    "profile-unused",
+                    "rule:profile-unused:alt:",
+                    "4e9deb44a6a4cf40",
+                )],
             ),
             (
                 facts(
@@ -1169,10 +1169,8 @@ mod tests {
     fn sortiert_ubernehmbares_vor_hinweisen_und_andert_die_id_mit_dem_profil() {
         let result = advise(&facts(
             vec![pf("standard", |f| {
-                f.aborts = BTreeMap::from([
-                    ("context".to_string(), 5),
-                    ("max-turns".to_string(), 2),
-                ]);
+                f.aborts =
+                    BTreeMap::from([("context".to_string(), 5), ("max-turns".to_string(), 2)]);
             })],
             vec![],
         ));

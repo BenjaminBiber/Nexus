@@ -14,8 +14,8 @@ use serde_json::Value;
 use tokio_util::sync::CancellationToken;
 
 use crate::dispatch::claude_process::ClaudeRunInput;
-use crate::dispatch::claude_runner::analysis_dir;
 use crate::dispatch::result_envelope::excerpt;
+use nexus_core::dispatch::optimization::AnalysisWorkspace;
 
 /// Fünf Minuten je Lauf (wie `TIMEOUT_MS` in TypeScript)
 pub const TIMEOUT: Duration = Duration::from_secs(5 * 60);
@@ -67,7 +67,7 @@ pub fn run_input(
         command: cfg.claude.command.clone(),
         args: args(cfg),
         prompt,
-        cwd: analysis_dir(home)?,
+        cwd: AnalysisWorkspace::new(home.clone()).dir()?,
         env: ClaudeInvocation::new().env(&env, cfg, None, None),
         timeout: TIMEOUT,
         cancel,
