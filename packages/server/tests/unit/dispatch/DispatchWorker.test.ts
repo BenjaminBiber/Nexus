@@ -263,4 +263,55 @@ describe('Worker des Dispatchers', () => {
     while (!existsSync(out) && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50));
     expect(JSON.parse(readFileSync(out, 'utf8'))).toEqual({ argv: ['--dispatch-worker', 'ARC-0001-x'], t: 'ARC-0001' });
   });
+
+  // „Claude“, das einen losgelösten Dauerläufer im Ordner `cwd` startet, dessen PID in `pidFile` schreibt und endet
+  const leaveOrphan = (cwd: string, pidFile: string) => [
+    "const { spawn } = require('node:child_process');",
+    `const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { cwd: ${JSON.stringify(cwd)}, detached: true, stdio: 'ignore' });`,
+    `require('node:fs').writeFileSync(${JSON.stringify(pidFile)}, String(child.pid));`,
+    'child.unref();',
+  ].join('');
+  const alive = (pid: number) => {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  it.skipIf(process.platform === 'win32')('DispatchWorker beendet nach dem Lauf, was im Worktree verwaist übrig bleibt', async () => {
+    const worktree = join(dir, 'wt');
+    mkdirSync(worktree);
+    writeFileSync(join(worktree, '.git'), 'gitdir: /x/.git/worktrees/wt\n');
+    const pidFile = join(dir, 'waise.pid');
+    const logFile = join(dir, 'lauf.log');
+    await new RunStore(home).create({
+      id: 'ARC-0001-x', kind: 'work', ticketId: 'ARC-0001', boardId: 1, title: 'T', agent: 'junior-ARC-0001', cwd: worktree, branch: 'b', target: null,
+      run: RUN, command: process.execPath, args: ['-e', leaveOrphan(worktree, pidFile)], prompt: '', logFile, startedAt: new Date().toISOString(), pid: null,
+    });
+
+    await new DispatchWorker(home).run('ARC-0001-x');
+
+    const orphan = Number(readFileSync(pidFile, 'utf8'));
+    await expect.poll(() => alive(orphan), { timeout: 5000 }).toBe(false);
+    expect(readFileSync(logFile, 'utf8')).toMatch(new RegExp(`Aufgeräumt: 1 übrig gebliebene Prozesse beendet \\(PID ${orphan}\\)`));
+  }, 30000);
+
+  it.skipIf(process.platform === 'win32')('DispatchWorker räumt im Hauptordner nichts ab', async () => {
+    const pidFile = join(dir, 'waise.pid');
+    await new RunStore(home).create({
+      id: 'ARC-0001-x', kind: 'merge', ticketId: 'ARC-0001', boardId: 1, title: 'T', agent: 'merge-ARC-0001', cwd: dir, branch: 'b', target: 'main',
+      run: RUN, command: process.execPath, args: ['-e', leaveOrphan(dir, pidFile)], prompt: '', logFile: join(dir, 'lauf.log'), startedAt: new Date().toISOString(), pid: null,
+    });
+
+    await new DispatchWorker(home).run('ARC-0001-x');
+
+    const orphan = Number(readFileSync(pidFile, 'utf8'));
+    try {
+      expect(alive(orphan)).toBe(true);
+    } finally {
+      process.kill(orphan, 'SIGKILL');
+    }
+  }, 30000);
 });
