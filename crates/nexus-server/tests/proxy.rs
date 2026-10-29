@@ -141,12 +141,12 @@ async fn with_upstream() -> (
 async fn leitet_methode_pfad_abfrage_und_korper_unverandert_weiter() {
     let (server, upstream, _base, task) = with_upstream().await;
     let reply = server
-        .post("/api/db/boards?a=1&a=2", r#"{"path":"/x"}"#)
+        .post("/api/db/tickets?a=1&a=2", r#"{"path":"/x"}"#)
         .await;
     assert_eq!(reply.status, 200);
     let json = reply.json().unwrap();
     assert_eq!(json["method"], serde_json::json!("POST"));
-    assert_eq!(json["path"], serde_json::json!("/api/db/boards"));
+    assert_eq!(json["path"], serde_json::json!("/api/db/tickets"));
     assert_eq!(json["query"], serde_json::json!("a=1&a=2"));
     assert_eq!(json["body"], serde_json::json!(r#"{"path":"/x"}"#));
     assert_eq!(json["harness"], serde_json::json!("1"));
@@ -171,7 +171,7 @@ async fn schreibt_host_und_herkunft_auf_den_upstream_um() {
     let authority = base.trim_start_matches("http://").to_string();
     let reply = server
         .get_with(
-            "/api/db/boards",
+            "/api/db/tickets",
             &[("origin", Some("http://127.0.0.1:4710"))],
         )
         .await;
@@ -219,7 +219,7 @@ async fn ein_nicht_erreichbarer_upstream_wird_zu_503_upstream_unavailable() {
         upstream: Some(base),
         ..TestServerOptions::default()
     });
-    let reply = server.get("/api/db/boards").await;
+    let reply = server.get("/api/db/tickets").await;
     assert_eq!(reply.status, 503);
     assert_eq!(
         reply.json().unwrap(),
@@ -295,7 +295,7 @@ async fn der_notschalter_schickt_eine_routengruppe_zum_node_server() {
 #[tokio::test]
 async fn ohne_upstream_gibt_es_fur_unbekannte_api_pfade_404() {
     let server = TestServer::start();
-    let reply = server.get("/api/db/boards").await;
+    let reply = server.get("/api/db/tickets").await;
     assert_eq!(reply.status, 404);
     assert_eq!(reply.code().as_deref(), Some("not-found"));
     assert_eq!(reply.header("x-nexus-backend"), Some("rust"));

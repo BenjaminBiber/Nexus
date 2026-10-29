@@ -16,8 +16,17 @@ use axum::body::Body;
 use axum::http::{HeaderName, HeaderValue, Request, StatusCode};
 use axum::Router;
 use nexus_core::board::basics::BoardActor;
-use nexus_core::{HarnessHome, Result};
+use nexus_core::board::config::{BoardConfig, BoardProvider};
+use nexus_core::board::config_store::BoardConfigStore;
+use nexus_core::board::database::BoardDatabase as _;
+use nexus_core::board::in_memory::InMemoryBoardDatabase;
+use nexus_core::board::repo_paths::{BoardRepoPaths, MemoryBoardRepoStore};
+use nexus_core::board::services::BoardServices;
+use nexus_core::board::types::BoardUser;
+use nexus_core::clock::Clock;
+use nexus_core::{tx, HarnessHome, Result};
 use nexus_platform::Platform;
+use nexus_server::board_db::{ServerBoardDatabase, ServerBoardServices};
 use nexus_server::board_runtime::{BoardBackend, BoardBackendFactory, BoardBackendFuture};
 use nexus_server::config::ServerConfig;
 use nexus_server::groups::RouteGroups;
@@ -71,6 +80,11 @@ pub struct TestServerOptions {
     pub upstream: Option<String>,
     pub proxy_groups: RouteGroups,
     pub board: Option<BoardBackendFactory>,
+    /// Systemfunktionen des Servers; ohne Angabe die Attrappen
+    pub platform: Option<Platform>,
+    /// Die Board-Laufzeit aus `board.yaml` statt der im Speicher: nur so prüfen Tests die
+    /// Antworten ohne und mit kaputter Konfig
+    pub board_from_config: bool,
 }
 
 impl TestServer {
@@ -91,8 +105,15 @@ impl TestServer {
         config.web_dir = options.web_dir;
         config.upstream = options.upstream;
         config.proxy_groups = options.proxy_groups;
-        let board = options.board.unwrap_or_else(memory_board);
-        let state = AppState::new(config, board, Platform::fake()).expect("Zustand");
+        let board = options.board.unwrap_or_else(|| {
+            if options.board_from_config {
+                nexus_server::board_from_config(home.clone())
+            } else {
+                memory_board()
+            }
+        });
+        let platform = options.platform.unwrap_or_else(Platform::fake);
+        let state = AppState::new(config, board, platform).expect("Zustand");
         TestServer {
             router: build_router(state.clone()),
             state,
@@ -197,6 +218,123 @@ impl TestServer {
     }
 }
 
+/// Der Testbenutzer der Board-Laufzeit im Speicher (wie `MEMORY_USER` in TypeScript)
+pub const MEMORY_USER_ID: &str = "11111111-1111-1111-1111-111111111111";
+pub const MEMORY_USER_NAME: &str = "Florian";
+
+/// Platzhalter-Konfig für Tests (kein echter Server, kein echtes Passwort)
+pub fn memory_config() -> BoardConfig {
+    BoardConfig {
+        // `file` gilt nur bei Anbieter sqlite
+        provider: BoardProvider::Mssql,
+        file: String::new(),
+        server: "memory".into(),
+        port: 1433,
+        database: "AiHarness_Test".into(),
+        user: "test".into(),
+        password: "test".into(),
+        encrypt: false,
+        trust_server_certificate: true,
+        user_id: MEMORY_USER_ID.into(),
+        user_name: MEMORY_USER_NAME.into(),
+        active_board: None,
+    }
+}
+
+impl TestServer {
+    /// Server mit Board-Laufzeit im Speicher und geschriebener `board.yaml`; Gegenstück zu
+    /// `TestServer.startWithBoard()` in TypeScript
+    pub async fn start_with_board() -> (TestServer, Arc<BoardBackendWithServices>) {
+        TestServer::start_with_board_and(TestServerOptions::default()).await
+    }
+
+    /// Wie [`TestServer::start_with_board`], aber mit eigenen Einstellungen
+    pub async fn start_with_board_and(
+        mut options: TestServerOptions,
+    ) -> (TestServer, Arc<BoardBackendWithServices>) {
+        let backend = BoardBackendWithServices::create().await;
+        let shared = backend.clone();
+        options.board = Some(nexus_server::board_runtime::factory(
+            move || -> BoardBackendFuture {
+                let backend = shared.clone();
+                Box::pin(async move { Ok(backend as Arc<dyn BoardBackend>) })
+            },
+        ));
+        let server = TestServer::with(options);
+        BoardConfigStore::new(server.home.clone())
+            .write(&memory_config())
+            .expect("board.yaml schreiben");
+        (server, backend)
+    }
+}
+
+/// Board-Laufzeit im Speicher mit allen Diensten; Gegenstück zu
+/// `packages/server/tests/helpers/MemoryBoardBackend.ts`
+pub struct BoardBackendWithServices {
+    pub services: ServerBoardServices,
+    pub repos: Arc<MemoryBoardRepoStore>,
+    closed: AtomicBool,
+}
+
+impl BoardBackendWithServices {
+    /// Laufzeit mit dem Testbenutzer in der Datenbank
+    pub async fn create() -> Arc<Self> {
+        let db = Arc::new(ServerBoardDatabase::Memory(Box::new(
+            InMemoryBoardDatabase::new(),
+        )));
+        let user = BoardUser {
+            id: MEMORY_USER_ID.into(),
+            name: MEMORY_USER_NAME.into(),
+        };
+        tx!(db, [user], |u| { u.users().upsert(&user).await })
+            .await
+            .expect("Testbenutzer anlegen");
+        let repos = Arc::new(MemoryBoardRepoStore::new());
+        let paths = BoardRepoPaths::new(repos.clone(), Some(MEMORY_USER_ID.to_string()));
+        Arc::new(Self {
+            services: BoardServices::new(db, Clock::system(), paths),
+            repos,
+            closed: AtomicBool::new(false),
+        })
+    }
+
+    /// Der Handelnde des Testbenutzers
+    pub fn actor(&self) -> BoardActor {
+        BoardActor {
+            user_id: MEMORY_USER_ID.into(),
+            name: MEMORY_USER_NAME.into(),
+        }
+    }
+
+    /// Wurde sie geschlossen?
+    pub fn closed(&self) -> bool {
+        self.closed.load(Ordering::SeqCst)
+    }
+}
+
+#[async_trait]
+impl BoardBackend for BoardBackendWithServices {
+    fn services(&self) -> &ServerBoardServices {
+        &self.services
+    }
+
+    fn actor(&self, name: Option<&str>) -> BoardActor {
+        let name = name
+            .map(str::trim)
+            .filter(|name| !name.is_empty())
+            .unwrap_or(MEMORY_USER_NAME);
+        BoardActor {
+            user_id: MEMORY_USER_ID.into(),
+            name: name.to_string(),
+        }
+    }
+
+    async fn close(&self) -> Result<()> {
+        self.closed.store(true, Ordering::SeqCst);
+        Ok(())
+    }
+}
+
 /// Legt ein eingerichtetes Testprojekt an, meldet es am Server an und liefert es samt ID
 impl TestServer {
     pub fn add_project(&self) -> (TempRepo, String) {
@@ -259,6 +397,11 @@ impl TempRepo {
         let _ = std::fs::remove_dir_all(&self.path);
     }
 
+    /// Führt Git im Projekt aus (auch für Tests, die eigene Branches brauchen)
+    pub fn run_git(&self, args: &[&str]) {
+        self.git(args);
+    }
+
     /// Führt Git im Projekt aus
     fn git(&self, args: &[&str]) {
         let output = std::process::Command::new("git")
@@ -281,9 +424,11 @@ impl Default for TempRepo {
     }
 }
 
-/// Board-Laufzeit im Speicher: merkt sich nur, ob sie geschlossen wurde
-#[derive(Debug, Default)]
+/// Board-Laufzeit im Speicher: merkt sich nur, ob sie geschlossen wurde. Ihre Dienste laufen
+/// über eine leere Datenbank im Speicher – Tests, die wirklich Daten brauchen, nehmen
+/// [`BoardBackendWithServices`].
 pub struct MemoryBoardBackend {
+    services: ServerBoardServices,
     closed: AtomicBool,
     name: String,
 }
@@ -292,6 +437,12 @@ impl MemoryBoardBackend {
     /// Laufzeit mit einem Namen, an dem Tests sie auseinanderhalten
     pub fn new(name: &str) -> Arc<Self> {
         Arc::new(Self {
+            services: BoardServices::with_memory_paths(
+                Arc::new(ServerBoardDatabase::Memory(Box::new(
+                    InMemoryBoardDatabase::new(),
+                ))),
+                Clock::system(),
+            ),
             closed: AtomicBool::new(false),
             name: name.to_string(),
         })
@@ -310,6 +461,10 @@ impl MemoryBoardBackend {
 
 #[async_trait]
 impl BoardBackend for MemoryBoardBackend {
+    fn services(&self) -> &ServerBoardServices {
+        &self.services
+    }
+
     fn actor(&self, name: Option<&str>) -> BoardActor {
         BoardActor {
             user_id: "11111111-1111-1111-1111-111111111111".into(),

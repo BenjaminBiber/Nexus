@@ -2,3 +2,7 @@
 # werden Zeichen für Zeichen verglichen. Ein Checkout unter Windows darf ihre Zeilenenden
 # deshalb nicht auf CRLF umstellen.
 crates/nexus-core/src/dispatch/prompts/*.txt text eol=lf
+
+# Das PowerShell-Skript der Ordnerwahl wird Zeichen für Zeichen nach UTF-16LE kodiert und an
+# PowerShell übergeben; CRLF im Checkout würde die Kodierung verändern.
+crates/nexus-platform/src/windows/folder_picker.ps1 text eol=lf

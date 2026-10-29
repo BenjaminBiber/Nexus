@@ -98,17 +98,17 @@ async fn serve(
     }
 
     let board = nexus_server::board_from_config(config.home.clone());
-    let server =
-        match nexus_server::serve_on(listener, config, board, Platform::unavailable()).await {
-            Ok(server) => server,
-            Err(error) => {
-                // Der Node-Server darf nicht übrig bleiben, wenn der Rust-Server nicht hochkommt
-                if let Some(sidecar) = sidecar {
-                    sidecar.stop().await;
-                }
-                return Err(error);
+    let platform = platform(&config);
+    let server = match nexus_server::serve_on(listener, config, board, platform).await {
+        Ok(server) => server,
+        Err(error) => {
+            // Der Node-Server darf nicht übrig bleiben, wenn der Rust-Server nicht hochkommt
+            if let Some(sidecar) = sidecar {
+                sidecar.stop().await;
             }
-        };
+            return Err(error);
+        }
+    };
     let node_port = sidecar.as_ref().map(|sidecar| sidecar.port);
     context.printer().result(
         &ServeResult {
@@ -147,6 +147,15 @@ fn web_dir_beside_exe() -> Option<PathBuf> {
     exe_dir()
         .map(|dir| dir.join("web"))
         .filter(|dir| dir.is_dir())
+}
+
+/// Systemfunktionen zu diesen Einstellungen: im Vertragsmodus die des Vertrags, sonst die
+/// dieses Rechners
+fn platform(config: &ServerConfig) -> Platform {
+    match config.is_contract() {
+        true => Platform::contract(),
+        false => Platform::local(),
+    }
 }
 
 #[cfg(test)]

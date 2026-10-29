@@ -52,7 +52,16 @@ pub struct ServerConfig {
     pub dispatch_tick_ms: u64,
 }
 
+/// Version, die den Vertragsmodus kennzeichnet (`NEXUS_SERVER_VERSION=contract`)
+pub const CONTRACT_VERSION: &str = "contract";
+
 impl ServerConfig {
+    /// Läuft der Server im Vertragsmodus? Dort gibt es keinen Ordnerdialog, kein Öffnen von
+    /// Dateien und keine Systemmeldungen
+    pub fn is_contract(&self) -> bool {
+        self.version == CONTRACT_VERSION
+    }
+
     /// Einstellungen mit den Standardwerten für einen Benutzerordner (Tests und Aufrufer,
     /// die Port und Ordner schon kennen)
     pub fn new(port: u16, home: HarnessHome) -> Self {

@@ -11,6 +11,9 @@ nexus-core = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 
+[target.'cfg(windows)'.dependencies]
+tokio = { workspace = true }
+
 [dev-dependencies]
 tokio = { workspace = true }
 
