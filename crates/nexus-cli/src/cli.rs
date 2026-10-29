@@ -166,6 +166,19 @@ pub enum Commands {
     )]
     Customize(commands::customize::CustomizeCli),
 
+    /// Losgelöster Worker eines Laufs des Dispatchers; den startet nur der Server selbst,
+    /// deshalb steht der Befehl nicht in der Hilfe.
+    #[command(
+        name = "dispatch-worker",
+        about = "Führt einen Lauf des Dispatchers im eigenen Prozess aus",
+        hide = true,
+        disable_help_flag = true
+    )]
+    DispatchWorker {
+        #[arg(value_name = "lauf", help = "ID des Laufs aus dispatch/runs")]
+        lauf: String,
+    },
+
     /// Hilfe zu einem Befehl anzeigen
     #[command(
         name = "help",
@@ -244,6 +257,7 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
         ),
         Some(Commands::Install { no_path }) => commands::install::run(&context, !no_path),
         Some(Commands::Customize(args)) => commands::customize::run(&context, args),
+        Some(Commands::DispatchWorker { lauf }) => commands::dispatch_worker::run(&context, &lauf),
         Some(Commands::Help { befehl }) => help_command(root, befehl.as_deref()),
         #[cfg(debug_assertions)]
         Some(Commands::SelbsttestFehler { code, meldung }) => {
