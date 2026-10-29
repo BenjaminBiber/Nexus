@@ -12,7 +12,9 @@ pub mod dependency_cleanup;
 pub mod dependency_graph;
 pub mod dependency_graph_service;
 pub mod dependency_rules;
+pub mod dispatch_run_service;
 pub mod dispatch_run_types;
+pub mod dispatch_stats;
 pub mod in_memory;
 pub mod inbox;
 pub mod labels;
@@ -60,7 +62,9 @@ pub use dependency_graph_service::{
     DependencyGraphService, DependencyGraphView, GraphNodeView, GraphRequest,
 };
 pub use dependency_rules::{DependencyGraphMap, DependencyRules};
+pub use dispatch_run_service::{BackfillResult, DispatchRunService};
 pub use dispatch_run_types::*;
+pub use dispatch_stats::{DispatchStatsCalculator, DispatchStatsFacts};
 pub use in_memory::{InMemoryBoardDatabase, InMemoryBoardSearch, SearchableState};
 pub use inbox::types::*;
 pub use inbox::{InboxFilter, InboxOrder, InboxOrderFile, InboxRanking, InboxService};
