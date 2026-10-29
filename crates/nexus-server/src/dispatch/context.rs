@@ -228,6 +228,11 @@ impl DispatchContext {
         self.backend.actor(Some(name))
     }
 
+    /// Der Handelnde eines Menschen (Arbeiten von Hand); ohne Namen der eigene Benutzer
+    pub fn user_actor(&self, by: Option<&str>) -> BoardActor {
+        self.backend.actor(by)
+    }
+
     /// Aktuelle Zeit des Dispatchers
     pub fn now(&self) -> chrono::DateTime<chrono::Utc> {
         self.clock.now()
