@@ -23,6 +23,35 @@ blockingFiles: Array<string>,
 stagedFiles: Array<string>, };
 
 /**
+ * Aufruf und Grenzen von Claude Code
+ */
+export type ClaudeSettings = { 
+/**
+ * Aufruf von Claude Code – `claude` oder ein voller Pfad
+ */
+command: string, 
+/**
+ * Vorgabe für Profile ohne `model`; null = Einstellung von Claude Code
+ */
+model: string | null, 
+/**
+ * Vorgabe für Profile ohne `effort`; null = Standard des Modells
+ */
+effort: string | null, maxTurns: number, timeoutMinutes: number, permissionMode: string | null, 
+/**
+ * Was der Agent ohne Rückfrage darf (`--allowedTools`)
+ */
+allowedTools: Array<string>, 
+/**
+ * true = API-Key-Variablen aus der Umgebung des Workers entfernen
+ */
+useSubscription: boolean, extraArgs: Array<string>, 
+/**
+ * Pfad der bash.exe von Git for Windows; null = automatisch suchen (nur Windows)
+ */
+gitBashPath: string | null, };
+
+/**
  * Abbrüche einer Kategorie mit Anzeigetext und Anzahl
  */
 export type DispatchAbortReason = { category: string, label: string, count: number, };
@@ -31,6 +60,55 @@ export type DispatchAbortReason = { category: string, label: string, count: numb
  * Zahl der `[dispatch]`-Kommentare „Start“ und „Abbruch“ eines Tickets
  */
 export type DispatchCommentCounts = { starts: number, aborts: number, };
+
+/**
+ * Die vollständig aufgelöste Einstellung des Dispatchers
+ */
+export type DispatchConfig = { 
+/**
+ * false = nichts Neues starten (Läufe werden trotzdem ausgewertet)
+ */
+enabled: boolean, 
+/**
+ * Board-IDs; null = aktives Board
+ */
+boards: Array<number> | null, wip: number, window: TimeWindow | null, optInLabel: string | null, optOutLabel: string | null, agentPrefix: string, dispatcherName: string, staleMinutes: number, maxAttempts: number, pauseMinutesOnLimit: number, promptExtra: string, 
+/**
+ * Eigene Vorlagen je Laufart; null/leer = Standardvorlage
+ */
+prompts: PromptTemplates, 
+/**
+ * Zurückmergen der Ticket-Branches: Merge-Commit (alle Commits bleiben) oder
+ * Squash (ein Commit je Branch)
+ */
+mergeStrategy: MergeStrategy, 
+/**
+ * true = ein vom Lauf erledigtes Ticket wartet vor dem Merge auf Freigabe
+ * (Blockiert, `REVIEW_REASON`)
+ */
+reviewBeforeMerge: boolean, 
+/**
+ * none = jedes Ticket bekommt einen eigenen Worktree und wird einzeln gemergt;
+ * sameSpec = Tickets einer Spec teilen einen Worktree
+ */
+joinWorktrees: JoinWorktrees, 
+/**
+ * Befehle, die der Worker in einem neu angelegten Worktree vor Claude ausführt
+ * (nacheinander; leer = keine)
+ */
+worktreeSetup: Array<WorktreeSetupStep>, 
+/**
+ * Zeitlimit je Einrichtungsbefehl in Minuten
+ */
+worktreeSetupTimeoutMinutes: number, claude: ClaudeSettings, 
+/**
+ * Profile in der Reihenfolge der Datei – `defaultProfile` und die Leiter hängen daran
+ */
+profiles: Record<string, Profile>, defaultProfile: string, rules: Array<Rule>, escalate: boolean, 
+/**
+ * Profilleiter von günstig nach teuer
+ */
+ladder: Array<string>, allowFable: boolean, research: ResearchSettings, planning: PlanningSettings, };
 
 /**
  * Eine Fassung der Dispatcher-Einstellung (Tabelle board.DispatchConfigVersions)
@@ -218,6 +296,160 @@ firstTryRate: number | null,
 escalationRate: number | null, finalFailures: number, };
 
 /**
+ * Worktrees des Dispatchers: ein Worktree je Ticket oder Tickets einer Spec in einem
+ * gemeinsamen Worktree (alt)
+ */
+export type JoinWorktrees = "none" | "sameSpec";
+
+/**
  * Wie ein Ticket-Branch in seinen Zielbranch kommt
  */
 export type MergeStrategy = "merge" | "squash";
+
+/**
+ * Planungsläufe an Tickets („Planen“ im Ticket-Panel)
+ */
+export type PlanningSettings = { 
+/**
+ * true = Tickets mit Planungsbedarf auf eigenen Boards automatisch planen lassen, solange im
+ * Dispatcher Platz ist (je Ticket einmal; nur Tickets, die nach dem Einschalten dazukamen)
+ */
+auto: boolean, 
+/**
+ * Höchstens so viele Planungsläufe gleichzeitig (1–5, zusätzlich zum WIP der Tickets)
+ */
+wip: number, 
+/**
+ * true = die Planung füllt auch die Abnahme des Tickets (woran man sieht, dass es fertig ist)
+ */
+acceptance: boolean, 
+/**
+ * Profil der Planung; null = Profil „planning“, falls vorhanden, sonst defaultProfile
+ */
+profile: string | null, };
+
+/**
+ * Modell, Effort und Grenzen eines Profils
+ */
+export type Profile = { model: string | null, effort: string | null, maxTurns: number, timeoutMinutes: number, };
+
+/**
+ * Laufart einer Prompt-Vorlage
+ */
+export type PromptKind = "work" | "plan" | "research" | "merge";
+
+/**
+ * Ein Platzhalter einer Vorlage, für die Oberfläche
+ */
+export type PromptPlaceholder = { name: string, 
+/**
+ * Kurze Beschreibung, was an dieser Stelle eingesetzt wird
+ */
+description: string, };
+
+/**
+ * Befund zu einer eigenen Vorlage: unbekannte Platzhalter und fehlende Pflichtteile
+ */
+export type PromptProblem = { kind: PromptKind, unknownPlaceholders: Array<string>, 
+/**
+ * Beschriftungen der fehlenden Pflichtteile (`PromptTemplateCheck`)
+ */
+missingParts: Array<string>, };
+
+/**
+ * Eigene Prompt-Vorlagen je Laufart; null oder leer = Standardvorlage
+ */
+export type PromptTemplates = { work: string | null, plan: string | null, research: string | null, merge: string | null, };
+
+/**
+ * Ein Pflichtteil mit Kennung und Beschriftung für Oberfläche und Meldungen
+ */
+export type RequiredPart = { id: string, label: string, };
+
+/**
+ * Recherche-Läufe zu offenen Fragen
+ */
+export type ResearchSettings = { 
+/**
+ * true = neue offene Fragen ohne Recherche, die den eigenen Benutzer betreffen, automatisch
+ * recherchieren lassen (je Frage einmal; nur Fragen, die nach dem Einschalten entstanden sind)
+ */
+auto: boolean, 
+/**
+ * Höchstens so viele Recherche-Läufe gleichzeitig (1–5, zusätzlich zum WIP der Tickets)
+ */
+wip: number, 
+/**
+ * Höchstens so viele automatische Recherchen je Kalendertag (Ortszeit)
+ */
+maxPerDay: number, 
+/**
+ * Profil der Recherche; null = Profil „research“, falls vorhanden, sonst defaultProfile
+ */
+profile: string | null, };
+
+/**
+ * Eine Regel: trifft `when` zu, gilt `profile`
+ */
+export type Rule = { when: RuleCondition, profile: string, };
+
+/**
+ * Bedingung einer Regel; nur genannte Felder zählen
+ */
+export type RuleCondition = { 
+/**
+ * Das Ticket trägt eines dieser Labels
+ */
+labels?: Array<string>, 
+/**
+ * Die Priorität ist eine davon
+ */
+priority?: Array<string>, 
+/**
+ * Mindestens so viele Zeilen in der Tabelle unter `## Integration` im Plan
+ */
+filesMin?: number, 
+/**
+ * Der Plan hat mindestens so viele Zeichen
+ */
+planMinChars?: number, };
+
+/**
+ * Einstellungen eines Laufs samt Begründung für den Start-Kommentar
+ */
+export type RunSettings = { model: string | null, effort: string | null, maxTurns: number, timeoutMinutes: number, profile: string, why: string, 
+/**
+ * Warum das Basisprofil gewählt wurde (vor einer Eskalation); fehlt bei Läufen älterer Stände
+ */
+reason?: DispatchProfileReason, 
+/**
+ * Hash der Dispatcher-Einstellung, die beim Start galt; fehlt bei Läufen älterer Stände
+ */
+configHash?: string, 
+/**
+ * 1-basierte Nummer der Regel, die gegriffen hat – nur bei `reason: 'rule'`
+ */
+ruleIndex?: number, 
+/**
+ * Basisprofil vor der Eskalation; fehlt ohne Eskalation
+ */
+escalatedFrom?: string, };
+
+/**
+ * Zeitfenster, in dem neue Läufe starten dürfen
+ */
+export type TimeWindow = { 
+/**
+ * HH:MM Ortszeit, einschließlich
+ */
+from: string, 
+/**
+ * HH:MM Ortszeit, ausschließlich; liegt `to` vor `from`, geht das Fenster über Mitternacht
+ */
+to: string, };
+
+/**
+ * Einrichtungsbefehl für einen neu angelegten Worktree (z. B. npm ci);
+ * cwd relativ zum Worktree, „.“ = Worktree selbst
+ */
+export type WorktreeSetupStep = { cwd: string, run: string, };

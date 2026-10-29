@@ -1,0 +1,2 @@
+- Keine Links, Junctions oder Symlinks auf den Hauptordner oder andere Worktrees anlegen (auch nicht für node_modules).
+  Fehlen Abhängigkeiten, im Worktree selbst installieren (z. B. npm ci); geht das nicht, Ausgang „blockiert mit Grund“.

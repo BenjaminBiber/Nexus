@@ -9,6 +9,7 @@ rust-version.workspace = true
 async-trait = { workspace = true }
 chrono = { workspace = true }
 getrandom = { workspace = true }
+indexmap = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
 # „preserve_order“ für die rohe Übersicht von `OverviewFile::read_value`: `GET
@@ -17,6 +18,7 @@ serde = { workspace = true }
 serde_json = { workspace = true, features = ["preserve_order"] }
 serde_yaml_ng = { workspace = true }
 sha1_smol = { workspace = true }
+sha2 = { workspace = true }
 # Temporäre Ordner für den Vergleich der Basis und für die Typprüfung eines eigenen Workflows
 tempfile = { workspace = true }
 thiserror = { workspace = true }
