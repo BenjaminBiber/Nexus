@@ -30,9 +30,11 @@ export class BenchProject {
     this.token = '';
   }
 
-  // Prüft, dass die gebauten Programmdateien vorhanden sind (sonst fehlt `npm run build`)
+  // Prüft, dass die gebauten Programmdateien vorhanden sind (sonst fehlt `npm run build`).
+  // Mit eigenem Hook-Befehl wird das Testprojekt mit dessen Programm eingerichtet; dann braucht es
+  // weder das gebaute TypeScript-CLI noch das Plugin-Bündel.
   assertBuilt() {
-    for (const file of [CLI_ENTRY, this.hookCmd ? null : PLUGIN_BUILD].filter(Boolean)) {
+    for (const file of [this.hookCmd ? null : CLI_ENTRY, this.hookCmd ? null : PLUGIN_BUILD].filter(Boolean)) {
       if (!existsSync(join(this.cloneDir, file))) {
         throw new Error(`${file} fehlt – bitte zuerst „npm run build“ im Hauptordner des Repos ausführen.`);
       }
@@ -119,7 +121,10 @@ export class BenchProject {
 
   // `harness init`: Harness-Ordner, Token und Zähler im Testprojekt; wiederholbar. Liefert die Ausgabe als Objekt.
   init() {
-    const result = spawnSync(process.execPath, [join(this.cloneDir, CLI_ENTRY), '--json', 'init'], {
+    const [command, ...vorher] = this.hookCmd
+      ? splitCommand(this.hookCmd).slice(0, -1)
+      : [process.execPath, join(this.cloneDir, CLI_ENTRY)];
+    const result = spawnSync(command, [...vorher, '--json', 'init'], {
       cwd: this.repo,
       encoding: 'utf8',
       windowsHide: true,
