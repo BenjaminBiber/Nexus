@@ -1,6 +1,7 @@
 //! Der Dispatcher: Einstellung samt Prüfung und Fingerabdruck, die Prompt-Vorlagen, die
 //! Bereitschaftsprüfung, die Profilwahl sowie Argumente und Umgebung für `claude -p`.
-//! Dazu die Vorsilben seiner Kommentare und die Git-Bausteine für den Merge.
+//! Dazu die Vorsilben seiner Kommentare, die Git-Bausteine für den Merge und die Auswertung
+//! der Ausgabe eines Laufs (`output`).
 
 pub mod abort_reason;
 pub mod attempts;
@@ -15,6 +16,7 @@ pub mod invocation;
 mod js_value;
 pub mod markers;
 pub mod merge_strategy;
+pub mod output;
 pub mod profile_chooser;
 pub mod prompt;
 pub mod prompt_check;
@@ -41,6 +43,10 @@ pub use fingerprint::DispatchConfigFingerprint;
 pub use git_bash::{EnvLookup, GitBashLocator, ProcessEnv};
 pub use invocation::{ClaudeInvocation, RunKind};
 pub use merge_strategy::MergeStrategy;
+pub use output::{
+    ModelUsage, OutputSummary, RunLogLine, RunLogLineKind, RunOutputReader, RunUsage,
+    ShellCommandSummary, ShellKind, ShellSummary, StreamEventFormatter, TestRunExtractor,
+};
 pub use profile_chooser::{DispatchLabels, ProfileChooser, ProfileTicket};
 pub use prompt::{
     AnsweredQuestion, DispatchPrompt, MergePromptInput, PlanPromptInput, ResearchPromptInput,
