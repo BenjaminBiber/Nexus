@@ -158,6 +158,18 @@ pub enum Commands {
         no_path: bool,
     },
 
+    /// Hook-Ereignis von Claude Code verarbeiten
+    #[command(
+        name = "hook",
+        about = commands::hook::about(),
+        after_help = commands::hook::EXAMPLE,
+        disable_help_flag = true
+    )]
+    Hook {
+        #[arg(value_name = "ereignis")]
+        ereignis: String,
+    },
+
     /// Anpassungen des Clones prüfen, kopieren, zurücksetzen, anwenden und anzeigen
     #[command(
         name = "customize",
@@ -257,6 +269,7 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
             },
         ),
         Some(Commands::Install { no_path }) => commands::install::run(&context, !no_path),
+        Some(Commands::Hook { ereignis }) => commands::hook::run(&ereignis),
         Some(Commands::Customize(args)) => commands::customize::run(&context, args),
         Some(Commands::DispatchWorker { lauf }) => commands::dispatch_worker::run(&context, &lauf),
         Some(Commands::Help { befehl }) => help_command(root, befehl.as_deref()),
