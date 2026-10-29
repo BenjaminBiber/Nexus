@@ -1,36 +1,36 @@
-// Zugang zum Harness-Server: Port bestimmen, Health prüfen, bei Bedarf den gebündelten Server starten,
-// das Hauptfenster auf die Oberfläche schicken und den selbst gestarteten Server beim Beenden wieder stoppen.
-// Ein fremder Server auf demselben Port bleibt unangetastet.
+// Zugang zum Harness-Server: einen schon laufenden Server übernehmen oder den Server im eigenen
+// Prozess starten, das Hauptfenster auf die Oberfläche schicken und den selbst gestarteten Server
+// beim Beenden wieder stoppen. Einen fremden Server lässt die App unangetastet.
 //
-// Gestartet wird der Rust-Server (`nexus serve`); er nimmt den Port an und beantwortet alles selbst.
+// Seit P5-2 läuft der Server nicht mehr als Kindprozess, sondern als Bibliothek auf einer eigenen
+// tokio-Laufzeit im Prozess der App. Ohne App übernimmt `nexus serve` dieselbe Aufgabe.
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU16, Ordering};
 use std::sync::Mutex;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
-use tauri::async_runtime::Receiver;
+use nexus_core::registry::{HarnessHome, ServerInfoFile};
+use nexus_platform::Platform;
+use nexus_server::config::{ServerConfig, ServerConfigLoader};
+use nexus_server::ServerHandle;
 use tauri::{AppHandle, Manager, Runtime};
-use tauri_plugin_shell::process::{CommandChild, CommandEvent};
-use tauri_plugin_shell::ShellExt;
 
-// Port, auf dem CLI und Hooks den Server erwarten (DEFAULT_SERVER_PORT in packages/core)
-pub const DEFAULT_SERVER_PORT: u16 = 4710;
-// Name des Rust-Servers aus bundle.externalBin; er nimmt den öffentlichen Port an
-const NEXUS: &str = "nexus";
+// Port, auf dem CLI und Hooks den Server erwarten, wenn nichts anderes gesetzt ist
+// (DEFAULT_SERVER_PORT in nexus-core)
+pub const DEFAULT_SERVER_PORT: u16 = nexus_core::registry::DEFAULT_SERVER_PORT;
 // Daran erkennt sich der eigene Server in der Antwort von /api/health
 const HEALTH_NAME: &str = "ai-harness";
-// Prozessangaben des laufenden Servers im Harness-Ordner
-const SERVER_FILE: &str = "server.json";
-// Protokoll des Servers, auf das die Fehlermeldung verweist
-const SERVER_LOG: &str = "server.log";
 // So lange darf ein einzelner Health-Aufruf dauern
 const PROBE_TIMEOUT: Duration = Duration::from_secs(2);
-// So lange wartet die App auf den frisch gestarteten Server (wie ServerLauncher in der CLI)
-const START_TIMEOUT: Duration = Duration::from_secs(10);
-// Takt der Health-Aufrufe beim Warten (wie ServerLauncher in der CLI)
-const POLL: Duration = Duration::from_millis(150);
-// So viel Zeit bekommt der eigene Server, um nach SIGTERM selbst aufzuräumen
-const STOP_TIMEOUT: Duration = Duration::from_secs(2);
+// So lange bekommt der eigene Server Zeit, um geordnet aufzuhören (Takt anhalten, Läufe abschließen)
+const STOP_TIMEOUT: Duration = Duration::from_secs(30);
+// So viele Arbeitsfäden bekommt die Laufzeit des Servers; schwere Anfragen blockieren damit nicht
+// die Oberfläche, und die App bleibt klein
+const SERVER_THREADS: usize = 3;
+
+// Port, auf dem der genutzte Server antwortet; 0, solange noch keiner gefunden oder gestartet ist
+static AKTIVER_PORT: AtomicU16 = AtomicU16::new(0);
 
 // Gründe, aus denen die App nicht an den Server kommt; die Texte stehen so auf der Startseite
 #[derive(Debug, thiserror::Error)]
@@ -43,8 +43,6 @@ pub enum ServerError {
     PortForeign(u16),
     #[error("Der Server ließ sich nicht starten: {0}")]
     StartFailed(String),
-    #[error("Der Server hat in {0} Sekunden nicht geantwortet. Einzelheiten stehen in {1}.")]
-    NoAnswer(u64, String),
 }
 
 // Zustand eines Ports: eigener Server, frei oder von einem fremden Programm belegt
@@ -62,10 +60,11 @@ pub struct ServerInfo {
     pub port: u16,
 }
 
-// Findet den Harness-Server auf seinem festen Port oder startet ihn als gebündeltes Programm
+// Findet einen laufenden Harness-Server oder startet ihn im eigenen Prozess
 pub struct ServerConnector {
     home: PathBuf,
-    port: u16,
+    // Gewünschter Port aus der Umgebung; ohne Wunsch nimmt der Server einen freien (Port 0)
+    wunsch_port: Option<u16>,
 }
 
 impl ServerConnector {
@@ -73,12 +72,13 @@ impl ServerConnector {
     pub fn from_env(env: &HashMap<String, String>) -> Result<Self, ServerError> {
         Ok(Self {
             home: harness_home(env),
-            port: port_from_env(env)?,
+            wunsch_port: port_from_env(env)?,
         })
     }
 
+    // Port, auf dem der Server starten soll; 0 heißt „einen freien nehmen“
     pub fn port(&self) -> u16 {
-        self.port
+        self.wunsch_port.unwrap_or(0)
     }
 
     pub fn home(&self) -> &Path {
@@ -86,42 +86,46 @@ impl ServerConnector {
     }
 
     // Adresse, von der das Fenster die Oberfläche lädt; immer 127.0.0.1, nie localhost (IPv6 unter Windows)
-    pub fn url(&self) -> String {
-        format!("http://127.0.0.1:{}/", self.port)
-    }
-
-    // Prüft den eigenen Port
-    pub async fn probe(&self) -> PortState {
-        probe(self.port).await
-    }
-
-    // Wartet, bis auf dem Port der eigene Server antwortet; false, wenn die Frist abläuft.
-    // Alle Aufrufe der Schleife teilen sich einen Client.
-    pub async fn wait_for_ours(&self, frist: Duration) -> bool {
-        let Some(client) = health_client() else {
-            return false;
-        };
-        let deadline = Instant::now() + frist;
-        loop {
-            if probe_with(&client, self.port).await == PortState::Ours {
-                return true;
-            }
-            if Instant::now() >= deadline {
-                return false;
-            }
-            tokio::time::sleep(POLL).await;
-        }
+    pub fn url(&self, port: u16) -> String {
+        format!("http://127.0.0.1:{port}/")
     }
 
     // Prozessangaben des zuletzt gestarteten Servers
     pub fn server_info(&self) -> Option<ServerInfo> {
         read_server_info(&self.home)
     }
+
+    // Der schon laufende Server dieses Datenordners, falls es ihn gibt: `server.json` nennt ihn,
+    // seine Prozessnummer lebt, und unter seinem Port antwortet genau dieser Prozess auf
+    // `/api/health`. Die Prozessnummer verknüpft die Antwort mit dem eigenen Datenordner.
+    pub async fn vorhandener_server(&self) -> Option<u16> {
+        let info = self.server_info()?;
+        if !nexus_core::process::is_alive(info.pid) {
+            log::info!(
+                "server.json nennt pid {}; der Prozess läuft nicht mehr.",
+                info.pid
+            );
+            return None;
+        }
+        let client = health_client()?;
+        match health(&client, info.port).await {
+            Some(pid) if pid == info.pid => Some(info.port),
+            Some(pid) => {
+                log::info!(
+                    "Auf Port {} antwortet pid {pid}, server.json nennt pid {}.",
+                    info.port,
+                    info.pid
+                );
+                None
+            }
+            None => None,
+        }
+    }
 }
 
-// Nexus-Ordner in derselben Reihenfolge wie `NexusHome` in `crates/nexus-core/src/registry/home.rs`
-// und `HarnessHome` in `packages/core`: NEXUS_HOME, HARNESS_HOME (veraltet), vorhandenes ~/.nexus,
-// vorhandenes ~/.harness (Rückfall), sonst ~/.nexus. Nur so nehmen App, CLI und Server dieselbe board.db.
+// Nexus-Ordner in derselben Reihenfolge wie `NexusHome` in `crates/nexus-core/src/registry/home.rs`:
+// NEXUS_HOME, HARNESS_HOME (veraltet), vorhandenes ~/.nexus, vorhandenes ~/.harness (Rückfall),
+// sonst ~/.nexus. Nur so nehmen App, CLI und Server dieselbe board.db.
 pub fn harness_home(env: &HashMap<String, String>) -> PathBuf {
     if let Some(dir) = var(env, "HOME") {
         return PathBuf::from(dir);
@@ -146,28 +150,44 @@ fn var(env: &HashMap<String, String>, name: &str) -> Option<String> {
         .find(|value| !value.trim().is_empty())
 }
 
-// Port des Servers: NEXUS_PORT, sonst HARNESS_PORT, sonst 4710. CLI und Hooks kennen nur diesen Port,
-// darum kein zufälliger.
-pub fn port_from_env(env: &HashMap<String, String>) -> Result<u16, ServerError> {
+// Gewünschter Port des Servers: NEXUS_PORT, sonst HARNESS_PORT. Ohne Angabe nimmt der Server einen
+// freien Port (None); CLI und Hooks finden ihn über `server.json`.
+pub fn port_from_env(env: &HashMap<String, String>) -> Result<Option<u16>, ServerError> {
     let found = var(env, "PORT");
     let raw = match &found {
         Some(value) => value.trim(),
-        None => return Ok(DEFAULT_SERVER_PORT),
+        None => return Ok(None),
     };
     match raw.parse::<u16>() {
-        Ok(port) if port > 0 => Ok(port),
+        Ok(port) if port > 0 => Ok(Some(port)),
         _ => Err(ServerError::PortInvalid(raw.to_string())),
     }
 }
 
 // Liest server.json; None, wenn es sie nicht gibt oder sie unlesbar ist
 pub fn read_server_info(home: &Path) -> Option<ServerInfo> {
-    let text = std::fs::read_to_string(home.join(SERVER_FILE)).ok()?;
-    let value: serde_json::Value = serde_json::from_str(&text).ok()?;
+    let info = ServerInfoFile::new(HarnessHome::at(home)).read()?;
     Some(ServerInfo {
-        pid: u32::try_from(value.get("pid")?.as_u64()?).ok()?,
-        port: u16::try_from(value.get("port")?.as_u64()?).ok()?,
+        pid: info.pid,
+        port: info.port,
     })
+}
+
+// Port, auf dem der genutzte Server antwortet; solange keiner feststeht, der Wunsch aus der
+// Umgebung bzw. der Standardport
+pub fn aktiver_port() -> u16 {
+    match AKTIVER_PORT.load(Ordering::Relaxed) {
+        0 => port_from_env(&std::env::vars().collect())
+            .ok()
+            .flatten()
+            .unwrap_or(DEFAULT_SERVER_PORT),
+        port => port,
+    }
+}
+
+// Merkt den Port des genutzten Servers für Tray, Rückfragen und Deep-Links
+fn setze_port(port: u16) {
+    AKTIVER_PORT.store(port, Ordering::Relaxed);
 }
 
 // Fragt /api/health: antwortet dort der Harness-Server, hört niemand oder ein fremdes Programm?
@@ -204,6 +224,17 @@ async fn probe_with(client: &reqwest::Client, port: u16) -> PortState {
     }
 }
 
+// Prozessnummer des Harness-Servers auf dem Port; None, wenn dort niemand oder ein fremdes
+// Programm antwortet
+async fn health(client: &reqwest::Client, port: u16) -> Option<u32> {
+    let url = format!("http://127.0.0.1:{port}/api/health");
+    let body: serde_json::Value = client.get(url).send().await.ok()?.json().await.ok()?;
+    if body.get("name").and_then(|name| name.as_str()) != Some(HEALTH_NAME) {
+        return None;
+    }
+    u32::try_from(body.get("pid")?.as_u64()?).ok()
+}
+
 // Eine abgelehnte Verbindung heißt: auf dem Port hört niemand (ECONNREFUSED wie in der CLI)
 fn connection_refused(error: &reqwest::Error) -> bool {
     let mut current: Option<&(dyn std::error::Error + 'static)> = Some(error);
@@ -216,10 +247,10 @@ fn connection_refused(error: &reqwest::Error) -> bool {
     false
 }
 
-// Der von der App gestartete Server; ein fremder Server steht hier nie drin
+// Der von der App gestartete Server samt seiner eigenen Laufzeit; ein fremder Server steht hier nie drin
 struct OwnServer {
-    child: CommandChild,
-    home: PathBuf,
+    handle: ServerHandle,
+    runtime: tokio::runtime::Runtime,
 }
 
 // Was die App beim Beenden wieder aufräumen muss, was die Startseite noch zeigen soll und
@@ -293,7 +324,8 @@ pub fn eigener_server<R: Runtime>(app: &AppHandle<R>) -> bool {
         .unwrap_or(false)
 }
 
-// Beendet den selbst gestarteten Server; einen fremden lässt die App laufen
+// Beendet den selbst gestarteten Server: Takt anhalten, Board-Laufzeit schließen, server.json
+// entfernen. Einen fremden Server lässt die App laufen; losgelöste Worker laufen weiter.
 pub fn shutdown<R: Runtime>(app: &AppHandle<R>) {
     let Some(state) = app.try_state::<ServerState>() else {
         return;
@@ -301,43 +333,35 @@ pub fn shutdown<R: Runtime>(app: &AppHandle<R>) {
     let Some(own) = state.take() else {
         return;
     };
-    let pid = own.child.pid();
-    log::info!("Der selbst gestartete Server (pid {pid}) wird beendet.");
-    if !stop_gracefully(pid) {
-        log::warn!("Der Server (pid {pid}) hat nicht von allein aufgehört; er wird hart beendet.");
-        if let Err(error) = own.child.kill() {
-            log::warn!("Der Server (pid {pid}) ließ sich nicht beenden: {error}");
-        }
+    log::info!("Der eigene Server wird beendet.");
+    let OwnServer { handle, runtime } = own;
+    let beendet = runtime.block_on(async move {
+        tokio::time::timeout(STOP_TIMEOUT, handle.stop())
+            .await
+            .is_ok()
+    });
+    if !beendet {
+        log::warn!(
+            "Der Server war nach {} s nicht fertig; Nexus beendet sich trotzdem.",
+            STOP_TIMEOUT.as_secs()
+        );
     }
-    remove_server_info(&own.home, pid);
+    // Die Laufzeit darf das Beenden nicht aufhalten; was noch läuft, endet mit dem Prozess
+    runtime.shutdown_timeout(Duration::from_secs(2));
 }
 
 // Server finden oder starten, dann das Fenster auf die Oberfläche schicken
 async fn connect<R: Runtime>(app: &AppHandle<R>) -> Result<(), ServerError> {
     let connector = ServerConnector::from_env(&std::env::vars().collect())?;
-    log::info!(
-        "Harness-Ordner {}, Port {}",
-        connector.home().display(),
-        connector.port()
-    );
-    if let Some(info) = connector.server_info() {
-        if info.port != connector.port() {
-            log::info!(
-                "{SERVER_FILE} nennt Port {} (pid {}); geprüft wird trotzdem zuerst Port {}.",
-                info.port,
-                info.pid,
-                connector.port()
-            );
+    log::info!("Harness-Ordner {}", connector.home().display());
+    let port = match connector.vorhandener_server().await {
+        Some(port) => {
+            log::info!("Auf Port {port} läuft schon ein Harness-Server; die App nutzt ihn mit.");
+            port
         }
-    }
-    match connector.probe().await {
-        PortState::Ours => log::info!(
-            "Auf Port {} läuft schon ein Harness-Server; die App startet keinen zweiten.",
-            connector.port()
-        ),
-        PortState::Free => start(app, &connector).await?,
-        PortState::Foreign => return Err(ServerError::PortForeign(connector.port())),
-    }
+        None => start(app, &connector).await?,
+    };
+    setze_port(port);
     // Ab hier nimmt die Oberfläche Deep-Links selbst an; ein vorher gemerkter Pfad kommt jetzt dran
     let pfad = match app.try_state::<ServerState>() {
         Some(state) => {
@@ -348,7 +372,7 @@ async fn connect<R: Runtime>(app: &AppHandle<R>) -> Result<(), ServerError> {
         }
         None => None,
     };
-    navigate(app, &url_mit_pfad(&connector.url(), pfad.as_deref()))
+    navigate(app, &url_mit_pfad(&connector.url(port), pfad.as_deref()))
 }
 
 // Adresse der Oberfläche mit einem Pfad dahinter; ohne Pfad bleibt es die Startadresse
@@ -376,52 +400,74 @@ pub fn open_path<R: Runtime>(app: &AppHandle<R>, path: &str) {
     }
 }
 
-// Startet den gebündelten Rust-Server und wartet, bis er antwortet
+// Startet den Server im eigenen Prozess auf einer eigenen Laufzeit und liefert seinen Port
 async fn start<R: Runtime>(
     app: &AppHandle<R>,
     connector: &ServerConnector,
-) -> Result<(), ServerError> {
-    let mut command = app
-        .shell()
-        .sidecar(NEXUS)
-        .map_err(|error| ServerError::StartFailed(format!("{NEXUS}: {error}")))?
-        .args(["serve", "--port", &connector.port().to_string()]);
-    for (name, dir) in resource_dirs(app) {
-        command = command.env(name, dir);
+) -> Result<u16, ServerError> {
+    // Ist ein fester Port gewünscht und hört dort ein fremdes Programm, startet die App nicht
+    let wunsch = connector.port();
+    if wunsch != 0 && probe(wunsch).await == PortState::Foreign {
+        return Err(ServerError::PortForeign(wunsch));
     }
-    // Der Server bekommt den hier aufgelösten Ordner ausdrücklich mit; sonst löste er selbst auf und
-    // könnte nach einem Umzug auf einer anderen board.db landen als die App.
-    command = command.env("NEXUS_HOME", connector.home().to_string_lossy().as_ref());
-    let (events, child) = command
-        .spawn()
-        .map_err(|error| ServerError::StartFailed(format!("{NEXUS}: {error}")))?;
-    log::info!(
-        "Server gestartet (pid {}) auf Port {}.",
-        child.pid(),
-        connector.port()
-    );
-    app.state::<ServerState>().keep(OwnServer {
-        child,
-        home: connector.home().to_path_buf(),
+    let config = server_config(app, connector)?;
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(SERVER_THREADS)
+        .enable_all()
+        .thread_name("nexus-server")
+        .build()
+        .map_err(|error| ServerError::StartFailed(error.to_string()))?;
+    let home = config.home.clone();
+    let platform = match config.is_contract() {
+        true => Platform::contract(),
+        false => Platform::local(),
+    };
+    let (sender, receiver) = tokio::sync::oneshot::channel();
+    runtime.spawn(async move {
+        let board = nexus_server::board_from_config(home);
+        let _ = sender.send(
+            nexus_server::serve(config, board, platform)
+                .await
+                .map_err(|error| error.to_string()),
+        );
     });
-    tauri::async_runtime::spawn(log_output(events));
-    if connector.wait_for_ours(START_TIMEOUT).await {
-        return Ok(());
+    let handle = receiver
+        .await
+        .map_err(|_| ServerError::StartFailed("Der Server hat nicht geantwortet.".to_string()))?
+        .map_err(ServerError::StartFailed)?;
+    let port = handle.port;
+    log::info!("Server im Prozess der App gestartet (Port {port}).");
+    app.state::<ServerState>()
+        .keep(OwnServer { handle, runtime });
+    Ok(port)
+}
+
+// Einstellungen des Servers: Port und Ordner wie bei `nexus serve`, dazu die Ressourcen der App
+fn server_config<R: Runtime>(
+    app: &AppHandle<R>,
+    connector: &ServerConnector,
+) -> Result<ServerConfig, ServerError> {
+    let args = vec!["--port".to_string(), connector.port().to_string()];
+    let mut config = ServerConfigLoader::load_from_process(&args)
+        .map_err(|error| ServerError::StartFailed(error.to_string()))?;
+    // Der aufgelöste Ordner der App gilt; sonst könnte der Server nach einem Umzug auf einer
+    // anderen board.db landen als die App
+    config.home = HarnessHome::at(connector.home());
+    if let Some(base) = resource_dir(app) {
+        config.web_dir = Some(base.join("web"));
+        config.toast_dir = base.join("toast");
     }
-    Err(ServerError::NoAnswer(
-        START_TIMEOUT.as_secs(),
-        connector.home().join(SERVER_LOG).display().to_string(),
-    ))
+    Ok(config)
 }
 
 // Oberfläche und Benachrichtigungsbilder liegen als Ressourcen neben der App; findet die App sie
-// nicht, sucht der Server selbst neben seinem Programm
-fn resource_dirs<R: Runtime>(app: &AppHandle<R>) -> Vec<(&'static str, PathBuf)> {
+// nicht, bleibt es bei dem, was der Server selbst neben seinem Programm findet
+fn resource_dir<R: Runtime>(app: &AppHandle<R>) -> Option<PathBuf> {
     let base = match app.path().resource_dir() {
         Ok(dir) => dir,
         Err(error) => {
             log::warn!("Der Ressourcenordner ist nicht bestimmbar: {error}");
-            return Vec::new();
+            return None;
         }
     };
     if !base.join("web").is_dir() {
@@ -429,34 +475,9 @@ fn resource_dirs<R: Runtime>(app: &AppHandle<R>) -> Vec<(&'static str, PathBuf)>
             "In {} fehlt der Ordner web; der Server sucht die Oberfläche selbst.",
             base.display()
         );
-        return Vec::new();
+        return None;
     }
-    vec![
-        ("HARNESS_WEB_DIR", base.join("web")),
-        ("HARNESS_TOAST_DIR", base.join("toast")),
-    ]
-}
-
-// Schreibt die Ausgabe des gestarteten Servers ins Protokoll der App
-async fn log_output(mut events: Receiver<CommandEvent>) {
-    while let Some(event) = events.recv().await {
-        match event {
-            CommandEvent::Stdout(line) => log::info!("Server: {}", text(&line)),
-            CommandEvent::Stderr(line) => log::warn!("Server: {}", text(&line)),
-            CommandEvent::Error(message) => log::warn!("Server: {message}"),
-            CommandEvent::Terminated(ende) => log::info!(
-                "Server beendet (Code {:?}, Signal {:?}).",
-                ende.code,
-                ende.signal
-            ),
-            _ => {}
-        }
-    }
-}
-
-// Eine Ausgabezeile des gestarteten Servers als Text
-fn text(line: &[u8]) -> String {
-    String::from_utf8_lossy(line).trim_end().to_string()
+    Some(base)
 }
 
 // Schickt das Hauptfenster auf die Oberfläche des Servers
@@ -518,43 +539,6 @@ fn status_script(message: &str) -> String {
     )
 }
 
-// Bittet den Server unter Unix mit SIGTERM um ein geordnetes Ende, damit er server.json selbst aufräumt;
-// true, wenn er innerhalb der Frist gegangen ist
-#[cfg(unix)]
-fn stop_gracefully(pid: u32) -> bool {
-    let id = pid as libc::pid_t;
-    if unsafe { libc::kill(id, libc::SIGTERM) } != 0 {
-        return true; // Es gibt den Prozess nicht mehr
-    }
-    let deadline = Instant::now() + STOP_TIMEOUT;
-    while Instant::now() < deadline {
-        if unsafe { libc::kill(id, 0) } != 0 {
-            return true;
-        }
-        std::thread::sleep(Duration::from_millis(50));
-    }
-    false
-}
-
-// Windows kennt kein SIGTERM; dort wird der Prozess hart beendet und server.json danach gelöscht
-#[cfg(not(unix))]
-fn stop_gracefully(_pid: u32) -> bool {
-    false
-}
-
-// Löscht server.json, wenn sie noch den beendeten Server nennt (der Server selbst tut das nur bei SIGTERM)
-fn remove_server_info(home: &Path, pid: u32) {
-    if read_server_info(home).map(|info| info.pid) != Some(pid) {
-        return;
-    }
-    let file = home.join(SERVER_FILE);
-    match std::fs::remove_file(&file) {
-        Ok(()) => log::info!("{} entfernt.", file.display()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-        Err(error) => log::warn!("{} ließ sich nicht löschen: {error}", file.display()),
-    }
-}
-
 // Ein SIGTERM an die App löst kein RunEvent::Exit aus; abgefangen beendet sie sich geordnet und
 // nimmt ihren Server mit
 #[cfg(unix)]
@@ -589,6 +573,9 @@ mod tests {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
 
+    // Name des Rust-Programms aus bundle.externalBin
+    const NEXUS: &str = "nexus";
+
     // Umgebung aus Paaren, damit die Tests nur setzen, was sie prüfen
     fn env(pairs: &[(&str, &str)]) -> HashMap<String, String> {
         pairs
@@ -598,7 +585,8 @@ mod tests {
     }
 
     // Kleiner HTTP-Server, der auf jede Anfrage mit demselben Rumpf antwortet
-    async fn fake_server(body: &'static str) -> u16 {
+    async fn fake_server(body: impl Into<String>) -> u16 {
+        let body = body.into();
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let port = listener.local_addr().unwrap().port();
         tokio::spawn(async move {
@@ -622,20 +610,35 @@ mod tests {
         listener.local_addr().unwrap().port()
     }
 
+    // Ein leerer Benutzerordner nur für diesen Test
+    fn home_dir(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("nexus-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    // Schreibt eine server.json mit Prozessnummer und Port
+    fn schreibe_server_json(home: &Path, pid: u32, port: u16) {
+        std::fs::write(
+            home.join("server.json"),
+            format!(r#"{{"pid":{pid},"port":{port},"startedAt":"2026-10-28T08:00:00.000Z"}}"#),
+        )
+        .unwrap();
+    }
+
     #[test]
     fn port_aus_umgebung() {
-        assert_eq!(port_from_env(&env(&[])).unwrap(), DEFAULT_SERVER_PORT);
-        assert_eq!(
-            port_from_env(&env(&[("HARNESS_PORT", "")])).unwrap(),
-            DEFAULT_SERVER_PORT
-        );
+        // Ohne Angabe wünscht die App keinen festen Port; der Server nimmt einen freien
+        assert_eq!(port_from_env(&env(&[])).unwrap(), None);
+        assert_eq!(port_from_env(&env(&[("HARNESS_PORT", "")])).unwrap(), None);
         assert_eq!(
             port_from_env(&env(&[("HARNESS_PORT", "4812")])).unwrap(),
-            4812
+            Some(4812)
         );
         assert_eq!(
             port_from_env(&env(&[("HARNESS_PORT", " 4812 ")])).unwrap(),
-            4812
+            Some(4812)
         );
         for invalid in ["0", "-1", "65536", "abc", "47.10"] {
             let error = port_from_env(&env(&[("HARNESS_PORT", invalid)])).unwrap_err();
@@ -668,24 +671,19 @@ mod tests {
     fn der_neue_port_gewinnt_gegen_den_alten() {
         assert_eq!(
             port_from_env(&env(&[("NEXUS_PORT", "4813"), ("HARNESS_PORT", "4812")])).unwrap(),
-            4813
+            Some(4813)
         );
         assert_eq!(
             port_from_env(&env(&[("NEXUS_PORT", ""), ("HARNESS_PORT", "4812")])).unwrap(),
-            4812
+            Some(4812)
         );
     }
 
     #[test]
     fn server_json_wird_gelesen() {
-        let home = std::env::temp_dir().join(format!("nexus-server-json-{}", std::process::id()));
-        std::fs::create_dir_all(&home).unwrap();
+        let home = home_dir("server-json");
         assert_eq!(read_server_info(&home), None);
-        std::fs::write(
-            home.join(SERVER_FILE),
-            r#"{"pid":4242,"port":4812,"startedAt":"2026-10-28T08:00:00.000Z"}"#,
-        )
-        .unwrap();
+        schreibe_server_json(&home, 4242, 4812);
         assert_eq!(
             read_server_info(&home),
             Some(ServerInfo {
@@ -693,7 +691,7 @@ mod tests {
                 port: 4812
             })
         );
-        std::fs::write(home.join(SERVER_FILE), "kein json").unwrap();
+        std::fs::write(home.join("server.json"), "kein json").unwrap();
         assert_eq!(read_server_info(&home), None);
         std::fs::remove_dir_all(&home).unwrap();
     }
@@ -716,14 +714,42 @@ mod tests {
         assert_eq!(probe(port).await, PortState::Free);
     }
 
+    // Steht in server.json ein lebender Server, der sich auf seinem Port mit derselben
+    // Prozessnummer meldet, nutzt die App ihn mit und startet keinen zweiten
     #[tokio::test]
-    async fn warten_endet_mit_der_frist() {
-        let port = free_port().await;
+    async fn vorhandener_server_wird_uebernommen() {
+        let home = home_dir("vorhandener-server");
+        let eigene = std::process::id();
+        let port = fake_server(format!(r#"{{"name":"ai-harness","pid":{eigene}}}"#)).await;
+        schreibe_server_json(&home, eigene, port);
         let connector = ServerConnector {
-            home: PathBuf::from("/tmp"),
-            port,
+            home: home.clone(),
+            wunsch_port: None,
         };
-        assert!(!connector.wait_for_ours(Duration::from_millis(1)).await);
+        assert_eq!(connector.vorhandener_server().await, Some(port));
+        std::fs::remove_dir_all(&home).unwrap();
+    }
+
+    // Ohne server.json, mit toter Prozessnummer oder mit einem fremden Programm auf dem Port
+    // startet die App ihren eigenen Server
+    #[tokio::test]
+    async fn ohne_passenden_server_startet_die_app_selbst() {
+        let home = home_dir("kein-server");
+        let connector = ServerConnector {
+            home: home.clone(),
+            wunsch_port: None,
+        };
+        assert_eq!(connector.vorhandener_server().await, None);
+
+        // Eine Prozessnummer, die nie vergeben ist
+        schreibe_server_json(&home, 2_147_483_646, 4710);
+        assert_eq!(connector.vorhandener_server().await, None);
+
+        // Lebender Prozess, aber auf dem Port antwortet ein anderer Server
+        let fremd = fake_server(r#"{"name":"etwas-anderes"}"#).await;
+        schreibe_server_json(&home, std::process::id(), fremd);
+        assert_eq!(connector.vorhandener_server().await, None);
+        std::fs::remove_dir_all(&home).unwrap();
     }
 
     #[test]
@@ -733,8 +759,14 @@ mod tests {
             ("HARNESS_PORT", "4812"),
         ]))
         .unwrap();
-        assert_eq!(connector.url(), "http://127.0.0.1:4812/");
+        assert_eq!(connector.port(), 4812);
+        assert_eq!(connector.url(4812), "http://127.0.0.1:4812/");
         assert_eq!(connector.home(), Path::new("/tmp/eigener-ordner"));
+
+        // Ohne Portwunsch bindet der Server Port 0 und sucht sich selbst einen freien
+        let frei =
+            ServerConnector::from_env(&env(&[("HARNESS_HOME", "/tmp/eigener-ordner")])).unwrap();
+        assert_eq!(frei.port(), 0);
     }
 
     // Ein Deep-Link hängt seinen Pfad an die Adresse der Oberfläche, ohne doppelten Schrägstrich
@@ -835,9 +867,10 @@ mod tests {
         assert_eq!(adressen, ["http://*", "https://*", "vscode://*"]);
     }
 
-    // Mitgeliefert wird genau ein Programm: der Rust-Server, den die App startet
+    // Mitgeliefert wird genau ein Programm: die Kommandozeile, die im Terminal auch ohne App
+    // einen Server anbietet (`nexus serve`)
     #[test]
-    fn der_server_ist_als_externalbin_eingetragen() {
+    fn die_kommandozeile_ist_als_externalbin_eingetragen() {
         let datei: serde_json::Value =
             serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
         let bins: Vec<&str> = datei["bundle"]["externalBin"]
