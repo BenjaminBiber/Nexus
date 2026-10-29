@@ -134,10 +134,9 @@ impl ServerConfigLoader {
 
     /// Einstellungen aus Argumenten und einer frei wählbaren Umgebung (Tests)
     pub fn load(args: &[String], env: &dyn Fn(&str) -> Option<String>) -> Result<ServerConfig> {
-        let home = HarnessHome::from_env(|name| match name {
-            "HARNESS_HOME" => value(env, &["NEXUS_HOME", "HARNESS_HOME"]),
-            other => env(other),
-        });
+        // `HarnessHome::from_env` kennt die Reihenfolge `NEXUS_HOME`, `HARNESS_HOME`, `~/.nexus`,
+        // `~/.harness` selbst
+        let home = HarnessHome::from_env(env);
         let web_dir = argument(args, "--web-dir")
             .or_else(|| value(env, &["NEXUS_WEB_DIR", "HARNESS_WEB_DIR"]))
             .filter(|dir| !dir.is_empty())

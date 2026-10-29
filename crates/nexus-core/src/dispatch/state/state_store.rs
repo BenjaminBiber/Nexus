@@ -1,4 +1,4 @@
-//! Pause, Merge-Aufträge, Recherchen und Planungen in `~/.harness/dispatch/state.json`;
+//! Pause, Merge-Aufträge, Recherchen und Planungen in `~/.nexus/dispatch/state.json`;
 //! portiert aus `packages/core/src/dispatch/state/DispatchStateStore.ts`. Änderungen laufen
 //! nacheinander, damit zwei gleichzeitige Änderungen sich nicht überschreiben.
 

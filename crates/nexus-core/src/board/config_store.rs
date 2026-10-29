@@ -1,4 +1,4 @@
-//! Liest und schreibt `~/.harness/board.yaml` und prüft die Pflichtfelder. Die Datei teilen
+//! Liest und schreibt `~/.nexus/board.yaml` und prüft die Pflichtfelder. Die Datei teilen
 //! sich TypeScript und Rust, deshalb sind Schlüssel, Standardwerte, Fehlercodes und
 //! Meldungen wortgleich zu `packages/core/src/board/BoardConfigStore.ts`.
 
@@ -68,7 +68,7 @@ impl BoardConfigStore {
             HarnessError::new(
                 "board-config-missing",
                 format!(
-                    "{} fehlt – mit „harness board“ die Oberfläche öffnen und unter Einstellungen → Board-Datenbank anlegen.",
+                    "{} fehlt – mit „nexus board“ die Oberfläche öffnen und unter Einstellungen → Board-Datenbank anlegen.",
                     self.file().display()
                 ),
             )

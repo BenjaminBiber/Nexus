@@ -1,4 +1,4 @@
-//! Die Lauf-Dateien unter `~/.harness/dispatch/runs`: `<id>.json` legt der Server an,
+//! Die Lauf-Dateien unter `~/.nexus/dispatch/runs`: `<id>.json` legt der Server an,
 //! `<id>.result.json` schreibt der Worker, und unter `stats/` liegen vorgemerkte Lauf-Zeilen,
 //! bis sie in der Datenbank stehen. Portiert aus
 //! `packages/core/src/dispatch/state/RunStore.ts`.

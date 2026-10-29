@@ -14,14 +14,14 @@ pub const SPEC_ABOUT: &str = "Kommentare zu Spec- und Plan-Dokumenten abarbeiten
 /// Beschreibung von `spec comments`
 pub const COMMENTS_ABOUT: &str = "Listet offene Kommentare zu Spec- und Plan-Dokumenten, Glossar und ADRs (optional eines Dokuments oder Themas).";
 /// Beispiele unter der Hilfe von `spec comments`
-pub const COMMENTS_EXAMPLES: &str = "\nBeispiele:\n  harness spec comments\n  harness spec comments spec-docs-rework\n  harness spec comments docs/superpowers/specs/2026-10-22-spec-docs-rework-design.md";
+pub const COMMENTS_EXAMPLES: &str = "\nBeispiele:\n  nexus spec comments\n  nexus spec comments spec-docs-rework\n  nexus spec comments docs/superpowers/specs/2026-10-22-spec-docs-rework-design.md";
 
 /// Beschreibung von `spec resolve`
 pub const RESOLVE_ABOUT: &str =
     "Markiert einen Kommentar als erledigt und speichert eine kurze Antwort.";
 /// Beispiel unter der Hilfe von `spec resolve`
 pub const RESOLVE_EXAMPLE: &str =
-    "\nBeispiel:\n  harness spec resolve K-1a2b3c4d \"Ziel in Abschnitt 2 präzisiert\"";
+    "\nBeispiel:\n  nexus spec resolve K-1a2b3c4d \"Ziel in Abschnitt 2 präzisiert\"";
 
 /// Das Dokument oder Thema, auf das `spec comments` begrenzt wird
 #[derive(Debug, Args)]

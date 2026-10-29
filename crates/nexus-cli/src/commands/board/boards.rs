@@ -18,31 +18,31 @@ const LIST_ABOUT: &str =
 
 /// Beispiele unter der Hilfe von `boards list`
 const LIST_EXAMPLES: &str =
-    "\nBeispiele:\n  harness board boards list\n  harness board boards list --project ARC --mine";
+    "\nBeispiele:\n  nexus board boards list\n  nexus board boards list --project ARC --mine";
 
 /// Beschreibung von `boards create`
 const CREATE_ABOUT: &str = "Legt ein eigenes Board im Projekt an.";
 
 /// Beispiel unter der Hilfe von `boards create`
-const CREATE_EXAMPLE: &str = "\nBeispiel:\n  harness board boards create ARC \"Sprint 12\" --use";
+const CREATE_EXAMPLE: &str = "\nBeispiel:\n  nexus board boards create ARC \"Sprint 12\" --use";
 
 /// Beschreibung von `boards rename`
 const RENAME_ABOUT: &str = "Benennt ein Board um.";
 
 /// Beispiel unter der Hilfe von `boards rename`
-const RENAME_EXAMPLE: &str = "\nBeispiel:\n  harness board boards rename 7 \"Sprint 13\"";
+const RENAME_EXAMPLE: &str = "\nBeispiel:\n  nexus board boards rename 7 \"Sprint 13\"";
 
 /// Beschreibung von `boards use`
 const USE_ABOUT: &str = "Setzt das aktive Board dieses Rechners (Standard für alle Ticketbefehle).";
 
 /// Beispiel unter der Hilfe von `boards use`
-const USE_EXAMPLE: &str = "\nBeispiel:\n  harness board boards use 7";
+const USE_EXAMPLE: &str = "\nBeispiel:\n  nexus board boards use 7";
 
 /// Beschreibung von `boards repo`
-const REPO_ABOUT: &str = "Setzt deinen Repo-Pfad des Boards – nur für dich auf diesem Rechner (~/.harness/board-repos.yaml), nicht in der gemeinsamen DB; ohne Pfad zeigt er ihn.";
+const REPO_ABOUT: &str = "Setzt deinen Repo-Pfad des Boards – nur für dich auf diesem Rechner (~/.nexus/board-repos.yaml), nicht in der gemeinsamen DB; ohne Pfad zeigt er ihn.";
 
 /// Beispiele unter der Hilfe von `boards repo`
-const REPO_EXAMPLES: &str = "\nBeispiele:\n  harness board boards repo 7 C:\\Projects\\Arches\\Shopsystem\n  harness board boards repo 7\n  harness board boards repo 7 --clear";
+const REPO_EXAMPLES: &str = "\nBeispiele:\n  nexus board boards repo 7 C:\\Projects\\Arches\\Shopsystem\n  nexus board boards repo 7\n  nexus board boards repo 7 --clear";
 
 /// Beschreibung von `boards delete`
 const DELETE_ABOUT: &str =
@@ -50,7 +50,7 @@ const DELETE_ABOUT: &str =
 
 /// Beispiele unter der Hilfe von `boards delete`
 const DELETE_EXAMPLES: &str =
-    "\nBeispiele:\n  harness board boards delete 7\n  harness board boards delete 7 --delete-open";
+    "\nBeispiele:\n  nexus board boards delete 7\n  nexus board boards delete 7 --delete-open";
 
 /// Die Unterbefehle von `board boards`
 #[derive(Debug, Subcommand)]

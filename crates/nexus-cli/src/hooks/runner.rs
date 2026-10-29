@@ -116,7 +116,7 @@ impl<O: BoardOpener, L: Launcher> HookRunner<O, L> {
         env: &HashMap<String, String>,
         emit: &mut dyn FnMut(&str),
     ) {
-        let debug = env.get("HARNESS_DEBUG").is_some_and(|wert| wert == "1");
+        let debug = debug_enabled(env);
         if let Err(error) = self.execute(kind, payload, env, emit) {
             if debug {
                 eprintln!("Hook {}: {error}", kind.as_str());
@@ -149,14 +149,14 @@ impl<O: BoardOpener, L: Launcher> HookRunner<O, L> {
         if session_id.is_empty() {
             return Ok(());
         }
-        let debug = env.get("HARNESS_DEBUG").is_some_and(|wert| wert == "1");
+        let debug = debug_enabled(env);
         let Self {
             opener,
             launcher,
             board_budget,
         } = self;
         let deadline = Instant::now() + board_budget;
-        // Ohne `harness init` endet der Hook still
+        // Ohne `nexus init` endet der Hook still
         let project = HarnessProject::open(&cwd)?;
         let cwd_text = cwd.to_string_lossy().into_owned();
 
@@ -192,9 +192,15 @@ impl<O: BoardOpener, L: Launcher> HookRunner<O, L> {
         };
         let title = Self::name_session(kind, &project, &session_id, &mut event, payload)?;
         if kind == HookKind::SessionStart {
-            let mut vars = vec![("HARNESS_SESSION".to_string(), session_id.clone())];
+            // Beide Namen: `NEXUS_*` für Nexus, `HARNESS_*` für alte Skills und den Node-Server
+            let mut vars = Vec::new();
+            for name in nexus_core::env::names("SESSION") {
+                vars.push((name, session_id.clone()));
+            }
             if let Some(ticket) = part.tickets.first() {
-                vars.push(("HARNESS_TICKET".to_string(), ticket.clone()));
+                for name in nexus_core::env::names("TICKET") {
+                    vars.push((name, ticket.clone()));
+                }
             }
             EnvFileWriter::append(env.get("CLAUDE_ENV_FILE").map(Path::new), &vars, env)?;
         }
@@ -266,8 +272,7 @@ impl<O: BoardOpener, L: Launcher> HookRunner<O, L> {
         event: &HookEvent,
         env: &HashMap<String, String>,
     ) {
-        let port = env
-            .get("HARNESS_PORT")
+        let port = nexus_core::env::var_in(env, "PORT")
             .and_then(|raw| raw.parse::<u16>().ok())
             .filter(|port| *port >= 1)
             .unwrap_or(DEFAULT_SERVER_PORT);
@@ -277,8 +282,7 @@ impl<O: BoardOpener, L: Launcher> HookRunner<O, L> {
                 if kind != HookKind::SessionStart {
                     return;
                 }
-                let wait = env
-                    .get("HARNESS_HOOK_SERVER_WAIT_MS")
+                let wait = nexus_core::env::var_in(env, "HOOK_SERVER_WAIT_MS")
                     .and_then(|raw| raw.parse::<u64>().ok())
                     .filter(|ms| *ms >= 1)
                     .unwrap_or(DEFAULT_SERVER_START_MS);
@@ -442,7 +446,12 @@ async fn collect<A: BoardAccess>(
     }
 }
 
-/// Meldung auf stderr, aber nur mit `HARNESS_DEBUG=1`
+/// Soll der Hook seine Fehler melden? `NEXUS_DEBUG=1`, sonst `HARNESS_DEBUG=1`
+fn debug_enabled(env: &HashMap<String, String>) -> bool {
+    nexus_core::env::var_in(env, "DEBUG").as_deref() == Some("1")
+}
+
+/// Meldung auf stderr, aber nur mit `NEXUS_DEBUG=1` (oder `HARNESS_DEBUG=1`)
 fn debug(job: &BoardJob, message: &str) {
     if job.debug {
         eprintln!("Hook {}: Board-DB: {message}", job.kind.as_str());

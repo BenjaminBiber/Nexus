@@ -14,7 +14,7 @@ pub const PLAN_ABOUT: &str =
     "Planungslauf: schreibt Plan/Handbuch/Diagramm, setzt Geplant und löscht den Planungsbedarf.";
 
 /// Beispiel unter der Hilfe von `plan`
-pub const PLAN_EXAMPLE: &str = "\nBeispiel:\n  harness board plan ARC-0007 --plan-file plan.md --handbook-file hb.md --by claude";
+pub const PLAN_EXAMPLE: &str = "\nBeispiel:\n  nexus board plan ARC-0007 --plan-file plan.md --handbook-file hb.md --by claude";
 
 /// Beschreibung von `plan-json`
 pub const PLAN_JSON_ABOUT: &str =
@@ -22,13 +22,13 @@ pub const PLAN_JSON_ABOUT: &str =
 
 /// Beispiel unter der Hilfe von `plan-json`
 pub const PLAN_JSON_EXAMPLE: &str =
-    "\nBeispiel:\n  harness board plan-json ARC-0007 --file payload.json --by claude";
+    "\nBeispiel:\n  nexus board plan-json ARC-0007 --file payload.json --by claude";
 
 /// Beschreibung von `next-planning`
 pub const NEXT_ABOUT: &str = "Nächstes Ticket mit Planungsbedarf; mit --claim für 15 Minuten beansprucht. Überspringt In Planung.";
 
 /// Beispiel unter der Hilfe von `next-planning`
-pub const NEXT_EXAMPLE: &str = "\nBeispiel:\n  harness --json board next-planning --claim claude";
+pub const NEXT_EXAMPLE: &str = "\nBeispiel:\n  nexus --json board next-planning --claim claude";
 
 /// Die Felder, die in der Eingabe von `plan-json` Texte sein müssen
 const JSON_FIELDS: [&str; 6] = ["plan", "handbook", "diagram", "acceptance", "status", "by"];

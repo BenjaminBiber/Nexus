@@ -79,7 +79,7 @@ impl BoardRepoStore for MemoryBoardRepoStore {
     }
 }
 
-/// Die Datei `~/.harness/board-repos.yaml` als Speicher (P3-1)
+/// Die Datei `~/.nexus/board-repos.yaml` als Speicher (P3-1)
 impl BoardRepoStore for BoardRepoFile {
     fn read(&self) -> Result<BoardRepoEntries> {
         BoardRepoFile::read(self)

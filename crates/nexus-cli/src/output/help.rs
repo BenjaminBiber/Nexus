@@ -20,7 +20,7 @@ pub const HELP_DESCRIPTION: &str = "Hilfe anzeigen";
 /// Ein Eintrag einer Liste: Begriff und Beschreibung
 type Item = (String, String);
 
-/// Rendert die Hilfe eines Befehls; `path` ist der Aufruf bis hierher, z. B. „harness board create“
+/// Rendert die Hilfe eines Befehls; `path` ist der Aufruf bis hierher, z. B. „nexus board create“
 pub fn render(path: &str, cmd: &Command) -> String {
     let sections = [
         ("Argumente:", argument_items(cmd)),

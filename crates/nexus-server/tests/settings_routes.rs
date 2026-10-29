@@ -99,7 +99,7 @@ async fn lehnt_fehlenden_relativen_und_nicht_eingerichteten_pfad_mit_422_ab() {
         .await;
     assert_eq!(reply.status, 422);
     let message = reply.json().expect("JSON")["message"].to_string();
-    assert!(message.contains("harness init"), "{message}");
+    assert!(message.contains("nexus init"), "{message}");
 }
 
 #[tokio::test]

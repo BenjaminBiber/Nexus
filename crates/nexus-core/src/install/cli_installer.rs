@@ -1,5 +1,5 @@
-//! Richtet `harness` für das normale Terminal ein: kopiert das Binary nach `~/.harness/bin`,
-//! die Regeln nach `~/.harness/rules`, die Anpassungen nach `~/.harness/customizations`, legt
+//! Richtet `nexus` für das normale Terminal ein: kopiert das Binary nach `~/.nexus/bin`,
+//! die Regeln nach `~/.nexus/rules`, die Anpassungen nach `~/.nexus/customizations`, legt
 //! die Startdateien an und trägt den Startordner in den Benutzer-PATH ein.
 //! Portiert aus `packages/core/src/install/CliInstaller.ts`; statt `lib/cli.mjs` wird das
 //! Rust-Binary kopiert, `lib/` und `web/` nur noch, solange es den Node-Server gibt.
@@ -58,6 +58,7 @@ pub struct CliInstaller<'a> {
     home: HarnessHome,
     user_path: &'a dyn UserPath,
     launchers: LauncherWriter,
+    legacy_home: Option<PathBuf>,
 }
 
 impl<'a> CliInstaller<'a> {
@@ -67,7 +68,15 @@ impl<'a> CliInstaller<'a> {
             home,
             user_path,
             launchers: LauncherWriter::new(),
+            legacy_home: None,
         }
+    }
+
+    /// Alter Benutzerordner (`~/.harness`): dessen Startdateien werden durch Weiterleitungen
+    /// auf das neue Binary ersetzt, damit ein alter PATH-Eintrag nicht die alte Fassung startet
+    pub fn with_legacy_home(mut self, dir: impl Into<PathBuf>) -> Self {
+        self.legacy_home = Some(dir.into());
+        self
     }
 
     /// Plugin-Wurzel zum laufenden Binary (Aufbau `<wurzel>/bin/nexus[.exe]`, daneben
@@ -97,7 +106,9 @@ impl<'a> CliInstaller<'a> {
         self.copy_rules(root)?;
         self.copy_customizations(root)?;
         let launchers = self.launchers.write(&bin_dir)?;
-        copy_binary(&source, &bin_dir.join(BINARY_NAME))?;
+        let binary = bin_dir.join(BINARY_NAME);
+        copy_binary(&source, &binary)?;
+        self.redirect_legacy_launchers(&bin_dir, &binary)?;
         let path_added = if options.register_path {
             self.user_path.add(&bin_dir)?
         } else {
@@ -111,6 +122,21 @@ impl<'a> CliInstaller<'a> {
             path_added,
             path_skipped: !options.register_path,
         })
+    }
+
+    /// Ersetzt die Startdateien im alten Ordner `~/.harness/bin` durch Weiterleitungen auf das
+    /// neue Binary. Gibt es den alten Startordner nicht oder ist es derselbe wie der neue,
+    /// bleibt alles, wie es ist; Daten werden nie angefasst.
+    fn redirect_legacy_launchers(&self, bin_dir: &Path, binary: &Path) -> Result<()> {
+        let Some(legacy) = &self.legacy_home else {
+            return Ok(());
+        };
+        let legacy_bin = legacy.join("bin");
+        if !legacy_bin.is_dir() || is_same(&legacy_bin, bin_dir) {
+            return Ok(());
+        }
+        self.launchers.write_forwarders(&legacy_bin, binary)?;
+        Ok(())
     }
 
     /// Kopiert `lib/` und `web/` frisch nach `<home>/app`, falls das Plugin sie mitbringt
@@ -136,14 +162,14 @@ impl<'a> CliInstaller<'a> {
         Ok(())
     }
 
-    /// Legt die Regeln des Plugins frisch unter `~/.harness/rules` ab, dem festen Importziel der
+    /// Legt die Regeln des Plugins frisch unter `~/.nexus/rules` ab, dem festen Importziel der
     /// Projekte. Der Ordner des Plugins in Claude Code taugt dafür nicht, er wechselt mit jeder
     /// Version.
     fn copy_rules(&self, root: &Path) -> Result<()> {
         self.copy_into(&root.join("rules"), &self.home.rules_dir())
     }
 
-    /// Legt die angewendeten Anpassungen frisch unter `~/.harness/customizations` ab; Hook und
+    /// Legt die angewendeten Anpassungen frisch unter `~/.nexus/customizations` ab; Hook und
     /// Server lesen dort
     fn copy_customizations(&self, root: &Path) -> Result<()> {
         self.copy_into(
@@ -331,6 +357,60 @@ mod tests {
         assert!(cmd.contains("nexus.exe"), "{cmd}");
         let sh = fs::read_to_string(Path::new(&result.bin_dir).join("harness")).unwrap();
         assert!(sh.contains("/nexus"), "{sh}");
+    }
+
+    #[test]
+    fn ersetzt_die_startdateien_im_alten_ordner_durch_weiterleitungen() {
+        let plugin = Plugin::new();
+        let path = FakeUserPath::new(true);
+        let alt = plugin.base.path().join("alt");
+        fs::create_dir_all(alt.join("bin")).unwrap();
+        fs::write(alt.join("bin").join("harness"), "#!/bin/sh\nnode alt.mjs\n").unwrap();
+        fs::write(alt.join("board.db"), "daten").unwrap();
+
+        let result = CliInstaller::new(plugin.home(), &path)
+            .with_legacy_home(&alt)
+            .install(&plugin.root(), InstallOptions::default())
+            .unwrap();
+
+        let weiterleitung = fs::read_to_string(alt.join("bin").join("harness")).unwrap();
+        let binary = Path::new(&result.bin_dir).join(BINARY_NAME);
+        assert!(
+            weiterleitung.contains(&binary.display().to_string()),
+            "{weiterleitung}"
+        );
+        assert!(alt.join("bin").join("harness.cmd").exists());
+        // Die Daten des alten Ordners bleiben unberührt
+        assert_eq!(fs::read_to_string(alt.join("board.db")).unwrap(), "daten");
+    }
+
+    #[test]
+    fn ohne_alten_startordner_gibt_es_nichts_umzuleiten() {
+        let plugin = Plugin::new();
+        let path = FakeUserPath::new(true);
+        let alt = plugin.base.path().join("alt");
+
+        CliInstaller::new(plugin.home(), &path)
+            .with_legacy_home(&alt)
+            .install(&plugin.root(), InstallOptions::default())
+            .unwrap();
+
+        assert!(!alt.exists());
+    }
+
+    #[test]
+    fn ist_der_alte_ordner_der_neue_bleiben_die_startdateien_wie_sie_sind() {
+        let plugin = Plugin::new();
+        let path = FakeUserPath::new(true);
+        let home = plugin.home();
+
+        let result = CliInstaller::new(home.clone(), &path)
+            .with_legacy_home(home.dir())
+            .install(&plugin.root(), InstallOptions::default())
+            .unwrap();
+
+        let sh = fs::read_to_string(Path::new(&result.bin_dir).join("harness")).unwrap();
+        assert!(sh.contains("$(dirname \"$0\")/nexus"), "{sh}");
     }
 
     #[test]

@@ -16,13 +16,13 @@ use crate::context::CliContext;
 pub const START_ABOUT: &str = "Startet ein Ticket: eigener Branch ticket/<ID>-<Kurztitel> (vom Zielbranch des Tickets, sonst vom ausgecheckten Branch) und Worktree neben dem Projekt, Status In Arbeit (Sperren gelten). Mit --join tritt es stattdessen einem offenen Worktree derselben Spec bei, wenn sich die Bereiche nicht überschneiden. Nur für Tickets des Boards, das diesem Repo zugeordnet ist. Warnt, wenn das Spec-Dokument des Tickets nicht (vollständig) committet ist.";
 
 /// Beispiele unter der Hilfe von `start`
-pub const START_EXAMPLES: &str = "\nBeispiele:\n  harness board start ARC-0007 --by claude\n  harness board start ARC-0008 --in ARC-0007\n  harness board start ARC-0009 --join";
+pub const START_EXAMPLES: &str = "\nBeispiele:\n  nexus board start ARC-0007 --by claude\n  nexus board start ARC-0008 --in ARC-0007\n  nexus board start ARC-0009 --join";
 
 /// Beschreibung von `done`
 pub const DONE_ABOUT: &str = "Setzt das Ticket auf Erledigt (Abnahme nötig) und meldet, ob der Worktree zum Merge bereit ist. Es wird nichts gemergt. Nur für Tickets des Boards dieses Repos.";
 
 /// Beispiel unter der Hilfe von `done`
-pub const DONE_EXAMPLE: &str = "\nBeispiel:\n  harness board done ARC-0007 --acceptance \"Tests grün, Review erledigt\" --by claude";
+pub const DONE_EXAMPLE: &str = "\nBeispiel:\n  nexus board done ARC-0007 --acceptance \"Tests grün, Review erledigt\" --by claude";
 
 /// Optionen von `board start`
 #[derive(Debug, Args)]

@@ -25,15 +25,10 @@ pub struct CliContext {
 }
 
 impl CliContext {
-    /// Kontext aus den globalen Optionen; die Session kommt aus `HARNESS_SESSION`
+    /// Kontext aus den globalen Optionen; die Session kommt aus `NEXUS_SESSION`
+    /// (sonst `NEXUS_SESSION`)
     pub fn new(json: bool, dir: Option<PathBuf>) -> Self {
-        Self::with_session(
-            json,
-            dir,
-            std::env::var("HARNESS_SESSION")
-                .ok()
-                .filter(|id| !id.is_empty()),
-        )
+        Self::with_session(json, dir, nexus_core::env::var("SESSION"))
     }
 
     /// Kontext mit ausdrücklich gesetzter Session (Tests)
@@ -56,17 +51,17 @@ impl CliContext {
         &self.dir
     }
 
-    /// Öffnet das eingerichtete Projekt (Fehler mit Hinweis auf `harness init`, wenn nicht eingerichtet)
+    /// Öffnet das eingerichtete Projekt (Fehler mit Hinweis auf `nexus init`, wenn nicht eingerichtet)
     pub fn open_project(&self) -> Result<HarnessProject> {
         HarnessProject::open(&self.dir)
     }
 
-    /// Benutzerweiter Harness-Ordner (`HARNESS_HOME` oder `~/.harness`)
+    /// Benutzerweiter Ordner von Nexus (`NEXUS_HOME`, `HARNESS_HOME`, `~/.nexus` oder `~/.harness`)
     pub fn home(&self) -> HarnessHome {
         HarnessHome::from_process_env()
     }
 
-    /// Worktrees des Dispatchers (`joinWorktrees` aus `~/.harness/dispatch.yaml`); ohne oder
+    /// Worktrees des Dispatchers (`joinWorktrees` aus `~/.nexus/dispatch.yaml`); ohne oder
     /// mit kaputter Datei: ein Worktree je Ticket
     pub fn join_worktrees(&self) -> JoinWorktrees {
         DispatchConfigStore::new(self.home())
@@ -75,7 +70,7 @@ impl CliContext {
             .unwrap_or(JoinWorktrees::None)
     }
 
-    /// Die Kennung der Session, in der der Befehl läuft (`HARNESS_SESSION`)
+    /// Die Kennung der Session, in der der Befehl läuft (`NEXUS_SESSION`)
     pub fn session(&self) -> Option<&str> {
         self.session.as_deref()
     }
@@ -113,7 +108,7 @@ impl CliContext {
     }
 
     /// Wer handelt bei Fragen: wie `actor`, bei Sessions und Subagenten zusätzlich mit der Kennung
-    /// der Session. Ohne `--kind` gilt „session“ innerhalb einer Session (`HARNESS_SESSION` oder
+    /// der Session. Ohne `--kind` gilt „session“ innerhalb einer Session (`NEXUS_SESSION` oder
     /// `--session`), sonst „human“.
     pub fn question_actor(
         &self,

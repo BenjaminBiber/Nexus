@@ -69,10 +69,14 @@ fn freier_port() -> u16 {
 fn nexus(home: &Path, port: u16, entry: Option<&Path>) -> Command {
     let mut command = Command::cargo_bin("nexus").unwrap();
     command
-        .env("HARNESS_HOME", home)
-        .env("HARNESS_PORT", port.to_string())
+        .env("NEXUS_HOME", home)
+        .env("NEXUS_PORT", port.to_string())
+        .env_remove("HARNESS_HOME")
+        .env_remove("HARNESS_PORT")
         // Eine lokal installierte Nexus-App darf den Test nicht an sich ziehen
         .env("NEXUS_APP_PATH", home.join("keine-app"))
+        .env_remove("NEXUS_SESSION")
+        .env_remove("NEXUS_TICKET")
         .env_remove("HARNESS_SESSION")
         .env_remove("HARNESS_TICKET");
     match entry {
@@ -203,7 +207,7 @@ fn ein_unbekannter_unterbefehl_endet_mit_command_unknown() {
     assert_eq!(out.status.code(), Some(1));
     assert_eq!(
         String::from_utf8_lossy(&out.stderr).trim_end(),
-        "Unbekannter Befehl „board quatsch“. Hilfe: harness board --help [command-unknown]"
+        "Unbekannter Befehl „board quatsch“. Hilfe: nexus board --help [command-unknown]"
     );
 }
 

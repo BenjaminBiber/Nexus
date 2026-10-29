@@ -210,7 +210,7 @@ mod dienst_tests {
             .await
             .unwrap_err();
         assert_eq!(error.code(), Some("board-repo-unknown"));
-        assert!(error.to_string().contains("harness board boards repo"));
+        assert!(error.to_string().contains("nexus board boards repo"));
     }
 
     #[tokio::test]

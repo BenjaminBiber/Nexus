@@ -10,8 +10,8 @@ use nexus_core::HarnessProject;
 use crate::server::client::ServerClient;
 use crate::server::launcher::{PortState, ServerLauncher};
 
-/// Umgebungsvariable mit dem Port des Servers
-const PORT_ENV: &str = "HARNESS_PORT";
+/// Umgebungsvariable mit dem Port des Servers (ohne Präfix; `NEXUS_PORT` vor `HARNESS_PORT`)
+const PORT_ENV: &str = "PORT";
 
 /// Sagt dem Server, welche Session an welchem Ticket arbeitet.
 #[derive(Debug, Clone, Copy, Default)]
@@ -34,10 +34,9 @@ impl ServerSessionNotice {
         }
     }
 
-    /// Port aus `HARNESS_PORT`, sonst der Standardport
+    /// Port aus `NEXUS_PORT` (sonst `HARNESS_PORT`), sonst der Standardport
     fn port() -> u16 {
-        std::env::var(PORT_ENV)
-            .ok()
+        nexus_core::env::var(PORT_ENV)
             .and_then(|raw| raw.parse::<u16>().ok())
             .filter(|port| *port >= 1)
             .unwrap_or(DEFAULT_SERVER_PORT)

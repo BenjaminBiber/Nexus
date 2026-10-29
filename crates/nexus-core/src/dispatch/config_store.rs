@@ -1,4 +1,4 @@
-//! Liest und schreibt `~/.harness/dispatch.yaml`; portiert aus
+//! Liest und schreibt `~/.nexus/dispatch.yaml`; portiert aus
 //! `packages/core/src/dispatch/DispatchConfigStore.ts`. Geschrieben wird nur, was die Prüfung
 //! besteht.
 

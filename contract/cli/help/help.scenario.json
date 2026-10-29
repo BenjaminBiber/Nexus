@@ -2,14 +2,14 @@
   "title": "Hilfetexte aller Befehle und die Fehlermeldungen von commander",
   "steps": [
     {
-      "name": "harness",
+      "name": "nexus",
       "kind": "cli",
       "args": [
         "--help"
       ]
     },
     {
-      "name": "harness init",
+      "name": "nexus init",
       "kind": "cli",
       "args": [
         "init",
@@ -17,7 +17,7 @@
       ]
     },
     {
-      "name": "harness board",
+      "name": "nexus board",
       "kind": "cli",
       "args": [
         "board",
@@ -25,7 +25,7 @@
       ]
     },
     {
-      "name": "harness board project",
+      "name": "nexus board project",
       "kind": "cli",
       "args": [
         "board",
@@ -34,7 +34,7 @@
       ]
     },
     {
-      "name": "harness board project list",
+      "name": "nexus board project list",
       "kind": "cli",
       "args": [
         "board",
@@ -44,7 +44,7 @@
       ]
     },
     {
-      "name": "harness board project create",
+      "name": "nexus board project create",
       "kind": "cli",
       "args": [
         "board",
@@ -54,7 +54,7 @@
       ]
     },
     {
-      "name": "harness board project rename",
+      "name": "nexus board project rename",
       "kind": "cli",
       "args": [
         "board",
@@ -64,7 +64,7 @@
       ]
     },
     {
-      "name": "harness board boards",
+      "name": "nexus board boards",
       "kind": "cli",
       "args": [
         "board",
@@ -73,7 +73,7 @@
       ]
     },
     {
-      "name": "harness board boards list",
+      "name": "nexus board boards list",
       "kind": "cli",
       "args": [
         "board",
@@ -83,7 +83,7 @@
       ]
     },
     {
-      "name": "harness board boards create",
+      "name": "nexus board boards create",
       "kind": "cli",
       "args": [
         "board",
@@ -93,7 +93,7 @@
       ]
     },
     {
-      "name": "harness board boards rename",
+      "name": "nexus board boards rename",
       "kind": "cli",
       "args": [
         "board",
@@ -103,7 +103,7 @@
       ]
     },
     {
-      "name": "harness board boards use",
+      "name": "nexus board boards use",
       "kind": "cli",
       "args": [
         "board",
@@ -113,7 +113,7 @@
       ]
     },
     {
-      "name": "harness board boards repo",
+      "name": "nexus board boards repo",
       "kind": "cli",
       "args": [
         "board",
@@ -123,7 +123,7 @@
       ]
     },
     {
-      "name": "harness board boards delete",
+      "name": "nexus board boards delete",
       "kind": "cli",
       "args": [
         "board",
@@ -133,7 +133,7 @@
       ]
     },
     {
-      "name": "harness board list",
+      "name": "nexus board list",
       "kind": "cli",
       "args": [
         "board",
@@ -142,7 +142,7 @@
       ]
     },
     {
-      "name": "harness board show",
+      "name": "nexus board show",
       "kind": "cli",
       "args": [
         "board",
@@ -151,7 +151,7 @@
       ]
     },
     {
-      "name": "harness board create",
+      "name": "nexus board create",
       "kind": "cli",
       "args": [
         "board",
@@ -160,7 +160,7 @@
       ]
     },
     {
-      "name": "harness board set",
+      "name": "nexus board set",
       "kind": "cli",
       "args": [
         "board",
@@ -169,7 +169,7 @@
       ]
     },
     {
-      "name": "harness board move",
+      "name": "nexus board move",
       "kind": "cli",
       "args": [
         "board",
@@ -178,7 +178,7 @@
       ]
     },
     {
-      "name": "harness board delete",
+      "name": "nexus board delete",
       "kind": "cli",
       "args": [
         "board",
@@ -187,7 +187,7 @@
       ]
     },
     {
-      "name": "harness board claim",
+      "name": "nexus board claim",
       "kind": "cli",
       "args": [
         "board",
@@ -196,7 +196,7 @@
       ]
     },
     {
-      "name": "harness board release",
+      "name": "nexus board release",
       "kind": "cli",
       "args": [
         "board",
@@ -205,7 +205,7 @@
       ]
     },
     {
-      "name": "harness board start",
+      "name": "nexus board start",
       "kind": "cli",
       "args": [
         "board",
@@ -214,7 +214,7 @@
       ]
     },
     {
-      "name": "harness board done",
+      "name": "nexus board done",
       "kind": "cli",
       "args": [
         "board",
@@ -223,7 +223,7 @@
       ]
     },
     {
-      "name": "harness board step",
+      "name": "nexus board step",
       "kind": "cli",
       "args": [
         "board",
@@ -232,7 +232,7 @@
       ]
     },
     {
-      "name": "harness board step done",
+      "name": "nexus board step done",
       "kind": "cli",
       "args": [
         "board",
@@ -242,7 +242,7 @@
       ]
     },
     {
-      "name": "harness board step add",
+      "name": "nexus board step add",
       "kind": "cli",
       "args": [
         "board",
@@ -252,7 +252,7 @@
       ]
     },
     {
-      "name": "harness board step edit",
+      "name": "nexus board step edit",
       "kind": "cli",
       "args": [
         "board",
@@ -262,7 +262,7 @@
       ]
     },
     {
-      "name": "harness board step rm",
+      "name": "nexus board step rm",
       "kind": "cli",
       "args": [
         "board",
@@ -272,7 +272,7 @@
       ]
     },
     {
-      "name": "harness board step move",
+      "name": "nexus board step move",
       "kind": "cli",
       "args": [
         "board",
@@ -282,7 +282,7 @@
       ]
     },
     {
-      "name": "harness board plan",
+      "name": "nexus board plan",
       "kind": "cli",
       "args": [
         "board",
@@ -291,7 +291,7 @@
       ]
     },
     {
-      "name": "harness board plan-json",
+      "name": "nexus board plan-json",
       "kind": "cli",
       "args": [
         "board",
@@ -300,7 +300,7 @@
       ]
     },
     {
-      "name": "harness board next-planning",
+      "name": "nexus board next-planning",
       "kind": "cli",
       "args": [
         "board",
@@ -309,7 +309,7 @@
       ]
     },
     {
-      "name": "harness board comment",
+      "name": "nexus board comment",
       "kind": "cli",
       "args": [
         "board",
@@ -318,7 +318,7 @@
       ]
     },
     {
-      "name": "harness board note",
+      "name": "nexus board note",
       "kind": "cli",
       "args": [
         "board",
@@ -327,7 +327,7 @@
       ]
     },
     {
-      "name": "harness board note add",
+      "name": "nexus board note add",
       "kind": "cli",
       "args": [
         "board",
@@ -337,7 +337,7 @@
       ]
     },
     {
-      "name": "harness board note seen",
+      "name": "nexus board note seen",
       "kind": "cli",
       "args": [
         "board",
@@ -347,7 +347,7 @@
       ]
     },
     {
-      "name": "harness board note list",
+      "name": "nexus board note list",
       "kind": "cli",
       "args": [
         "board",
@@ -357,7 +357,7 @@
       ]
     },
     {
-      "name": "harness board note show",
+      "name": "nexus board note show",
       "kind": "cli",
       "args": [
         "board",
@@ -367,7 +367,7 @@
       ]
     },
     {
-      "name": "harness board note take",
+      "name": "nexus board note take",
       "kind": "cli",
       "args": [
         "board",
@@ -377,7 +377,7 @@
       ]
     },
     {
-      "name": "harness board note drop",
+      "name": "nexus board note drop",
       "kind": "cli",
       "args": [
         "board",
@@ -387,7 +387,7 @@
       ]
     },
     {
-      "name": "harness board inbox",
+      "name": "nexus board inbox",
       "kind": "cli",
       "args": [
         "board",
@@ -396,7 +396,7 @@
       ]
     },
     {
-      "name": "harness board question",
+      "name": "nexus board question",
       "kind": "cli",
       "args": [
         "board",
@@ -405,7 +405,7 @@
       ]
     },
     {
-      "name": "harness board question add",
+      "name": "nexus board question add",
       "kind": "cli",
       "args": [
         "board",
@@ -415,7 +415,7 @@
       ]
     },
     {
-      "name": "harness board question research",
+      "name": "nexus board question research",
       "kind": "cli",
       "args": [
         "board",
@@ -425,7 +425,7 @@
       ]
     },
     {
-      "name": "harness board question comment",
+      "name": "nexus board question comment",
       "kind": "cli",
       "args": [
         "board",
@@ -435,7 +435,7 @@
       ]
     },
     {
-      "name": "harness board question list",
+      "name": "nexus board question list",
       "kind": "cli",
       "args": [
         "board",
@@ -445,7 +445,7 @@
       ]
     },
     {
-      "name": "harness board question show",
+      "name": "nexus board question show",
       "kind": "cli",
       "args": [
         "board",
@@ -455,7 +455,7 @@
       ]
     },
     {
-      "name": "harness board question answer",
+      "name": "nexus board question answer",
       "kind": "cli",
       "args": [
         "board",
@@ -465,7 +465,7 @@
       ]
     },
     {
-      "name": "harness board question discard",
+      "name": "nexus board question discard",
       "kind": "cli",
       "args": [
         "board",
@@ -475,7 +475,7 @@
       ]
     },
     {
-      "name": "harness board question reopen",
+      "name": "nexus board question reopen",
       "kind": "cli",
       "args": [
         "board",
@@ -485,7 +485,7 @@
       ]
     },
     {
-      "name": "harness board question link",
+      "name": "nexus board question link",
       "kind": "cli",
       "args": [
         "board",
@@ -495,7 +495,7 @@
       ]
     },
     {
-      "name": "harness board question depends",
+      "name": "nexus board question depends",
       "kind": "cli",
       "args": [
         "board",
@@ -505,7 +505,7 @@
       ]
     },
     {
-      "name": "harness board question research-start",
+      "name": "nexus board question research-start",
       "kind": "cli",
       "args": [
         "board",
@@ -515,7 +515,7 @@
       ]
     },
     {
-      "name": "harness board dispatch",
+      "name": "nexus board dispatch",
       "kind": "cli",
       "args": [
         "board",
@@ -524,7 +524,7 @@
       ]
     },
     {
-      "name": "harness board dispatch status",
+      "name": "nexus board dispatch status",
       "kind": "cli",
       "args": [
         "board",
@@ -534,7 +534,7 @@
       ]
     },
     {
-      "name": "harness board dispatch run",
+      "name": "nexus board dispatch run",
       "kind": "cli",
       "args": [
         "board",
@@ -544,7 +544,7 @@
       ]
     },
     {
-      "name": "harness board dispatch pause",
+      "name": "nexus board dispatch pause",
       "kind": "cli",
       "args": [
         "board",
@@ -554,7 +554,7 @@
       ]
     },
     {
-      "name": "harness board dispatch resume",
+      "name": "nexus board dispatch resume",
       "kind": "cli",
       "args": [
         "board",
@@ -564,7 +564,7 @@
       ]
     },
     {
-      "name": "harness board dispatch enable",
+      "name": "nexus board dispatch enable",
       "kind": "cli",
       "args": [
         "board",
@@ -574,7 +574,7 @@
       ]
     },
     {
-      "name": "harness board dispatch disable",
+      "name": "nexus board dispatch disable",
       "kind": "cli",
       "args": [
         "board",
@@ -584,7 +584,7 @@
       ]
     },
     {
-      "name": "harness board dispatch-runs",
+      "name": "nexus board dispatch-runs",
       "kind": "cli",
       "args": [
         "board",
@@ -593,7 +593,7 @@
       ]
     },
     {
-      "name": "harness board dispatch-runs backfill",
+      "name": "nexus board dispatch-runs backfill",
       "kind": "cli",
       "args": [
         "board",
@@ -603,7 +603,7 @@
       ]
     },
     {
-      "name": "harness board merge",
+      "name": "nexus board merge",
       "kind": "cli",
       "args": [
         "board",
@@ -612,7 +612,7 @@
       ]
     },
     {
-      "name": "harness board accept",
+      "name": "nexus board accept",
       "kind": "cli",
       "args": [
         "board",
@@ -621,7 +621,7 @@
       ]
     },
     {
-      "name": "harness board plan-start",
+      "name": "nexus board plan-start",
       "kind": "cli",
       "args": [
         "board",
@@ -630,31 +630,15 @@
       ]
     },
     {
-      "name": "harness install",
+      "name": "nexus serve",
       "kind": "cli",
       "args": [
-        "install",
+        "serve",
         "--help"
       ]
     },
     {
-      "name": "harness stop",
-      "kind": "cli",
-      "args": [
-        "stop",
-        "--help"
-      ]
-    },
-    {
-      "name": "harness hook",
-      "kind": "cli",
-      "args": [
-        "hook",
-        "--help"
-      ]
-    },
-    {
-      "name": "harness spec",
+      "name": "nexus spec",
       "kind": "cli",
       "args": [
         "spec",
@@ -662,7 +646,7 @@
       ]
     },
     {
-      "name": "harness spec comments",
+      "name": "nexus spec comments",
       "kind": "cli",
       "args": [
         "spec",
@@ -671,11 +655,69 @@
       ]
     },
     {
-      "name": "harness spec resolve",
+      "name": "nexus spec resolve",
       "kind": "cli",
       "args": [
         "spec",
         "resolve",
+        "--help"
+      ]
+    },
+    {
+      "name": "nexus stop",
+      "kind": "cli",
+      "args": [
+        "stop",
+        "--help"
+      ]
+    },
+    {
+      "name": "nexus install",
+      "kind": "cli",
+      "args": [
+        "install",
+        "--help"
+      ]
+    },
+    {
+      "name": "nexus migrate",
+      "kind": "cli",
+      "args": [
+        "migrate",
+        "--help"
+      ]
+    },
+    {
+      "name": "nexus hook",
+      "kind": "cli",
+      "args": [
+        "hook",
+        "--help"
+      ]
+    },
+    {
+      "name": "nexus customize",
+      "kind": "cli",
+      "args": [
+        "customize",
+        "--help"
+      ]
+    },
+    {
+      "name": "nexus customize apply",
+      "kind": "cli",
+      "args": [
+        "customize",
+        "apply",
+        "--help"
+      ]
+    },
+    {
+      "name": "nexus customize overview",
+      "kind": "cli",
+      "args": [
+        "customize",
+        "overview",
         "--help"
       ]
     },

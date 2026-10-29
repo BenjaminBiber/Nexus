@@ -25,12 +25,15 @@ impl GitPaths {
             return Ok(fast);
         }
         self.git
-            .run(cwd, &["rev-parse", "--path-format=absolute", "--git-common-dir"])
+            .run(
+                cwd,
+                &["rev-parse", "--path-format=absolute", "--git-common-dir"],
+            )
             .map(|out| normalize(&out))
             .map_err(|_| {
                 HarnessError::new(
                     "not-a-git-project",
-                    "Hier ist kein Git-Projekt. `harness init` muss in einem Git-Repository laufen.",
+                    "Hier ist kein Git-Projekt. `nexus init` muss in einem Git-Repository laufen.",
                 )
                 .into()
             })

@@ -778,7 +778,7 @@ Bitte von Hand prüfen.",
             format!(
                 "{} liegt auf {ticket_board}, dieses Repo gehört aber zu Board {} „{}“. \
 Das Ticket im Repo seines Boards bearbeiten oder die Zuordnung mit \
-„harness board boards repo <id> <pfad>“ ändern.",
+„nexus board boards repo <id> <pfad>“ ändern.",
                 ticket.id, repo_board.id, repo_board.name
             ),
         )

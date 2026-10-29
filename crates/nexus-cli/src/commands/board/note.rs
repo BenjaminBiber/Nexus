@@ -17,40 +17,40 @@ pub const NOTE_ABOUT: &str = "Notizen: Befunde über etwas anderes als das laufe
 const ADD_ABOUT: &str = "Hält einen Befund fest, der nicht zum laufenden Ticket gehört. Gibt es ihn schon, wird abgelehnt.";
 
 /// Zusatztext unter der Hilfe von `note add`
-const ADD_AFTER: &str = "\nDer Titel ist ein Satz, der ohne Kontext verständlich ist: was ist kaputt oder fehlt – ohne Ticket-ID.\nDie Herkunft steht in --from; „unabhängig von <Ticket>“ gehört nicht in den Text.\n\nBeispiel:\n  harness board note add \"Cache der Board-Ansicht läuft nie ab\" --details \"BoardViewService.ts: ohne TTL; nach Ticketwechsel bleibt die alte Spalte stehen. Vorschlag: changeMarker prüfen.\" --from ARC-0009 --label cache --author claude";
+const ADD_AFTER: &str = "\nDer Titel ist ein Satz, der ohne Kontext verständlich ist: was ist kaputt oder fehlt – ohne Ticket-ID.\nDie Herkunft steht in --from; „unabhängig von <Ticket>“ gehört nicht in den Text.\n\nBeispiel:\n  nexus board note add \"Cache der Board-Ansicht läuft nie ab\" --details \"BoardViewService.ts: ohne TTL; nach Ticketwechsel bleibt die alte Spalte stehen. Vorschlag: changeMarker prüfen.\" --from ARC-0009 --label cache --author claude";
 
 /// Beschreibung von `note seen`
 const SEEN_ABOUT: &str =
     "Derselbe Befund ist erneut aufgefallen: zählt die offene Notiz hoch statt einer neuen.";
 
 /// Beispiel unter der Hilfe von `note seen`
-const SEEN_EXAMPLE: &str = "\nBeispiel:\n  harness board note seen 12 --from ARC-0014";
+const SEEN_EXAMPLE: &str = "\nBeispiel:\n  nexus board note seen 12 --from ARC-0014";
 
 /// Beschreibung von `note list`
 const LIST_ABOUT: &str = "Listet Notizen; ohne --state nur offene.";
 
 /// Beispiele unter der Hilfe von `note list`
 const LIST_EXAMPLES: &str =
-    "\nBeispiele:\n  harness board note list --md\n  harness board note list --state alle";
+    "\nBeispiele:\n  nexus board note list --md\n  nexus board note list --state alle";
 
 /// Beschreibung von `note show`
 const SHOW_ABOUT: &str = "Zeigt eine Notiz vollständig.";
 
 /// Beispiel unter der Hilfe von `note show`
-const SHOW_EXAMPLE: &str = "\nBeispiel:\n  harness board note show 12";
+const SHOW_EXAMPLE: &str = "\nBeispiel:\n  nexus board note show 12";
 
 /// Beschreibung von `note take`
 const TAKE_ABOUT: &str = "Macht aus einer offenen Notiz ein Ticket (Titel der Notiz = Titel, Details = Beschreibung, Labels gehen mit).";
 
 /// Beispiel unter der Hilfe von `note take`
-const TAKE_EXAMPLE: &str = "\nBeispiel:\n  harness board note take 12 --priority high";
+const TAKE_EXAMPLE: &str = "\nBeispiel:\n  nexus board note take 12 --priority high";
 
 /// Beschreibung von `note drop`
 const DROP_ABOUT: &str = "Verwirft eine Notiz mit Grund (wird nie gelöscht).";
 
 /// Beispiel unter der Hilfe von `note drop`
 const DROP_EXAMPLE: &str =
-    "\nBeispiel:\n  harness board note drop 12 --reason \"erledigt sich mit ARC-0020\"";
+    "\nBeispiel:\n  nexus board note drop 12 --reason \"erledigt sich mit ARC-0020\"";
 
 /// Die Unterbefehle von `board note`
 #[derive(Debug, Subcommand)]

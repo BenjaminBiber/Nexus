@@ -77,7 +77,11 @@ impl Clone {
             .arg(self.custom())
             .args(args)
             .current_dir(self.dir.path())
+            // Eigener Benutzerordner, damit der Lauf den echten nicht anfasst
+            .env("NEXUS_HOME", self.root().join("home"))
+            .env_remove("HARNESS_HOME")
             .env_remove("HARNESS_CUSTOM_DIR")
+            .env_remove("NEXUS_CUSTOM_DIR")
             .env_remove("HARNESS_SESSION");
         let output: Output = befehl.output().expect("nexus startet");
         Lauf {
@@ -246,7 +250,7 @@ fn die_hilfe_nennt_die_unterbefehle() {
         .expect("nexus startet");
     let hilfe = String::from_utf8_lossy(&output.stdout);
     assert!(
-        hilfe.starts_with("Aufruf: harness customize [options] [command]\n"),
+        hilfe.starts_with("Aufruf: nexus customize [options] [command]\n"),
         "{hilfe}"
     );
     for teil in [

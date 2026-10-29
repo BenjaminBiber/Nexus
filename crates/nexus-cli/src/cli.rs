@@ -4,18 +4,24 @@
 use std::path::PathBuf;
 
 use clap::{Command, CommandFactory, FromArgMatches, Parser, Subcommand};
-use nexus_core::Result;
+use nexus_core::{HomeSource, NexusHome, Result};
 
 use crate::commands;
 use crate::context::CliContext;
-use crate::output::{errors, help};
+use crate::notices;
+use crate::output::{errors, help, Printer};
 
-/// Name in Hilfe, Beispielen und Fehlermeldungen; bis P3-16 bleibt es „harness“
-pub const PROGRAM: &str = "harness";
+/// Name in Hilfe, Beispielen und Fehlermeldungen
+pub const PROGRAM: &str = "nexus";
+
+/// Name des Hook-Befehls; er bleibt still (keine Hinweise, keine Migration)
+const HOOK: &str = "hook";
+
+/// Name des Umzugsbefehls; er migriert selbst und nicht noch einmal vorab
+const MIGRATE: &str = "migrate";
 
 /// Beschreibung des Programms auf der Hauptseite der Hilfe
-const ABOUT: &str =
-    "AI Harness: Board, Specs, Worktrees und Sessions für parallele Claude-Sessions";
+const ABOUT: &str = "Nexus: Board, Specs, Worktrees und Sessions für parallele Claude-Sessions";
 
 /// Globale Optionen und der Befehl, der ausgeführt werden soll.
 ///
@@ -56,30 +62,30 @@ Weitere Befehle:
                                      Anpassung und Basis löschen
 
 Beispiele:
-  harness customize check
-  harness customize copy skill harness-grill
-  harness customize reset workflow";
+  nexus customize check
+  nexus customize copy skill harness-grill
+  nexus customize reset workflow";
 
 /// Beschreibung von `init` (wortgleich zu `InitCommand.ts`)
-const INIT_ABOUT: &str = "Richtet den Harness im aktuellen Git-Projekt ein (einmal pro Projekt, wiederholbar) und nennt das zugeordnete Board.";
+const INIT_ABOUT: &str = "Richtet Nexus im aktuellen Git-Projekt ein (einmal pro Projekt, wiederholbar) und nennt das zugeordnete Board.";
 
 /// Beschreibung von `install` (wortgleich zu `InstallCommand.ts`)
-const INSTALL_ABOUT: &str = "Macht den Befehl harness im normalen Terminal verfügbar (Kopie unter ~/.harness, Eintrag im PATH des Benutzers).";
+const INSTALL_ABOUT: &str = "Macht den Befehl nexus im normalen Terminal verfügbar (Kopie unter ~/.nexus, Eintrag im PATH des Benutzers).";
 
 /// Beschreibung von `board` auf der Hilfeseite; wortgleich zum TypeScript-Befehl
 const BOARD_ABOUT: &str = "Ohne Unterbefehl: startet bei Bedarf den Server und öffnet das Board. Mit Unterbefehl: Board-Datenbank bedienen.";
 
 /// Hilfe der Option `--port`; die Zahl ist `DEFAULT_SERVER_PORT` aus dem Fachkern
-const BOARD_PORT_HELP: &str = "Port des Servers (Standard 4710 oder HARNESS_PORT)";
+const BOARD_PORT_HELP: &str = "Port des Servers (Standard 4710 oder NEXUS_PORT)";
 
 /// Beschreibung von `serve` auf der Hilfeseite
 const SERVE_ABOUT: &str = "Startet den Server im Vordergrund: Rust nimmt den Port an, der Node-Server läuft als Kindprozess dahinter.";
 
 /// Beispiele unter der Hilfe von `serve`
-const SERVE_EXAMPLES: &str = "\nBeispiele:\n  harness serve\n  harness serve --port 4800\n  harness serve --node-sidecar packages/server/dist/main.js\n\nBeendet wird mit Strg+C; der Node-Server geht dabei mit.";
+const SERVE_EXAMPLES: &str = "\nBeispiele:\n  nexus serve\n  nexus serve --port 4800\n  nexus serve --node-sidecar packages/server/dist/main.js\n\nBeendet wird mit Strg+C; der Node-Server geht dabei mit.";
 
 /// Beispiele unter der Hilfe von `board`
-const BOARD_EXAMPLES: &str = "\nBeispiele:\n  harness board\n  harness board --port 4800 --no-open";
+const BOARD_EXAMPLES: &str = "\nBeispiele:\n  nexus board\n  nexus board --port 4800 --no-open";
 
 /// Die Befehle des Programms. Die restlichen Fachbefehle folgen in P3-16 bis P3-18; `help` steht
 /// wie bei commander in jedem Befehl, der selbst nichts tut und Unterbefehle hat.
@@ -91,7 +97,7 @@ pub enum Commands {
     #[command(
         name = "init",
         about = INIT_ABOUT,
-        after_help = "\nBeispiel:\n  harness init",
+        after_help = "\nBeispiel:\n  nexus init",
         disable_help_flag = true
     )]
     Init,
@@ -170,16 +176,30 @@ pub enum Commands {
         restart: bool,
     },
 
-    /// `harness` im normalen Terminal verfügbar machen
+    /// `nexus` im normalen Terminal verfügbar machen
     #[command(
         name = "install",
         about = INSTALL_ABOUT,
-        after_help = "\nBeispiel:\n  harness install\n\nWiederholbar; aktualisiert die Kopie nach einem Plugin-Update.",
+        after_help = "\nBeispiel:\n  nexus install\n\nWiederholbar; aktualisiert die Kopie nach einem Plugin-Update.",
         disable_help_flag = true
     )]
     Install {
         #[arg(long = "no-path", help = "PATH nicht ändern, nur kopieren")]
         no_path: bool,
+    },
+
+    /// Daten aus dem alten Ordner holen
+    #[command(
+        name = MIGRATE,
+        about = commands::migrate::MIGRATE_ABOUT,
+        after_help = commands::migrate::MIGRATE_EXAMPLES,
+        disable_help_flag = true
+    )]
+    Migrate {
+        #[arg(long, value_name = "pfad", help = commands::migrate::FROM_HELP)]
+        from: Option<PathBuf>,
+        #[arg(long = "dry-run", help = commands::migrate::DRY_RUN_HELP)]
+        dry_run: bool,
     },
 
     /// Hook-Ereignis von Claude Code verarbeiten
@@ -239,6 +259,14 @@ pub fn run(args: &[String]) -> Result<u8> {
     root.build();
     let walk = locate(&root, args);
 
+    // Hooks bleiben still: ihre Ausgabe gehört Claude Code
+    if walk.command() != Some(HOOK) {
+        notices::print_once();
+    }
+    if migrates(&walk) {
+        commands::migrate::migrate_on_first_run(&Printer::from_args(args));
+    }
+
     if walk.help {
         print!("{}", help::render(&walk.path.join(" "), walk.cmd));
         return Ok(0);
@@ -274,8 +302,8 @@ pub fn run(args: &[String]) -> Result<u8> {
 ///
 /// Geändert wird mit `mut_subcommands` und nicht mit `mut_subcommand`: Letzteres hängt den
 /// geänderten Unterbefehl hinten an, und die Hilfe zeigt die Unterbefehle in genau dieser
-/// Reihenfolge – `board` stünde dann am Ende von `harness --help` und `step` am Ende von
-/// `harness board --help`.
+/// Reihenfolge – `board` stünde dann am Ende von `nexus --help` und `step` am Ende von
+/// `nexus board --help`.
 pub fn help_tree() -> Command {
     Cli::command().mut_subcommands(|sub| {
         if sub.get_name() != "board" {
@@ -322,6 +350,9 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
         Some(Commands::Spec { sub }) => commands::spec::run(&context, &sub),
         Some(Commands::Stop { restart }) => commands::stop::run(&context, restart),
         Some(Commands::Install { no_path }) => commands::install::run(&context, !no_path),
+        Some(Commands::Migrate { from, dry_run }) => {
+            commands::migrate::run(&context, from.as_deref(), dry_run)
+        }
         Some(Commands::Hook { ereignis }) => commands::hook::run(&ereignis),
         Some(Commands::Customize(args)) => commands::customize::run(&context, args),
         Some(Commands::DispatchWorker { lauf }) => commands::dispatch_worker::run(&context, &lauf),
@@ -333,7 +364,7 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
     }
 }
 
-/// `harness help [befehl]`: Hilfe des Programms oder eines Unterbefehls
+/// `nexus help [befehl]`: Hilfe des Programms oder eines Unterbefehls
 fn help_command(root: &Command, name: Option<&str>) -> Result<u8> {
     let Some(name) = name else {
         print!("{}", help::render(PROGRAM, root));
@@ -351,7 +382,7 @@ fn help_command(root: &Command, name: Option<&str>) -> Result<u8> {
     }
 }
 
-/// `harness <gruppe> help [befehl]`: Hilfe einer Gruppe oder eines ihrer Unterbefehle.
+/// `nexus <gruppe> help [befehl]`: Hilfe einer Gruppe oder eines ihrer Unterbefehle.
 /// commander legt diesen Befehl in jeder Gruppe ohne eigene Aktion selbst an; in clap steht er
 /// als Variante im Aufzählungstyp der Gruppe und landet hier.
 pub fn group_help(path: &[&str], name: Option<&str>) -> Result<u8> {
@@ -384,6 +415,19 @@ pub fn group_help(path: &[&str], name: Option<&str>) -> Result<u8> {
     }
 }
 
+/// Soll dieser Aufruf vorab den Umzug nach `~/.nexus` versuchen? Nur ein echter Befehl, nie
+/// `hook` (die Ausgabe gehört Claude Code), nie `migrate` (der migriert selbst), nie eine
+/// Hilfeseite – und nur, wenn die Auflösung noch auf `~/.harness` zurückgefallen ist.
+fn migrates(walk: &Walk<'_>) -> bool {
+    if walk.help {
+        return false;
+    }
+    match walk.command() {
+        None | Some(HOOK) | Some(MIGRATE) => false,
+        Some(_) => NexusHome::from_process_env().source() == HomeSource::HarnessFallback,
+    }
+}
+
 /// Namen der sichtbaren Unterbefehle (für Vorschläge)
 fn subcommand_names(cmd: &Command) -> Vec<String> {
     cmd.get_subcommands()
@@ -398,6 +442,13 @@ struct Walk<'a> {
     path: Vec<String>,
     cmd: &'a Command,
     help: bool,
+}
+
+impl Walk<'_> {
+    /// Der Befehl der ersten Ebene, also `hook` in `nexus hook session-start`; ohne Befehl nichts
+    fn command(&self) -> Option<&str> {
+        self.path.get(1).map(String::as_str)
+    }
 }
 
 /// Sucht `-h`/`--help` in den rohen Argumenten und merkt sich dabei, in welchem Befehl sie stehen.
@@ -435,7 +486,7 @@ fn locate<'a>(root: &'a Command, args: &[String]) -> Walk<'a> {
                 cmd = sub;
             }
             // Ein unbekannter Befehl ist ein Fehler, kein Argument: dann endet auch die Suche
-            // nach der Hilfe, damit `harness gibtesnicht --help` wie bei commander scheitert.
+            // nach der Hilfe, damit `nexus gibtesnicht --help` wie bei commander scheitert.
             None if cmd.get_subcommands().next().is_some()
                 && cmd.get_positionals().next().is_none() =>
             {
@@ -492,7 +543,7 @@ mod tests {
         let root = baum();
         let walk = locate(&root, &argumente(&["--help"]));
         assert!(walk.help);
-        assert_eq!(walk.path, vec!["harness".to_string()]);
+        assert_eq!(walk.path, vec!["nexus".to_string()]);
     }
 
     #[test]
@@ -500,7 +551,7 @@ mod tests {
         let root = baum();
         let walk = locate(&root, &argumente(&["help", "-h"]));
         assert!(walk.help);
-        assert_eq!(walk.path, vec!["harness".to_string(), "help".to_string()]);
+        assert_eq!(walk.path, vec!["nexus".to_string(), "help".to_string()]);
     }
 
     #[test]

@@ -14,13 +14,17 @@ struct Lauf {
     stderr: String,
 }
 
-/// Ruft `nexus` in einem leeren Ordner auf, ohne Session in der Umgebung
+/// Ruft `nexus` in einem leeren Ordner auf, ohne Session in der Umgebung. `NEXUS_HOME` zeigt
+/// auf einen eigenen Ordner, damit der Lauf den echten Benutzerordner nicht anfasst (sonst
+/// würde der erste Start dort den Umzug von `~/.harness` versuchen).
 fn run(args: &[&str]) -> Lauf {
     let dir = TempDir::new().expect("Temp-Ordner");
     let output: Output = std::process::Command::cargo_bin("nexus")
         .expect("Binary nexus")
         .args(args)
         .current_dir(dir.path())
+        .env("NEXUS_HOME", dir.path().join("home"))
+        .env_remove("HARNESS_HOME")
         .env_remove("HARNESS_SESSION")
         .output()
         .expect("nexus startet");
@@ -36,7 +40,7 @@ fn zeigt_die_hilfe_auf_deutsch_und_endet_mit_code_0() {
     let lauf = run(&["--help"]);
     assert_eq!(lauf.stderr, "");
     assert_eq!(lauf.code, 0);
-    assert!(lauf.stdout.contains("AI Harness"), "{}", lauf.stdout);
+    assert!(lauf.stdout.contains("Nexus:"), "{}", lauf.stdout);
     assert!(lauf.stdout.contains("--json"), "{}", lauf.stdout);
 }
 
@@ -45,7 +49,7 @@ fn die_hauptseite_hat_den_aufrufkopf_und_deutsche_uberschriften() {
     let lauf = run(&["--help"]);
     assert!(
         lauf.stdout
-            .starts_with("Aufruf: harness [options] [command]\n"),
+            .starts_with("Aufruf: nexus [options] [command]\n"),
         "{}",
         lauf.stdout
     );
@@ -89,7 +93,7 @@ fn der_hilfe_befehl_zeigt_die_hauptseite_und_einzelne_befehle() {
     assert!(
         einzeln
             .stdout
-            .starts_with("Aufruf: harness help [options] [befehl]\n"),
+            .starts_with("Aufruf: nexus help [options] [befehl]\n"),
         "{}",
         einzeln.stdout
     );
@@ -102,7 +106,7 @@ fn ohne_befehl_zeigt_das_programm_die_hilfe_auf_stderr_und_endet_mit_code_1() {
     assert_eq!(lauf.stdout, "");
     assert!(
         lauf.stderr
-            .starts_with("Aufruf: harness [options] [command]\n"),
+            .starts_with("Aufruf: nexus [options] [command]\n"),
         "{}",
         lauf.stderr
     );

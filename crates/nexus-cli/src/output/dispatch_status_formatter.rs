@@ -1,4 +1,4 @@
-//! Lesbare Zeilen für `harness board dispatch status`, `board merge`, `board plan-start` und
+//! Lesbare Zeilen für `nexus board dispatch status`, `board merge`, `board plan-start` und
 //! `board question research-start`.
 //! Portiert aus `packages/cli/src/board/DispatchStatusFormatter.ts`; die Sichten stammen aus
 //! `DispatchClient.ts`.
@@ -139,7 +139,7 @@ impl DispatchStatusFormatter {
         serde_json::from_value(json.clone()).unwrap_or_default()
     }
 
-    /// Ergebnis von `harness board merge <id>` für dieses Ticket; ohne Ergebnis (älterer Server)
+    /// Ergebnis von `nexus board merge <id>` für dieses Ticket; ohne Ergebnis (älterer Server)
     /// die Übersicht
     pub fn merge_lines(&self, view: &DispatchStatusView) -> Vec<String> {
         match &view.result {
@@ -148,7 +148,7 @@ impl DispatchStatusFormatter {
         }
     }
 
-    /// Ergebnis von `harness board question research-start <id>`
+    /// Ergebnis von `nexus board question research-start <id>`
     pub fn research_lines(&self, view: &DispatchStatusView) -> Vec<String> {
         let Some(run) = &view.started else {
             return self.lines(view);
@@ -166,7 +166,7 @@ impl DispatchStatusFormatter {
         ]
     }
 
-    /// Ausgabe von `harness board plan-start`
+    /// Ausgabe von `nexus board plan-start`
     pub fn plan_lines(&self, view: &DispatchStatusView) -> Vec<String> {
         let Some(run) = &view.started else {
             return self.lines(view);

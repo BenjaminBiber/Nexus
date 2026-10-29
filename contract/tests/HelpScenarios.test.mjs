@@ -104,6 +104,30 @@ describe('HelpScenarios', () => {
     });
   });
 
+  describe('program: Name aus der Aufruf-Zeile', () => {
+    it('nimmt den Namen, mit dem sich das geprüfte Programm selbst meldet', () => {
+      expect(generator.program()).toBe('harness');
+    });
+
+    it('nimmt auch den neuen Namen, wenn das Rust-Binary geprüft wird', () => {
+      class Rust extends HelpScenarios {
+        help() {
+          return 'Aufruf: nexus [options] [command]';
+        }
+      }
+      expect(new Rust(['target/debug/nexus']).program()).toBe('nexus');
+    });
+
+    it('fällt ohne Aufruf-Zeile auf nexus zurück', () => {
+      class Ohne extends HelpScenarios {
+        help() {
+          return 'Optionen:\n  -h, --help  Hilfe anzeigen';
+        }
+      }
+      expect(new Ohne(['target/debug/nexus']).program()).toBe('nexus');
+    });
+  });
+
   describe('scenario: das fertige Szenario', () => {
     const scenario = generator.scenario();
 

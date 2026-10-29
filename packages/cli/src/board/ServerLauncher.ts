@@ -32,7 +32,7 @@ export class ServerLauncher {
       detached: true,
       stdio: 'ignore',
       windowsHide: true,
-      env: { ...process.env, ...this.bundledWebDir() },
+      env: { ...process.env, ...this.resolvedHome(), ...this.bundledWebDir() },
     });
     child.unref();
     const deadline = Date.now() + waitMs;
@@ -61,6 +61,12 @@ export class ServerLauncher {
     } catch {
       return require.resolve('@harness/server');
     }
+  }
+
+  // Der gestartete Server bekommt den hier aufgelösten Ordner als NEXUS_HOME mit. Ohne ihn löste er selbst
+  // auf, und ein Umzug zwischen den beiden Aufrufen hieße: CLI und Server auf verschiedenen board.db.
+  private resolvedHome(): Record<string, string> {
+    return { NEXUS_HOME: new HarnessHome().dir };
   }
 
   // Im Plugin liegt die Oberfläche neben `lib/`; im Sidecar findet der Server sie selbst neben dem Programm,

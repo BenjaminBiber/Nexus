@@ -84,7 +84,7 @@ fn open_ohne_init_wirft_einen_hinweis_auf_harness_init() {
     let error = HarnessProject::open(repo.path()).unwrap_err();
 
     assert_eq!(error.code(), Some("not-initialized"));
-    assert!(error.to_string().contains("harness init"), "{error}");
+    assert!(error.to_string().contains("nexus init"), "{error}");
 }
 
 #[test]

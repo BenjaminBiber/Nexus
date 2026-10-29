@@ -170,7 +170,7 @@
       "json": {
         "error": {
           "code": "not-initialized",
-          "message": "Dieses Projekt ist nicht eingerichtet. Bitte zuerst `harness init` ausführen."
+          "message": "Dieses Projekt ist nicht eingerichtet. Bitte zuerst `nexus init` ausführen."
         }
       },
       "stderr": ""

@@ -35,7 +35,7 @@ pub struct CustomizeCli {
     #[arg(
         long,
         value_name = "ordner",
-        help = "Ordner der Anpassungen (Standard: HARNESS_CUSTOM_DIR, sonst <clone>/custom)"
+        help = "Ordner der Anpassungen (Standard: NEXUS_CUSTOM_DIR, sonst <clone>/custom)"
     )]
     pub custom: Option<PathBuf>,
     // Nur für `scripts/customize.mjs`: dort heißt der Aufruf „npm run customize -- …“
@@ -296,14 +296,15 @@ fn clone_dir(context: &CliContext, option: Option<&Path>) -> PathBuf {
         .unwrap_or_else(|_| dir.to_path_buf())
 }
 
-/// Ordner der Anpassungen: `--custom`, sonst `HARNESS_CUSTOM_DIR`, sonst `<clone>/custom`
+/// Ordner der Anpassungen: `--custom`, sonst `NEXUS_CUSTOM_DIR` (sonst `HARNESS_CUSTOM_DIR`),
+/// sonst `<clone>/custom`
 fn custom_dir(option: Option<&Path>, clone: &Path) -> PathBuf {
     if let Some(dir) = option {
         return dir.to_path_buf();
     }
-    match std::env::var("HARNESS_CUSTOM_DIR") {
-        Ok(dir) if !dir.is_empty() => PathBuf::from(dir),
-        _ => clone.join("custom"),
+    match nexus_core::env::var("CUSTOM_DIR") {
+        Some(dir) => PathBuf::from(dir),
+        None => clone.join("custom"),
     }
 }
 
@@ -342,8 +343,8 @@ mod tests {
             custom_dir(Some(Path::new("/woanders")), clone),
             PathBuf::from("/woanders")
         );
-        // Ohne Option und ohne HARNESS_CUSTOM_DIR gilt <clone>/custom
-        if std::env::var("HARNESS_CUSTOM_DIR").is_err() {
+        // Ohne Option und ohne NEXUS_CUSTOM_DIR gilt <clone>/custom
+        if nexus_core::env::var("CUSTOM_DIR").is_none() {
             assert_eq!(custom_dir(None, clone), clone.join("custom"));
         }
     }

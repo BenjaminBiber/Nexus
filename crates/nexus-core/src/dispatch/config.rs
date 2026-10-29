@@ -1,4 +1,4 @@
-//! Einstellung des Dispatchers (`~/.harness/dispatch.yaml`), vollständig aufgelöst;
+//! Einstellung des Dispatchers (`~/.nexus/dispatch.yaml`), vollständig aufgelöst;
 //! portiert aus `packages/core/src/dispatch/DispatchConfig.ts`.
 //!
 //! Die Tool-Listen, Marker und Gründe sind Vertrag zwischen Dispatcher und Agent und stehen

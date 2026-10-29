@@ -7,6 +7,7 @@ pub mod dispatch_worker;
 pub mod hook;
 pub mod init;
 pub mod install;
+pub mod migrate;
 #[cfg(debug_assertions)]
 pub mod selbsttest;
 pub mod serve;

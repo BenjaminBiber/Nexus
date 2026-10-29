@@ -347,7 +347,7 @@ fn session_start_im_worktree_speist_kontext_ein_und_setzt_die_umgebungsvariablen
     );
     assert_eq!(
         std::fs::read_to_string(&env_datei).unwrap(),
-        "export HARNESS_SESSION='s1'\nexport HARNESS_TICKET='ARC-0001'\n"
+        "export NEXUS_SESSION='s1'\nexport HARNESS_SESSION='s1'\nexport NEXUS_TICKET='ARC-0001'\nexport HARNESS_TICKET='ARC-0001'\n"
     );
 }
 
@@ -502,7 +502,7 @@ fn wartet_nicht_auf_eine_hangende_db() {
     assert_eq!(start, None);
     assert_eq!(
         std::fs::read_to_string(&env_datei).unwrap(),
-        "export HARNESS_SESSION='s6'\n"
+        "export NEXUS_SESSION='s6'\nexport HARNESS_SESSION='s6'\n"
     );
 
     let (prompt, dauer) = u.hook_mit(
@@ -559,7 +559,7 @@ fn behalt_bei_einem_db_fehler_im_kontext_die_zuordnung_ohne_kontext_einzuspeisen
     );
     assert_eq!(
         std::fs::read_to_string(&env_datei).unwrap(),
-        "export HARNESS_SESSION='s8'\nexport HARNESS_TICKET='ARC-0001'\n"
+        "export NEXUS_SESSION='s8'\nexport HARNESS_SESSION='s8'\nexport NEXUS_TICKET='ARC-0001'\nexport HARNESS_TICKET='ARC-0001'\n"
     );
 }
 
@@ -736,7 +736,7 @@ fn das_binary_ordnet_im_worktree_zu_und_speist_den_kontext_ein() {
     );
     assert_eq!(
         std::fs::read_to_string(&env_datei).unwrap(),
-        "export HARNESS_SESSION='s1'\nexport HARNESS_TICKET='ARC-0001'\n"
+        "export NEXUS_SESSION='s1'\nexport HARNESS_SESSION='s1'\nexport NEXUS_TICKET='ARC-0001'\nexport HARNESS_TICKET='ARC-0001'\n"
     );
 }
 
@@ -828,6 +828,6 @@ fn das_binary_endet_bei_hangender_db_still_innerhalb_der_frist() {
     assert!(begonnen.elapsed() < Duration::from_secs(5));
     assert_eq!(
         std::fs::read_to_string(&env_datei).unwrap(),
-        "export HARNESS_SESSION='s9'\n"
+        "export NEXUS_SESSION='s9'\nexport HARNESS_SESSION='s9'\n"
     );
 }

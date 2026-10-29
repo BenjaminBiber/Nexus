@@ -8,7 +8,7 @@ use crate::registry::HarnessHome;
 
 use super::overview::CustomizationOverview;
 
-/// Liest die Übersicht des letzten Anwendens aus `~/.harness/customizations/overview.json`.
+/// Liest die Übersicht des letzten Anwendens aus `~/.nexus/customizations/overview.json`.
 #[derive(Debug, Clone)]
 pub struct OverviewFile {
     home: HarnessHome,

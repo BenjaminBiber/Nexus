@@ -46,7 +46,7 @@ fn der_hilfe_befehl_zeigt_die_gruppe_und_einzelne_befehle() {
     let gruppe = projekt.run(&["board", "question", "help"]);
     assert_eq!(gruppe.code, 0, "{}", gruppe.stderr);
     assert!(
-        gruppe.stdout.starts_with("Aufruf: harness board question"),
+        gruppe.stdout.starts_with("Aufruf: nexus board question"),
         "{}",
         gruppe.stdout
     );
@@ -61,7 +61,7 @@ fn der_hilfe_befehl_zeigt_die_gruppe_und_einzelne_befehle() {
     assert!(
         blatt
             .stdout
-            .starts_with("Aufruf: harness board question add [options] <titel>"),
+            .starts_with("Aufruf: nexus board question add [options] <titel>"),
         "{}",
         blatt.stdout
     );
@@ -76,7 +76,7 @@ fn der_hilfe_befehl_zeigt_bei_unbekanntem_namen_die_gruppe_auf_stderr() {
     assert_eq!(lauf.code, 1);
     assert_eq!(lauf.stdout, "");
     assert!(
-        lauf.stderr.starts_with("Aufruf: harness board question"),
+        lauf.stderr.starts_with("Aufruf: nexus board question"),
         "{}",
         lauf.stderr
     );

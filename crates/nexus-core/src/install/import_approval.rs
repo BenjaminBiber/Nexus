@@ -175,7 +175,7 @@ impl ClaudeImportApproval {
         Err(HarnessError::new(
             "approval-lost",
             format!(
-                "Die Freigabe in {} wurde gleich wieder überschrieben. Bitte `harness init` wiederholen.",
+                "Die Freigabe in {} wurde gleich wieder überschrieben. Bitte `nexus init` wiederholen.",
                 file.display()
             ),
         )

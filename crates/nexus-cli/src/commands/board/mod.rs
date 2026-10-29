@@ -24,7 +24,7 @@ use crate::context::CliContext;
 /// Die Unterbefehle von `board`, die die Board-Datenbank bedienen oder den Dispatcher im
 /// lokalen Server steuern.
 ///
-/// Die Reihenfolge der Varianten ist die Reihenfolge in `harness board --help`; sie steht
+/// Die Reihenfolge der Varianten ist die Reihenfolge in `nexus board --help`; sie steht
 /// zeichengleich in `contract/cli/help/help.golden.json` und folgt damit der TS-CLI.
 // Die Varianten tragen die Optionen von clap; sie dürfen unterschiedlich groß sein
 #[allow(clippy::large_enum_variant)]
@@ -308,7 +308,7 @@ pub fn unknown_question(words: &[String]) -> nexus_core::Error {
     HarnessError::new(
         "command-unknown",
         format!(
-            "Unbekannter Befehl „board question {}“. Hilfe: harness board question --help",
+            "Unbekannter Befehl „board question {}“. Hilfe: nexus board question --help",
             words.join(" ")
         ),
     )
@@ -320,7 +320,7 @@ pub fn unknown(words: &[String]) -> nexus_core::Error {
     HarnessError::new(
         "command-unknown",
         format!(
-            "Unbekannter Befehl „board {}“. Hilfe: harness board --help",
+            "Unbekannter Befehl „board {}“. Hilfe: nexus board --help",
             words.join(" ")
         ),
     )

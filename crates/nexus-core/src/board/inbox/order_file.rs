@@ -1,5 +1,5 @@
 //! Speichert die manuelle Reihenfolge von „Meine Aufgaben“ je Benutzer lokal in
-//! `~/.harness/inbox-order.json`. Eine fehlende oder kaputte Datei ist nie ein Fehler: dann
+//! `~/.nexus/inbox-order.json`. Eine fehlende oder kaputte Datei ist nie ein Fehler: dann
 //! gilt die Standardsortierung. Portiert aus
 //! `packages/core/src/board/inbox/InboxOrderFile.ts`.
 

@@ -13,13 +13,13 @@ use crate::server::session_notice::ServerSessionNotice;
 pub const CLAIM_ABOUT: &str = "Übernimmt ein Ticket für einen Agenten (Standard: In Arbeit). Bereits zugewiesen (auch an denselben Namen) → Exit 1, außer mit --force. Innerhalb einer Session wird sie mit dem Ticket verknüpft.";
 
 /// Beispiel unter der Hilfe von `claim`
-pub const CLAIM_EXAMPLE: &str = "\nBeispiel:\n  harness board claim ARC-0007 --agent claude";
+pub const CLAIM_EXAMPLE: &str = "\nBeispiel:\n  nexus board claim ARC-0007 --agent claude";
 
 /// Beschreibung von `release`
 pub const RELEASE_ABOUT: &str = "Gibt ein Ticket frei; der Status ändert sich nur mit --status.";
 
 /// Beispiel unter der Hilfe von `release`
-pub const RELEASE_EXAMPLE: &str = "\nBeispiel:\n  harness board release ARC-0007 --status geplant";
+pub const RELEASE_EXAMPLE: &str = "\nBeispiel:\n  nexus board release ARC-0007 --status geplant";
 
 /// Optionen von `board claim`
 #[derive(Debug, Args)]

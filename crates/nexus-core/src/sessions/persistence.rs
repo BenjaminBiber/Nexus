@@ -1,4 +1,4 @@
-//! Speichert die Sessions aller Projekte in `~/.harness/sessions.json` (atomar).
+//! Speichert die Sessions aller Projekte in `~/.nexus/sessions.json` (atomar).
 //! Portiert aus `packages/core/src/sessions/SessionPersistence.ts`.
 
 use std::fs;

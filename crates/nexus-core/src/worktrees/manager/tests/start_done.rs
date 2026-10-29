@@ -632,7 +632,7 @@ async fn lehnt_start_und_done_ab_wenn_das_ticket_auf_einem_anderen_board_liegt()
             && harness.message.contains("Sprint")
             && harness.message.contains(&format!("Board {}", other.id))
             && harness.message.contains("Anderes")
-            && harness.message.contains("harness board boards repo"),
+            && harness.message.contains("nexus board boards repo"),
         "{}",
         harness.message
     );

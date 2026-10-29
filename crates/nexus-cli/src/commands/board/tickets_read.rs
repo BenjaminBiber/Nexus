@@ -26,13 +26,13 @@ pub const LIST_ABOUT: &str =
 
 /// Beispiele unter der Hilfe von `list`
 pub const LIST_EXAMPLES: &str =
-    "\nBeispiele:\n  harness board list --md\n  harness board list --status geplant,wartet --q login";
+    "\nBeispiele:\n  nexus board list --md\n  nexus board list --status geplant,wartet --q login";
 
 /// Beschreibung von `show`
 pub const SHOW_ABOUT: &str = "Zeigt ein Ticket mit Texten, Voraussetzungen und Kommentaren (kompakt; --history, --all-comments für alles).";
 
 /// Beispiele unter der Hilfe von `show`
-pub const SHOW_EXAMPLES: &str = "\nBeispiele:\n  harness board show ARC-0007\n  harness board show ARC-0007 --all-comments --history\n  harness board show ARC-0007 --field plan";
+pub const SHOW_EXAMPLES: &str = "\nBeispiele:\n  nexus board show ARC-0007\n  nexus board show ARC-0007 --all-comments --history\n  nexus board show ARC-0007 --field plan";
 
 /// Optionen von `board list`
 #[derive(Debug, Args)]

@@ -1,4 +1,4 @@
-//! Review-Einträge unter `~/.harness/dispatch/reviews/<ID>.json`; portiert aus
+//! Review-Einträge unter `~/.nexus/dispatch/reviews/<ID>.json`; portiert aus
 //! `packages/core/src/dispatch/state/ReviewStore.ts`.
 
 use std::fs;
