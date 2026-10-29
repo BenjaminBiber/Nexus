@@ -5,7 +5,7 @@ description: Schneidet aus Spec und Plan unter docs/superpowers die Aufgaben zu 
 
 # Aufgaben zuschneiden und als Tickets anlegen
 
-Du schneidest die Aufgaben einer Funktion zu und legst daraus Tickets auf dem Board an: der Titel der Aufgabe wird der Titel der Karte, `Beschreibung:` und `Akzeptanz:` werden Beschreibung und Abnahme des Tickets, die Schritte seine Arbeitsliste, der volle Aufgabentext sein Plan. Tickets änderst du nie von Hand, nur über `harness board …`.
+Du schneidest die Aufgaben einer Funktion zu und legst daraus Tickets auf dem Board an: der Titel der Aufgabe wird der Titel der Karte, `Beschreibung:` und `Akzeptanz:` werden Beschreibung und Abnahme des Tickets, die Schritte seine Arbeitsliste, der volle Aufgabentext sein Plan. Tickets änderst du nie von Hand, nur über `nexus board …`.
 
 **Leitgedanke**: Wer eine Aufgabe umsetzt, sieht nur dieses Ticket. Es muss selbsttragend sein: Was ist zu bauen, woran erkennt man „fertig“, welche Dateien, welcher Code, welcher Befehl, welches Ergebnis. Nichts bleibt abstrakt: kein „Logik ergänzen“, „Tests schreiben“ oder „Fehler behandeln“ ohne Angabe, wie genau.
 
@@ -19,9 +19,9 @@ Du schneidest die Aufgaben einer Funktion zu und legst daraus Tickets auf dem Bo
 
 Der Benutzer kommentiert die Superpowers-Dokumente, Glossar und ADRs in den Docs des Boards. Nach dem Lesen von Spec und Plan, bevor du Aufgaben zuschneidest:
 
-1. `harness spec comments <dokument>` (ohne Angabe: alle Dokumente; sonst ein Dokumentpfad oder ein Thema) listet die offenen Kommentare mit Datei, Abschnitt, Stelle und Text.
+1. `nexus spec comments <dokument>` (ohne Angabe: alle Dokumente; sonst ein Dokumentpfad oder ein Thema) listet die offenen Kommentare mit Datei, Abschnitt, Stelle und Text.
 2. Arbeite jeden Kommentar in das genannte Dokument ein. Ist er unklar oder widerspricht er einem anderen Kommentar, frage den Benutzer, statt zu raten.
-3. Markiere ihn danach mit `harness spec resolve K-… "Was du geändert hast, in einem Satz"`. Die `*.comments.json`-Dateien bearbeitest du nie von Hand.
+3. Markiere ihn danach mit `nexus spec resolve K-… "Was du geändert hast, in einem Satz"`. Die `*.comments.json`-Dateien bearbeitest du nie von Hand.
 4. Nenne dem Benutzer am Ende, welche Kommentare du eingearbeitet hast.
 
 ## 2. Dateistruktur zuerst
@@ -89,9 +89,9 @@ Ticket-Verlauf anzeigen
     Befehl: `git commit -m "feat(web): Verlauf auf der Ticketseite"`
 ````
 
-**Titel** (die erste Zeile, später `--title` bzw. das erste Argument von `harness board create`): ein knapper Satz im Imperativ, höchstens etwa 60 Zeichen, beschreibt das Ergebnis und nicht die Dateiarbeit. Keine Pfade, Klassen-, Paket- oder Funktionsnamen im Titel. Richtig: „Server-Paket anlegen“. Falsch: „Paket `server` anlegen: `packages/server/package.json` (Abhängigkeiten …)“.
+**Titel** (die erste Zeile, später `--title` bzw. das erste Argument von `nexus board create`): ein knapper Satz im Imperativ, höchstens etwa 60 Zeichen, beschreibt das Ergebnis und nicht die Dateiarbeit. Keine Pfade, Klassen-, Paket- oder Funktionsnamen im Titel. Richtig: „Server-Paket anlegen“. Falsch: „Paket `server` anlegen: `packages/server/package.json` (Abhängigkeiten …)“.
 
-**Wohin die Teile gehen**: Titel → `harness board create "<Titel>"`, `Beschreibung:` → `--desc`, `Akzeptanz:` → `--acceptance`, jeder Schritt → ein `--step`, der volle Aufgabentext samt Code → `plan` in `payload.json`.
+**Wohin die Teile gehen**: Titel → `nexus board create "<Titel>"`, `Beschreibung:` → `--desc`, `Akzeptanz:` → `--acceptance`, jeder Schritt → ein `--step`, der volle Aufgabentext samt Code → `plan` in `payload.json`.
 
 **Details** (genau diese Beschriftungen):
 
@@ -135,24 +135,24 @@ Gehe die fertigen Aufgaben einmal selbst durch, ohne Subagent, bevor du Tickets 
 
 ## 8. Tickets anlegen
 
-- Committe zuerst Spec und Plan unter `docs/superpowers/`, bevor Tickets gestartet werden: Worktrees und Agenten sehen nur den letzten Commit; `harness board start` warnt sonst.
-- Prüfe mit `harness board list` auf Dubletten: Gibt es zu einer Aufgabe schon ein Ticket, lege keins an, sondern nenne es.
+- Committe zuerst Spec und Plan unter `docs/superpowers/`, bevor Tickets gestartet werden: Worktrees und Agenten sehen nur den letzten Commit; `nexus board start` warnt sonst.
+- Prüfe mit `nexus board list` auf Dubletten: Gibt es zu einer Aufgabe schon ein Ticket, lege keins an, sondern nenne es.
 - Lege dann je Aufgabe in der Reihenfolge der Phasen ein Ticket an:
 
 ```bash
-harness board create "<Titel>" --desc "<Beschreibung>" --acceptance "<Akzeptanz>" --step "<Schritt 1>" --step "<Schritt 2>" --depends-on <ID der vorigen Aufgabe> --by claude
-harness board plan-json <ID> --file payload.json --by claude
+nexus board create "<Titel>" --desc "<Beschreibung>" --acceptance "<Akzeptanz>" --step "<Schritt 1>" --step "<Schritt 2>" --depends-on <ID der vorigen Aufgabe> --by claude
+nexus board plan-json <ID> --file payload.json --by claude
 ```
 
-  `--depends-on` nennt das Ticket der vorigen Aufgabe (bei der ersten und bei parallelen Aufgaben entfällt es). In `payload.json` ist `plan` der volle Aufgabentext samt Code, `handbook` die Vorgaben und Testbefehle aus Abschnitt 4, `diagram` ein kleines Mermaid-Diagramm **ohne** Code-Zaun. Der Plan endet mit `## Aufwand` (siehe Skill `ai-harness:board`, „Tickets aus einem Superpowers-Plan“ – diesen Weg gehst du hier).
-- Die Tickets landen auf dem Board, das diesem Repo zugeordnet ist; ist keines zugeordnet, nenne dem Benutzer `harness board boards list` und `harness board boards repo <id> <pfad>`.
+  `--depends-on` nennt das Ticket der vorigen Aufgabe (bei der ersten und bei parallelen Aufgaben entfällt es). In `payload.json` ist `plan` der volle Aufgabentext samt Code, `handbook` die Vorgaben und Testbefehle aus Abschnitt 4, `diagram` ein kleines Mermaid-Diagramm **ohne** Code-Zaun. Der Plan endet mit `## Aufwand` (siehe Skill `nexus:board`, „Tickets aus einem Superpowers-Plan“ – diesen Weg gehst du hier).
+- Die Tickets landen auf dem Board, das diesem Repo zugeordnet ist; ist keines zugeordnet, nenne dem Benutzer `nexus board boards list` und `nexus board boards repo <id> <pfad>`.
 - Kleinere Schnitte macht der Benutzer selbst auf der Seite „Docs“: Stelle markieren, „Zur Ticket-Auswahl“, Entwürfe erzeugen, prüfen und anlegen.
 - Nenne dem Benutzer: die angelegten Tickets, die Anzahl der Aufgaben je Story, parallele Möglichkeiten, vorgeschlagenen Umfang für den ersten Schnitt.
-- Schlage als Nächstes `/ai-harness:harness-implement` vor. Sollen die Tickets vom Dispatcher umgesetzt werden: `harness board set <id> --label <bisherige> --label auto` (`set --label` ersetzt die Labels, bisherige mit angeben).
+- Schlage als Nächstes `/nexus:harness-implement` vor. Sollen die Tickets vom Dispatcher umgesetzt werden: `nexus board set <id> --label <bisherige> --label auto` (`set --label` ersetzt die Labels, bisherige mit angeben).
 
 ## Regeln
 
-- Tickets nie von Hand ändern; sie entstehen über `harness board create` und `harness board plan-json`.
-- Keine Worktrees und keine Branches anlegen; das macht `harness board start`.
-- Setze keine Kästchen von Aufgaben oder Schritten auf `[X]`; das tun `harness board step` und `harness board done`.
+- Tickets nie von Hand ändern; sie entstehen über `nexus board create` und `nexus board plan-json`.
+- Keine Worktrees und keine Branches anlegen; das macht `nexus board start`.
+- Setze keine Kästchen von Aufgaben oder Schritten auf `[X]`; das tun `nexus board step` und `nexus board done`.
 - Texte für Menschen in natürlichem Deutsch.

@@ -1,5 +1,5 @@
 //! Eine Rule im Projekt, die nur einen Import auf eine zentrale Regeldatei unter
-//! `~/.harness/rules` enthält. Portiert aus `packages/core/src/install/ProjectRule.ts`,
+//! `~/.nexus/rules` enthält. Portiert aus `packages/core/src/install/ProjectRule.ts`,
 //! `ProjectDocsRule.ts` und `ProjectBoardRule.ts`.
 
 use std::fs;
@@ -8,13 +8,26 @@ use std::path::{Path, PathBuf};
 use crate::error::{Error, Result};
 use crate::git::{GitExclude, GitPaths};
 use crate::locking::AtomicWriter;
-use crate::registry::HarnessHome;
+use crate::registry::{HarnessHome, HARNESS_DIR, NEXUS_DIR};
 
 /// Ort der Doku-Rule im Projekt, relativ zur Wurzel (Hauptordner oder Worktree)
-pub const DOCS_RULE_PATH: &str = ".claude/rules/ai-harness-docs.md";
+pub const DOCS_RULE_PATH: &str = ".claude/rules/nexus-docs.md";
 
 /// Ort der Board-Rule im Projekt, relativ zur Wurzel (Hauptordner oder Worktree)
-pub const BOARD_RULE_PATH: &str = ".claude/rules/ai-harness-board.md";
+pub const BOARD_RULE_PATH: &str = ".claude/rules/nexus-board.md";
+
+/// Ort der Doku-Rule, die der Harness früher angelegt hat; `nexus init` löst sie ab
+pub const LEGACY_DOCS_RULE_PATH: &str = ".claude/rules/ai-harness-docs.md";
+
+/// Ort der Board-Rule, die der Harness früher angelegt hat; `nexus init` löst sie ab
+pub const LEGACY_BOARD_RULE_PATH: &str = ".claude/rules/ai-harness-board.md";
+
+/// Kopfzeile, an der eine von Nexus angelegte Rule zu erkennen ist
+pub const RULE_MARKER: &str = "# Angelegt von `nexus init`";
+
+/// Kopfzeile der Rules, die der Harness angelegt hat; nur solche Dateien darf `nexus init`
+/// löschen, von Hand geschriebene bleiben liegen
+pub const LEGACY_RULE_MARKER: &str = "# Angelegt von `harness init`";
 
 /// Was eine Rule ausmacht: Ort im Projekt, zentrale Datei und optionale Eingrenzung
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -52,7 +65,7 @@ impl ProjectRule {
     }
 
     /// Rule, die beim Zugriff auf einen `docs/`-Ordner die zentralen Doku-Regeln
-    /// (`~/.harness/rules/docs.md`) lädt
+    /// (`~/.nexus/rules/docs.md`) lädt
     pub fn docs(home: HarnessHome) -> Self {
         Self::new(
             ProjectRuleSpec {
@@ -65,8 +78,8 @@ impl ProjectRule {
     }
 
     /// Rule ohne Eingrenzung (immer geladen), die die zentrale Board-Regel
-    /// (`~/.harness/rules/board.md`) lädt: Tickets, Board, Fragen und Notizen meinen immer
-    /// das AI-Harness-Board
+    /// (`~/.nexus/rules/board.md`) lädt: Tickets, Board, Fragen und Notizen meinen immer
+    /// das Nexus-Board
     pub fn board(home: HarnessHome) -> Self {
         Self::new(
             ProjectRuleSpec {
@@ -100,8 +113,11 @@ impl ProjectRule {
     /// Importziel: beim Standardordner `~/…`, sonst der absolute Pfad mit Schrägstrichen und
     /// maskierten Leerzeichen
     pub fn import_target(&self) -> String {
-        if absolute(self.home.dir()) == absolute(&home_dir().join(".harness")) {
-            return format!("~/.harness/rules/{}", self.spec.import_file);
+        let dir = absolute(self.home.dir());
+        for name in [NEXUS_DIR, HARNESS_DIR] {
+            if dir == absolute(&home_dir().join(name)) {
+                return format!("~/{name}/rules/{}", self.spec.import_file);
+            }
         }
         self.home
             .rules_dir()
@@ -115,7 +131,7 @@ impl ProjectRule {
     pub fn content(&self) -> String {
         let mut lines = vec![
             "---".to_string(),
-            "# Angelegt von `harness init`, nicht versioniert. Die Regeln liegen zentral und kommen mit `npm run setup`.".to_string(),
+            format!("{RULE_MARKER}, nicht versioniert. Die Regeln liegen zentral und kommen mit `npm run setup`."),
         ];
         if !self.spec.paths.is_empty() {
             lines.push("paths:".to_string());
@@ -207,6 +223,15 @@ mod tests {
 
     #[test]
     fn importiert_beim_standardordner_mit_tilde() {
+        let home = HarnessHome::at(home_dir().join(".nexus"));
+        assert_eq!(
+            ProjectRule::docs(home).import_target(),
+            "~/.nexus/rules/docs.md"
+        );
+    }
+
+    #[test]
+    fn importiert_beim_alten_standardordner_ebenfalls_mit_tilde() {
         let home = HarnessHome::at(home_dir().join(".harness"));
         assert_eq!(
             ProjectRule::docs(home).import_target(),
@@ -216,17 +241,21 @@ mod tests {
 
     #[test]
     fn kennt_die_orte_beider_rules() {
-        assert_eq!(rule("/x", true).path(), ".claude/rules/ai-harness-docs.md");
-        assert_eq!(
-            rule("/x", false).path(),
-            ".claude/rules/ai-harness-board.md"
-        );
+        assert_eq!(rule("/x", true).path(), ".claude/rules/nexus-docs.md");
+        assert_eq!(rule("/x", false).path(), ".claude/rules/nexus-board.md");
         assert_eq!(
             rule("/x", true).file(Path::new("p")),
             Path::new("p")
                 .join(".claude")
                 .join("rules")
-                .join("ai-harness-docs.md")
+                .join("nexus-docs.md")
         );
+    }
+
+    #[test]
+    fn die_kopfzeile_nennt_nexus_init() {
+        let text = rule("/x/.nexus", true).content();
+        assert!(text.contains(RULE_MARKER), "{text}");
+        assert!(!text.contains(LEGACY_RULE_MARKER), "{text}");
     }
 }

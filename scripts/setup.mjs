@@ -1,15 +1,16 @@
-// Richtet den Harness auf diesem Rechner ein (einmal, wiederholbar zum Aktualisieren):
-// baut alles, installiert das Plugin global für den Benutzer und macht `harness` im Terminal verfügbar.
+// Richtet Nexus auf diesem Rechner ein (einmal, wiederholbar zum Aktualisieren):
+// baut alles und ruft `nexus install` aus dem gebauten Plugin – das richtet PATH, Regeln und das
+// Plugin in Claude Code ein.
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const MARKETPLACE = 'ai-harness-local';
-const PLUGIN = `ai-harness@${MARKETPLACE}`;
-const BUNDLED_CLI = join(ROOT, 'packages/plugin/dist/ai-harness/lib/cli.mjs');
+const MARKETPLACE = 'nexus-local';
+const PLUGIN = `nexus@${MARKETPLACE}`;
+const PLUGIN_DIR = join(ROOT, 'packages/plugin/dist/nexus');
+const BUNDLED_BIN = join(PLUGIN_DIR, 'bin', process.platform === 'win32' ? 'nexus.exe' : 'nexus');
 // `npm run setup -- --no-pull`: nur bauen und Anpassungen anwenden, keine neue Version holen
 const NO_PULL = process.argv.includes('--no-pull');
 
@@ -46,72 +47,22 @@ function updateSources() {
   if (!run('git', ['pull', '--ff-only']).ok) console.warn('git pull ist nicht gelungen; es wird mit dem lokalen Stand weitergebaut.');
 }
 
-// Aktualisiert die Projekt-Einträge des Plugins (von `harness init` eingeschaltet), sonst bleiben sie auf dem alten Stand
-function updateProjectInstalls() {
-  let entries = [];
-  try {
-    const file = join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude'), 'plugins', 'installed_plugins.json');
-    entries = JSON.parse(readFileSync(file, 'utf8')).plugins?.[PLUGIN] ?? [];
-  } catch {
-    return;
-  }
-  for (const entry of entries) {
-    if (entry.scope === 'user' || !entry.projectPath || !existsSync(entry.projectPath)) continue;
-    const ok = run('claude', ['plugin', 'update', PLUGIN, '--scope', entry.scope], false, entry.projectPath).ok;
-    console.log(`  ${ok ? 'aktualisiert' : 'nicht aktualisiert'}: ${entry.projectPath}`);
-  }
-}
-
-// Gibt die Übersicht der Anpassungen aus (dieselbe Datei wie das Panel „Anpassungen“ im Board)
-async function printCustomizations() {
-  const file = join(ROOT, 'packages/plugin/dist/ai-harness/customizations/overview.json');
-  if (!existsSync(file)) return console.warn('Keine Übersicht der Anpassungen gefunden (customizations/overview.json fehlt).');
-  // Fehler hier dürfen setup nicht abbrechen (SC-002): die Installation ist dann schon erledigt
-  try {
-    const core = await import(pathToFileURL(join(ROOT, 'packages/core/dist/index.js')).href);
-    console.log('\n▸ Anpassungen');
-    console.log(new core.OverviewFormatter().format(JSON.parse(readFileSync(file, 'utf8'))));
-  } catch (error) {
-    console.warn(`Übersicht der Anpassungen nicht lesbar: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
-// Meldet das Plugin über den lokalen Marktplatz bei Claude Code an (Benutzerebene, also in jedem Projekt)
-function installPlugin() {
-  console.log('\n▸ Plugin in Claude Code installieren (für alle Projekte)');
-  if (!run('claude', ['--version'], false).ok) {
-    console.warn('Claude Code (Befehl `claude`) wurde nicht gefunden. Das Plugin muss später selbst installiert werden:');
-    console.warn(`  claude plugin marketplace add "${ROOT}"`);
-    console.warn(`  claude plugin install ${PLUGIN}`);
-    return false;
-  }
-  if (!run('claude', ['plugin', 'marketplace', 'list'], false).out.includes(MARKETPLACE)) {
-    if (!run('claude', ['plugin', 'marketplace', 'add', ROOT]).ok) return false;
-  }
-  // Marktplatz neu einlesen, sonst sieht `plugin update` den frisch gebauten Stand nicht
-  run('claude', ['plugin', 'marketplace', 'update', MARKETPLACE]);
-  const installed = run('claude', ['plugin', 'list'], false).out.includes(PLUGIN);
-  if (!run('claude', ['plugin', installed ? 'update' : 'install', PLUGIN]).ok) return false;
-  updateProjectInstalls();
-  // Auf Benutzerebene ausschalten: `harness init` schaltet es je Projekt ein, sonst kostet es überall Zeit und Kontext
-  console.log('Plugin auf Benutzerebene ausschalten (wird je Projekt mit `harness init` eingeschaltet)');
-  run('claude', ['plugin', 'disable', PLUGIN, '--scope', 'user']);
-  return true;
-}
-
 updateSources();
 step('Pakete bauen', 'npm', ['run', 'build']);
-step('Plugin bauen', 'npm', ['run', 'build:plugin']);
-if (!existsSync(BUNDLED_CLI)) {
-  console.error(`Fehlt nach dem Bauen: ${BUNDLED_CLI}`);
+step('Plugin bauen (inkl. Rust-Binary)', 'npm', ['run', 'build:plugin']);
+if (!existsSync(BUNDLED_BIN)) {
+  console.error(`Fehlt nach dem Bauen: ${BUNDLED_BIN}`);
   process.exit(1);
 }
-const pluginOk = installPlugin();
-step('Laufenden Server neu starten (falls er lief; sonst startet er mit `harness board`)', process.execPath, [BUNDLED_CLI, 'stop', '--restart']);
-step('harness im Terminal einrichten', process.execPath, [BUNDLED_CLI, 'install']);
-await printCustomizations();
+step('Laufenden Server neu starten (falls er lief; sonst startet er mit `nexus board`)', BUNDLED_BIN, ['stop', '--restart']);
+// `nexus install` kopiert Binary, Regeln und Anpassungen nach ~/.nexus, ergänzt den PATH und
+// meldet das Plugin über den Marktplatz nexus-local bei Claude Code an
+step('nexus im Terminal und Plugin in Claude Code einrichten', BUNDLED_BIN, ['install', '--marketplace', ROOT]);
+// Übersicht der Anpassungen (dieselbe Datei wie das Panel „Anpassungen“ im Board)
+console.log('\n▸ Anpassungen');
+run(BUNDLED_BIN, ['customize', 'overview', '--file', join(PLUGIN_DIR, 'customizations/overview.json')]);
 
 console.log('\nFertig.');
-console.log('- Neues Terminal öffnen, dann funktioniert `harness` in jedem Ordner.');
-console.log(pluginOk ? '- Das Plugin wird je Projekt durch `harness init` eingeschaltet; in anderen Projekten ist es aus und kostet nichts.' : '- Das Plugin ist noch nicht installiert (siehe Hinweis oben).');
-console.log('- Im Projektordner: `harness init`, dann Claude Code neu starten (oder /reload-plugins), dann `harness board`.');
+console.log('- Neues Terminal öffnen, dann funktioniert `nexus` in jedem Ordner (`harness` bleibt als alter Name nutzbar).');
+console.log(`- Das Plugin ${PLUGIN} wird je Projekt durch \`nexus init\` eingeschaltet; in anderen Projekten ist es aus und kostet nichts.`);
+console.log('- Im Projektordner: `nexus init`, dann Claude Code neu starten (oder /reload-plugins), dann `nexus board`.');

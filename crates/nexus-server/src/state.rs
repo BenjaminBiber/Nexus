@@ -25,7 +25,9 @@ use crate::docs::{
     SavedTicketDrafts, TicketDraftService,
 };
 use crate::events::watcher::MarkerOf;
-use crate::events::{ChangeWatcher, EventHub, SpecDocWatcher, BRIDGED_EVENTS};
+use crate::events::{ChangeWatcher, EventHub, SpecDocWatcher, BRIDGED_EVENTS, SESSIONS_EVENT};
+use crate::favorites::FavoriteService;
+use crate::groups::RouteGroup;
 use crate::guard::RequestGuard;
 use crate::log::ServerLog;
 use crate::notices::BrowserNoticeHub;
@@ -34,6 +36,8 @@ use crate::notifications::{
 };
 use crate::projects::ProjectService;
 use crate::proxy::Upstream;
+use crate::sessions::{SessionService, TicketInfoLookup, TicketSummaries};
+use crate::usage::ClaudeUsageService;
 
 /// Alles, was die Routen des Servers teilen
 pub struct AppState {
@@ -61,6 +65,14 @@ pub struct AppState {
     pub doc_revisions: DocRevisionService,
     /// Wie Claude gestartet wird; Tests setzen hier Attrappen ein
     pub claude: ClaudeRunners,
+    /// Die Sessions des Servers: Hook-Ereignisse, Liste und `sessions.json`
+    pub sessions: SessionService,
+    /// Die gemerkten Sessions des Servers (`favorites.json`)
+    pub favorites: FavoriteService,
+    /// Titel und Status von Tickets für Sessions, Favoriten und Meldungen (mit Zeitlimit)
+    pub ticket_info: TicketInfoLookup,
+    /// Die Abo-Limits von Claude samt Zwischenspeicher
+    pub usage: ClaudeUsageService,
     pub platform: Platform,
     pub log: ServerLog,
     /// Verteiler der Ereignisse je Projekt (`sessions`, später mehr)
@@ -109,6 +121,18 @@ impl AppState {
         platform: Platform,
         claude: ClaudeRunners,
     ) -> nexus_core::Result<Arc<Self>> {
+        Self::with_claude_and_usage(config, board, platform, claude, None)
+    }
+
+    /// Wie [`AppState::with_claude`], mit eigenem Dienst der Abo-Limits (Tests fragen damit
+    /// nie das Netz)
+    pub fn with_claude_and_usage(
+        config: ServerConfig,
+        board: BoardBackendFactory,
+        platform: Platform,
+        claude: ClaudeRunners,
+        usage: Option<ClaudeUsageService>,
+    ) -> nexus_core::Result<Arc<Self>> {
         let upstream = config
             .upstream
             .as_deref()
@@ -129,6 +153,17 @@ impl AppState {
             // deshalb auch dort der echte
             ntfy: NtfySender::default(),
         }));
+        // Der Verteiler entsteht vor dem Zustand: die Sessions melden über ihn, und die
+        // Ereignisströme nehmen denselben
+        let events = EventHub::new();
+        let sessions =
+            SessionService::new(config.home.clone(), events.clone(), config.clock.clone());
+        let favorites = FavoriteService::new(
+            config.home.clone(),
+            config.clock.clone(),
+            ServerLog::new(&config.home),
+        );
+        let usage = usage.unwrap_or_else(|| ClaudeUsageService::new(config.clock.clone()));
         // Die Watcher fragen über den Zustand ab, in dem sie selbst liegen; sie halten ihn
         // deshalb nur schwach – sonst hielte sich der Zustand selbst am Leben
         let board = Arc::new(BoardRuntimeHolder::new(board));
@@ -173,9 +208,13 @@ impl AppState {
             doc_questions: DocQuestionService::new(config.home.clone()),
             doc_revisions: DocRevisionService::new(config.home.clone()),
             claude,
+            sessions,
+            favorites,
+            ticket_info: TicketInfoLookup::new(ticket_summaries(weak)),
+            usage,
             platform,
             log: ServerLog::new(&config.home),
-            events: EventHub::new(),
+            events,
             board_changes: ChangeWatcher::boards(
                 marker_of(weak, |state, id| {
                     Box::pin(async move {
@@ -213,7 +252,7 @@ impl AppState {
             ),
             notifications,
             notice_tabs,
-            bridged_events: BRIDGED_EVENTS.into_iter().collect(),
+            bridged_events: bridged_events(&config),
             upstream,
             shutdown: CancellationToken::new(),
             pid: std::process::id(),
@@ -230,6 +269,31 @@ impl AppState {
         self.spec_docs.close();
         self.notice_tabs.close();
     }
+}
+
+/// Die Ereignisse, die vom Node-Server kommen: `notice` immer, `sessions` nur, wenn der
+/// Notschalter die Gruppe `sessions` wieder dorthin schickt (dann entstehen sie auch dort)
+fn bridged_events(config: &ServerConfig) -> HashSet<&'static str> {
+    let mut events: HashSet<&'static str> = BRIDGED_EVENTS.into_iter().collect();
+    if config.proxy_groups.contains(RouteGroup::Sessions) {
+        events.insert(SESSIONS_EVENT);
+    }
+    events
+}
+
+/// Die Kurzangaben der Tickets aus der Board-Datenbank; hält den Zustand nur schwach
+fn ticket_summaries(weak: &std::sync::Weak<AppState>) -> TicketSummaries {
+    let weak = weak.clone();
+    Arc::new(move |ids: Vec<String>| {
+        let weak = weak.clone();
+        Box::pin(async move {
+            let state = weak.upgrade().ok_or_else(gone)?;
+            state
+                .board
+                .run(move |backend| async move { backend.services().tickets.summaries(&ids).await })
+                .await
+        })
+    })
 }
 
 /// Die offenen eigenen Fragen der Board-Datenbank; hält den Zustand nur schwach

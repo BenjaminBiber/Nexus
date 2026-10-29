@@ -9,7 +9,7 @@ Anpassungen gelten für diesen Dev in allen Projekten. Sie liegen in `custom/` i
 
 ## 1. Clone finden
 
-Lies `~/.harness/customizations/overview.json`. Ist die Umgebungsvariable `HARNESS_HOME` gesetzt, liegt die Datei stattdessen unter `$HARNESS_HOME/customizations/overview.json`. Daraus brauchst du `cloneDir` und `customDir`.
+Lies `~/.nexus/customizations/overview.json`. Ist die Umgebungsvariable `NEXUS_HOME` gesetzt, liegt die Datei stattdessen unter `$NEXUS_HOME/customizations/overview.json`. Daraus brauchst du `cloneDir` und `customDir`.
 
 Fehlt die Datei, sage: „Der Harness muss einmal im Harness-Ordner mit `npm run setup` eingerichtet werden.“ Ändere dann nichts.
 
@@ -33,7 +33,7 @@ Ersetzen beginnt immer mit `copy`: so startet die Anpassung beim aktuellen Stand
 ## 3. Regeln
 
 - Schreibe nur in `<customDir>` und nie in andere Dateien des Clones. Dateien in `<customDir>/.base/` änderst du nie von Hand; die Basis erneuert nur `copy … --rebase`.
-- Namen: Kleinbuchstaben, Ziffern und einzelne Bindestriche, höchstens 64 Zeichen. Gleicher Name wie ein mitgelieferter Skill oder Output-Style ersetzt ihn, ein neuer Name kommt dazu. Aufruf eines Skills: `/ai-harness:<name>`.
+- Namen: Kleinbuchstaben, Ziffern und einzelne Bindestriche, höchstens 64 Zeichen. Gleicher Name wie ein mitgelieferter Skill oder Output-Style ersetzt ihn, ein neuer Name kommt dazu. Aufruf eines Skills: `/nexus:<name>`.
 - Der Workflow ist ein Default-Export vom Typ `WorkflowPhase[]` und muss die Phasen `planen` und `umsetzen` enthalten; ihr Inhalt ist frei. Die Phasen-IDs `fragen` und `nebenbei` sind für die Anleitung im Board reserviert:
   ```ts
   import type { WorkflowPhase } from '@harness/core';

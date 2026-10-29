@@ -1,8 +1,8 @@
 {
-  "name": "ai-harness",
-  "displayName": "AI Harness",
+  "name": "nexus",
+  "displayName": "Nexus",
   "version": "0.1.0",
-  "description": "Kanban-Board, Ticket-Zuordnung und Session-Übersicht für parallele Claude-Sessions; speist Kommentare aus dem Board in die Session ein.",
+  "description": "Board, Specs, Worktrees und Session-Übersicht für parallele Claude-Sessions; speist Kommentare aus dem Board in die Session ein.",
   "author": { "name": "User" },
   "license": "MIT",
   "defaultEnabled": false,

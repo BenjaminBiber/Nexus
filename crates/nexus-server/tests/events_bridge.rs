@@ -1,5 +1,6 @@
-//! Die Brücke zum Ereignisstrom des Node-Servers: `sessions` und `notice` kommen von dort
-//! an, `hello` und Herzschlag nicht doppelt, die Upstream-Verbindung endet mit dem Client.
+//! Die Brücke zum Ereignisstrom des Node-Servers: `notice` kommt von dort an, `sessions`
+//! nicht mehr (die Sessions laufen seit P4-9 in Rust), `hello` und Herzschlag nicht doppelt,
+//! die Upstream-Verbindung endet mit dem Client.
 //!
 //! Der „Node-Server“ ist hier ein kleiner axum-Server auf `127.0.0.1:0`, der sich merkt, was
 //! bei ihm ankommt und wie viele Ströme er offen hat.
@@ -123,7 +124,7 @@ async fn until(frames: &mut BodyStream<Body>, text: &mut String, needle: &str) -
 }
 
 #[tokio::test]
-async fn reicht_sessions_und_notice_des_node_servers_weiter_ohne_hello_und_herzschlag_zu_doppeln() {
+async fn reicht_notice_des_node_servers_weiter_aber_keine_sessions_und_kein_hello() {
     let (server, pid, _repo, _upstream, task) = with_upstream().await;
     let response = server
         .send("GET", &format!("/api/projects/{pid}/events"), None, &[])
@@ -133,7 +134,6 @@ async fn reicht_sessions_und_notice_des_node_servers_weiter_ohne_hello_und_herzs
     let mut frames = BodyStream::new(response.into_body());
     let mut text = String::new();
 
-    assert!(until(&mut frames, &mut text, "data: {\"type\":\"sessions\"}\n\n").await);
     assert!(
         until(
             &mut frames,
@@ -145,6 +145,8 @@ async fn reicht_sessions_und_notice_des_node_servers_weiter_ohne_hello_und_herzs
     // Genau eine Begrüßung – die des Rust-Servers; `: ping` und `dbboard` des Upstreams
     // bleiben liegen
     assert_eq!(text.matches("\"type\":\"hello\"").count(), 1, "{text}");
+    // Die Sessions des Node-Servers bleiben liegen: sie entstehen jetzt hier
+    assert!(!text.contains("\"type\":\"sessions\""), "{text}");
     assert!(!text.contains(": ping"), "{text}");
     assert!(!text.contains("dbboard"), "{text}");
 

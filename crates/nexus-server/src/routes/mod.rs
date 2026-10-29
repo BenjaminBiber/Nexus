@@ -12,12 +12,16 @@ pub mod doc_comments;
 pub mod docs;
 pub mod docs_claude;
 pub mod events;
+pub mod favorites;
 pub mod health;
+pub mod hook;
 pub mod notifications;
 pub mod questions;
+pub mod sessions;
 pub mod settings;
 pub mod spec;
 pub mod static_files;
+pub mod usage;
 pub mod workflow;
 
 use std::sync::Arc;
@@ -69,6 +73,13 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     }
     if state.config.proxy_groups.enabled(RouteGroup::DocsClaude) {
         router = router.merge(docs_claude::routes());
+    }
+    if state.config.proxy_groups.enabled(RouteGroup::Sessions) {
+        router = router
+            .merge(hook::routes())
+            .merge(sessions::routes())
+            .merge(favorites::routes())
+            .merge(usage::routes());
     }
     if state.config.proxy_groups.enabled(RouteGroup::Notifications) {
         router = router.merge(notifications::routes());

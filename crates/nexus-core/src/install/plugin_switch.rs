@@ -9,12 +9,24 @@ use serde_json::{Map, Value};
 use crate::error::{Error, HarnessError, Result};
 use crate::locking::AtomicWriter;
 
-/// Kennung des Plugins in Claude Code; P3-17 stellt sie auf `nexus@nexus-local` um
-pub const PLUGIN_ID: &str = "ai-harness@ai-harness-local";
+/// Kennung des Plugins in Claude Code
+pub const PLUGIN_ID: &str = "nexus@nexus-local";
+
+/// Kennung des alten Plugins; `enable` nimmt sie aus den Einstellungen des Projekts heraus
+pub const LEGACY_PLUGIN_ID: &str = "ai-harness@ai-harness-local";
+
+/// Was `enable` getan hat.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct SwitchResult {
+    /// true, wenn das Plugin neu eingetragen wurde (false: war schon eingeschaltet)
+    pub enabled: bool,
+    /// true, wenn der Eintrag des alten Plugins entfernt wurde
+    pub migrated: bool,
+}
 
 /// Schaltet das Plugin für genau ein Projekt ein: `enabledPlugins` in
 /// `<projekt>/.claude/settings.local.json`. Das Plugin ist sonst ausgeschaltet
-/// (Benutzerebene), damit es in Projekten ohne Harness nichts kostet.
+/// (Benutzerebene), damit es in Projekten ohne Nexus nichts kostet.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ProjectPluginSwitch {
     writer: AtomicWriter,
@@ -31,21 +43,27 @@ impl ProjectPluginSwitch {
         project_dir.join(".claude").join("settings.local.json")
     }
 
-    /// Trägt `true` ein und lässt alle anderen Einstellungen unberührt; liefert false, wenn
-    /// schon eingetragen
-    pub fn enable(&self, project_dir: &Path) -> Result<bool> {
+    /// Trägt `true` ein, nimmt den Eintrag des alten Plugins heraus und lässt alle anderen
+    /// Einstellungen unberührt; ohne Änderung wird nichts geschrieben
+    pub fn enable(&self, project_dir: &Path) -> Result<SwitchResult> {
         let file = self.file(project_dir);
         let mut settings = self.read(&file)?;
         let mut plugins = plugins(&settings);
-        if plugins.get(PLUGIN_ID) == Some(&Value::Bool(true)) {
-            return Ok(false);
+        let result = SwitchResult {
+            enabled: plugins.get(PLUGIN_ID) != Some(&Value::Bool(true)),
+            migrated: plugins.contains_key(LEGACY_PLUGIN_ID),
+        };
+        if !result.enabled && !result.migrated {
+            return Ok(result);
         }
         plugins.insert(PLUGIN_ID.to_string(), Value::Bool(true));
+        plugins.remove(LEGACY_PLUGIN_ID);
         settings.insert("enabledPlugins".to_string(), Value::Object(plugins));
         if let Some(parent) = file.parent() {
             fs::create_dir_all(parent).map_err(Error::unexpected)?;
         }
-        self.write(&file, settings)
+        self.write(&file, settings)?;
+        Ok(result)
     }
 
     /// Entfernt den Eintrag wieder; liefert false, wenn keiner vorhanden war
@@ -138,7 +156,13 @@ mod tests {
     #[test]
     fn legt_die_einstellungen_mit_dem_eintrag_an() {
         let dir = projekt();
-        assert!(ProjectPluginSwitch::new().enable(dir.path()).unwrap());
+        assert_eq!(
+            ProjectPluginSwitch::new().enable(dir.path()).unwrap(),
+            SwitchResult {
+                enabled: true,
+                migrated: false
+            }
+        );
         assert_eq!(
             gelesen(dir.path()),
             serde_json::json!({ "enabledPlugins": { PLUGIN_ID: true } })
@@ -150,7 +174,53 @@ mod tests {
         let dir = projekt();
         let switch = ProjectPluginSwitch::new();
         switch.enable(dir.path()).unwrap();
-        assert!(!switch.enable(dir.path()).unwrap());
+        assert_eq!(switch.enable(dir.path()).unwrap(), SwitchResult::default());
+    }
+
+    #[test]
+    fn ersetzt_das_alte_plugin_und_meldet_die_umstellung() {
+        let dir = projekt();
+        vorgeben(
+            dir.path(),
+            &format!(r#"{{"enabledPlugins":{{"{LEGACY_PLUGIN_ID}":true,"x@y":true}}}}"#),
+        );
+
+        let result = ProjectPluginSwitch::new().enable(dir.path()).unwrap();
+
+        assert_eq!(
+            result,
+            SwitchResult {
+                enabled: true,
+                migrated: true
+            }
+        );
+        assert_eq!(
+            gelesen(dir.path()),
+            serde_json::json!({ "enabledPlugins": { "x@y": true, PLUGIN_ID: true } })
+        );
+    }
+
+    #[test]
+    fn nimmt_das_alte_plugin_auch_heraus_wenn_das_neue_schon_eingeschaltet_ist() {
+        let dir = projekt();
+        vorgeben(
+            dir.path(),
+            &format!(r#"{{"enabledPlugins":{{"{PLUGIN_ID}":true,"{LEGACY_PLUGIN_ID}":false}}}}"#),
+        );
+
+        let result = ProjectPluginSwitch::new().enable(dir.path()).unwrap();
+
+        assert_eq!(
+            result,
+            SwitchResult {
+                enabled: false,
+                migrated: true
+            }
+        );
+        assert_eq!(
+            gelesen(dir.path()),
+            serde_json::json!({ "enabledPlugins": { PLUGIN_ID: true } })
+        );
     }
 
     #[test]

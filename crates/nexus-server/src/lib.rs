@@ -15,6 +15,7 @@ pub mod docs;
 pub mod error;
 pub mod events;
 pub mod extract;
+pub mod favorites;
 pub mod groups;
 pub mod guard;
 pub mod input;
@@ -24,9 +25,11 @@ pub mod notifications;
 pub mod projects;
 pub mod proxy;
 pub mod routes;
+pub mod sessions;
 pub mod sidecar;
 pub mod state;
 pub mod timeline;
+pub mod usage;
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -68,6 +71,8 @@ impl ServerHandle {
         // Vor dem Abbau der Board-Laufzeit anhalten, damit kein Durchlauf sie neu aufbaut
         self.state.dispatch_scheduler.stop().await;
         self.state.db_questions.stop();
+        // Ausstehende Änderungen der Sessions landen noch in `sessions.json`
+        self.state.sessions.close().await;
         self.state.close_events();
         let _ = self.task.await;
         self.state.board.reset().await;

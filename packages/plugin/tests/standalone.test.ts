@@ -4,7 +4,7 @@ import { createServer as createNetServer } from 'node:net';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildPlugin, PLUGIN_OUT } from './helpers/pluginBuild.js';
+import { buildPlugin, BINARY, PLUGIN_OUT } from './helpers/pluginBuild.js';
 
 // Sucht einen freien Port
 function freePort(): Promise<number> {
@@ -26,25 +26,28 @@ describe('Plugin ohne Repository-Quellen', () => {
   let port: number;
   let env: NodeJS.ProcessEnv;
 
-  const node = (args: string[], options: { cwd?: string; input?: string } = {}) =>
-    spawnSync(process.execPath, args, { cwd: options.cwd ?? project, env, input: options.input, encoding: 'utf8', windowsHide: true });
+  // Das Binary des kopierten Plugins; genauso startet Claude Code die Hooks
+  const nexus = (args: string[], options: { cwd?: string; input?: string } = {}) =>
+    spawnSync(join(plugin, 'bin', BINARY), args, { cwd: options.cwd ?? project, env, input: options.input, encoding: 'utf8', windowsHide: true });
   const git = (...args: string[]) => spawnSync('git', args, { cwd: project, encoding: 'utf8', windowsHide: true });
 
   beforeAll(async () => {
     const built = buildPlugin();
     expect(built.ok, built.message).toBe(true);
-    base = realpathSync(mkdtempSync(join(tmpdir(), 'harness-plugin-')));
-    plugin = join(base, 'installiert', 'ai-harness');
+    base = realpathSync(mkdtempSync(join(tmpdir(), 'nexus-plugin-')));
+    plugin = join(base, 'installiert', 'nexus');
     cpSync(PLUGIN_OUT, plugin, { recursive: true }); // Kopie ohne node_modules und ohne Quellen
     project = join(base, 'Projekt ä');
     home = join(base, 'home');
     port = await freePort();
-    env = { ...process.env, HARNESS_HOME: home, HARNESS_PORT: String(port), PATH: process.env.PATH };
-    delete env.HARNESS_SERVER_ENTRY;
-    delete env.HARNESS_WEB_DIR;
+    // NEXUS_APP_PATH auf einen Ordner, den es nicht gibt: sonst startet `nexus board` eine auf
+    // diesem Rechner installierte Nexus-App statt des Servers aus dem Plugin, und die schreibt
+    // ihren Port in den echten Benutzerordner statt in den dieses Tests
+    env = { ...process.env, NEXUS_HOME: home, NEXUS_PORT: String(port), NEXUS_APP_PATH: join(base, 'keine-app'), PATH: process.env.PATH };
+    for (const name of ['NEXUS_SERVER_ENTRY', 'HARNESS_SERVER_ENTRY', 'NEXUS_WEB_DIR', 'HARNESS_WEB_DIR']) delete env[name];
     mkdirSync(project, { recursive: true });
     git('init', '-q');
-  }, 180000);
+  }, 300000);
 
   afterAll(async () => {
     const info = join(home, 'server.json');
@@ -60,7 +63,8 @@ describe('Plugin ohne Repository-Quellen', () => {
   });
 
   it('zeigt die deutsche Hilfe über das Startskript bin/harness', () => {
-    const result = node([join(plugin, 'bin', 'harness'), '--help']);
+    if (process.platform === 'win32') return; // Startdatei für die Bash; unter cmd gilt harness.cmd im Benutzerordner
+    const result = spawnSync(join(plugin, 'bin', 'harness'), ['--help'], { cwd: project, env, encoding: 'utf8' });
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('Befehle:');
     expect(result.stdout).toContain('hook');
@@ -68,8 +72,8 @@ describe('Plugin ohne Repository-Quellen', () => {
 
   it('richtet ein Projekt ein, startet den eigenen Server und liefert die Oberfläche', async () => {
     git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '--allow-empty', '-q', '-m', 'init');
-    expect(node([join(plugin, 'lib', 'cli.mjs'), 'init']).status).toBe(0);
-    const board = node([join(plugin, 'lib', 'cli.mjs'), '--json', 'board', '--no-open', '--port', String(port)]);
+    expect(nexus(['init']).status).toBe(0);
+    const board = nexus(['--json', 'board', '--no-open', '--port', String(port)]);
     expect(board.stderr).toBe('');
     expect(JSON.parse(board.stdout).started).toBe(true);
     const health = await (await fetch(`http://127.0.0.1:${port}/api/health`)).json();
@@ -81,14 +85,21 @@ describe('Plugin ohne Repository-Quellen', () => {
     expect((await fetch(`http://127.0.0.1:${port}${asset}`)).status).toBe(200);
   }, 60000);
 
+  it('schaltet das Plugin nexus@nexus-local für das Projekt ein', () => {
+    const settings = JSON.parse(readFileSync(join(project, '.claude', 'settings.local.json'), 'utf8'));
+    expect(settings.enabledPlugins['nexus@nexus-local']).toBe(true);
+    expect(existsSync(join(project, '.claude', 'rules', 'nexus-board.md'))).toBe(true);
+    expect(existsSync(join(project, '.claude', 'rules', 'nexus-docs.md'))).toBe(true);
+  });
+
   it('führt einen Hook aus dem Plugin in unter 3 Sekunden aus und meldet die Session', async () => {
     const start = Date.now();
-    const result = node([join(plugin, 'lib', 'cli.mjs'), 'hook', 'session-start'], {
+    const result = nexus(['hook', 'session-start'], {
       input: JSON.stringify({ session_id: 'plugin-s1', cwd: project }),
     });
     expect(Date.now() - start).toBeLessThan(3000);
     expect(result.status).toBe(0);
-    // Ohne board.yaml im HARNESS_HOME bleibt der Hook still; die Session wird trotzdem gemeldet
+    // Ohne board.yaml im NEXUS_HOME bleibt der Hook still; die Session wird trotzdem gemeldet
     expect(result.stdout).toBe('');
     const projects = await (await fetch(`http://127.0.0.1:${port}/api/projects`)).json();
     const sessions = await (await fetch(`http://127.0.0.1:${port}/api/projects/${projects[0].id}/sessions`)).json();
@@ -98,7 +109,7 @@ describe('Plugin ohne Repository-Quellen', () => {
   it('bleibt in einem nicht eingerichteten Projekt wirkungslos', () => {
     const bare = join(base, 'ohne-init');
     spawnSync('git', ['init', '-q', bare], { windowsHide: true });
-    const result = node([join(plugin, 'lib', 'cli.mjs'), 'hook', 'session-start'], {
+    const result = nexus(['hook', 'session-start'], {
       cwd: bare,
       input: JSON.stringify({ session_id: 'x', cwd: bare }),
     });
