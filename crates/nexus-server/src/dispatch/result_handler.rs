@@ -2,8 +2,10 @@
 //! `packages/server/src/dispatch/ResultHandler.ts`.
 //!
 //! Freigabe vor dem Merge ([`ReviewGate`]) und das Ende einer Merge-Session
-//! ([`MergeSessionEnd`]) stehen hier nur als Trait: den Review bringt P4-15b, die
-//! Merge-Session P4-15a. Bis dahin tun die Leer-Umsetzungen nichts.
+//! ([`MergeSessionEnd`]) stehen hier als Trait: dahinter stehen im Betrieb
+//! [`crate::dispatch::review_service::ReviewService`] und
+//! [`crate::dispatch::merge_service::MergeService`]. Den Kontext bekommen sie als Parameter,
+//! weil der Dispatcher ihn je Durchlauf baut.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -27,39 +29,61 @@ use crate::dispatch::run_recorder::{AbortInfo, HandleOutcome, HandleResult};
 /// So viele Limit-Pausen in Folge zählen nicht als Versuch; die nächste schon
 const LIMIT_PAUSES_FREE: usize = 2;
 
-/// Freigabe vor dem Merge: hält das Ticket nach dem Lauf an, bis ein Mensch entscheidet.
-/// Umsetzung in P4-15b (`ReviewService.hold`).
+/// Freigabe vor dem Merge: hält das Ticket nach dem Lauf an, bis ein Mensch entscheidet
+/// (`ReviewService.hold`).
 #[async_trait]
 pub trait ReviewGate: std::fmt::Debug + Send + Sync {
     /// Hält das Ticket im Review
-    async fn hold(&self, detail: &TicketDetail, record: &RunRecord, end: &RunEnd) -> Result<()>;
+    async fn hold(
+        &self,
+        ctx: &DispatchContext,
+        detail: &TicketDetail,
+        record: &RunRecord,
+        end: &RunEnd,
+    ) -> Result<()>;
 }
 
-/// Hält nichts an (Standard, bis P4-15b den Review anbindet).
+/// Hält nichts an (für Tests, die den Review nicht brauchen).
 #[derive(Debug, Clone, Copy, Default)]
 pub struct NoReviewGate;
 
 #[async_trait]
 impl ReviewGate for NoReviewGate {
-    async fn hold(&self, _detail: &TicketDetail, _record: &RunRecord, _end: &RunEnd) -> Result<()> {
+    async fn hold(
+        &self,
+        _ctx: &DispatchContext,
+        _detail: &TicketDetail,
+        _record: &RunRecord,
+        _end: &RunEnd,
+    ) -> Result<()> {
         Ok(())
     }
 }
 
-/// Eine beendete Merge-Session; Umsetzung in P4-15a (`MergeService.sessionEnded`).
+/// Eine beendete Merge-Session (`MergeService.afterSession`).
 #[async_trait]
 pub trait MergeSessionEnd: std::fmt::Debug + Send + Sync {
     /// Wertet das Ende einer Merge-Session aus
-    async fn session_ended(&self, record: &RunRecord, end: &RunEnd) -> Result<()>;
+    async fn session_ended(
+        &self,
+        ctx: &DispatchContext,
+        record: &RunRecord,
+        end: &RunEnd,
+    ) -> Result<()>;
 }
 
-/// Tut nichts (Standard, bis P4-15a den Merge anbindet).
+/// Tut nichts (für Tests, die den Merge nicht brauchen).
 #[derive(Debug, Clone, Copy, Default)]
 pub struct NoMergeSessionEnd;
 
 #[async_trait]
 impl MergeSessionEnd for NoMergeSessionEnd {
-    async fn session_ended(&self, _record: &RunRecord, _end: &RunEnd) -> Result<()> {
+    async fn session_ended(
+        &self,
+        _ctx: &DispatchContext,
+        _record: &RunRecord,
+        _end: &RunEnd,
+    ) -> Result<()> {
         Ok(())
     }
 }
@@ -101,7 +125,7 @@ impl<'a> ResultHandler<'a> {
         reason: Option<&str>,
     ) -> Result<HandleResult> {
         if record.kind == RunKind::Merge {
-            self.merges.session_ended(record, end).await?;
+            self.merges.session_ended(self.ctx, record, end).await?;
             return Ok(HandleResult::new(HandleOutcome::MergeSession));
         }
         self.evaluate(record, end, reason).await
@@ -152,7 +176,7 @@ impl<'a> ResultHandler<'a> {
             // Freigabe vor dem Merge: wartet als Human Interaction auf „Übernehmen“ oder
             // „Zurück an den Agenten“
             if ctx.cfg.review_before_merge && detail.ticket.branch.is_some() {
-                self.reviews.hold(&detail, record, end).await?;
+                self.reviews.hold(ctx, &detail, record, end).await?;
                 return Ok(HandleResult::new(HandleOutcome::Review));
             }
             let id = detail.ticket.id.clone();

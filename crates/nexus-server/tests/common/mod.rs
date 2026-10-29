@@ -454,6 +454,11 @@ impl TempRepo {
         &self.path
     }
 
+    /// Ordner über dem Projekt; dort legen Tests fremde Worktrees ab
+    pub fn base(&self) -> &std::path::Path {
+        self.path.parent().expect("Ordner über dem Projekt")
+    }
+
     /// Löscht den Ordner des Projekts (das Projekt gilt danach als nicht erreichbar)
     pub fn remove(&self) {
         let _ = std::fs::remove_dir_all(&self.path);

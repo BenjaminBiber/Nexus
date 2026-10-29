@@ -30,11 +30,14 @@ use tokio::sync::watch;
 
 use crate::board_runtime::{BoardBackend, BoardRuntimeHolder};
 use crate::dispatch::context::{DispatchContext, DispatchStores, RepoWork};
-use crate::dispatch::merge_step::{MergeStep, NoMergeStep};
+use crate::dispatch::merge_result::{MergeResultReader, MergeRetryOutcome, MergeRetryResult};
+use crate::dispatch::merge_service::MergeService;
+use crate::dispatch::merge_step::MergeStep;
 use crate::dispatch::notifier::{DispatchNotify, NoDispatchNotify};
 use crate::dispatch::plan_runner::PlanRunner;
 use crate::dispatch::research_runner::{hhmm, ResearchRunner, StartMode};
-use crate::dispatch::result_handler::{MergeSessionEnd, NoReviewGate, ResultHandler, ReviewGate};
+use crate::dispatch::result_handler::{MergeSessionEnd, ResultHandler, ReviewGate};
+use crate::dispatch::review_service::{ReviewFilePatch, ReviewService, ReviewView};
 use crate::dispatch::run_recorder::{HandleOutcome, HandleResult, RunRecorder};
 use crate::dispatch::status::{
     DispatchMergeInfo, DispatchPlanningInfo, DispatchResearchInfo, DispatchRunInfo, DispatchRunLog,
@@ -97,8 +100,16 @@ impl DispatchReport {
     }
 }
 
-/// Was der Dispatch-Service braucht; alles, was später kommt (Merge, Review) und alles, was
-/// Tests ersetzen (Uhr, Prozessprüfung, Umgebung), steht hier
+/// Bericht einer Arbeit von Hand („Erneut mergen“, „Abnehmen“, „Zurück an den Agenten“) samt
+/// Ergebnis für das angefragte Ticket
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MergeRetryReport {
+    pub report: DispatchReport,
+    pub result: MergeRetryResult,
+}
+
+/// Was der Dispatch-Service braucht; alles, was Tests ersetzen (Uhr, Prozessprüfung, Umgebung,
+/// Merge, Review), steht hier
 pub struct DispatchServiceDeps {
     pub home: HarnessHome,
     pub boards: Arc<BoardRuntimeHolder>,
@@ -107,9 +118,9 @@ pub struct DispatchServiceDeps {
     pub clock: Clock,
     /// Läuft der Prozess noch? (Standard: Signal 0 bzw. Prozessabfrage unter Windows)
     pub alive: AliveCheck,
-    /// Merge-Schritt des Durchlaufs (Leer-Umsetzung bis P4-15b)
+    /// Merge-Seite des Dispatchers (Betrieb: [`MergeService`])
     pub merge: Arc<dyn MergeStep>,
-    /// Freigabe vor dem Merge (Leer-Umsetzung bis P4-15b)
+    /// Freigabe vor dem Merge (Betrieb: [`ReviewService`])
     pub reviews: Arc<dyn ReviewGate>,
     /// Umgebung, die ein Worker erbt (im Betrieb die des Servers)
     pub env: BTreeMap<String, String>,
@@ -126,8 +137,8 @@ impl std::fmt::Debug for DispatchServiceDeps {
 }
 
 impl DispatchServiceDeps {
-    /// Die Abhängigkeiten des Betriebs: Systemuhr, echte Prozessprüfung, kein Merge und kein
-    /// Review (bis P4-15b), Umgebung und Plattform dieses Prozesses
+    /// Die Abhängigkeiten des Betriebs: Systemuhr, echte Prozessprüfung, der echte Merge und
+    /// die echte Freigabe vor dem Merge, Umgebung und Plattform dieses Prozesses
     pub fn new(
         home: HarnessHome,
         boards: Arc<BoardRuntimeHolder>,
@@ -140,8 +151,8 @@ impl DispatchServiceDeps {
             notifier: Arc::new(NoDispatchNotify),
             clock: Clock::system(),
             alive: Arc::new(nexus_core::process::is_alive),
-            merge: Arc::new(NoMergeStep),
-            reviews: Arc::new(NoReviewGate),
+            merge: Arc::new(MergeService::new()),
+            reviews: Arc::new(ReviewService::new()),
             env: std::env::vars().collect(),
             platform: crate::dispatch::context::node_platform().to_string(),
         }
@@ -286,6 +297,134 @@ impl DispatchService {
             .log
             .line(if on { "eingeschaltet" } else { "ausgeschaltet" });
         Ok(())
+    }
+
+    // ------------------------------------------------------------------------------------
+    // Merge und Review von Hand
+    // ------------------------------------------------------------------------------------
+
+    /// „Erneut mergen“ (Mensch): unter der Sperre der Durchläufe Auftrag setzen und sofort einen
+    /// Durchlauf ausführen (kein Takt-Durchlauf dazwischen); liefert den Bericht samt Ergebnis
+    /// für dieses Ticket. Fehler (kein Merge möglich, fremdes Board, Merge-Session läuft noch)
+    /// werden geworfen
+    pub async fn retry_merge(&self, id: &str) -> Result<MergeRetryReport> {
+        self.exclusive(|| async {
+            let cfg = self.configs.read()?.config;
+            let ticket_id = self
+                .with_context(cfg, |ctx| async move {
+                    let actor = ctx.user_actor(None);
+                    self.deps.merge.retry(&ctx, id, &actor).await
+                })
+                .await?;
+            self.merge_report(&ticket_id, self.run_tick().await).await
+        })
+        .await
+    }
+
+    /// „Abnehmen“ (Mensch) eines Human-Interaction-Tickets: unter der Sperre der Durchläufe
+    /// erledigen, auf eigenem Board den Merge anstoßen und sofort einen Durchlauf ausführen;
+    /// liefert den Bericht samt Ergebnis (gemergt, wartet … oder nur erledigt)
+    pub async fn accept(&self, id: &str, by: Option<&str>) -> Result<MergeRetryReport> {
+        self.exclusive(|| async {
+            let cfg = self.configs.read()?.config;
+            let by = by.map(str::trim).filter(|name| !name.is_empty());
+            let accepted = self
+                .with_context(cfg, |ctx| async move {
+                    let actor = ctx.user_actor(by);
+                    self.deps.merge.accept(&ctx, id, &actor).await
+                })
+                .await?;
+            let report = self.run_tick().await;
+            if !accepted.merge {
+                return Ok(MergeRetryReport {
+                    report,
+                    result: MergeRetryResult {
+                        outcome: MergeRetryOutcome::Accepted,
+                        text: accepted.text,
+                    },
+                });
+            }
+            self.merge_report(&accepted.ticket_id, report).await
+        })
+        .await
+    }
+
+    /// Review vor dem Merge: Dateien des Ticket-Branches gegen das Ziel und Testläufe des Agenten
+    pub async fn review(&self, id: &str) -> Result<ReviewView> {
+        let cfg = self.configs.read()?.config;
+        self.with_context(cfg, |ctx| async move {
+            ReviewService::new().view(&ctx, id).await
+        })
+        .await
+    }
+
+    /// Patch einer Datei aus der Dateiliste des Reviews
+    pub async fn review_file(&self, id: &str, path: &str) -> Result<ReviewFilePatch> {
+        let cfg = self.configs.read()?.config;
+        self.with_context(cfg, |ctx| async move {
+            ReviewService::new().file_diff(&ctx, id, path).await
+        })
+        .await
+    }
+
+    /// „Zurück an den Agenten“ (Mensch) mit Rückmeldung: unter der Sperre der Durchläufe zurück
+    /// nach Geplant, ohne sofortigen Durchlauf; der nächste Durchlauf setzt im selben Worktree
+    /// fort
+    pub async fn return_to_agent(
+        &self,
+        id: &str,
+        comment: &str,
+        by: Option<&str>,
+    ) -> Result<MergeRetryReport> {
+        self.exclusive(|| async {
+            let cfg = self.configs.read()?.config;
+            let by = by.map(str::trim).filter(|name| !name.is_empty());
+            let returned = self
+                .with_context(cfg, |ctx| async move {
+                    let actor = ctx.user_actor(by);
+                    ReviewService::new()
+                        .return_to_agent(&ctx, id, comment, &actor)
+                        .await
+                })
+                .await?;
+            Ok(MergeRetryReport {
+                report: DispatchReport::new(iso(self.deps.clock.now())),
+                result: MergeRetryResult {
+                    outcome: MergeRetryOutcome::Returned,
+                    text: returned.text,
+                },
+            })
+        })
+        .await
+    }
+
+    /// Bericht samt Ergebnis für das angefragte Ticket (Status, Grund, Kommentare und
+    /// Merge-Auftrag nach dem Durchlauf)
+    async fn merge_report(
+        &self,
+        ticket_id: &str,
+        report: DispatchReport,
+    ) -> Result<MergeRetryReport> {
+        let wanted = ticket_id.to_string();
+        // Ein nicht mehr lesbares Ticket (gelöscht, Verbindung weg) liest der Leser als „None“
+        let detail = self
+            .deps
+            .boards
+            .run(|backend| {
+                let wanted = wanted.clone();
+                async move { backend.services().tickets.get(&wanted).await }
+            })
+            .await
+            .ok();
+        let entry = self.stores.state.read()?.merges.get(ticket_id).cloned();
+        let result = MergeResultReader::new().read(
+            ticket_id,
+            &report.merged,
+            &report.errors,
+            detail.as_ref(),
+            entry.as_ref(),
+        );
+        Ok(MergeRetryReport { report, result })
     }
 
     /// „Recherche starten“ (von Hand): startet sofort, unabhängig von Ein/Aus, Zeitfenster und

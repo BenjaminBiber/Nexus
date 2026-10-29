@@ -9,6 +9,7 @@
 #![allow(dead_code)]
 
 use std::collections::BTreeMap;
+use std::path::Path;
 use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::{Arc, Mutex};
 
@@ -22,15 +23,19 @@ use nexus_core::board::ticket_service::{
 };
 use nexus_core::board::types::Board;
 use nexus_core::clock::{iso, Clock};
+use nexus_core::dispatch::git::MergeOutcome;
 use nexus_core::dispatch::{
     DispatchConfig, DispatchConfigNormalizer, DispatchConfigStore, DispatchLog, DispatchStateStore,
-    ReviewStore, RunEnd, RunRecord, RunResult, RunStore,
+    MergeStrategy, ReviewStore, RunEnd, RunRecord, RunResult, RunStore,
 };
 use nexus_core::{HarnessError, HarnessHome, Result};
 use nexus_server::board_runtime::{factory, BoardBackend, BoardBackendFuture, BoardRuntimeHolder};
 use nexus_server::dispatch::context::{DispatchContext, DispatchStores, RepoWork};
+use nexus_server::dispatch::merge_git::{MergeGit, RealMergeGit};
+use nexus_server::dispatch::merge_service::MergeService;
+use nexus_server::dispatch::merge_step::{AcceptOutcome, MergeStep, MergeStepReport};
 use nexus_server::dispatch::notifier::{DispatchNotice, DispatchNotify};
-use nexus_server::dispatch::result_handler::ResultHandler;
+use nexus_server::dispatch::result_handler::{MergeSessionEnd, ResultHandler};
 use nexus_server::dispatch::run_recorder::{HandleResult, RunRecorder};
 use nexus_server::dispatch::service::{DispatchReport, DispatchService, DispatchServiceDeps};
 use nexus_server::dispatch::ticket_starter::{StartOutcome, TicketStarter};
@@ -136,10 +141,251 @@ impl DispatchNotify for CollectedNotices {
     }
 }
 
+/// Antwort, die die Attrappe statt des echten Merges gibt; Vorbild
+/// `vi.spyOn(BranchMerger.prototype, 'merge')`
+#[derive(Debug, Clone)]
+pub enum MergeAnswer {
+    /// Git weist ab, ohne etwas zu verändern
+    Refused(String),
+    /// Konflikt in diesen Dateien
+    Conflict(Vec<String>),
+    /// Der eigene Merge ließ sich nicht zurücksetzen; `details` = mit Ordner, Git-Meldung und
+    /// Befehl (wie außerhalb des Hauptordners)
+    AbortFailed { details: bool },
+}
+
+/// Die Git-Seite des Merges mit gelenkten Antworten und Zählern; alles, was nicht gelenkt ist,
+/// macht das echte Git.
+#[derive(Debug, Default)]
+pub struct FakeMergeGit {
+    real: RealMergeGit,
+    answer: Mutex<Option<MergeAnswer>>,
+    /// Datei, die der gelenkte Merge vor seiner Antwort im Ordner anlegt (Name, Inhalt)
+    before_merge: Mutex<Option<(String, String)>>,
+    /// Meldung, mit der `contains` scheitert
+    contains_error: Mutex<Option<String>>,
+    merge_calls: AtomicI64,
+    open_calls: AtomicI64,
+    merge_roots: Mutex<Vec<String>>,
+}
+
+impl FakeMergeGit {
+    /// Attrappe, die zunächst alles ans echte Git weitergibt
+    pub fn new() -> Arc<Self> {
+        Arc::new(Self::default())
+    }
+
+    /// Lässt jeden weiteren Merge so antworten
+    pub fn answer_merge(&self, answer: MergeAnswer) {
+        *self.answer.lock().expect("Attrappe") = Some(answer);
+    }
+
+    /// Legt vor jeder gelenkten Antwort diese Datei im Ordner des Merges an
+    pub fn write_before_merge(&self, file: &str, content: &str) {
+        *self.before_merge.lock().expect("Attrappe") =
+            Some((file.to_string(), content.to_string()));
+    }
+
+    /// Lässt `contains` mit dieser Meldung scheitern
+    pub fn fail_contains(&self, message: &str) {
+        *self.contains_error.lock().expect("Attrappe") = Some(message.to_string());
+    }
+
+    /// Zahl der Merge-Versuche
+    pub fn merge_calls(&self) -> i64 {
+        self.merge_calls.load(Ordering::SeqCst)
+    }
+
+    /// Zahl der geöffneten Merge-Worktrees
+    pub fn open_calls(&self) -> i64 {
+        self.open_calls.load(Ordering::SeqCst)
+    }
+
+    /// Ordner des letzten Merge-Versuchs
+    pub fn last_merge_root(&self) -> String {
+        self.merge_roots
+            .lock()
+            .expect("Attrappe")
+            .last()
+            .cloned()
+            .expect("kein Merge-Versuch")
+    }
+}
+
+impl MergeGit for FakeMergeGit {
+    fn inspect(&self, root: &Path) -> Result<nexus_core::dispatch::git::CheckoutState> {
+        self.real.inspect(root)
+    }
+
+    fn running(&self, root: &Path) -> Result<Option<String>> {
+        self.real.running(root)
+    }
+
+    fn merge(
+        &self,
+        root: &Path,
+        branch: &str,
+        message: Option<&str>,
+        strategy: MergeStrategy,
+    ) -> Result<MergeOutcome> {
+        self.merge_calls.fetch_add(1, Ordering::SeqCst);
+        self.merge_roots
+            .lock()
+            .expect("Attrappe")
+            .push(root.to_string_lossy().into_owned());
+        let answer = self.answer.lock().expect("Attrappe").clone();
+        let Some(answer) = answer else {
+            return self.real.merge(root, branch, message, strategy);
+        };
+        if let Some((file, content)) = self.before_merge.lock().expect("Attrappe").clone() {
+            std::fs::write(root.join(file), content).expect("Datei im Ordner des Merges");
+        }
+        match answer {
+            MergeAnswer::Refused(message) => Ok(MergeOutcome::Refused { message }),
+            MergeAnswer::Conflict(files) => Ok(MergeOutcome::Conflict { files }),
+            MergeAnswer::AbortFailed { details } => {
+                let error = HarnessError::new(
+                    "merge-abort-failed",
+                    "Der Hauptordner steht noch im Merge-Zustand: kaputt. Bitte von Hand \
+aufräumen (git merge --abort).",
+                );
+                Err(if details {
+                    error
+                        .with_details(json!({
+                            "root": root.to_string_lossy(),
+                            "git": "kaputt",
+                            "command": "git merge --abort",
+                        }))
+                        .into()
+                } else {
+                    error.into()
+                })
+            }
+        }
+    }
+
+    fn contains(&self, root: &Path, ancestor: &str, branch: &str) -> Result<bool> {
+        if let Some(message) = self.contains_error.lock().expect("Attrappe").clone() {
+            return Err(HarnessError::new("git-failed", message).into());
+        }
+        self.real.contains(root, ancestor, branch)
+    }
+
+    fn merged_earlier(&self, root: &Path, branch: &str, target: &str) -> Option<String> {
+        self.real.merged_earlier(root, branch, target)
+    }
+
+    fn overlapping(&self, root: &Path, branch: &str) -> Result<Vec<String>> {
+        self.real.overlapping(root, branch)
+    }
+
+    fn ensure_target(
+        &self,
+        root: &Path,
+        name: &str,
+    ) -> Result<nexus_core::dispatch::git::EnsuredBranch> {
+        self.real.ensure_target(root, name)
+    }
+
+    fn checked_out_at(&self, root: &Path, name: &str) -> Result<Option<String>> {
+        self.real.checked_out_at(root, name)
+    }
+
+    fn merge_worktree_path(&self, root: &Path, name: &str) -> String {
+        self.real.merge_worktree_path(root, name)
+    }
+
+    fn open_merge_worktree(&self, root: &Path, name: &str) -> Result<String> {
+        self.open_calls.fetch_add(1, Ordering::SeqCst);
+        self.real.open_merge_worktree(root, name)
+    }
+
+    fn close_merge_worktree(&self, root: &Path, path: &str) -> Option<String> {
+        self.real.close_merge_worktree(root, path)
+    }
+}
+
+/// Merge-Seite, die die Reihenfolge der Aufrufe mitschreibt und „Erneut mergen“ an einem Tor
+/// anhält; Vorbild `vi.spyOn(MergeService.prototype, …)` im Sperren-Test
+#[derive(Debug)]
+pub struct OrderedMerge {
+    inner: MergeService,
+    order: Mutex<Vec<String>>,
+    gate: tokio::sync::Semaphore,
+}
+
+impl OrderedMerge {
+    /// Merge-Seite mit geschlossenem Tor
+    pub fn new() -> Arc<Self> {
+        Arc::new(Self {
+            inner: MergeService::new(),
+            order: Mutex::new(Vec::new()),
+            gate: tokio::sync::Semaphore::new(0),
+        })
+    }
+
+    /// Öffnet das Tor: „Erneut mergen“ läuft weiter
+    pub fn release(&self) {
+        self.gate.add_permits(1);
+    }
+
+    /// Reihenfolge der Aufrufe
+    pub fn order(&self) -> Vec<String> {
+        self.order.lock().expect("Reihenfolge").clone()
+    }
+
+    /// Vergisst die bisherigen Aufrufe; in TypeScript wird die Attrappe erst hier gesetzt
+    pub fn forget(&self) {
+        self.order.lock().expect("Reihenfolge").clear();
+    }
+
+    /// Schreibt einen Aufruf mit
+    fn note(&self, what: &str) {
+        self.order.lock().expect("Reihenfolge").push(what.into());
+    }
+}
+
+#[async_trait]
+impl MergeSessionEnd for OrderedMerge {
+    async fn session_ended(
+        &self,
+        ctx: &DispatchContext,
+        record: &RunRecord,
+        end: &RunEnd,
+    ) -> Result<()> {
+        self.inner.session_ended(ctx, record, end).await
+    }
+}
+
+#[async_trait]
+impl MergeStep for OrderedMerge {
+    async fn process_all(&self, ctx: &DispatchContext) -> Result<MergeStepReport> {
+        self.note("merge-tick");
+        MergeStep::process_all(&self.inner, ctx).await
+    }
+
+    async fn retry(&self, ctx: &DispatchContext, id: &str, actor: &BoardActor) -> Result<String> {
+        self.note("retry");
+        self.gate.acquire().await.expect("Tor").forget();
+        let ticket = MergeStep::retry(&self.inner, ctx, id, actor).await;
+        self.note("retry fertig");
+        ticket
+    }
+
+    async fn accept(
+        &self,
+        ctx: &DispatchContext,
+        id: &str,
+        actor: &BoardActor,
+    ) -> Result<AcceptOutcome> {
+        MergeStep::accept(&self.inner, ctx, id, actor).await
+    }
+}
+
 /// Alles, was Start und Auswertung eines Tickets brauchen: eigener Benutzerordner, Git-Repo als
 /// Board-Repo, Board im Speicher, Attrappe statt Worker.
 pub struct DispatchFixture {
-    _dir: tempfile::TempDir,
+    dir: tempfile::TempDir,
     pub home: HarnessHome,
     pub repo: TempRepo,
     pub backend: Arc<BoardBackendWithServices>,
@@ -160,6 +406,12 @@ impl DispatchFixture {
     /// Legt alles an; die Einstellung ist die aus dem Beispiel, eingeschaltet und ohne Freigabe
     /// vor dem Merge – `patch` überschreibt einzelne Felder der rohen Einstellung
     pub async fn create(patch: Value) -> Self {
+        Self::create_with(patch, None).await
+    }
+
+    /// Wie [`DispatchFixture::create`], aber mit einer eigenen Merge-Seite (Attrappe statt
+    /// [`MergeService`]); `None` nimmt die echte
+    pub async fn create_with(patch: Value, merge: Option<Arc<dyn MergeStep>>) -> Self {
         let dir = tempfile::Builder::new()
             .prefix("nexus-dispatch-")
             .tempdir()
@@ -244,7 +496,7 @@ impl DispatchFixture {
                 },
             )))
         };
-        let service = Arc::new(DispatchService::new(DispatchServiceDeps {
+        let mut deps = DispatchServiceDeps {
             notifier: notices.clone(),
             clock: clock.clone(),
             alive: {
@@ -254,9 +506,13 @@ impl DispatchFixture {
             env: BTreeMap::new(),
             platform: "linux".into(),
             ..DispatchServiceDeps::new(home.clone(), holder, launcher.clone())
-        }));
+        };
+        if let Some(merge) = merge {
+            deps.merge = merge;
+        }
+        let service = Arc::new(DispatchService::new(deps));
         Self {
-            _dir: dir,
+            dir,
             home,
             repo,
             backend,
@@ -342,6 +598,45 @@ impl DispatchFixture {
             BTreeMap::new(),
             "linux",
         )
+    }
+
+    /// Ordner, in dem Benutzerordner und Hilfsdateien des Tests liegen
+    pub fn dir(&self) -> &std::path::Path {
+        self.dir.path()
+    }
+
+    /// Der Agent committet eine Datei im Worktree und meldet „erledigt“ wie `harness board done`
+    pub async fn finish_as_agent(&self, ticket_id: &str, file: &str, content: &str) {
+        let worktree = self
+            .ticket(ticket_id)
+            .await
+            .worktree
+            .expect("Worktree des Tickets");
+        std::fs::write(std::path::Path::new(&worktree).join(file), content).expect("Datei");
+        for args in [
+            vec!["-C", &worktree, "add", file],
+            vec![
+                "-C",
+                &worktree,
+                "commit",
+                "-q",
+                "-m",
+                &format!("{ticket_id}: {file}"),
+            ],
+        ] {
+            self.repo.run_git(&args);
+        }
+        self.work()
+            .await
+            .manager
+            .finish(
+                ticket_id,
+                &nexus_core::worktrees::manager::FinishOptions::default(),
+                std::path::Path::new(&worktree),
+                &self.agent(ticket_id),
+            )
+            .await
+            .expect("Ticket als Agent abschließen");
     }
 
     /// Der Handelnde des Testbenutzers
