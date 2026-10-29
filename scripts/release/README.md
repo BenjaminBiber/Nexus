@@ -57,7 +57,7 @@ bricht das Skript ab, statt zu raten.
 | `Cargo.lock` | `[[package]]` der eigenen Crates → `version` | nur Einträge der Crates des Workspace, nie die der Abhängigkeiten |
 | `<app>/src-tauri/tauri.conf.json` | `version` | **darf dort nicht stehen** (Tauri liest sie aus dem Crate): wird mit einer Warnung entfernt und gilt bei `check` als Abweichung |
 | `packages/*/package.json`, `apps/*/package.json` | `version` | wird gesetzt; ein Paket ohne `version` bekommt keine |
-| dieselben Dateien | exakt gepinnte Geschwister (`"@harness/core": "0.1.0"`) | werden mitgezogen; `^`, `~`, `*` und `workspace:*` bleiben unberührt |
+| dieselben Dateien | exakt gepinnte Geschwister (`"@nexus/<paket>": "0.1.0"`) | werden mitgezogen; `^`, `~`, `*` und `workspace:*` bleiben unberührt |
 | `package-lock.json` | `packages["<paket>"].version` und dieselben Pins | wird gesetzt; die Wurzel (`packages[""]`) hat keine Version |
 | `packages/plugin/manifest/.claude-plugin/plugin.json` | `version` | wird gesetzt |
 | `.claude-plugin/marketplace.json` | `plugins[<name des plugins>].version` | wird gesetzt, und angelegt, falls sie fehlt |
@@ -66,7 +66,7 @@ Die Workspace-Pakete kommen aus `workspaces` der Wurzel-`package.json`, die Crat
 zusätzlich aus `apps/*/src-tauri`. Gesucht wird also nur dort, wo das Repo selbst seine Mitglieder nennt – ein
 `Cargo.toml` oder `package.json` in einem Testordner gerät dem Skript nicht in die Hände.
 
-**Mitgezogene Pins.** Die Pakete pinnen sich untereinander exakt (`"@harness/core": "0.1.0"`). Würden nur die
+**Mitgezogene Pins.** Pakete des Workspace können sich untereinander exakt pinnen (`"@nexus/<paket>": "0.1.0"`). Würden nur die
 `version`-Felder wandern, fände `npm ci` die alte Version nicht mehr. Deshalb sind diese Angaben eigene
 Versionsstellen – in `package.json` und in `package-lock.json`.
 

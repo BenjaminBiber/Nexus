@@ -441,7 +441,7 @@ async fn die_uhr_bestimmt_die_zeitstempel_des_protokolls() {
 async fn das_protokoll_gleicht_dem_des_typescript_workers() {
     let u = Umgebung::neu();
     let log_file = u.pfad("strom.log");
-    // Genau der Lauf, den `tests/fixtures/golden_run_log.mts` mit dem TypeScript-Worker fährt
+    // Genau der Lauf, aus dem das eingecheckte Golden-Protokoll des TypeScript-Workers stammt
     let mut record = lauf("ARC-0004-x", u.dir.path(), &log_file);
     record.agent = "junior-ARC-0004-x".to_string();
     record.prompt = "Zeile 1\n\nZeile 3".to_string();
@@ -467,8 +467,8 @@ async fn das_protokoll_gleicht_dem_des_typescript_workers() {
     assert_eq!(gesehen, golden);
 }
 
-/// Macht ein Lauf-Protokoll vergleichbar: Pfade und Zeiten raus (wie in
-/// `tests/fixtures/golden_run_log.mts`)
+/// Macht ein Lauf-Protokoll vergleichbar: Pfade und Zeiten raus (wie bei der Aufzeichnung des
+/// Golden-Protokolls)
 fn normalisiert(log: &str, cwd: &str, claude: &str) -> String {
     let ohne_pfade = log.replace(claude, "<claude>").replace(cwd, "<cwd>");
     let ohne_iso = regex::Regex::new(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z")
