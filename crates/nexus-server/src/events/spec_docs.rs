@@ -301,7 +301,6 @@ mod tests {
         let root = base.path().to_path_buf();
         let signature_of: SignatureOf = Arc::new(move |_pid| {
             let root = root.clone();
-            let scanner = scanner.clone();
             Box::pin(async move { Ok(scanner.signature(&root)) })
         });
         let watcher = SpecDocWatcher::new(signature_of, 10_000);

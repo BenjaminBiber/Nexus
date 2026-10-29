@@ -162,9 +162,7 @@ fn signature_of(weak: &std::sync::Weak<AppState>) -> crate::events::SignatureOf 
                 .resolve(&opened.project.root)
                 .await?;
             Ok(match source.root {
-                Some(root) => {
-                    SuperpowersDocScanner::new().signature(std::path::Path::new(&root))
-                }
+                Some(root) => SuperpowersDocScanner::new().signature(std::path::Path::new(&root)),
                 None => "none".to_string(),
             })
         })

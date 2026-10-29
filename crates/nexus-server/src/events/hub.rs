@@ -109,12 +109,19 @@ impl EventHub {
             .unwrap_or(0)
     }
 
-    /// Meldet alle Empfänger ab
-    pub fn close(&self) {
+    /// Empfänger über alle Projekte (Nachweis, dass beim Beenden nichts offen bleibt)
+    pub fn subscribers_total(&self) -> usize {
         self.channels
             .lock()
             .expect("Sperre des Verteilers")
-            .clear();
+            .values()
+            .map(Vec::len)
+            .sum()
+    }
+
+    /// Meldet alle Empfänger ab
+    pub fn close(&self) {
+        self.channels.lock().expect("Sperre des Verteilers").clear();
     }
 
     /// Meldet einen Empfänger ab; das letzte Kanalende nimmt den Kanal mit

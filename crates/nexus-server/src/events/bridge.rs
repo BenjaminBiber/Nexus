@@ -109,7 +109,9 @@ async fn follow(
         };
         let Some(frame) = frame else { return Ok(()) };
         let frame = frame.map_err(|error| error.to_string())?;
-        let Ok(data) = frame.into_data() else { continue };
+        let Ok(data) = frame.into_data() else {
+            continue;
+        };
         rest.push_str(&String::from_utf8_lossy(&data));
         while let Some(at) = rest.find('\n') {
             let line: String = rest.drain(..=at).collect();
@@ -194,7 +196,11 @@ mod tests {
     fn ohne_empfanger_endet_die_brucke() {
         let (sender, rx) = tokio::sync::mpsc::unbounded_channel();
         drop(rx);
-        assert!(!deliver("data: {\"type\":\"sessions\"}", &bridged(), &sender));
+        assert!(!deliver(
+            "data: {\"type\":\"sessions\"}",
+            &bridged(),
+            &sender
+        ));
         assert!(!deliver(": ping", &bridged(), &sender));
     }
 }

@@ -85,6 +85,10 @@ pub struct TestServerOptions {
     /// Die Board-Laufzeit aus `board.yaml` statt der im Speicher: nur so prüfen Tests die
     /// Antworten ohne und mit kaputter Konfig
     pub board_from_config: bool,
+    /// Abstand des Herzschlags im Ereignisstrom; ohne Angabe der Standard
+    pub heartbeat_ms: Option<u64>,
+    /// Takt der Watcher; ohne Angabe der Standard
+    pub poll_ms: Option<u64>,
 }
 
 impl TestServer {
@@ -105,6 +109,13 @@ impl TestServer {
         config.web_dir = options.web_dir;
         config.upstream = options.upstream;
         config.proxy_groups = options.proxy_groups;
+        if let Some(heartbeat_ms) = options.heartbeat_ms {
+            config.heartbeat_ms = heartbeat_ms;
+        }
+        if let Some(poll_ms) = options.poll_ms {
+            config.db_poll_ms = poll_ms;
+            config.docs_poll_ms = poll_ms;
+        }
         let board = options.board.unwrap_or_else(|| {
             if options.board_from_config {
                 nexus_server::board_from_config(home.clone())

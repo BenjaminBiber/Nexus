@@ -103,10 +103,7 @@ fn stream(receiver: UnboundedReceiver<LiveEvent>, guards: Guards, state: &AppSta
             (header::CACHE_CONTROL, "no-cache, no-transform"),
             (header::CONNECTION, "keep-alive"),
             // Kein Puffern in einem Proxy davor
-            (
-                header::HeaderName::from_static("x-accel-buffering"),
-                "no".into(),
-            ),
+            (header::HeaderName::from_static("x-accel-buffering"), "no"),
         ],
         Body::from_stream(futures::StreamExt::chain(hello, frames)),
     )
