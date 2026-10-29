@@ -83,9 +83,11 @@ impl DbInput {
 
     /// Pflichtliste von Texten mit mindestens einem und höchstens `max` Einträgen
     pub fn required_list(body: &Body, key: &str, max: usize) -> Result<Vec<String>> {
-        let too_long = |list: &Vec<String>| list.is_empty() || list.len() > max;
-        match Self::optional_list(body, key) {
-            Ok(Some(list)) if !too_long(&list) => Ok(list),
+        // Ist das Feld da, aber keine Liste von Texten, gilt die Meldung der Typprüfung –
+        // erst danach zählt die Zahl der Einträge (genau wie in TypeScript)
+        let list = Self::optional_list(body, key)?;
+        match list {
+            Some(list) if !list.is_empty() && list.len() <= max => Ok(list),
             _ => Err(invalid(format!(
                 "Feld „{key}“ muss eine Liste mit 1 bis {max} Einträgen sein."
             ))),
@@ -243,6 +245,15 @@ mod tests {
         assert_eq!(
             error(DbInput::required_list(&full, "fehlt", 3)).1,
             "Feld „fehlt“ muss eine Liste mit 1 bis 3 Einträgen sein."
+        );
+        // Ist das Feld gar keine Liste von Texten, gilt die Meldung der Typprüfung
+        assert_eq!(
+            error(DbInput::required_list(&full, "gemischt", 5)).1,
+            "Feld „gemischt“ muss eine Liste von Texten sein."
+        );
+        assert_eq!(
+            error(DbInput::required_list(&full, "text", 5)).1,
+            "Feld „text“ muss eine Liste von Texten sein."
         );
     }
 
