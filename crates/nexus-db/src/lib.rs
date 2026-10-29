@@ -10,6 +10,7 @@ pub mod factory;
 pub mod managed;
 pub mod mssql;
 pub mod row_groups;
+pub mod runtime;
 pub mod schema_version_guard;
 pub mod sql_chunks;
 pub mod sqlite;
@@ -20,6 +21,7 @@ pub use factory::{
 };
 pub use managed::{ConnectOptions, ManagedBoardDatabase, DEFAULT_CONNECTION_TIMEOUT_MS};
 pub use row_groups::RowGroups;
+pub use runtime::BoardRuntime;
 pub use schema_version_guard::{
     SchemaVersionGuard, EXPECTED_SCHEMA_VERSION, REQUIRED_SCHEMA_FEATURES,
 };

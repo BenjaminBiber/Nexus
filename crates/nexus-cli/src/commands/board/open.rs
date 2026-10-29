@@ -28,19 +28,8 @@ struct BoardResult {
     project: serde_json::Value,
 }
 
-/// Führt `board` aus; `extra` sind Wörter, die kein registrierter Unterbefehl sind
-pub fn run(context: &CliContext, port: Option<&str>, open: bool, extra: &[String]) -> Result<u8> {
-    // Ein unbekannter Unterbefehl wird ohne Datenbankzugriff abgewiesen
-    if !extra.is_empty() {
-        return Err(HarnessError::new(
-            "command-unknown",
-            format!(
-                "Unbekannter Befehl „board {}“. Hilfe: harness board --help",
-                extra.join(" ")
-            ),
-        )
-        .into());
-    }
+/// Führt `board` ohne Unterbefehl aus: Server oder App starten und das Board öffnen
+pub fn run(context: &CliContext, port: Option<&str>, open: bool) -> Result<u8> {
     context.open_project()?;
     let from_env = std::env::var(PORT_ENV).ok().filter(|raw| !raw.is_empty());
     let port = parse_port(port, from_env.as_deref())?;

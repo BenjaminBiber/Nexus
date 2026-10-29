@@ -83,6 +83,8 @@ const BOARD_EXAMPLES: &str = "\nBeispiele:\n  harness board\n  harness board --p
 
 /// Die Befehle des Programms. Die restlichen Fachbefehle folgen in P3-16 bis P3-18; `help` steht
 /// wie bei commander in jedem Befehl, der selbst nichts tut und Unterbefehle hat.
+// Die Varianten tragen die Optionen von clap; sie dürfen unterschiedlich groß sein
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Subcommand)]
 pub enum Commands {
     /// Projekt einrichten
@@ -109,10 +111,10 @@ pub enum Commands {
             help = "Browser nicht öffnen, nur die Adresse ausgeben"
         )]
         no_open: bool,
-        /// Wörter, die kein registrierter Unterbefehl sind; sie werden mit `command-unknown`
-        /// abgewiesen. Versteckt, damit die Hilfe wie heute aussieht.
-        #[arg(hide = true, trailing_var_arg = true)]
-        extra: Vec<String>,
+        /// Ohne Unterbefehl öffnet `board` das Board im Browser; ein Wort, das kein
+        /// angemeldeter Unterbefehl ist, wird mit `command-unknown` abgewiesen.
+        #[command(subcommand)]
+        sub: Option<commands::board::BoardCommands>,
     },
 
     /// Server im Vordergrund starten (Rust vorn, Node-Server dahinter)
@@ -236,11 +238,10 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
             Ok(1)
         }
         Some(Commands::Init) => commands::init::run(&context),
-        Some(Commands::Board {
-            port,
-            no_open,
-            extra,
-        }) => commands::board::open::run(&context, port.as_deref(), !no_open, &extra),
+        Some(Commands::Board { port, no_open, sub }) => match sub {
+            Some(sub) => commands::board::run(&context, &sub),
+            None => commands::board::open::run(&context, port.as_deref(), !no_open),
+        },
         Some(Commands::Serve {
             port,
             web_dir,
