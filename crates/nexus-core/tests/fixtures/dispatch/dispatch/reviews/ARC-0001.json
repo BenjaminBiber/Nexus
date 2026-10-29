@@ -1,0 +1,19 @@
+{
+  "ticketId": "ARC-0001",
+  "branch": "ticket/ARC-0001-x",
+  "runId": "r1",
+  "logFile": "C:/logs/ARC-0001-20261027-081500.log",
+  "at": "2026-10-27T09:50:00.000Z",
+  "tests": [
+    {
+      "command": "npm test",
+      "ok": true,
+      "output": "ok"
+    },
+    {
+      "command": "cargo test",
+      "ok": null,
+      "output": "unklar"
+    }
+  ]
+}

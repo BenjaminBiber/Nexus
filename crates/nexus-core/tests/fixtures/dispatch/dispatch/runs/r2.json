@@ -1,0 +1,27 @@
+{
+  "id": "r2",
+  "kind": "merge",
+  "ticketId": "ARC-0002",
+  "boardId": 8,
+  "title": "Zweiter",
+  "agent": "merge-ARC-0002",
+  "cwd": "C:/repo",
+  "branch": "ticket/ARC-0002-y",
+  "target": "main",
+  "run": {
+    "profile": "merge",
+    "why": "Merge",
+    "model": null,
+    "effort": null,
+    "maxTurns": 80,
+    "timeoutMinutes": 30
+  },
+  "command": "claude",
+  "args": [
+    "-p"
+  ],
+  "prompt": "Merge.",
+  "logFile": "C:/logs/ARC-0002-20261027-082000-merge.log",
+  "startedAt": "2026-10-27T08:20:00.000Z",
+  "pid": null
+}

@@ -1,0 +1,45 @@
+{
+  "id": "r1",
+  "kind": "work",
+  "ticketId": "ARC-0001",
+  "boardId": 7,
+  "title": "Titel",
+  "agent": "junior-ARC-0001",
+  "cwd": "C:/wt/ARC-0001",
+  "branch": "ticket/ARC-0001-x",
+  "target": null,
+  "run": {
+    "profile": "standard",
+    "why": "Label",
+    "model": "opus",
+    "effort": "low",
+    "maxTurns": 250,
+    "timeoutMinutes": 90,
+    "reason": "label",
+    "configHash": "abc",
+    "ruleIndex": 2,
+    "escalatedFrom": "klein"
+  },
+  "attempt": 2,
+  "command": "claude",
+  "args": [
+    "-p",
+    "--model",
+    "opus"
+  ],
+  "prompt": "Setze um.",
+  "logFile": "C:/logs/ARC-0001-20261027-081500.log",
+  "startedAt": "2026-10-27T08:15:00.123Z",
+  "pid": 4711,
+  "setup": [
+    {
+      "cwd": "C:/wt/ARC-0001",
+      "run": "npm ci"
+    }
+  ],
+  "setupTimeoutMinutes": 15,
+  "questionId": "ARC-F0001",
+  "researchBefore": 1,
+  "plannedBefore": null,
+  "repoRoot": "C:/repo"
+}

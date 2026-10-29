@@ -3,6 +3,9 @@
 
 use std::collections::BTreeMap;
 
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+
 use crate::dispatch::config::{
     planning_denied_tools, DispatchConfig, RunSettings, PLANNING_TOOLS, RESEARCH_DENIED_TOOLS,
     RESEARCH_PERMISSION_MODE, RESEARCH_TOOLS,
@@ -14,7 +17,9 @@ const BASH_DEFAULT_TIMEOUT_MS: i64 = 15 * 60_000;
 const BASH_MAX_TIMEOUT_MS: i64 = 30 * 60_000;
 
 /// Art eines Laufs, wie der Lauf-Speicher sie kennt (`RunKind`)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "dispatch.ts")]
 pub enum RunKind {
     #[default]
     Work,

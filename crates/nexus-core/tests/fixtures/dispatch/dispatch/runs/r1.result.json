@@ -1,0 +1,14 @@
+{
+  "code": null,
+  "timedOut": true,
+  "output": "Ausgabe",
+  "endedAt": "2026-10-27T09:45:00.456Z",
+  "setupOk": false,
+  "setupFailed": {
+    "cwd": "C:/wt/ARC-0001",
+    "run": "npm ci",
+    "code": 1,
+    "timedOut": false,
+    "output": "fehlgeschlagen"
+  }
+}

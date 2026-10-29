@@ -247,6 +247,11 @@ export type DispatchSeriesPoint = { start: string, done: number, aborted: number
 export type DispatchSeriesUnit = "day" | "week";
 
 /**
+ * Inhalt von `dispatch/state.json`
+ */
+export type DispatchState = { pausedUntil: string | null, merges: Record<string, MergeEntry>, research: Record<string, ResearchEntry>, researchAuto: ResearchAutoState, planning: Record<string, PlanningEntry>, planningAuto: PlanningAutoState, };
+
+/**
  * Ergebnis der Auswertung (Läufe einer Art, Start im Zeitraum)
  */
 export type DispatchStats = { kind: DispatchRunKind, runsSince: string | null, backfilledRuns: number, 
@@ -302,9 +307,75 @@ escalationRate: number | null, finalFailures: number, };
 export type JoinWorktrees = "none" | "sameSpec";
 
 /**
+ * Merge-Auftrag eines erledigten Tickets
+ */
+export type MergeEntry = { ticketId: string, branch: string, phase: MergePhase, 
+/**
+ * true, sobald für diesen Merge-Versuch eine Merge-Session gestartet wurde
+ */
+sessionUsed: boolean, 
+/**
+ * „Merge wartet auf …“ wurde schon kommentiert
+ */
+waitNoted: boolean, 
+/**
+ * Ziel-Branch der Merge-Session
+ */
+target: string | null, 
+/**
+ * Der letzte Merge-Versuch hatte einen Konflikt, die Merge-Session durfte aber nicht starten
+ * (aus, Pause, außerhalb); bis sie starten darf, wird nicht erneut gemergt. „Erneut mergen“
+ * setzt den Merker zurück.
+ */
+conflictSeen?: boolean, 
+/**
+ * Art des zuletzt kommentierten Grundes, warum der Merge auf seinen Ordner wartet: `busy`
+ * (laufende Git-Aktion), `staged` (vorgemerkte), `overlap` (überschneidende lokale
+ * Änderungen) oder `leftover` (Reste im Merge-Worktree); nur eine neue Art wird erneut
+ * kommentiert. „Erneut mergen“ setzt sie zurück.
+ */
+heldBy?: string | null, since: string, };
+
+/**
+ * Stand eines Merge-Auftrags
+ */
+export type MergePhase = "pending" | "waiting" | "session";
+
+/**
  * Wie ein Ticket-Branch in seinen Zielbranch kommt
  */
 export type MergeStrategy = "merge" | "squash";
+
+/**
+ * Zustand der Planungs-Automatik
+ */
+export type PlanningAutoState = { 
+/**
+ * Seit wann die Automatik an ist; nur Tickets, die danach dazugekommen sind, kommen in Frage
+ * (null = aus)
+ */
+since: string | null, 
+/**
+ * Nach einem Umgebungs- oder Repo-Fehler: frühester Neuversuch
+ */
+retryAt: string | null, 
+/**
+ * Letzter Umgebungs- oder Repo-Fehler (wird je Text nur einmal protokolliert)
+ */
+lastError: string | null, };
+
+/**
+ * Planungsläufe eines Tickets
+ */
+export type PlanningEntry = { ticketId: string, lastStartedAt: string, 
+/**
+ * Zahl der gestarteten Planungsläufe (von Hand und automatisch)
+ */
+count: number, 
+/**
+ * Zeitpunkt des automatischen Anstoßes; die Automatik stößt jedes Ticket nur einmal an
+ */
+autoAt: string | null, };
 
 /**
  * Planungsläufe an Tickets („Planen“ im Ticket-Panel)
@@ -367,6 +438,45 @@ export type PromptTemplates = { work: string | null, plan: string | null, resear
 export type RequiredPart = { id: string, label: string, };
 
 /**
+ * Zustand der Recherche-Automatik
+ */
+export type ResearchAutoState = { 
+/**
+ * Seit wann die Automatik an ist; nur Fragen, die danach entstanden sind, kommen in Frage
+ * (null = aus)
+ */
+since: string | null, 
+/**
+ * Kalendertag (Ortszeit, JJJJ-MM-TT) des Tageszählers
+ */
+day: string | null, 
+/**
+ * Automatisch gestartete Recherchen an diesem Tag
+ */
+count: number, 
+/**
+ * Nach einem Umgebungs- oder Repo-Fehler: frühester Neuversuch
+ */
+retryAt: string | null, 
+/**
+ * Letzter Umgebungs- oder Repo-Fehler (wird je Text nur einmal protokolliert)
+ */
+lastError: string | null, };
+
+/**
+ * Recherche-Läufe einer Frage
+ */
+export type ResearchEntry = { questionId: string, lastStartedAt: string, 
+/**
+ * Zahl der gestarteten Recherche-Läufe (von Hand und automatisch)
+ */
+count: number, 
+/**
+ * Zeitpunkt des automatischen Anstoßes; die Automatik stößt jede Frage nur einmal an
+ */
+autoAt: string | null, };
+
+/**
  * Recherche-Läufe zu offenen Fragen
  */
 export type ResearchSettings = { 
@@ -387,6 +497,19 @@ maxPerDay: number,
  * Profil der Recherche; null = Profil „research“, falls vorhanden, sonst defaultProfile
  */
 profile: string | null, };
+
+/**
+ * Review eines Tickets vor dem Merge: Lauf und Testläufe des Agenten
+ */
+export type ReviewEntry = { ticketId: string, branch: string, runId: string, 
+/**
+ * Lauf-Protokoll des Laufs
+ */
+logFile: string, 
+/**
+ * Zeitpunkt des Gates (ISO)
+ */
+at: string, tests: Array<TestRun>, };
 
 /**
  * Eine Regel: trifft `when` zu, gilt `profile`
@@ -415,6 +538,132 @@ filesMin?: number,
 planMinChars?: number, };
 
 /**
+ * Ergebnis eines Laufs samt Endzeit; schreibt nur der Worker
+ */
+export type RunEnd = { endedAt: string, 
+/**
+ * Exit-Code von Claude; null, wenn der Prozess beendet wurde
+ */
+code: number | null, timedOut: boolean, 
+/**
+ * stdout (Ereignisse von `--output-format stream-json`, zuletzt das Ergebnis), notfalls samt stderr
+ */
+output: string, 
+/**
+ * Einrichtung des Worktrees: true = alle Befehle gelaufen (fehlt ohne Einrichtung)
+ */
+setupOk?: boolean, 
+/**
+ * Einrichtung gescheitert: dieser Befehl; Claude wurde dann nicht gestartet
+ */
+setupFailed?: SetupFailure, };
+
+/**
+ * Art eines Laufs, wie der Lauf-Speicher sie kennt (`RunKind`)
+ */
+export type RunKind = "work" | "merge" | "research" | "plan";
+
+/**
+ * Lauf-Protokoll eines Tickets oder einer Frage
+ */
+export type RunLogEntry = { 
+/**
+ * Dateiname, z. B. `ARC-0001-20261016-091500-merge.log`
+ */
+name: string, kind: RunKind, 
+/**
+ * Start laut Namen als ISO-Zeit
+ */
+started: string | null, };
+
+/**
+ * Teile eines Lauf-Protokolls
+ */
+export type RunLogParts = { 
+/**
+ * Kopf des Dispatchers (Start, Profil, Aufruf)
+ */
+header: string, 
+/**
+ * Arbeitsanweisung; `None`, wenn sie nicht (mehr) im Text steht, z. B. weil nur das Ende
+ * gelesen wurde
+ */
+prompt: string | null, 
+/**
+ * Ausgabe von Claude und Ende des Laufs
+ */
+body: string, };
+
+/**
+ * Ausgang eines Laufs laut Ende seines Protokolls
+ */
+export type RunOutcome = { state: RunState, exitCode: number | null, timedOut: boolean, endedAt: string | null, };
+
+/**
+ * Ein gestarteter Worker-Lauf; der Worker-Prozess liest ihn und schreibt sein Ergebnis daneben
+ */
+export type RunRecord = { id: string, kind: RunKind, 
+/**
+ * Ticket des Laufs; bei einer Recherche die Fragen-ID (Gegenstand des Laufs)
+ */
+ticketId: string, boardId: number, title: string, agent: string, 
+/**
+ * Arbeitsordner (Worktree des Tickets)
+ */
+cwd: string, branch: string, 
+/**
+ * Merge-Session: Ziel-Branch im Hauptordner
+ */
+target: string | null, run: RunSettings, 
+/**
+ * Umsetzung: Nummer des Versuchs (gescheiterte Versuche + 1)
+ */
+attempt?: number, command: string, args: Array<string>, prompt: string, logFile: string, startedAt: string, pid: number | null, 
+/**
+ * Umsetzung in einem neu angelegten Worktree: Einrichtungsbefehle, die der Worker vor Claude
+ * ausführt, und ihr Zeitlimit
+ */
+setup?: Array<WorktreeSetupStep>, setupTimeoutMinutes?: number, 
+/**
+ * Recherche: ID der Frage
+ */
+questionId?: string, 
+/**
+ * Recherche: Zahl der Recherchen der Frage beim Start (danach mehr = Ergebnis da)
+ */
+researchBefore?: number, 
+/**
+ * Planung: `plannedAt` des Tickets beim Start (danach ein neuerer Wert = Plan gespeichert)
+ */
+plannedBefore?: string | null, 
+/**
+ * Recherche und Planung: Hauptordner des Repos, zu dem der losgelöste Worktree gehört
+ * (zum Aufräumen)
+ */
+repoRoot?: string, };
+
+/**
+ * Ergebnis eines Worker-Laufs
+ */
+export type RunResult = { 
+/**
+ * Exit-Code von Claude; null, wenn der Prozess beendet wurde
+ */
+code: number | null, timedOut: boolean, 
+/**
+ * stdout (Ereignisse von `--output-format stream-json`, zuletzt das Ergebnis), notfalls samt stderr
+ */
+output: string, 
+/**
+ * Einrichtung des Worktrees: true = alle Befehle gelaufen (fehlt ohne Einrichtung)
+ */
+setupOk?: boolean, 
+/**
+ * Einrichtung gescheitert: dieser Befehl; Claude wurde dann nicht gestartet
+ */
+setupFailed?: SetupFailure, };
+
+/**
  * Einstellungen eines Laufs samt Begründung für den Start-Kommentar
  */
 export type RunSettings = { model: string | null, effort: string | null, maxTurns: number, timeoutMinutes: number, profile: string, why: string, 
@@ -434,6 +683,21 @@ ruleIndex?: number,
  * Basisprofil vor der Eskalation; fehlt ohne Eskalation
  */
 escalatedFrom?: string, };
+
+/**
+ * Stand eines Laufs laut Ende seines Protokolls
+ */
+export type RunState = "finished" | "running";
+
+/**
+ * Gescheiterter Einrichtungsbefehl eines neuen Worktrees
+ */
+export type SetupFailure = { cwd: string, run: string, code: number | null, timedOut: boolean, output: string, };
+
+/**
+ * Ein Testlauf des Agenten, wie das Review ihn zeigt; `ok: null` = Ausgang unklar
+ */
+export type TestRun = { command: string, ok: boolean | null, output: string, };
 
 /**
  * Zeitfenster, in dem neue Läufe starten dürfen

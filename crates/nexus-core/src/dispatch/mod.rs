@@ -21,7 +21,9 @@ pub mod prompt_defaults;
 pub mod prompt_template;
 pub mod readiness;
 pub mod review_feedback;
+pub mod state;
 pub mod time_window;
+pub mod types;
 
 pub use attempts::AttemptCounter;
 pub use comments::CommentLike;
@@ -46,4 +48,11 @@ pub use prompt_defaults::PromptPlaceholder;
 pub use prompt_template::{PromptTemplate, PromptValue, PromptValues};
 pub use readiness::{DispatchReadiness, ReadinessBoard, ReadinessTicket};
 pub use review_feedback::ReviewFeedback;
+pub use state::{
+    DispatchLog, DispatchState, DispatchStateStore, MergeEntry, MergePhase, PlanningAutoState,
+    PlanningEntry, ResearchAutoState, ResearchEntry, ReviewEntry, ReviewStore, RunEnd, RunLogEntry,
+    RunLogOutcome, RunLogParts, RunLogSplitter, RunOutcome, RunRecord, RunState, RunStore,
+    RUN_LOG_OUTPUT_MARKER, RUN_LOG_PROMPT_MARKER,
+};
 pub use time_window::TimeWindowCheck;
+pub use types::{RunResult, SetupFailure, TestRun};

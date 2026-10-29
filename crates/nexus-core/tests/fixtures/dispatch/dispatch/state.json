@@ -1,0 +1,53 @@
+{
+  "pausedUntil": "2026-10-27T08:15:00.123Z",
+  "merges": {
+    "ARC-0001": {
+      "ticketId": "ARC-0001",
+      "branch": "ticket/ARC-0001-x",
+      "phase": "waiting",
+      "sessionUsed": true,
+      "waitNoted": true,
+      "target": "main",
+      "conflictSeen": true,
+      "heldBy": "busy",
+      "since": "2026-10-27T08:10:00.000Z"
+    },
+    "ARC-0002": {
+      "ticketId": "ARC-0002",
+      "branch": "ticket/ARC-0002-y",
+      "phase": "pending",
+      "sessionUsed": false,
+      "waitNoted": false,
+      "target": null,
+      "since": "2026-10-27T08:11:00.000Z"
+    }
+  },
+  "research": {
+    "ARC-F0001": {
+      "questionId": "ARC-F0001",
+      "lastStartedAt": "2026-10-27T08:12:00.000Z",
+      "count": 2,
+      "autoAt": "2026-10-27T08:12:00.000Z"
+    }
+  },
+  "researchAuto": {
+    "since": "2026-10-27T07:00:00.000Z",
+    "day": "2026-10-27",
+    "count": 3,
+    "retryAt": null,
+    "lastError": "kein Git"
+  },
+  "planning": {
+    "ARC-0003": {
+      "ticketId": "ARC-0003",
+      "lastStartedAt": "2026-10-27T08:13:00.000Z",
+      "count": 1,
+      "autoAt": null
+    }
+  },
+  "planningAuto": {
+    "since": "2026-10-27T07:30:00.000Z",
+    "retryAt": "2026-10-27T09:00:00.000Z",
+    "lastError": null
+  }
+}
