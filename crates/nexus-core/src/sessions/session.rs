@@ -39,6 +39,19 @@ pub enum DisplayState {
     Stale,
 }
 
+impl DisplayState {
+    /// Schreibweise in JSON und in den Dateien
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            DisplayState::Idle => "idle",
+            DisplayState::Running => "running",
+            DisplayState::Waiting => "waiting",
+            DisplayState::Ended => "ended",
+            DisplayState::Stale => "stale",
+        }
+    }
+}
+
 impl From<SessionState> for DisplayState {
     fn from(state: SessionState) -> Self {
         match state {

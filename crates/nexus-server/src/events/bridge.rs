@@ -1,7 +1,7 @@
 //! Brücke zum Ereignisstrom des Node-Servers.
 //!
-//! Sessions (bis P4-9) und die Meldungen des Node-Dispatchers (bis Phase 5) entstehen noch
-//! im Node-Prozess. Solange ein Upstream eingerichtet ist, öffnet jeder Rust-Strom deshalb
+//! Die Meldungen des Node-Dispatchers (bis Phase 5) entstehen noch im Node-Prozess; die
+//! Sessions melden seit P4-9 aus Rust. Solange ein Upstream eingerichtet ist, öffnet jeder Rust-Strom deshalb
 //! eine eigene Verbindung zum Node-Strom desselben Projekts und reicht genau die Ereignisse
 //! weiter, die dort entstehen – `hello`, Herzschlag und alles, was Rust selbst schickt,
 //! bleiben liegen.
@@ -24,7 +24,12 @@ use crate::log::ServerLog;
 use crate::proxy::Upstream;
 
 /// Ereignisse, die vom Node-Server kommen, solange sie dort entstehen
-pub const BRIDGED_EVENTS: [&str; 2] = ["sessions", "notice"];
+pub const BRIDGED_EVENTS: [&str; 1] = ["notice"];
+
+/// Ereignis der Sessions. Es entsteht seit P4-9 in Rust und wird nur gebrückt, wenn der
+/// Notschalter `NEXUS_PROXY_GROUPS=sessions` die Hooks wieder zum Node-Server schickt – dort
+/// entstehen die Sessions dann auch wieder.
+pub const SESSIONS_EVENT: &str = "sessions";
 
 /// Wartezeit bis zum neuen Verbindungsversuch, wenn der Node-Strom abbricht
 const RETRY: Duration = Duration::from_millis(2000);
@@ -167,11 +172,13 @@ mod tests {
             "data: {\"type\":\"dbboard\",\"boardId\":1}",
             "event: kaputt",
             "data: kein JSON",
+            // Die Sessions laufen seit P4-9 in Rust und werden nicht mehr gebrückt
             "data: {\"type\":\"sessions\"}",
+            r#"data: {"type":"notice","kind":"wartet","tag":"a","title":"T","body":"B","url":"/u"}"#,
         ] {
             assert!(deliver(line, &bridged, &sender), "{line}");
         }
-        assert_eq!(rx.try_recv(), Ok(LiveEvent::Sessions));
+        assert!(matches!(rx.try_recv(), Ok(LiveEvent::Notice(_))));
         assert!(rx.try_recv().is_err());
     }
 

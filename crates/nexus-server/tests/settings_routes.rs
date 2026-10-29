@@ -2,8 +2,8 @@
 //! `SettingsRoutes.test.ts`, `UserSettingsRoutes.test.ts` und `BoardConfigRoutes.test.ts`.
 //!
 //! Die Fälle der beiden Testmeldungs-Routen (`POST /api/user-settings/test-notification` und
-//! `…/test-ntfy`) fehlen hier: die Routen bleiben bis P4-11 beim Node-Server, ihre Tests
-//! folgen dort.
+//! `…/test-ntfy`) stehen in `notification_routes.rs`: sie gehören zur Gruppe
+//! `notifications`. Hier steht nur, wer sie beantwortet.
 
 mod common;
 
@@ -574,19 +574,35 @@ async fn reicht_die_gespeicherte_board_konfig_am_node_server_nach() {
 }
 
 #[tokio::test]
-async fn die_testmeldungen_der_benutzereinstellungen_gehen_weiter_an_den_node_server() {
+async fn die_testmeldungen_der_benutzereinstellungen_gehen_nur_mit_notschalter_an_den_node_server()
+{
     let (upstream, base, task) = start_upstream().await;
+    // Die Testmeldungen gehören zur Gruppe `notifications`; nur ihr Notschalter schiebt sie
+    // zurück zum Node-Server
     let server = TestServer::with(TestServerOptions {
-        upstream: Some(base),
+        upstream: Some(base.clone()),
+        proxy_groups: RouteGroups::from_env(Some(RouteGroup::Notifications.as_str())),
         ..Default::default()
     });
-
     for pfad in [
         "/api/user-settings/test-notification",
         "/api/user-settings/test-ntfy",
     ] {
         let reply = server.post(pfad, "{}").await;
         assert_eq!(reply.header("x-nexus-backend"), Some("node"), "{pfad}");
+    }
+
+    // Ohne Notschalter beantwortet Rust sie selbst
+    let server = TestServer::with(TestServerOptions {
+        upstream: Some(base),
+        ..Default::default()
+    });
+    for pfad in [
+        "/api/user-settings/test-notification",
+        "/api/user-settings/test-ntfy",
+    ] {
+        let reply = server.post(pfad, "{}").await;
+        assert_eq!(reply.header("x-nexus-backend"), Some("rust"), "{pfad}");
     }
     // Eigene Routen beantwortet Rust selbst
     assert_eq!(
