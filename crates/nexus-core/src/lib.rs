@@ -23,6 +23,7 @@ pub mod settings;
 pub mod testing;
 pub mod text;
 pub mod workflow;
+pub mod worktrees;
 
 mod random;
 
