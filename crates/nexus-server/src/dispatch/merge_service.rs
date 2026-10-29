@@ -543,8 +543,9 @@ dort („Mergen“ bzw. harness board merge)"
         Ok(())
     }
 
-    /// Merge-Session mindestens mit dem Standardprofil
-    fn at_least_default(&self, ctx: &DispatchContext, run: RunSettings) -> RunSettings {
+    /// Merge-Session mindestens mit dem Standardprofil (der Schattenbetrieb rechnet damit
+    /// dieselbe Wahl nach)
+    pub fn at_least_default(&self, ctx: &DispatchContext, run: RunSettings) -> RunSettings {
         let cfg = &ctx.cfg;
         let index = |name: &str| cfg.ladder.iter().position(|entry| entry == name);
         if index(&run.profile) >= index(&cfg.default_profile) {

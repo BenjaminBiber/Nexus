@@ -29,12 +29,15 @@ pub const DEFAULT_DISPATCH_TICK_MS: u64 = 60_000;
 /// So schreibt immer nur ein Dispatcher. Bei [`DispatchBackend::Node`] (Vorgabe) gehen die
 /// Routen unter `/api/dispatch` an den Sidecar und der Rust-Takt bleibt aus; bei
 /// [`DispatchBackend::Rust`] antwortet Rust, der Rust-Takt läuft und der Sidecar startet mit
-/// `HARNESS_DISPATCH_TICK_MS=0`.
+/// `HARNESS_DISPATCH_TICK_MS=0`. [`DispatchBackend::Shadow`] ist der Parallelbetrieb: Node
+/// dispatcht und schreibt wie bei `node`, und Rust rechnet jede Entscheidung und jede
+/// Auswertung nach, ohne irgendetwas außerhalb von `dispatch/shadow/` zu schreiben.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum DispatchBackend {
     #[default]
     Node,
     Rust,
+    Shadow,
 }
 
 impl DispatchBackend {
@@ -43,12 +46,19 @@ impl DispatchBackend {
         match self {
             DispatchBackend::Node => "node",
             DispatchBackend::Rust => "rust",
+            DispatchBackend::Shadow => "shadow",
         }
     }
 
-    /// Dispatcht der Rust-Server?
+    /// Dispatcht der Rust-Server? Nur dann beantwortet er die Dispatch-Routen und schreibt
+    /// selbst – im Schattenbetrieb nicht
     pub fn is_rust(self) -> bool {
         self == DispatchBackend::Rust
+    }
+
+    /// Läuft der Schattenbetrieb?
+    pub fn is_shadow(self) -> bool {
+        self == DispatchBackend::Shadow
     }
 
     /// Der Umschalter aus der Umgebung; ein unbekannter Wert bricht den Start ab
@@ -56,9 +66,12 @@ impl DispatchBackend {
         match raw.trim() {
             "node" => Ok(DispatchBackend::Node),
             "rust" => Ok(DispatchBackend::Rust),
+            "shadow" => Ok(DispatchBackend::Shadow),
             other => Err(HarnessError::new(
                 "dispatch-backend-invalid",
-                format!("NEXUS_DISPATCH „{other}“ ist ungültig. Erlaubt sind node und rust."),
+                format!(
+                    "NEXUS_DISPATCH „{other}“ ist ungültig. Erlaubt sind node, rust und shadow."
+                ),
             )
             .into()),
         }
@@ -479,12 +492,19 @@ mod tests {
             DispatchBackend::Node
         );
 
-        let error = load(&[], &[("NEXUS_DISPATCH", "shadow")]).unwrap_err();
+        // Der Schattenbetrieb dispatcht nicht selbst: die Routen bleiben beim Sidecar
+        let shadow = load(&[], &[("NEXUS_DISPATCH", "shadow")]).unwrap();
+        assert_eq!(shadow.dispatch, DispatchBackend::Shadow);
+        assert!(shadow.dispatch.is_shadow());
+        assert!(!shadow.dispatch.is_rust());
+        assert_eq!(shadow.dispatch.as_str(), "shadow");
+
+        let error = load(&[], &[("NEXUS_DISPATCH", "beides")]).unwrap_err();
         let harness = error.harness().expect("Fehler");
         assert_eq!(harness.code, "dispatch-backend-invalid");
         assert_eq!(
             harness.message,
-            "NEXUS_DISPATCH „shadow“ ist ungültig. Erlaubt sind node und rust."
+            "NEXUS_DISPATCH „beides“ ist ungültig. Erlaubt sind node, rust und shadow."
         );
     }
 

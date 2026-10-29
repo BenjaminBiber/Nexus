@@ -396,6 +396,8 @@ pub struct DispatchFixture {
     pub cfg: DispatchConfig,
     /// Der ganze Dispatcher auf diesem Benutzerordner (liest `dispatch.yaml` und `board.yaml`)
     pub service: Arc<DispatchService>,
+    /// Die Board-Laufzeit hinter dem Dispatcher; der Schattenbetrieb braucht dieselbe
+    pub holder: Arc<BoardRuntimeHolder>,
     /// Leben die Prozesse der Läufe noch? (wie `f.alive` in TypeScript)
     alive: Arc<AtomicBool>,
     clock: Clock,
@@ -510,6 +512,7 @@ impl DispatchFixture {
         if let Some(merge) = merge {
             deps.merge = merge;
         }
+        let holder = deps.boards.clone();
         let service = Arc::new(DispatchService::new(deps));
         Self {
             dir,
@@ -522,6 +525,7 @@ impl DispatchFixture {
             ctx,
             cfg,
             service,
+            holder,
             alive,
             clock,
             now,
@@ -878,6 +882,11 @@ impl DispatchFixture {
             .single()
             .expect("eindeutige Ortszeit");
         *self.now.lock().expect("Uhr") = at.with_timezone(&Utc);
+    }
+
+    /// Die Uhr des Dispatchers; der Schattenbetrieb rechnet mit derselben
+    pub fn clock(&self) -> Clock {
+        self.clock.clone()
     }
 
     /// Die aktuelle Zeit des Dispatchers als ISO-Text

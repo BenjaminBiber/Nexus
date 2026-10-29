@@ -1,7 +1,7 @@
 //! Der Dispatcher: Einstellung samt Prüfung und Fingerabdruck, die Prompt-Vorlagen, die
 //! Bereitschaftsprüfung, die Profilwahl sowie Argumente und Umgebung für `claude -p`.
 //! Dazu die Vorsilben seiner Kommentare, die Git-Bausteine für den Merge und die Auswertung
-//! der Ausgabe eines Laufs (`output`).
+//! der Ausgabe eines Laufs (`output`) und der Vergleich des Parallelbetriebs (`shadow`).
 
 pub mod abort_reason;
 pub mod attempts;
@@ -26,6 +26,7 @@ pub mod prompt_template;
 pub mod readiness;
 pub mod review_feedback;
 pub mod run_backfill;
+pub mod shadow;
 pub mod state;
 pub mod time_window;
 pub mod types;
@@ -66,6 +67,10 @@ pub use prompt_template::{PromptTemplate, PromptValue, PromptValues};
 pub use readiness::{DispatchReadiness, ReadinessBoard, ReadinessTicket};
 pub use review_feedback::ReviewFeedback;
 pub use run_backfill::{BackfillInput, DispatchRunBackfill};
+pub use shadow::{
+    ShadowDecision, ShadowDiff, ShadowEvaluation, ShadowReadiness, ShadowReport, ShadowStore,
+    ShadowSummary,
+};
 pub use state::{
     DispatchLog, DispatchState, DispatchStateStore, MergeEntry, MergePhase, PlanningAutoState,
     PlanningEntry, ResearchAutoState, ResearchEntry, ReviewEntry, ReviewStore, RunEnd, RunLogEntry,

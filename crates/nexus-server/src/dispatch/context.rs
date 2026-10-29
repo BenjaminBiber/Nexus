@@ -137,6 +137,9 @@ pub struct DispatchContext {
     env: BTreeMap<String, String>,
     /// Name der Plattform wie in Node (`win32`, `darwin`, `linux`)
     platform: String,
+    /// Nur lesen: [`DispatchContext::repo`] richtet den Harness-Ordner des Repos nicht ein,
+    /// sondern öffnet ihn. Der Schattenbetrieb fasst damit auch das Repo nicht an
+    read_only: bool,
     /// Hauptordner und Worktree-Verwaltung je Board, einmal je Durchlauf eingerichtet
     repos: Mutex<HashMap<i32, Arc<RepoWork>>>,
 }
@@ -182,8 +185,15 @@ impl DispatchContext {
             git_bash: GitBashLocator::new(),
             env,
             platform: platform.into(),
+            read_only: false,
             repos: Mutex::new(HashMap::new()),
         }
+    }
+
+    /// Kontext, der auch den Harness-Ordner des Repos nicht anlegt (Schattenbetrieb)
+    pub fn read_only(mut self) -> Self {
+        self.read_only = true;
+        self
     }
 
     /// Kontext mit der Umgebung und der Plattform dieses Prozesses
@@ -320,7 +330,11 @@ impl DispatchContext {
         if let Some(work) = repos.get(&board.id) {
             return Ok(work.clone());
         }
-        let project = HarnessProject::init(Path::new(&repo_path))?;
+        let project = if self.read_only {
+            HarnessProject::open(Path::new(&repo_path))?
+        } else {
+            HarnessProject::init(Path::new(&repo_path))?
+        };
         let work = Arc::new(RepoWork {
             board: board.clone(),
             root: project.root.clone(),

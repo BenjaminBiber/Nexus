@@ -150,6 +150,9 @@ pub struct DispatchServiceDeps {
     pub env: BTreeMap<String, String>,
     /// Name der Plattform wie in Node (`win32`, `darwin`, `linux`)
     pub platform: String,
+    /// Nur lesen: der Schattenbetrieb nutzt [`DispatchService::status`] für seinen Vergleich
+    /// und darf dabei nicht einmal den Harness-Ordner eines Repos anlegen
+    pub read_only: bool,
 }
 
 impl std::fmt::Debug for DispatchServiceDeps {
@@ -179,6 +182,7 @@ impl DispatchServiceDeps {
             reviews: Arc::new(ReviewService::new()),
             env: std::env::vars().collect(),
             platform: crate::dispatch::context::node_platform().to_string(),
+            read_only: false,
         }
     }
 }
@@ -1367,6 +1371,11 @@ impl DispatchService {
                     self.deps.env.clone(),
                     self.deps.platform.clone(),
                 );
+                let ctx = if self.deps.read_only {
+                    ctx.read_only()
+                } else {
+                    ctx
+                };
                 let Some(target) = ctx.board(board_id).await? else {
                     return Ok((Vec::new(), false));
                 };
@@ -1534,7 +1543,7 @@ impl DispatchService {
         me: RepoBoardOwner,
         backend: Arc<dyn BoardBackend>,
     ) -> DispatchContext {
-        DispatchContext::new(
+        let ctx = DispatchContext::new(
             cfg,
             me,
             self.deps.home.clone(),
@@ -1545,7 +1554,12 @@ impl DispatchService {
             self.deps.notifier.clone(),
             self.deps.env.clone(),
             self.deps.platform.clone(),
-        )
+        );
+        if self.deps.read_only {
+            ctx.read_only()
+        } else {
+            ctx
+        }
     }
 }
 

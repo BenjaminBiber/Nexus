@@ -838,6 +838,117 @@ export type RunState = "finished" | "running";
 export type SetupFailure = { cwd: string, run: string, code: number | null, timedOut: boolean, output: string, };
 
 /**
+ * Vergleich einer Entscheidung: Node hat einen Lauf gestartet, Rust hat ihn nachgerechnet
+ */
+export type ShadowDecision = { 
+/**
+ * Zeitpunkt des Vergleichs
+ */
+at: string, 
+/**
+ * ID des Laufs aus `dispatch/runs`
+ */
+runId: string, ticketId: string, 
+/**
+ * Art des Laufs (`work`, `merge`, `research`, `plan`)
+ */
+kind: string, equal: boolean, diffs: Array<ShadowDiff>, 
+/**
+ * Unified-Diff der Arbeitsanweisung, wenn sie abweicht
+ */
+promptDiff?: string, 
+/**
+ * Warum nichts nachgerechnet werden konnte (Ticket weg, Repo fehlt …); dann ist der
+ * Lauf weder gleich noch abweichend, sondern bleibt ohne Urteil
+ */
+skipped?: string, };
+
+/**
+ * Eine Abweichung zwischen dem, was Node getan hat, und dem, was Rust gerechnet hat.
+ * Fehlt ein Wert auf einer Seite, steht dort `None`
+ */
+export type ShadowDiff = { 
+/**
+ * Name des Feldes, so wie es in der Lauf-Datei bzw. der Lauf-Zeile heißt
+ */
+field: string, node: string | null, rust: string | null, };
+
+/**
+ * Vergleich einer Auswertung: Node hat eine Zeile in `board.DispatchRuns` geschrieben, Rust
+ * hat sie aus Lauf und Ergebnis nachgerechnet
+ */
+export type ShadowEvaluation = { at: string, runId: string, 
+/**
+ * ID der Zeile in `board.DispatchRuns`; `None`, solange sie fehlt
+ */
+rowId?: string, ticketId: string, kind: string, equal: boolean, 
+/**
+ * Die Zeile ist auch nach der Wartefrist nicht erschienen
+ */
+missingRow: boolean, diffs: Array<ShadowDiff>, };
+
+/**
+ * Abweichung der Bereitschaft eines Tickets zwischen Node-Sidecar und Rust; gleiche Urteile
+ * schreibt der Schattenbetrieb nicht mit
+ */
+export type ShadowReadiness = { at: string, ticketId: string, 
+/**
+ * Urteil des Node-Sidecars (`bereit`, „wartet …“); `None` = Ticket fehlt dort
+ */
+node: string | null, 
+/**
+ * Urteil von Rust; `None` = Ticket fehlt hier
+ */
+rust: string | null, 
+/**
+ * Das Ticket hat sich kurz vorher geändert – die Abweichung ist vermutlich nur ein
+ * Zeitunterschied
+ */
+timing: boolean, };
+
+/**
+ * Bericht über einen Zeitraum
+ */
+export type ShadowReport = { 
+/**
+ * Erster Tag des Zeitraums (`JJJJ-MM-TT`); `None` = ohne Grenze
+ */
+from: string | null, 
+/**
+ * Letzter Tag des Zeitraums; `None` = ohne Grenze
+ */
+until: string | null, summary: ShadowSummary, 
+/**
+ * Nur die abweichenden und die ohne Urteil
+ */
+decisions: Array<ShadowDecision>, 
+/**
+ * Nur die abweichenden und die ohne Zeile
+ */
+evaluations: Array<ShadowEvaluation>, readiness: Array<ShadowReadiness>, };
+
+/**
+ * Die Zahlen eines Zeitraums
+ */
+export type ShadowSummary = { 
+/**
+ * Läufe, zu denen eine Entscheidung verglichen wurde
+ */
+runs: number, decisionsEqual: number, decisionsDifferent: number, 
+/**
+ * Entscheidungen ohne Urteil (Ticket weg, Repo fehlt …)
+ */
+decisionsSkipped: number, evaluationsEqual: number, evaluationsDifferent: number, 
+/**
+ * Auswertungen, zu denen keine Zeile in `board.DispatchRuns` erschienen ist
+ */
+evaluationsMissing: number, readinessDifferent: number, 
+/**
+ * Davon solche, bei denen sich das Ticket kurz vorher geändert hat
+ */
+readinessTiming: number, };
+
+/**
  * Wie die Starts eines Profils zustande kamen (Grund und Regel), häufigste zuerst
  */
 export type StartSource = { reason: DispatchProfileReason | null, ruleIndex: number | null, count: number, };
