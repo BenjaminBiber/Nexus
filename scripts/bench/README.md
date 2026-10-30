@@ -157,6 +157,45 @@ Messung der Oberfläche) bleiben erhalten.
 `--compare` und `--out` lassen sich zusammen verwenden, auch mit derselben Datei: verglichen wird gegen den Stand
 vor dem Schreiben.
 
+## Leistungsschwelle in der CI
+
+Der Job `bench` in `.github/workflows/ci.yml` misst bei jedem Push und Pull Request auf macOS, Windows und Linux
+und vergleicht mit den Ausgangswerten **desselben Runners**. Werte vom Entwicklungsrechner taugen dafür nicht:
+GitHub-Runner sind langsamer und schwanken.
+
+```sh
+node scripts/bench/bench.mjs --out bench-linux.json
+node scripts/bench/compare.mjs --baseline contract/baseline-ci-linux.json --measured bench-linux.json \
+                               --ignore sseDbBoardLatencyMs
+```
+
+| Argument | Bedeutung |
+| --- | --- |
+| `--baseline <datei>` | Ausgangswerte des Runners (`contract/baseline-ci-<os>.json`) |
+| `--measured <datei>` | Messwerte eines Laufs; mehrfach genannt zählt je Messgröße und Feld der Median |
+| `--ignore <name>` | Messgröße, die nur berichtet wird und nie scheitern lässt; mehrfach erlaubt |
+| `--tolerance <zahl>` | erlaubter Rückschritt in Prozent (Standard 10) |
+
+`compare.mjs` rechnet je Messgröße `(neu - alt) / alt`, meldet jeden Rückschritt über der Toleranz mit Name, altem
+Wert, neuem Wert und Prozent und endet dann mit Code 1. Messgrößen ohne Ausgangswert (`null`) werden gemeldet,
+lassen den Job aber nicht scheitern. `sseDbBoardLatencyMs` folgt dem Abfrage-Takt des Servers (2500 ms) und streut
+deshalb über die Toleranz hinaus; die CI übergeht den Wert mit `--ignore`.
+
+### Ausgangswerte der CI füllen oder anheben
+
+Die Dateien `contract/baseline-ci-<os>.json` (`linux`, `macos`, `windows`) stehen zunächst auf `null`. So entstehen
+die echten Werte:
+
+1. Den Job `bench` fünfmal auf `main` laufen lassen (Push oder „Re-run all jobs“).
+2. Je Plattform die fünf Artefakte `bench-<os>` herunterladen.
+3. Median je Messgröße bilden – dafür reicht das Prüfskript selbst:
+   `node scripts/bench/compare.mjs --baseline contract/baseline-ci-<os>.json --measured lauf1.json … --measured lauf5.json`
+   nennt die zusammengefassten Werte in der Tabelle; sie kommen unter `metrics` in die Datei.
+4. `createdAt` und `machine` aus einem der Läufe übernehmen.
+
+Angehoben werden Ausgangswerte nur mit einem eigenen Commit, der ausschließlich `baseline-ci-<os>.json` ändert und
+die Begründung im Commit-Text nennt.
+
 ## Dateien
 
 | Datei | Aufgabe |
@@ -170,6 +209,7 @@ vor dem Schreiben.
 | `lib/SseStream.mjs` | Ereignisstrom lesen und den Zeitpunkt jedes Ereignisses festhalten |
 | `lib/BaselineCompare.mjs` | Vergleich zweier Messungen und die Tabelle dazu (reine Funktionen) |
 | `lib/BenchApi.mjs` | Anfragen an den gemessenen Server (Pflichtkopf, Zeitlimit, Fehlertexte) |
+| `compare.mjs` | Prüfskript der CI: Messwerte gegen die Ausgangswerte eines Runners, Code 1 bei Rückschritt |
 | `lib/Stats.mjs` | Median, Perzentil, Mittelwert, Runden (reine Funktionen) |
 | `lib/ProcessMemory.mjs` | Speicherbedarf eines fremden Prozesses in MB |
 | `tests/*.test.mjs` | Unit-Tests der reinen Teile (`npx vitest run scripts/bench`) |

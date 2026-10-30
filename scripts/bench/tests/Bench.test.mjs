@@ -56,8 +56,10 @@ describe('parseArgs', () => {
     expect(options).toMatchObject({ hookCmd: 'nexus hook', hookRuns: 7, hyperfine: true });
   });
 
-  it('misst ohne --hyperfine selbst und ohne --hook-cmd das Plugin-Bündel', () => {
-    expect(parseArgs([])).toMatchObject({ hyperfine: false, hookCmd: null, compare: null });
+  it('misst ohne --hyperfine selbst und ohne --hook-cmd den Hook des Rust-Binaries', () => {
+    const options = parseArgs([]);
+    expect(options).toMatchObject({ hyperfine: false, compare: null });
+    expect(options.hookCmd).toMatch(/nexus(\.exe)?" hook$/);
   });
 });
 
