@@ -4,19 +4,28 @@
 mod common;
 
 use std::fs;
+// Die Startdateien und der Umzug aus dem Benutzerordner werden nur unter Unix geprüft
+#[cfg(unix)]
 use std::path::{Path, PathBuf};
+#[cfg(unix)]
 use std::process::Command;
 
+#[cfg(unix)]
 use assert_cmd::cargo::CommandCargoExt;
-use common::temp_project::{Lauf, TempProject};
+#[cfg(unix)]
+use common::temp_project::Lauf;
+use common::temp_project::TempProject;
+#[cfg(unix)]
 use nexus_core::install::LauncherWriter;
 
 /// Hinweis, den die Startdatei `harness` auslöst
+#[cfg(unix)]
 const ALIAS_HINWEIS: &str =
     "Hinweis: `harness` heißt jetzt `nexus`. Der alte Name funktioniert noch eine Weile.";
 
 /// Legt einen Startordner mit einer Kopie des Binaries und den Startdateien an und liefert den
 /// Pfad der Startdatei `harness`
+#[cfg(unix)]
 fn startordner(base: &Path) -> PathBuf {
     let bin = base.join("bin");
     fs::create_dir_all(&bin).expect("Startordner");
@@ -27,6 +36,7 @@ fn startordner(base: &Path) -> PathBuf {
 }
 
 /// Ruft die Startdatei `harness` mit dem Home des Projekts auf
+#[cfg(unix)]
 fn ueber_startdatei(projekt: &TempProject, launcher: &Path, args: &[&str]) -> Lauf {
     let output = Command::new(launcher)
         .args(args)
