@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "hinweis": "Ausgangswerte der CI für linux. Sie entstehen aus fünf Läufen des Jobs bench auf main; wie, steht in scripts/bench/README.md. Solange ein Wert null ist, meldet compare.mjs ihn nur und lässt den Job nicht scheitern.",
+  "createdAt": null,
+  "machine": null,
+  "metrics": {
+    "serverColdStartMs": { "median": null, "p95": null },
+    "boardFirstLoadMs": { "median": null, "p95": null },
+    "boardLoadMs": { "p50": null, "p95": null, "mean": null },
+    "serverRssIdleMb": { "value": null },
+    "hookSessionStartMs": { "median": null, "p95": null },
+    "hookUserPromptMs": { "median": null, "p95": null },
+    "sseSessionsLatencyMs": { "median": null, "p95": null },
+    "sseDbBoardLatencyMs": { "median": null, "p95": null }
+  }
+}

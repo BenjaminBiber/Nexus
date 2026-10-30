@@ -1,6 +1,7 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { arch, cpus, platform, release, tmpdir, totalmem } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { DEFAULT_TOLERANCE_PCT, compareMetrics, formatComparison, machineWarning, worseRows } from './lib/BaselineCompare.mjs';
 import { BenchProject } from './lib/BenchProject.mjs';
@@ -17,6 +18,9 @@ const SCHEMA = 1;
 const DEFAULT_SERVER_CMD = 'target/release/nexus serve --port {port}';
 // Programmdatei, die der Standardbefehl braucht (nur dann geprüft)
 const DEFAULT_ENTRY = join('target', 'release', process.platform === 'win32' ? 'nexus.exe' : 'nexus');
+// Hook-Befehl der Rust-Welt; das Ereignis hängt die Messung an. Ohne ihn würde das alte Plugin-Bündel gemessen.
+// Der Pfad steht absolut und in Anführungszeichen, weil der Hook im Testprojekt läuft und Ordner Leerzeichen haben.
+const DEFAULT_HOOK_CMD = `"${resolve(DEFAULT_ENTRY)}" hook`;
 // Umfang einer vollen Messung und der schnellen Messung (--quick, für Tests und Rauchtest)
 const FULL = { tickets: 500, runs: 10, loads: 100, hookRuns: 30, sseRuns: 20, dbRuns: 10 };
 const QUICK = { tickets: 50, runs: 3, loads: 10, hookRuns: 5, sseRuns: 5, dbRuns: 3 };
@@ -44,7 +48,8 @@ const HELP = `Messskript für die Ausgangswerte der Migration.
   --out <datei>       schreibt das Ergebnis zusätzlich in diese Datei (z. B. contract/baseline.json)
   --server-cmd <text> Startbefehl des zu messenden Servers; {port} wird ersetzt
                       (Standard: ${DEFAULT_SERVER_CMD})
-  --hook-cmd <text>   Befehl des Hooks ohne Ereignis (Standard: das gebaute Plugin-Bündel aus diesem Repo)
+  --hook-cmd <text>   Befehl des Hooks ohne Ereignis
+                      (Standard: ${DEFAULT_ENTRY} hook)
   --tickets <zahl>    Tickets, mit denen das Board befüllt wird
   --runs <zahl>       Zahl der gemessenen Kaltstarts
   --loads <zahl>      Zahl der gemessenen warmen Ladevorgänge
@@ -72,7 +77,7 @@ const NUMBER_ARGS = {
 // Liest die Argumente; ausdrücklich genannte Zahlen gelten auch zusammen mit --quick
 export function parseArgs(argv) {
   const options = {
-    out: null, serverCmd: DEFAULT_SERVER_CMD, hookCmd: null, help: false,
+    out: null, serverCmd: DEFAULT_SERVER_CMD, hookCmd: DEFAULT_HOOK_CMD, help: false,
     quick: argv.includes('--quick'), hyperfine: argv.includes('--hyperfine'),
     compare: null, tolerance: DEFAULT_TOLERANCE_PCT,
   };
@@ -105,6 +110,15 @@ export function parseArgs(argv) {
     } else throw new Error(`Unbekanntes Argument „${arg}“. --help zeigt die Möglichkeiten.`);
   }
   return { ...options, ...(options.quick ? QUICK : FULL), ...numbers };
+}
+
+// Commit des Arbeitsordners; ohne Git (etwa in einem entpackten Archiv) bleibt das Feld leer
+export function commitHash() {
+  try {
+    return execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8', windowsHide: true }).trim();
+  } catch {
+    return null;
+  }
 }
 
 // Angaben zur Maschine; sie gehören zu jeder Messung, weil Zahlen ohne sie nichts bedeuten
@@ -248,12 +262,17 @@ async function run(options) {
     log('Messe die Latenz des Ereignisstroms …');
     const sse = await measureSse(server, project, boardId, firstTicket, options);
 
+    const createdAt = new Date().toISOString();
     return {
       schema: SCHEMA,
-      createdAt: new Date().toISOString(),
+      createdAt,
+      // Tag und Commit stehen eigens daneben, damit eine Abschlussmessung ohne Rechnen zuzuordnen ist
+      date: createdAt.slice(0, 10),
+      commit: commitHash(),
       machine: machine(),
       server: { cmd: options.serverCmd, tickets: options.tickets },
-      hooks: { cmd: project.hookDescription() },
+      // Der Standardbefehl steht ohne den Ordner des Klons in der Datei, damit sie auf jedem Rechner gleich aussieht
+      hooks: { cmd: options.hookCmd === DEFAULT_HOOK_CMD ? `${DEFAULT_ENTRY} hook` : project.hookDescription() },
       metrics: {
         serverColdStartMs: { median: round1(median(cold.health)), p95: round1(p95(cold.health)), runs: options.runs },
         boardFirstLoadMs: { median: round1(median(cold.firstLoad)), p95: round1(p95(cold.firstLoad)), runs: options.runs },

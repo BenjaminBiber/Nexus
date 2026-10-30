@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "createdAt": "2026-10-30T07:02:46.754Z",
+  "date": "2026-10-30",
+  "commit": "a2676501aaed142e33762ae32274402a9ceb3ac1",
+  "machine": {
+    "os": "darwin",
+    "release": "25.6.0",
+    "arch": "arm64",
+    "cpu": "Apple M5",
+    "cpus": 10,
+    "memGb": 32,
+    "node": "v26.10.0"
+  },
+  "server": {
+    "cmd": "target/release/nexus serve --port {port}",
+    "tickets": 500
+  },
+  "hooks": {
+    "cmd": "target/release/nexus hook"
+  },
+  "metrics": {
+    "serverColdStartMs": {
+      "median": 11.8,
+      "p95": 12.1,
+      "runs": 10
+    },
+    "boardFirstLoadMs": {
+      "median": 20.6,
+      "p95": 21.2,
+      "runs": 10
+    },
+    "boardLoadMs": {
+      "p50": 7.1,
+      "p95": 7.4,
+      "mean": 7.1,
+      "runs": 100
+    },
+    "serverRssIdleMb": {
+      "value": 22.3
+    },
+    "hookSessionStartMs": {
+      "median": 7.7,
+      "p95": 8.7,
+      "runs": 30
+    },
+    "hookUserPromptMs": {
+      "median": 7.7,
+      "p95": 7.9,
+      "runs": 30
+    },
+    "sseSessionsLatencyMs": {
+      "median": 0.2,
+      "p95": 0.4,
+      "runs": 20
+    },
+    "sseDbBoardLatencyMs": {
+      "median": 1898.1,
+      "p95": 2367.5,
+      "runs": 10
+    },
+    "installerMacosAarch64Bytes": {
+      "value": 23878853
+    },
+    "installerMacosX64Bytes": {
+      "value": null
+    },
+    "installerWindowsNsisBytes": {
+      "value": null
+    },
+    "installerLinuxDebBytes": {
+      "value": null
+    },
+    "installerLinuxRpmBytes": {
+      "value": null
+    },
+    "installerLinuxAppImageBytes": {
+      "value": null
+    }
+  },
+  "installers": {
+    "quelle": "Lokaler Bau mit „npm run desktop build“ auf dem Rechner der Messung (Apple Silicon, Version 0.1.0).",
+    "offen": "Die Werte der übrigen Plattformen stehen auf null: sie entstehen erst im Release-Bau der CI und werden danach hier eingetragen."
+  }
+}

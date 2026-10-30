@@ -121,9 +121,12 @@ export class BenchProject {
 
   // `harness init`: Harness-Ordner, Token und Zähler im Testprojekt; wiederholbar. Liefert die Ausgabe als Objekt.
   init() {
-    const [command, ...vorher] = this.hookCmd
-      ? splitCommand(this.hookCmd).slice(0, -1)
-      : [process.execPath, join(this.cloneDir, CLI_ENTRY)];
+    // Ohne das angehängte Ereignis: der Hook-Befehl endet auf „hook“, das Einrichten nutzt dasselbe Programm
+    const ohneUnterbefehl = this.hookCmd ? splitCommand(this.hookCmd).slice(0, -1) : null;
+    if (ohneUnterbefehl && ohneUnterbefehl.length === 0) {
+      throw new Error(`Der Hook-Befehl „${this.hookCmd}“ nennt nur ein Programm; erwartet wird er samt Unterbefehl, z. B. „nexus hook“.`);
+    }
+    const [command, ...vorher] = ohneUnterbefehl ?? [process.execPath, join(this.cloneDir, CLI_ENTRY)];
     const result = spawnSync(command, [...vorher, '--json', 'init'], {
       cwd: this.repo,
       encoding: 'utf8',

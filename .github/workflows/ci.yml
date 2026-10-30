@@ -52,6 +52,65 @@ jobs:
         if: hashFiles('contract/run.mjs') != ''
         run: npm run contract
 
+  # Misst Server, Hooks und Ereignisstrom auf jedem Runner und vergleicht mit dessen Ausgangswerten.
+  # Scheitert, sobald eine Messgröße mehr als 10 % schlechter ist als in contract/baseline-ci-<os>.json.
+  bench:
+    name: bench (${{ matrix.os }})
+    strategy:
+      # Jede Plattform läuft zu Ende, damit ein Rückschritt auf einer die anderen nicht verdeckt
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            baseline: linux
+          - os: macos-14
+            baseline: macos
+          - os: windows-latest
+            baseline: windows
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      # Das Messskript legt ein eigenes Git-Projekt für die Hooks an
+      - name: Git für die Messung einrichten
+        shell: bash
+        run: |
+          git config --global user.name "CI"
+          git config --global user.email "ci@example.invalid"
+          git config --global init.defaultBranch main
+          git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: npm
+      # Version absichtlich wie in rust-toolchain.toml
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.99.1'
+      - uses: Swatinem/rust-cache@v2
+      - run: npm ci
+      # Gemessen wird das Release-Profil: das Debug-Binary wäre um ein Vielfaches langsamer
+      - run: cargo build --release -p nexus-cli --bin nexus
+      # sseDbBoardLatencyMs folgt dem Abfrage-Takt des Servers (2500 ms) und streut deshalb stark;
+      # der Wert wird gemeldet, lässt den Job aber nicht scheitern (siehe scripts/bench/README.md).
+      - name: Messen
+        shell: bash
+        run: node scripts/bench/bench.mjs --out bench-${{ matrix.baseline }}.json
+      - name: Mit den Ausgangswerten des Runners vergleichen
+        shell: bash
+        run: |
+          node scripts/bench/compare.mjs \
+            --baseline contract/baseline-ci-${{ matrix.baseline }}.json \
+            --measured bench-${{ matrix.baseline }}.json \
+            --ignore sseDbBoardLatencyMs
+      # Immer hochladen: gerade der gescheiterte Lauf soll nachlesbar sein
+      - name: Messwerte als Artefakt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-${{ matrix.baseline }}
+          path: bench-${{ matrix.baseline }}.json
+
   # Formatiert, lintet und testet den Cargo-Workspace (nexus-core, nexus-db, Desktop-App).
   rust:
     name: rust (${{ matrix.os }})
