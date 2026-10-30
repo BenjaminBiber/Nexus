@@ -1132,7 +1132,7 @@
     "response": {
       "code": 0,
       "stderr": "",
-      "stdout": "Aufruf: nexus spec comments [options] [dokument]\n\nListet offene Kommentare zu Spec- und Plan-Dokumenten, Glossar und ADRs\n(optional eines Dokuments oder Themas).\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiele:\n  nexus spec comments\n  nexus spec comments spec-docs-rework\n  nexus spec comments docs/superpowers/specs/<DATE-7>-spec-docs-rework-design.md"
+      "stdout": "Aufruf: nexus spec comments [options] [dokument]\n\nListet offene Kommentare zu Spec- und Plan-Dokumenten, Glossar und ADRs\n(optional eines Dokuments oder Themas).\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiele:\n  nexus spec comments\n  nexus spec comments spec-docs-rework\n  nexus spec comments docs/superpowers/specs/2025-06-12-spec-docs-rework-design.md"
     }
   },
   {

@@ -75,6 +75,8 @@ describe('Plugin ohne Repository-Quellen', () => {
     expect(nexus(['init']).status).toBe(0);
     const board = nexus(['--json', 'board', '--no-open', '--port', String(port)]);
     expect(board.stderr).toBe('');
+    // Mit --json steht ein Fehler als {"error":…} auf stdout; die Meldung soll im Testlauf sichtbar sein
+    expect(board.status, board.stdout).toBe(0);
     expect(JSON.parse(board.stdout).started).toBe(true);
     const health = await (await fetch(`http://127.0.0.1:${port}/api/health`)).json();
     expect(health.name).toBe('ai-harness');

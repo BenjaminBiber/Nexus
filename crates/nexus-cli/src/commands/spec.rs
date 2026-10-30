@@ -13,8 +13,10 @@ pub const SPEC_ABOUT: &str = "Kommentare zu Spec- und Plan-Dokumenten abarbeiten
 
 /// Beschreibung von `spec comments`
 pub const COMMENTS_ABOUT: &str = "Listet offene Kommentare zu Spec- und Plan-Dokumenten, Glossar und ADRs (optional eines Dokuments oder Themas).";
-/// Beispiele unter der Hilfe von `spec comments`
-pub const COMMENTS_EXAMPLES: &str = "\nBeispiele:\n  nexus spec comments\n  nexus spec comments spec-docs-rework\n  nexus spec comments docs/superpowers/specs/2026-10-22-spec-docs-rework-design.md";
+/// Beispiele unter der Hilfe von `spec comments`. Das Datum liegt absichtlich über ein Jahr
+/// zurück: jüngere Daten macht der Vertragstest zu `<DATE-n>` relativ zu heute, und die
+/// Golden-Datei der Hilfe stimmte dann nur am Tag der Aufzeichnung.
+pub const COMMENTS_EXAMPLES: &str = "\nBeispiele:\n  nexus spec comments\n  nexus spec comments spec-docs-rework\n  nexus spec comments docs/superpowers/specs/2025-06-12-spec-docs-rework-design.md";
 
 /// Beschreibung von `spec resolve`
 pub const RESOLVE_ABOUT: &str =

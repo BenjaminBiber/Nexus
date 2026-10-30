@@ -95,13 +95,14 @@ export class Normalizer {
     return this.shas(out, key);
   }
 
-  // 1. Gespeicherte Werte aus `save` → `<var:name>`
+  // 1. Gespeicherte Werte aus `save` → `<var:name>`. Längere Werte zuerst: enthält ein Wert einen
+  // anderen (Lauf `X` und Merge-Lauf `X-merge` in derselben Sekunde), bekommt er sonst den kürzeren Namen
   savedValues(input) {
     let out = input;
-    for (const [name, value] of Object.entries(this.saved)) {
-      if (typeof value !== 'string' || value.length < MIN_SAVED) continue;
-      out = out.split(value).join(`<var:${name}>`);
-    }
+    const entries = Object.entries(this.saved)
+      .filter(([, value]) => typeof value === 'string' && value.length >= MIN_SAVED)
+      .sort(([, a], [, b]) => b.length - a.length);
+    for (const [name, value] of entries) out = out.split(value).join(`<var:${name}>`);
     return out;
   }
 

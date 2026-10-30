@@ -65,6 +65,15 @@ function selectTicket() {
   fireEvent.mouseUp(document.querySelector('article.doc')!);
 }
 
+// Wartet auf die Hervorhebung im Dokument; der Kommentartext steht oft schon da, bevor sie gesetzt ist
+async function highlight() {
+  return waitFor(() => {
+    const mark = document.querySelector('mark.doc-comment');
+    expect(mark).not.toBeNull();
+    return mark!;
+  });
+}
+
 // Öffnet das Popover über den Knopf an der Auswahl
 async function compose() {
   await userEvent.click(await screen.findByRole('button', { name: 'Kommentieren' }));
@@ -302,7 +311,7 @@ describe('Kommentare im Dokument', () => {
   it('zeigt den Kommentar beim Überfahren der Hervorhebung', async () => {
     open([existing]);
     await screen.findByText('Bitte präzisieren');
-    fireEvent.mouseOver(document.querySelector('mark.doc-comment')!);
+    fireEvent.mouseOver(await highlight());
     const card = within(await screen.findByRole('dialog', { name: 'Kommentar' }));
     expect(card.getByText('Bitte präzisieren')).toBeTruthy();
     expect(card.queryByRole('textbox')).toBeNull();
@@ -311,7 +320,7 @@ describe('Kommentare im Dokument', () => {
   it('öffnet den Kommentar per Klick auf die Hervorhebung zum Bearbeiten und speichert ihn', async () => {
     const { patchDocComment } = open([existing]);
     await screen.findByText('Bitte präzisieren');
-    fireEvent.click(document.querySelector('mark.doc-comment')!);
+    fireEvent.click(await highlight());
     const card = within(await screen.findByRole('dialog', { name: 'Kommentar' }));
     const field = card.getByRole('textbox', { name: 'Kommentar bearbeiten' });
     await userEvent.clear(field);
@@ -323,7 +332,7 @@ describe('Kommentare im Dokument', () => {
   it('wechselt im Hover über den Stift in die Bearbeitung und bricht mit Escape ab', async () => {
     open([existing]);
     await screen.findByText('Bitte präzisieren');
-    fireEvent.mouseOver(document.querySelector('mark.doc-comment')!);
+    fireEvent.mouseOver(await highlight());
     await userEvent.click(await screen.findByRole('button', { name: 'Kommentar bearbeiten' }));
     await userEvent.type(screen.getByRole('textbox', { name: 'Kommentar bearbeiten' }), '{Escape}');
     expect(screen.queryByRole('dialog', { name: 'Kommentar' })).toBeNull();
