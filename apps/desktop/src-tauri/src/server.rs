@@ -232,8 +232,16 @@ async fn probe_with(client: &reqwest::Client, port: u16) -> PortState {
             _ => PortState::Foreign,
         },
         Err(error) if connection_refused(&error) => PortState::Free,
+        // Windows lehnt eine Verbindung zu einem geschlossenen Port erst nach etwa 2 s ab, dann
+        // läuft die Wartezeit vorher ab. Lässt sich der Port binden, lauscht dort niemand.
+        Err(error) if error.is_timeout() && bindable(port) => PortState::Free,
         Err(_) => PortState::Foreign,
     }
+}
+
+// Ob sich der Port auf 127.0.0.1 binden lässt, also kein Programm auf ihm lauscht
+fn bindable(port: u16) -> bool {
+    std::net::TcpListener::bind(("127.0.0.1", port)).is_ok()
 }
 
 // Prozessnummer des Harness-Servers auf dem Port; None, wenn dort niemand oder ein fremdes
@@ -838,6 +846,16 @@ mod tests {
     async fn probe_freier_port() {
         let port = free_port().await;
         assert_eq!(probe(port).await, PortState::Free);
+    }
+
+    // Die Wartezeit läuft ab wie bei einem geschlossenen Port unter Windows; der Port ist aber
+    // belegt und darf nicht als frei gelten
+    #[tokio::test]
+    async fn probe_stummes_programm_gilt_als_fremd() {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        assert_eq!(probe(port).await, PortState::Foreign);
+        drop(listener);
     }
 
     // Steht in server.json ein lebender Server, der sich auf seinem Port mit derselben
