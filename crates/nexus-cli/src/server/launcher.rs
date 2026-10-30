@@ -89,8 +89,18 @@ impl ServerLauncher {
                 }
             }
             Err(error) if error.kind() == io::ErrorKind::ConnectionRefused => PortState::Free,
+            // Windows lehnt eine Verbindung zu einem geschlossenen Port erst nach etwa 2 s ab, dann
+            // läuft die Wartezeit vorher ab. Lässt sich der Port binden, lauscht dort niemand.
+            Err(error) if error.kind() == io::ErrorKind::TimedOut && Self::bindable(port) => {
+                PortState::Free
+            }
             Err(_) => PortState::Foreign,
         }
+    }
+
+    /// Ob sich der Port auf 127.0.0.1 binden lässt, also kein Programm auf ihm lauscht
+    fn bindable(port: u16) -> bool {
+        std::net::TcpListener::bind(("127.0.0.1", port)).is_ok()
     }
 
     /// Startet den Server auf dem Port und wartet, bis er antwortet
@@ -300,6 +310,19 @@ mod tests {
             starter(&[], Path::new("/h"), None).probe(port),
             PortState::Free
         );
+    }
+
+    #[test]
+    fn ein_programm_das_lauscht_aber_nicht_antwortet_gilt_als_fremd() {
+        // Die Wartezeit läuft ab wie bei einem geschlossenen Port unter Windows; der Port ist
+        // aber belegt und darf nicht als frei gelten
+        let listener = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let port = listener.local_addr().unwrap().port();
+        assert_eq!(
+            starter(&[], Path::new("/h"), None).probe(port),
+            PortState::Foreign
+        );
+        drop(listener);
     }
 
     #[test]
