@@ -166,7 +166,9 @@ impl ServerLauncher {
     }
 
     /// Startet das Programm abgelöst: eigene Prozessgruppe unter Unix, unter Windows ohne
-    /// Konsolenfenster und ohne Bindung an dieses Terminal; Ein- und Ausgaben nach `null`
+    /// Konsolenfenster und ohne Bindung an dieses Terminal; Ein- und Ausgaben nach `null`.
+    /// Die Standard-Handles von `nexus` selbst erbt es nicht, `main` schaltet ihre Vererbung
+    /// beim Start ab (`nexus_platform::stdio`)
     fn spawn(&self, start: &StartCommand) -> Result<()> {
         let mut command = Command::new(&start.program);
         command

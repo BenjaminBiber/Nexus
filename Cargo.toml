@@ -19,8 +19,11 @@ rust-version = "1.99"
 
 # Gemeinsame Lints für die Nexus-Crates; die Desktop-App bleibt davon unberührt,
 # weil Tauri dort eigene Anforderungen mitbringt.
+# `unsafe` ist verboten. `deny` statt `forbid`, damit genau eine Stelle es mit
+# `#[allow(unsafe_code)]` erlauben kann: nexus-platform/src/stdio.rs (SetHandleInformation
+# unter Windows, solange `CommandExt::inherit_handles` instabil ist).
 [workspace.lints.rust]
-unsafe_code = "forbid"
+unsafe_code = "deny"
 
 # Versionen aller Abhängigkeiten stehen nur hier; die Mitglieder nennen mit
 # `{ workspace = true }` nur noch, was sie wirklich brauchen.

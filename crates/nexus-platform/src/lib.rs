@@ -1,5 +1,6 @@
 //! Systemfunktionen des Rechners, auf dem Nexus läuft: Ordnerdialog, Dateien im
-//! Explorer/Finder oder in VS Code öffnen und Systemmeldungen (Toasts).
+//! Explorer/Finder oder in VS Code öffnen, Systemmeldungen (Toasts) und die Vererbung der
+//! Standard-Handles an Kindprozesse ([`stdio`]).
 //!
 //! Neben den Verträgen stehen hier die „nicht verfügbar“-Umsetzung, Attrappen für Tests, die
 //! Windows-Umsetzungen von Ordnerdialog und Öffnen sowie die Systemmeldungen je Plattform
@@ -8,6 +9,7 @@
 //! `packages/server/src/notifications/WindowsToastSender.ts`.
 
 pub mod notifier;
+pub mod stdio;
 pub mod windows;
 
 pub use crate::notifier::fake::FakeNotifier;

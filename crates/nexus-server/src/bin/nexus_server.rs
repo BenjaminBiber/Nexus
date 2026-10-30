@@ -14,6 +14,9 @@ use nexus_server::config::ServerConfigLoader;
 
 #[tokio::main]
 async fn main() -> ExitCode {
+    // Wie im Binary `nexus`: Worker und andere Kindprozesse erben die Standard-Handles nur
+    // ausdrücklich
+    nexus_platform::stdio::disable_inheritance();
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut config = match ServerConfigLoader::load_from_process(&args) {
         Ok(config) => config,
