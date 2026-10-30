@@ -109,14 +109,9 @@ mod tests {
     #[test]
     fn hat_pfade_fur_favoriten_und_sicherungen_im_harness_ordner() {
         let home = HarnessHome::at("/tmp/neu");
-        assert!(home
-            .favorites_file()
-            .to_string_lossy()
-            .ends_with("neu/favorites.json"));
-        assert!(home
-            .backups_dir()
-            .to_string_lossy()
-            .ends_with("neu/backups"));
+        // Als Pfad verglichen: unter Windows trennt join mit Rückstrich
+        assert!(home.favorites_file().ends_with("neu/favorites.json"));
+        assert!(home.backups_dir().ends_with("neu/backups"));
     }
 
     #[test]

@@ -50,14 +50,17 @@ export class Normalizer {
     return rules.sort((a, b) => b.from.length - a.from.length);
   }
 
-  // Alle Schreibweisen eines Ordners: nativ, mit Schrägstrichen, JSON-escaped; dazu die aufgelöste Form
-  // (macOS legt temporäre Ordner unter /var ab, `realpath` meldet /private/var)
+  // Alle Schreibweisen eines Ordners: nativ, mit Schrägstrichen, JSON-escaped; dazu die aufgelösten Formen
+  // (macOS legt temporäre Ordner unter /var ab, `realpath` meldet /private/var; unter Windows kennt erst
+  // `realpathSync.native` den langen Namen hinter einem 8.3-Kurznamen wie RUNNER~1)
   static spellings(dir) {
     const bases = new Set([dir]);
-    try {
-      bases.add(realpathSync(dir));
-    } catch {
-      /* Ordner kann schon gelöscht sein */
+    for (const resolve of [realpathSync, realpathSync.native]) {
+      try {
+        bases.add(resolve(dir));
+      } catch {
+        /* Ordner kann schon gelöscht sein */
+      }
     }
     for (const base of [...bases]) {
       if (base.startsWith('/private/var/')) bases.add(base.slice('/private'.length));

@@ -87,16 +87,20 @@ export class ScenarioRunner {
       if (server) await server.stop();
       for (const stub of stubs.values()) await stub.close();
       fixture.dispose();
-      rmSync(claudeConfig, { recursive: true, force: true });
+      // Mit Wiederholungen: unter Windows hält oft noch ein anderes Programm (Virenscanner, Indexer) kurz eine
+      // Datei offen, und das Löschen scheitert mit EPERM
+      const remove = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 };
+      rmSync(claudeConfig, remove);
       // Ein von außen übergebenes Home gehört dem Aufrufer
-      if (own) rmSync(home, { recursive: true, force: true });
+      if (own) rmSync(home, remove);
     }
   }
 
-  // Temporärer Ordner mit aufgelöstem Pfad: Git und die CLI melden ihn aufgelöst (macOS: /var → /private/var),
-  // und die Szenarien setzen ihn über `{{HOME}}` wieder ein
+  // Temporärer Ordner mit aufgelöstem Pfad: Git und die CLI melden ihn aufgelöst (macOS: /var → /private/var,
+  // Windows: lange Namen statt 8.3-Kurznamen, die nur `realpathSync.native` auflöst), und die Szenarien setzen
+  // ihn über `{{HOME}}` wieder ein
   static tempDir(prefix) {
-    return realpathSync(mkdtempSync(join(tmpdir(), prefix)));
+    return realpathSync.native(mkdtempSync(join(tmpdir(), prefix)));
   }
 
   // Port einer Adresse (`--base`); ohne Angabe der Standardport des Schemas

@@ -479,7 +479,9 @@ mod tests {
         );
     }
 
+    // Unter Windows fragt `sweep` keine Arbeitsordner ab (das System gibt sie nicht preis)
     #[test]
+    #[cfg(not(windows))]
     fn findet_waisen_ueber_den_arbeitsordner_den_das_system_liefert() {
         let mut processes = basis();
         processes.push(p(40, 1, "node main.js"));

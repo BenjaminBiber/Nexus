@@ -478,8 +478,14 @@ mod tests {
     #[test]
     fn ein_pfad_ausserhalb_des_alten_ordners_bleibt_stehen() {
         let (_base, from, to) = ordner();
-        let config = "provider: sqlite\nfile: /woanders/board.db\nuserId: 11111111-1111-1111-1111-111111111111\nuserName: Benjamin\n";
-        write(&from, "board.yaml", config);
+        // Absolut auf jeder Plattform: unter Windows gehört das Laufwerk dazu
+        let woanders = if cfg!(windows) {
+            "C:/woanders/board.db"
+        } else {
+            "/woanders/board.db"
+        };
+        let config = format!("provider: sqlite\nfile: {woanders}\nuserId: 11111111-1111-1111-1111-111111111111\nuserName: Benjamin\n");
+        write(&from, "board.yaml", &config);
 
         let report = migrator(&[]).run(&from, &to, false).unwrap();
 
@@ -490,7 +496,7 @@ mod tests {
                 .unwrap()
                 .unwrap()
                 .file,
-            "/woanders/board.db"
+            woanders
         );
     }
 

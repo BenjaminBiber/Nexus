@@ -19,10 +19,11 @@ export class RepoFixture {
     this.claudeConfig = options.claudeConfig;
     this.cli = options.cli;
     // Aufgelöster Pfad: Git und die CLI melden die Projektwurzel ohne Verknüpfungen (unter macOS /private/var
-    // statt /var). Nur so ist `{{REPO1}}` derselbe Text, den der Server als Projektwurzel führt – sonst fände
-    // ein Board, dessen Repo-Pfad auf `{{REPO1}}` zeigt, sein Projekt unter macOS nicht und die Golden-Dateien
+    // statt /var) und unter Windows mit langen Namen statt 8.3-Kurznamen wie RUNNER~1; die löst nur
+    // `realpathSync.native` auf. Nur so ist `{{REPO1}}` derselbe Text, den der Server als Projektwurzel führt –
+    // sonst fände ein Board, dessen Repo-Pfad auf `{{REPO1}}` zeigt, sein Projekt nicht und die Golden-Dateien
     // wären je Plattform verschieden.
-    this.base = realpathSync(mkdtempSync(join(tmpdir(), 'harness-contract-repos-')));
+    this.base = realpathSync.native(mkdtempSync(join(tmpdir(), 'harness-contract-repos-')));
   }
 
   // Legt alle Repos an und liefert Name → Pfad
@@ -44,9 +45,10 @@ export class RepoFixture {
     }
     if (repo.harnessInit) this.harnessInit(path);
     // Aufgelöster Pfad: Git meldet die Projektwurzel ohne Verknüpfungen (unter macOS `/private/var/…` statt
-    // `/var/…`). Nur so passt `{{REPO1}}` zu dem Pfad, den der Server selbst führt – etwa beim Repo-Pfad
-    // eines Boards. Der Normalisierer kennt beide Schreibweisen und schreibt in beiden Fällen `<REPO1>`.
-    return realpathSync(path);
+    // `/var/…`, unter Windows mit langen Namen). Nur so passt `{{REPO1}}` zu dem Pfad, den der Server selbst
+    // führt – etwa beim Repo-Pfad eines Boards. Der Normalisierer kennt alle Schreibweisen und schreibt in
+    // jedem Fall `<REPO1>`.
+    return realpathSync.native(path);
   }
 
   // Legt einen Arbeitsbranch mit einem Commit an und wechselt zurück auf den Hauptbranch: der Branch steht damit vor
@@ -101,8 +103,9 @@ export class RepoFixture {
     }
   }
 
-  // Räumt alle Repos auf
+  // Räumt alle Repos auf. Unter Windows hält oft noch ein anderes Programm (Virenscanner, Indexer) kurz eine
+  // Datei offen; das Löschen scheitert dann mit EPERM und gelingt bei einem späteren Versuch.
   dispose() {
-    rmSync(this.base, { recursive: true, force: true });
+    rmSync(this.base, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   }
 }

@@ -3,7 +3,7 @@
 //! `FakeClaude.ts` kommt das Binary `nexus-fake-claude` zum Einsatz.
 
 use std::collections::BTreeMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -223,11 +223,16 @@ async fn der_arbeitsordner_ist_der_worktree() {
     let mut input = lauf(&fake_claude(), &cwd);
     input.env = env(&[("FAKE_CLAUDE_MODE", "cwd")]);
     let (result, _) = fuehre_aus(input, ClaudeProcess::new()).await;
-    let erwartet = cwd.canonicalize().expect("Pfad");
-    assert!(
-        result
-            .output
-            .contains(&erwartet.to_string_lossy().to_string()),
+    let gemeldet = result
+        .output
+        .lines()
+        .find_map(|zeile| zeile.strip_prefix("cwd="))
+        .unwrap_or_else(|| panic!("Arbeitsordner in der Ausgabe: {}", result.output));
+    // Beide Seiten aufgelöst: unter macOS zeigt /var auf /private/var, unter Windows meldet der
+    // Prozess den Ordner so, wie er gesetzt wurde (TEMP oft als 8.3-Kurzname)
+    assert_eq!(
+        Path::new(gemeldet).canonicalize().expect("gemeldeter Pfad"),
+        cwd.canonicalize().expect("Pfad"),
         "Arbeitsordner in der Ausgabe: {}",
         result.output
     );

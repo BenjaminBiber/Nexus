@@ -194,10 +194,11 @@ async fn startet_claude_nicht_wenn_die_einrichtung_scheitert() {
     let log_file = u.pfad("kaputt.log");
     let mut record = lauf("ARC-0006-x", u.dir.path(), &log_file);
     record.prompt = "p".to_string();
+    // `&&` statt `;`: ohne Git Bash läuft der Befehl unter Windows in cmd, und cmd kennt kein `;`
     record.setup = Some(vec![
         WorktreeSetupStep {
             cwd: ".".to_string(),
-            run: "echo kaputt; exit 3".to_string(),
+            run: "echo kaputt&& exit 3".to_string(),
         },
         WorktreeSetupStep {
             cwd: ".".to_string(),
@@ -217,7 +218,7 @@ async fn startet_claude_nicht_wenn_die_einrichtung_scheitert() {
     assert_eq!(end.result.setup_ok, None);
     let gescheitert = end.result.setup_failed.expect("gescheiterter Befehl");
     assert_eq!(gescheitert.cwd, ".");
-    assert_eq!(gescheitert.run, "echo kaputt; exit 3");
+    assert_eq!(gescheitert.run, "echo kaputt&& exit 3");
     assert_eq!(gescheitert.code, Some(3));
     assert!(!gescheitert.timed_out);
     assert!(gescheitert.output.contains("kaputt"));
