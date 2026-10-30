@@ -257,11 +257,10 @@ fn anzeigen<R: Runtime>(app: &AppHandle<R>, zeilen: &Zeilen<R>, zustand: TraySta
     }
 }
 
-// Adresse des eigenen Servers ohne Schrägstrich am Ende; ein ungültiger HARNESS_PORT fällt auf den Standard zurück
+// Adresse des genutzten Servers ohne Schrägstrich am Ende; steht sein Port noch nicht fest,
+// gilt der Wunsch aus der Umgebung bzw. der Standardport
 pub fn basis_url() -> String {
-    let port =
-        server::port_from_env(&std::env::vars().collect()).unwrap_or(server::DEFAULT_SERVER_PORT);
-    format!("http://127.0.0.1:{port}")
+    format!("http://127.0.0.1:{}", server::aktiver_port())
 }
 
 // Holt eine Antwort; None, wenn der Server nicht erreichbar ist oder einen Fehler meldet

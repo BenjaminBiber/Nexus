@@ -25,12 +25,16 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ApiClient } from './api/ApiClient.js';
 import { ApiProvider } from './api/ApiContext.js';
+import { nexusBridge } from './api/nexusBridge.js';
 import { App } from './App.js';
 import { PlatformProvider } from './platform/PlatformContext.js';
 
+// In der Desktop-App stehen Serveradresse und Start-Token im Fenster; im Browser nicht
+const bridge = nexusBridge();
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ApiProvider api={new ApiClient()}>
+    <ApiProvider api={new ApiClient(bridge?.base ?? '', bridge?.token)}>
       <PlatformProvider>
         <BrowserRouter>
           <App />

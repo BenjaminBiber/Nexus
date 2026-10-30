@@ -17,6 +17,11 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 dirs = "6"
 log = "0.4"
+# Der Server läuft seit P5-2 im Prozess der App; dazu kommen der Benutzerordner aus nexus-core
+# und die Systemfunktionen aus nexus-platform
+nexus-core = { workspace = true }
+nexus-server = { workspace = true }
+nexus-platform = { workspace = true }
 # Version 0.13 wie beim Updater-Plugin: sonst landen zwei reqwest-Fassungen samt eigenem
 # hyper in der App. Ohne TLS-Merkmal, weil alle Aufrufe an den eigenen Server auf localhost
 # gehen; die TLS-Schicht für die Selbstaktualisierung bringt das Updater-Plugin mit.
@@ -42,7 +47,8 @@ tauri-plugin-updater = "2"
 tauri-plugin-window-state = "2"
 thiserror = "2"
 # sync: die Rückfrage des Updaters meldet ihre Antwort über einen oneshot-Kanal zurück
-tokio = { version = "1", default-features = false, features = ["time", "signal", "macros", "sync", "rt"] }
+# net: die App bindet den Port des Servers selbst, bevor sie das Fenster öffnet
+tokio = { version = "1", default-features = false, features = ["time", "signal", "macros", "sync", "rt", "net"] }
 
 [features]
 # Von `tauri dev` gesetzt, wenn eine eigene Schutzschicht aktiv sein soll.

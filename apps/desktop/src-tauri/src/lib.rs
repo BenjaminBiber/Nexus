@@ -5,8 +5,20 @@ mod lifecycle;
 mod server;
 mod tray;
 mod updater;
+mod worker;
 
 use tauri_plugin_window_state::StateFlags;
+
+/// Start als Dispatch-Worker (`<app> dispatch-worker <lauf>`), falls die Argumente das sagen.
+/// `true`: der Lauf ist abgearbeitet, die App startet nicht.
+pub fn run_dispatch_worker() -> bool {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let Some(run_id) = worker::lauf_aus_argumenten(&args) else {
+        return false;
+    };
+    worker::run(&run_id);
+    true
+}
 
 pub fn run() {
     let builder = tauri::Builder::default()

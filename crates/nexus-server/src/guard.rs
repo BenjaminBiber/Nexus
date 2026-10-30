@@ -1,18 +1,49 @@
 //! Schutz des lokalen Servers; portiert aus `packages/server/src/security/RequestGuard.ts`.
 //!
-//! Die Prüfung läuft als Middleware **vor** dem Routing, also auch vor dem Proxy und der
-//! statischen Auslieferung: eine abgewiesene Anfrage erreicht den Node-Server nie.
+//! Die Prüfung läuft als Middleware **vor** dem Routing, also auch vor der statischen
+//! Auslieferung: eine abgewiesene Anfrage erreicht keine Route.
+//!
+//! Es gibt zwei Arten von Aufrufern:
+//! * **Browser** (`http://127.0.0.1:<port>`, `http://localhost:<port>`): Host und Herkunft
+//!   müssen stimmen, Schreibzugriffe brauchen `X-Harness: 1` und JSON.
+//! * **Desktop-App** (`tauri://localhost` und `http(s)://tauri.localhost`): Die Oberfläche
+//!   kommt aus den Dateien der App und hat damit eine fremde Herkunft. Sie ist nur erlaubt,
+//!   wenn sie das Start-Token des Servers mitschickt; das Token ersetzt dort `X-Harness`.
 
 use std::collections::HashSet;
 use std::sync::{Arc, RwLock};
 
 use axum::extract::{Request, State};
+use axum::http::header::{HeaderName, HeaderValue};
 use axum::http::{HeaderMap, Method, StatusCode};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
+use nexus_core::registry::AppToken;
 use serde::Serialize;
 
 use crate::state::AppState;
+
+/// Herkünfte, unter denen die Desktop-App ihre Oberfläche lädt: macOS und Linux nutzen
+/// `tauri://localhost`, Windows (WebView2) `http://tauri.localhost`
+pub const TAURI_ORIGINS: [&str; 3] = [
+    "tauri://localhost",
+    "http://tauri.localhost",
+    "https://tauri.localhost",
+];
+
+/// Kopf, in dem die Oberfläche der App ihr Start-Token mitschickt
+pub const TOKEN_HEADER: &str = "x-nexus-token";
+
+/// Abfragewert mit dem Start-Token; nur für `GET`/`HEAD`, weil `EventSource` und der
+/// Abruf eines Protokolls keine Köpfe setzen können
+pub const TOKEN_QUERY: &str = "token";
+
+/// Methoden, die eine Vorabfrage der App freigibt
+const ALLOW_METHODS: &str = "GET, POST, PUT, PATCH, DELETE";
+/// Köpfe, die eine Vorabfrage der App freigibt
+const ALLOW_HEADERS: &str = "content-type, x-harness, x-nexus-token";
+/// So lange darf der Browser die Vorabfrage merken (Sekunden)
+const MAX_AGE: &str = "600";
 
 /// Grund einer Ablehnung, wie der Browser ihn als JSON bekommt
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -22,10 +53,12 @@ pub struct GuardDenial {
 }
 
 /// Schützt den lokalen Server: nur eigener Host, nur eigene Herkunft, Schreibzugriffe nur mit
-/// Pflichtkopf.
+/// Pflichtkopf. Die Oberfläche der App weist sich stattdessen mit dem Start-Token aus.
 #[derive(Debug)]
 pub struct RequestGuard {
     allowed: RwLock<Allowed>,
+    /// Start-Token dieses Serverlaufs; ohne Token kommt keine App durch
+    app_token: RwLock<Option<AppToken>>,
 }
 
 /// Erlaubte Hosts und Herkünfte; sie wachsen mit [`RequestGuard::allow_port`]
@@ -40,6 +73,7 @@ impl RequestGuard {
     pub fn new(port: u16) -> Self {
         let guard = Self {
             allowed: RwLock::new(Allowed::default()),
+            app_token: RwLock::new(None),
         };
         guard.allow_port(port);
         guard
@@ -54,8 +88,20 @@ impl RequestGuard {
         }
     }
 
-    /// Prüft eine Anfrage; `None`, wenn sie zulässig ist, sonst der Ablehnungsgrund
-    pub fn check(&self, method: &Method, headers: &HeaderMap) -> Option<GuardDenial> {
+    /// Lässt die Oberfläche der Desktop-App zu, sobald sie dieses Token mitschickt
+    pub fn allow_app_token(&self, token: AppToken) {
+        *self.app_token.write().expect("Sperre des Schutzes") = Some(token);
+    }
+
+    /// Prüft eine Anfrage; `None`, wenn sie zulässig ist, sonst der Ablehnungsgrund.
+    /// `query` ist der Abfrageteil der Adresse ohne `?`; daraus kommt bei `GET`/`HEAD` das
+    /// Token der App.
+    pub fn check(
+        &self,
+        method: &Method,
+        headers: &HeaderMap,
+        query: Option<&str>,
+    ) -> Option<GuardDenial> {
         let allowed = self.allowed.read().expect("Sperre des Schutzes");
         let host = single(headers, "host");
         if !host.is_some_and(|host| allowed.hosts.contains(&host.to_lowercase())) {
@@ -64,21 +110,85 @@ impl RequestGuard {
                 message: "Dieser Server antwortet nur auf 127.0.0.1 und localhost.",
             });
         }
+        let mut aus_der_app = false;
         if let Some(origin) = single(headers, "origin") {
-            if !allowed.origins.contains(&origin.to_lowercase()) {
-                return Some(GuardDenial {
-                    code: "origin-denied",
-                    message: "Anfragen von fremden Webseiten sind nicht erlaubt.",
-                });
+            let origin = origin.to_lowercase();
+            if !allowed.origins.contains(&origin) {
+                if !is_tauri_origin(&origin) {
+                    return Some(GuardDenial {
+                        code: "origin-denied",
+                        message: "Anfragen von fremden Webseiten sind nicht erlaubt.",
+                    });
+                }
+                if !self.token_stimmt(method, headers, query) {
+                    return Some(GuardDenial {
+                        code: "origin-denied",
+                        message: "Die App hat sich nicht ausgewiesen.",
+                    });
+                }
+                aus_der_app = true;
             }
         }
-        if !is_read(method) && !has_required_headers(headers) {
-            return Some(GuardDenial {
-                code: "header-missing",
-                message: "Schreibende Anfragen brauchen den Kopf X-Harness: 1 und den Inhaltstyp application/json.",
+        if !is_read(method) && !json_content(headers) {
+            return Some(match aus_der_app {
+                true => GuardDenial {
+                    code: "header-missing",
+                    message: "Schreibende Anfragen brauchen den Inhaltstyp application/json.",
+                },
+                false => fehlender_pflichtkopf(),
             });
         }
+        // Der Pflichtkopf löst bei fremden Seiten eine Vorabfrage aus; die App weist sich
+        // stattdessen mit ihrem Token aus und braucht ihn nicht
+        if !is_read(method) && !aus_der_app && single(headers, "x-harness") != Some("1") {
+            return Some(fehlender_pflichtkopf());
+        }
         None
+    }
+
+    /// Hat die Anfrage das Start-Token dabei? Der Kopf gilt immer, die Abfrage nur bei
+    /// `GET`/`HEAD` – dort gibt es Aufrufer ohne eigene Köpfe (`EventSource`, Protokolle).
+    fn token_stimmt(&self, method: &Method, headers: &HeaderMap, query: Option<&str>) -> bool {
+        let Some(token) = self.app_token.read().expect("Sperre des Schutzes").clone() else {
+            return false;
+        };
+        if let Some(value) = single(headers, TOKEN_HEADER) {
+            return token.matches(value);
+        }
+        if !is_read(method) {
+            return false;
+        }
+        query
+            .and_then(token_aus_abfrage)
+            .is_some_and(|value| token.matches(value))
+    }
+}
+
+/// Lädt die Oberfläche der Desktop-App unter dieser Herkunft?
+pub fn is_tauri_origin(origin: &str) -> bool {
+    TAURI_ORIGINS.contains(&origin)
+}
+
+/// Die Tauri-Herkunft einer Anfrage, falls sie von der App kommt (immer klein geschrieben)
+fn tauri_origin(headers: &HeaderMap) -> Option<String> {
+    let origin = single(headers, "origin")?.to_lowercase();
+    is_tauri_origin(&origin).then_some(origin)
+}
+
+/// Wert von `token` im Abfrageteil. Das Token ist Base64url und braucht deshalb keine
+/// Dekodierung; alles andere passt ohnehin nicht zum Token.
+fn token_aus_abfrage(query: &str) -> Option<&str> {
+    query.split('&').find_map(|paar| {
+        paar.strip_prefix(TOKEN_QUERY)
+            .and_then(|rest| rest.strip_prefix('='))
+    })
+}
+
+/// Der immer gleiche Grund, wenn einem Schreibzugriff aus dem Browser etwas fehlt
+fn fehlender_pflichtkopf() -> GuardDenial {
+    GuardDenial {
+        code: "header-missing",
+        message: "Schreibende Anfragen brauchen den Kopf X-Harness: 1 und den Inhaltstyp application/json.",
     }
 }
 
@@ -87,12 +197,10 @@ fn is_read(method: &Method) -> bool {
     method == Method::GET || method == Method::HEAD
 }
 
-/// Pflichtkopf und JSON als Inhaltstyp: beides löst bei fremden Seiten eine Vorabfrage aus,
-/// die nicht beantwortet wird
-fn has_required_headers(headers: &HeaderMap) -> bool {
-    let type_ok = single(headers, "content-type")
-        .is_some_and(|value| value.to_lowercase().starts_with("application/json"));
-    single(headers, "x-harness") == Some("1") && type_ok
+/// JSON als Inhaltstyp: Pflicht bei jedem Schreibzugriff, auch aus der App
+fn json_content(headers: &HeaderMap) -> bool {
+    single(headers, "content-type")
+        .is_some_and(|value| value.to_lowercase().starts_with("application/json"))
 }
 
 /// Köpfe können mehrfach vorkommen; wie in Node zählt der erste Wert. Köpfe, die sich nicht
@@ -101,14 +209,59 @@ fn single<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
     headers.get(name)?.to_str().ok()
 }
 
-/// Middleware: prüft jede Anfrage vor dem Routing und antwortet im Zweifel mit 403
+/// Middleware: prüft jede Anfrage vor dem Routing und antwortet im Zweifel mit 403.
+/// Anfragen der App bekommen zusätzlich die CORS-Köpfe, sonst sähe die Oberfläche statt
+/// einer Antwort nur einen Netzwerkfehler.
 pub async fn guard_middleware(
     State(state): State<Arc<AppState>>,
     request: Request,
     next: Next,
 ) -> Response {
-    if let Some(denial) = state.guard.check(request.method(), request.headers()) {
-        return (StatusCode::FORBIDDEN, crate::error::json(&denial)).into_response();
+    let app_origin = tauri_origin(request.headers());
+    // Die Vorabfrage schickt der Browser selbst, ohne Kopf und ohne Token; sie gibt nur
+    // bekannt, was danach erlaubt ist. Vorabfragen anderer Herkünfte fallen unten durch.
+    if request.method() == Method::OPTIONS {
+        if let Some(origin) = &app_origin {
+            return vorabfrage(origin);
+        }
     }
-    next.run(request).await
+    let denial = state
+        .guard
+        .check(request.method(), request.headers(), request.uri().query());
+    let mut response = match denial {
+        Some(denial) => (StatusCode::FORBIDDEN, crate::error::json(&denial)).into_response(),
+        None => next.run(request).await,
+    };
+    if let Some(origin) = &app_origin {
+        cors_kopfe(response.headers_mut(), origin);
+    }
+    response
+}
+
+/// Antwort auf die Vorabfrage der App: 204 ohne Rumpf, dazu die Freigaben
+fn vorabfrage(origin: &str) -> Response {
+    let mut response = StatusCode::NO_CONTENT.into_response();
+    let headers = response.headers_mut();
+    cors_kopfe(headers, origin);
+    setze(headers, "access-control-allow-methods", ALLOW_METHODS);
+    setze(headers, "access-control-allow-headers", ALLOW_HEADERS);
+    setze(headers, "access-control-max-age", MAX_AGE);
+    response
+}
+
+/// Die Köpfe, die jede Antwort an die App trägt – auch der Ereignisstrom
+fn cors_kopfe(headers: &mut HeaderMap, origin: &str) {
+    setze(headers, "access-control-allow-origin", origin);
+    // Angehängt statt gesetzt: die statische Auslieferung bringt schon ein eigenes `Vary` mit
+    headers.append(
+        HeaderName::from_static("vary"),
+        HeaderValue::from_static("Origin"),
+    );
+}
+
+/// Setzt einen Kopf; unbrauchbare Werte gibt es hier nicht, deshalb still übergehen
+fn setze(headers: &mut HeaderMap, name: &'static str, value: &str) {
+    if let Ok(value) = HeaderValue::from_str(value) {
+        headers.insert(HeaderName::from_static(name), value);
+    }
 }

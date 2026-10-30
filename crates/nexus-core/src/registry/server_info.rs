@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::error::{Error, Result};
 use crate::locking::AtomicWriter;
 use crate::process::is_alive;
-use crate::registry::HarnessHome;
+use crate::registry::{AppToken, HarnessHome};
 
 /// Prozessangaben des laufenden Servers
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -17,6 +17,10 @@ pub struct ServerInfo {
     pub pid: u32,
     pub port: u16,
     pub started_at: String,
+    /// Start-Token, mit dem sich die Oberfläche der Desktop-App ausweist. Ältere Server
+    /// schreiben es nicht, und CLI und Hooks brauchen es nicht – deshalb freiwillig.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub app_token: Option<AppToken>,
 }
 
 /// Liest und schreibt `server.json`.
@@ -41,11 +45,12 @@ impl ServerInfoFile {
         serde_json::from_str(&text).ok()
     }
 
-    /// Schreibt die Angaben
+    /// Schreibt die Angaben. Die Datei trägt das Start-Token und ist deshalb nur für den
+    /// Benutzer lesbar; unter Windows schützt schon das Benutzerprofil.
     pub fn write(&self, info: &ServerInfo) -> Result<()> {
         fs::create_dir_all(self.home.dir()).map_err(Error::unexpected)?;
         let json = serde_json::to_string(info).map_err(Error::unexpected)?;
-        self.writer.write(&self.home.server_file(), &json)
+        self.writer.write_private(&self.home.server_file(), &json)
     }
 
     /// Löscht die Angaben (`stop`, nachdem es den eingetragenen Server beendet hat)
@@ -95,6 +100,7 @@ mod tests {
             pid: 42,
             port: 4710,
             started_at: "2026-10-09T10:00:00.000Z".into(),
+            app_token: None,
         };
 
         assert_eq!(file.read(), None);
@@ -127,7 +133,35 @@ mod tests {
             pid,
             port,
             started_at: "2026-10-29T10:00:00.000Z".into(),
+            app_token: None,
         }
+    }
+
+    #[test]
+    fn schreibt_das_start_token_als_app_token_und_liest_es_zurueck() {
+        let (_dir, file) = datei();
+        let token = AppToken::new();
+        let mut info = angaben(std::process::id(), 4710);
+        info.app_token = Some(token.clone());
+
+        file.write(&info).unwrap();
+
+        assert_eq!(file.read().unwrap().app_token, Some(token.clone()));
+        let json: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(file.home.server_file()).unwrap()).unwrap();
+        assert_eq!(json["appToken"], serde_json::json!(token.as_str()));
+    }
+
+    #[test]
+    fn liest_eine_datei_ohne_app_token_wie_bisher() {
+        let (dir, file) = datei();
+        fs::write(
+            HarnessHome::at(dir.path()).server_file(),
+            r#"{"pid":7,"port":4710,"startedAt":"2026-10-29T10:00:00.000Z"}"#,
+        )
+        .unwrap();
+
+        assert_eq!(file.read(), Some(angaben(7, 4710)));
     }
 
     /// Eine Prozessnummer, die nie vergeben ist

@@ -38,8 +38,27 @@ impl AtomicWriter {
 
     /// Schreibt `content` nach `path`; unter Windows wird bei kurzer Sperre durch Dritte wiederholt
     pub fn write(&self, path: &Path, content: &str) -> Result<()> {
+        self.write_inner(path, content, false)
+    }
+
+    /// Wie [`AtomicWriter::write`], aber die Datei gehört nur dem Benutzer (Unix: `0600`).
+    /// Für Dateien mit Geheimnissen wie dem Start-Token in `server.json`. Unter Windows
+    /// bleibt es bei den Rechten des Benutzerprofils.
+    pub fn write_private(&self, path: &Path, content: &str) -> Result<()> {
+        self.write_inner(path, content, true)
+    }
+
+    /// Gemeinsamer Weg: temporäre Datei schreiben, auf Wunsch die Rechte setzen, umbenennen.
+    /// Die Rechte stehen schon vor dem Umbenennen fest, damit die Zieldatei nie kurz offen liegt.
+    fn write_inner(&self, path: &Path, content: &str, private: bool) -> Result<()> {
         let temp = temp_path(path);
-        fs::write(&temp, content).map_err(Error::unexpected)?;
+        let geschrieben =
+            fs::write(&temp, content)
+                .and_then(|()| if private { nur_benutzer(&temp) } else { Ok(()) });
+        if let Err(error) = geschrieben {
+            let _ = fs::remove_file(&temp);
+            return Err(Error::unexpected(error));
+        }
         match rename_with_retry(&temp, path) {
             Ok(()) => Ok(()),
             Err(error) => {
@@ -48,6 +67,19 @@ impl AtomicWriter {
             }
         }
     }
+}
+
+/// Nimmt Gruppe und anderen Benutzern jedes Recht an der Datei (Unix)
+#[cfg(unix)]
+fn nur_benutzer(path: &Path) -> io::Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    fs::set_permissions(path, fs::Permissions::from_mode(0o600))
+}
+
+/// Unter Windows regelt das Benutzerprofil den Zugriff; hier ist nichts zu tun
+#[cfg(not(unix))]
+fn nur_benutzer(_path: &Path) -> io::Result<()> {
+    Ok(())
 }
 
 /// Name der temporären Datei: `<pfad>.<pid>.<hex>.tmp` wie in TypeScript
@@ -136,6 +168,21 @@ mod tests {
             .filter(|name| name.ends_with(".tmp"))
             .collect();
         assert!(leftovers.is_empty(), "{leftovers:?}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn schreibt_eine_geschuetzte_datei_nur_fuer_den_benutzer() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let base = temp_dir();
+        let file = base.path().join("server.json");
+
+        AtomicWriter::new().write_private(&file, "{}").unwrap();
+
+        let mode = fs::metadata(&file).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode, 0o600, "{mode:o}");
+        assert_eq!(fs::read_to_string(&file).unwrap(), "{}");
     }
 
     #[test]

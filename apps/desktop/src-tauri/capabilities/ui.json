@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "description": "Rechte der Oberfläche, die das Fenster aus den Dateien der App lädt: das Protokoll, Systemmeldungen sowie Ordnerauswahl und Öffnen von Dateien und Adressen. Den Server startet die App selbst in Rust, darum keine Shell-Berechtigung für die Oberfläche.",
+  "identifier": "local-ui",
+  "windows": ["main"],
+  "permissions": [
+    "log:default",
+    "notification:default",
+    "dialog:allow-open",
+    "opener:allow-reveal-item-in-dir",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "http://*" }, { "url": "https://*" }, { "url": "vscode://*" }]
+    }
+  ]
+}
