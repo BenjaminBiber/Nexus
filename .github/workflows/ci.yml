@@ -46,6 +46,9 @@ jobs:
       - run: npm run build
       - run: npm run typecheck
       - run: cargo build -p nexus-cli --bin nexus
+      # Der Plugin-Build (build-plugin.mjs) braucht das Release-Binary; vorab gebaut, damit die
+      # Plugin-Tests nicht selbst minutenlang kompilieren und dabei in ihr Zeitlimit laufen
+      - run: cargo build --release -p nexus-cli --bin nexus
       - run: npm test
       # Läuft erst, sobald es die Vertragstests im Repo gibt
       - name: Vertragstests
@@ -121,6 +124,11 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
+    # Ohne Debug-Info: die Testbinaries des ganzen Workspace samt Tauri füllen sonst die Platte
+    # des Linux-Runners, und der Linker bricht mit „Bus error“ ab
+    env:
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CARGO_PROFILE_TEST_DEBUG: '0'
     steps:
       - uses: actions/checkout@v4
       # Version absichtlich wie in rust-toolchain.toml; beim Anheben beide Stellen ändern

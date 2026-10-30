@@ -165,9 +165,11 @@ async fn erganzt_lauf_protokolle_mit_ausgang() {
     let (server, _backend, _board_id) = start().await;
     let dir = server.home.dispatch_logs_dir();
     std::fs::create_dir_all(&dir).expect("Protokollordner");
+    // Der Start im Namen ist Ortszeit (09:15 liegt je nach Zeitzone zwischen 19:15Z am Vortag
+    // und 21:15Z); das Ende liegt in jeder Zeitzone danach
     std::fs::write(
         dir.join("ARC-0001-20991016-091500.log"),
-        "Anweisung\n[dispatch] 2099-10-16T07:30:00.000Z Ende: Exit-Code 1\n",
+        "Anweisung\n[dispatch] 2099-10-16T23:30:00.000Z Ende: Exit-Code 1\n",
     )
     .expect("Protokoll");
     // Gehört zu ARC-00010, nicht zu ARC-0001
@@ -192,7 +194,7 @@ async fn erganzt_lauf_protokolle_mit_ausgang() {
     assert_eq!(runs[0]["actor"]["type"], "agent");
     assert_eq!(runs[0]["ref"]["runLog"], "ARC-0001-20991016-091500.log");
     assert_eq!(runs[0]["ref"]["exitCode"], 1);
-    assert_eq!(runs[1]["at"], "2099-10-16T07:30:00.000Z");
+    assert_eq!(runs[1]["at"], "2099-10-16T23:30:00.000Z");
     assert!(
         runs[1]["text"]
             .as_str()

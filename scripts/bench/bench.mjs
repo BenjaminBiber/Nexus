@@ -14,10 +14,11 @@ import { mean, median, p95, round1 } from './lib/Stats.mjs';
 
 // Version des Ausgabeformats von contract/baseline.json
 const SCHEMA = 1;
-// Startbefehl des Rust-Servers; `{port}` wird durch den freien Port ersetzt
-const DEFAULT_SERVER_CMD = 'target/release/nexus serve --port {port}';
 // Programmdatei, die der Standardbefehl braucht (nur dann geprüft)
 const DEFAULT_ENTRY = join('target', 'release', process.platform === 'win32' ? 'nexus.exe' : 'nexus');
+// Startbefehl des Rust-Servers; `{port}` wird durch den freien Port ersetzt. Der Pfad kommt aus
+// DEFAULT_ENTRY, weil cmd.exe unter Windows `target/release/nexus` nicht als Befehl erkennt.
+const DEFAULT_SERVER_CMD = `${DEFAULT_ENTRY} serve --port {port}`;
 // Hook-Befehl der Rust-Welt; das Ereignis hängt die Messung an. Ohne ihn würde das alte Plugin-Bündel gemessen.
 // Der Pfad steht absolut und in Anführungszeichen, weil der Hook im Testprojekt läuft und Ordner Leerzeichen haben.
 const DEFAULT_HOOK_CMD = `"${resolve(DEFAULT_ENTRY)}" hook`;
