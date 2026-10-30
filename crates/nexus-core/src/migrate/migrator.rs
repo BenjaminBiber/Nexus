@@ -244,18 +244,20 @@ fn rewrite_board_config(from: &Path, to: &Path, staging: &Path) -> Result<bool> 
 /// Der Teil von `path` unterhalb von `base`; `None`, wenn `path` nicht darin liegt.
 /// Unter Windows wird die Schreibweise wie im TypeScript-Code ohne Groß-/Kleinschreibung
 /// verglichen.
+#[cfg(windows)]
 fn relative_to(path: &Path, base: &Path) -> Option<PathBuf> {
-    #[cfg(windows)]
-    {
-        let lower = |value: &Path| PathBuf::from(value.to_string_lossy().to_lowercase());
-        if lower(path).strip_prefix(lower(base)).is_err() {
-            return None;
-        }
-        // Die Teile kommen aus dem ursprünglichen Pfad, damit die Schreibweise erhalten bleibt
-        let base_parts = base.components().count();
-        return Some(path.components().skip(base_parts).collect());
+    let lower = |value: &Path| PathBuf::from(value.to_string_lossy().to_lowercase());
+    if lower(path).strip_prefix(lower(base)).is_err() {
+        return None;
     }
-    #[cfg(not(windows))]
+    // Die Teile kommen aus dem ursprünglichen Pfad, damit die Schreibweise erhalten bleibt
+    let base_parts = base.components().count();
+    Some(path.components().skip(base_parts).collect())
+}
+
+/// Der Teil von `path` unterhalb von `base`; `None`, wenn `path` nicht darin liegt.
+#[cfg(not(windows))]
+fn relative_to(path: &Path, base: &Path) -> Option<PathBuf> {
     path.strip_prefix(base).ok().map(Path::to_path_buf)
 }
 

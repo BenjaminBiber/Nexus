@@ -136,6 +136,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev patchelf
       - run: cargo fmt --all --check
+      # Das Build-Skript der Desktop-App verlangt den Rust-Server unter binaries/ und die gebaute
+      # Oberfläche, die beide erst copy-server.mjs bzw. npm run build anlegen. Für Lint und Tests
+      # reichen leere Platzhalter.
+      - name: Platzhalter für Sidecar und Oberfläche anlegen
+        shell: bash
+        run: |
+          ziel="$(rustc -vV | sed -n 's/^host: //p')"
+          endung=""; if [ "$RUNNER_OS" = "Windows" ]; then endung=".exe"; fi
+          mkdir -p apps/desktop/src-tauri/binaries packages/web/dist
+          touch "apps/desktop/src-tauri/binaries/nexus-$ziel$endung" packages/web/dist/index.html
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
       # Die TypeScript-Typen aus ts-rs sind eingecheckt: neu erzeugen und prüfen, dass sich
