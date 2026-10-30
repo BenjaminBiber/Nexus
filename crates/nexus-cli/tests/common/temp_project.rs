@@ -33,6 +33,22 @@ impl Lauf {
     }
 }
 
+/// Kanonischer langer Pfad eines Ordners, ohne die Windows-Schreibweise `\\?\` (wie
+/// `test_support::canonical` im Fachkern). Bewusst aufgelöst: unter Windows steht TEMP oft als
+/// 8.3-Kurzname, unter macOS zeigt `/var` auf `/private/var`. Ohne `\\?\`, weil die CLI den
+/// Repo-Pfad aus Git so schreibt; sonst findet sie das zugeordnete Board nicht.
+fn canonical(path: &Path) -> PathBuf {
+    let resolved = fs::canonicalize(path).expect("echter Pfad");
+    #[cfg(windows)]
+    {
+        let text = resolved.to_string_lossy().into_owned();
+        if let Some(rest) = text.strip_prefix(r"\\?\") {
+            return PathBuf::from(rest);
+        }
+    }
+    resolved
+}
+
 /// Temporäres Git-Projekt samt eigenem Home und eigener Board-Datenbank.
 pub struct TempProject {
     base: TempDir,
@@ -47,7 +63,7 @@ impl TempProject {
             .prefix("harness-board-")
             .tempdir()
             .expect("Temp-Ordner");
-        let root = fs::canonicalize(base.path()).expect("echter Pfad");
+        let root = canonical(base.path());
         let path = root.join("Demo Projekt ä");
         fs::create_dir(&path).expect("Projektordner");
         fs::create_dir(root.join("home")).expect("Home-Ordner");
@@ -62,7 +78,7 @@ impl TempProject {
 
     /// Ordner, in dem Projekt und Home liegen
     pub fn base(&self) -> PathBuf {
-        fs::canonicalize(self.base.path()).expect("echter Pfad")
+        canonical(self.base.path())
     }
 
     /// Eigenes `HARNESS_HOME` dieses Testprojekts

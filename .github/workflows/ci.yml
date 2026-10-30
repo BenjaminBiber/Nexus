@@ -130,6 +130,16 @@ jobs:
       CARGO_PROFILE_DEV_DEBUG: '0'
       CARGO_PROFILE_TEST_DEBUG: '0'
     steps:
+      # Wie im test-Job vor dem Checkout: die Tests legen eigene Git-Projekte an, und autocrlf
+      # false hält Vergleichsdateien wie tests/fixtures unter Windows bei \n
+      - name: Git für Tests einrichten
+        shell: bash
+        run: |
+          git config --global user.name "CI"
+          git config --global user.email "ci@example.invalid"
+          git config --global init.defaultBranch main
+          git config --global core.autocrlf false
+          if [ "$RUNNER_OS" = "Windows" ]; then git config --global core.longpaths true; fi
       - uses: actions/checkout@v4
       # Version absichtlich wie in rust-toolchain.toml; beim Anheben beide Stellen ändern
       - uses: dtolnay/rust-toolchain@master
@@ -155,7 +165,8 @@ jobs:
           mkdir -p apps/desktop/src-tauri/binaries packages/web/dist
           touch "apps/desktop/src-tauri/binaries/nexus-$ziel$endung" packages/web/dist/index.html
       - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo test --workspace
+      # Alle Testprogramme laufen zu Ende: sonst verdeckt das erste scheiternde alle folgenden
+      - run: cargo test --workspace --no-fail-fast
       # Die TypeScript-Typen aus ts-rs sind eingecheckt: neu erzeugen und prüfen, dass sich
       # nichts ändert. Reicht auf einer Plattform, weil das Ergebnis überall gleich ist.
       - name: Erzeugte TypeScript-Typen prüfen

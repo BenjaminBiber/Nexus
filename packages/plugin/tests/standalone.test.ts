@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { createServer as createNetServer } from 'node:net';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
+import { closeSync, cpSync, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { buildPlugin, BINARY, PLUGIN_OUT } from './helpers/pluginBuild.js';
@@ -26,9 +26,25 @@ describe('Plugin ohne Repository-Quellen', () => {
   let port: number;
   let env: NodeJS.ProcessEnv;
 
-  // Das Binary des kopierten Plugins; genauso startet Claude Code die Hooks
+  // Das Binary des kopierten Plugins; genauso startet Claude Code die Hooks. Die Zeitgrenze lässt
+  // einen hängenden Aufruf scheitern: spawnSync blockiert die Ereignisschleife, die Zeitgrenze
+  // des Tests greift dann nicht, und der Lauf hinge bis zum Abbruch des CI-Jobs.
   const nexus = (args: string[], options: { cwd?: string; input?: string } = {}) =>
-    spawnSync(join(plugin, 'bin', BINARY), args, { cwd: options.cwd ?? project, env, input: options.input, encoding: 'utf8', windowsHide: true });
+    spawnSync(join(plugin, 'bin', BINARY), args, { cwd: options.cwd ?? project, env, input: options.input, encoding: 'utf8', windowsHide: true, timeout: 30000 });
+  // `nexus board` startet den Server abgelöst. Unter Windows erbt der Server dabei die vererbbaren
+  // Handles von `nexus`, auch die Pipes, die `nexus` von seinem Aufrufer bekommen hat; spawnSync
+  // wartete dann bis zum Ende des Servers auf das Ende der Ausgabe. Deshalb gehen Aus- und
+  // Fehlerausgabe hier in Dateien.
+  const nexusBoard = (args: string[]) => {
+    const files = ['board.out', 'board.err'].map((name) => join(base, name));
+    const fds = files.map((file) => openSync(file, 'w'));
+    try {
+      const result = spawnSync(join(plugin, 'bin', BINARY), args, { cwd: project, env, stdio: ['ignore', fds[0], fds[1]], windowsHide: true, timeout: 30000 });
+      return { status: result.status, stdout: readFileSync(files[0], 'utf8'), stderr: readFileSync(files[1], 'utf8') };
+    } finally {
+      fds.forEach((fd) => closeSync(fd));
+    }
+  };
   const git = (...args: string[]) => spawnSync('git', args, { cwd: project, encoding: 'utf8', windowsHide: true });
 
   beforeAll(async () => {
@@ -73,7 +89,7 @@ describe('Plugin ohne Repository-Quellen', () => {
   it('richtet ein Projekt ein, startet den eigenen Server und liefert die Oberfläche', async () => {
     git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '--allow-empty', '-q', '-m', 'init');
     expect(nexus(['init']).status).toBe(0);
-    const board = nexus(['--json', 'board', '--no-open', '--port', String(port)]);
+    const board = nexusBoard(['--json', 'board', '--no-open', '--port', String(port)]);
     expect(board.stderr).toBe('');
     // Mit --json steht ein Fehler als {"error":…} auf stdout; die Meldung soll im Testlauf sichtbar sein
     expect(board.status, board.stdout).toBe(0);
