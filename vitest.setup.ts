@@ -30,6 +30,13 @@ process.env.CLAUDE_CONFIG_DIR = mkdtempSync(join(tmpdir(), 'harness-claude-confi
 delete process.env.HARNESS_SESSION;
 delete process.env.HARNESS_TICKET;
 
+// Oberflächentests: findBy… und waitFor warten 5 s statt 1 s. Auf langsamen CI-Runnern braucht der
+// erste Aufbau einer Seite (Laden, Markdown, nachgeladene Daten) sonst gelegentlich zu lange.
+if (typeof document !== 'undefined') {
+  const { configure } = await import('@testing-library/react');
+  configure({ asyncUtilTimeout: 5000 });
+}
+
 // Sicherheitsnetz im Prozess: Anfragen an den Standardport werden nie ausgeführt, sondern lassen den Test scheitern.
 // Der Fehler ist kein ECONNREFUSED, damit der Hook den Port als „fremd“ ansieht und keinen Server startet.
 const blocked: string[] = [];

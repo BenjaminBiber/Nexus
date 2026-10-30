@@ -144,7 +144,9 @@ impl<'a> WorkflowCustomization<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
+    #[cfg(unix)]
+    use std::path::PathBuf;
 
     use super::*;
     use crate::customization::overview::EntryBase;
@@ -186,6 +188,8 @@ mod tests {
     }
 
     struct Beispiel {
+        // Hält den Temp-Ordner am Leben; gelesen wird es nur im Unix-Test mit Symlink
+        #[cfg_attr(not(unix), allow(dead_code))]
         dir: tempfile::TempDir,
         paths: CustomizationPaths,
     }
@@ -204,6 +208,7 @@ mod tests {
             Self { dir, paths }
         }
 
+        #[cfg(unix)]
         fn root(&self) -> PathBuf {
             self.dir.path().to_path_buf()
         }

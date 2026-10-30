@@ -23,6 +23,12 @@ describe('Normalizer', () => {
       const normalizer = make({ saved: { pid: 'a1b2c3d4', ticket: 'BEN-0001' } });
       expect(normalizer.savedValues('a1b2c3d4/BEN-0001/a1b2c3d4')).toBe('<var:pid>/<var:ticket>/<var:pid>');
     });
+
+    it('ersetzt einen Wert, der einen anderen enthält, unter seinem eigenen Namen', () => {
+      const normalizer = make({ saved: { lauf: 'BEN-0002-20201030-091500', merge: 'BEN-0002-20201030-091500-merge' } });
+      expect(normalizer.savedValues('BEN-0002-20201030-091500-merge.log und BEN-0002-20201030-091500.log'))
+        .toBe('<var:merge>.log und <var:lauf>.log');
+    });
   });
 
   describe('2. Pfade', () => {
