@@ -41,7 +41,8 @@ tauri-plugin-updater = "2"
 tauri-plugin-window-state = "2"
 thiserror = "2"
 # sync: die Rückfrage des Updaters meldet ihre Antwort über einen oneshot-Kanal zurück
-tokio = { version = "1", features = ["time", "signal", "macros", "sync"] }
+# net: die App bindet den Port des Servers selbst, bevor sie das Fenster öffnet
+tokio = { version = "1", features = ["time", "signal", "macros", "sync", "net"] }
 
 [features]
 # Von `tauri dev` gesetzt, wenn eine eigene Schutzschicht aktiv sein soll.

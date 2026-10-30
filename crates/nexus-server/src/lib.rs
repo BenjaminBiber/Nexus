@@ -139,6 +139,9 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
         .map_err(nexus_core::Error::unexpected)?;
     let port = local.port();
     state.guard.allow_port(port);
+    // Mit diesem Token weist sich die Oberfläche der Desktop-App aus; es steht in
+    // `server.json` und darf nirgends ins Protokoll
+    state.guard.allow_app_token(state.config.app_token.clone());
     // Bei Port 0 zeigen die Links in Meldungen erst jetzt auf den richtigen Port
     state.notifications.set_port(port);
 
@@ -147,6 +150,7 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
         pid: state.pid,
         port,
         started_at: now_iso(),
+        app_token: Some(state.config.app_token.clone()),
     })?;
     if !eingetragen {
         state

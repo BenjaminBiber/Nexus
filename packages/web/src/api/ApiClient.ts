@@ -26,8 +26,10 @@ const SHARE_WINDOW_MS = 50;
 const withBoard = (url: string, board?: number) => (board === undefined ? url : `${url}${url.includes('?') ? '&' : '?'}board=${board}`);
 
 // Spricht mit dem Harness-Server; schreibende Anfragen tragen den Pflichtkopf.
+// In der Desktop-App kommt die Oberfläche aus den Dateien der App und damit von einer fremden Herkunft:
+// dort stehen die Serveradresse in `base` und das Start-Token in `token`, das jede Anfrage mitnimmt.
 export class ApiClient {
-  constructor(private readonly base = '') {}
+  constructor(private readonly base = '', private readonly token?: string) {}
 
   // Auslastung der Claude-Abo-Limits (5-Stunden-Fenster, Woche)
   getClaudeUsage(): Promise<ClaudeUsageDto> {
@@ -475,7 +477,9 @@ export class ApiClient {
   // Öffnet den Ereignisstrom eines Projekts; dbBoard meldet zusätzlich Änderungen dieses DB-Boards, dbProject Änderungen an dessen Fragen;
   // notify: der Tab zeigt Benachrichtigungen selbst (statt des Windows-Toasts)
   openEvents(pid: string, dbBoard: number | null = null, dbProject: number | null = null, notify = false): EventSource {
-    const query = [dbBoard ? `dbBoard=${dbBoard}` : '', dbProject ? `dbProject=${dbProject}` : '', notify ? 'notify=1' : ''].filter(Boolean).join('&');
+    // EventSource kann keine Köpfe setzen; in der App geht das Token deshalb in die Adresse
+    const query = [dbBoard ? `dbBoard=${dbBoard}` : '', dbProject ? `dbProject=${dbProject}` : '', notify ? 'notify=1' : '', this.token ? `token=${encodeURIComponent(this.token)}` : '']
+      .filter(Boolean).join('&');
     return new EventSource(`${this.base}/api/projects/${pid}/events${query ? `?${query}` : ''}`);
   }
 
@@ -607,7 +611,7 @@ export class ApiClient {
   async getDispatchLog(name: string): Promise<string> {
     let res: Response;
     try {
-      res = await fetch(`${this.base}/api/dispatch/logs/${encodeURIComponent(name)}`, { method: 'GET', headers: {} });
+      res = await fetch(`${this.base}/api/dispatch/logs/${encodeURIComponent(name)}`, { method: 'GET', headers: this.headers() });
     } catch {
       throw new ApiError('unreachable', 'Server nicht erreichbar', 0);
     }
@@ -651,9 +655,14 @@ export class ApiClient {
 
   private readonly shared = new Map<string, { startedAt: number; promise: Promise<unknown> }>();
 
+  // Köpfe, die jede Anfrage trägt: in der App das Start-Token, im Browser nichts
+  private headers(): Record<string, string> {
+    return this.token ? { 'x-nexus-token': this.token } : {};
+  }
+
   // Schickt die Anfrage und übersetzt Fehlerantworten in ApiError
   private async send(method: string, path: string, body?: unknown): Promise<unknown> {
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = this.headers();
     if (method !== 'GET') {
       headers['content-type'] = 'application/json';
       headers['x-harness'] = '1';

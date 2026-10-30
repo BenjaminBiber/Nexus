@@ -115,6 +115,7 @@ mod tests {
             pid: 4242,
             port: 4710,
             started_at: "jetzt".into(),
+            app_token: None,
         }
     }
 

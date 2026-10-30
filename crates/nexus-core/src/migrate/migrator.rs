@@ -417,6 +417,7 @@ mod tests {
                 pid: 4242,
                 port: 4710,
                 started_at: "2026-10-29T11:00:00.000Z".to_string(),
+                app_token: None,
             })
             .unwrap();
 
@@ -439,6 +440,7 @@ mod tests {
                 pid: 4242,
                 port: 4710,
                 started_at: "2026-10-29T11:00:00.000Z".to_string(),
+                app_token: None,
             })
             .unwrap();
 

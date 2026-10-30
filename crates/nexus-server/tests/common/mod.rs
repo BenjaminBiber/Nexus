@@ -176,6 +176,8 @@ impl TestServer {
         let claude = options.claude.unwrap_or_default();
         let state = AppState::with_claude_and_usage(config, board, platform, claude, options.usage)
             .expect("Zustand");
+        // Wie beim echten Start: das Token der Einstellungen lässt die Oberfläche der App durch
+        state.guard.allow_app_token(state.config.app_token.clone());
         TestServer {
             router: build_router(state.clone()),
             state,
@@ -247,6 +249,11 @@ impl TestServer {
             .oneshot(request)
             .await
             .expect("Antwort des Servers")
+    }
+
+    /// Das Start-Token dieses Servers, mit dem sich die Oberfläche der App ausweist
+    pub fn app_token(&self) -> String {
+        self.state.config.app_token.as_str().to_string()
     }
 
     /// `GET` mit zusätzlichen Köpfen

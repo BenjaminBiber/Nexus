@@ -3,25 +3,14 @@
   "productName": "Nexus",
   "identifier": "cc.biber.nexus",
   "build": {
-    "frontendDist": "../splash",
+    "frontendDist": "../../../packages/web/dist",
     "beforeBuildCommand": "npm run prepare-binaries",
     "beforeDevCommand": "npm run prepare-binaries"
   },
   "app": {
-    "windows": [
-      {
-        "label": "main",
-        "title": "Nexus",
-        "url": "index.html",
-        "width": 1280,
-        "height": 840,
-        "minWidth": 900,
-        "minHeight": 600,
-        "backgroundThrottling": "disabled"
-      }
-    ],
+    "windows": [],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost; img-src 'self' data: blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
     }
   },
   "plugins": {
