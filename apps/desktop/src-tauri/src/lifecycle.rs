@@ -144,10 +144,7 @@ pub fn rueckfrage(laeufe: u32, eigener_server: bool) -> String {
 // Holt den Dispatch-Status für die Rückfrage; None, wenn der Server nicht erreichbar ist
 // oder kein Board eingerichtet ist (dann läuft auch kein Dispatch)
 async fn status_holen() -> Option<DispatchSummary> {
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build()
-        .ok()?;
+    let client = crate::http::client(std::time::Duration::from_secs(2)).ok()?;
     dispatch_status(&client, &tray::basis_url()).await
 }
 

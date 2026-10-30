@@ -1,10 +1,15 @@
-import '@fontsource/geist-sans/400.css';
-import '@fontsource/geist-sans/500.css';
-import '@fontsource/geist-sans/600.css';
-import '@fontsource/geist-mono/400.css';
-import '@fontsource/geist-mono/500.css';
+// Nur die Zeichensätze, die die Oberfläche braucht: latin und – soweit das Paket ihn anbietet –
+// latin-ext. Die Sammel-CSS je Schnitt würde auch Kyrillisch und Griechisch mitliefern.
+// geist-sans bringt ausschließlich latin mit, deshalb steht dort kein latin-ext.
+import '@fontsource/geist-sans/latin-400.css';
+import '@fontsource/geist-sans/latin-500.css';
+import '@fontsource/geist-sans/latin-600.css';
+import '@fontsource/geist-mono/latin-400.css';
+import '@fontsource/geist-mono/latin-ext-400.css';
+import '@fontsource/geist-mono/latin-500.css';
+import '@fontsource/geist-mono/latin-ext-500.css';
 // Material Icons liegen im Build statt bei Google Fonts: kein blockierender Abruf von außen beim Start
-import '@fontsource/material-icons/400.css';
+import '@fontsource/material-icons/latin-400.css';
 import './styles/variables.css';
 import './styles/base.css';
 import './styles/docs.css';

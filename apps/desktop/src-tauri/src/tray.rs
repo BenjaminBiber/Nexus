@@ -213,7 +213,7 @@ fn anlegen<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Zeilen<R>> {
 
 // Fragt den Status im Takt ab und setzt Symbol, Tooltip und Menütexte nur, wenn sich etwas geändert hat
 async fn beobachten<R: Runtime>(app: AppHandle<R>, zeilen: Zeilen<R>) {
-    let client = match reqwest::Client::builder().timeout(TIMEOUT).build() {
+    let client = match crate::http::client(TIMEOUT) {
         Ok(client) => client,
         Err(error) => {
             log::warn!("Die Statusabfrage ließ sich nicht vorbereiten: {error}");

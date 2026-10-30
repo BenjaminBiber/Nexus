@@ -1,4 +1,5 @@
 // Einstieg der Desktop-App: Plugins, Zustand und Fenster einrichten.
+mod http;
 mod instance;
 mod lifecycle;
 mod server;

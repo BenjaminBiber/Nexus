@@ -165,7 +165,7 @@ fn merken<R: Runtime>(app: &AppHandle<R>, version: &str) {
 
 // Laufende Dispatch-Läufe für den Hinweis im Dialog; 0, wenn der Server nicht erreichbar ist
 async fn laufende_laeufe() -> u32 {
-    let Ok(client) = reqwest::Client::builder().timeout(STATUS_TIMEOUT).build() else {
+    let Ok(client) = crate::http::client(STATUS_TIMEOUT) else {
         return 0;
     };
     match lifecycle::dispatch_status(&client, &crate::tray::basis_url()).await {

@@ -22,7 +22,13 @@ log = "0.4"
 nexus-core = { workspace = true }
 nexus-server = { workspace = true }
 nexus-platform = { workspace = true }
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+# Version 0.13 wie beim Updater-Plugin: sonst landen zwei reqwest-Fassungen samt eigenem
+# hyper in der App. Ohne TLS-Merkmal, weil alle Aufrufe an den eigenen Server auf localhost
+# gehen; die TLS-Schicht für die Selbstaktualisierung bringt das Updater-Plugin mit.
+reqwest = { version = "0.13", default-features = false, features = ["json"] }
+# Nur für den Kryptoanbieter in src/http.rs: ring liegt über das Updater-Plugin ohnehin im Bau,
+# aws-lc-rs wird bewusst nicht eingeschaltet (es würde die App um rund 1 MB größer machen).
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # tray-icon: Symbol in der Menüleiste; image-png: die Tray-Symbole liegen als PNG neben der App
@@ -42,7 +48,7 @@ tauri-plugin-window-state = "2"
 thiserror = "2"
 # sync: die Rückfrage des Updaters meldet ihre Antwort über einen oneshot-Kanal zurück
 # net: die App bindet den Port des Servers selbst, bevor sie das Fenster öffnet
-tokio = { version = "1", features = ["time", "signal", "macros", "sync", "net"] }
+tokio = { version = "1", default-features = false, features = ["time", "signal", "macros", "sync", "rt", "net"] }
 
 [features]
 # Von `tauri dev` gesetzt, wenn eine eigene Schutzschicht aktiv sein soll.

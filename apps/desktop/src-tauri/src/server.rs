@@ -212,7 +212,7 @@ pub async fn probe(port: u16) -> PortState {
 
 // Client für den Health-Aufruf; None, wenn er sich nicht bauen lässt
 fn health_client() -> Option<reqwest::Client> {
-    match reqwest::Client::builder().timeout(PROBE_TIMEOUT).build() {
+    match crate::http::client(PROBE_TIMEOUT) {
         Ok(client) => Some(client),
         Err(error) => {
             log::warn!("Der Health-Aufruf ließ sich nicht vorbereiten: {error}");
