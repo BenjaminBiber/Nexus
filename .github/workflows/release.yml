@@ -120,13 +120,32 @@ jobs:
           fi
           printf '%s' "$APPLE_API_PRIVATE_KEY" > "$RUNNER_TEMP/AuthKey.p8"
           echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
+      # Tauri signiert, sobald APPLE_CERTIFICATE gesetzt ist, auch wenn es leer ist. Ein fehlendes
+      # Secret wird in env: zum leeren String, deshalb landen die Variablen nur mit Zertifikat im Job
+      - name: Zertifikat für die Apple-Signatur
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          if [ -z "$APPLE_CERTIFICATE" ]; then
+            echo "Kein Zertifikat: macOS-Build bleibt unsigniert"
+            exit 0
+          fi
+          {
+            echo "APPLE_CERTIFICATE=$APPLE_CERTIFICATE"
+            echo "APPLE_CERTIFICATE_PASSWORD=$APPLE_CERTIFICATE_PASSWORD"
+            echo "APPLE_SIGNING_IDENTITY=$APPLE_SIGNING_IDENTITY"
+          } >> "$GITHUB_ENV"
       # signCommand ruft trusted-signing-cli auf; der Cache oben deckt den Build mit ab
       - name: trusted-signing-cli installieren
         if: runner.os == 'Windows'
         run: cargo install trusted-signing-cli --locked
       # Baut die App und lädt dmg, NSIS-Installer, AppImage, deb und rpm an den Entwurf des Releases.
-      # Die Signatur-Variablen dürfen auf allen Plattformen gesetzt sein: sind sie leer (Fork, Probelauf),
-      # baut tauri-action unsigniert und sign-windows.mjs überspringt die Signatur.
+      # Die Apple-Zertifikatsvariablen setzt der Schritt oben nur, wenn es ein Zertifikat gibt; die übrigen
+      # Signatur-Variablen dürfen leer sein (Fork, Probelauf), dann überspringt sign-windows.mjs die Signatur.
       # Der Updater-Schlüssel ist davon getrennt (M4): mit ihm entstehen über
       # src-tauri/tauri.release.conf.json die Updater-Artefakte und je Matrix-Job ein Stück von
       # latest.json, das tauri-action am Entwurf zusammenführt.
@@ -135,9 +154,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           AZURE_SIGNING_ENDPOINT: ${{ vars.AZURE_SIGNING_ENDPOINT }}
