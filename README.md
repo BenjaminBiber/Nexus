@@ -230,7 +230,7 @@ Umgebungsvariablen (die alten Namen mit `HARNESS_` statt `NEXUS_` gelten weiter,
 
 | Symptom | Abhilfe |
 |---|---|
-| `nexus` im Terminal „nicht gefunden“ | `nexus install` aus dem gebauten Plugin ausführen, neues Terminal öffnen |
+| `nexus` im Terminal „nicht gefunden“ | Neues Terminal öffnen (der PATH gilt erst dort); sonst `nexus install` aus dem gebauten Plugin ausführen. Windows-Installer bis 0.1.2 tragen keinen PATH ein: neu installieren oder `%LOCALAPPDATA%\Nexus\nexus.exe` direkt aufrufen |
 | Hooks oder Skills fehlen | Im Projekt `nexus init`, dann `/reload-plugins`; prüfen mit `claude plugin list` (`nexus@nexus-local`) |
 | Skills heißen noch `/ai-harness:…` oder laufen doppelt | Altes Plugin aktiv: `nexus install` erneut, im Projekt `nexus init`; sonst `claude plugin disable ai-harness@ai-harness-local --scope user` |
 | `git worktree add` scheitert mit „Filename too long“ (Windows) | Nexus schaltet dafür `core.longpaths` in der lokalen Konfiguration des Repos ein (Hinweis beim Anlegen); notfalls von Hand `git config core.longpaths true` im Repo |

@@ -61,7 +61,11 @@
       "nsis": {
         "installMode": "currentUser",
         "languages": ["German", "English"],
-        "displayLanguageSelector": false
+        "displayLanguageSelector": false,
+        "installerHooks": "./windows/installer-hooks.nsh",
+        "installerIcon": "icons/icon.ico",
+        "headerImage": "windows/installer-header.bmp",
+        "sidebarImage": "windows/installer-sidebar.bmp"
       }
     },
     "linux": {

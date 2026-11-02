@@ -54,6 +54,13 @@ Ergebnis: `target\release\bundle\nsis\Nexus_<version>_x64-setup.exe`.
 - `webviewInstallMode: { "type": "downloadBootstrapper" }` – fehlt WebView2, lädt der Installer den
   Bootstrapper von Microsoft nach. Der Rechner braucht dafür einen Internetzugang.
 - Sprachen: Deutsch und Englisch, ohne Sprachauswahl beim Start (die Sprache des Systems gewinnt).
+- `nsis.installerHooks` (`src-tauri/windows/installer-hooks.nsh`) – trägt den Installationsordner
+  (`%LOCALAPPDATA%\Nexus`, dort liegt `nexus.exe`) in den Benutzer-PATH ein und beim Deinstallieren
+  wieder aus. Bereits offene Terminals sehen den Eintrag erst nach einem Neustart.
+- Aussehen: `installerIcon` ist das App-Icon, `sidebarImage` (164×314, Willkommens- und Abschlussseite)
+  und `headerImage` (150×57, Kopf der übrigen Seiten) zeigen Logo und Markenblau `#1d4ed8`. Die BMPs in
+  `src-tauri/windows/` erzeugt `scripts/installer-images.ps1`; nach einer Änderung an Logo oder Farbe neu
+  ausführen: `powershell -NoProfile -ExecutionPolicy Bypass -File apps/desktop/scripts/installer-images.ps1`.
 
 ## Linux
 

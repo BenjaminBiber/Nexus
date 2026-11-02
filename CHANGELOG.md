@@ -14,6 +14,9 @@
 
 ### Sonstiges
 
+- Windows-Installer: trägt den Installationsordner (mit `nexus.exe`) in den Benutzer-PATH ein und beim Deinstallieren wieder aus, damit `nexus` im Terminal gefunden wird.
+- Windows-Installer im Nexus-Look: App-Icon, Seitenbild und Kopfbild mit Logo im Markenblau.
+
 ## 0.1.2 – 2026-11-02
 
 ### Vertrag
