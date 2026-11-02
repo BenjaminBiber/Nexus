@@ -9,6 +9,8 @@
 //! * **Desktop-App** (`tauri://localhost` und `http(s)://tauri.localhost`): Die Oberfläche
 //!   kommt aus den Dateien der App und hat damit eine fremde Herkunft. Sie ist nur erlaubt,
 //!   wenn sie das Start-Token des Servers mitschickt; das Token ersetzt dort `X-Harness`.
+//!   Im Entwicklungsmodus der App kommt die Oberfläche von Vite; dessen Herkunft lässt
+//!   [`RequestGuard::allow_app_origin`] unter denselben Bedingungen zu.
 
 use std::collections::HashSet;
 use std::sync::{Arc, RwLock};
@@ -61,18 +63,25 @@ pub struct RequestGuard {
     app_token: RwLock<Option<AppToken>>,
 }
 
-/// Erlaubte Hosts und Herkünfte; sie wachsen mit [`RequestGuard::allow_port`]
+/// Erlaubte Hosts und Herkünfte; sie wachsen mit [`RequestGuard::allow_port`] und
+/// [`RequestGuard::allow_app_origin`]
 #[derive(Debug, Default)]
 struct Allowed {
     hosts: HashSet<String>,
     origins: HashSet<String>,
+    /// Herkünfte der App, die nur mit Start-Token durchkommen; ab Werk [`TAURI_ORIGINS`]
+    app_origins: HashSet<String>,
 }
 
 impl RequestGuard {
     /// Schutz für einen Port; bei Port 0 kommt der tatsächliche Port nach dem Binden dazu
     pub fn new(port: u16) -> Self {
+        let allowed = Allowed {
+            app_origins: TAURI_ORIGINS.iter().map(|origin| origin.to_string()).collect(),
+            ..Allowed::default()
+        };
         let guard = Self {
-            allowed: RwLock::new(Allowed::default()),
+            allowed: RwLock::new(allowed),
             app_token: RwLock::new(None),
         };
         guard.allow_port(port);
@@ -86,6 +95,20 @@ impl RequestGuard {
             allowed.hosts.insert(format!("{name}:{port}"));
             allowed.origins.insert(format!("http://{name}:{port}"));
         }
+    }
+
+    /// Behandelt eine weitere Herkunft wie die der App: nur mit Start-Token, dann mit CORS.
+    /// Die Desktop-App nennt hier im Entwicklungsmodus die Adresse von Vite.
+    pub fn allow_app_origin(&self, origin: &str) {
+        let mut allowed = self.allowed.write().expect("Sperre des Schutzes");
+        allowed.app_origins.insert(origin.to_lowercase());
+    }
+
+    /// Die Herkunft einer Anfrage, falls sie von der App kommt (immer klein geschrieben)
+    pub fn app_origin(&self, headers: &HeaderMap) -> Option<String> {
+        let origin = single(headers, "origin")?.to_lowercase();
+        let allowed = self.allowed.read().expect("Sperre des Schutzes");
+        allowed.app_origins.contains(&origin).then_some(origin)
     }
 
     /// Lässt die Oberfläche der Desktop-App zu, sobald sie dieses Token mitschickt
@@ -114,7 +137,7 @@ impl RequestGuard {
         if let Some(origin) = single(headers, "origin") {
             let origin = origin.to_lowercase();
             if !allowed.origins.contains(&origin) {
-                if !is_tauri_origin(&origin) {
+                if !allowed.app_origins.contains(&origin) {
                     return Some(GuardDenial {
                         code: "origin-denied",
                         message: "Anfragen von fremden Webseiten sind nicht erlaubt.",
@@ -169,12 +192,6 @@ pub fn is_tauri_origin(origin: &str) -> bool {
     TAURI_ORIGINS.contains(&origin)
 }
 
-/// Die Tauri-Herkunft einer Anfrage, falls sie von der App kommt (immer klein geschrieben)
-fn tauri_origin(headers: &HeaderMap) -> Option<String> {
-    let origin = single(headers, "origin")?.to_lowercase();
-    is_tauri_origin(&origin).then_some(origin)
-}
-
 /// Wert von `token` im Abfrageteil. Das Token ist Base64url und braucht deshalb keine
 /// Dekodierung; alles andere passt ohnehin nicht zum Token.
 fn token_aus_abfrage(query: &str) -> Option<&str> {
@@ -217,7 +234,7 @@ pub async fn guard_middleware(
     request: Request,
     next: Next,
 ) -> Response {
-    let app_origin = tauri_origin(request.headers());
+    let app_origin = state.guard.app_origin(request.headers());
     // Die Vorabfrage schickt der Browser selbst, ohne Kopf und ohne Token; sie gibt nur
     // bekannt, was danach erlaubt ist. Vorabfragen anderer Herkünfte fallen unten durch.
     if request.method() == Method::OPTIONS {

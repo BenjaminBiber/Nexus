@@ -142,6 +142,9 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
     // Mit diesem Token weist sich die Oberfläche der Desktop-App aus; es steht in
     // `server.json` und darf nirgends ins Protokoll
     state.guard.allow_app_token(state.config.app_token.clone());
+    if let Some(origin) = &state.config.dev_origin {
+        state.guard.allow_app_origin(origin);
+    }
     // Bei Port 0 zeigen die Links in Meldungen erst jetzt auf den richtigen Port
     state.notifications.set_port(port);
 

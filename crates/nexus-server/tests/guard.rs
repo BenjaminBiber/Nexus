@@ -180,6 +180,27 @@ fn laesst_die_app_mit_gueltigem_token_lesen_und_schreiben() {
 }
 
 #[test]
+fn behandelt_die_herkunft_von_vite_erst_nach_freigabe_wie_die_app() {
+    let guard = guard_mit_token("geheim");
+    let vite = "http://localhost:5173";
+    assert_eq!(
+        code(&guard, "GET", &aus_der_app(vite, "geheim")),
+        Some("origin-denied")
+    );
+
+    guard.allow_app_origin(vite);
+    assert_eq!(code(&guard, "GET", &aus_der_app(vite, "geheim")), None);
+    assert_eq!(
+        code(&guard, "GET", &aus_der_app(vite, "falsch")),
+        Some("origin-denied")
+    );
+    assert_eq!(
+        guard.app_origin(&headers(&aus_der_app(vite, "geheim"))),
+        Some(vite.to_string())
+    );
+}
+
+#[test]
 fn weist_die_app_ohne_oder_mit_falschem_token_ab() {
     let guard = guard_mit_token("geheim");
     let host = ("host", "127.0.0.1:4710");

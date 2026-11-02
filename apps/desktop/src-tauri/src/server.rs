@@ -610,6 +610,12 @@ fn server_config<R: Runtime>(
         config.web_dir = Some(base.join("web"));
         config.toast_dir = base.join("toast");
     }
+    // Im Entwicklungsmodus (`tauri dev`) kommt die Oberfläche von Vite statt aus den Dateien
+    // der App; der Server muss diese Herkunft dann wie die der App zulassen
+    #[cfg(debug_assertions)]
+    if let Some(url) = &app.config().build.dev_url {
+        config.dev_origin = Some(url.origin().ascii_serialization());
+    }
     Ok(config)
 }
 
