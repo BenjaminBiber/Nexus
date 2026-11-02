@@ -75,3 +75,11 @@ _Avoid_: Hook, Plugin-Punkt
 **Leitplanke**:
 Eine Vorgabe des Harness, die sich nicht ersetzen, höchstens erweitern lässt.
 _Avoid_: Regel, Policy
+
+**Account**:
+Eine Claude-Anmeldung mit eigenem Konfigurationsordner (`CLAUDE_CONFIG_DIR`), auf die der Dispatcher Läufe verteilt; „Standard“ ist die Anmeldung des Servers.
+_Avoid_: Konto, Profil (ein Profil legt Modell und Grenzen fest)
+
+**Account-Pause**:
+Die Pause eines einzelnen Accounts nach einem Nutzungslimit; die übrigen Accounts arbeiten weiter.
+_Avoid_: Limit-Sperre
