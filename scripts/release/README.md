@@ -125,7 +125,7 @@ Die Logik steckt in drei Skripten, nicht im Workflow:
 
 | Skript | Aufgabe |
 | --- | --- |
-| `check-ci.sh <ref> <sha> <dry_run>` | bricht ab, wenn der Lauf nicht auf `main` steht oder der jüngste Lauf von `ci.yml` für genau diesen Commit nicht `completed`/`success` ist; im Probelauf nur eine Warnung |
+| `check-ci.sh <ref> <sha> <dry_run>` | bricht ab, wenn der Lauf nicht auf `main` steht oder der jüngste Lauf von `ci.yml` für genau diesen Commit nicht `completed`/`success` ist; im Probelauf nur eine Warnung. `ci.yml` läuft nur für Tags `v*` und von Hand – vor dem Release also die CI auf `main` von Hand starten |
 | `version-job.sh <stelle> <dry_run>` | `bump.mjs next` → `bump.mjs set --changelog`, Commit „Release vX.Y.Z“, Tag `vX.Y.Z`, Push nach `main` (im Probelauf kein Push); schreibt `version` und `tag` |
 | `draft-release.sh <tag> <version>` | legt mit `gh release create --draft --verify-tag` den Entwurf an, Text aus `bump.mjs notes` plus erzeugte Notizen; schreibt `release_id` |
 
