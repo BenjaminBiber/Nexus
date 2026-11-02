@@ -80,6 +80,7 @@ pruefeDatei(app, 'Contents/Info.plist');
 pruefeDatei(app, `Contents/MacOS/${hauptprogramm(app)}`, true);
 pruefeDatei(app, 'Contents/Resources/web/index.html');
 pruefeDatei(app, 'Contents/Resources/toast/logo-app.png');
+pruefeDatei(app, 'Contents/Resources/plugin/nexus/.claude-plugin/plugin.json');
 pruefeDatei(app, 'Contents/Resources/icon.icns');
 
 const dmg = juengstes('dmg', '.dmg');

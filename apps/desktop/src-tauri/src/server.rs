@@ -609,6 +609,12 @@ fn server_config<R: Runtime>(
     if let Some(base) = resource_dir(app) {
         config.web_dir = Some(base.join("web"));
         config.toast_dir = base.join("toast");
+        // Mitgeliefertes Claude-Code-Plugin für den Einrichtungsdialog; fehlt es, bietet die
+        // Oberfläche keine Installation an
+        let plugin = base.join("plugin").join("nexus");
+        if plugin.join(".claude-plugin").join("plugin.json").is_file() {
+            config.plugin_bundle = Some(plugin);
+        }
     }
     // Im Entwicklungsmodus (`tauri dev`) kommt die Oberfläche von Vite statt aus den Dateien
     // der App; der Server muss diese Herkunft dann wie die der App zulassen
@@ -1008,6 +1014,18 @@ mod tests {
             .map(|eintrag| eintrag["url"].as_str().unwrap())
             .collect();
         assert_eq!(adressen, ["http://*", "https://*", "vscode://*"]);
+    }
+
+    // Das Claude-Code-Plugin liegt als Ressource im Installer; der Server findet es unter
+    // `<Ressourcen>/plugin/nexus`
+    #[test]
+    fn das_plugin_ist_als_ressource_eingetragen() {
+        let datei: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        assert_eq!(
+            datei["bundle"]["resources"]["../../../packages/plugin/dist/nexus/"],
+            "plugin/nexus/"
+        );
     }
 
     // Mitgeliefert wird genau ein Programm: die Kommandozeile, die im Terminal auch ohne App

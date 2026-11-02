@@ -45,7 +45,8 @@
     "externalBin": ["binaries/nexus"],
     "resources": {
       "../../../packages/web/dist/": "web/",
-      "../../../crates/nexus-server/assets/toast/": "toast/"
+      "../../../crates/nexus-server/assets/toast/": "toast/",
+      "../../../packages/plugin/dist/nexus/": "plugin/nexus/"
     },
     "macOS": {
       "minimumSystemVersion": "11.0",
