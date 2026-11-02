@@ -83,6 +83,38 @@ impl AccountList for Vec<ClaudeAccount> {
     }
 }
 
+/// Limits und Zustand der Accounts, wie der Dispatcher sie braucht; Tests reichen eine
+/// Attrappe statt des echten Dienstes
+#[async_trait::async_trait]
+pub trait AccountLimits: Send + Sync {
+    /// Zustand für die Account-Wahl; `with_usage` false fragt Anthropic nicht
+    async fn states(
+        &self,
+        accounts: &[ClaudeAccount],
+        pauses: &BTreeMap<String, String>,
+        with_usage: bool,
+    ) -> BTreeMap<String, AccountState>;
+
+    /// Limits eines Accounts; `fresh` umgeht den Zwischenspeicher
+    async fn usage(&self, account: &ClaudeAccount, fresh: bool) -> ClaudeUsageDto;
+}
+
+#[async_trait::async_trait]
+impl AccountLimits for AccountUsageService {
+    async fn states(
+        &self,
+        accounts: &[ClaudeAccount],
+        pauses: &BTreeMap<String, String>,
+        with_usage: bool,
+    ) -> BTreeMap<String, AccountState> {
+        AccountUsageService::states(self, accounts, pauses, with_usage).await
+    }
+
+    async fn usage(&self, account: &ClaudeAccount, fresh: bool) -> ClaudeUsageDto {
+        AccountUsageService::usage(self, account, fresh).await
+    }
+}
+
 /// Liest ein Token aus dem macOS-Schlüsselbund (Dienstname → Inhalt oder `None`)
 pub type Keychain =
     Arc<dyn Fn(String) -> Pin<Box<dyn Future<Output = Option<String>> + Send>> + Send + Sync>;

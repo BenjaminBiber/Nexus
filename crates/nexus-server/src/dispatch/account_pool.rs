@@ -15,7 +15,7 @@ use nexus_core::dispatch::{
 };
 use nexus_core::HarnessHome;
 
-use crate::accounts::AccountUsageService;
+use crate::accounts::{AccountLimits, AccountList, AccountUsageService};
 
 /// Was der Lauf über seine Accounts mitbringt
 #[derive(Debug, Clone, Default)]
@@ -63,8 +63,8 @@ pub trait AccountPool: Send + Sync {
 
 /// Accounts aus `~/.nexus/accounts.json`, Limits über den [`AccountUsageService`].
 pub struct StoredAccountPool {
-    store: AccountStore,
-    usage: Arc<AccountUsageService>,
+    store: Arc<dyn AccountList>,
+    usage: Arc<dyn AccountLimits>,
     paths: AccountPaths,
 }
 
@@ -76,7 +76,11 @@ impl std::fmt::Debug for StoredAccountPool {
 
 impl StoredAccountPool {
     /// Pool über diesem Speicher und Limit-Dienst
-    pub fn new(store: AccountStore, usage: Arc<AccountUsageService>, paths: AccountPaths) -> Self {
+    pub fn new(
+        store: Arc<dyn AccountList>,
+        usage: Arc<dyn AccountLimits>,
+        paths: AccountPaths,
+    ) -> Self {
         Self {
             store,
             usage,
@@ -86,10 +90,11 @@ impl StoredAccountPool {
 
     /// Pool über dem Benutzerordner mit den Pfaden des Rechners
     pub fn create(home: HarnessHome, usage: Arc<AccountUsageService>) -> Self {
+        let paths = AccountPaths::from_process_env();
         Self::new(
-            AccountStore::new(home),
+            Arc::new(AccountStore::with_paths(home, paths.clone())),
             usage,
-            AccountPaths::from_process_env(),
+            paths,
         )
     }
 }
@@ -141,7 +146,11 @@ impl AccountPool for StoredAccountPool {
         if id == STANDARD_ACCOUNT_ID {
             return None;
         }
-        let account = self.store.find(id)?;
+        let account = self
+            .store
+            .list()
+            .into_iter()
+            .find(|account| account.id == id)?;
         let dir = account.config_dir?;
         Some(self.paths.expand(&dir).to_string_lossy().into_owned())
     }
@@ -162,7 +171,11 @@ impl AccountPool for StoredAccountPool {
     // erst, wenn jedes zurückgesetzt ist. Ist keins voll (das Limit kam aus einem Fenster, das
     // der Endpunkt nicht meldet) oder fehlt eine Rücksetzzeit, bleibt es unbekannt
     async fn resets_at(&self, id: &str, limit_percent: i64) -> Option<String> {
-        let account = self.store.find(id)?;
+        let account = self
+            .store
+            .list()
+            .into_iter()
+            .find(|account| account.id == id)?;
         let usage = self.usage.usage(&account, true).await;
         let windows = [
             (

@@ -12,6 +12,6 @@ pub mod usage;
 pub use login::{AccountLoginDto, AccountLoginService, LoginProcess, LoginSpawner};
 pub use plugin::AccountPluginInstaller;
 pub use usage::{
-    no_keychain, system_keychain, AccountInfoDto, AccountList, AccountUsageEntryDto,
+    no_keychain, system_keychain, AccountInfoDto, AccountLimits, AccountList, AccountUsageEntryDto,
     AccountUsageOptions, AccountUsageService, Keychain,
 };

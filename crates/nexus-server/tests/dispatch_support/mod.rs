@@ -30,6 +30,7 @@ use nexus_core::dispatch::{
 };
 use nexus_core::{HarnessError, HarnessHome, Result};
 use nexus_server::board_runtime::{factory, BoardBackend, BoardBackendFuture, BoardRuntimeHolder};
+use nexus_server::dispatch::account_pool::AccountPool;
 use nexus_server::dispatch::context::{DispatchContext, DispatchStores, RepoWork};
 use nexus_server::dispatch::merge_git::{MergeGit, RealMergeGit};
 use nexus_server::dispatch::merge_service::MergeService;
@@ -81,6 +82,16 @@ impl FakeLauncher {
     /// Läufe, die gestartet wurden
     pub fn launched(&self) -> Vec<String> {
         self.launched.lock().expect("Attrappe").clone()
+    }
+
+    /// Umgebung des zuletzt gestarteten Laufs
+    pub fn last_env(&self) -> BTreeMap<String, String> {
+        self.envs
+            .lock()
+            .expect("Attrappe")
+            .last()
+            .map(|(_, env)| env.clone())
+            .expect("kein Start")
     }
 
     /// Umgebung, mit der der Lauf gestartet wurde
@@ -414,6 +425,24 @@ impl DispatchFixture {
     /// Wie [`DispatchFixture::create`], aber mit einer eigenen Merge-Seite (Attrappe statt
     /// [`MergeService`]); `None` nimmt die echte
     pub async fn create_with(patch: Value, merge: Option<Arc<dyn MergeStep>>) -> Self {
+        Self::create_full(patch, merge, |_| None).await
+    }
+
+    /// Wie [`DispatchFixture::create`], mit Claude-Accounts; der Pool entsteht zum
+    /// Benutzerordner der Fixture
+    pub async fn create_with_accounts(
+        patch: Value,
+        pool: impl FnOnce(&HarnessHome) -> Option<Arc<dyn AccountPool>>,
+    ) -> Self {
+        Self::create_full(patch, None, pool).await
+    }
+
+    /// Alles zusammen: Einstellung, Merge-Seite und Account-Pool
+    async fn create_full(
+        patch: Value,
+        merge: Option<Arc<dyn MergeStep>>,
+        pool: impl FnOnce(&HarnessHome) -> Option<Arc<dyn AccountPool>>,
+    ) -> Self {
         let dir = tempfile::Builder::new()
             .prefix("nexus-dispatch-")
             .tempdir()
@@ -488,6 +517,8 @@ impl DispatchFixture {
             // Suche nach der Git Bash
             "linux",
         );
+        let accounts = pool(&home);
+        let ctx = ctx.with_accounts(accounts.clone());
         let alive = Arc::new(AtomicBool::new(true));
         let holder = {
             let shared = backend.clone();
@@ -507,6 +538,7 @@ impl DispatchFixture {
             },
             env: BTreeMap::new(),
             platform: "linux".into(),
+            accounts,
             ..DispatchServiceDeps::new(home.clone(), holder, launcher.clone())
         };
         if let Some(merge) = merge {
@@ -892,6 +924,11 @@ impl DispatchFixture {
     /// Die aktuelle Zeit des Dispatchers als ISO-Text
     pub fn now_iso(&self) -> String {
         iso(*self.now.lock().expect("Uhr"))
+    }
+
+    /// Ein Zeitpunkt in `minutes` Minuten als ISO-Text
+    pub fn now_iso_in(&self, minutes: i64) -> String {
+        iso(*self.now.lock().expect("Uhr") + chrono::Duration::minutes(minutes))
     }
 }
 

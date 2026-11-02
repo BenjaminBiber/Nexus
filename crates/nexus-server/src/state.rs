@@ -209,7 +209,7 @@ impl AppState {
                 (_, true) | (DispatchAccounts::Off, _) => None,
                 (DispatchAccounts::Pool(pool), _) => Some(pool.clone()),
                 (DispatchAccounts::Stored, _) => Some(Arc::new(StoredAccountPool::new(
-                    AccountStore::with_paths(config.home.clone(), paths.clone()),
+                    Arc::new(AccountStore::with_paths(config.home.clone(), paths.clone())),
                     account_usage.clone(),
                     paths.clone(),
                 ))),

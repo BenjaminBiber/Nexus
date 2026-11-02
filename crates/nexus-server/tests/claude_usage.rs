@@ -192,6 +192,80 @@ async fn merkt_sich_einen_fehlschlag_nur_kurz_und_fragt_danach_wieder_an() {
 }
 
 #[tokio::test]
+async fn fragt_nach_429_mindestens_fuenf_minuten_nicht_neu_auch_nicht_frisch() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    login(&file, json!({}));
+    let at = Arc::new(AtomicI64::new(now_ms()));
+    let status = Arc::new(AtomicU16::new(429));
+    let retry_after = Arc::new(std::sync::Mutex::new(Some("0".to_string())));
+    let calls = Arc::new(AtomicUsize::new(0));
+    let (answer, header, counted) = (status.clone(), retry_after.clone(), calls.clone());
+    let fetch: UsageFetch = Arc::new(move |_| {
+        counted.fetch_add(1, Ordering::SeqCst);
+        let status = answer.load(Ordering::SeqCst);
+        let retry_after = header.lock().unwrap().clone();
+        Box::pin(async move {
+            Ok(UsageReply {
+                retry_after,
+                ..UsageReply::new(status, Some(body()))
+            })
+        })
+    });
+    let service = ClaudeUsageService::with(file, fetch, clock(at.clone()), DEFAULT_TTL_MS);
+
+    let first = service.current(false).await;
+    assert_eq!(first.reason.as_deref(), Some("rate-limited"));
+    assert_eq!(first.plan.as_deref(), Some("team"));
+
+    // Auch `fresh` fragt innerhalb der Sperre nicht neu
+    at.fetch_add(4 * 60_000, Ordering::SeqCst);
+    assert_eq!(
+        service.current(true).await.reason.as_deref(),
+        Some("rate-limited")
+    );
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+
+    // Nach fünf Minuten fragt er wieder – und ein langes Retry-After sperrt länger
+    *retry_after.lock().unwrap() = Some("900".to_string());
+    at.fetch_add(61_000, Ordering::SeqCst);
+    assert_eq!(
+        service.current(false).await.reason.as_deref(),
+        Some("rate-limited")
+    );
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
+    status.store(200, Ordering::SeqCst);
+    at.fetch_add(14 * 60_000, Ordering::SeqCst);
+    assert_eq!(
+        service.current(false).await.reason.as_deref(),
+        Some("rate-limited")
+    );
+    at.fetch_add(61_000, Ordering::SeqCst);
+    assert!(service.current(false).await.available);
+    assert_eq!(calls.load(Ordering::SeqCst), 3);
+}
+
+#[tokio::test]
+async fn fresh_umgeht_den_zwischenspeicher_einer_erfolgreichen_antwort() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    login(&file, json!({}));
+    let (fetch, calls) = answers(200, body());
+    let service = ClaudeUsageService::with(
+        file,
+        fetch,
+        Clock::fixed(NOW.parse().unwrap()),
+        DEFAULT_TTL_MS,
+    );
+
+    service.current(false).await;
+    service.current(false).await;
+    service.current(true).await;
+
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
+}
+
+#[tokio::test]
 async fn stempelt_den_zwischenspeicher_erst_nach_dem_laden() {
     let dir = tempfile::tempdir().unwrap();
     let file = dir.path().join(".credentials.json");
