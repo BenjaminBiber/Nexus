@@ -272,6 +272,12 @@ export type NotificationMode = 'off' | 'browser' | 'windows';
 
 export type ThemeMode = 'system' | 'light' | 'dark' | 'signal' | 'pastel' | 'win95';
 
+/** Setup-Dialoge, die nicht mehr kommen sollen („Nicht mehr fragen“) */
+export interface SetupPromptsDto {
+  pluginDismissed: boolean;
+  migrationDismissed: number[];
+}
+
 export interface UserSettingsDto {
   notifications: NotificationMode;
   heroImages: boolean;
@@ -284,6 +290,44 @@ export interface UserSettingsDto {
   ntfyServer: string;
   ntfyTopic: string;
   ntfyToken: string;
+  setupPrompts: SetupPromptsDto;
+}
+
+export type PluginState = 'installed' | 'missing' | 'outdated';
+
+/** Zustand des Claude-Code-Plugins (`GET /api/setup/plugin`) */
+export interface PluginSetupDto {
+  bundled: boolean;
+  claude: boolean;
+  state: PluginState;
+  installedVersion: string | null;
+  bundledVersion: string | null;
+}
+
+/** Ergebnis der Installation (`POST /api/setup/plugin`) */
+export interface PluginInstallDto {
+  ok: boolean;
+  installed: boolean;
+  steps: string[];
+  hints: string[];
+}
+
+export type MigrationReason = 'legacy-plugin' | 'legacy-rules';
+
+/** Braucht das Repo des Boards eine Migration? (`GET /api/db/boards/{id}/migration`) */
+export interface BoardMigrationDto {
+  needed: boolean;
+  repoPath: string | null;
+  reasons: MigrationReason[];
+}
+
+/** Ergebnis der Migration (`POST /api/db/boards/{id}/migration`) */
+export interface BoardMigrationResultDto {
+  written: string[];
+  removed: string[];
+  kept: string[];
+  pluginSwitched: boolean;
+  importApproval: 'approved' | 'unchanged' | 'no-config';
 }
 
 export interface TestNotificationDto {

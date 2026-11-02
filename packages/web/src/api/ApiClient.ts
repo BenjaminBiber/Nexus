@@ -7,7 +7,7 @@ import type {
   BoardConfigDto, BoardConfigInput, BoardConfigTestDto, FavoriteDto, DocFileContentDto, DocsListDto, SessionDto, SettingsDto, UserSettingsDto, TestNotificationDto,
   SearchHitDto, QuestionDraftInputDto, QuestionDraftResultDto, DocQuestionResultDto, TicketDraftDto, TicketDraftInput, TicketDraftResultDto, DocTicketInput, DocTicketRefDto, DocTicketResultDto, DocCommentDto, NewDocCommentInput, DocCommentPatch, DocWriteResultDto, WriteDocSectionInput,
   ReviseDocInput, ReviseDocResultDto, ProjectDto,
-  WorkflowDto, CustomizationsDto,
+  WorkflowDto, CustomizationsDto, PluginSetupDto, PluginInstallDto, BoardMigrationDto, BoardMigrationResultDto,
 } from './types.js';
 import type {
   DbActiveDto, DbBoardDto, DbBoardPatch, DbBoardViewDto, DbBranchListDto, DbCreatedBranchDto, DbDecisionInput, DbGraphDto, DbGraphScope, DbSpecProgressDto, DbImportResult, DbMoveInput, DbNewNoteInput, DbNewQuestionInput,
@@ -185,6 +185,22 @@ export class ApiClient {
   // Speichert die benutzerweiten Einstellungen
   saveUserSettings(settings: Partial<UserSettingsDto>): Promise<UserSettingsDto> {
     return this.request('PUT', '/api/user-settings', settings);
+  }
+
+  getPluginSetup(): Promise<PluginSetupDto> {
+    return this.request('GET', '/api/setup/plugin');
+  }
+
+  installPlugin(): Promise<PluginInstallDto> {
+    return this.request('POST', '/api/setup/plugin', {});
+  }
+
+  getBoardMigration(id: number): Promise<BoardMigrationDto> {
+    return this.request('GET', `/api/db/boards/${id}/migration`);
+  }
+
+  migrateBoard(id: number): Promise<BoardMigrationResultDto> {
+    return this.request('POST', `/api/db/boards/${id}/migration`, {});
   }
 
   // Zeigt eine Beispielmeldung als Windows-Benachrichtigung
