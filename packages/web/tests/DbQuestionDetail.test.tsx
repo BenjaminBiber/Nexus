@@ -138,7 +138,7 @@ describe('DbQuestionDetailPage', () => {
     const research = screen.getByRole('region', { name: 'Aktuelle Recherche' });
     expect(within(research).getByText('Datei')).toBeTruthy();
     expect(within(research).getByText('empfohlen')).toBeTruthy();
-    expect(screen.getByText('/ai-harness:board-question ARC-F0001')).toBeTruthy();
+    expect(screen.getByText('/nexus:board-question ARC-F0001')).toBeTruthy();
     const history = screen.getByRole('region', { name: 'Verlauf' });
     expect(within(history).getByText('Frage angelegt')).toBeTruthy();
     expect(within(history).getByText('Bitte bis Freitag')).toBeTruthy();

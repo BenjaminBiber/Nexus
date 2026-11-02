@@ -22,12 +22,12 @@
                     "when": "Einfach: erkundet Idee, Anforderungen und Entwurf im Dialog (Superpowers-Plugin) und schreibt die Spec nach docs/superpowers/specs/. Danach weiter mit /superpowers:writing-plans."
                   },
                   {
-                    "command": "/ai-harness:harness-grill",
+                    "command": "/nexus:harness-grill",
                     "label": "Grill",
                     "when": "Mittel: fragt in Runden nach, pflegt Glossar und ADRs. Am Ende steht eine Zusammenfassung. Claude legt sie als Spec unter docs/superpowers/specs/ ab; danach weiter mit /superpowers:writing-plans."
                   },
                   {
-                    "command": "/ai-harness:harness-wayfinder",
+                    "command": "/nexus:harness-wayfinder",
                     "label": "Wayfinder",
                     "when": "Komplex: für große Vorhaben über mehrere Sessions (AI Hero). Hält Ziel und Klärungsfragen in einer Karte fest; am Ende steht eine Zusammenfassung. Claude legt sie als Spec unter docs/superpowers/specs/ ab (je Funktion eine); danach weiter mit /superpowers:writing-plans."
                   }
@@ -58,12 +58,12 @@
             "id": "umsetzen",
             "steps": [
               {
-                "command": "/ai-harness:harness-implement",
+                "command": "/nexus:harness-implement",
                 "options": [
                   {
-                    "command": "/ai-harness:harness-implement",
+                    "command": "/nexus:harness-implement",
                     "label": "Ein Ticket",
-                    "when": "Wählt das nächste Ticket, legt Branch und Worktree an (harness board start), setzt es test-first um und schließt mit Review ab. Ein bestimmtes Ticket: /ai-harness:harness-implement ARC-0042."
+                    "when": "Wählt das nächste Ticket, legt Branch und Worktree an (harness board start), setzt es test-first um und schließt mit Review ab. Ein bestimmtes Ticket: /nexus:harness-implement ARC-0042."
                   },
                   {
                     "command": "/superpowers:subagent-driven-development",
@@ -72,7 +72,7 @@
                   }
                 ],
                 "step": "Umsetzen",
-                "when": "Wählt das nächste Ticket, legt Branch und Worktree an (harness board start), setzt es test-first um und schließt mit Review ab. Ein bestimmtes Ticket: /ai-harness:harness-implement ARC-0042."
+                "when": "Wählt das nächste Ticket, legt Branch und Worktree an (harness board start), setzt es test-first um und schließt mit Review ab. Ein bestimmtes Ticket: /nexus:harness-implement ARC-0042."
               },
               {
                 "place": "Einstellungen → Dispatcher",

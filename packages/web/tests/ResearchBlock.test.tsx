@@ -65,7 +65,7 @@ describe('ResearchBlock', () => {
   it('zeigt ohne Recherche den Befehl mit Plugin-Namen; ohne start gibt es keinen Knopf zum Starten', () => {
     render(<ResearchBlock questionId="ARC-F0008" research={[]} />);
     const card = screen.getByRole('region', { name: 'Recherche anfordern' });
-    expect(within(card).getByText('/ai-harness:board-question ARC-F0008')).toBeTruthy();
+    expect(within(card).getByText('/nexus:board-question ARC-F0008')).toBeTruthy();
     expect(within(card).getByText(/Befehl in einer Session ausführen/)).toBeTruthy();
     expect(within(card).getByRole('button', { name: /Befehl kopieren/ })).toBeTruthy();
     expect(within(card).queryByRole('button', { name: 'Recherche starten' })).toBeNull();
@@ -96,6 +96,6 @@ describe('ResearchBlock', () => {
     render(<ResearchBlock questionId="ARC-F0007" research={[newest]} />);
     const card = screen.getByRole('region', { name: 'Recherche anfordern' });
     expect(within(card).getByText(/Eine neue Recherche kommt dazu/)).toBeTruthy();
-    expect(within(card).getByText('/ai-harness:board-question ARC-F0007')).toBeTruthy();
+    expect(within(card).getByText('/nexus:board-question ARC-F0007')).toBeTruthy();
   });
 });

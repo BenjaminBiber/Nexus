@@ -4,8 +4,8 @@ use serde_json::Value;
 
 use super::overview::Problem;
 
-/// Vorsilbe eines Harness-Skills in einem Befehl
-const PREFIX: &str = "/ai-harness:";
+/// Vorsilbe eines Skills des Nexus-Plugins in einem Befehl
+const PREFIX: &str = "/nexus:";
 
 /// Ergebnis der Prüfung: Probleme führen zum Rückfall, Warnungen nicht
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -151,7 +151,7 @@ impl WorkflowValidator {
             .collect()
     }
 
-    /// `/ai-harness:<name>` muss einen verfügbaren Skill nennen; je Schritt und Name eine
+    /// `/nexus:<name>` muss einen verfügbaren Skill nennen; je Schritt und Name eine
     /// Warnung; andere Befehle ungeprüft
     fn references(&self, phases: &[Value], skills: &[String]) -> Vec<Problem> {
         let mut warnings = Vec::new();
@@ -357,9 +357,9 @@ mod tests {
         let result = validator.validate(
             &mit_schritt(serde_json::json!({
                 "step": "Review",
-                "command": "/ai-harness:mein-review",
+                "command": "/nexus:mein-review",
                 "when": "Vorher.",
-                "options": [{ "label": "R", "command": "/ai-harness:mein-review", "when": "x" }],
+                "options": [{ "label": "R", "command": "/nexus:mein-review", "when": "x" }],
             })),
             &skills(),
         );
@@ -368,7 +368,7 @@ mod tests {
             result.warnings,
             vec![Problem::new(
                 "skill-ref-missing",
-                "/ai-harness:mein-review gibt es nicht (Schritt „Review“)."
+                "/nexus:mein-review gibt es nicht (Schritt „Review“)."
             )]
         );
         let fremd = validator.validate(

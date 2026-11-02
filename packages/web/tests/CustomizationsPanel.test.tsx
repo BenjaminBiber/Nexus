@@ -29,7 +29,7 @@ describe('CustomizationsPanel', () => {
     expect(within(within(panel).getByRole('list', { name: 'Rückfälle auf den Standard' })).getByText('Output-Style kurz: Im Kopf fehlt description.')).toBeTruthy();
     // Nur lesend: außer Erklärungen (i) gibt es nur den Kopieren-Knopf
     const actions = within(panel).getAllByRole('button').map((b) => b.getAttribute('aria-label')).filter((name) => !name?.startsWith('Erklärung:'));
-    expect(actions).toEqual(['Befehl kopieren: /ai-harness:harness-customize']);
+    expect(actions).toEqual(['Befehl kopieren: /nexus:harness-customize']);
   });
   it('meldet, wenn es keine Anpassungen gibt', async () => {
     open({ ...base, workflow: 'standard', entries: [] });

@@ -74,10 +74,11 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
-      # Gebaut wird das Tag aus dem Job „version“, nicht der Stand des Branches
+      # Gebaut wird das Tag aus dem Job „version“, nicht der Stand des Branches. Im Probelauf
+      # bleibt das Tag lokal im Job „version“; gebaut wird dann der gestartete Commit
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.version.outputs.tag }}
+          ref: ${{ inputs.dry_run && github.sha || needs.version.outputs.tag }}
       # Version absichtlich wie in rust-toolchain.toml; beim Anheben beide Stellen ändern
       - uses: dtolnay/rust-toolchain@master
         with:
@@ -148,19 +149,25 @@ jobs:
           includeUpdaterJson: true
           # Unter Windows wird nur der NSIS-Installer gebaut; latest.json soll auf ihn zeigen
           updaterJsonPreferNsis: true
-      # CLI und Plugin für den Betrieb ohne App
+      # CLI und Plugin für den Betrieb ohne App; im Probelauf gibt es keinen Entwurf zum Hochladen
       - name: CLI-Archiv
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           file=$(node scripts/release/cli-archive.mjs --version "${{ needs.version.outputs.version }}" --target "${{ matrix.target }}")
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Probelauf: $file wird nicht hochgeladen"
+            exit 0
+          fi
           gh release upload "${{ needs.version.outputs.tag }}" "$file" --clobber
 
   # Prüft, dass alle erwarteten Dateien am Entwurf hängen, hängt die Prüfsummen an und veröffentlicht das Release
   publish:
     name: Veröffentlichen
     needs: [version, build]
+    # Im Probelauf gibt es weder Tag bei GitHub noch Entwurf
+    if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

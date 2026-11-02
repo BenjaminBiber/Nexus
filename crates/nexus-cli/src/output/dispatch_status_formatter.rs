@@ -280,7 +280,11 @@ impl DispatchStatusFormatter {
                 out.push(format!("  {error}"));
             }
         }
-        out.push(format!("Einstellung: {}", status.config_file));
+        // Der Pfad kommt aus Benutzerordner und Dateiname; unter Windows sonst mit beiden Trennzeichen
+        out.push(format!(
+            "Einstellung: {}",
+            status.config_file.replace('\\', "/")
+        ));
         out
     }
 

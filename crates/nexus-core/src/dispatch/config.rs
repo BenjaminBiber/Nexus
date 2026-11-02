@@ -301,14 +301,15 @@ pub struct DispatchConfig {
 }
 
 /// Werkzeuge, die ein Umsetzungslauf ohne Rückfrage benutzen darf
-pub const DEFAULT_ALLOWED_TOOLS: [&str; 15] = [
+pub const DEFAULT_ALLOWED_TOOLS: [&str; 16] = [
     "Read",
     "Edit",
     "Write",
     "Glob",
     "Grep",
-    // Board-CLI des Harness
+    // Board-CLI: `nexus` und der alte Name `harness`
     "Bash(harness:*)",
+    "Bash(nexus:*)",
     // node deckt Tests und Skripte des Projekts ab
     "Bash(node:*)",
     "Bash(npm test:*)",
@@ -328,16 +329,20 @@ pub const MERGE_SESSION_TOOLS: [&str; 2] = ["Bash(git merge:*)", "Bash(git check
 /// Datei research.json im Arbeitsordner (Heredocs mit JSON lehnt Claude Code bei Präfix-Regeln ab),
 /// das Speichern der Recherche aus dieser Datei und lesende Git-Befehle; ersetzt
 /// `claude.allowedTools`. Kein `git grep` (`-O` startet ein Programm) – dafür gibt es Grep
-pub const RESEARCH_TOOLS: [&str; 12] = [
+pub const RESEARCH_TOOLS: [&str; 16] = [
     "Read",
     "Glob",
     "Grep",
     "Write(./research.json)",
     "Edit(./research.json)",
     "Bash(harness board question show:*)",
+    "Bash(nexus board question show:*)",
     "Bash(harness board question research:*)",
+    "Bash(nexus board question research:*)",
     "Bash(harness board show:*)",
+    "Bash(nexus board show:*)",
     "Bash(harness board list:*)",
+    "Bash(nexus board list:*)",
     "Bash(git log:*)",
     "Bash(git show:*)",
     "Bash(git diff:*)",
@@ -345,7 +350,7 @@ pub const RESEARCH_TOOLS: [&str; 12] = [
 
 /// Für eine Recherche ausdrücklich verboten (`--disallowedTools`): Verbote schlagen Erlaubnisse,
 /// auch solche aus `~/.claude/settings.json` und den Einstellungen des Repos
-pub const RESEARCH_DENIED_TOOLS: [&str; 18] = [
+pub const RESEARCH_DENIED_TOOLS: [&str; 22] = [
     "MultiEdit",
     "NotebookEdit",
     "Bash(git commit:*)",
@@ -358,9 +363,13 @@ pub const RESEARCH_DENIED_TOOLS: [&str; 18] = [
     "Bash(npm:*)",
     "Bash(node:*)",
     "Bash(harness board dispatch:*)",
+    "Bash(nexus board dispatch:*)",
     "Bash(harness board question research-start:*)",
+    "Bash(nexus board question research-start:*)",
     "Bash(harness board question answer:*)",
+    "Bash(nexus board question answer:*)",
     "Bash(harness board question discard:*)",
+    "Bash(nexus board question discard:*)",
     "Bash(git diff --output:*)",
     "Bash(git log --output:*)",
     "Bash(git show --output:*)",
@@ -369,20 +378,28 @@ pub const RESEARCH_DENIED_TOOLS: [&str; 18] = [
 /// Einzige erlaubte Tools einer Planung: lesen, lesende Board-Befehle, das Schreiben genau einer
 /// Datei plan.json im Arbeitsordner, das Speichern des Plans aus dieser Datei, eine Frage oder
 /// einen Kommentar am Ticket anlegen und lesende Git-Befehle; ersetzt `claude.allowedTools`
-pub const PLANNING_TOOLS: [&str; 16] = [
+pub const PLANNING_TOOLS: [&str; 24] = [
     "Read",
     "Glob",
     "Grep",
     "Write(./plan.json)",
     "Edit(./plan.json)",
     "Bash(harness board show:*)",
+    "Bash(nexus board show:*)",
     "Bash(harness board list:*)",
+    "Bash(nexus board list:*)",
     "Bash(harness board plan-json:*)",
+    "Bash(nexus board plan-json:*)",
     "Bash(harness board comment:*)",
+    "Bash(nexus board comment:*)",
     "Bash(harness board note list:*)",
+    "Bash(nexus board note list:*)",
     "Bash(harness board question show:*)",
+    "Bash(nexus board question show:*)",
     "Bash(harness board question list:*)",
+    "Bash(nexus board question list:*)",
     "Bash(harness board question add:*)",
+    "Bash(nexus board question add:*)",
     "Bash(git log:*)",
     "Bash(git show:*)",
     "Bash(git diff:*)",
@@ -390,14 +407,21 @@ pub const PLANNING_TOOLS: [&str; 16] = [
 
 /// Nur für eine Planung zusätzlich verboten: alles, was Status, Zuständigkeit oder Felder des
 /// Tickets von Hand ändert (das erledigt plan-json)
-pub const PLANNING_ONLY_DENIED_TOOLS: [&str; 7] = [
+pub const PLANNING_ONLY_DENIED_TOOLS: [&str; 14] = [
     "Bash(harness board move:*)",
+    "Bash(nexus board move:*)",
     "Bash(harness board set:*)",
+    "Bash(nexus board set:*)",
     "Bash(harness board claim:*)",
+    "Bash(nexus board claim:*)",
     "Bash(harness board start:*)",
+    "Bash(nexus board start:*)",
     "Bash(harness board done:*)",
+    "Bash(nexus board done:*)",
     "Bash(harness board delete:*)",
+    "Bash(nexus board delete:*)",
     "Bash(harness board plan-start:*)",
+    "Bash(nexus board plan-start:*)",
 ];
 
 /// Für eine Planung ausdrücklich verboten: die Verbote der Recherche, dazu
@@ -454,6 +478,7 @@ mod tests {
     fn tool_listen_sind_wortgleich_zu_typescript() {
         assert_eq!(DEFAULT_ALLOWED_TOOLS[0], "Read");
         assert_eq!(DEFAULT_ALLOWED_TOOLS[5], "Bash(harness:*)");
+        assert_eq!(DEFAULT_ALLOWED_TOOLS[6], "Bash(nexus:*)");
         assert_eq!(MERGE_SESSION_TOOLS.len(), 2);
         assert_eq!(RESEARCH_PERMISSION_MODE, "default");
         assert_eq!(EFFORT_LEVELS, ["low", "medium", "high", "xhigh", "max"]);

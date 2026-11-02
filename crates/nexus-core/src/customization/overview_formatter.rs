@@ -183,7 +183,7 @@ mod tests {
     fn meldet_wenn_es_keine_anpassungen_gibt() {
         assert_eq!(
             OverviewFormatter::new().format(&basis(), Some(DEFAULT_MAX_DIFF_LINES)),
-            "Keine Anpassungen, überall gilt der Standard.\nÄndern: /ai-harness:harness-customize"
+            "Keine Anpassungen, überall gilt der Standard.\nÄndern: /nexus:harness-customize"
         );
     }
 
@@ -242,7 +242,7 @@ mod tests {
         assert!(text.contains(
             "  ✗ Output-Style kurz: Im Kopf fehlt description. (custom/output-styles/kurz.md)"
         ));
-        assert!(text.ends_with("Ändern: /ai-harness:harness-customize"));
+        assert!(text.ends_with("Ändern: /nexus:harness-customize"));
     }
 
     #[test]

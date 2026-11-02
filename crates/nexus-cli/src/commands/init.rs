@@ -48,9 +48,10 @@ pub fn run(context: &CliContext) -> Result<u8> {
     let approval = ClaudeImportApproval::from_process_env().approve(&project.root)?;
     let info = find_board(&context.home(), &project.root);
 
+    // Unter Windows hängt der Ordner mit `\` an einen Pfad mit `/`; einheitlich ausgeben
     let mut lines = vec![format!(
         "Nexus eingerichtet: {}",
-        project.layout.dir().display()
+        project.layout.dir().to_string_lossy().replace('\\', "/")
     )];
     if switched.enabled {
         lines.push("Plugin für dieses Projekt eingeschaltet. Claude Code neu starten oder /reload-plugins eingeben, dann laufen die Hooks.".to_string());

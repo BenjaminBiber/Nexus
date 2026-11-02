@@ -17,7 +17,7 @@ describe('Anleitung: Fragen', () => {
     expect(within(steps).getByText('Entscheidung aufschieben')).toBeTruthy();
     expect(within(steps).getByText('Recherchieren lassen')).toBeTruthy();
     expect(within(steps).getByRole('button', { name: /Befehl kopieren: harness board question add/ })).toBeTruthy();
-    expect(within(steps).getByRole('button', { name: 'Befehl kopieren: /ai-harness:board-question ARC-F0007' })).toBeTruthy();
+    expect(within(steps).getByRole('button', { name: 'Befehl kopieren: /nexus:board-question ARC-F0007' })).toBeTruthy();
   });
 
   it('erklärt die Begriffe Frage, Option, Recherche und Entscheidung', () => {

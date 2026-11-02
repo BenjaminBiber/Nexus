@@ -282,6 +282,20 @@ mod tests {
                 &"Bash(harness board list:*)",
             ]
         );
+        // Jede Regel gilt auch für den neuen Namen der CLI
+        let nexus: Vec<&&str> = RESEARCH_TOOLS
+            .iter()
+            .filter(|tool| tool.starts_with("Bash(nexus"))
+            .collect();
+        assert_eq!(
+            nexus,
+            [
+                &"Bash(nexus board question show:*)",
+                &"Bash(nexus board question research:*)",
+                &"Bash(nexus board show:*)",
+                &"Bash(nexus board list:*)",
+            ]
+        );
     }
 
     #[test]
@@ -488,6 +502,8 @@ mod tests {
             "Bash(harness board move:*)",
             "Bash(harness board set:*)",
             "Bash(harness board claim:*)",
+            "Bash(nexus board move:*)",
+            "Bash(nexus board dispatch:*)",
         ] {
             assert!(denied.iter().any(|d| d == tool), "{tool}");
         }
@@ -500,5 +516,6 @@ mod tests {
         }
         assert!(!PLANNING_TOOLS.contains(&"Write"));
         assert!(!PLANNING_TOOLS.contains(&"Bash(harness:*)"));
+        assert!(!PLANNING_TOOLS.contains(&"Bash(nexus:*)"));
     }
 }

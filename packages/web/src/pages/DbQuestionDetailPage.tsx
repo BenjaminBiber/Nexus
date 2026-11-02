@@ -146,7 +146,7 @@ function DbQuestionDetail() {
             picked={picked}
             optionsDisabled={text.trim() !== ''}
             onPick={setPicked}
-            command={`/ai-harness:board-question ${question.id}`}
+            command={`/nexus:board-question ${question.id}`}
             start={{ open, running: research.run, pausedUntil: research.pausedUntil, busy: research.busy, error: research.error, onStart: () => void research.start(), onShowLog: setLog }}
           />
           <section className="card panel roomy" aria-label="Recherche-Läufe">

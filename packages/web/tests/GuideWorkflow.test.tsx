@@ -9,16 +9,16 @@ import { renderWithApp } from './helpers/renderWithApp.js';
 afterEach(cleanup);
 describe('Anleitung mit angewendetem Workflow', () => {
   it('zeigt den Ablauf, den der Server liefert', async () => {
-    const phases = TEST_WORKFLOW_PHASES.map((p) => (p.id === 'umsetzen' ? { ...p, steps: [...p.steps, { step: 'Review', command: '/ai-harness:mein-review', when: 'Vor dem Abschluss.' }] } : p));
+    const phases = TEST_WORKFLOW_PHASES.map((p) => (p.id === 'umsetzen' ? { ...p, steps: [...p.steps, { step: 'Review', command: '/nexus:mein-review', when: 'Vor dem Abschluss.' }] } : p));
     renderWithApp(<GuidePage />, { api: fakeApi({ getWorkflow: async () => ({ source: 'custom', phases }) }), path: '/p/p1/guide', route: '/p/:pid/guide' });
     const list = await screen.findByRole('list', { name: 'Ticket umsetzen' });
-    expect(await within(list).findByText('/ai-harness:mein-review')).toBeTruthy();
+    expect(await within(list).findByText('/nexus:mein-review')).toBeTruthy();
   });
 
   it('behält den Abschnitt Dispatcher auch bei eigenem Workflow', async () => {
     const phases: WorkflowPhase[] = [
-      { id: 'planen', title: 'Eigene Planung', hint: 'h', steps: [{ step: 'Klären', command: '/ai-harness:harness-grill', when: 'x' }] },
-      { id: 'umsetzen', title: 'Eigene Umsetzung', hint: 'h', steps: [{ step: 'Bauen', command: '/ai-harness:harness-implement', when: 'x' }] },
+      { id: 'planen', title: 'Eigene Planung', hint: 'h', steps: [{ step: 'Klären', command: '/nexus:harness-grill', when: 'x' }] },
+      { id: 'umsetzen', title: 'Eigene Umsetzung', hint: 'h', steps: [{ step: 'Bauen', command: '/nexus:harness-implement', when: 'x' }] },
     ];
     renderWithApp(<GuidePage />, { api: fakeApi({ getWorkflow: async () => ({ source: 'custom', phases }) }), path: '/p/p1/guide', route: '/p/:pid/guide' });
     expect(await screen.findByRole('list', { name: 'Eigene Planung' })).toBeTruthy();

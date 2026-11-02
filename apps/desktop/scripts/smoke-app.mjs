@@ -1,5 +1,5 @@
-// Prüft die gebaute Debug-App im echten Lauf: Server finden oder starten, Oberfläche laden und beim Beenden
-// nur den selbst gestarteten Server mitnehmen. Jede Prüfung gibt eine Zeile aus; ein Fehler endet mit Code 1.
+// Prüft die gebaute Debug-App im echten Lauf: Server finden oder im eigenen Prozess starten, Oberfläche aus
+// den Dateien der App laden und beim Beenden nur den selbst gestarteten Server mitnehmen. Jede Prüfung gibt eine Zeile aus; ein Fehler endet mit Code 1.
 // Der Lauf öffnet dreimal kurz ein Fenster und arbeitet in einem eigenen HARNESS_HOME auf einem freien Port.
 // Unter Windows gibt es kein geordnetes Beenden von außen; dort prüft ein Mensch das Schließen über das Fenster.
 // Voraussetzung: npm run tauri -w apps/desktop -- build --debug --no-bundle
@@ -22,6 +22,8 @@ const SERVER = join(ROOT, 'target/debug', process.platform === 'win32' ? 'nexus.
 // Die App öffnet ein Fenster und startet den Server; beim ersten Lauf dauert das
 const START_MS = 60000;
 const STOP_MS = 20000;
+// Protokollzeile, sobald das Fenster die Oberfläche aus den Dateien der App lädt (NXS-0100)
+const WINDOW_LOADED = /Das Fenster lädt .+ aus den Dateien der App/;
 // Nur dort lässt sich die App von außen geordnet beenden
 const GRACEFUL = process.platform !== 'win32';
 
@@ -145,8 +147,9 @@ async function appStartetDenServer() {
     const written = await waitForInfo(home);
     server = written?.pid;
     check(written?.port === port, `${label}: server.json nennt den Port der App`, JSON.stringify(written));
-    check(typeof server === 'number' && server !== app.child.pid, `${label}: server.json nennt den Server, nicht die App`, `pid ${server}, App ${app.child.pid}`);
-    check(await waitFor(() => /Das Fenster lädt http:\/\/127\.0\.0\.1:/.test(app.output), 10000), `${label}: das Fenster lädt die Oberfläche vom Server`);
+    // Der Server läuft im Prozess der App (NXS-0099)
+    check(server === app.child.pid, `${label}: server.json nennt die App, in deren Prozess der Server läuft`, `pid ${server}, App ${app.child.pid}`);
+    check(await waitFor(() => WINDOW_LOADED.test(app.output), 10000), `${label}: das Fenster lädt die Oberfläche aus den Dateien der App`);
 
     if (!GRACEFUL) {
       console.log('    (das geordnete Beenden prüft unter Windows ein Mensch über das Fenster)');
@@ -180,7 +183,7 @@ async function serverLaeuftSchon() {
     check(before?.pid === server.child.pid, `${label}: server.json nennt den vorher gestarteten Server`, JSON.stringify(before));
 
     app = start(APP, [], env);
-    const connected = await waitFor(() => /Das Fenster lädt http:\/\/127\.0\.0\.1:/.test(app.output), START_MS);
+    const connected = await waitFor(() => WINDOW_LOADED.test(app.output), START_MS);
     check(connected, `${label}: die App lädt die Oberfläche`, connected ? '' : app.output.trim().slice(-300));
     const alleine = /läuft schon ein Harness-Server/.test(app.output);
     check(alleine, `${label}: die App startet keinen zweiten Server`, alleine ? '' : app.output.trim().slice(-300));

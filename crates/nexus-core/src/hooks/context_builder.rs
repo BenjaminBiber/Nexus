@@ -442,7 +442,7 @@ mod tests {
                 }
             }
         }
-        assert!(out.contains("Stand: ARC-0001 ist Backlog. Vorschlag: vor dem Umsetzen planen: Plan, Handbuch und Diagramm mit `harness board plan-json ARC-0001 --file payload.json --by claude` schreiben (setzt Geplant); erst danach mit /ai-harness:harness-implement ARC-0001 umsetzen."));
+        assert!(out.contains("Stand: ARC-0001 ist Backlog. Vorschlag: vor dem Umsetzen planen: Plan, Handbuch und Diagramm mit `harness board plan-json ARC-0001 --file payload.json --by claude` schreiben (setzt Geplant); erst danach mit /nexus:harness-implement ARC-0001 umsetzen."));
         assert!(
             out.contains("Aus einem Superpowers-Plan legst du auf Wunsch je Task ein Ticket an")
         );
@@ -467,7 +467,7 @@ mod tests {
             .text(ContextKind::SessionStart, &["ARC-0001"], None)
             .await
             .unwrap()
-            .contains("Vorschlag: mit /ai-harness:harness-implement ARC-0001 umsetzen."));
+            .contains("Vorschlag: mit /nexus:harness-implement ARC-0001 umsetzen."));
     }
 
     #[tokio::test]
@@ -779,7 +779,7 @@ mod tests {
                     let mut steps = phase.steps.clone();
                     steps.push(crate::workflow::phases::WorkflowStep {
                         step: "Review".into(),
-                        command: Some("/ai-harness:mein-review".into()),
+                        command: Some("/nexus:mein-review".into()),
                         place: None,
                         when: "x".into(),
                         options: None,
@@ -803,7 +803,7 @@ mod tests {
         .unwrap()
         .text
         .unwrap();
-        assert!(out.contains("/ai-harness:mein-review"));
+        assert!(out.contains("/nexus:mein-review"));
     }
 
     #[tokio::test]

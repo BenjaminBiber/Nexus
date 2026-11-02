@@ -163,7 +163,7 @@ Schreibregeln für eine Frage. Der Leser ist ein Außenstehender: Er kennt weder
 
 const RESEARCH: &str = r##"Du bist research-ARC-F0007, ein Recherche-Agent. Recherchiere Frage ARC-F0007 („Brutto oder netto?“).
 
-Arbeite nach dem Skill „ai-harness:board-question“ (Abschnitt Recherchieren).
+Arbeite nach dem Skill „nexus:board-question“ (Abschnitt Recherchieren).
 
 Vorgehen:
 1. Frage lesen: harness board question show ARC-F0007 (Beschreibung, Kommentare, betroffene Tickets, frühere Recherchen);

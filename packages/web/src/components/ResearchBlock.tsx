@@ -117,7 +117,7 @@ export function ResearchBlock({
   /** Optionen sind gesperrt (Freitext ist eingegeben) */
   optionsDisabled?: boolean;
   onPick?: (id: string | null) => void;
-  /** Befehl unter „Recherche anfordern“ (Standard: /ai-harness:board-question <Nummer>) */
+  /** Befehl unter „Recherche anfordern“ (Standard: /nexus:board-question <Nummer>) */
   command?: string;
   /** Knopf „Recherche starten“ (ohne: nur der Befehl zum Kopieren) */
   start?: ResearchStart;
@@ -168,7 +168,7 @@ export function ResearchBlock({
             : ' Befehl in einer Session ausführen.'}
         </p>
         {start && <ResearchStartButton start={start} />}
-        <CopyCommand command={command ?? `/ai-harness:board-question ${questionId}`} />
+        <CopyCommand command={command ?? `/nexus:board-question ${questionId}`} />
       </section>
     </section>
   );

@@ -130,7 +130,7 @@ export function GuidePage() {
         <h2>Anpassen</h2>
         <p>Workflow, Skills und Output-Styles des Harness kannst du für dich ersetzen oder ergänzen. Die Anpassungen liegen im Ordner custom/ des Harness-Repositories, den Git ignoriert, und überstehen Updates ohne Merge. Am einfachsten sagst du Claude in einer beliebigen Session, was du ändern willst:</p>
         <p>
-          <CopyCommand command="/ai-harness:harness-customize" />
+          <CopyCommand command="/nexus:harness-customize" />
         </p>
         <p>Anpassungen wirken erst, nachdem du sie im Ordner des Harness-Repositories anwendest: npm run build:plugin baut das Plugin mit den Anpassungen, danach:</p>
         <p>

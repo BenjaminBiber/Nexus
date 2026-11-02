@@ -49,6 +49,9 @@ impl TestRunExtractor {
     pub fn extract(&self, output: &str) -> Vec<TestRun> {
         let mut runs: IndexMap<String, TestRun> = IndexMap::new();
         for line in output.split('\n') {
+            for id in denied_ids(line) {
+                runs.shift_remove(&id);
+            }
             for block in blocks(line) {
                 let kind = block.get("type").and_then(Value::as_str);
                 let name = block.get("name").and_then(Value::as_str).unwrap_or("");
@@ -74,8 +77,15 @@ impl TestRunExtractor {
                     let Some(run) = runs.get_mut(id) else {
                         continue;
                     };
-                    run.ok = Some(block.get("is_error") != Some(&Value::Bool(true)));
-                    run.output = last_chars(&text(block.get("content")), MAX_OUTPUT);
+                    let failed = block.get("is_error") == Some(&Value::Bool(true));
+                    let content = text(block.get("content"));
+                    // Von der Rechteprüfung abgelehnt: der Befehl lief nie, also kein Testlauf
+                    if failed && is_denial(&content) {
+                        runs.shift_remove(id);
+                        continue;
+                    }
+                    run.ok = Some(!failed);
+                    run.output = last_chars(&content, MAX_OUTPUT);
                 }
             }
         }
@@ -111,6 +121,37 @@ fn blocks(line: &str) -> Vec<Value> {
                 .collect()
         })
         .unwrap_or_default()
+}
+
+/// Antworten von Claude Code, wenn die Rechteprüfung einen Aufruf ablehnt
+const DENIAL_MARKERS: [&str; 3] = [
+    "requires approval",
+    "requested permissions to use",
+    "haven't granted it yet",
+];
+
+/// Ist das Ergebnis die Ablehnung durch die Rechteprüfung statt einer Ausgabe des Befehls?
+fn is_denial(content: &str) -> bool {
+    DENIAL_MARKERS.iter().any(|marker| content.contains(marker))
+}
+
+/// Kennungen der Aufrufe, die das Ergebnis eines Laufs unter `permission_denials` nennt
+fn denied_ids(line: &str) -> Vec<String> {
+    let text = line.trim();
+    if !text.starts_with('{') || !text.contains("permission_denials") {
+        return Vec::new();
+    }
+    let Ok(event) = serde_json::from_str::<Value>(text) else {
+        return Vec::new();
+    };
+    event
+        .get("permission_denials")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|denial| denial.get("tool_use_id").and_then(Value::as_str))
+        .map(str::to_string)
+        .collect()
 }
 
 /// Befehl eines Werkzeugaufrufs
@@ -223,6 +264,29 @@ mod tests {
         ] {
             assert!(!extractor.is_test(command), "{command}");
         }
+    }
+
+    #[test]
+    fn abgelehnte_aufrufe_zahlen_nicht_als_testlauf() {
+        let output = [
+            call("a", "cd x && python -m pytest --version 2>&1 | head -1", "Bash"),
+            result(
+                "a",
+                json!("This Bash command contains multiple operations. The following part requires approval: cd x && python -m pytest --version 2>&1"),
+                true,
+            ),
+            call("b", "npm test", "Bash"),
+            call("c", "cargo test", "Bash"),
+            result("c", json!("ok"), false),
+            json!({ "type": "result", "subtype": "success", "is_error": false,
+                "permission_denials": [{ "tool_name": "Bash", "tool_use_id": "b" }] })
+            .to_string(),
+        ]
+        .join("\n");
+        assert_eq!(
+            TestRunExtractor::new().extract(&output),
+            vec![run("cargo test", Some(true), "ok")]
+        );
     }
 
     #[test]

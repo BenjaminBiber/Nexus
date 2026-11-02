@@ -449,7 +449,7 @@ mod tests {
             &text,
             &[
                 "Du bist research-ARC-F0007",
-                "ai-harness:board-question",
+                "nexus:board-question",
                 "harness board question show ARC-F0007",
                 "2–5 Optionen",
                 "höchstens eine davon als Empfehlung",

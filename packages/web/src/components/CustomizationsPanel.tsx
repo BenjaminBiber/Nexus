@@ -6,7 +6,7 @@ import { Notice } from './settings/Notice.js';
 import { SettingsPanel } from './settings/SettingsPanel.js';
 import { SettingsSection } from './settings/SettingRow.js';
 
-const COMMAND = '/ai-harness:harness-customize';
+const COMMAND = '/nexus:harness-customize';
 const WORKFLOW = { standard: 'Standard', custom: 'angepasst', fallback: 'Rückfall auf Standard' } as const;
 
 // Anpassungen des Devs (Workflow, Skills, Output-Styles), nur lesend; geändert wird über den Skill, npm run build:plugin und nexus install.

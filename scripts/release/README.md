@@ -148,7 +148,8 @@ cat "$T/out"; git log -1 --oneline; git tag --list 'v*'; node scripts/release/bu
 
 ## Job `build`: Installer und CLI-Archiv
 
-Der zweite Job `build` hängt am Tag aus `version` und baut je Plattform in einer Matrix:
+Im Probelauf ist das Tag nie bei GitHub angekommen: dann baut `build` den gestarteten Commit, lädt nichts hoch, und
+`publish` entfällt. Sonst hängt der zweite Job `build` am Tag aus `version` und baut je Plattform in einer Matrix:
 
 | Runner | Ziel | Pakete |
 | --- | --- | --- |

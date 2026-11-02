@@ -267,20 +267,20 @@ mod tests {
         assert_eq!(content["defaultProfile"], json!(base().default_profile));
     }
 
-    /// Referenzwerte aus dem TypeScript-Stand; erzeugt mit einem einmaligen tsx-Skript, das
+    /// Referenzwerte, ursprünglich aus dem TypeScript-Stand (einmaliges tsx-Skript, das
     /// `DispatchConfigFingerprint.hash` über die drei Einstellungen laufen ließ
     /// (`normalize({})`, `normalize(example())` und das Beispiel mit eigener work-Vorlage und
-    /// promptExtra).
+    /// promptExtra)). Neu gesetzt, seit die Tool-Listen auch `Bash(nexus…)` erlauben.
     #[test]
     fn stimmt_mit_den_referenzwerten_aus_typescript_uberein() {
         let normalizer = DispatchConfigNormalizer::new();
         let fingerprint = DispatchConfigFingerprint::new();
 
         let leer = normalizer.normalize(&json!({})).unwrap();
-        assert_eq!(fingerprint.hash(&leer), "9d2e3a0591b37576");
+        assert_eq!(fingerprint.hash(&leer), "3a8210751bb79267");
 
         let beispiel = normalizer.normalize(&normalizer.example()).unwrap();
-        assert_eq!(fingerprint.hash(&beispiel), "2a279428522a285a");
+        assert_eq!(fingerprint.hash(&beispiel), "75c95ab89adda529");
 
         let mut raw = normalizer.example();
         raw["promptExtra"] = json!("Hausregel: kein any.");
@@ -291,7 +291,7 @@ mod tests {
             "merge": null,
         });
         let eigene = normalizer.normalize(&raw).unwrap();
-        assert_eq!(fingerprint.hash(&eigene), "58dc3a07ba753e05");
+        assert_eq!(fingerprint.hash(&eigene), "5369d71ff3e36193");
     }
 
     /// Der gehashte Inhalt der leeren Einstellung, Zeichen für Zeichen wie in TypeScript
@@ -301,7 +301,7 @@ mod tests {
         let cfg = normalizer.normalize(&json!({})).unwrap();
         assert_eq!(
             DispatchConfigFingerprint::new().content(&cfg),
-            r#"{"allowFable":false,"claude":{"allowedTools":["Read","Edit","Write","Glob","Grep","Bash(harness:*)","Bash(node:*)","Bash(npm test:*)","Bash(npm run:*)","Bash(git status:*)","Bash(git diff:*)","Bash(git log:*)","Bash(git branch:*)","Bash(git add:*)","Bash(git commit:*)"],"effort":null,"extraArgs":[],"maxTurns":80,"model":"sonnet","permissionMode":"acceptEdits","timeoutMinutes":60},"defaultProfile":"standard","escalate":true,"joinWorktrees":"none","ladder":["standard"],"maxAttempts":2,"mergeStrategy":"merge","planning":{"profile":null},"profiles":{"standard":{"effort":null,"maxTurns":80,"model":"sonnet","timeoutMinutes":60}},"promptExtra":"","prompts":{"merge":null,"plan":null,"research":null,"work":null},"research":{"profile":null},"reviewBeforeMerge":true,"rules":[],"worktreeSetup":[],"worktreeSetupTimeoutMinutes":15}"#
+            r#"{"allowFable":false,"claude":{"allowedTools":["Read","Edit","Write","Glob","Grep","Bash(harness:*)","Bash(nexus:*)","Bash(node:*)","Bash(npm test:*)","Bash(npm run:*)","Bash(git status:*)","Bash(git diff:*)","Bash(git log:*)","Bash(git branch:*)","Bash(git add:*)","Bash(git commit:*)"],"effort":null,"extraArgs":[],"maxTurns":80,"model":"sonnet","permissionMode":"acceptEdits","timeoutMinutes":60},"defaultProfile":"standard","escalate":true,"joinWorktrees":"none","ladder":["standard"],"maxAttempts":2,"mergeStrategy":"merge","planning":{"profile":null},"profiles":{"standard":{"effort":null,"maxTurns":80,"model":"sonnet","timeoutMinutes":60}},"promptExtra":"","prompts":{"merge":null,"plan":null,"research":null,"work":null},"research":{"profile":null},"reviewBeforeMerge":true,"rules":[],"worktreeSetup":[],"worktreeSetupTimeoutMinutes":15}"#
         );
     }
 }

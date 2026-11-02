@@ -6,7 +6,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Befehl, mit dem Anpassungen geändert werden (steht in jeder Übersicht)
-pub const CUSTOMIZE_COMMAND: &str = "/ai-harness:harness-customize";
+pub const CUSTOMIZE_COMMAND: &str = "/nexus:harness-customize";
 
 /// Die drei Stellen, an denen ein Clone angepasst werden kann
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]

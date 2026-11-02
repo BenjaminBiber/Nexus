@@ -81,6 +81,14 @@ fn fasst_zustand_laeufe_merges_tickets_und_fehler_zusammen() {
 }
 
 #[test]
+fn nennt_die_einstellung_mit_einheitlichen_trennzeichen() {
+    let lines = F.lines(&mit(
+        serde_json::json!({ "configFile": "C:/h\\dispatch.yaml" }),
+    ));
+    assert_eq!(lines.last().unwrap(), "Einstellung: C:/h/dispatch.yaml");
+}
+
+#[test]
 fn merge_nennt_das_ergebnis_fuer_das_ticket_statt_der_uebersicht() {
     let gemergt = mit(serde_json::json!({
         "result": { "outcome": "merged", "text": "ARC-0012 gemergt in main (abc1234)." }

@@ -102,7 +102,7 @@ describe('GuidePage', () => {
     open();
     const section = screen.getByRole('heading', { name: 'Anpassen' }).closest('section')!;
     expect(within(section).getByText(/Workflow, Skills und Output-Styles/)).toBeTruthy();
-    expect(within(section).getByRole('button', { name: 'Befehl kopieren: /ai-harness:harness-customize' })).toBeTruthy();
+    expect(within(section).getByRole('button', { name: 'Befehl kopieren: /nexus:harness-customize' })).toBeTruthy();
     expect(within(section).getByRole('button', { name: 'Befehl kopieren: packages/plugin/dist/nexus/bin/nexus install' })).toBeTruthy();
   });
 
@@ -110,7 +110,7 @@ describe('GuidePage', () => {
     open();
     const phases: Array<[string, string[]]> = [
       ['Neue Funktion planen', ['/superpowers:brainstorming', '/superpowers:writing-plans']],
-      ['Ticket umsetzen', ['/ai-harness:harness-implement']],
+      ['Ticket umsetzen', ['/nexus:harness-implement']],
     ];
     await screen.findByRole('list', { name: 'Neue Funktion planen' });
     for (const [title, commands] of phases) {
@@ -154,11 +154,11 @@ describe('GuidePage', () => {
     const list = await screen.findByRole('list', { name: 'Neue Funktion planen' });
     expect(within(list).getByText('/superpowers:brainstorming')).toBeTruthy();
     await userEvent.click(within(list).getByRole('button', { name: 'Grill' }));
-    expect(within(list).getByText('/ai-harness:harness-grill')).toBeTruthy();
+    expect(within(list).getByText('/nexus:harness-grill')).toBeTruthy();
     expect(within(list).queryByText('/superpowers:brainstorming')).toBeNull();
     await userEvent.click(within(list).getByRole('button', { name: 'Wayfinder' }));
-    expect(within(list).getByText('/ai-harness:harness-wayfinder')).toBeTruthy();
-    expect(within(list).queryByText('/ai-harness:harness-grill')).toBeNull();
+    expect(within(list).getByText('/nexus:harness-wayfinder')).toBeTruthy();
+    expect(within(list).queryByText('/nexus:harness-grill')).toBeNull();
   });
 
   it('zeigt die Terminal-Befehle getrennt vom Ablauf', async () => {

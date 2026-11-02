@@ -14,7 +14,7 @@ export const EXTRA_PHASES: GuidePhase[] = [
     hint: 'Wenn eine Entscheidung noch nicht fällt: festhalten, recherchieren lassen, später selbst entscheiden.',
     steps: [
       { step: 'Entscheidung aufschieben', command: 'harness board question add "Titel" --ticket ARC-0042', when: 'Hält die Frage zum Ticket fest; das Ticket wartet, bis sie entschieden ist. Das geht auch im Ticket-Panel mit „Frage stellen“.' },
-      { step: 'Recherchieren lassen', command: '/ai-harness:board-question ARC-F0007', when: 'Ein Agent sucht im Code die Fundstellen und schlägt Optionen vor. Entscheiden kannst nur du, auf der Seite „Fragen“.' },
+      { step: 'Recherchieren lassen', command: '/nexus:board-question ARC-F0007', when: 'Ein Agent sucht im Code die Fundstellen und schlägt Optionen vor. Entscheiden kannst nur du, auf der Seite „Fragen“.' },
       { step: 'Eigene Fragen sehen', place: 'Seite „Fragen“, Reiter „Eigene“', when: 'Zeigt die offenen Fragen, die dich betreffen: selbst gestellt (auch von deinen Agenten) oder zu Tickets auf deinen Boards. Nur sie zählt der rote Zähler an „Fragen“, und nur zu ihnen kommen Meldungen. Offene Fragen anderer stehen unter „Andere offene“.' },
       { step: 'Recherche starten lassen', place: 'Seite der Frage, „Recherche starten“', when: 'Startet sofort eine Claude-Session im eigenen Worktree, die die Frage recherchiert; das Ergebnis erscheint auf der Seite. Im Terminal: harness board question research-start ARC-F0007. Automatisch für neue Fragen zu deinen Boards: Einstellungen → Dispatcher → Recherchen.' },
     ],

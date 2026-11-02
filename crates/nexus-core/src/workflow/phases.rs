@@ -85,7 +85,7 @@ fn wahl(label: &str, command: &str, when: &str) -> WorkflowOption {
 const BRAINSTORMING: &str = "Einfach: erkundet Idee, Anforderungen und Entwurf im Dialog (Superpowers-Plugin) und schreibt die Spec nach docs/superpowers/specs/. Danach weiter mit /superpowers:writing-plans.";
 
 /// Hinweis des Umsetzen-Schritts und seiner ersten Alternative
-const IMPLEMENT: &str = "Wählt das nächste Ticket, legt Branch und Worktree an (harness board start), setzt es test-first um und schließt mit Review ab. Ein bestimmtes Ticket: /ai-harness:harness-implement ARC-0042.";
+const IMPLEMENT: &str = "Wählt das nächste Ticket, legt Branch und Worktree an (harness board start), setzt es test-first um und schließt mit Review ab. Ein bestimmtes Ticket: /nexus:harness-implement ARC-0042.";
 
 /// Ablauf in Phasen, nur mit Befehlen für Claude Code. Die CLI ruft Claude im Hintergrund
 /// selbst auf.
@@ -102,8 +102,8 @@ pub fn workflow_phases() -> Vec<WorkflowPhase> {
                     BRAINSTORMING,
                     vec![
                         wahl("Brainstorming", "/superpowers:brainstorming", BRAINSTORMING),
-                        wahl("Grill", "/ai-harness:harness-grill", "Mittel: fragt in Runden nach, pflegt Glossar und ADRs. Am Ende steht eine Zusammenfassung. Claude legt sie als Spec unter docs/superpowers/specs/ ab; danach weiter mit /superpowers:writing-plans."),
-                        wahl("Wayfinder", "/ai-harness:harness-wayfinder", "Komplex: für große Vorhaben über mehrere Sessions (AI Hero). Hält Ziel und Klärungsfragen in einer Karte fest; am Ende steht eine Zusammenfassung. Claude legt sie als Spec unter docs/superpowers/specs/ ab (je Funktion eine); danach weiter mit /superpowers:writing-plans."),
+                        wahl("Grill", "/nexus:harness-grill", "Mittel: fragt in Runden nach, pflegt Glossar und ADRs. Am Ende steht eine Zusammenfassung. Claude legt sie als Spec unter docs/superpowers/specs/ ab; danach weiter mit /superpowers:writing-plans."),
+                        wahl("Wayfinder", "/nexus:harness-wayfinder", "Komplex: für große Vorhaben über mehrere Sessions (AI Hero). Hält Ziel und Klärungsfragen in einer Karte fest; am Ende steht eine Zusammenfassung. Claude legt sie als Spec unter docs/superpowers/specs/ ab (je Funktion eine); danach weiter mit /superpowers:writing-plans."),
                     ],
                 ),
                 mit_befehl(
@@ -131,10 +131,10 @@ pub fn workflow_phases() -> Vec<WorkflowPhase> {
             steps: vec![
                 mit_befehl(
                     "Umsetzen",
-                    "/ai-harness:harness-implement",
+                    "/nexus:harness-implement",
                     IMPLEMENT,
                     vec![
-                        wahl("Ein Ticket", "/ai-harness:harness-implement", IMPLEMENT),
+                        wahl("Ein Ticket", "/nexus:harness-implement", IMPLEMENT),
                         wahl("Ganzer Plan", "/superpowers:subagent-driven-development", "Setzt alle Tasks des Plans in dieser Session mit Subagenten um. Die Tickets dabei mit dem Board-Skill nachführen: übernehmen, Schritte abhaken, abschließen."),
                     ],
                 ),

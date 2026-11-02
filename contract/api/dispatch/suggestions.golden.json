@@ -14,7 +14,7 @@
           "runs": 0,
           "since": "<TIME>"
         },
-        "configHash": "2a279428522a285a",
+        "configHash": "75c95ab89adda529",
         "dismissed": [],
         "insufficient": [
           {
@@ -855,7 +855,7 @@
             "runs": 12,
             "since": "<TIME>"
           },
-          "configHash": "a9d7cf9629c859d4",
+          "configHash": "b695c5212df57c0e",
           "dismissed": [],
           "insufficient": [
             {
@@ -983,6 +983,7 @@
                 "Glob",
                 "Grep",
                 "Bash(harness:*)",
+                "Bash(nexus:*)",
                 "Bash(node:*)",
                 "Bash(npm test:*)",
                 "Bash(npm run:*)",

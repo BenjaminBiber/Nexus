@@ -203,7 +203,7 @@ mod tests {
     #[test]
     fn nennt_alle_phasen_mit_ihren_befehlen() {
         let hint = WorkflowHint::default().build(&[]);
-        assert!(hint.starts_with("Ablauf im Harness: Neue Funktion planen: /superpowers:brainstorming → /superpowers:writing-plans; Ticket umsetzen: /ai-harness:harness-implement."));
+        assert!(hint.starts_with("Ablauf im Harness: Neue Funktion planen: /superpowers:brainstorming → /superpowers:writing-plans; Ticket umsetzen: /nexus:harness-implement."));
         assert!(hint.contains("Stand: keinem Ticket zugeordnet. Vorschlag: eine neue Funktion mit /superpowers:brainstorming planen oder mit `harness board list --status geplant --md` das nächste bereite Ticket suchen."));
         assert!(hint.contains("Schnelle Aufgaben und Nebenaufgaben"));
     }
@@ -213,13 +213,13 @@ mod tests {
         let hint = WorkflowHint::default();
         assert!(hint
             .build(&[ticket("ARC-0001", TicketStatus::Backlog)])
-            .contains("Stand: ARC-0001 ist Backlog. Vorschlag: vor dem Umsetzen planen: Plan, Handbuch und Diagramm mit `harness board plan-json ARC-0001 --file payload.json --by claude` schreiben (setzt Geplant); erst danach mit /ai-harness:harness-implement ARC-0001 umsetzen."));
+            .contains("Stand: ARC-0001 ist Backlog. Vorschlag: vor dem Umsetzen planen: Plan, Handbuch und Diagramm mit `harness board plan-json ARC-0001 --file payload.json --by claude` schreiben (setzt Geplant); erst danach mit /nexus:harness-implement ARC-0001 umsetzen."));
         assert!(hint
             .build(&[ticket("ARC-0001", TicketStatus::InPlanning)])
             .contains("Stand: ARC-0001 ist In Planung. Vorschlag: den Plan mit dem Nutzer abschließen (In Planung gehört ihm), dann Plan, Handbuch und Diagramm mit"));
         assert!(hint
             .build(&[ticket("ARC-0001", TicketStatus::Planned)])
-            .contains("Vorschlag: mit /ai-harness:harness-implement ARC-0001 umsetzen."));
+            .contains("Vorschlag: mit /nexus:harness-implement ARC-0001 umsetzen."));
         assert!(hint
             .build(&[ticket("ARC-0001", TicketStatus::InProgress)])
             .contains("Stand: ARC-0001 ist In Arbeit. Vorschlag: nach der Umsetzung Review und Abschluss mit `harness board done` vorschlagen."));

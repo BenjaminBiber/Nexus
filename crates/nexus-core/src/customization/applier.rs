@@ -321,7 +321,7 @@ mod tests {
         let beispiel = Beispiel::neu();
         beispiel.mit_workflow();
         let phases = mit_schritt(serde_json::json!({
-            "step": "Grill", "command": "/ai-harness:harness-grill", "when": "x",
+            "step": "Grill", "command": "/nexus:harness-grill", "when": "x",
         }));
         let tools = Fake(phases.clone());
         let input = beispiel.eingabe(&tools);
@@ -381,7 +381,7 @@ mod tests {
         let beispiel = Beispiel::neu();
         beispiel.mit_workflow();
         let phases = mit_schritt(serde_json::json!({
-            "step": "Review", "command": "/ai-harness:mein-review", "when": "x",
+            "step": "Review", "command": "/nexus:mein-review", "when": "x",
         }));
         let tools = Fake(phases);
         let input = beispiel.eingabe(&tools);

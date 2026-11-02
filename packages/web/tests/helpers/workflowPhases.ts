@@ -15,8 +15,8 @@ export const TEST_WORKFLOW_PHASES: WorkflowPhase[] = [
         when: 'Einfach: erkundet Idee und Entwurf im Dialog.',
         options: [
           { label: 'Brainstorming', command: '/superpowers:brainstorming', when: 'Einfach: erkundet Idee und Entwurf im Dialog.' },
-          { label: 'Grill', command: '/ai-harness:harness-grill', when: 'Mittel: fragt in Runden nach.' },
-          { label: 'Wayfinder', command: '/ai-harness:harness-wayfinder', when: 'Komplex: für große Vorhaben über mehrere Sessions.' },
+          { label: 'Grill', command: '/nexus:harness-grill', when: 'Mittel: fragt in Runden nach.' },
+          { label: 'Wayfinder', command: '/nexus:harness-wayfinder', when: 'Komplex: für große Vorhaben über mehrere Sessions.' },
         ],
       },
       { step: 'Plan schreiben', command: '/superpowers:writing-plans', when: 'Zerlegt die Spec in Tasks.' },
@@ -31,10 +31,10 @@ export const TEST_WORKFLOW_PHASES: WorkflowPhase[] = [
     steps: [
       {
         step: 'Umsetzen',
-        command: '/ai-harness:harness-implement',
+        command: '/nexus:harness-implement',
         when: 'Setzt das nächste Ticket test-first um.',
         options: [
-          { label: 'Ein Ticket', command: '/ai-harness:harness-implement', when: 'Setzt das nächste Ticket test-first um.' },
+          { label: 'Ein Ticket', command: '/nexus:harness-implement', when: 'Setzt das nächste Ticket test-first um.' },
           { label: 'Ganzer Plan', command: '/superpowers:subagent-driven-development', when: 'Setzt alle Tasks des Plans mit Subagenten um.' },
         ],
       },
