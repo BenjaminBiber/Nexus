@@ -36,7 +36,8 @@ git tag -a "$tag" -m "Release $tag"
 if [ "$dry" = 'true' ]; then
   echo "Probelauf: Commit und Tag $tag bleiben lokal, es wird nicht gepusht."
 else
-  git push origin HEAD:main "refs/tags/$tag"
+  # Atomar: Lehnt GitHub main ab (etwa beim Re-run eines alten Laufs), darf der Tag nicht allein landen
+  git push --atomic origin HEAD:main "refs/tags/$tag"
 fi
 
 {
