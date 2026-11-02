@@ -15,6 +15,8 @@ export interface ProfileRow {
   effort: string;
   maxTurns: string;
   timeoutMinutes: string;
+  /** Account-IDs, durch Komma getrennt; leer = jeder aktive Account */
+  accounts: string;
 }
 
 export interface SetupRow {
@@ -28,6 +30,8 @@ export interface RuleRow {
   filesMin: string;
   planMinChars: string;
   profile: string;
+  /** Account-IDs, durch Komma getrennt; leer = wie das Profil */
+  accounts: string;
 }
 
 // Formularzustand der Einstellungen; Zahlen und Listen als Text, damit Eingaben unterwegs ungültig sein dürfen
@@ -54,6 +58,10 @@ export interface DispatchForm {
   rules: RuleRow[];
   escalate: boolean;
   allowFable: boolean;
+  /** Wahl unter mehreren Accounts */
+  accountStrategy: 'most-free' | 'order';
+  /** Ab dieser Auslastung (Prozent) gilt ein Account als voll */
+  accountLimit: string;
   command: string;
   permissionMode: string;
   gitBashPath: string;
@@ -100,15 +108,17 @@ export function toForm(raw: RawDispatchConfigDto): DispatchForm {
     joinWorktrees: String(raw.joinWorktrees ?? '').trim() === 'sameSpec' ? 'sameSpec' : 'none',
     worktreeSetup: (raw.worktreeSetup ?? []).map((s) => ({ cwd: text(s?.cwd), run: text(s?.run) })),
     profiles: Object.entries(raw.profiles ?? {}).map(([name, p]) => ({
-      name, model: text(p.model), effort: text(p.effort), maxTurns: text(p.maxTurns), timeoutMinutes: text(p.timeoutMinutes),
+      name, model: text(p.model), effort: text(p.effort), maxTurns: text(p.maxTurns), timeoutMinutes: text(p.timeoutMinutes), accounts: (p.accounts ?? []).join(', '),
     })),
     defaultProfile: raw.defaultProfile ?? '',
     rules: (raw.rules ?? []).map((r) => ({
       labels: (r.when?.labels ?? []).join(', '), priority: (r.when?.priority ?? []).join(', '),
-      filesMin: text(r.when?.filesMin), planMinChars: text(r.when?.planMinChars), profile: r.profile ?? '',
+      filesMin: text(r.when?.filesMin), planMinChars: text(r.when?.planMinChars), profile: r.profile ?? '', accounts: (r.accounts ?? []).join(', '),
     })),
     escalate: raw.escalate !== false,
     allowFable: raw.allowFable === true,
+    accountStrategy: raw.accountStrategy === 'order' ? 'order' : 'most-free',
+    accountLimit: text(raw.accountLimitPercent ?? 90),
     command: raw.claude?.command ?? 'claude',
     permissionMode: text(raw.claude?.permissionMode),
     gitBashPath: text(raw.claude?.gitBashPath),
@@ -140,6 +150,7 @@ export function checkForm(form: DispatchForm): string | null {
     numberError('Gleichzeitig (WIP)', form.wip, 0),
     numberError('Versuche', form.maxAttempts, 1),
     numberError('Pause nach Limit (min)', form.pause, 1),
+    numberError('Account voll ab (%)', form.accountLimit, 50, 100),
     numberError('Gleichzeitige Recherchen', form.researchWip, 1, 5),
     numberError('Automatische Recherchen je Tag', form.researchMaxPerDay, 1),
     numberError('Gleichzeitige Planungen', form.planningWip, 1, 5),
@@ -149,7 +160,7 @@ export function checkForm(form: DispatchForm): string | null {
     const name = p.name.trim();
     const label = name || `Profil ${i + 1}`;
     // Eine ganz leere Zeile ist nur angelegt; mit Werten, aber ohne Namen ginge sie beim Speichern still verloren
-    if (!name && (p.model.trim() || p.effort || p.maxTurns.trim() || p.timeoutMinutes.trim())) errors.push(`${label} braucht einen Namen.`);
+    if (!name && (p.model.trim() || p.effort || p.maxTurns.trim() || p.timeoutMinutes.trim() || p.accounts.trim())) errors.push(`${label} braucht einen Namen.`);
     errors.push(numberError(`${label}: Schritte`, p.maxTurns, 1), numberError(`${label}: Minuten`, p.timeoutMinutes, 1));
     if (name && seen.has(name)) errors.push(`Profilname ${name} doppelt`);
     seen.add(name);
@@ -233,7 +244,9 @@ export function toRaw(form: DispatchForm, base: RawDispatchConfigDto): RawDispat
   const profiles: Record<string, DispatchProfileDto> = {};
   for (const row of form.profiles) {
     if (!row.name.trim()) continue;
-    profiles[row.name.trim()] = { ...base.profiles?.[row.name.trim()], model: row.model.trim() || null, effort: row.effort || null, maxTurns: num(row.maxTurns), timeoutMinutes: num(row.timeoutMinutes) };
+    const { accounts: _old, ...rest } = base.profiles?.[row.name.trim()] ?? {};
+    const accounts = list(row.accounts, /,/);
+    profiles[row.name.trim()] = { ...rest, model: row.model.trim() || null, effort: row.effort || null, maxTurns: num(row.maxTurns), timeoutMinutes: num(row.timeoutMinutes), ...(accounts.length ? { accounts } : {}) };
   }
   const rules: DispatchRuleDto[] = form.rules.map((row, i) => {
     const when: NonNullable<DispatchRuleDto['when']> = {};
@@ -241,7 +254,9 @@ export function toRaw(form: DispatchForm, base: RawDispatchConfigDto): RawDispat
     if (row.priority.trim()) when.priority = list(row.priority, /,/);
     if (row.filesMin.trim()) when.filesMin = num(row.filesMin);
     if (row.planMinChars.trim()) when.planMinChars = num(row.planMinChars);
-    return { ...base.rules?.[i], when, profile: row.profile };
+    const { accounts: _old, ...rest } = base.rules?.[i] ?? {};
+    const accounts = list(row.accounts, /,/);
+    return { ...rest, when, profile: row.profile, ...(accounts.length ? { accounts } : {}) };
   });
   return {
     ...base,
@@ -266,6 +281,9 @@ export function toRaw(form: DispatchForm, base: RawDispatchConfigDto): RawDispat
     rules,
     escalate: form.escalate,
     allowFable: form.allowFable,
+    // Ohne Eintrag in der Datei und ohne Abweichung von den Vorgaben kommen keine Felder dazu
+    ...(form.accountStrategy !== 'most-free' || base.accountStrategy !== undefined ? { accountStrategy: form.accountStrategy } : {}),
+    ...(form.accountLimit.trim() !== '90' || base.accountLimitPercent !== undefined ? { accountLimitPercent: num(form.accountLimit) } : {}),
     promptExtra: form.promptExtra,
     ...prompts(form, base),
     ...research(form, base),

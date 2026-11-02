@@ -8,7 +8,7 @@ interface Props {
   onMove: (from: number, to: number) => void;
 }
 
-// Tabelle der Profile: Name, Modell, Effort, Schritte, Minuten; hinzufügen, entfernen und umsortieren (die Reihenfolge ist
+// Tabelle der Profile: Name, Modell, Effort, Schritte, Minuten, Accounts (IDs durch Komma, leer = jeder aktive); hinzufügen, entfernen und umsortieren (die Reihenfolge ist
 // die Eskalationsreihenfolge). Umsortiert wird per Ziehen am Griff oder per Pfeiltasten auf dem Griff.
 export function DispatchProfilesEditor({ rows, onChange, onMove }: Props) {
   const [dragFrom, setDragFrom] = useState<number | null>(null);
@@ -18,7 +18,7 @@ export function DispatchProfilesEditor({ rows, onChange, onMove }: Props) {
   return (
     <div className="dispatch-table">
       <div className="dispatch-row profile head" aria-hidden="true">
-        <span /><span>Name</span><span>Modell</span><span>Effort</span><span>Schritte</span><span>Minuten</span><span />
+        <span /><span>Name</span><span>Modell</span><span>Effort</span><span>Schritte</span><span>Minuten</span><span>Accounts</span><span />
       </div>
       {rows.map((row, i) => (
         <div
@@ -70,10 +70,11 @@ export function DispatchProfilesEditor({ rows, onChange, onMove }: Props) {
           </select>
           <input aria-label={`Profil ${i + 1} Schritte`} inputMode="numeric" value={row.maxTurns} onChange={(e) => set(i, { maxTurns: e.target.value })} />
           <input aria-label={`Profil ${i + 1} Minuten`} inputMode="numeric" value={row.timeoutMinutes} onChange={(e) => set(i, { timeoutMinutes: e.target.value })} />
+          <input aria-label={`Profil ${i + 1} Accounts`} value={row.accounts} placeholder="alle" onChange={(e) => set(i, { accounts: e.target.value })} />
           <button type="button" className="btn" onClick={() => onChange(rows.filter((_, j) => j !== i))}>Entfernen</button>
         </div>
       ))}
-      <button type="button" className="btn" onClick={() => onChange([...rows, { name: '', model: '', effort: '', maxTurns: '', timeoutMinutes: '' }])}>+ Profil</button>
+      <button type="button" className="btn" onClick={() => onChange([...rows, { name: '', model: '', effort: '', maxTurns: '', timeoutMinutes: '', accounts: '' }])}>+ Profil</button>
     </div>
   );
 }

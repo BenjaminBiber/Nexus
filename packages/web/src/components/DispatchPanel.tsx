@@ -83,6 +83,8 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
   // Jede Eingabe zählt die Version hoch; das Auto-Speichern speichert nur ungespeicherte Versionen.
   const [version, setVersion] = useState(0);
   const savedVersion = useRef(0);
+  // Fassung, die der Server beim Auto-Speichern abgelehnt hat: nicht erneut senden, erst nach der nächsten Änderung
+  const rejectedVersion = useRef(-1);
   const versionRef = useRef(0);
   versionRef.current = version;
   const [pending, setPending] = useState<string | null>(null);
@@ -129,10 +131,16 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
       // Eine abgelehnte Vorlage gehört an ihren Editor; die Statuszeile meldet nur, dass nicht gespeichert wurde
       if (problems) {
         setPromptErrors(problems);
-        if (auto) setPending((e as Error).message);
+        if (auto) {
+          setPending((e as Error).message);
+          rejectedVersion.current = at;
+        }
       }
       // Der Server lehnt halbfertige Eingaben ab (leere Regel, Befehl ohne Text, Zeit „18:“): beim Auto-Speichern kein Fehler, nur Hinweis
-      else if (auto && e instanceof ApiError && e.code === 'dispatch-config-invalid') setPending(e.message);
+      else if (auto && e instanceof ApiError && e.code === 'dispatch-config-invalid') {
+        setPending(e.message);
+        rejectedVersion.current = at;
+      }
       else setError((e as Error).message);
     } finally {
       setBusy(false);
@@ -140,7 +148,7 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
   };
 
   useEffect(() => {
-    if (version === 0 || version === savedVersion.current || busy) return;
+    if (version === 0 || version === savedVersion.current || version === rejectedVersion.current || busy) return;
     const timer = setTimeout(() => void save(true), AUTOSAVE_DELAY_MS);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- save liest form/base des aktuellen Renders
@@ -189,7 +197,7 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
             <SettingRow label="Versuche" hint="Nach so vielen abgebrochenen Läufen geht ein Ticket nach Blockiert." info="Ein Abbruch ist ein Lauf ohne Ergebnis (weder erledigt noch blockiert). Das Ticket geht dann zurück nach Geplant; mit Eskalation läuft der nächste Versuch eine Profilstufe größer.">
               <input className="short" inputMode="numeric" value={form.maxAttempts} onChange={(e) => change({ maxAttempts: e.target.value })} />
             </SettingRow>
-            <SettingRow label="Pause nach Limit (min)" hint="So lange startet er nichts Neues, wenn Claude ein Nutzungslimit meldet." info="Das Ticket geht zurück nach Geplant. Ein Limit zählt nicht als Versuch, erst das dritte in Folge.">
+            <SettingRow label="Pause nach Limit (min)" hint="So lange startet er nichts Neues, wenn Claude ein Nutzungslimit meldet." info="Das Ticket geht zurück nach Geplant. Ein Limit zählt nicht als Versuch, erst das dritte desselben Accounts in Folge. Mit mehreren Accounts pausiert nur der volle Account, und zwar bis sein Limit zurückgesetzt wird (diese Minuten gelten nur, wenn die Rücksetzzeit unbekannt ist).">
               <input className="short" inputMode="numeric" value={form.pause} onChange={(e) => change({ pause: e.target.value })} />
             </SettingRow>
           </SettingsSection>
@@ -246,6 +254,17 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
             </SettingRow>
             <SettingRow label="Fable erlauben" hint="Profile dürfen das Modell Fable verwenden.">
               <input type="checkbox" checked={form.allowFable} onChange={(e) => change({ allowFable: e.target.checked })} />
+            </SettingRow>
+          </SettingsSection>
+          <SettingsSection title="Accounts" description="Wie er unter den erlaubten Claude-Accounts eines Profils wählt." info={ACCOUNTS_INFO}>
+            <SettingRow label="Wahl" hint="Gilt nur, wenn mehrere Accounts erlaubt und frei sind.">
+              <select value={form.accountStrategy} onChange={(e) => change({ accountStrategy: e.target.value === 'order' ? 'order' : 'most-free' })}>
+                <option value="most-free">Meiste freie Kapazität</option>
+                <option value="order">Erster freier der Liste</option>
+              </select>
+            </SettingRow>
+            <SettingRow label="Account voll ab (%)" hint="Ab dieser Auslastung (5 Stunden oder Woche) nimmt er den Account nicht mehr.">
+              <input className="short" inputMode="numeric" value={form.accountLimit} onChange={(e) => change({ accountLimit: e.target.value })} />
             </SettingRow>
           </SettingsSection>
           <SettingsSection title="Regeln" description="Die erste passende Regel bestimmt das Profil." info="Alle ausgefüllten Bedingungen einer Regel müssen zutreffen. „ab Dateien“ zählt die Zeilen der Tabelle unter „## Integration“ im Plan, „ab Zeichen Plan“ die Länge des Plans.">
@@ -372,3 +391,14 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
     </SettingsPanel>
   );
 }
+
+// Erklärung der Account-Einstellungen hinter dem (i)
+const ACCOUNTS_INFO = (
+  <ul>
+    <li>Accounts legst du unter Einstellungen → Accounts an. In der Spalte „Accounts“ der Profile stehen ihre IDs, durch Komma getrennt, z. B. <code>max</code> beim Profil <code>schwer</code>.</li>
+    <li>Ein Profil ohne Accounts darf jeden aktiven Account verwenden. Eine Regel mit Accounts überschreibt die des Profils, ein Label <code>account:&lt;id&gt;</code> am Ticket beide.</li>
+    <li>Bei der Eskalation bringt das größere Profil seine eigenen Accounts mit.</li>
+    <li>Accounts mit „Nur als Fallback“ (Einstellungen → Accounts) nimmt er erst, wenn kein anderer erlaubter Account frei ist.</li>
+    <li>Ist kein erlaubter Account frei, wartet das Ticket in Geplant – das zählt nicht als Versuch.</li>
+  </ul>
+);

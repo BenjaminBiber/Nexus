@@ -144,26 +144,51 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
 .bp-status-only { padding: 0 4px; }
 .dock-row { display: flex; align-items: center; gap: 8px; }
 .dock-row .proj { flex: 1; min-width: 0; }
-/* Claude-Nutzungslimits ganz unten in der Seitenleiste: je Limit Name und Prozent, ein Balken und der Zeitpunkt des
-   Zurücksetzens. Ohne Werte (nicht angemeldet) bleibt der Platz leer. */
+/* Claude-Nutzungslimits ganz unten in der Seitenleiste: je Account ein Doppelring (außen 5 Stunden, innen Woche, Strich =
+   eigene Grenze) mit Name und Werten; über der Grenze orange. Ohne Werte nur vorübergehend (Token abgelaufen, gedrosselt) ein
+   grauer Ring, nicht angemeldete Accounts fehlen ganz. */
 .usage-dock { position: sticky; bottom: 0; z-index: 1; flex: none; margin: auto -12px -16px; padding: 8px 12px 16px; background: var(--sidebar-bg); }
 .usage-dock:empty { display: none; }
-.usage-meter { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); font-size: 12px; color: var(--text-soft); }
-.usage-skel { min-height: 120px; }
-.usage-head { margin: 0; font-size: 12px; font-weight: 600; color: var(--text); }
-.usage-plan { font-weight: 500; color: var(--muted); text-transform: capitalize; }
-.usage-limit { display: flex; flex-direction: column; gap: 5px; }
-.usage-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.usage-name { min-width: 0; font-size: 11.5px; color: var(--text); font-weight: 600; }
-.usage-value { flex: none; font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--usage-ok); }
-.usage-value.warn { color: var(--usage-warn); }
-.usage-value.crit { color: var(--usage-crit); }
-.usage-bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
-.usage-fill { display: block; height: 100%; border-radius: 3px; background: var(--usage-ok); transition: width 0.3s; }
-.usage-fill.warn { background: var(--usage-warn); }
-.usage-fill.crit { background: var(--usage-crit); }
-.usage-reset { color: var(--muted); font-size: 11px; }
-@media (max-width: 900px) { .dock-row { flex: 1; } .usage-dock { position: static; flex: 1 1 100%; margin: 0; padding: 0; background: none; } }
+.usage-meter { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); font-size: 12px; color: var(--muted); }
+.usage-skel { min-height: 74px; }
+.usage-accounts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px 16px; }
+.usage-meter.compact .usage-accounts { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 8px; }
+.usage-acc { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.usage-acc.stale .usage-ring, .usage-acc.stale .usage-acc-text, .usage-dot.stale .usage-ring { opacity: 0.6; }
+.usage-ring { flex: none; display: block; }
+.usage-ring-track { fill: none; stroke: var(--line); }
+.usage-ring-arc { fill: none; stroke-linecap: round; transition: stroke-dasharray 0.3s; }
+.usage-ring-arc.outer { stroke: var(--usage-ok); }
+.usage-ring-arc.inner { stroke: color-mix(in srgb, var(--usage-ok) 55%, white); }
+.usage-ring-arc.over { stroke: var(--usage-over); }
+.usage-ring-arc.crit { stroke: var(--danger); }
+.usage-ring-tick { stroke: var(--text); stroke-width: 2; stroke-linecap: round; }
+.usage-ring-initials { fill: var(--text); font-size: 10px; font-weight: 600; letter-spacing: 0.02em; }
+.usage-acc-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; font-variant-numeric: tabular-nums; line-height: 1.3; }
+.usage-acc-name { overflow: hidden; font-size: 12.5px; font-weight: 600; color: var(--text); text-overflow: ellipsis; white-space: nowrap; }
+.usage-acc-five { font-size: 12px; color: var(--text); }
+.usage-acc-week { font-size: 11.5px; color: var(--muted); }
+.usage-num-limit { color: var(--muted); }
+.usage-num.over { font-weight: 600; color: var(--usage-over); }
+.usage-num.crit { font-weight: 600; color: var(--danger); }
+/* Seitenleiste: nur die Ringe; die genauen Werte erscheinen als Karte über dem Block (Hover oder Tastaturfokus) */
+.usage-dot-link { display: block; border-radius: 50%; }
+.usage-dot-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.usage-pop { position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); z-index: 5; display: none; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); box-shadow: 0 6px 20px var(--shadow-mid); font-variant-numeric: tabular-nums; pointer-events: none; }
+.usage-dot:hover .usage-pop, .usage-dot:focus-within .usage-pop { display: flex; }
+.usage-pop-name { overflow: hidden; font-size: 12.5px; color: var(--text); text-overflow: ellipsis; white-space: nowrap; }
+.usage-pop-plan { font-weight: 400; color: var(--muted); text-transform: capitalize; }
+.usage-pop-row { display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 10px; row-gap: 1px; }
+.usage-pop-label { font-size: 11.5px; color: var(--muted); }
+.usage-pop-value { justify-self: end; color: var(--text); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.usage-pop-limit { font-weight: 400; color: var(--muted); }
+.usage-pop-reset { grid-column: 1 / -1; justify-self: end; font-size: 11px; color: var(--muted); white-space: nowrap; }
+.usage-pop-stand { font-size: 11px; color: var(--muted); }
+.usage-pop-why { font-size: 11px; line-height: 1.35; color: var(--muted); white-space: normal; }
+.usage-acc-why { font-size: 11.5px; line-height: 1.3; color: var(--muted); }
+/* Account ohne Werte (Token abgelaufen, gedrosselt): nur die Spur, Kürzel gedämpft */
+.usage-ring.empty .usage-ring-initials { fill: var(--muted); }
+@media (max-width: 900px) { .dock-row { flex: 1; } .usage-dock { position: static; flex: 1 1 100%; margin: 0; padding: 0; background: none; } .usage-pop { top: calc(100% + 6px); bottom: auto; } }
 .global-search { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 36px; padding: 0 10px; border: 0; border-radius: var(--radius-control); background: var(--line-soft); color: var(--text-soft); font: inherit; font-size: 13px; cursor: pointer; text-align: left; }
 .global-search:hover { background: var(--line); color: var(--text); }
 .global-search-label { flex: 1; font-weight: 500; }

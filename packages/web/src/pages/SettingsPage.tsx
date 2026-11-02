@@ -13,6 +13,7 @@ import { TokenPanel } from '../components/TokenPanel.js';
 import { SettingsIcon } from '../components/NavIcons.js';
 import { SaveStatusSlot } from '../components/settings/SettingsPanel.js';
 import { useSettings } from '../hooks/useSettings.js';
+import { AccountsPanel } from '../components/AccountsPanel.js';
 
 interface Section { id: string; label: string; icon: string; hint: string }
 
@@ -21,6 +22,7 @@ const GROUPS: Array<{ title: string; sections: Section[] }> = [
   { title: 'Arbeitsbereich', sections: [
     { id: 'projects', label: 'Arbeitsverzeichnisse', icon: 'folder', hint: 'Lokale Repos, in denen eine Claude-Session lief, und ob sie erreichbar sind.' },
     { id: 'token', label: 'Zugriff', icon: 'key', hint: 'Token, mit dem sich Plugin und Terminal beim Harness anmelden.' },
+    { id: 'accounts', label: 'Accounts', icon: 'group', hint: 'Claude-Accounts, auf die der Dispatcher seine Läufe verteilt.' },
   ] },
   { title: 'Oberfläche', sections: [
     { id: 'appearance', label: 'Darstellung', icon: 'palette', hint: 'Farbschema und Aussehen des Boards.' },
@@ -53,6 +55,7 @@ export function SettingsPage() {
     const panels: Record<string, ReactNode> = {
       projects: <ProjectsPanel projects={projects.state.data} current={pid} />,
       token: <TokenPanel token={settings.state.data.token} />,
+      accounts: <AccountsPanel />,
       appearance: <AppearancePanel />,
       notifications: <NotificationPanel />,
       usage: <UsagePanel />,

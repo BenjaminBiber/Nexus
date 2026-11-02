@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiClient } from '../src/api/ApiClient.js';
 import { checkForm, toForm, toRaw } from '../src/components/dispatch/dispatchForm.js';
+import type { RawDispatchConfigDto } from '../src/api/dispatchTypes.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -78,7 +79,7 @@ describe('dispatchForm', () => {
     expect(toForm(withBash).gitBashPath).toBe('D:/bash.exe');
     expect(toRaw(toForm(withBash), withBash)).toEqual(withBash);
     expect(toRaw({ ...toForm(withBash), gitBashPath: '' }, withBash).claude).toMatchObject({ gitBashPath: null });
-    expect(form.rules[0]).toEqual({ labels: 'doku', priority: '', filesMin: '6', planMinChars: '', profile: 'klein' });
+    expect(form.rules[0]).toEqual({ labels: 'doku', priority: '', filesMin: '6', planMinChars: '', profile: 'klein', accounts: '' });
     expect(toRaw(form, raw)).toEqual(raw);
     const cleared = toRaw({ ...form, from: '', to: '', optIn: '' }, raw);
     expect(cleared).toMatchObject({ window: null, optInLabel: null });
@@ -176,3 +177,25 @@ describe('dispatchForm Planungen', () => {
     expect(toRaw(toForm(old), old).planning).toEqual({ profile: null, auto: true, wip: 1 });
   });
 });
+
+describe('dispatchForm – Accounts', () => {
+  it('liest und schreibt Accounts je Profil und Regel; leere Felder entfernen die Liste', () => {
+    const raw: RawDispatchConfigDto = {
+      profiles: { schwer: { model: 'opus', accounts: ['max'] }, klein: { model: 'sonnet' } },
+      defaultProfile: 'klein',
+      rules: [{ when: { labels: ['firma'] }, profile: 'klein', accounts: ['pro-1', 'pro-2'] }],
+      accountStrategy: 'order',
+    };
+    const form = toForm(raw);
+    expect(form.profiles.map((p) => p.accounts)).toEqual(['max', '']);
+    expect(form.rules[0].accounts).toBe('pro-1, pro-2');
+    expect(form.accountStrategy).toBe('order');
+    expect(toRaw(form, raw)).toMatchObject({ profiles: { schwer: { accounts: ['max'] } }, rules: [{ accounts: ['pro-1', 'pro-2'] }], accountStrategy: 'order' });
+    const cleared = toRaw({ ...form, profiles: form.profiles.map((p) => ({ ...p, accounts: '' })), rules: form.rules.map((r) => ({ ...r, accounts: '' })) }, raw);
+    expect(cleared.profiles!.schwer).not.toHaveProperty('accounts');
+    expect(cleared.rules![0]).not.toHaveProperty('accounts');
+    expect(toRaw(toForm({}), {})).not.toHaveProperty('accountLimitPercent');
+    expect(checkForm({ ...form, accountLimit: '20' })).toBe('Account voll ab (%) muss eine ganze Zahl von 50 bis 100 sein.');
+  });
+});
+

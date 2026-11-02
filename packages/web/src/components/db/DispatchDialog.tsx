@@ -58,6 +58,11 @@ export function DispatchDialog({ boardId, status, error: loadError, pid, onClose
         <header className="dd-head">
           <h2 id={titleId}>Dispatcher</h2>
           {status && <span className={`dd-state state-${status.state}`}>{status.message}</span>}
+          {status?.accountPauses && Object.keys(status.accountPauses).length > 0 && (
+            <span className="dd-checked" title="Accounts im Nutzungslimit; die übrigen arbeiten weiter">
+              {Object.entries(status.accountPauses).map(([id, at]) => `${id} pausiert bis ${clock(at)}`).join(' · ')}
+            </span>
+          )}
           {status?.lastTick && <span className="dd-checked">geprüft {formatDate(status.lastTick)}</span>}
           <div className="dd-tools">
             {status && (
@@ -160,7 +165,7 @@ function RunCard({ run, pid, freed, onClose, onOpenTicket, onLog }: {
       </div>
       <p className="dd-card-title">{run.title}</p>
       <div className="dd-card-foot">
-        <span title={`Profil ${run.profile}`}>{run.model ?? 'Standard'}/{run.effort ?? 'Standard'}</span>
+        <span title={`Profil ${run.profile}${run.account ? `, Account ${run.account}` : ''}`}>{run.model ?? 'Standard'}/{run.effort ?? 'Standard'}{run.account ? ` · ${run.account}` : ''}</span>
         {freed > 0 && <span className="dd-frees">gibt {freed} frei →</span>}
         <button type="button" className="link-btn dd-protocol" aria-label={`Protokoll ${run.log}`} onClick={() => onLog(run.log)}>Protokoll</button>
       </div>

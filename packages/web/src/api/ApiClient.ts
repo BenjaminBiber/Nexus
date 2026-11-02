@@ -16,7 +16,7 @@ import type {
 } from './dbTypes.js';
 import type { DispatchStatsDto, DispatchStatsFilter } from './statsTypes.js';
 import type { InboxListDto } from './inboxTypes.js';
-import type { ClaudeUsageDto } from './usageTypes.js';
+import type { AccountListDto, ClaudeUsageDto, UsageOverviewDto } from './usageTypes.js';
 
 // Wie lange ein laufendes GET für dieselbe Adresse mitbenutzt wird: deckt gleichzeitiges Laden beim Seitenaufbau ab,
 // aber nicht ein Nachladen nach einem Ereignis des Servers
@@ -34,6 +34,55 @@ export class ApiClient {
   // Auslastung der Claude-Abo-Limits (5-Stunden-Fenster, Woche)
   getClaudeUsage(): Promise<ClaudeUsageDto> {
     return this.request('GET', '/api/claude-usage');
+  }
+
+  // Limits aller aktiven Accounts samt Obergrenzen (Ringe in der Seitenleiste)
+  getUsageOverview(): Promise<UsageOverviewDto> {
+    return this.request('GET', '/api/claude-usage/accounts');
+  }
+
+  getAccountNames(): Promise<{ accounts: Array<{ id: string; name: string }> }> {
+    return this.request('GET', '/api/accounts/names');
+  }
+
+  getAccounts(): Promise<AccountListDto> {
+    return this.request('GET', '/api/accounts');
+  }
+
+  createAccount(name: string, configDir: string | null): Promise<AccountListDto> {
+    return this.request('POST', '/api/accounts', { name, configDir });
+  }
+
+  updateAccount(id: string, patch: { name?: string; enabled?: boolean; fallback?: boolean; limitFiveHour?: number | null; limitWeek?: number | null }): Promise<AccountListDto> {
+    return this.request('PATCH', `/api/accounts/${encodeURIComponent(id)}`, patch);
+  }
+
+  deleteAccount(id: string, deleteDir: boolean): Promise<AccountListDto> {
+    return this.request('DELETE', `/api/accounts/${encodeURIComponent(id)}${deleteDir ? '?deleteDir=1' : ''}`, {});
+  }
+
+  loginNewAccount(name: string, email: string): Promise<AccountListDto> {
+    return this.request('POST', '/api/accounts/login', { name, email });
+  }
+
+  loginAccount(id: string): Promise<AccountListDto> {
+    return this.request('POST', `/api/accounts/${encodeURIComponent(id)}/login`, {});
+  }
+
+  sendLoginCode(id: string, code: string): Promise<AccountListDto> {
+    return this.request('POST', `/api/accounts/${encodeURIComponent(id)}/login/code`, { code });
+  }
+
+  cancelLogin(id: string): Promise<AccountListDto> {
+    return this.request('DELETE', `/api/accounts/${encodeURIComponent(id)}/login`, {});
+  }
+
+  installAccountPlugin(id: string): Promise<AccountListDto> {
+    return this.request('POST', `/api/accounts/${encodeURIComponent(id)}/plugin`, {});
+  }
+
+  resumeAccount(id: string): Promise<AccountListDto> {
+    return this.request('POST', `/api/accounts/${encodeURIComponent(id)}/resume`, {});
   }
 
   // Alle angemeldeten Projekte

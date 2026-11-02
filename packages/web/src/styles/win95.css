@@ -104,13 +104,14 @@
 .w95-statusbar { flex: none; display: flex; align-items: stretch; gap: 2px; margin-top: 2px; min-height: 20px; }
 .w95-status-field { display: flex; align-items: center; padding: 1px 6px; box-shadow: var(--w95-shallow); white-space: nowrap; overflow: hidden; }
 .w95-status-field:first-child { flex: 1; }
+.w95-status-usage { overflow: visible; }
 .w95-status-usage:empty { display: none; }
 .w95-status-usage .usage-meter { flex-direction: row; align-items: center; gap: 14px; padding: 0; border: 0; background: none; font-size: 12px; color: var(--w95-dark); }
 .w95-status-usage .usage-skel { min-height: 0; }
-.w95-status-usage .usage-limit { flex-direction: row; align-items: center; gap: 6px; }
-.w95-status-usage .usage-row { gap: 6px; }
-.w95-status-usage .usage-reset, .w95-status-usage .usage-plan { display: none; }
-.w95-status-usage .usage-bar { width: 64px; height: 12px; }
+.w95-status-usage .usage-meter.compact .usage-accounts { flex-wrap: nowrap; gap: 6px; }
+.w95-status-usage .usage-ring { width: 18px; height: 18px; }
+.w95-status-usage .usage-ring-initials { display: none; }
+.w95-status-usage .usage-pop { left: auto; right: 0; width: 240px; }
 
 /* Taskleiste */
 .w95-taskbar { position: relative; z-index: 5; flex: none; display: flex; align-items: center; gap: 4px; height: 28px; padding: 2px 2px 2px 2px; background: var(--w95-face); box-shadow: inset 0 1px var(--w95-hilight), inset 0 2px var(--w95-light); }
@@ -231,10 +232,8 @@
 [data-theme='win95'] :is(.info-pop, .live-text, .runs-tip, .info-tip) { border: 0; border-radius: 0; background: var(--w95-tooltip); color: var(--w95-dark); box-shadow: 0 0 0 1px var(--w95-dark); }
 
 /* Fortschritt: blaue Blöcke in eingelassener Bahn */
-[data-theme='win95'] :is(.usage-bar, .progress-bar) { border-radius: 0; background: var(--w95-field); box-shadow: var(--w95-shallow); padding: 2px; }
-[data-theme='win95'] .usage-fill, [data-theme='win95'] .progress-bar > span { border-radius: 0; background: repeating-linear-gradient(90deg, var(--usage-ok) 0 6px, transparent 6px 8px); }
-[data-theme='win95'] .usage-fill.warn { background: repeating-linear-gradient(90deg, var(--usage-warn) 0 6px, transparent 6px 8px); }
-[data-theme='win95'] .usage-fill.crit { background: repeating-linear-gradient(90deg, var(--usage-crit) 0 6px, transparent 6px 8px); }
+[data-theme='win95'] .progress-bar { border-radius: 0; background: var(--w95-field); box-shadow: var(--w95-shallow); padding: 2px; }
+[data-theme='win95'] .progress-bar > span { border-radius: 0; background: repeating-linear-gradient(90deg, var(--usage-ok) 0 6px, transparent 6px 8px); }
 
 /* Schwebender „+“-Knopf des Boards: eckiger Knopf, Menü als Knopfsäule ohne Goo */
 [data-theme='win95'] .db-fab { right: 36px; bottom: 64px; width: 40px; height: 40px; }

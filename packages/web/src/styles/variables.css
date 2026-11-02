@@ -62,6 +62,8 @@
   --usage-ok: #2563eb;
   --usage-warn: #f5b400;
   --usage-crit: #c026a3;
+  /* Ring über der Grenze eines Accounts (Seitenleiste) */
+  --usage-over: #f59e0b;
   --row-waiting-bg: #fffcf2;
   --sk-base: #ececf0;
   --sk-shine: #f6f6f8;
@@ -195,6 +197,7 @@
   --usage-ok: #60a5fa;
   --usage-warn: #fdd835;
   --usage-crit: #f472b6;
+  --usage-over: #f59e0b;
   --row-waiting-bg: #1f1a0d;
   --sk-base: #1f1f24;
   --sk-shine: #2a2a31;

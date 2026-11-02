@@ -7,7 +7,7 @@ export function DispatchRulesEditor({ rows, profiles, onChange }: { rows: RuleRo
   return (
     <div className="dispatch-table">
       <div className="dispatch-row rule head" aria-hidden="true">
-        <span>Labels (eines davon)</span><span>Priorität</span><span>ab Dateien</span><span>ab Zeichen Plan</span><span>Profil</span><span />
+        <span>Labels (eines davon)</span><span>Priorität</span><span>ab Dateien</span><span>ab Zeichen Plan</span><span>Profil</span><span>Accounts</span><span />
       </div>
       {rows.map((row, i) => (
         <div className="dispatch-row rule" key={i}>
@@ -19,10 +19,11 @@ export function DispatchRulesEditor({ rows, profiles, onChange }: { rows: RuleRo
             <option value="">–</option>
             <ProfileOptions names={profiles} value={row.profile} />
           </select>
+          <input aria-label={`Regel ${i + 1} Accounts`} value={row.accounts} placeholder="wie Profil" onChange={(e) => set(i, { accounts: e.target.value })} />
           <button type="button" className="btn" onClick={() => onChange(rows.filter((_, j) => j !== i))}>Entfernen</button>
         </div>
       ))}
-      <button type="button" className="btn" onClick={() => onChange([...rows, { labels: '', priority: '', filesMin: '', planMinChars: '', profile: '' }])}>+ Regel</button>
+      <button type="button" className="btn" onClick={() => onChange([...rows, { labels: '', priority: '', filesMin: '', planMinChars: '', profile: '', accounts: '' }])}>+ Regel</button>
     </div>
   );
 }

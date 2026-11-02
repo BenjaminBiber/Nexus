@@ -5,11 +5,15 @@ export interface DispatchProfileDto {
   effort?: string | null;
   maxTurns?: number;
   timeoutMinutes?: number;
+  /** Claude-Accounts, die das Profil nutzen darf; fehlt = jeder aktive */
+  accounts?: string[];
 }
 
 export interface DispatchRuleDto {
   when?: { labels?: string[]; priority?: string[]; filesMin?: number; planMinChars?: number };
   profile?: string;
+  /** Überschreibt die Accounts des Profils; fehlt = wie das Profil */
+  accounts?: string[];
 }
 
 // Inhalt von ~/.harness/dispatch.yaml (alles optional)
@@ -47,6 +51,10 @@ export interface RawDispatchConfigDto {
   escalate?: boolean;
   escalation?: string[];
   allowFable?: boolean;
+  /** Wahl unter mehreren Accounts: meiste freie Kapazität oder erster freier der Liste */
+  accountStrategy?: 'most-free' | 'order';
+  /** Ab dieser Auslastung (Prozent) gilt ein Account als voll */
+  accountLimitPercent?: number;
   research?: { auto?: boolean; wip?: number; maxPerDay?: number; profile?: string | null } | null;
   planning?: { auto?: boolean; wip?: number; acceptance?: boolean; profile?: string | null } | null;
 }
@@ -100,6 +108,8 @@ export interface DispatchRunDto {
   effort: string | null;
   startedAt: string;
   log: string;
+  /** Claude-Account des Laufs; fehlt ohne Account-Wahl */
+  account?: string;
 }
 
 /** Lauf eines Tickets oder einer Frage aus den Protokollen (Reiter „Agent“), neueste zuerst */
@@ -141,6 +151,8 @@ export interface DispatchStatusDto {
   state: DispatchStateKind;
   message: string;
   pausedUntil: string | null;
+  /** Laufende Pausen einzelner Claude-Accounts (ältere Server liefern das Feld nicht) */
+  accountPauses?: Record<string, string>;
   wip: number;
   active: number;
   /** Laufende Planungen („Planen“ im Ticket; ältere Server liefern das Feld nicht) */

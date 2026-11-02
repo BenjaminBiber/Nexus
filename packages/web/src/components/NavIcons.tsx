@@ -48,6 +48,7 @@ export function CogIcon() {
 // Symbole der Einstellungs-Navigation, nach Namen
 const SETTINGS_ICONS: Record<string, string> = {
   folder: 'M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
+  group: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1M16 3.1a4 4 0 0 1 0 7.8M22 21v-1a6 6 0 0 0-4-5.7',
   key: 'M14 10a4 4 0 1 0-3.9 4H11v2h2v2h3v-3.2l-2.4-2.4A4 4 0 0 0 14 10zM8 9h.01',
   palette: 'M12 21a9 9 0 1 1 9-9c0 2.2-1.8 3-3.5 3H16a2 2 0 0 0-1.5 3.3A1.7 1.7 0 0 1 12 21zM7.5 11h.01M10 7h.01M14.5 7h.01',
   notifications: 'M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 21h4',
