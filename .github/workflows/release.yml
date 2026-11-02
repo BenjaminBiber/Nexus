@@ -13,6 +13,10 @@ on:
         description: Probelauf ohne Push und ohne Release
         type: boolean
         default: false
+      skip_ci:
+        description: Nicht auf eine grüne CI für den Commit warten (der Branch muss trotzdem main sein)
+        type: boolean
+        default: false
 # Immer nur ein Release zur Zeit, und keines abbrechen: ein halber Release-Lauf hinterlässt Tag ohne Artefakte
 concurrency: release
 permissions:
@@ -45,7 +49,7 @@ jobs:
       - name: Branch und CI prüfen
         env:
           GH_TOKEN: ${{ github.token }}
-        run: scripts/release/check-ci.sh "${{ github.ref }}" "${{ github.sha }}" "${{ inputs.dry_run }}"
+        run: scripts/release/check-ci.sh "${{ github.ref }}" "${{ github.sha }}" "${{ inputs.dry_run }}" "${{ inputs.skip_ci }}"
       - name: Version setzen
         id: v
         run: scripts/release/version-job.sh "${{ inputs.bump }}" "${{ inputs.dry_run }}"

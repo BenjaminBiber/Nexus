@@ -115,8 +115,8 @@ Vorabversion gilt dabei als Weg zu ihrer eigenen Version: `1.4.2-rc.1` + `patch`
 
 ## Release-Workflow
 
-`.github/workflows/release.yml` wird von Hand gestartet (`workflow_dispatch`) und nimmt zwei Eingaben: `bump`
-(`patch`, `minor` oder `major`) und `dry_run` (Probelauf). `concurrency: release` lässt nur ein Release zur Zeit zu.
+`.github/workflows/release.yml` wird von Hand gestartet (`workflow_dispatch`) und nimmt drei Eingaben: `bump`
+(`patch`, `minor` oder `major`), `dry_run` (Probelauf) und `skip_ci` (ohne Prüfung der CI). `concurrency: release` lässt nur ein Release zur Zeit zu.
 Der erste Job `version` läuft in der Umgebung `release` – dort liegt `RELEASE_TOKEN`, mit dem der Checkout
 arbeitet; ohne dieses Token lösen Commit und Tag keine weiteren Workflows aus. Er liefert die Ausgaben `version`,
 `tag` und `release_id` für den Job `build` (unten) und den Job, der den Entwurf veröffentlicht (P6-5).
@@ -125,7 +125,7 @@ Die Logik steckt in drei Skripten, nicht im Workflow:
 
 | Skript | Aufgabe |
 | --- | --- |
-| `check-ci.sh <ref> <sha> <dry_run>` | bricht ab, wenn der Lauf nicht auf `main` steht oder der jüngste Lauf von `ci.yml` für genau diesen Commit nicht `completed`/`success` ist; im Probelauf nur eine Warnung. `ci.yml` läuft nur für Tags `v*` und von Hand – vor dem Release also die CI auf `main` von Hand starten |
+| `check-ci.sh <ref> <sha> <dry_run> [skip_ci]` | bricht ab, wenn der Lauf nicht auf `main` steht oder der jüngste Lauf von `ci.yml` für genau diesen Commit nicht `completed`/`success` ist; im Probelauf nur eine Warnung. Mit der Eingabe `skip_ci` entfällt die Prüfung der CI, die des Branches bleibt. `ci.yml` läuft nur für Tags `v*` und von Hand – vor dem Release also die CI auf `main` von Hand starten |
 | `version-job.sh <stelle> <dry_run>` | `bump.mjs next` → `bump.mjs set --changelog`, Commit „Release vX.Y.Z“, Tag `vX.Y.Z`, Push nach `main` (im Probelauf kein Push); schreibt `version` und `tag` |
 | `draft-release.sh <tag> <version>` | prüft, dass der Tag bei GitHub liegt, und legt mit `POST /releases` den Entwurf an, Text aus `bump.mjs notes` plus erzeugte Notizen; schreibt `release_id` |
 

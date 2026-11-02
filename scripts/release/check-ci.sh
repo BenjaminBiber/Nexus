@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # Prüft vor einem Release, ob der Lauf auf „main“ steht und die CI für genau diesen Commit grün ist.
-# Aufruf: check-ci.sh <ref> <sha> <dry_run>   (ref wie „refs/heads/main“, dry_run „true“ oder „false“)
+# Aufruf: check-ci.sh <ref> <sha> <dry_run> [skip_ci]   (ref wie „refs/heads/main“, dry_run und skip_ci „true“ oder „false“)
 # Im Probelauf wird nur gewarnt, damit sich der Workflow auch von einem Zweig aus durchspielen lässt.
+# Mit skip_ci „true“ entfällt die Prüfung der CI; den Branch prüft das Skript trotzdem.
 # shellcheck disable=SC1111  # „…“ in den Meldungen sind deutsche Anführungszeichen, keine Tippfehler
 set -euo pipefail
 
 ref="${1:?Aufruf: check-ci.sh <ref> <sha> <dry_run>}"
 sha="${2:?Aufruf: check-ci.sh <ref> <sha> <dry_run>}"
 dry="${3:-false}"
+skip_ci="${4:-false}"
 
 # Dateiname der CI; in .github/workflows/ci.yml steht derselbe Hinweis, dass er fest ist
 CI_WORKFLOW='ci.yml'
@@ -27,6 +29,11 @@ if [ "$ref" != "$RELEASE_BRANCH" ]; then
   problem "Ein Release entsteht nur aus „$RELEASE_BRANCH“, gestartet wurde aber auf „$ref“."
 else
   echo "Branch: $ref"
+fi
+
+if [ "$skip_ci" = 'true' ]; then
+  echo "Warnung: Die CI für $sha wird auf Wunsch nicht geprüft (skip_ci)." >&2
+  exit 0
 fi
 
 # Der jüngste CI-Lauf genau dieses Commits als eine Zeile „Status<Tab>Ergebnis<Tab>Adresse“; ohne Lauf leer.
