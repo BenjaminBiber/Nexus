@@ -355,8 +355,10 @@ impl AppState {
     }
 
     /// Beendet alle Ereignisströme: Verteiler, Watcher und offene Tabs leeren (Ende des
-    /// Servers; die Ströme selbst enden am Abbruch-Signal)
+    /// Servers; die Ströme selbst enden am Abbruch-Signal). Laufende Anmeldungen von
+    /// Claude-Accounts enden mit
     pub fn close_events(&self) {
+        self.accounts.logins.close();
         self.events.close();
         self.board_changes.close();
         self.question_changes.close();
