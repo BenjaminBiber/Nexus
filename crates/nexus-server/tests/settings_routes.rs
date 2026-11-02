@@ -184,6 +184,7 @@ async fn liefert_system_als_standard_und_speichert_das_theme() {
             "notifications": "off", "heroImages": false, "theme": "dark", "claudeUsage": false,
             "compactCards": false, "hideNotNeeded": false, "hideInPlanning": false,
             "ntfy": false, "ntfyServer": "https://ntfy.sh", "ntfyTopic": "", "ntfyToken": "",
+            "setupPrompts": { "pluginDismissed": false, "migrationDismissed": [] },
         }))
     );
     assert_eq!(

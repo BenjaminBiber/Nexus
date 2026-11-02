@@ -17,7 +17,7 @@ use nexus_core::board::config::BoardConfig;
 use nexus_core::board::config_store::BoardConfigStore;
 use nexus_core::project::TokenStore;
 use nexus_core::settings::{
-    UserSettings, UserSettingsStore, NOTIFICATION_MODES, NTFY_TOPIC_PATTERN, THEME_MODES,
+    SetupPrompts, UserSettings, UserSettingsStore, NOTIFICATION_MODES, NTFY_TOPIC_PATTERN, THEME_MODES,
 };
 use nexus_core::{Error, HarnessError, Result};
 use nexus_db::ConnectOptions;
@@ -194,6 +194,39 @@ fn merge_user_settings(current: UserSettings, body: &Value) -> Result<UserSettin
             .as_str()
             .ok_or_else(|| settings_invalid("ntfyToken muss ein Text sein."))?;
         next.ntfy_token = token.trim().to_string();
+    }
+    if let Some(value) = field("setupPrompts") {
+        next.setup_prompts = merge_setup_prompts(next.setup_prompts, value)?;
+    }
+    Ok(next)
+}
+
+/// Übernimmt die angegebenen Felder von `setupPrompts`
+fn merge_setup_prompts(current: SetupPrompts, value: &Value) -> Result<SetupPrompts> {
+    let object = value
+        .as_object()
+        .ok_or_else(|| settings_invalid("setupPrompts muss ein Objekt sein."))?;
+    let mut next = current;
+    if let Some(value) = object.get("pluginDismissed") {
+        next.plugin_dismissed = value.as_bool().ok_or_else(|| {
+            settings_invalid("setupPrompts.pluginDismissed muss true oder false sein.")
+        })?;
+    }
+    if let Some(value) = object.get("migrationDismissed") {
+        const MESSAGE: &str = "setupPrompts.migrationDismissed muss eine Liste von Board-IDs sein.";
+        let list = value.as_array().ok_or_else(|| settings_invalid(MESSAGE))?;
+        let mut ids = Vec::with_capacity(list.len());
+        for id in list {
+            let id = id
+                .as_i64()
+                .filter(|id| *id > 0)
+                .and_then(|id| i32::try_from(id).ok())
+                .ok_or_else(|| settings_invalid(MESSAGE))?;
+            ids.push(id);
+        }
+        ids.sort_unstable();
+        ids.dedup();
+        next.migration_dismissed = ids;
     }
     Ok(next)
 }
@@ -409,6 +442,31 @@ mod tests {
             .map(|value: Yaml| serde_json::to_value(value).unwrap())
             .unwrap();
         assert_eq!(back, value);
+    }
+
+    #[test]
+    fn ubernimmt_die_setup_dialoge_teilweise() {
+        let merged = merge_user_settings(
+            UserSettings::default(),
+            &serde_json::json!({ "setupPrompts": { "migrationDismissed": [4, 2, 4] } }),
+        )
+        .unwrap();
+        assert_eq!(merged.setup_prompts.migration_dismissed, vec![2, 4]);
+        assert!(!merged.setup_prompts.plugin_dismissed);
+    }
+
+    #[test]
+    fn lehnt_ungueltige_setup_dialoge_ab() {
+        for body in [
+            serde_json::json!({ "setupPrompts": true }),
+            serde_json::json!({ "setupPrompts": { "pluginDismissed": "ja" } }),
+            serde_json::json!({ "setupPrompts": { "migrationDismissed": [0] } }),
+        ] {
+            assert!(
+                merge_user_settings(UserSettings::default(), &body).is_err(),
+                "{body}"
+            );
+        }
     }
 
     #[test]

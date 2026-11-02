@@ -8,7 +8,7 @@ use crate::error::{Error, Result};
 use crate::locking::AtomicWriter;
 use crate::registry::HarnessHome;
 use crate::settings::user_settings::{
-    NotificationMode, ThemeMode, UserSettings, DEFAULT_NTFY_SERVER, NOTIFICATION_MODES,
+    NotificationMode, SetupPrompts, ThemeMode, UserSettings, DEFAULT_NTFY_SERVER, NOTIFICATION_MODES,
     NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN, THEME_MODES,
 };
 
@@ -84,6 +84,31 @@ fn normalize(raw: &Value) -> UserSettings {
             .filter(|topic| NTFY_TOPIC_PATTERN.is_match(topic))
             .unwrap_or_default(),
         ntfy_token: text(raw, "ntfyToken").unwrap_or_default(),
+        setup_prompts: setup_prompts(raw.get("setupPrompts")),
+    }
+}
+
+/// Abgewiesene Setup-Dialoge; Unbrauchbares zählt als nicht abgewiesen
+fn setup_prompts(raw: Option<&Value>) -> SetupPrompts {
+    let Some(raw) = raw.filter(|raw| raw.is_object()) else {
+        return SetupPrompts::default();
+    };
+    let mut ids: Vec<i32> = raw
+        .get("migrationDismissed")
+        .and_then(Value::as_array)
+        .map(|list| {
+            list.iter()
+                .filter_map(Value::as_i64)
+                .filter(|id| *id > 0)
+                .filter_map(|id| i32::try_from(id).ok())
+                .collect()
+        })
+        .unwrap_or_default();
+    ids.sort_unstable();
+    ids.dedup();
+    SetupPrompts {
+        plugin_dismissed: is_true(raw, "pluginDismissed"),
+        migration_dismissed: ids,
     }
 }
 
@@ -139,6 +164,10 @@ mod tests {
             ntfy_server: "https://push.example".into(),
             ntfy_topic: "harness-x".into(),
             ntfy_token: "tk_1".into(),
+            setup_prompts: SetupPrompts {
+                plugin_dismissed: true,
+                migration_dismissed: vec![2, 7],
+            },
         };
 
         store.write(&settings).unwrap();
@@ -209,5 +238,27 @@ mod tests {
         assert_eq!(settings.ntfy_server, DEFAULT_NTFY_SERVER);
         assert_eq!(settings.ntfy_topic, "");
         assert_eq!(settings.ntfy_token, "");
+    }
+
+    #[test]
+    fn liest_die_abgewiesenen_setup_dialoge() {
+        let (dir, store) = store();
+        write_raw(
+            &dir,
+            r#"{"setupPrompts":{"pluginDismissed":true,"migrationDismissed":[3,1,3,"x",-2]}}"#,
+        );
+
+        let settings = store.read();
+
+        assert!(settings.setup_prompts.plugin_dismissed);
+        assert_eq!(settings.setup_prompts.migration_dismissed, vec![1, 3]);
+    }
+
+    #[test]
+    fn ohne_gueltige_setup_dialoge_ist_nichts_abgewiesen() {
+        let (dir, store) = store();
+        write_raw(&dir, r#"{"setupPrompts":"kaputt"}"#);
+
+        assert_eq!(store.read().setup_prompts, SetupPrompts::default());
     }
 }

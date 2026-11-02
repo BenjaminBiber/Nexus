@@ -86,6 +86,16 @@ pub static NTFY_TOPIC_PATTERN: LazyLock<Regex> =
 pub(crate) static NTFY_SERVER_PATTERN: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^https?://\S+$").unwrap());
 
+/// Setup-Dialoge der Oberfläche, die nicht mehr kommen sollen („Nicht mehr fragen“)
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SetupPrompts {
+    /// Dialog zur Installation des Claude-Code-Plugins abgewiesen
+    pub plugin_dismissed: bool,
+    /// Boards, deren Migrationsdialog abgewiesen wurde (aufsteigend, ohne Doppelte)
+    pub migration_dismissed: Vec<i32>,
+}
+
 /// Benutzerweite Einstellungen des Harness (gelten für alle Projekte)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -113,6 +123,8 @@ pub struct UserSettings {
     pub ntfy_topic: String,
     /// Zugriffstoken für geschützte Themen; leer: ohne Anmeldung
     pub ntfy_token: String,
+    /// Abgewiesene Setup-Dialoge
+    pub setup_prompts: SetupPrompts,
 }
 
 impl Default for UserSettings {
@@ -130,6 +142,7 @@ impl Default for UserSettings {
             ntfy_server: DEFAULT_NTFY_SERVER.to_string(),
             ntfy_topic: String::new(),
             ntfy_token: String::new(),
+            setup_prompts: SetupPrompts::default(),
         }
     }
 }
@@ -155,6 +168,7 @@ mod tests {
                 "ntfyServer": "https://ntfy.sh",
                 "ntfyTopic": "",
                 "ntfyToken": "",
+                "setupPrompts": { "pluginDismissed": false, "migrationDismissed": [] },
             })
         );
     }
