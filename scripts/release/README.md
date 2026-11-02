@@ -127,11 +127,12 @@ Die Logik steckt in drei Skripten, nicht im Workflow:
 | --- | --- |
 | `check-ci.sh <ref> <sha> <dry_run>` | bricht ab, wenn der Lauf nicht auf `main` steht oder der jüngste Lauf von `ci.yml` für genau diesen Commit nicht `completed`/`success` ist; im Probelauf nur eine Warnung. `ci.yml` läuft nur für Tags `v*` und von Hand – vor dem Release also die CI auf `main` von Hand starten |
 | `version-job.sh <stelle> <dry_run>` | `bump.mjs next` → `bump.mjs set --changelog`, Commit „Release vX.Y.Z“, Tag `vX.Y.Z`, Push nach `main` (im Probelauf kein Push); schreibt `version` und `tag` |
-| `draft-release.sh <tag> <version>` | legt mit `gh release create --draft --verify-tag` den Entwurf an, Text aus `bump.mjs notes` plus erzeugte Notizen; schreibt `release_id` |
+| `draft-release.sh <tag> <version>` | prüft, dass der Tag bei GitHub liegt, und legt mit `POST /releases` den Entwurf an, Text aus `bump.mjs notes` plus erzeugte Notizen; schreibt `release_id` |
 
 `cargo` und `npm install` braucht der Job nicht: `bump.mjs set` pflegt `Cargo.lock` und `package-lock.json` selbst.
-Die Ausgaben gehen nach `$GITHUB_OUTPUT`; fehlt die Variable, nach stdout. Den Entwurf sucht `draft-release.sh`
-über die Liste aller Releases, denn `GET /releases/tags/<tag>` findet keine Entwürfe.
+Die Ausgaben gehen nach `$GITHUB_OUTPUT`; fehlt die Variable, nach stdout. Die `release_id` nimmt
+`draft-release.sh` aus der Antwort von `POST /releases`: `GET /releases/tags/<tag>` findet keine Entwürfe, und die
+Liste aller Releases zeigt einen frischen Entwurf erst nach einer Weile.
 
 ### Probelauf auf dem eigenen Rechner
 

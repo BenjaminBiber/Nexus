@@ -9,17 +9,25 @@ version="${2:?Aufruf: draft-release.sh <tag> <version>}"
 output="${GITHUB_OUTPUT:-/dev/stdout}"
 repo="${GITHUB_REPOSITORY:?GITHUB_REPOSITORY fehlt – das Skript läuft im Release-Workflow.}"
 
+# Wie „gh release create --verify-tag“: ohne den Tag bei GitHub würde die API ihn sonst selbst anlegen
+if ! gh api "repos/$repo/git/ref/tags/$tag" --silent; then
+  echo "Abbruch: Der Tag $tag liegt nicht in $repo." >&2
+  exit 1
+fi
+
 # Der Abschnitt des Changelogs kommt in eine Temp-Datei, damit der Arbeitsordner sauber bleibt
 notes=$(mktemp)
 trap 'rm -f "$notes"' EXIT
 node scripts/release/bump.mjs notes "$version" > "$notes"
 
-gh release create "$tag" --draft --verify-tag --title "Nexus $tag" --notes-file "$notes" --generate-notes
-
-# GET /releases/tags/<tag> findet keine Entwürfe – darum die Liste durchsuchen
-id=$(gh api "repos/$repo/releases" --jq "[.[] | select(.tag_name == \"$tag\") | .id] | first // empty")
+# Die Id kommt direkt aus der Antwort: Die Liste der Releases zeigt einen frischen Entwurf erst nach
+# einer Weile, und GET /releases/tags/<tag> findet gar keine Entwürfe.
+# GitHub stellt „body“ vor die erzeugten Notizen.
+id=$(gh api -X POST "repos/$repo/releases" \
+  -f tag_name="$tag" -f name="Nexus $tag" -F body=@"$notes" \
+  -F draft=true -F generate_release_notes=true --jq .id)
 if [ -z "$id" ]; then
-  echo "Abbruch: Das Entwurfs-Release zu $tag steht nicht in der Liste von $repo." >&2
+  echo "Abbruch: GitHub hat für den Entwurf zu $tag keine Id geliefert." >&2
   exit 1
 fi
 echo "Entwurfs-Release $id für $tag angelegt."
