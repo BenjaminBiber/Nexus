@@ -57,6 +57,11 @@ pub struct Profile {
     pub effort: Option<String>,
     pub max_turns: i64,
     pub timeout_minutes: i64,
+    /// Claude-Accounts (IDs aus `accounts.json`), die das Profil nutzen darf, in dieser
+    /// Reihenfolge; fehlt = jeder aktive Account
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub accounts: Option<Vec<String>>,
 }
 
 /// Bedingung einer Regel; nur genannte Felder zählen
@@ -99,7 +104,40 @@ impl RuleCondition {
 pub struct Rule {
     pub when: RuleCondition,
     pub profile: String,
+    /// Überschreibt die Accounts des Profils, wenn die Regel greift; fehlt = wie das Profil
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub accounts: Option<Vec<String>>,
 }
+
+/// Wie unter den erlaubten Accounts gewählt wird: meiste freie Kapazität oder erster freier
+/// der Liste
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "dispatch.ts")]
+pub enum AccountStrategy {
+    /// Der Account mit der geringsten bekannten Auslastung
+    #[default]
+    MostFree,
+    /// Der erste freie Account der Liste
+    Order,
+}
+
+impl AccountStrategy {
+    /// Erlaubte Werte in der Reihenfolge von TypeScript (`ACCOUNT_STRATEGIES`)
+    pub const ALL: [AccountStrategy; 2] = [AccountStrategy::MostFree, AccountStrategy::Order];
+
+    /// Schreibweise in JSON und in der Einstellung
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            AccountStrategy::MostFree => "most-free",
+            AccountStrategy::Order => "order",
+        }
+    }
+}
+
+/// Erlaubte Werte von `accountStrategy`
+pub const ACCOUNT_STRATEGIES: [AccountStrategy; 2] = AccountStrategy::ALL;
 
 /// Einstellungen eines Laufs samt Begründung für den Start-Kommentar
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -128,6 +166,23 @@ pub struct RunSettings {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub escalated_from: Option<String>,
+    /// Accounts, aus denen gewählt wird (Label `account:`, Regel, Profil);
+    /// fehlt = jeder aktive Account
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub allowed_accounts: Option<Vec<String>>,
+    /// Herkunft von `allowedAccounts` für die Begründung, z. B. „Profil schwer“
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub accounts_from: Option<String>,
+    /// Gewählter Account des Laufs; fehlt bei Läufen älterer Stände (= `standard`)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub account: Option<String>,
+    /// Begründung der Account-Wahl
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub account_why: Option<String>,
 }
 
 /// Recherche-Läufe zu offenen Fragen
@@ -298,6 +353,10 @@ pub struct DispatchConfig {
     pub allow_fable: bool,
     pub research: ResearchSettings,
     pub planning: PlanningSettings,
+    /// Wahl unter mehreren erlaubten Accounts
+    pub account_strategy: AccountStrategy,
+    /// Ab dieser Auslastung in Prozent (5 Stunden oder Woche) gilt ein Account als voll (50–100)
+    pub account_limit_percent: i64,
 }
 
 /// Werkzeuge, die ein Umsetzungslauf ohne Rückfrage benutzen darf

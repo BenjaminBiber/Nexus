@@ -8,6 +8,7 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
+use crate::accounts::is_account_id;
 use crate::board::{DispatchProfileReason, Priority, Ticket};
 use crate::dispatch::config::{DispatchConfig, Rule, RunSettings};
 use crate::dispatch::config_normalizer::DispatchConfigNormalizer;
@@ -59,12 +60,13 @@ impl From<&Ticket> for ProfileTicket {
     }
 }
 
-/// Die Labels `profil:`, `model:` und `effort:` eines Tickets – jeweils das erste
+/// Die Labels `profil:`, `model:`, `effort:` und `account:` eines Tickets – jeweils das erste
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct DispatchLabels {
     pub profile: Option<String>,
     pub model: Option<String>,
     pub effort: Option<String>,
+    pub account: Option<String>,
 }
 
 /// Wählt die Einstellungen eines Laufs aus Einstellung und Ticket.
@@ -90,7 +92,7 @@ impl<'a> ProfileChooser<'a> {
         &self.config_hash
     }
 
-    /// Labels `profil:`, `model:` und `effort:` – jeweils das erste
+    /// Labels `profil:`, `model:`, `effort:` und `account:` – jeweils das erste
     pub fn labels(&self, labels: &[String]) -> DispatchLabels {
         let value = |prefix: &str| {
             labels
@@ -103,6 +105,7 @@ impl<'a> ProfileChooser<'a> {
             profile: value("profil:"),
             model: value("model:"),
             effort: value("effort:"),
+            account: value("account:"),
         }
     }
 
@@ -131,6 +134,13 @@ impl<'a> ProfileChooser<'a> {
         if let Some(effort) = &l.effort {
             if let Some(problem) = normalizer.effort_problem(effort) {
                 return Some(format!("Label effort:{effort} – {problem}"));
+            }
+        }
+        if let Some(account) = &l.account {
+            if !is_account_id(account) {
+                return Some(format!(
+                    "Label account:{account} – keine gültige Account-ID"
+                ));
             }
         }
         None
@@ -247,6 +257,10 @@ impl<'a> ProfileChooser<'a> {
             config_hash: Some(self.config_hash.clone()),
             rule_index,
             escalated_from,
+            allowed_accounts: None,
+            accounts_from: None,
+            account: None,
+            account_why: None,
         };
         if let Some(model) = &labels.model {
             if normalizer
@@ -262,6 +276,24 @@ impl<'a> ProfileChooser<'a> {
                 run.effort = Some(effort.clone());
                 run.why.push_str(&format!(", Label effort:{effort}"));
             }
+        }
+        // Accounts: Label account: vor der Regel (nur ohne Eskalation – das eskalierte Profil
+        // bringt seine eigenen mit) vor dem Profil
+        let rule = run
+            .rule_index
+            .filter(|_| run.escalated_from.is_none())
+            .and_then(|index| self.cfg.rules.get(index as usize - 1));
+        let label_account = labels.account.as_ref().filter(|id| is_account_id(id));
+        if let Some(account) = label_account {
+            let from = format!("Label account:{account}");
+            allow(&mut run, Some(std::slice::from_ref(account)), &from);
+        } else if let Some(accounts) = rule.and_then(|rule| rule.accounts.as_deref()) {
+            let from = format!("Regel {}", run.rule_index.unwrap_or_default());
+            allow(&mut run, Some(accounts), &from);
+        } else {
+            let from = format!("Profil {}", run.profile);
+            let accounts = self.cfg.profiles[&run.profile].accounts.clone();
+            allow(&mut run, accounts.as_deref(), &from);
         }
         // Haiku kennt keinen Effort
         if run.model.as_deref().is_some_and(|m| HAIKU.is_match(m)) {
@@ -330,7 +362,13 @@ impl<'a> ProfileChooser<'a> {
             config_hash: Some(self.config_hash.clone()),
             rule_index: None,
             escalated_from: None,
+            allowed_accounts: None,
+            accounts_from: None,
+            account: None,
+            account_why: None,
         };
+        let from = format!("Profil {}", run.profile);
+        allow(&mut run, base.accounts.as_deref(), &from);
         if run.model.as_deref().is_some_and(|m| HAIKU.is_match(m)) {
             run.effort = None;
         }
@@ -364,6 +402,17 @@ impl<'a> ProfileChooser<'a> {
         }
         true
     }
+}
+
+/// Erlaubte Accounts samt Herkunft eintragen; ohne Liste bleibt jeder aktive Account erlaubt
+fn allow(run: &mut RunSettings, accounts: Option<&[String]>, from: &str) {
+    run.allowed_accounts = None;
+    run.accounts_from = None;
+    let Some(accounts) = accounts.filter(|accounts| !accounts.is_empty()) else {
+        return;
+    };
+    run.allowed_accounts = Some(accounts.to_vec());
+    run.accounts_from = Some(from.to_string());
 }
 
 #[cfg(test)]

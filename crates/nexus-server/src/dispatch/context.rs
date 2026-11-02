@@ -452,7 +452,9 @@ impl DispatchContext {
         };
         let env = self
             .invocation
-            .env(&self.env, &self.cfg, ticket, git_bash.as_deref());
+            // Der Konfigurationsordner des gewählten Accounts kommt mit der Account-Wahl
+            // (NXS-0111); bis dahin bleibt die Umgebung des Servers
+            .env(&self.env, &self.cfg, ticket, git_bash.as_deref(), None);
         let pid = match self.launcher.launch(&id, &env) {
             Ok(pid) => pid.map(i64::from),
             Err(error) => {

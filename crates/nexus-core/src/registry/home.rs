@@ -147,6 +147,16 @@ impl NexusHome {
         self.dir.join("settings.json")
     }
 
+    /// Claude-Accounts des Dispatchers
+    pub fn accounts_file(&self) -> PathBuf {
+        self.dir.join("accounts.json")
+    }
+
+    /// Konfigurationsordner neu angelegter Accounts (`<id>/`)
+    pub fn accounts_dir(&self) -> PathBuf {
+        self.dir.join("accounts")
+    }
+
     /// Sicherungen
     pub fn backups_dir(&self) -> PathBuf {
         self.dir.join("backups")
@@ -379,6 +389,8 @@ mod tests {
         assert_eq!(home.sessions_file(), Path::new("h").join("sessions.json"));
         assert_eq!(home.favorites_file(), Path::new("h").join("favorites.json"));
         assert_eq!(home.settings_file(), Path::new("h").join("settings.json"));
+        assert_eq!(home.accounts_file(), Path::new("h").join("accounts.json"));
+        assert_eq!(home.accounts_dir(), Path::new("h").join("accounts"));
         assert_eq!(home.backups_dir(), Path::new("h").join("backups"));
         assert_eq!(home.board_config_file(), Path::new("h").join("board.yaml"));
         assert_eq!(

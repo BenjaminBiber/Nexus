@@ -52,6 +52,8 @@
       "contentType": "application/json",
       "json": {
         "config": {
+          "accountLimitPercent": 90,
+          "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
           "boards": null,
@@ -349,6 +351,8 @@
           }
         ],
         "raw": {
+          "accountLimitPercent": 90,
+          "accountStrategy": "most-free",
           "allowFable": false,
           "boards": null,
           "claude": {
@@ -471,6 +475,8 @@
     "name": "Beispiel unverändert speichern",
     "request": {
       "body": {
+        "accountLimitPercent": 90,
+        "accountStrategy": "most-free",
         "allowFable": false,
         "boards": null,
         "claude": {
@@ -592,6 +598,8 @@
       "contentType": "application/json",
       "json": {
         "config": {
+          "accountLimitPercent": 90,
+          "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
           "boards": null,
@@ -724,6 +732,8 @@
         "exists": true,
         "file": "<HOME>/dispatch.yaml",
         "raw": {
+          "accountLimitPercent": 90,
+          "accountStrategy": "most-free",
           "allowFable": false,
           "boards": null,
           "claude": {
@@ -852,6 +862,8 @@
       "contentType": "application/json",
       "json": {
         "config": {
+          "accountLimitPercent": 90,
+          "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
           "boards": null,
@@ -984,6 +996,8 @@
         "exists": true,
         "file": "<HOME>/dispatch.yaml",
         "raw": {
+          "accountLimitPercent": 90,
+          "accountStrategy": "most-free",
           "allowFable": false,
           "boards": null,
           "claude": {
@@ -1168,6 +1182,8 @@
       "contentType": "application/json",
       "json": {
         "config": {
+          "accountLimitPercent": 90,
+          "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
           "boards": null,
@@ -1346,6 +1362,8 @@
       "contentType": "application/json",
       "json": {
         "config": {
+          "accountLimitPercent": 90,
+          "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
           "boards": null,
@@ -1618,6 +1636,8 @@
       "contentType": "application/json",
       "json": {
         "config": {
+          "accountLimitPercent": 90,
+          "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
           "boards": null,
@@ -1946,6 +1966,8 @@
       "contentType": "application/json",
       "json": {
         "config": {
+          "accountLimitPercent": 90,
+          "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
           "boards": null,

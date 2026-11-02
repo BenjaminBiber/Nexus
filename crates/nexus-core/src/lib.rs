@@ -2,6 +2,7 @@
 //! HTTP-Schicht und Oberfläche. Die Grundtypen sind 1:1 aus `packages/core` portiert,
 //! samt Fehlercodes und deutschen Meldungen.
 
+pub mod accounts;
 pub mod actors;
 pub mod board;
 pub mod clock;

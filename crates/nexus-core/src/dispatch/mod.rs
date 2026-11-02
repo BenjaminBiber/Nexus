@@ -4,6 +4,8 @@
 //! der Ausgabe eines Laufs (`output`) und der Vergleich des Parallelbetriebs (`shadow`).
 
 pub mod abort_reason;
+pub mod account_chooser;
+pub mod account_references;
 pub mod attempts;
 pub mod comments;
 pub mod config;
@@ -31,12 +33,15 @@ pub mod time_window;
 pub mod types;
 
 pub use abort_reason::{AbortCategory, AbortReasonClassifier, ABORT_CATEGORIES};
-pub use attempts::AttemptCounter;
+pub use account_chooser::{AccountChoice, AccountChoiceInput, AccountChooser, AccountState};
+pub use account_references::AccountReferences;
+pub use attempts::{limit_account, AttemptCounter};
 pub use comments::CommentLike;
 pub use config::{
-    limit_pause, ClaudeSettings, DispatchConfig, JoinWorktrees, PlanningSettings, Profile,
-    PromptProblem, PromptTemplates, ResearchSettings, Rule, RuleCondition, RunSettings, TimeWindow,
-    WorktreeSetupStep, JOIN_WORKTREES, MERGE_REASON_PREFIX, SETUP_REASON_PREFIX,
+    limit_pause, AccountStrategy, ClaudeSettings, DispatchConfig, JoinWorktrees, PlanningSettings,
+    Profile, PromptProblem, PromptTemplates, ResearchSettings, Rule, RuleCondition, RunSettings,
+    TimeWindow, WorktreeSetupStep, ACCOUNT_STRATEGIES, JOIN_WORKTREES, MERGE_REASON_PREFIX,
+    SETUP_REASON_PREFIX,
 };
 pub use config_normalizer::DispatchConfigNormalizer;
 pub use config_store::{DispatchConfigRead, DispatchConfigStore};

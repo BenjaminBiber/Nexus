@@ -1,5 +1,6 @@
 {
   "pausedUntil": "2026-10-27T08:15:00.123Z",
+  "accountPauses": {},
   "merges": {
     "ARC-0001": {
       "ticketId": "ARC-0001",

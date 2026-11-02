@@ -1,9 +1,17 @@
 //! Zählt gescheiterte automatische Versuche an den Abbruch-Kommentaren des Dispatchers;
 //! portiert aus `packages/core/src/dispatch/AttemptCounter.ts`.
 
+use std::sync::LazyLock;
+
+use regex::Regex;
+
 use crate::dispatch::comments::CommentLike;
 use crate::dispatch::config::{limit_pause, DispatchConfig};
 use crate::dispatch::markers;
+
+/// Anfang einer Limit-Pause mit Account: „[dispatch] Pause: Nutzungslimit von Account <id>“
+static LIMIT_ACCOUNT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^\S+ Pause: Nutzungslimit von Account ([a-z0-9-]+)").unwrap());
 
 /// Zählt Abbrüche und Limit-Pausen an den Kommentaren eines Tickets.
 #[derive(Debug, Clone, Copy)]
@@ -30,8 +38,13 @@ impl<'a> AttemptCounter<'a> {
 
     /// Wie viele Limit-Pausen („[dispatch] Pause: Nutzungslimit …“) zuletzt in Folge kamen;
     /// Start-Kommentare dazwischen zählen nicht, jeder andere Kommentar des Dispatchers
-    /// (Abbruch, Frage, …) beendet die Folge
-    pub fn limit_pauses_in_row<C: CommentLike>(&self, comments: &[C]) -> usize {
+    /// (Abbruch, Frage, …) beendet die Folge. Mit `account` zählen nur Pausen dieses Accounts;
+    /// Pausen anderer Accounts (Wechsel auf den nächsten) überspringt die Zählung
+    pub fn limit_pauses_in_row<C: CommentLike>(
+        &self,
+        comments: &[C],
+        account: Option<&str>,
+    ) -> usize {
         let pause = limit_pause();
         let mut count = 0;
         for comment in comments.iter().rev() {
@@ -43,10 +56,24 @@ impl<'a> AttemptCounter<'a> {
             if !comment.body().starts_with(&pause) {
                 break;
             }
+            let of = limit_account(comment.body());
+            if let (Some(account), Some(of)) = (account, of.as_deref()) {
+                if of != account {
+                    continue;
+                }
+            }
             count += 1;
         }
         count
     }
+}
+
+/// Account einer Limit-Pause („… Nutzungslimit von Account <id> …“) oder `None`
+/// (ältere Kommentare, ein einziger Account)
+pub fn limit_account(body: &str) -> Option<String> {
+    LIMIT_ACCOUNT
+        .captures(body)
+        .map(|found| found[1].to_string())
 }
 
 #[cfg(test)]
@@ -82,20 +109,54 @@ mod tests {
         let cfg = cfg();
         let counter = AttemptCounter::new(&cfg);
         assert_eq!(
-            counter.limit_pauses_in_row(&[
-                ("dispatcher", "[dispatch] Abbruch Versuch 1/2: x"),
-                ("dispatcher", "[dispatch] Pause: Nutzungslimit bis 10:00"),
-                ("dispatcher", "[dispatch] Start: an junior-ARC-0001"),
-                ("dispatcher", "[dispatch] Pause: Nutzungslimit bis 11:00"),
-            ]),
+            counter.limit_pauses_in_row(
+                &[
+                    ("dispatcher", "[dispatch] Abbruch Versuch 1/2: x"),
+                    ("dispatcher", "[dispatch] Pause: Nutzungslimit bis 10:00"),
+                    ("dispatcher", "[dispatch] Start: an junior-ARC-0001"),
+                    ("dispatcher", "[dispatch] Pause: Nutzungslimit bis 11:00"),
+                ],
+                None
+            ),
             2
         );
         assert_eq!(
-            counter.limit_pauses_in_row(&[
-                ("dispatcher", "[dispatch] Pause: Nutzungslimit bis 10:00"),
-                ("dispatcher", "[dispatch] Abbruch Versuch 1/2: x"),
-            ]),
+            counter.limit_pauses_in_row(
+                &[
+                    ("dispatcher", "[dispatch] Pause: Nutzungslimit bis 10:00"),
+                    ("dispatcher", "[dispatch] Abbruch Versuch 1/2: x"),
+                ],
+                None
+            ),
             0
+        );
+    }
+
+    #[test]
+    fn zahlt_limit_pausen_je_account_und_ubergeht_die_anderen() {
+        let cfg = cfg();
+        let counter = AttemptCounter::new(&cfg);
+        let pause = limit_pause();
+        let von = |body: String| ("dispatcher".to_string(), body);
+        let comments: Vec<(String, String)> = vec![
+            von(format!(
+                "{pause} von Account max erreicht, Ticket zurück nach Geplant."
+            )),
+            von("[dispatch] Start: an junior-ARC-1".to_string()),
+            von(format!(
+                "{pause} von Account pro-1 erreicht, Ticket zurück nach Geplant."
+            )),
+            von(format!(
+                "{pause} von Account max erreicht, Ticket zurück nach Geplant."
+            )),
+        ];
+        assert_eq!(counter.limit_pauses_in_row(&comments, Some("max")), 2);
+        assert_eq!(counter.limit_pauses_in_row(&comments, Some("pro-1")), 1);
+        assert_eq!(counter.limit_pauses_in_row(&comments, None), 3);
+        assert_eq!(limit_account(&format!("{pause} erreicht")), None);
+        assert_eq!(
+            limit_account(&format!("{pause} von Account pro-1 erreicht")),
+            Some("pro-1".to_string())
         );
     }
 

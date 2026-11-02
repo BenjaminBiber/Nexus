@@ -972,6 +972,8 @@
         },
         "view": {
           "config": {
+            "accountLimitPercent": 90,
+            "accountStrategy": "most-free",
             "agentPrefix": "junior-",
             "allowFable": false,
             "boards": null,

@@ -136,15 +136,23 @@ impl ClaudeInvocation {
 
     /// Umgebung des Workers (`git_bash`: Pfad der Git Bash unter Windows, sonst `None`): ohne
     /// API-Key (Abrechnung über die Anmeldung), ohne fremde Session (auch keine
-    /// Claude-Code-Kennung), mit `HARNESS_TICKET` (ohne Ticket, z. B. Recherche: ohne)
+    /// Claude-Code-Kennung), mit `HARNESS_TICKET` (ohne Ticket, z. B. Recherche: ohne).
+    /// `config_dir`: Konfigurationsordner des gewählten Accounts (`CLAUDE_CONFIG_DIR`);
+    /// `None` = Standard-Account, die Variable bleibt wie beim Server
     pub fn env(
         &self,
         env: &BTreeMap<String, String>,
         cfg: &DispatchConfig,
         ticket_id: Option<&str>,
         git_bash: Option<&str>,
+        config_dir: Option<&str>,
     ) -> BTreeMap<String, String> {
         let mut out = env.clone();
+        // Konfigurationsordner des gewählten Accounts; ohne eigenen Ordner bleibt die Variable
+        // der Umgebung des Servers, wie sie ist
+        if let Some(config_dir) = config_dir.filter(|dir| !dir.is_empty()) {
+            out.insert("CLAUDE_CONFIG_DIR".to_string(), config_dir.to_string());
+        }
         if cfg.claude.use_subscription {
             out.remove("ANTHROPIC_API_KEY");
             out.remove("ANTHROPIC_AUTH_TOKEN");
@@ -213,6 +221,10 @@ mod tests {
             config_hash: None,
             rule_index: None,
             escalated_from: None,
+            allowed_accounts: None,
+            accounts_from: None,
+            account: None,
+            account_why: None,
         }
     }
 
@@ -302,9 +314,15 @@ mod tests {
     fn setzt_harness_ticket_nur_mit_ticket() {
         let cfg = cfg();
         let invocation = ClaudeInvocation::new();
-        let ohne = invocation.env(&env(&[("HARNESS_TICKET", "ARC-0001")]), &cfg, None, None);
+        let ohne = invocation.env(
+            &env(&[("HARNESS_TICKET", "ARC-0001")]),
+            &cfg,
+            None,
+            None,
+            None,
+        );
         assert!(!ohne.contains_key("HARNESS_TICKET"));
-        let mit = invocation.env(&env(&[]), &cfg, Some("ARC-0002"), None);
+        let mit = invocation.env(&env(&[]), &cfg, Some("ARC-0002"), None, None);
         assert_eq!(mit["HARNESS_TICKET"], "ARC-0002");
     }
 
@@ -393,6 +411,7 @@ mod tests {
             &cfg,
             Some("ARC-0001"),
             None,
+            None,
         );
         assert_eq!(
             out,
@@ -411,6 +430,7 @@ mod tests {
             &keep,
             Some("ARC-0001"),
             None,
+            None,
         );
         assert_eq!(behalten["ANTHROPIC_API_KEY"], "k");
     }
@@ -419,8 +439,13 @@ mod tests {
     fn setzt_mit_gefundener_git_bash_das_powershell_tool_aus() {
         let cfg = cfg();
         let bash = "C:/G/bin/bash.exe";
-        let out =
-            ClaudeInvocation::new().env(&env(&[("PATH", "p")]), &cfg, Some("ARC-0001"), Some(bash));
+        let out = ClaudeInvocation::new().env(
+            &env(&[("PATH", "p")]),
+            &cfg,
+            Some("ARC-0001"),
+            Some(bash),
+            None,
+        );
         assert_eq!(
             out,
             env(&[
@@ -433,7 +458,7 @@ mod tests {
             ])
         );
         assert_eq!(
-            ClaudeInvocation::new().env(&env(&[("PATH", "p")]), &cfg, Some("ARC-0001"), None),
+            ClaudeInvocation::new().env(&env(&[("PATH", "p")]), &cfg, Some("ARC-0001"), None, None),
             env(&[
                 ("PATH", "p"),
                 ("HARNESS_TICKET", "ARC-0001"),
@@ -450,6 +475,7 @@ mod tests {
             &env(&[("BASH_MAX_TIMEOUT_MS", "60000")]),
             &cfg,
             Some("ARC-0001"),
+            None,
             None,
         );
         assert_eq!(out["BASH_DEFAULT_TIMEOUT_MS"], "900000");

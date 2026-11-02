@@ -10,11 +10,12 @@ use indexmap::IndexMap;
 use regex::Regex;
 use serde_json::{json, Value};
 
+use crate::accounts::is_account_id;
 use crate::dispatch::config::{
-    ClaudeSettings, DispatchConfig, JoinWorktrees, MergeStrategy, PlanningSettings, Profile,
-    PromptProblem, PromptTemplates, ResearchSettings, Rule, RuleCondition, TimeWindow,
-    WorktreeSetupStep, DEFAULT_ALLOWED_TOOLS, EFFORT_LEVELS, JOIN_WORKTREES, MERGE_STRATEGIES,
-    MODEL_ALIASES, PROMPT_KINDS,
+    AccountStrategy, ClaudeSettings, DispatchConfig, JoinWorktrees, MergeStrategy,
+    PlanningSettings, Profile, PromptProblem, PromptTemplates, ResearchSettings, Rule,
+    RuleCondition, TimeWindow, WorktreeSetupStep, ACCOUNT_STRATEGIES, DEFAULT_ALLOWED_TOOLS,
+    EFFORT_LEVELS, JOIN_WORKTREES, MERGE_STRATEGIES, MODEL_ALIASES, PROMPT_KINDS,
 };
 use crate::dispatch::js_value::{field, field_or_null, is_integer, js_number, js_string};
 use crate::dispatch::prompt_check::{PromptKind, PromptTemplateCheck};
@@ -187,6 +188,13 @@ impl DispatchConfigNormalizer {
             allow_fable,
             research,
             planning,
+            account_strategy: self.account_strategy(field_or_null(input, "accountStrategy"))?,
+            account_limit_percent: int(
+                coalesce(field_or_null(input, "accountLimitPercent"), &json!(90)),
+                "accountLimitPercent",
+                50,
+                Some(100),
+            )?,
         })
     }
 
@@ -221,6 +229,10 @@ impl DispatchConfigNormalizer {
             ],
             "escalate": true,
             "allowFable": false,
+            // Mehrere Claude-Accounts (Einstellungen → Accounts): Profile und Regeln können sie
+            // mit accounts: [id, …] festlegen
+            "accountStrategy": "most-free",
+            "accountLimitPercent": 90,
             "research": { "auto": false, "wip": 1, "maxPerDay": 10 },
             "planning": { "auto": false, "wip": 1, "acceptance": true, "profile": null },
             "promptExtra": "",
@@ -385,9 +397,11 @@ impl DispatchConfigNormalizer {
             if let Some(effort) = &effort {
                 check(self.effort_problem(effort), &where_)?;
             }
+            let accounts = self.accounts(field(p, "accounts"), &format!("{where_}.accounts"))?;
             profiles.insert(
                 name.clone(),
                 Profile {
+                    accounts,
                     model,
                     effort,
                     max_turns: match field(p, "maxTurns") {
@@ -440,9 +454,11 @@ impl DispatchConfigNormalizer {
                 None | Some(Value::Null) => String::new(),
                 Some(value) => js_string(value),
             };
+            let accounts = self.accounts(field(raw, "accounts"), &format!("{where_}.accounts"))?;
             rules.push(Rule {
                 when: cond,
                 profile: known(profiles, &profile, &where_)?,
+                accounts,
             });
         }
         Ok(rules)
@@ -554,6 +570,51 @@ impl DispatchConfigNormalizer {
             ));
         }
         Ok(Some(TimeWindow { from, to }))
+    }
+
+    /// Account-IDs eines Profils oder einer Regel (ohne doppelte); leer oder fehlend = `None`
+    /// (jeder aktive bzw. wie das Profil). Ob es die Accounts gibt, prüft erst die Wahl –
+    /// `accounts.json` kann sich unabhängig von `dispatch.yaml` ändern
+    fn accounts(&self, value: Option<&Value>, where_: &str) -> Result<Option<Vec<String>>> {
+        let Some(value) = value.filter(|value| !value.is_null()) else {
+            return Ok(None);
+        };
+        let Some(items) = value.as_array() else {
+            return Err(fail(format!(
+                "{where_} muss eine Liste von Account-IDs sein."
+            )));
+        };
+        let mut ids: Vec<String> = Vec::new();
+        for raw in items {
+            let id = js_string(raw).trim().to_string();
+            if !is_account_id(&id) {
+                return Err(fail(format!("{where_}: „{id}“ ist keine Account-ID.")));
+            }
+            if !ids.contains(&id) {
+                ids.push(id);
+            }
+        }
+        Ok(if ids.is_empty() { None } else { Some(ids) })
+    }
+
+    /// Wahl unter mehreren Accounts; fehlend = meiste freie Kapazität
+    fn account_strategy(&self, value: &Value) -> Result<AccountStrategy> {
+        if value.is_null() {
+            return Ok(AccountStrategy::MostFree);
+        }
+        let wanted = value.as_str().unwrap_or_default().trim();
+        ACCOUNT_STRATEGIES
+            .into_iter()
+            .find(|strategy| strategy.as_str() == wanted)
+            .ok_or_else(|| {
+                fail(format!(
+                    "accountStrategy muss {} sein (nicht „{}“).",
+                    ACCOUNT_STRATEGIES
+                        .map(|strategy| strategy.as_str())
+                        .join(" oder "),
+                    js_string(value)
+                ))
+            })
     }
 
     /// Merge-Strategie; fehlend = Merge-Commit
@@ -866,6 +927,7 @@ mod tests {
                 effort: None,
                 max_turns: 80,
                 timeout_minutes: 60,
+                accounts: None,
             })
         );
         assert_eq!(cfg.profiles.len(), 1);
@@ -887,6 +949,7 @@ mod tests {
                 effort: Some("max".to_string()),
                 max_turns: 150,
                 timeout_minutes: 120,
+                accounts: None,
             })
         );
         assert_eq!(
@@ -901,6 +964,7 @@ mod tests {
                     ..RuleCondition::default()
                 },
                 profile: "klein".to_string(),
+                accounts: None,
             }
         );
         assert_eq!(cfg.ladder, ["klein", "standard", "schwer"]);

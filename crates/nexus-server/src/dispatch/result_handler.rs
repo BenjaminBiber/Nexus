@@ -288,7 +288,12 @@ installieren oder den Befehl in der Einstellung prüfen. Zählt nicht als Versuc
         if reason.is_none() && ctx.output.hit_usage_limit(&end.result) {
             // Ab der dritten Limit-Pause in Folge liegt es vermutlich am Ticket selbst: dann
             // zählt es als Versuch
-            if ctx.attempts().limit_pauses_in_row(&detail.comments) < LIMIT_PAUSES_FREE {
+            // Nur die Pausen des Accounts, mit dem dieser Lauf gestartet ist
+            if ctx
+                .attempts()
+                .limit_pauses_in_row(&detail.comments, record.run.account.as_deref())
+                < LIMIT_PAUSES_FREE
+            {
                 self.pause(
                     &detail,
                     board.as_ref().and_then(|board| board.repo_path.clone()),

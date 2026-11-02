@@ -127,6 +127,9 @@ pub struct PlanningAutoState {
 #[ts(export, export_to = "dispatch.ts")]
 pub struct DispatchState {
     pub paused_until: Option<String>,
+    /// Pausen einzelner Claude-Accounts (Nutzungslimit): Account-ID → ISO-Zeitpunkt
+    #[ts(type = "Record<string, string>")]
+    pub account_pauses: IndexMap<String, String>,
     #[ts(type = "Record<string, MergeEntry>")]
     pub merges: IndexMap<String, MergeEntry>,
     #[ts(type = "Record<string, ResearchEntry>")]

@@ -106,7 +106,7 @@ impl SuggestionAnalyzer {
                 args: self.args(&cfg),
                 prompt: self.prompt(&context)?,
                 cwd,
-                env: self.invocation.env(&process_env(), &cfg, None, None),
+                env: self.invocation.env(&process_env(), &cfg, None, None, None),
                 timeout: TIMEOUT,
                 cancel: None,
             })

@@ -6,6 +6,12 @@
 export type AbortCategory = "timeout" | "max-turns" | "context" | "exit-code" | "claude-error" | "no-outcome" | "usage-limit" | "start-failed" | "vanished" | "other";
 
 /**
+ * Wie unter den erlaubten Accounts gewählt wird: meiste freie Kapazität oder erster freier
+ * der Liste
+ */
+export type AccountStrategy = "most-free" | "order";
+
+/**
  * Ergebnis des Regelkatalogs: Vorschläge und Profile mit zu wenig Daten
  */
 export type AdvisorResult = { suggestions: Array<Suggestion>, insufficient: Array<InsufficientData>, };
@@ -136,7 +142,15 @@ profiles: Record<string, Profile>, defaultProfile: string, rules: Array<Rule>, e
 /**
  * Profilleiter von günstig nach teuer
  */
-ladder: Array<string>, allowFable: boolean, research: ResearchSettings, planning: PlanningSettings, };
+ladder: Array<string>, allowFable: boolean, research: ResearchSettings, planning: PlanningSettings, 
+/**
+ * Wahl unter mehreren erlaubten Accounts
+ */
+accountStrategy: AccountStrategy, 
+/**
+ * Ab dieser Auslastung in Prozent (5 Stunden oder Woche) gilt ein Account als voll (50–100)
+ */
+accountLimitPercent: number, };
 
 /**
  * Eine Fassung der Dispatcher-Einstellung (Tabelle board.DispatchConfigVersions)
@@ -277,7 +291,11 @@ export type DispatchSeriesUnit = "day" | "week";
 /**
  * Inhalt von `dispatch/state.json`
  */
-export type DispatchState = { pausedUntil: string | null, merges: Record<string, MergeEntry>, research: Record<string, ResearchEntry>, researchAuto: ResearchAutoState, planning: Record<string, PlanningEntry>, planningAuto: PlanningAutoState, };
+export type DispatchState = { pausedUntil: string | null, 
+/**
+ * Pausen einzelner Claude-Accounts (Nutzungslimit): Account-ID → ISO-Zeitpunkt
+ */
+accountPauses: Record<string, string>, merges: Record<string, MergeEntry>, research: Record<string, ResearchEntry>, researchAuto: ResearchAutoState, planning: Record<string, PlanningEntry>, planningAuto: PlanningAutoState, };
 
 /**
  * Ergebnis der Auswertung (Läufe einer Art, Start im Zeitraum)
@@ -458,7 +476,12 @@ profile: string | null, };
 /**
  * Modell, Effort und Grenzen eines Profils
  */
-export type Profile = { model: string | null, effort: string | null, maxTurns: number, timeoutMinutes: number, };
+export type Profile = { model: string | null, effort: string | null, maxTurns: number, timeoutMinutes: number, 
+/**
+ * Claude-Accounts (IDs aus `accounts.json`), die das Profil nutzen darf, in dieser
+ * Reihenfolge; fehlt = jeder aktive Account
+ */
+accounts?: Array<string>, };
 
 /**
  * Kennzahlen eines Profils über die Läufe mit seinen aktuellen Limits
@@ -644,7 +667,11 @@ export type ReviewPatch = { patch: string, truncated: boolean, };
 /**
  * Eine Regel: trifft `when` zu, gilt `profile`
  */
-export type Rule = { when: RuleCondition, profile: string, };
+export type Rule = { when: RuleCondition, profile: string, 
+/**
+ * Überschreibt die Accounts des Profils, wenn die Regel greift; fehlt = wie das Profil
+ */
+accounts?: Array<string>, };
 
 /**
  * Bedingung einer Regel; nur genannte Felder zählen
@@ -825,7 +852,24 @@ ruleIndex?: number,
 /**
  * Basisprofil vor der Eskalation; fehlt ohne Eskalation
  */
-escalatedFrom?: string, };
+escalatedFrom?: string, 
+/**
+ * Accounts, aus denen gewählt wird (Label `account:`, Regel, Profil);
+ * fehlt = jeder aktive Account
+ */
+allowedAccounts?: Array<string>, 
+/**
+ * Herkunft von `allowedAccounts` für die Begründung, z. B. „Profil schwer“
+ */
+accountsFrom?: string, 
+/**
+ * Gewählter Account des Laufs; fehlt bei Läufen älterer Stände (= `standard`)
+ */
+account?: string, 
+/**
+ * Begründung der Account-Wahl
+ */
+accountWhy?: string, };
 
 /**
  * Stand eines Laufs laut Ende seines Protokolls

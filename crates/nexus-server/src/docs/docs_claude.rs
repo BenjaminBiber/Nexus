@@ -68,7 +68,7 @@ pub fn run_input(
         args: args(cfg),
         prompt,
         cwd: AnalysisWorkspace::new(home.clone()).dir()?,
-        env: ClaudeInvocation::new().env(&env, cfg, None, None),
+        env: ClaudeInvocation::new().env(&env, cfg, None, None, None),
         timeout: TIMEOUT,
         cancel,
     })

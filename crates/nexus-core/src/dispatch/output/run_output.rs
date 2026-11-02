@@ -397,6 +397,10 @@ mod tests {
             config_hash: None,
             rule_index: None,
             escalated_from: None,
+            allowed_accounts: None,
+            accounts_from: None,
+            account: None,
+            account_why: None,
         }
     }
 

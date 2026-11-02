@@ -569,6 +569,10 @@ dort („Mergen“ bzw. harness board merge)"
             config_hash: run.config_hash,
             rule_index: run.rule_index,
             escalated_from: None,
+            allowed_accounts: run.allowed_accounts,
+            accounts_from: run.accounts_from,
+            account: run.account,
+            account_why: run.account_why,
         }
     }
 
