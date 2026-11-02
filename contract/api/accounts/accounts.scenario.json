@@ -1,0 +1,70 @@
+{
+  "title": "Claude-Accounts anlegen, ändern, entfernen und ihre Anmeldung",
+  "steps": [
+    { "name": "Liste mit nur dem Standard-Account", "method": "GET", "path": "/api/accounts" },
+    { "name": "nur IDs und Namen", "method": "GET", "path": "/api/accounts/names" },
+
+    {
+      "name": "Account anlegen",
+      "method": "POST",
+      "path": "/api/accounts",
+      "body": { "name": "Max privat" }
+    },
+    { "name": "Account ohne Namen anlegen", "method": "POST", "path": "/api/accounts", "body": { "name": "" } },
+    {
+      "name": "Account auf einem unbekannten Ordner anlegen",
+      "method": "POST",
+      "path": "/api/accounts",
+      "body": { "name": "Fremd", "configDir": "/gibt/es/nicht" }
+    },
+    {
+      "name": "Account mit falschem Ordner anlegen",
+      "method": "POST",
+      "path": "/api/accounts",
+      "body": { "name": "Falsch", "configDir": 7 }
+    },
+
+    {
+      "name": "Account umbenennen und abschalten",
+      "method": "PATCH",
+      "path": "/api/accounts/max-privat",
+      "body": { "name": "Max Firma", "enabled": false }
+    },
+    {
+      "name": "Account als Fallback markieren und begrenzen",
+      "method": "PATCH",
+      "path": "/api/accounts/max-privat",
+      "body": { "fallback": true, "limitFiveHour": 50, "limitWeek": null }
+    },
+    {
+      "name": "Obergrenze außerhalb von 1 bis 100",
+      "method": "PATCH",
+      "path": "/api/accounts/max-privat",
+      "body": { "limitWeek": 150 }
+    },
+    {
+      "name": "Schalter als Text",
+      "method": "PATCH",
+      "path": "/api/accounts/max-privat",
+      "body": { "enabled": "ja" }
+    },
+    {
+      "name": "unbekannten Account ändern",
+      "method": "PATCH",
+      "path": "/api/accounts/gibt-es-nicht",
+      "body": { "enabled": true }
+    },
+
+    { "name": "Standard-Account entfernen", "method": "DELETE", "path": "/api/accounts/standard" },
+    { "name": "unbekannten Account entfernen", "method": "DELETE", "path": "/api/accounts/gibt-es-nicht" },
+
+    { "name": "Code ohne laufende Anmeldung", "method": "POST", "path": "/api/accounts/max-privat/login/code", "body": { "code": "abc" } },
+    { "name": "Anmeldung abbrechen, die es nicht gibt", "method": "DELETE", "path": "/api/accounts/max-privat/login" },
+    { "name": "Anmeldung eines unbekannten Accounts", "method": "POST", "path": "/api/accounts/gibt-es-nicht/login", "body": {} },
+    { "name": "Pause eines Accounts aufheben", "method": "POST", "path": "/api/accounts/max-privat/resume", "body": {} },
+    { "name": "Plugin eines unbekannten Accounts einrichten", "method": "POST", "path": "/api/accounts/gibt-es-nicht/plugin", "body": {} },
+
+    { "name": "Account entfernen", "method": "DELETE", "path": "/api/accounts/max-privat" },
+    { "name": "Liste nach dem Entfernen", "method": "GET", "path": "/api/accounts" }
+  ]
+}

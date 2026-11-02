@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use axum::extract::{Path as UrlPath, State};
 use axum::response::Response;
-use axum::routing::{get, post};
+use axum::routing::{get, patch, post};
 use axum::Router;
 use nexus_core::accounts::{AccountPatch, ClaudeAccount, NewAccount, STANDARD_ACCOUNT_ID};
 use nexus_core::dispatch::{AccountReferences, DispatchConfigStore};
@@ -76,10 +76,7 @@ pub fn routes() -> Router<Arc<AppState>> {
         )
         .route(
             "/api/accounts/{id}",
-            get(list)
-                .patch(update)
-                .delete(remove)
-                .fallback(static_or_not_found),
+            patch(update).delete(remove).fallback(static_or_not_found),
         )
         .route(
             "/api/accounts/{id}/login",

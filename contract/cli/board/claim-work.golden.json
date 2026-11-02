@@ -520,6 +520,7 @@
     "response": {
       "code": 0,
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": null,
@@ -621,6 +622,7 @@
     "response": {
       "code": 0,
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": null,

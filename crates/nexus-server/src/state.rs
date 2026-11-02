@@ -185,7 +185,13 @@ impl AppState {
         );
         // Claude-Accounts: ein Dienst für Limits und Anmeldung, den Dispatcher, Seitenleiste
         // und Einstellungen teilen (Zwischenspeicher je Account)
-        let paths = AccountPaths::from_process_env();
+        // Im Vertragsmodus zeigt nichts auf den echten Claude-Ordner des Rechners: die Pfade
+        // wurzeln im Benutzerordner des Servers, und weder Schlüsselbund noch Anthropic
+        // werden gefragt
+        let paths = match config.is_contract() {
+            true => AccountPaths::new(std::collections::HashMap::new(), config.home.dir()),
+            false => AccountPaths::from_process_env(),
+        };
         let store = AccountStore::with_paths(config.home.clone(), paths.clone());
         let account_usage = config.account_usage.clone().unwrap_or_else(|| {
             Arc::new(AccountUsageService::with_options(
@@ -193,6 +199,11 @@ impl AppState {
                 AccountUsageOptions {
                     paths: paths.clone(),
                     clock: config.clock.clone(),
+                    keychain: match config.is_contract() {
+                        true => crate::accounts::no_keychain(),
+                        false => crate::accounts::system_keychain(),
+                    },
+                    fetch: config.is_contract().then(crate::usage::no_fetch),
                     ..AccountUsageOptions::default()
                 },
             ))
@@ -286,10 +297,14 @@ impl AppState {
                 )),
                 plugins,
                 store,
+                // Im Vertragsmodus schlägt nichts die echten Profile des Rechners vor
                 mcacc_dir: config
                     .mcacc_dir
                     .clone()
-                    .unwrap_or_else(|| user_home().join(".mcacc").join("profiles")),
+                    .unwrap_or_else(|| match config.is_contract() {
+                        true => config.home.dir().join("mcacc-profiles"),
+                        false => user_home().join(".mcacc").join("profiles"),
+                    }),
                 paths,
                 rename_on_login: std::sync::Mutex::new(std::collections::HashSet::new()),
             },

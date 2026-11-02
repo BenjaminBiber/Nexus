@@ -1,5 +1,60 @@
 [
   {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "GET",
+    "pattern": "/api/accounts"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "POST",
+    "pattern": "/api/accounts"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "DELETE",
+    "pattern": "/api/accounts/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "PATCH",
+    "pattern": "/api/accounts/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "DELETE",
+    "pattern": "/api/accounts/:id/login"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "POST",
+    "pattern": "/api/accounts/:id/login"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "POST",
+    "pattern": "/api/accounts/:id/login/code"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "POST",
+    "pattern": "/api/accounts/:id/plugin"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "POST",
+    "pattern": "/api/accounts/:id/resume"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "POST",
+    "pattern": "/api/accounts/login"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "GET",
+    "pattern": "/api/accounts/names"
+  },
+  {
     "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "GET",
     "pattern": "/api/db/active"
@@ -575,6 +630,26 @@
     "pattern": "/api/user-settings"
   },
   {
+    "file": "crates/nexus-server/src/routes/setup.rs",
+    "method": "GET",
+    "pattern": "/api/db/boards/:id/migration"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/setup.rs",
+    "method": "POST",
+    "pattern": "/api/db/boards/:id/migration"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/setup.rs",
+    "method": "GET",
+    "pattern": "/api/setup/plugin"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/setup.rs",
+    "method": "POST",
+    "pattern": "/api/setup/plugin"
+  },
+  {
     "file": "crates/nexus-server/src/routes/spec.rs",
     "method": "GET",
     "pattern": "/api/projects/:pid/spec-progress"
@@ -583,6 +658,11 @@
     "file": "crates/nexus-server/src/routes/usage.rs",
     "method": "GET",
     "pattern": "/api/claude-usage"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/usage.rs",
+    "method": "GET",
+    "pattern": "/api/claude-usage/accounts"
   },
   {
     "file": "crates/nexus-server/src/routes/workflow.rs",

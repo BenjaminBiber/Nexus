@@ -339,6 +339,11 @@ fn home_dir() -> PathBuf {
         .unwrap_or_default()
 }
 
+/// Ein Abruf, der nie etwas liefert (Vertragsmodus und Tests ohne Netz)
+pub fn no_fetch() -> UsageFetch {
+    Arc::new(|_request: UsageRequest| Box::pin(async { Err("ohne Netz".to_string()) }))
+}
+
 /// Der echte Abruf über HTTPS mit Zeitlimit
 pub fn http_fetch() -> UsageFetch {
     Arc::new(|request: UsageRequest| {

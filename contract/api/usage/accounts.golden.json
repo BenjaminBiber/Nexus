@@ -1,0 +1,186 @@
+[
+  {
+    "name": "Übersicht ohne eingeschaltete Einstellung",
+    "request": {
+      "method": "GET",
+      "path": "/api/claude-usage/accounts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [],
+        "defaultLimit": 90,
+        "enabled": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Abo-Limits einschalten",
+    "request": {
+      "body": {
+        "claudeUsage": true
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": true,
+        "compactCards": false,
+        "heroImages": false,
+        "hideInPlanning": false,
+        "hideNotNeeded": false,
+        "notifications": "off",
+        "ntfy": false,
+        "ntfyServer": "https://ntfy.sh",
+        "ntfyToken": "",
+        "ntfyTopic": "",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
+        "theme": "system"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Übersicht mit dem Standard-Account",
+    "request": {
+      "method": "GET",
+      "path": "/api/claude-usage/accounts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "name": "Standard",
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "defaultLimit": 90,
+        "enabled": true
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "zweiter Account",
+    "request": {
+      "body": {
+        "name": "Max"
+      },
+      "method": "POST",
+      "path": "/api/accounts"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "Übersicht mit beiden Accounts",
+    "request": {
+      "method": "GET",
+      "path": "/api/claude-usage/accounts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "name": "Standard",
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          },
+          {
+            "fallback": false,
+            "id": "max",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "name": "Max",
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "defaultLimit": 90,
+        "enabled": true
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Account abschalten",
+    "request": {
+      "body": {
+        "enabled": false
+      },
+      "method": "PATCH",
+      "path": "/api/accounts/max"
+    },
+    "response": {
+      "status": 200
+    }
+  },
+  {
+    "name": "Übersicht ohne den abgeschalteten Account",
+    "request": {
+      "method": "GET",
+      "path": "/api/claude-usage/accounts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "name": "Standard",
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "defaultLimit": 90,
+        "enabled": true
+      },
+      "status": 200
+    }
+  }
+]

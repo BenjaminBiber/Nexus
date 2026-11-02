@@ -1,0 +1,23 @@
+{
+  "title": "Abo-Limits aller aktiven Claude-Accounts",
+  "steps": [
+    { "name": "Übersicht ohne eingeschaltete Einstellung", "method": "GET", "path": "/api/claude-usage/accounts" },
+    {
+      "name": "Abo-Limits einschalten",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "claudeUsage": true }
+    },
+    { "name": "Übersicht mit dem Standard-Account", "method": "GET", "path": "/api/claude-usage/accounts" },
+    { "name": "zweiter Account", "method": "POST", "path": "/api/accounts", "body": { "name": "Max" }, "compare": "status" },
+    { "name": "Übersicht mit beiden Accounts", "method": "GET", "path": "/api/claude-usage/accounts" },
+    {
+      "name": "Account abschalten",
+      "method": "PATCH",
+      "path": "/api/accounts/max",
+      "body": { "enabled": false },
+      "compare": "status"
+    },
+    { "name": "Übersicht ohne den abgeschalteten Account", "method": "GET", "path": "/api/claude-usage/accounts" }
+  ]
+}

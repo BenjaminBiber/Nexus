@@ -1,0 +1,471 @@
+[
+  {
+    "name": "Einstellung mit unbekanntem Account speichern",
+    "request": {
+      "body": {
+        "defaultProfile": "standard",
+        "enabled": false,
+        "profiles": {
+          "schwer": {
+            "accounts": [
+              "max"
+            ],
+            "model": "opus"
+          },
+          "standard": {
+            "model": "opus"
+          }
+        }
+      },
+      "method": "PUT",
+      "path": "/api/dispatch/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "dispatch-config-invalid",
+        "message": "Unbekannte Accounts: „max“ (Profil schwer). Accounts legst du unter Einstellungen → Accounts an."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Account anlegen",
+    "request": {
+      "body": {
+        "name": "Max"
+      },
+      "method": "POST",
+      "path": "/api/accounts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "configDir": null,
+            "effectiveDir": "<HOME>/.claude",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Standard",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          },
+          {
+            "configDir": "<HOME>/accounts/max",
+            "effectiveDir": "<HOME>/accounts/max",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "max",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Max",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "accountsDir": "<HOME>/accounts",
+        "multi": true,
+        "pluginCommands": [],
+        "suggestions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Einstellung mit bekanntem Account speichern",
+    "request": {
+      "body": {
+        "defaultProfile": "standard",
+        "enabled": false,
+        "profiles": {
+          "schwer": {
+            "accounts": [
+              "max"
+            ],
+            "model": "opus"
+          },
+          "standard": {
+            "model": "opus"
+          }
+        }
+      },
+      "method": "PUT",
+      "path": "/api/dispatch/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "config": {
+          "accountLimitPercent": 90,
+          "accountStrategy": "most-free",
+          "agentPrefix": "junior-",
+          "allowFable": false,
+          "boards": null,
+          "claude": {
+            "allowedTools": [
+              "Read",
+              "Edit",
+              "Write",
+              "Glob",
+              "Grep",
+              "Bash(harness:*)",
+              "Bash(nexus:*)",
+              "Bash(node:*)",
+              "Bash(npm test:*)",
+              "Bash(npm run:*)",
+              "Bash(git status:*)",
+              "Bash(git diff:*)",
+              "Bash(git log:*)",
+              "Bash(git branch:*)",
+              "Bash(git add:*)",
+              "Bash(git commit:*)"
+            ],
+            "command": "claude",
+            "effort": null,
+            "extraArgs": [],
+            "gitBashPath": null,
+            "maxTurns": 80,
+            "model": "sonnet",
+            "permissionMode": "acceptEdits",
+            "timeoutMinutes": 60,
+            "useSubscription": true
+          },
+          "defaultProfile": "standard",
+          "dispatcherName": "dispatcher",
+          "enabled": false,
+          "escalate": true,
+          "joinWorktrees": "none",
+          "ladder": [
+            "standard",
+            "schwer"
+          ],
+          "maxAttempts": 2,
+          "mergeStrategy": "merge",
+          "optInLabel": "auto",
+          "optOutLabel": "manuell",
+          "pauseMinutesOnLimit": 60,
+          "planning": {
+            "acceptance": true,
+            "auto": false,
+            "profile": null,
+            "wip": 1
+          },
+          "profiles": {
+            "schwer": {
+              "accounts": [
+                "max"
+              ],
+              "effort": null,
+              "maxTurns": 80,
+              "model": "opus",
+              "timeoutMinutes": 60
+            },
+            "standard": {
+              "effort": null,
+              "maxTurns": 80,
+              "model": "opus",
+              "timeoutMinutes": 60
+            }
+          },
+          "promptExtra": "",
+          "prompts": {
+            "merge": null,
+            "plan": null,
+            "research": null,
+            "work": null
+          },
+          "research": {
+            "auto": false,
+            "maxPerDay": 10,
+            "profile": null,
+            "wip": 1
+          },
+          "reviewBeforeMerge": true,
+          "rules": [],
+          "staleMinutes": 90,
+          "window": null,
+          "wip": 1,
+          "worktreeSetup": [],
+          "worktreeSetupTimeoutMinutes": 15
+        },
+        "error": null,
+        "exists": true,
+        "file": "<HOME>/dispatch.yaml",
+        "raw": {
+          "defaultProfile": "standard",
+          "enabled": false,
+          "profiles": {
+            "schwer": {
+              "accounts": [
+                "max"
+              ],
+              "model": "opus"
+            },
+            "standard": {
+              "model": "opus"
+            }
+          }
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Account kennt seinen Verweis",
+    "request": {
+      "method": "GET",
+      "path": "/api/accounts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "configDir": null,
+            "effectiveDir": "<HOME>/.claude",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Standard",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          },
+          {
+            "configDir": "<HOME>/accounts/max",
+            "effectiveDir": "<HOME>/accounts/max",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "max",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Max",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [
+              "Profil schwer"
+            ],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "accountsDir": "<HOME>/accounts",
+        "multi": true,
+        "pluginCommands": [],
+        "suggestions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Account entfernen",
+    "request": {
+      "method": "DELETE",
+      "path": "/api/accounts/max"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "configDir": null,
+            "effectiveDir": "<HOME>/.claude",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Standard",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "accountsDir": "<HOME>/accounts",
+        "multi": false,
+        "pluginCommands": [],
+        "suggestions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Einstellung ohne den Verweis",
+    "request": {
+      "method": "GET",
+      "path": "/api/dispatch/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "config": {
+          "accountLimitPercent": 90,
+          "accountStrategy": "most-free",
+          "agentPrefix": "junior-",
+          "allowFable": false,
+          "boards": null,
+          "claude": {
+            "allowedTools": [
+              "Read",
+              "Edit",
+              "Write",
+              "Glob",
+              "Grep",
+              "Bash(harness:*)",
+              "Bash(nexus:*)",
+              "Bash(node:*)",
+              "Bash(npm test:*)",
+              "Bash(npm run:*)",
+              "Bash(git status:*)",
+              "Bash(git diff:*)",
+              "Bash(git log:*)",
+              "Bash(git branch:*)",
+              "Bash(git add:*)",
+              "Bash(git commit:*)"
+            ],
+            "command": "claude",
+            "effort": null,
+            "extraArgs": [],
+            "gitBashPath": null,
+            "maxTurns": 80,
+            "model": "sonnet",
+            "permissionMode": "acceptEdits",
+            "timeoutMinutes": 60,
+            "useSubscription": true
+          },
+          "defaultProfile": "standard",
+          "dispatcherName": "dispatcher",
+          "enabled": false,
+          "escalate": true,
+          "joinWorktrees": "none",
+          "ladder": [
+            "standard",
+            "schwer"
+          ],
+          "maxAttempts": 2,
+          "mergeStrategy": "merge",
+          "optInLabel": "auto",
+          "optOutLabel": "manuell",
+          "pauseMinutesOnLimit": 60,
+          "planning": {
+            "acceptance": true,
+            "auto": false,
+            "profile": null,
+            "wip": 1
+          },
+          "profiles": {
+            "schwer": {
+              "effort": null,
+              "maxTurns": 80,
+              "model": "opus",
+              "timeoutMinutes": 60
+            },
+            "standard": {
+              "effort": null,
+              "maxTurns": 80,
+              "model": "opus",
+              "timeoutMinutes": 60
+            }
+          },
+          "promptExtra": "",
+          "prompts": {
+            "merge": null,
+            "plan": null,
+            "research": null,
+            "work": null
+          },
+          "research": {
+            "auto": false,
+            "maxPerDay": 10,
+            "profile": null,
+            "wip": 1
+          },
+          "reviewBeforeMerge": true,
+          "rules": [],
+          "staleMinutes": 90,
+          "window": null,
+          "wip": 1,
+          "worktreeSetup": [],
+          "worktreeSetupTimeoutMinutes": 15
+        },
+        "error": null,
+        "exists": true,
+        "file": "<HOME>/dispatch.yaml",
+        "raw": {
+          "defaultProfile": "standard",
+          "enabled": false,
+          "profiles": {
+            "schwer": {
+              "model": "opus"
+            },
+            "standard": {
+              "model": "opus"
+            }
+          }
+        }
+      },
+      "status": 200
+    }
+  }
+]

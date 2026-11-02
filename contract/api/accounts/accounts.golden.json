@@ -1,0 +1,688 @@
+[
+  {
+    "name": "Liste mit nur dem Standard-Account",
+    "request": {
+      "method": "GET",
+      "path": "/api/accounts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "configDir": null,
+            "effectiveDir": "<HOME>/.claude",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Standard",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "accountsDir": "<HOME>/accounts",
+        "multi": false,
+        "pluginCommands": [],
+        "suggestions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "nur IDs und Namen",
+    "request": {
+      "method": "GET",
+      "path": "/api/accounts/names"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "id": "standard",
+            "name": "Standard"
+          }
+        ]
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Account anlegen",
+    "request": {
+      "body": {
+        "name": "Max privat"
+      },
+      "method": "POST",
+      "path": "/api/accounts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "configDir": null,
+            "effectiveDir": "<HOME>/.claude",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Standard",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          },
+          {
+            "configDir": "<HOME>/accounts/max-privat",
+            "effectiveDir": "<HOME>/accounts/max-privat",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "max-privat",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Max privat",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "accountsDir": "<HOME>/accounts",
+        "multi": true,
+        "pluginCommands": [],
+        "suggestions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Account ohne Namen anlegen",
+    "request": {
+      "body": {
+        "name": ""
+      },
+      "method": "POST",
+      "path": "/api/accounts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "account-invalid",
+        "message": "Der Account braucht einen Namen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Account auf einem unbekannten Ordner anlegen",
+    "request": {
+      "body": {
+        "configDir": "/gibt/es/nicht",
+        "name": "Fremd"
+      },
+      "method": "POST",
+      "path": "/api/accounts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "account-invalid",
+        "message": "Den Ordner /gibt/es/nicht gibt es nicht."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Account mit falschem Ordner anlegen",
+    "request": {
+      "body": {
+        "configDir": 7,
+        "name": "Falsch"
+      },
+      "method": "POST",
+      "path": "/api/accounts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "configDir muss ein Pfad sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Account umbenennen und abschalten",
+    "request": {
+      "body": {
+        "enabled": false,
+        "name": "Max Firma"
+      },
+      "method": "PATCH",
+      "path": "/api/accounts/max-privat"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "configDir": null,
+            "effectiveDir": "<HOME>/.claude",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Standard",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          },
+          {
+            "configDir": "<HOME>/accounts/max-privat",
+            "effectiveDir": "<HOME>/accounts/max-privat",
+            "email": null,
+            "enabled": false,
+            "fallback": false,
+            "id": "max-privat",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Max Firma",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "accountsDir": "<HOME>/accounts",
+        "multi": false,
+        "pluginCommands": [],
+        "suggestions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Account als Fallback markieren und begrenzen",
+    "request": {
+      "body": {
+        "fallback": true,
+        "limitFiveHour": 50,
+        "limitWeek": null
+      },
+      "method": "PATCH",
+      "path": "/api/accounts/max-privat"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "configDir": null,
+            "effectiveDir": "<HOME>/.claude",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Standard",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          },
+          {
+            "configDir": "<HOME>/accounts/max-privat",
+            "effectiveDir": "<HOME>/accounts/max-privat",
+            "email": null,
+            "enabled": false,
+            "fallback": true,
+            "id": "max-privat",
+            "limitFiveHour": 50,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Max Firma",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "accountsDir": "<HOME>/accounts",
+        "multi": false,
+        "pluginCommands": [],
+        "suggestions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Obergrenze außerhalb von 1 bis 100",
+    "request": {
+      "body": {
+        "limitWeek": 150
+      },
+      "method": "PATCH",
+      "path": "/api/accounts/max-privat"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Die Obergrenze für Woche muss eine ganze Zahl von 1 bis 100 sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Schalter als Text",
+    "request": {
+      "body": {
+        "enabled": "ja"
+      },
+      "method": "PATCH",
+      "path": "/api/accounts/max-privat"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "enabled muss true oder false sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekannten Account ändern",
+    "request": {
+      "body": {
+        "enabled": true
+      },
+      "method": "PATCH",
+      "path": "/api/accounts/gibt-es-nicht"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "account-not-found",
+        "message": "Account „gibt-es-nicht“ gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Standard-Account entfernen",
+    "request": {
+      "method": "DELETE",
+      "path": "/api/accounts/standard"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "account-invalid",
+        "message": "Den Standard-Account kann man nur abschalten, nicht entfernen."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "unbekannten Account entfernen",
+    "request": {
+      "method": "DELETE",
+      "path": "/api/accounts/gibt-es-nicht"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "account-not-found",
+        "message": "Account „gibt-es-nicht“ gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Code ohne laufende Anmeldung",
+    "request": {
+      "body": {
+        "code": "abc"
+      },
+      "method": "POST",
+      "path": "/api/accounts/max-privat/login/code"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "account-login-not-running",
+        "message": "Für diesen Account läuft keine Anmeldung."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Anmeldung abbrechen, die es nicht gibt",
+    "request": {
+      "method": "DELETE",
+      "path": "/api/accounts/max-privat/login"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "configDir": null,
+            "effectiveDir": "<HOME>/.claude",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Standard",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          },
+          {
+            "configDir": "<HOME>/accounts/max-privat",
+            "effectiveDir": "<HOME>/accounts/max-privat",
+            "email": null,
+            "enabled": false,
+            "fallback": true,
+            "id": "max-privat",
+            "limitFiveHour": 50,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Max Firma",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "accountsDir": "<HOME>/accounts",
+        "multi": false,
+        "pluginCommands": [],
+        "suggestions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Anmeldung eines unbekannten Accounts",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/accounts/gibt-es-nicht/login"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "account-not-found",
+        "message": "Account „gibt-es-nicht“ gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Pause eines Accounts aufheben",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/accounts/max-privat/resume"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "configDir": null,
+            "effectiveDir": "<HOME>/.claude",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Standard",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          },
+          {
+            "configDir": "<HOME>/accounts/max-privat",
+            "effectiveDir": "<HOME>/accounts/max-privat",
+            "email": null,
+            "enabled": false,
+            "fallback": true,
+            "id": "max-privat",
+            "limitFiveHour": 50,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Max Firma",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "accountsDir": "<HOME>/accounts",
+        "multi": false,
+        "pluginCommands": [],
+        "suggestions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Plugin eines unbekannten Accounts einrichten",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/accounts/gibt-es-nicht/plugin"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "account-not-found",
+        "message": "Account „gibt-es-nicht“ gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Account entfernen",
+    "request": {
+      "method": "DELETE",
+      "path": "/api/accounts/max-privat"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "configDir": null,
+            "effectiveDir": "<HOME>/.claude",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Standard",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "accountsDir": "<HOME>/accounts",
+        "multi": false,
+        "pluginCommands": [],
+        "suggestions": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Liste nach dem Entfernen",
+    "request": {
+      "method": "GET",
+      "path": "/api/accounts"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "accounts": [
+          {
+            "configDir": null,
+            "effectiveDir": "<HOME>/.claude",
+            "email": null,
+            "enabled": true,
+            "fallback": false,
+            "id": "standard",
+            "limitFiveHour": null,
+            "limitWeek": null,
+            "loggedIn": false,
+            "login": null,
+            "name": "Standard",
+            "pausedUntil": null,
+            "plugin": false,
+            "references": [],
+            "usage": {
+              "available": false,
+              "fetchedAt": null,
+              "fiveHour": null,
+              "plan": null,
+              "reason": "no-login",
+              "sevenDay": null
+            }
+          }
+        ],
+        "accountsDir": "<HOME>/accounts",
+        "multi": false,
+        "pluginCommands": [],
+        "suggestions": []
+      },
+      "status": 200
+    }
+  }
+]

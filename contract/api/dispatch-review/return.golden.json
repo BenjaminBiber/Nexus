@@ -201,6 +201,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": 1,

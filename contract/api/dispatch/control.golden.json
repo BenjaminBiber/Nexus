@@ -8,6 +8,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": null,
@@ -185,6 +186,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -245,6 +247,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -306,6 +309,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -369,6 +373,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -429,6 +434,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -492,6 +498,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 1,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -559,6 +566,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 1,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -626,6 +634,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 1,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -723,6 +732,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 1,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -898,6 +908,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 1,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -966,6 +977,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 1,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -1033,6 +1045,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "accountPauses": {},
         "active": 1,
         "agentPrefix": "junior-",
         "boardId": 1,

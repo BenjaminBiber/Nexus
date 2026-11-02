@@ -29,6 +29,7 @@
     "response": {
       "code": 0,
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -170,6 +171,7 @@
     "response": {
       "code": 0,
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -235,6 +237,7 @@
     "response": {
       "code": 0,
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -394,6 +397,7 @@
     "response": {
       "code": 0,
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -474,6 +478,7 @@
     "response": {
       "code": 0,
       "json": {
+        "accountPauses": {},
         "active": 0,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -696,6 +701,7 @@
     "response": {
       "code": 0,
       "json": {
+        "accountPauses": {},
         "active": 1,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -818,6 +824,7 @@
     "response": {
       "code": 0,
       "json": {
+        "accountPauses": {},
         "active": 1,
         "agentPrefix": "junior-",
         "boardId": 1,
@@ -983,6 +990,7 @@
     "response": {
       "code": 0,
       "json": {
+        "accountPauses": {},
         "active": 1,
         "agentPrefix": "junior-",
         "boardId": 1,

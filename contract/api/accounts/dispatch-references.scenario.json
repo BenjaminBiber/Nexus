@@ -1,0 +1,36 @@
+{
+  "title": "Dispatcher-Einstellung: Accounts in Profilen prüfen und mitentfernen",
+  "fixtures": { "boardConfig": "sqlite" },
+  "steps": [
+    {
+      "name": "Einstellung mit unbekanntem Account speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": {
+        "enabled": false,
+        "profiles": { "standard": { "model": "opus" }, "schwer": { "model": "opus", "accounts": ["max"] } },
+        "defaultProfile": "standard"
+      }
+    },
+    { "name": "Account anlegen", "method": "POST", "path": "/api/accounts", "body": { "name": "Max" } },
+    {
+      "name": "Einstellung mit bekanntem Account speichern",
+      "method": "PUT",
+      "path": "/api/dispatch/config",
+      "body": {
+        "enabled": false,
+        "profiles": { "standard": { "model": "opus" }, "schwer": { "model": "opus", "accounts": ["max"] } },
+        "defaultProfile": "standard"
+      },
+      "ignore": ["json.promptInfo"]
+    },
+    { "name": "Account kennt seinen Verweis", "method": "GET", "path": "/api/accounts" },
+    { "name": "Account entfernen", "method": "DELETE", "path": "/api/accounts/max" },
+    {
+      "name": "Einstellung ohne den Verweis",
+      "method": "GET",
+      "path": "/api/dispatch/config",
+      "ignore": ["json.promptInfo"]
+    }
+  ]
+}
