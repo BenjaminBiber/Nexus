@@ -5,6 +5,7 @@ import { LiveProvider } from '../live/LiveProvider.js';
 import { ConnectionBadge } from './ConnectionBadge.js';
 import { ConnectionBanner } from './ConnectionBanner.js';
 import { SessionNotifier } from './SessionNotifier.js';
+import { SetupPrompts } from './setup/SetupPrompts.js';
 import { BoardProjectSwitcher } from './BoardProjectSwitcher.js';
 import { DbQuestionsNavLink } from './DbQuestionsNavLink.js';
 import { DocsNavLink } from './DocsNavLink.js';
@@ -81,6 +82,7 @@ export function AppShell() {
       <BoardProjectProvider>
         <OpenSearchContext.Provider value={openSearch}>
         <SessionNotifier pid={pid} />
+        <SetupPrompts />
         {theme === 'win95' ? (
           <Win95Frame pid={pid} nav={navLinks} content={content} />
         ) : (
