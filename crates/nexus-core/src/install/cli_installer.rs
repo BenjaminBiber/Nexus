@@ -11,6 +11,7 @@ use serde::Serialize;
 
 use crate::error::{Error, HarnessError, Result};
 use crate::install::launcher_writer::{LauncherWriter, BINARY_NAME};
+use crate::install::plugin_files::{copy_dir, copy_home_data, is_same, remove_dir};
 use crate::install::user_path::UserPath;
 use crate::registry::HarnessHome;
 
@@ -103,8 +104,7 @@ impl<'a> CliInstaller<'a> {
             .into());
         }
         self.copy_app(root, &app_dir)?;
-        self.copy_rules(root)?;
-        self.copy_customizations(root)?;
+        copy_home_data(root, &self.home)?;
         let launchers = self.launchers.write(&bin_dir)?;
         let binary = bin_dir.join(BINARY_NAME);
         copy_binary(&source, &binary)?;
@@ -161,31 +161,6 @@ impl<'a> CliInstaller<'a> {
         }
         Ok(())
     }
-
-    /// Legt die Regeln des Plugins frisch unter `~/.nexus/rules` ab, dem festen Importziel der
-    /// Projekte. Der Ordner des Plugins in Claude Code taugt dafür nicht, er wechselt mit jeder
-    /// Version.
-    fn copy_rules(&self, root: &Path) -> Result<()> {
-        self.copy_into(&root.join("rules"), &self.home.rules_dir())
-    }
-
-    /// Legt die angewendeten Anpassungen frisch unter `~/.nexus/customizations` ab; Hook und
-    /// Server lesen dort
-    fn copy_customizations(&self, root: &Path) -> Result<()> {
-        self.copy_into(
-            &root.join("customizations"),
-            &self.home.customizations_dir(),
-        )
-    }
-
-    /// Kopiert einen Ordner des Plugins frisch in den Benutzerordner, falls es ihn gibt
-    fn copy_into(&self, source: &Path, target: &Path) -> Result<()> {
-        if !source.is_dir() || is_same(source, target) {
-            return Ok(());
-        }
-        remove_dir(target)?;
-        copy_dir(source, target)
-    }
 }
 
 /// Kopiert das Binary; unter Windows über einen temporären Namen, falls die alte Datei gerade
@@ -207,46 +182,6 @@ fn copy_binary(source: &Path, target: &Path) -> Result<()> {
         }
         Err(error) => Err(Error::unexpected(error)),
     }
-}
-
-/// Löscht einen Ordner samt Inhalt, falls es ihn gibt
-fn remove_dir(dir: &Path) -> Result<()> {
-    match fs::remove_dir_all(dir) {
-        Ok(()) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(Error::unexpected(error)),
-    }
-}
-
-/// Kopiert einen Ordner samt Unterordnern (wie `cp -r`)
-fn copy_dir(source: &Path, target: &Path) -> Result<()> {
-    fs::create_dir_all(target).map_err(Error::unexpected)?;
-    for entry in fs::read_dir(source).map_err(Error::unexpected)? {
-        let entry = entry.map_err(Error::unexpected)?;
-        let from = entry.path();
-        let to = target.join(entry.file_name());
-        if from.is_dir() {
-            copy_dir(&from, &to)?;
-        } else {
-            fs::copy(&from, &to).map_err(Error::unexpected)?;
-        }
-    }
-    Ok(())
-}
-
-/// Quelle und Ziel gleich? (Aufruf aus der bereits installierten Kopie; Windows ohne
-/// Groß-/Kleinschreibung)
-fn is_same(a: &Path, b: &Path) -> bool {
-    let norm = |path: &Path| {
-        let absolute = std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf());
-        let text = absolute.to_string_lossy().into_owned();
-        if cfg!(windows) {
-            text.to_lowercase()
-        } else {
-            text
-        }
-    };
-    norm(a) == norm(b)
 }
 
 /// Pfad als Text für das Ergebnis-JSON

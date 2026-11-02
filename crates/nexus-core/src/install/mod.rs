@@ -6,6 +6,8 @@ pub mod claude_plugin;
 pub mod cli_installer;
 pub mod import_approval;
 pub mod launcher_writer;
+pub mod plugin_bundle;
+pub mod plugin_files;
 pub mod plugin_switch;
 pub mod project_rule;
 pub mod project_rules;
@@ -22,6 +24,7 @@ pub use claude_plugin::{
 pub use cli_installer::{CliInstaller, InstallOptions, InstallResult};
 pub use import_approval::{ApprovalResult, ApprovalStatus, ClaudeImportApproval};
 pub use launcher_writer::{LauncherWriter, BINARY_NAME};
+pub use plugin_bundle::{PluginBundle, BUNDLE_PLUGIN_DIR};
 pub use plugin_switch::{ProjectPluginSwitch, SwitchResult, LEGACY_PLUGIN_ID, PLUGIN_ID};
 pub use project_rule::{
     ProjectRule, ProjectRuleSpec, BOARD_RULE_PATH, DOCS_RULE_PATH, LEGACY_BOARD_RULE_PATH,

@@ -221,6 +221,12 @@ impl NexusHome {
     pub fn customizations_dir(&self) -> PathBuf {
         self.dir.join("customizations")
     }
+
+    /// Lokaler Marktplatz mit der Kopie des mitgelieferten Plugins (`plugin/nexus`); überlebt
+    /// Updates der App, deren Ressourcenordner das nicht tut
+    pub fn plugin_dir(&self) -> PathBuf {
+        self.dir.join("plugin")
+    }
 }
 
 /// Quelle eines Umzugs: `HARNESS_HOME`, sonst `~/.harness` – unabhängig davon, ob es den
