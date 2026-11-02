@@ -355,7 +355,7 @@ async fn create_branch(
 
 /// Der Repo-Pfad eines Boards, wenn der Ordner auf diesem Rechner liegt; ein unbekanntes
 /// Board ist `board-not-found`
-async fn board_repo(state: &Arc<AppState>, id: i32) -> Result<Option<String>> {
+pub(crate) async fn board_repo(state: &Arc<AppState>, id: i32) -> Result<Option<String>> {
     let board = state
         .board
         .run(|b| async move { b.services().boards.find(id).await })

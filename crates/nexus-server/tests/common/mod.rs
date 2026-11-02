@@ -111,6 +111,10 @@ pub struct TestServerOptions {
     /// Benutzerordner eines schon laufenden Servers (Neustart mit demselben Bestand);
     /// ohne Angabe ein frischer
     pub home: Option<HarnessHome>,
+    /// Mitgeliefertes Plugin (`POST /api/setup/plugin`)
+    pub plugin_bundle: Option<PathBuf>,
+    /// Umgebung der Einrichtung; ohne Angabe ohne Claude und mit Claude-Ordner im Temp-Home
+    pub setup: Option<nexus_server::setup::SetupContext>,
 }
 
 /// Startet nichts und liefert keine Prozessnummer; so startet in Tests nie ein echter Worker
@@ -150,6 +154,15 @@ impl TestServer {
         let mut config = ServerConfig::new(PORT, home.clone());
         config.version = "test".into();
         config.web_dir = options.web_dir;
+        config.plugin_bundle = options.plugin_bundle;
+        // Nie den echten Claude-Ordner des Rechners anfassen
+        config.setup = options.setup.unwrap_or_else(|| {
+            nexus_server::setup::SetupContext::new(
+                Arc::new(nexus_server::setup::NoClaude),
+                Some(home.dir().join("claude")),
+                home.dir().to_path_buf(),
+            )
+        });
         if let Some(heartbeat_ms) = options.heartbeat_ms {
             config.heartbeat_ms = heartbeat_ms;
         }

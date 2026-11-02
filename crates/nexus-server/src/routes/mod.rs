@@ -19,6 +19,7 @@ pub mod notifications;
 pub mod questions;
 pub mod sessions;
 pub mod settings;
+pub mod setup;
 pub mod spec;
 pub mod static_files;
 pub mod usage;
@@ -48,6 +49,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     Router::new()
         .merge(health::routes())
         .merge(settings::routes())
+        .merge(setup::routes())
         .merge(db_boards::routes())
         .merge(db_tickets::routes())
         .merge(db_misc::routes())

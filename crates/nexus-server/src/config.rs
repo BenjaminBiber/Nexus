@@ -58,6 +58,11 @@ pub struct ServerConfig {
     /// Herkunft der Oberfläche im Entwicklungsmodus der Desktop-App (Vite, z. B.
     /// `http://localhost:5173`); gilt wie die der App nur mit Start-Token
     pub dev_origin: Option<String>,
+    /// Mit der Desktop-App geliefertes Claude-Code-Plugin (`<Ressourcen>/plugin/nexus`); bei
+    /// `nexus serve` `None`
+    pub plugin_bundle: Option<PathBuf>,
+    /// Umgebung der Einrichtung (Claude-Kommandozeile, Claude-Ordner); Tests setzen Attrappen
+    pub setup: crate::setup::SetupContext,
 }
 
 /// Version, die den Vertragsmodus kennzeichnet (`NEXUS_SERVER_VERSION=contract`)
@@ -89,6 +94,8 @@ impl ServerConfig {
             clock: Clock::system(),
             app_token: AppToken::new(),
             dev_origin: None,
+            plugin_bundle: None,
+            setup: crate::setup::SetupContext::from_process_env(),
         }
     }
 }
