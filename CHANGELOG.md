@@ -6,6 +6,18 @@
 
 ### Vertrag
 
+- Keine Änderungen.
+
+### Angekündigt
+
+- Keine.
+
+### Sonstiges
+
+## 0.1.1 – 2026-11-02
+
+### Vertrag
+
 - Workflow: Typen `WorkflowPhase`, `WorkflowStep`, `WorkflowOption` aus `@harness/core`; Default-Export von `custom/workflow.ts` ist `WorkflowPhase[]`; Pflicht-Phasen `planen` und `umsetzen`; die Phasen-IDs `fragen` und `nebenbei` sind reserviert.
 - Skills: `board`, `board-question`, `harness-grill`, `harness-wayfinder`, `harness-tasks`, `harness-implement`, `harness-setup`, `harness-customize`.
 - Output-Styles: `software-engineer`.
