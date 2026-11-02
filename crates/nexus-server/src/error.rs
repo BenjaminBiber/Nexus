@@ -59,7 +59,12 @@ impl ErrorMapper {
         if code == "token-invalid" {
             return StatusCode::FORBIDDEN;
         }
-        if code == "conflict" || code == "export-target-not-empty" || code == "doc-changed" {
+        if code == "conflict"
+            || code == "export-target-not-empty"
+            || code == "doc-changed"
+            || code == "setup-busy"
+            || code == "plugin-not-bundled"
+        {
             return StatusCode::CONFLICT;
         }
         // Zeilenbereich passt nicht zum Dokument: die Anfrage selbst ist falsch gebaut

@@ -21,6 +21,7 @@ pub mod notifications;
 pub mod projects;
 pub mod routes;
 pub mod sessions;
+pub mod setup;
 pub mod state;
 pub mod timeline;
 pub mod usage;
