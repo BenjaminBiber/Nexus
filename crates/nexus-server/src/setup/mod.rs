@@ -1,6 +1,9 @@
 //! Einrichtung aus der Oberfläche: Claude-Code-Plugin installieren und Projekte vom alten
 //! AI Harness umstellen. Die Routen dazu stehen in [`crate::routes::setup`].
 
+pub mod legacy_check;
+pub mod migration;
+pub mod plugin_install;
 pub mod plugin_status;
 
 use std::fmt;
