@@ -160,9 +160,10 @@ Im Probelauf ist das Tag nie bei GitHub angekommen: dann baut `build` den gestar
 | `ubuntu-22.04` | `x86_64-unknown-linux-gnu` | `appimage`, `deb`, `rpm` |
 
 Jeder Eintrag checkt das Tag aus, richtet Rust (Version wie in `rust-toolchain.toml`) und Node 26 ein, installiert
-unter Linux die Systempakete von Tauri samt `rpm`, baut dann Oberfläche (`npm run build`) und das Binary
-(`cargo build --release -p nexus-cli --bin nexus --target <ziel>`) und ruft `tauri-apps/tauri-action` mit
-`releaseId` auf. Die Action lädt
+unter Linux die Systempakete von Tauri samt `rpm` und ruft `tauri-apps/tauri-action` mit `releaseId` auf.
+Oberfläche und Binary baut der Tauri-Build selbst über `beforeBuildCommand` (`prepare-binaries`), je genau
+einmal: `NEXUS_RELEASE_TARGET=<ziel>` lässt `copy-server.mjs` mit `--target` bauen, sodass das Binary unter
+`target/<ziel>/release` neben der App liegt und das CLI-Archiv es dort findet. Die Action lädt
 dmg, NSIS-Installer, AppImage, deb und rpm an den Entwurf; `includeUpdaterJson` bleibt aus (P6-7). Der Job läuft in
 der Umgebung `release`, nutzt aber noch keine Secrets – gebaut wird unsigniert, die Signatur kommt mit P6-6.
 

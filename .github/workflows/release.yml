@@ -77,6 +77,10 @@ jobs:
           - { runner: ubuntu-22.04, target: x86_64-unknown-linux-gnu, bundles: 'appimage,deb,rpm' }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
+    # copy-server.mjs baut den Server damit wie die App mit --target: beide teilen sich
+    # target/<ziel>/release, und das CLI-Archiv findet den Server dort
+    env:
+      NEXUS_RELEASE_TARGET: ${{ matrix.target }}
     steps:
       # Gebaut wird das Tag aus dem Job „version“, nicht der Stand des Branches. Im Probelauf
       # bleibt das Tag lokal im Job „version“; gebaut wird dann der gestartete Commit
@@ -102,11 +106,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev patchelf rpm
+      # Oberfläche und Server baut der Tauri-Build über beforeBuildCommand (prepare-binaries)
+      # genau einmal; das CLI-Archiv nimmt beides danach von dort
       - run: npm ci
-      - run: npm run build
-      # Der Server für genau dieses Ziel; das CLI-Archiv nimmt ihn von hier, der Tauri-Build
-      # baut ihn über beforeBuildCommand selbst noch einmal
-      - run: cargo build --release -p nexus-cli --bin nexus --target ${{ matrix.target }}
       # Der Notarisierungs-Schlüssel muss als Datei vorliegen; ohne Secret entfällt die Notarisierung
       - name: API-Key für Notarisierung
         if: runner.os == 'macOS'

@@ -58,9 +58,9 @@ Ergebnis: `target\release\bundle\nsis\Nexus_<version>_x64-setup.exe`.
   (`%LOCALAPPDATA%\Nexus`, dort liegt `nexus.exe`) in den Benutzer-PATH ein und beim Deinstallieren
   wieder aus. Bereits offene Terminals sehen den Eintrag erst nach einem Neustart.
 - Aussehen: `installerIcon` ist das App-Icon, `sidebarImage` (164×314, Willkommens- und Abschlussseite)
-  und `headerImage` (150×57, Kopf der übrigen Seiten) zeigen Logo und Markenblau `#1d4ed8`. Die BMPs in
-  `src-tauri/windows/` erzeugt `scripts/installer-images.ps1`; nach einer Änderung an Logo oder Farbe neu
-  ausführen: `powershell -NoProfile -ExecutionPolicy Bypass -File apps/desktop/scripts/installer-images.ps1`.
+  und `headerImage` (150×57, Kopf der übrigen Seiten) zeigen den Schriftzug `assets/brand/nexus-logo.svg`
+  im Markenblau `#1d4ed8`. Die BMPs in `src-tauri/windows/` erzeugt `assets/brand/render.mjs` zusammen mit
+  den übrigen Markenbildern (Aufruf siehe Kopf der Datei).
 
 ## Linux
 

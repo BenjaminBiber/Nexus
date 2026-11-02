@@ -77,7 +77,10 @@ impl RequestGuard {
     /// Schutz für einen Port; bei Port 0 kommt der tatsächliche Port nach dem Binden dazu
     pub fn new(port: u16) -> Self {
         let allowed = Allowed {
-            app_origins: TAURI_ORIGINS.iter().map(|origin| origin.to_string()).collect(),
+            app_origins: TAURI_ORIGINS
+                .iter()
+                .map(|origin| origin.to_string())
+                .collect(),
             ..Allowed::default()
         };
         let guard = Self {

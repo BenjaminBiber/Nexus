@@ -16,6 +16,8 @@
 
 - Windows-Installer: trägt den Installationsordner (mit `nexus.exe`) in den Benutzer-PATH ein und beim Deinstallieren wieder aus, damit `nexus` im Terminal gefunden wird.
 - Windows-Installer im Nexus-Look: App-Icon, Seitenbild und Kopfbild mit Logo im Markenblau.
+- Desktop-Entwicklung: `npm run desktop -- dev` lädt die Oberfläche von Vite mit Hot Reload, statt sie bei jedem Start komplett zu bauen. Der Server lässt die Herkunft von Vite in Debug-Builds der App wie die der App zu (nur mit Start-Token).
+- Release-Workflow: Oberfläche und Server werden je Plattform nur noch einmal gebaut. Der Server teilt sich mit der App den Build unter `target/<ziel>/release`.
 
 ## 0.1.2 – 2026-11-02
 

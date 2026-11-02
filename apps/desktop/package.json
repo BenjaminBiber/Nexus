@@ -6,6 +6,7 @@
   "scripts": {
     "tauri": "tauri",
     "prepare-binaries": "npm run build --prefix ../.. && npm run build:plugin --prefix ../.. && node scripts/copy-server.mjs",
+    "dev-frontend": "node scripts/copy-server.mjs && npm run dev --prefix ../.. -w packages/web -- --strictPort",
     "smoke": "node scripts/smoke-app.mjs"
   },
   "devDependencies": {

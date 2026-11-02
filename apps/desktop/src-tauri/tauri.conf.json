@@ -4,8 +4,9 @@
   "identifier": "cc.biber.nexus",
   "build": {
     "frontendDist": "../../../packages/web/dist",
+    "devUrl": "http://localhost:5173",
     "beforeBuildCommand": "npm run prepare-binaries",
-    "beforeDevCommand": "npm run prepare-binaries"
+    "beforeDevCommand": "npm run dev-frontend"
   },
   "app": {
     "windows": [],

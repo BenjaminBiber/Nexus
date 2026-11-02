@@ -307,7 +307,7 @@ Am besten in einem Wegwerf-Repo (`git init`) mit gesetztem `NEXUS_HOME`. Nach Ä
 **4. Desktop-App (Tauri):**
 
 ```sh
-npm run desktop -- dev                        # baut Oberfläche und Server-Sidecar, startet die App
+npm run desktop -- dev                        # baut das Server-Sidecar, startet Vite (Hot Reload) und die App
 npm run desktop -- build --debug --no-bundle  # Debug-Build für den Smoke-Test
 npm run smoke -w apps/desktop                 # Smoke-Test: Start, Server-Erkennung, Beenden (eigenes HOME, freier Port)
 ```
