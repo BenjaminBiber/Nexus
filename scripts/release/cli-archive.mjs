@@ -90,9 +90,11 @@ try {
   mkdirSync(out, { recursive: true });
   const archiv = join(out, archiveName(version, target));
   rmSync(archiv, { force: true });
-  // tar liegt auf allen drei Plattformen bei; unter Windows ist es bsdtar und schreibt mit -a ein Zip
+  // tar liegt auf allen drei Plattformen bei; unter Windows ist es bsdtar und schreibt mit -a ein Zip.
+  // Dort fest das tar von Windows: in Git Bash steht GNU tar vorn im Pfad und hält „D:\…“ für host:pfad
+  const tar = process.platform === 'win32' ? join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'tar.exe') : 'tar';
   const args = isWindowsTarget(target) ? ['-a', '-cf', archiv] : ['-czf', archiv];
-  run('tar', [...args, '-C', stage, stem], {}, 'tar konnte das Archiv nicht schreiben');
+  run(tar, [...args, '-C', stage, stem], {}, 'tar konnte das Archiv nicht schreiben');
 
   console.error(`CLI-Archiv gebaut: ${archiv}`);
   console.log(archiv);
