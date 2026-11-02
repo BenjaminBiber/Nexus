@@ -17,7 +17,8 @@ use nexus_core::board::config::BoardConfig;
 use nexus_core::board::config_store::BoardConfigStore;
 use nexus_core::project::TokenStore;
 use nexus_core::settings::{
-    SetupPrompts, UserSettings, UserSettingsStore, NOTIFICATION_MODES, NTFY_TOPIC_PATTERN, THEME_MODES,
+    SetupPrompts, UserSettings, UserSettingsStore, NOTIFICATION_MODES, NTFY_TOPIC_PATTERN,
+    THEME_MODES,
 };
 use nexus_core::{Error, HarnessError, Result};
 use nexus_db::ConnectOptions;

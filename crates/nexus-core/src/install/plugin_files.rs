@@ -13,7 +13,10 @@ use crate::registry::HarnessHome;
 /// Version.
 pub fn copy_home_data(plugin_root: &Path, home: &HarnessHome) -> Result<()> {
     copy_fresh(&plugin_root.join("rules"), &home.rules_dir())?;
-    copy_fresh(&plugin_root.join("customizations"), &home.customizations_dir())
+    copy_fresh(
+        &plugin_root.join("customizations"),
+        &home.customizations_dir(),
+    )
 }
 
 /// Kopiert einen Ordner frisch an sein Ziel (ein vorhandenes Ziel wird ersetzt); fehlt die

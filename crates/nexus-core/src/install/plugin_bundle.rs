@@ -131,8 +131,7 @@ mod tests {
             .join("nexus/.claude-plugin/plugin.json")
             .is_file());
         let manifest: Value = serde_json::from_str(
-            &fs::read_to_string(home.plugin_dir().join(".claude-plugin/marketplace.json"))
-                .unwrap(),
+            &fs::read_to_string(home.plugin_dir().join(".claude-plugin/marketplace.json")).unwrap(),
         )
         .unwrap();
         assert_eq!(manifest["name"], "nexus-local");

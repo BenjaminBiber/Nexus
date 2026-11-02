@@ -64,6 +64,10 @@
         "ntfyServer": "<var:ntfyUrl>",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
         "theme": "system"
       },
       "status": 200
@@ -148,6 +152,10 @@
         "ntfyServer": "<var:fehlerUrl>",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
         "theme": "system"
       },
       "status": 200
@@ -219,6 +227,10 @@
         "ntfyServer": "<var:fehlerUrl>",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
         "theme": "system"
       },
       "status": 200
@@ -262,6 +274,10 @@
         "ntfyServer": "http://127.0.0.1:9",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
         "theme": "system"
       },
       "status": 200

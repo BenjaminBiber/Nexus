@@ -86,7 +86,13 @@ mod tests {
         write(repo.path(), LEGACY_DOCS_RULE_PATH, "von Hand");
         // Ohne `.claude.json` legt die Freigabe nichts an
         let approval = ClaudeImportApproval::new(
-            Some(home_dir.path().join("claude").to_string_lossy().into_owned()),
+            Some(
+                home_dir
+                    .path()
+                    .join("claude")
+                    .to_string_lossy()
+                    .into_owned(),
+            ),
             home_dir.path().to_path_buf(),
             cfg!(windows),
         );
@@ -98,8 +104,7 @@ mod tests {
         assert_eq!(result.kept, vec![LEGACY_DOCS_RULE_PATH.to_string()]);
         assert_eq!(result.written.len(), 2);
         assert_eq!(result.import_approval, ApprovalStatus::NoConfig);
-        let settings =
-            fs::read_to_string(repo.path().join(".claude/settings.local.json")).unwrap();
+        let settings = fs::read_to_string(repo.path().join(".claude/settings.local.json")).unwrap();
         assert!(settings.contains("nexus@nexus-local"));
         assert!(!settings.contains("ai-harness@ai-harness-local"));
         assert_eq!(

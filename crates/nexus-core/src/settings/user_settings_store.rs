@@ -8,8 +8,8 @@ use crate::error::{Error, Result};
 use crate::locking::AtomicWriter;
 use crate::registry::HarnessHome;
 use crate::settings::user_settings::{
-    NotificationMode, SetupPrompts, ThemeMode, UserSettings, DEFAULT_NTFY_SERVER, NOTIFICATION_MODES,
-    NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN, THEME_MODES,
+    NotificationMode, SetupPrompts, ThemeMode, UserSettings, DEFAULT_NTFY_SERVER,
+    NOTIFICATION_MODES, NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN, THEME_MODES,
 };
 
 /// Liest und schreibt `settings.json`.

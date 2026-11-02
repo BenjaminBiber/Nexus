@@ -155,11 +155,7 @@ mod tests {
     #[test]
     fn der_claude_ordner_folgt_claude_config_dir_sonst_dem_benutzerordner() {
         let user = PathBuf::from("/home/u");
-        let eigene = SetupContext::new(
-            Arc::new(NoClaude),
-            Some(PathBuf::from("/c")),
-            user.clone(),
-        );
+        let eigene = SetupContext::new(Arc::new(NoClaude), Some(PathBuf::from("/c")), user.clone());
         assert_eq!(eigene.claude_dir(), PathBuf::from("/c"));
         let standard = SetupContext::new(Arc::new(NoClaude), None, user.clone());
         assert_eq!(standard.claude_dir(), user.join(".claude"));

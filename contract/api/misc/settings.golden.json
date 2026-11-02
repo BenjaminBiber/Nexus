@@ -65,6 +65,10 @@
         "ntfyServer": "https://ntfy.sh",
         "ntfyToken": "",
         "ntfyTopic": "",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
         "theme": "system"
       },
       "status": 200
@@ -102,6 +106,10 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
         "theme": "dark"
       },
       "status": 200
@@ -126,6 +134,10 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
         "theme": "dark"
       },
       "status": 200
@@ -153,6 +165,10 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
         "theme": "win95"
       },
       "status": 200
@@ -178,6 +194,10 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
         "theme": "win95"
       },
       "status": 200
@@ -205,6 +225,10 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
         "theme": "win95"
       },
       "status": 200
@@ -427,6 +451,10 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
         "theme": "win95"
       },
       "status": 200
