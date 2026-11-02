@@ -166,7 +166,7 @@ impl DocQuestionService {
         cancel: &CancellationToken,
     ) -> Result<QuestionDraftResult> {
         let cfg = config(&self.home)?;
-        let run = run_input(&self.home, &cfg, prompt(content), Some(cancel.clone()))?;
+        let run = run_input(&self.home, &cfg, prompt(content), Some(cancel.clone())).await?;
         let result = claude.run(run).await;
         if cancel.is_cancelled() {
             return Err(

@@ -28,15 +28,16 @@ use nexus_core::board::types::BoardUser;
 use nexus_core::clock::Clock;
 use nexus_core::{tx, HarnessError, HarnessHome, Result};
 use nexus_platform::Platform;
+use nexus_server::accounts::AccountUsageService;
 use nexus_server::board_db::{ServerBoardDatabase, ServerBoardServices};
 use nexus_server::board_runtime::{BoardBackend, BoardBackendFactory, BoardBackendFuture};
+use nexus_server::config::DispatchAccounts;
 use nexus_server::config::ServerConfig;
 use nexus_server::dispatch::{
     ClaudeRunInput, ClaudeRunner, ClaudeRunners, RunResult, WorkerLauncher,
 };
 use nexus_server::routes::build_router;
 use nexus_server::state::AppState;
-use nexus_server::usage::ClaudeUsageService;
 use tower::ServiceExt as _;
 
 /// Port, den der Schutz des Testservers erlaubt
@@ -106,8 +107,17 @@ pub struct TestServerOptions {
     pub clock: Option<Clock>,
     /// Start der Worker; ohne Angabe eine Attrappe, die nichts startet
     pub dispatch_launcher: Option<Arc<dyn WorkerLauncher>>,
-    /// Die Abo-Limits von Claude; ohne Angabe der echte Dienst (den Tests nie fragen)
-    pub usage: Option<ClaudeUsageService>,
+    /// Anmeldung, Plugin und Abo-Limits der Claude-Accounts; ohne Angabe der echte Dienst
+    /// (den Tests nie fragen)
+    pub account_usage: Option<Arc<AccountUsageService>>,
+    /// Startet `claude auth login`; ohne Angabe der echte Prozess (den Tests nie starten)
+    pub account_login_spawner: Option<nexus_server::accounts::LoginSpawner>,
+    /// Richtet das Nexus-Plugin in Account-Ordnern ein
+    pub account_plugins: Option<Arc<nexus_server::accounts::AccountPluginInstaller>>,
+    /// Claude-Accounts des Dispatchers; ohne Angabe ohne Account-Wahl
+    pub dispatch_accounts: Option<DispatchAccounts>,
+    /// Ordner der MCACC-Profile für die Vorschläge der Account-Liste
+    pub mcacc_dir: Option<PathBuf>,
     /// Benutzerordner eines schon laufenden Servers (Neustart mit demselben Bestand);
     /// ohne Angabe ein frischer
     pub home: Option<HarnessHome>,
@@ -173,6 +183,16 @@ impl TestServer {
         if let Some(clock) = options.clock {
             config.clock = clock;
         }
+        config.account_usage = options.account_usage;
+        config.account_login_spawner = options.account_login_spawner;
+        config.account_plugins = options.account_plugins;
+        // Ohne Angabe wählt in Tests nie ein Pool echte Accounts des Rechners
+        config.dispatch_accounts = options.dispatch_accounts.unwrap_or(DispatchAccounts::Off);
+        config.mcacc_dir = Some(
+            options
+                .mcacc_dir
+                .unwrap_or_else(|| home.dir().join("mcacc-profiles")),
+        );
         config.dispatch_launcher = Some(
             options
                 .dispatch_launcher
@@ -187,8 +207,7 @@ impl TestServer {
         });
         let platform = options.platform.unwrap_or_else(Platform::fake);
         let claude = options.claude.unwrap_or_default();
-        let state = AppState::with_claude_and_usage(config, board, platform, claude, options.usage)
-            .expect("Zustand");
+        let state = AppState::with_claude(config, board, platform, claude).expect("Zustand");
         // Wie beim echten Start: das Token der Einstellungen lässt die Oberfläche der App durch
         state.guard.allow_app_token(state.config.app_token.clone());
         TestServer {

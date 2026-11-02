@@ -4,6 +4,7 @@
     "state",
     "message",
     "pausedUntil",
+    "accountPauses",
     "wip",
     "active",
     "planning",

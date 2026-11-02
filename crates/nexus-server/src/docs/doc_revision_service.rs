@@ -149,7 +149,9 @@ impl DocRevisionService {
     /// Claude starten wie die Optimierungs-Analyse und die Antwort auspacken
     async fn ask(&self, claude: &dyn ClaudeRunner, prompt: String) -> Result<String> {
         let cfg = config(&self.home)?;
-        let result = claude.run(run_input(&self.home, &cfg, prompt, None)?).await;
+        let result = claude
+            .run(run_input(&self.home, &cfg, prompt, None).await?)
+            .await;
         if result.code == Some(127) {
             return Err(HarnessError::new(
                 "analysis-failed",

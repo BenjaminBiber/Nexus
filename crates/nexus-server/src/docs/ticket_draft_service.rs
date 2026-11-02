@@ -155,7 +155,7 @@ impl TicketDraftService {
         } else {
             self.prompt(content, &input.selections, input.note.as_deref())
         };
-        let run = run_input(&self.home, &cfg, prompt, Some(cancel.clone()))?;
+        let run = run_input(&self.home, &cfg, prompt, Some(cancel.clone())).await?;
         let result = claude.run(run).await;
         if cancel.is_cancelled() {
             return Err(

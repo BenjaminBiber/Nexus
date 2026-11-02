@@ -42,6 +42,9 @@ pub struct DispatchRunInfo {
     /// Recherche: ID der Frage (fehlt bei allen anderen Laufarten)
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub question_id: Option<String>,
+    /// Claude-Account des Laufs; fehlt bei Läufen ohne Account-Wahl (= Standard)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub account: Option<String>,
 }
 
 /// Lauf eines Tickets oder einer Frage aus den Protokollen (Reiter „Agent“)
@@ -156,6 +159,8 @@ pub struct DispatchStatus {
     pub state: DispatchStateKind,
     pub message: String,
     pub paused_until: Option<String>,
+    /// Laufende Pausen einzelner Claude-Accounts (Nutzungslimit): Account-ID → ISO-Zeitpunkt
+    pub account_pauses: std::collections::BTreeMap<String, String>,
     pub wip: i64,
     /// Laufende Ticket-Läufe (Umsetzung und Merge-Session); Recherchen zählen unter
     /// `research.active`, Planungen unter `planning`

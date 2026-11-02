@@ -3,6 +3,7 @@
 //! Der Server ist eine axum-Anwendung und beantwortet die ganze API selbst; alles, was keine
 //! Route kennt, geht an die statische Auslieferung der Oberfläche bzw. endet als 404.
 
+pub mod accounts;
 pub mod board_db;
 pub mod board_runtime;
 pub mod config;

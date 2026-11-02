@@ -18,6 +18,7 @@ use nexus_core::dispatch::{
 use nexus_core::{HarnessError, HarnessHome, Result};
 use serde_json::{json, Value};
 
+use crate::dispatch::account_pool::side_run_config_dir;
 use crate::dispatch::claude_process::ClaudeRunInput;
 use crate::dispatch::claude_runner::ClaudeRunner;
 use crate::dispatch::result_envelope::{excerpt, ClaudeResultEnvelope};
@@ -46,6 +47,7 @@ pub struct SuggestionAnalyzer {
     service: Arc<DispatchSuggestionService>,
     claude: Arc<dyn ClaudeRunner>,
     workspace: AnalysisWorkspace,
+    home: HarnessHome,
     envelope: ClaudeResultEnvelope,
     patcher: ConfigPatcher,
     normalizer: DispatchConfigNormalizer,
@@ -66,7 +68,8 @@ impl SuggestionAnalyzer {
         Self {
             service,
             claude,
-            workspace: AnalysisWorkspace::new(home),
+            workspace: AnalysisWorkspace::new(home.clone()),
+            home,
             envelope: ClaudeResultEnvelope::new(),
             patcher: ConfigPatcher::new(),
             normalizer: DispatchConfigNormalizer::new(),
@@ -106,7 +109,17 @@ impl SuggestionAnalyzer {
                 args: self.args(&cfg),
                 prompt: self.prompt(&context)?,
                 cwd,
-                env: self.invocation.env(&process_env(), &cfg, None, None, None),
+                env: self.invocation.env(
+                    &process_env(),
+                    &cfg,
+                    None,
+                    None,
+                    // Läufe außerhalb des Dispatchers nehmen den Account mit der meisten
+                    // freien Kapazität
+                    side_run_config_dir(&self.home, &cfg, self.clock.now())
+                        .await
+                        .as_deref(),
+                ),
                 timeout: TIMEOUT,
                 cancel: None,
             })

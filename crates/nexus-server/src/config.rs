@@ -23,7 +23,7 @@ pub const DEFAULT_DB_QUESTION_POLL_MS: u64 = 10_000;
 pub const DEFAULT_DISPATCH_TICK_MS: u64 = 60_000;
 
 /// Einstellungen des Servers
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ServerConfig {
     /// Port, auf dem gehört wird (0 = freien Port wählen)
     pub port: u16,
@@ -63,6 +63,53 @@ pub struct ServerConfig {
     pub plugin_bundle: Option<PathBuf>,
     /// Umgebung der Einrichtung (Claude-Kommandozeile, Claude-Ordner); Tests setzen Attrappen
     pub setup: crate::setup::SetupContext,
+    /// Anmeldung, Plugin und Limits der Claude-Accounts (Tests: ohne echten Schlüsselbund und
+    /// ohne Anthropic)
+    pub account_usage: Option<std::sync::Arc<crate::accounts::AccountUsageService>>,
+    /// Startet `claude auth login` für die Anmeldung eines Accounts (Tests: Attrappe)
+    pub account_login_spawner: Option<crate::accounts::LoginSpawner>,
+    /// Richtet das Nexus-Plugin in Account-Ordnern ein (Tests: ohne echtes `claude plugin`)
+    pub account_plugins: Option<std::sync::Arc<crate::accounts::AccountPluginInstaller>>,
+    /// Claude-Accounts des Dispatchers
+    pub dispatch_accounts: DispatchAccounts,
+    /// Ordner der MCACC-Profile für die Vorschläge in `GET /api/accounts`; ohne Angabe
+    /// `~/.mcacc/profiles`
+    pub mcacc_dir: Option<PathBuf>,
+}
+
+/// Woher der Dispatcher seine Claude-Accounts nimmt
+#[derive(Clone, Default)]
+pub enum DispatchAccounts {
+    /// Aus `~/.nexus/accounts.json` (Betrieb)
+    #[default]
+    Stored,
+    /// Ohne Account-Wahl: jeder Lauf mit der Umgebung des Servers (Vertragsmodus, Tests)
+    Off,
+    /// Ein eigener Pool (Tests)
+    Pool(std::sync::Arc<dyn crate::dispatch::AccountPool>),
+}
+
+impl std::fmt::Debug for DispatchAccounts {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = match self {
+            Self::Stored => "Stored",
+            Self::Off => "Off",
+            Self::Pool(_) => "Pool",
+        };
+        f.write_str(name)
+    }
+}
+
+impl std::fmt::Debug for ServerConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ServerConfig")
+            .field("port", &self.port)
+            .field("host", &self.host)
+            .field("home", &self.home)
+            .field("version", &self.version)
+            .field("dispatch_accounts", &self.dispatch_accounts)
+            .finish_non_exhaustive()
+    }
 }
 
 /// Version, die den Vertragsmodus kennzeichnet (`NEXUS_SERVER_VERSION=contract`)
@@ -96,6 +143,11 @@ impl ServerConfig {
             dev_origin: None,
             plugin_bundle: None,
             setup: crate::setup::SetupContext::from_process_env(),
+            account_usage: None,
+            account_login_spawner: None,
+            account_plugins: None,
+            dispatch_accounts: DispatchAccounts::default(),
+            mcacc_dir: None,
         }
     }
 }

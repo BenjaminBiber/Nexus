@@ -569,29 +569,47 @@ Repo-Pfad setzen.",
                 return Ok(ResearchOutcome::Limit);
             }
             let missing = ctx.output.claude_missing(&end.result);
-            let until = iso(ctx.now() + chrono::Duration::minutes(minutes));
-            let stored = until.clone();
-            ctx.stores
-                .state
-                .update(move |state| {
-                    state.paused_until = Some(stored);
-                })
-                .await?;
-            let why = if missing {
-                format!(
-                    "Claude Code wurde nicht gefunden (Befehl „{}“)",
-                    record.command
-                )
+            let mut until = iso(ctx.now() + chrono::Duration::minutes(minutes));
+            let mut why = format!(
+                "Claude Code wurde nicht gefunden (Befehl „{}“)",
+                record.command
+            );
+            let mut wait = format!("Der Dispatcher startet {minutes} min lang nichts Neues");
+            if missing {
+                let stored = until.clone();
+                ctx.stores
+                    .state
+                    .update(move |state| {
+                        state.paused_until = Some(stored);
+                    })
+                    .await?;
             } else {
-                "Nutzungslimit erreicht".to_string()
-            };
+                // Nutzungslimit: nur der Account des Laufs pausiert (mit einem Account der
+                // ganze Dispatcher wie bisher)
+                let pause = ctx.pause_account(record.run.account.as_deref()).await?;
+                until = pause.until.clone();
+                let bis = ctx.hhmm(&until);
+                why = if pause.multi {
+                    format!("Nutzungslimit von Account {} erreicht", pause.account)
+                } else {
+                    "Nutzungslimit erreicht".to_string()
+                };
+                wait = if !pause.multi {
+                    format!("Der Dispatcher startet bis {bis} nichts Neues")
+                } else if pause.global {
+                    format!(
+                        "Alle Accounts sind pausiert, der Dispatcher startet bis {bis} nichts Neues"
+                    )
+                } else {
+                    format!("Account {} pausiert bis {bis}", pause.account)
+                };
+            }
             ctx.services()
                 .questions
                 .comment(
                     &id,
                     &format!(
-                        "{}: {why}. Der Dispatcher startet {minutes} min lang nichts Neues; die \
-Recherche danach bitte erneut starten.",
+                        "{}: {why}. {wait}; die Recherche danach bitte erneut starten.",
                         markers::RESEARCH_EMPTY
                     ),
                     &actor,
@@ -602,7 +620,7 @@ Recherche danach bitte erneut starten.",
                 kind: DispatchNoticeKind::Paused,
                 ticket_id: None,
                 title: question.view.question.title.clone(),
-                text: format!("{why} – Pause {minutes} min"),
+                text: format!("{why} – Pause bis {}", ctx.hhmm(&until)),
                 repo_path: None,
             })
             .await;

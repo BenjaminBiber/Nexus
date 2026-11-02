@@ -67,12 +67,7 @@ fn answers(status: u16, body: Value) -> (UsageFetch, Arc<AtomicUsize>) {
             ]
         );
         let body = body.clone();
-        Box::pin(async move {
-            Ok(UsageReply {
-                status,
-                body: Some(body),
-            })
-        })
+        Box::pin(async move { Ok(UsageReply::new(status, Some(body))) })
     });
     (fetch, calls)
 }
@@ -89,7 +84,7 @@ async fn liest_beide_fenster_und_schickt_das_token_nur_als_bearer_an_den_endpunk
         Clock::fixed(NOW.parse().unwrap()),
         DEFAULT_TTL_MS,
     );
-    let usage = service.current().await;
+    let usage = service.current(false).await;
     assert_eq!(
         serde_json::to_value(&usage).unwrap(),
         json!({
@@ -120,12 +115,12 @@ async fn fragt_innerhalb_der_gultigkeit_nur_einmal_und_ruft_gleichzeitige_anfrag
     let first = service.clone();
     let second = service.clone();
     let (left, right) = tokio::join!(
-        tokio::spawn(async move { first.current().await }),
-        tokio::spawn(async move { second.current().await })
+        tokio::spawn(async move { first.current(false).await }),
+        tokio::spawn(async move { second.current(false).await })
     );
     assert!(left.unwrap().available);
     assert!(right.unwrap().available);
-    service.current().await;
+    service.current(false).await;
     assert_eq!(calls.load(Ordering::SeqCst), 1);
 }
 
@@ -143,12 +138,12 @@ async fn meldet_fehlende_anmeldung_abgelaufenes_token_und_fehler_des_endpunkts_o
     };
 
     let (fetch, never) = answers(200, body());
-    let usage = service(fetch.clone()).current().await;
+    let usage = service(fetch.clone()).current(false).await;
     assert_eq!(usage.reason.as_deref(), Some("no-login"));
     assert!(!usage.available);
 
     login(&file, json!({ "expiresAt": now_ms() - 1 }));
-    let usage = service(fetch.clone()).current().await;
+    let usage = service(fetch.clone()).current(false).await;
     assert_eq!(usage.reason.as_deref(), Some("token-expired"));
     assert_eq!(usage.plan.as_deref(), Some("team"));
     assert_eq!(never.load(Ordering::SeqCst), 0);
@@ -156,17 +151,17 @@ async fn meldet_fehlende_anmeldung_abgelaufenes_token_und_fehler_des_endpunkts_o
     login(&file, json!({}));
     let (unauthorized, _) = answers(401, body());
     assert_eq!(
-        service(unauthorized).current().await.reason.as_deref(),
+        service(unauthorized).current(false).await.reason.as_deref(),
         Some("token-expired")
     );
     let (broken, _) = answers(500, body());
     assert_eq!(
-        service(broken).current().await.reason.as_deref(),
+        service(broken).current(false).await.reason.as_deref(),
         Some("request-failed")
     );
     let offline: UsageFetch = Arc::new(|_| Box::pin(async { Err("offline".to_string()) }));
     assert_eq!(
-        service(offline).current().await.reason.as_deref(),
+        service(offline).current(false).await.reason.as_deref(),
         Some("request-failed")
     );
 }
@@ -183,21 +178,16 @@ async fn merkt_sich_einen_fehlschlag_nur_kurz_und_fragt_danach_wieder_an() {
     let fetch: UsageFetch = Arc::new(move |_| {
         counted.fetch_add(1, Ordering::SeqCst);
         let status = answer.load(Ordering::SeqCst);
-        Box::pin(async move {
-            Ok(UsageReply {
-                status,
-                body: Some(body()),
-            })
-        })
+        Box::pin(async move { Ok(UsageReply::new(status, Some(body()))) })
     });
     let service = ClaudeUsageService::with(file, fetch, clock(at.clone()), DEFAULT_TTL_MS);
     assert_eq!(
-        service.current().await.reason.as_deref(),
+        service.current(false).await.reason.as_deref(),
         Some("request-failed")
     );
     at.fetch_add(5_000, Ordering::SeqCst);
     status.store(200, Ordering::SeqCst);
-    assert!(service.current().await.available);
+    assert!(service.current(false).await.available);
     assert_eq!(calls.load(Ordering::SeqCst), 2);
 }
 
@@ -213,18 +203,13 @@ async fn stempelt_den_zwischenspeicher_erst_nach_dem_laden() {
     let fetch: UsageFetch = Arc::new(move |_| {
         counted.fetch_add(1, Ordering::SeqCst);
         ticking.fetch_add(50_000, Ordering::SeqCst);
-        Box::pin(async {
-            Ok(UsageReply {
-                status: 200,
-                body: Some(body()),
-            })
-        })
+        Box::pin(async { Ok(UsageReply::new(200, Some(body()))) })
     });
     let service = ClaudeUsageService::with(file, fetch, clock(at.clone()), DEFAULT_TTL_MS);
-    service.current().await;
+    service.current(false).await;
     // 20 s nach dem Abschluss, also noch innerhalb der 60 s
     at.fetch_add(20_000, Ordering::SeqCst);
-    service.current().await;
+    service.current(false).await;
     assert_eq!(calls.load(Ordering::SeqCst), 1);
 }
 
@@ -243,7 +228,7 @@ async fn lasst_ein_fehlendes_fenster_leer() {
         Clock::fixed(NOW.parse().unwrap()),
         DEFAULT_TTL_MS,
     )
-    .current()
+    .current(false)
     .await;
     assert!(usage.available);
     assert_eq!(
@@ -253,16 +238,38 @@ async fn lasst_ein_fehlendes_fenster_leer() {
     assert_eq!(usage.seven_day, None);
 }
 
+/// Ein Account-Dienst, dessen Standard-Account seine Anmeldung aus dieser Datei liest
+fn standard_usage(
+    file: std::path::PathBuf,
+    fetch: UsageFetch,
+) -> Arc<nexus_server::accounts::AccountUsageService> {
+    let dir = file.parent().expect("Ordner der Anmeldung").to_path_buf();
+    let paths = nexus_core::accounts::AccountPaths::new(
+        [(
+            "CLAUDE_CONFIG_DIR".to_string(),
+            dir.to_string_lossy().into_owned(),
+        )]
+        .into_iter()
+        .collect(),
+        dir,
+    );
+    Arc::new(nexus_server::accounts::AccountUsageService::with_options(
+        Arc::new(vec![nexus_core::accounts::standard_account()]),
+        nexus_server::accounts::AccountUsageOptions {
+            paths,
+            platform: "linux".to_string(),
+            keychain: nexus_server::accounts::no_keychain(),
+            fetch: Some(fetch),
+            clock: Clock::fixed(NOW.parse().unwrap()),
+        },
+    ))
+}
+
 /// Server, dessen Dienst der Abo-Limits aus dieser Anmeldedatei liest
 fn server_with_usage(file: std::path::PathBuf) -> (TestServer, Arc<AtomicUsize>) {
     let (fetch, calls) = answers(200, body());
     let server = TestServer::with(TestServerOptions {
-        usage: Some(ClaudeUsageService::with(
-            file,
-            fetch,
-            Clock::fixed(NOW.parse().unwrap()),
-            DEFAULT_TTL_MS,
-        )),
+        account_usage: Some(standard_usage(file, fetch)),
         ..TestServerOptions::default()
     });
     (server, calls)

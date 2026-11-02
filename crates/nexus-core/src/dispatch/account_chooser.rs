@@ -316,7 +316,7 @@ fn after(at: &str, now: DateTime<Utc>) -> bool {
 }
 
 /// Uhrzeit HH:MM in Ortszeit, wie `Date.getHours()` in JavaScript
-fn hhmm(at: &str) -> String {
+pub fn hhmm(at: &str) -> String {
     match at.parse::<DateTime<Utc>>() {
         Ok(at) => at.with_timezone(&Local).format("%H:%M").to_string(),
         Err(_) => at.to_string(),

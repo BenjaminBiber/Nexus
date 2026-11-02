@@ -24,6 +24,9 @@ pub const DEFAULT_TTL_MS: i64 = 60_000;
 /// Fehlschläge gelten nur kurz: erneuert Claude Code gleich danach sein Token, soll der
 /// nächste Aufruf es schon sehen
 pub const FAILURE_TTL_MS: i64 = 5_000;
+/// Nach 429 (zu viele Anfragen) fragt der Dienst mindestens so lange nicht neu – länger, wenn
+/// `Retry-After` es verlangt
+pub const RATE_LIMIT_TTL_MS: i64 = 5 * 60_000;
 
 /// Auslastung eines Limit-Fensters; `resetsAt` ist ein ISO-Zeitpunkt
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -72,9 +75,20 @@ pub struct UsageRequest {
 pub struct UsageReply {
     pub status: u16,
     pub body: Option<serde_json::Value>,
+    /// Kopf `Retry-After` einer Antwort 429 (Sekunden oder HTTP-Datum)
+    pub retry_after: Option<String>,
 }
 
 impl UsageReply {
+    /// Antwort mit Status und Körper, ohne `Retry-After`
+    pub fn new(status: u16, body: Option<serde_json::Value>) -> Self {
+        Self {
+            status,
+            body,
+            retry_after: None,
+        }
+    }
+
     /// Hat der Endpunkt mit Erfolg geantwortet?
     pub fn ok(&self) -> bool {
         self.status < 400
@@ -88,15 +102,39 @@ pub type UsageFetch = Arc<
         + Sync,
 >;
 
-/// Zwischenspeicher: Wert samt dem Zeitpunkt, zu dem er geladen wurde
+/// Liest den Inhalt der Anmeldung (Datei oder macOS-Schlüsselbund); `None` = keine Anmeldung
+pub type ReadCredentials =
+    Arc<dyn Fn() -> Pin<Box<dyn Future<Output = Option<String>> + Send>> + Send + Sync>;
+
+/// Liest den Inhalt einer Anmeldedatei
+pub fn file_credentials(file: PathBuf) -> ReadCredentials {
+    Arc::new(move || {
+        let file = file.clone();
+        Box::pin(async move {
+            tokio::task::spawn_blocking(move || std::fs::read_to_string(file).ok())
+                .await
+                .ok()
+                .flatten()
+        })
+    })
+}
+
+/// Zwischenspeicher: Wert samt dem Zeitpunkt, zu dem er geladen wurde, und seiner Gültigkeit
 struct Cached {
     at: i64,
+    ttl: i64,
     value: ClaudeUsageDto,
+}
+
+/// Eine geladene Antwort samt ihrer Gültigkeit im Zwischenspeicher
+struct Loaded {
+    value: ClaudeUsageDto,
+    ttl: i64,
 }
 
 /// Liest die Abo-Limits über den OAuth-Endpunkt von Anthropic und hält sie kurz vor
 pub struct ClaudeUsageService {
-    file: PathBuf,
+    read_credentials: ReadCredentials,
     fetch: UsageFetch,
     clock: Clock,
     ttl_ms: i64,
@@ -114,8 +152,18 @@ impl ClaudeUsageService {
 
     /// Dienst mit eigener Anmeldedatei, eigenem Abruf und eigener Gültigkeit (Tests)
     pub fn with(file: PathBuf, fetch: UsageFetch, clock: Clock, ttl_ms: i64) -> Self {
+        Self::with_credentials(file_credentials(file), fetch, clock, ttl_ms)
+    }
+
+    /// Dienst mit eigener Quelle der Anmeldung (Schlüsselbund oder Datei)
+    pub fn with_credentials(
+        read_credentials: ReadCredentials,
+        fetch: UsageFetch,
+        clock: Clock,
+        ttl_ms: i64,
+    ) -> Self {
         Self {
-            file,
+            read_credentials,
             fetch,
             clock,
             ttl_ms,
@@ -124,45 +172,50 @@ impl ClaudeUsageService {
         }
     }
 
-    /// Aktuelle Werte (aus dem Zwischenspeicher, solange er frisch ist)
-    pub async fn current(&self) -> ClaudeUsageDto {
-        if let Some(value) = self.fresh() {
+    /// Aktuelle Werte (aus dem Zwischenspeicher, solange er frisch ist); `fresh` fragt neu
+    /// (z. B. gleich nach einem Nutzungslimit, wenn der Zwischenspeicher das volle Fenster
+    /// noch nicht kennt) – nur nicht, solange der Endpunkt nach 429 gesperrt ist
+    pub async fn current(&self, fresh: bool) -> ClaudeUsageDto {
+        if let Some(value) = self.fresh(fresh) {
             return value;
         }
         let _guard = self.loading.lock().await;
         // Hat der Aufruf davor gerade geladen, ist der Wert jetzt da
-        if let Some(value) = self.fresh() {
+        if let Some(value) = self.fresh(fresh) {
             return value;
         }
-        let value = self.load().await;
+        let loaded = self.load().await;
         // Erst nach dem Laden stempeln: sonst zählt die Laufzeit der Anfrage (bis zum
         // Zeitlimit) gegen die Gültigkeit
         *self.cached.lock().expect("Sperre der Abo-Limits") = Some(Cached {
             at: self.now_ms(),
-            value: value.clone(),
+            ttl: loaded.ttl,
+            value: loaded.value.clone(),
         });
-        value
+        loaded.value
     }
 
-    /// Der Wert des Zwischenspeichers, solange er gilt
-    fn fresh(&self) -> Option<ClaudeUsageDto> {
+    /// Der Wert des Zwischenspeichers, solange er gilt; `fresh` übergeht ihn, außer nach 429
+    fn fresh(&self, fresh: bool) -> Option<ClaudeUsageDto> {
         let cached = self.cached.lock().expect("Sperre der Abo-Limits");
         let cached = cached.as_ref()?;
-        let ttl = if cached.value.available {
-            self.ttl_ms
-        } else {
-            FAILURE_TTL_MS
-        };
-        (self.now_ms() - cached.at < ttl).then(|| cached.value.clone())
+        if fresh && cached.value.reason.as_deref() != Some("rate-limited") {
+            return None;
+        }
+        (self.now_ms() - cached.at < cached.ttl).then(|| cached.value.clone())
     }
 
     /// Liest die Anmeldung und fragt den Endpunkt
-    async fn load(&self) -> ClaudeUsageDto {
-        let Some(login) = self.read_login() else {
-            return ClaudeUsageDto::unavailable("no-login", None);
+    async fn load(&self) -> Loaded {
+        let failed = |reason: &str, plan: Option<String>, ttl: i64| Loaded {
+            value: ClaudeUsageDto::unavailable(reason, plan),
+            ttl,
+        };
+        let Some(login) = self.read_login().await else {
+            return failed("no-login", None, FAILURE_TTL_MS);
         };
         if login.expires_at.is_some_and(|at| at <= self.now_ms()) {
-            return ClaudeUsageDto::unavailable("token-expired", login.plan);
+            return failed("token-expired", login.plan, FAILURE_TTL_MS);
         }
         let request = UsageRequest {
             url: USAGE_URL.to_string(),
@@ -174,30 +227,55 @@ impl ClaudeUsageService {
         };
         let reply = match (self.fetch)(request).await {
             Ok(reply) => reply,
-            Err(_) => return ClaudeUsageDto::unavailable("request-failed", login.plan),
+            Err(_) => return failed("request-failed", login.plan, FAILURE_TTL_MS),
         };
+        if reply.status == 429 {
+            let ttl = self.retry_after(reply.retry_after.as_deref());
+            return failed("rate-limited", login.plan, ttl);
+        }
         if !reply.ok() {
             let reason = if reply.status == 401 {
                 "token-expired"
             } else {
                 "request-failed"
             };
-            return ClaudeUsageDto::unavailable(reason, login.plan);
+            return failed(reason, login.plan, FAILURE_TTL_MS);
         }
         let body = reply.body.unwrap_or(serde_json::Value::Null);
-        ClaudeUsageDto {
-            available: true,
-            reason: None,
-            plan: login.plan,
-            five_hour: window(body.get("five_hour")),
-            seven_day: window(body.get("seven_day")),
-            fetched_at: Some(self.clock.iso()),
+        Loaded {
+            value: ClaudeUsageDto {
+                available: true,
+                reason: None,
+                plan: login.plan,
+                five_hour: window(body.get("five_hour")),
+                seven_day: window(body.get("seven_day")),
+                fetched_at: Some(self.clock.iso()),
+            },
+            ttl: self.ttl_ms,
         }
     }
 
-    /// Token, Ablauf (ms) und Abo-Art aus der Anmeldedatei; `None` ohne Anmeldung
-    fn read_login(&self) -> Option<Login> {
-        let text = std::fs::read_to_string(&self.file).ok()?;
+    /// Sperre nach 429: `Retry-After` (Sekunden oder HTTP-Datum), aber nie kürzer als
+    /// [`RATE_LIMIT_TTL_MS`]
+    fn retry_after(&self, header: Option<&str>) -> i64 {
+        let Some(header) = header.map(str::trim).filter(|text| !text.is_empty()) else {
+            return RATE_LIMIT_TTL_MS;
+        };
+        let ms = match header.parse::<f64>() {
+            Ok(seconds) if seconds.is_finite() => (seconds * 1000.0) as i64,
+            _ => match chrono::DateTime::parse_from_rfc2822(header)
+                .or_else(|_| chrono::DateTime::parse_from_rfc3339(header))
+            {
+                Ok(at) => at.timestamp_millis() - self.now_ms(),
+                Err(_) => return RATE_LIMIT_TTL_MS,
+            },
+        };
+        ms.max(RATE_LIMIT_TTL_MS)
+    }
+
+    /// Token, Ablauf (ms) und Abo-Art aus der Anmeldung; `None` ohne Anmeldung
+    async fn read_login(&self) -> Option<Login> {
+        let text = (self.read_credentials)().await?;
         let json: serde_json::Value = serde_json::from_str(&text).ok()?;
         let oauth = json.get("claudeAiOauth")?;
         let token = oauth
@@ -275,9 +353,15 @@ pub fn http_fetch() -> UsageFetch {
             }
             let response = call.send().await.map_err(|error| error.to_string())?;
             let status = response.status().as_u16();
+            let retry_after = response
+                .headers()
+                .get("retry-after")
+                .and_then(|value| value.to_str().ok())
+                .map(str::to_string);
             Ok(UsageReply {
                 status,
                 body: response.json::<serde_json::Value>().await.ok(),
+                retry_after,
             })
         })
     })

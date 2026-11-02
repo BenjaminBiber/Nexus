@@ -525,19 +525,25 @@ async fn ein_nutzungslimit_pausiert_ohne_versuch() {
         f.evaluate(&id).await.expect("Auswertung").outcome,
         HandleOutcome::Limit
     );
-    let minutes = f.cfg.pause_minutes_on_limit;
+    let ticket = f.ticket(&id).await;
+    assert_eq!(ticket.status, TicketStatus::Planned);
+    let state = f.ctx.stores.state.read().expect("Zustand");
+    let until = state.paused_until.clone().expect("Pause vermerkt");
+    // Ohne mehrere Accounts pausiert der ganze Dispatcher bis zum Ende der Account-Pause
+    let bis = nexus_core::dispatch::hhmm(&until);
     let comments = f.comments(&id).await;
     assert_eq!(
         comments.last().expect("Kommentar"),
         &format!(
             "[dispatch] Pause: Nutzungslimit erreicht, Ticket zurück nach Geplant. Der \
-Dispatcher startet {minutes} min lang nichts Neues. Zählt nicht als Versuch."
+Dispatcher startet bis {bis} nichts Neues. Zählt nicht als Versuch."
         )
     );
-    let ticket = f.ticket(&id).await;
-    assert_eq!(ticket.status, TicketStatus::Planned);
-    let state = f.ctx.stores.state.read().expect("Zustand");
-    assert!(state.paused_until.is_some(), "Pause vermerkt");
+    assert_eq!(
+        state.account_pauses.get("standard").map(String::as_str),
+        Some(until.as_str()),
+        "die Pause gilt auch für den Standard-Account"
+    );
     assert_eq!(
         f.notices.last().expect("Meldung").kind,
         DispatchNoticeKind::Paused

@@ -145,6 +145,7 @@ async fn save_config(
     let previous = config_view(&state)?;
     let before = auto_of(&previous, "research");
     let plan_before = auto_of(&previous, "planning");
+    check_accounts(&state, &raw)?;
     let store = nexus_core::dispatch::DispatchConfigStore::new(state.home.clone());
     store.write(&raw)?;
     let view = config_view(&state)?;
@@ -159,6 +160,33 @@ async fn save_config(
         service.planning_auto_switched(plan_after).await?;
     }
     Ok(json(&view))
+}
+
+/// Profile und Regeln dürfen nur Accounts nennen, die es gibt (Einstellungen → Accounts)
+fn check_accounts(state: &Arc<AppState>, raw: &Value) -> ApiResult<()> {
+    let known: Vec<String> = state
+        .accounts
+        .store
+        .list()
+        .into_iter()
+        .map(|account| account.id)
+        .collect();
+    let unknown: Vec<String> = nexus_core::dispatch::AccountReferences::new()
+        .find(raw)
+        .into_iter()
+        .filter(|(id, _)| !known.contains(id))
+        .map(|(id, places)| format!("„{id}“ ({})", places.join(", ")))
+        .collect();
+    if unknown.is_empty() {
+        return Ok(());
+    }
+    Err(ApiError::new(
+        "dispatch-config-invalid",
+        format!(
+            "Unbekannte Accounts: {}. Accounts legst du unter Einstellungen → Accounts an.",
+            unknown.join(", ")
+        ),
+    ))
 }
 
 /// `POST /api/dispatch/prompts/preview`

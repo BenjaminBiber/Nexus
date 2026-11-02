@@ -3,6 +3,7 @@
 //! Reihenfolge: Kennzeichnung → Panik-Fang → Schutz → Routen → Rückfall. Der Rückfall
 //! beantwortet unbekannte `/api`-Pfade mit 404 als JSON und liefert sonst die Oberfläche.
 
+pub mod accounts;
 pub mod db_boards;
 pub mod db_misc;
 pub mod db_tickets;
@@ -63,6 +64,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(sessions::routes())
         .merge(favorites::routes())
         .merge(usage::routes())
+        .merge(accounts::routes())
         .merge(notifications::routes())
         .merge(workflow::routes())
         .merge(dispatch::routes())

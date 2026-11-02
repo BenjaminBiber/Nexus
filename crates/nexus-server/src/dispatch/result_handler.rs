@@ -294,15 +294,10 @@ installieren oder den Befehl in der Einstellung prüfen. Zählt nicht als Versuc
                 .limit_pauses_in_row(&detail.comments, record.run.account.as_deref())
                 < LIMIT_PAUSES_FREE
             {
-                self.pause(
+                self.limit_pause(
                     &detail,
+                    record,
                     board.as_ref().and_then(|board| board.repo_path.clone()),
-                    &format!(
-                        "{} erreicht, Ticket zurück nach Geplant. Der Dispatcher startet \
-{minutes} min lang nichts Neues. Zählt nicht als Versuch.",
-                        limit_pause()
-                    ),
-                    &format!("Nutzungslimit – Pause {minutes} min"),
                 )
                 .await?;
                 return Ok(HandleResult::new(HandleOutcome::Limit));
@@ -434,6 +429,86 @@ die Einrichtung erneut."
         })
         .await;
         Ok(HandleResult::new(HandleOutcome::SetupFailed))
+    }
+
+    /// Nutzungslimit: nur der Account des Laufs pausiert (mit nur einem Account der ganze
+    /// Dispatcher wie bisher); das Ticket geht zurück nach Geplant und startet beim nächsten
+    /// Durchlauf auf einem anderen freien Account
+    async fn limit_pause(
+        &self,
+        detail: &TicketDetail,
+        record: &RunRecord,
+        repo_path: Option<String>,
+    ) -> Result<()> {
+        let ctx = self.ctx;
+        let pause = ctx.pause_account(record.run.account.as_deref()).await?;
+        let bis = ctx.hhmm(&pause.until);
+        if !pause.multi {
+            return self
+                .released(
+                    detail,
+                    repo_path,
+                    &format!(
+                        "{} erreicht, Ticket zurück nach Geplant. Der Dispatcher startet bis \
+{bis} nichts Neues. Zählt nicht als Versuch.",
+                        limit_pause()
+                    ),
+                    &format!("Nutzungslimit – Pause bis {bis}"),
+                    &pause.until,
+                )
+                .await;
+        }
+        let rest = if pause.global {
+            format!("Alle Accounts sind pausiert – der Dispatcher startet bis {bis} nichts Neues.")
+        } else {
+            "Das Ticket startet beim nächsten Durchlauf auf einem anderen freien Account."
+                .to_string()
+        };
+        self.released(
+            detail,
+            repo_path,
+            &format!(
+                "{} von Account {} erreicht, Ticket zurück nach Geplant. Account {} pausiert \
+bis {bis}. {rest} Zählt nicht als Versuch.",
+                limit_pause(),
+                pause.account,
+                pause.account
+            ),
+            &format!("Nutzungslimit {} – Pause bis {bis}", pause.account),
+            &pause.until,
+        )
+        .await
+    }
+
+    /// Kommentar, zurück nach Geplant, Meldung; die Pause hat [`DispatchContext::pause_account`]
+    /// schon gesetzt
+    async fn released(
+        &self,
+        detail: &TicketDetail,
+        repo_path: Option<String>,
+        comment: &str,
+        notice: &str,
+        until: &str,
+    ) -> Result<()> {
+        let ctx = self.ctx;
+        ctx.comment(&detail.ticket.id, comment).await?;
+        ctx.services()
+            .tickets
+            .release(&detail.ticket.id, ctx.actor(), Some(TicketStatus::Planned))
+            .await?;
+        ctx.log(&format!(
+            "Pause bis {until}: {notice} ({})",
+            detail.ticket.id
+        ));
+        ctx.notify(&DispatchNotice {
+            kind: DispatchNoticeKind::Paused,
+            ticket_id: Some(detail.ticket.id.clone()),
+            title: detail.ticket.title.clone(),
+            text: notice.to_string(),
+            repo_path,
+        })
+        .await;
+        Ok(())
     }
 
     /// Pause ohne Versuch: Kommentar, zurück nach Geplant, neue Starts für

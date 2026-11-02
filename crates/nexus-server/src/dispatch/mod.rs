@@ -5,6 +5,7 @@
 //! (`scheduler`), der Merge erledigter Tickets (`merge_service`) und die Freigabe vor dem
 //! Merge (`review_service`).
 
+pub mod account_pool;
 pub mod claude_process;
 pub mod claude_runner;
 pub mod context;
@@ -31,6 +32,9 @@ pub mod worker;
 pub mod worker_launcher;
 pub mod worktree_setup;
 
+pub use account_pool::{
+    side_run_config_dir, side_run_config_dir_with, AccountPool, RunAccounts, StoredAccountPool,
+};
 pub use claude_process::{ClaudeProcess, ClaudeRunInput, OutputSource, RunResult};
 pub use claude_runner::{ClaudeRunner, ClaudeRunners, FixedClaudeRunner, ProcessClaudeRunner};
 pub use context::{DispatchContext, DispatchStores, LaunchInput, RepoWork};

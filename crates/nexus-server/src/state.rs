@@ -12,13 +12,16 @@ use nexus_core::HarnessHome;
 use nexus_platform::Platform;
 use tokio_util::sync::CancellationToken;
 
+use crate::accounts::{
+    AccountLoginService, AccountPluginInstaller, AccountUsageOptions, AccountUsageService,
+};
 use crate::board_runtime::{BoardBackendFactory, BoardRuntimeHolder};
-use crate::config::ServerConfig;
+use crate::config::{DispatchAccounts, ServerConfig};
 use crate::dispatch::claude_runner::ClaudeRunners;
 use crate::dispatch::{
-    DispatchScheduler, DispatchService, DispatchServiceDeps, DispatchSuggestionService,
-    NoWorkerLauncher, ProcessWorkerLauncher, ServerDispatchNotify, SuggestionAnalyzer,
-    WorkerLauncher,
+    AccountPool, DispatchScheduler, DispatchService, DispatchServiceDeps,
+    DispatchSuggestionService, NoWorkerLauncher, ProcessWorkerLauncher, ServerDispatchNotify,
+    StoredAccountPool, SuggestionAnalyzer, WorkerLauncher,
 };
 use crate::docs::{
     DocQuestionService, DocRevisionService, DocTicketService, DocsRootResolver, DocsService,
@@ -35,7 +38,7 @@ use crate::notifications::{
 };
 use crate::projects::ProjectService;
 use crate::sessions::{SessionService, TicketInfoLookup, TicketSummaries};
-use crate::usage::ClaudeUsageService;
+use nexus_core::accounts::{AccountPaths, AccountStore};
 
 /// Alles, was die Routen des Servers teilen
 pub struct AppState {
@@ -74,8 +77,8 @@ pub struct AppState {
     pub favorites: FavoriteService,
     /// Titel und Status von Tickets für Sessions, Favoriten und Meldungen (mit Zeitlimit)
     pub ticket_info: TicketInfoLookup,
-    /// Die Abo-Limits von Claude samt Zwischenspeicher
-    pub usage: ClaudeUsageService,
+    /// Die Claude-Accounts: Limits, Anmeldung, Plugin und die Wahl des Dispatchers
+    pub accounts: AccountServices,
     pub platform: Platform,
     pub log: ServerLog,
     /// Verteiler der Ereignisse je Projekt (`sessions`, später mehr)
@@ -96,6 +99,31 @@ pub struct AppState {
     pub shutdown: CancellationToken,
     /// Prozessnummer, wie `GET /api/health` sie meldet
     pub pid: u32,
+}
+
+/// Alles rund um die Claude-Accounts, das die Routen teilen
+pub struct AccountServices {
+    /// Anmeldung, Plugin und Abo-Limits je Account (ein Zwischenspeicher für alle Routen)
+    pub usage: Arc<AccountUsageService>,
+    /// Die Accounts des Dispatchers; `None` = ohne Account-Wahl
+    pub pool: Option<Arc<dyn AccountPool>>,
+    /// Laufende Anmeldungen über `claude auth login`
+    pub logins: Arc<AccountLoginService>,
+    /// Richtet das Nexus-Plugin in Account-Ordnern ein
+    pub plugins: Arc<AccountPluginInstaller>,
+    pub store: AccountStore,
+    pub paths: AccountPaths,
+    /// Ordner der MCACC-Profile (`~/.mcacc/profiles`)
+    pub mcacc_dir: std::path::PathBuf,
+    /// Accounts, die nach der Anmeldung nach ihrer E-Mail heißen sollen (ohne eigenen Namen
+    /// angelegt)
+    pub rename_on_login: std::sync::Mutex<std::collections::HashSet<String>>,
+}
+
+impl std::fmt::Debug for AccountServices {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AccountServices").finish_non_exhaustive()
+    }
 }
 
 impl AppState {
@@ -120,17 +148,15 @@ impl AppState {
         platform: Platform,
         claude: ClaudeRunners,
     ) -> nexus_core::Result<Arc<Self>> {
-        Self::with_claude_and_usage(config, board, platform, claude, None)
+        Self::build(config, board, platform, claude)
     }
 
-    /// Wie [`AppState::with_claude`], mit eigenem Dienst der Abo-Limits (Tests fragen damit
-    /// nie das Netz)
-    pub fn with_claude_and_usage(
+    /// Baut den Zustand; die Attrappen der Tests stehen in [`ServerConfig`]
+    fn build(
         config: ServerConfig,
         board: BoardBackendFactory,
         platform: Platform,
         claude: ClaudeRunners,
-        usage: Option<ClaudeUsageService>,
     ) -> nexus_core::Result<Arc<Self>> {
         // Offene Tabs zeigen Meldungen selbst (der Klick bleibt im Tab); nur ohne Tab geht
         // die Meldung den Weg des Betriebssystems
@@ -157,7 +183,37 @@ impl AppState {
             config.clock.clone(),
             ServerLog::new(&config.home),
         );
-        let usage = usage.unwrap_or_else(|| ClaudeUsageService::new(config.clock.clone()));
+        // Claude-Accounts: ein Dienst für Limits und Anmeldung, den Dispatcher, Seitenleiste
+        // und Einstellungen teilen (Zwischenspeicher je Account)
+        let paths = AccountPaths::from_process_env();
+        let store = AccountStore::with_paths(config.home.clone(), paths.clone());
+        let account_usage = config.account_usage.clone().unwrap_or_else(|| {
+            Arc::new(AccountUsageService::with_options(
+                Arc::new(AccountStore::with_paths(config.home.clone(), paths.clone())),
+                AccountUsageOptions {
+                    paths: paths.clone(),
+                    clock: config.clock.clone(),
+                    ..AccountUsageOptions::default()
+                },
+            ))
+        });
+        let plugins = config.account_plugins.clone().unwrap_or_else(|| {
+            Arc::new(AccountPluginInstaller::new(
+                config.home.clone(),
+                paths.clone(),
+            ))
+        });
+        // Im Vertragsmodus bindet nichts an echte Accounts oder an Anthropic
+        let pool: Option<Arc<dyn AccountPool>> =
+            match (&config.dispatch_accounts, config.is_contract()) {
+                (_, true) | (DispatchAccounts::Off, _) => None,
+                (DispatchAccounts::Pool(pool), _) => Some(pool.clone()),
+                (DispatchAccounts::Stored, _) => Some(Arc::new(StoredAccountPool::new(
+                    AccountStore::with_paths(config.home.clone(), paths.clone()),
+                    account_usage.clone(),
+                    paths.clone(),
+                ))),
+            };
         // Die Watcher fragen über den Zustand ab, in dem sie selbst liegen; sie halten ihn
         // deshalb nur schwach – sonst hielte sich der Zustand selbst am Leben
         let board = Arc::new(BoardRuntimeHolder::new(board));
@@ -176,6 +232,7 @@ impl AppState {
                 notifications.clone(),
             )),
             clock: config.clock.clone(),
+            accounts: pool.clone(),
             ..DispatchServiceDeps::new(config.home.clone(), board.clone(), launcher)
         }));
         let dispatch_scheduler = Arc::new(
@@ -218,7 +275,24 @@ impl AppState {
             sessions,
             favorites,
             ticket_info: TicketInfoLookup::new(ticket_summaries(weak)),
-            usage,
+            accounts: AccountServices {
+                usage: account_usage.clone(),
+                pool,
+                logins: Arc::new(login_service(
+                    weak,
+                    config.account_login_spawner.clone(),
+                    paths.clone(),
+                    config.clock.clone(),
+                )),
+                plugins,
+                store,
+                mcacc_dir: config
+                    .mcacc_dir
+                    .clone()
+                    .unwrap_or_else(|| user_home().join(".mcacc").join("profiles")),
+                paths,
+                rename_on_login: std::sync::Mutex::new(std::collections::HashSet::new()),
+            },
             platform,
             log: ServerLog::new(&config.home),
             events,
@@ -359,6 +433,67 @@ fn signature_of(weak: &std::sync::Weak<AppState>) -> crate::events::SignatureOf 
             })
         })
     })
+}
+
+/// Die Anmeldung der Accounts; nach dem Erfolg benennt sie den Account nach seiner E-Mail und
+/// richtet das Plugin ein. Sie hält den Zustand nur schwach
+fn login_service(
+    weak: &std::sync::Weak<AppState>,
+    spawner: Option<crate::accounts::LoginSpawner>,
+    paths: AccountPaths,
+    clock: nexus_core::clock::Clock,
+) -> AccountLoginService {
+    let weak = weak.clone();
+    let after_login: crate::accounts::login::AfterLogin = Arc::new(move |account| {
+        let weak = weak.clone();
+        Box::pin(async move { after_login(weak, account).await })
+    });
+    match spawner {
+        Some(spawner) => AccountLoginService::with_spawner(after_login, spawner, paths, clock),
+        None => AccountLoginService::new(after_login, paths, clock),
+    }
+}
+
+/// Nach erfolgreicher Anmeldung: Name aus der E-Mail (falls ohne Namen angelegt),
+/// Nexus-Plugin einrichten, falls es fehlt. Liefert den Stand für die Oberfläche
+async fn after_login(
+    weak: std::sync::Weak<AppState>,
+    account: nexus_core::accounts::ClaudeAccount,
+) -> Option<String> {
+    let state = weak.upgrade()?;
+    let accounts = &state.accounts;
+    let info = accounts.usage.info(&account, None, false).await;
+    let rename = accounts
+        .rename_on_login
+        .lock()
+        .expect("Sperre der Umbenennungen")
+        .remove(&account.id);
+    if let (true, Some(email)) = (rename, info.email.as_deref()) {
+        let _ = accounts.store.update(
+            &account.id,
+            &nexus_core::accounts::AccountPatch {
+                name: Some(email.to_string()),
+                ..nexus_core::accounts::AccountPatch::default()
+            },
+        );
+    }
+    if info.plugin {
+        return None;
+    }
+    let command = nexus_core::dispatch::DispatchConfigStore::new(state.home.clone())
+        .read()
+        .map(|read| read.config.claude.command)
+        .unwrap_or_else(|_| "claude".to_string());
+    match accounts.plugins.install(&account, &command) {
+        Ok(()) => Some("Nexus-Plugin eingerichtet".to_string()),
+        Err(error) => Some(format!("Plugin nicht eingerichtet: {error}")),
+    }
+}
+
+/// Benutzerordner des Rechners (wie `os.homedir()` in Node)
+fn user_home() -> std::path::PathBuf {
+    #[allow(deprecated)]
+    std::env::home_dir().unwrap_or_default()
 }
 
 /// Der Zustand ist weg: der Server wird gerade beendet

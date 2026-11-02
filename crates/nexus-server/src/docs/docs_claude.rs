@@ -13,6 +13,7 @@ use nexus_core::{HarnessError, HarnessHome, Result};
 use serde_json::Value;
 use tokio_util::sync::CancellationToken;
 
+use crate::dispatch::account_pool::side_run_config_dir;
 use crate::dispatch::claude_process::ClaudeRunInput;
 use crate::dispatch::result_envelope::excerpt;
 use nexus_core::dispatch::optimization::AnalysisWorkspace;
@@ -56,19 +57,21 @@ pub fn args(cfg: &DispatchConfig) -> Vec<String> {
 
 /// Ein Lauf im leeren Arbeitsordner der Analyse: Befehl und Umgebung aus der Einstellung,
 /// Anweisung über stdin, Zeitlimit fünf Minuten
-pub fn run_input(
+pub async fn run_input(
     home: &HarnessHome,
     cfg: &DispatchConfig,
     prompt: String,
     cancel: Option<CancellationToken>,
 ) -> Result<ClaudeRunInput> {
     let env: BTreeMap<String, String> = std::env::vars().collect();
+    // Läufe außerhalb des Dispatchers nehmen den Account mit der meisten freien Kapazität
+    let config_dir = side_run_config_dir(home, cfg, chrono::Utc::now()).await;
     Ok(ClaudeRunInput {
         command: cfg.claude.command.clone(),
         args: args(cfg),
         prompt,
         cwd: AnalysisWorkspace::new(home.clone()).dir()?,
-        env: ClaudeInvocation::new().env(&env, cfg, None, None, None),
+        env: ClaudeInvocation::new().env(&env, cfg, None, None, config_dir.as_deref()),
         timeout: TIMEOUT,
         cancel,
     })

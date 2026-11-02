@@ -61,6 +61,7 @@ fn run_info() -> DispatchRunInfo {
         started_at: "2026-10-29T09:00:00.000Z".into(),
         log: "ARC-0001-20261029-090000.log".into(),
         question_id: None,
+        account: None,
     }
 }
 
@@ -157,6 +158,7 @@ fn die_json_form_des_zustands_hat_die_schluessel_der_typescript_typen() {
             state: DispatchStateKind::Idle,
             message: "bereit · 0/1".into(),
             paused_until: None,
+            account_pauses: Default::default(),
             wip: 1,
             active: 0,
             planning: 0,

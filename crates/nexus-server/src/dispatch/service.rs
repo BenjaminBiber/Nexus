@@ -22,15 +22,16 @@ use nexus_core::board::types::Board;
 use nexus_core::clock::{iso, parse_millis, Clock};
 use nexus_core::dispatch::{
     DispatchConfig, DispatchConfigNormalizer, DispatchConfigStore, DispatchLog, DispatchPrompt,
-    DispatchStateStore, MergeEntry, PromptKind, ReadinessBoard, ReadinessTicket, ReviewStore,
-    RunEnd, RunKind, RunLogSplitter, RunRecord, RunResult, RunStore, TimeWindowCheck,
+    DispatchStateStore, MergeEntry, ProfileTicket, PromptKind, ReadinessBoard, ReadinessTicket,
+    ReviewStore, RunEnd, RunKind, RunLogSplitter, RunRecord, RunResult, RunStore, TimeWindowCheck,
 };
 use nexus_core::{HarnessError, HarnessHome, Result};
 use serde::{Deserialize, Serialize};
 use tokio::sync::watch;
 
 use crate::board_runtime::{BoardBackend, BoardRuntimeHolder};
-use crate::dispatch::context::{DispatchContext, DispatchStores, RepoWork};
+use crate::dispatch::account_pool::AccountPool;
+use crate::dispatch::context::{ChosenAccount, DispatchContext, DispatchStores, RepoWork};
 use crate::dispatch::merge_result::{MergeResultReader, MergeRetryOutcome, MergeRetryResult};
 use crate::dispatch::merge_service::MergeService;
 use crate::dispatch::merge_step::MergeStep;
@@ -153,6 +154,9 @@ pub struct DispatchServiceDeps {
     /// Nur lesen: der Schattenbetrieb nutzt [`DispatchService::status`] für seinen Vergleich
     /// und darf dabei nicht einmal den Harness-Ordner eines Repos anlegen
     pub read_only: bool,
+    /// Claude-Accounts des Dispatchers; `None` = ohne Account-Wahl, jeder Lauf mit der
+    /// Umgebung des Servers (Tests, Vertragsmodus)
+    pub accounts: Option<Arc<dyn AccountPool>>,
 }
 
 impl std::fmt::Debug for DispatchServiceDeps {
@@ -183,6 +187,7 @@ impl DispatchServiceDeps {
             env: std::env::vars().collect(),
             platform: crate::dispatch::context::node_platform().to_string(),
             read_only: false,
+            accounts: None,
         }
     }
 }
@@ -301,14 +306,57 @@ impl DispatchService {
         Ok(())
     }
 
-    /// Hebt die Pause auf
+    /// Hebt die Pause auf (auch die Pausen der einzelnen Accounts)
     pub async fn resume(&self) -> Result<()> {
         self.stores
             .state
-            .update(|state| state.paused_until = None)
+            .update(|state| {
+                state.paused_until = None;
+                state.account_pauses.clear();
+            })
             .await?;
         self.stores.log.line("Pause aufgehoben");
         Ok(())
+    }
+
+    /// Hebt die Pause eines Accounts auf; war der Dispatcher nur deshalb ganz pausiert, auch
+    /// diese
+    pub async fn resume_account(&self, id: &str) -> Result<()> {
+        let key = id.to_string();
+        self.stores
+            .state
+            .update(move |state| {
+                if state.account_pauses.contains_key(&key) && state.paused_until.is_some() {
+                    state.paused_until = None;
+                }
+                state.account_pauses.shift_remove(&key);
+            })
+            .await?;
+        self.stores
+            .log
+            .line(&format!("Pause von Account {id} aufgehoben"));
+        Ok(())
+    }
+
+    /// Laufende Account-Pausen
+    pub fn account_pauses(&self) -> Result<BTreeMap<String, String>> {
+        let now = self.deps.clock.now();
+        Ok(self
+            .stores
+            .state
+            .read()?
+            .account_pauses
+            .into_iter()
+            .filter(|(_, at)| {
+                at.parse::<chrono::DateTime<chrono::Utc>>()
+                    .is_ok_and(|at| at > now)
+            })
+            .collect())
+    }
+
+    /// Die Claude-Accounts des Dispatchers
+    pub fn accounts(&self) -> Option<Arc<dyn AccountPool>> {
+        self.deps.accounts.clone()
     }
 
     /// Schaltet den Dispatcher ein oder aus (schreibt `dispatch.yaml`)
@@ -733,6 +781,15 @@ impl DispatchService {
             state: kind,
             message,
             paused_until: paused,
+            account_pauses: state
+                .account_pauses
+                .iter()
+                .filter(|(_, at)| {
+                    at.parse::<chrono::DateTime<chrono::Utc>>()
+                        .is_ok_and(|at| at > now)
+                })
+                .map(|(id, at)| (id.clone(), at.clone()))
+                .collect(),
             wip,
             active,
             planning,
@@ -1370,7 +1427,8 @@ impl DispatchService {
                     Arc::new(NoDispatchNotify),
                     self.deps.env.clone(),
                     self.deps.platform.clone(),
-                );
+                )
+                .with_accounts(self.deps.accounts.clone());
                 let ctx = if self.deps.read_only {
                     ctx.read_only()
                 } else {
@@ -1414,6 +1472,21 @@ impl DispatchService {
                                 .worktree_busy(&view.ticket.id, view.ticket.branch.as_deref(), repo)
                                 .await
                                 .unwrap_or(None);
+                        }
+                    }
+                    if reason.is_none() && ctx.accounts().is_some() {
+                        // Ist kein erlaubter Claude-Account frei, wartet das Ticket ebenfalls
+                        // ohne Platz zu belegen
+                        let detail = ctx.services().tickets.get(&view.ticket.id).await.ok();
+                        if let Some(detail) = detail {
+                            let attempt = ctx.attempts().failed(&detail.comments) as i64 + 1;
+                            let run = ctx
+                                .chooser()
+                                .choose(&ProfileTicket::from(&detail.ticket), attempt);
+                            if let Ok(ChosenAccount::Waiting(waiting)) = ctx.with_account(run).await
+                            {
+                                reason = Some(format!("wartet – {waiting}"));
+                            }
                         }
                     }
                     if reason.is_none() {
@@ -1554,7 +1627,8 @@ impl DispatchService {
             self.deps.notifier.clone(),
             self.deps.env.clone(),
             self.deps.platform.clone(),
-        );
+        )
+        .with_accounts(self.deps.accounts.clone());
         if self.deps.read_only {
             ctx.read_only()
         } else {
@@ -1576,6 +1650,7 @@ fn run_info(record: &RunRecord) -> DispatchRunInfo {
         started_at: record.started_at.clone(),
         log: format!("{}.log", record.id),
         question_id: record.question_id.clone(),
+        account: record.run.account.clone(),
     }
 }
 

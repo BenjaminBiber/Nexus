@@ -10,14 +10,16 @@ use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use nexus_core::accounts::STANDARD_ACCOUNT_ID;
 use nexus_core::board::basics::BoardActor;
 use nexus_core::board::repo_board_resolver::RepoBoardOwner;
 use nexus_core::board::types::Board;
 use nexus_core::clock::{iso, Clock};
 use nexus_core::dispatch::{
-    AttemptCounter, ClaudeInvocation, DispatchConfig, DispatchLog, DispatchPrompt,
-    DispatchReadiness, DispatchStateStore, GitBashLocator, JoinWorktrees, ProfileChooser,
-    ReviewStore, RunKind, RunOutputReader, RunRecord, RunSettings, RunStore, WorktreeSetupStep,
+    hhmm, AccountChoice, AttemptCounter, ClaudeInvocation, DispatchConfig, DispatchLog,
+    DispatchPrompt, DispatchReadiness, DispatchStateStore, GitBashLocator, JoinWorktrees,
+    ProfileChooser, ReviewStore, RunKind, RunOutputReader, RunRecord, RunSettings, RunStore,
+    WorktreeSetupStep,
 };
 use nexus_core::project::layout::HarnessLayout;
 use nexus_core::worktrees::manager::{WorktreeManager, WorktreeOptions};
@@ -26,6 +28,7 @@ use tokio::sync::Mutex;
 
 use crate::board_db::{ServerBoardDatabase, ServerBoardServices};
 use crate::board_runtime::BoardBackend;
+use crate::dispatch::account_pool::{AccountPool, RunAccounts};
 use crate::dispatch::notifier::{DispatchNotice, DispatchNotify};
 use crate::dispatch::worker_launcher::WorkerLauncher;
 
@@ -118,6 +121,28 @@ impl LaunchInput {
     }
 }
 
+/// Ergebnis der Account-Wahl eines Laufs
+#[derive(Debug, Clone)]
+pub enum ChosenAccount {
+    /// Der Lauf mit gewähltem Account
+    Run(Box<RunSettings>),
+    /// Kein Account frei: der Grund fürs Warten
+    Waiting(String),
+}
+
+/// Eine gesetzte Pause nach einem Nutzungslimit
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AccountPause {
+    /// Der pausierte Account
+    pub account: String,
+    /// Ende der Pause (ISO)
+    pub until: String,
+    /// Der ganze Dispatcher pausiert mit
+    pub global: bool,
+    /// Mehr als ein aktiver Account
+    pub multi: bool,
+}
+
 /// Einstellung, eigener Benutzer, Board-Dienste, lokale Dateien und der Starter der Worker.
 pub struct DispatchContext {
     pub cfg: DispatchConfig,
@@ -142,6 +167,8 @@ pub struct DispatchContext {
     read_only: bool,
     /// Hauptordner und Worktree-Verwaltung je Board, einmal je Durchlauf eingerichtet
     repos: Mutex<HashMap<i32, Arc<RepoWork>>>,
+    /// Die Claude-Accounts; `None` = ohne Account-Wahl (Tests, Vertragsmodus)
+    accounts: Option<Arc<dyn AccountPool>>,
 }
 
 impl std::fmt::Debug for DispatchContext {
@@ -187,7 +214,19 @@ impl DispatchContext {
             platform: platform.into(),
             read_only: false,
             repos: Mutex::new(HashMap::new()),
+            accounts: None,
         }
+    }
+
+    /// Kontext mit Account-Wahl; ohne Pool bleibt es bei der Umgebung des Servers
+    pub fn with_accounts(mut self, accounts: Option<Arc<dyn AccountPool>>) -> Self {
+        self.accounts = accounts;
+        self
+    }
+
+    /// Die Claude-Accounts dieses Durchlaufs
+    pub fn accounts(&self) -> Option<&dyn AccountPool> {
+        self.accounts.as_deref()
     }
 
     /// Kontext, der auch den Harness-Ordner des Repos nicht anlegt (Schattenbetrieb)
@@ -383,6 +422,104 @@ impl DispatchContext {
         Ok(run.map(|run| format!("wartet – Worktree belegt durch {}", run.ticket_id)))
     }
 
+    /// Wählt den Claude-Account eines Laufs (ohne Account-Verwaltung: Standard) und trägt ihn
+    /// samt Begründung in die Einstellungen ein; ist keiner frei, kommt der Grund zum Warten
+    /// zurück
+    pub async fn with_account(&self, run: RunSettings) -> Result<ChosenAccount> {
+        if run.account.is_some() {
+            return Ok(ChosenAccount::Run(Box::new(run)));
+        }
+        let Some(accounts) = self.accounts.as_deref() else {
+            return Ok(ChosenAccount::Run(Box::new(run)));
+        };
+        let pauses: BTreeMap<String, String> = self
+            .stores
+            .state
+            .read()?
+            .account_pauses
+            .into_iter()
+            .collect();
+        let choice = accounts
+            .pick(&RunAccounts::from(&run), &self.cfg, self.now(), &pauses)
+            .await;
+        Ok(match choice {
+            AccountChoice::Waiting { reason, .. } => ChosenAccount::Waiting(reason),
+            AccountChoice::Picked { account, why } => ChosenAccount::Run(Box::new(RunSettings {
+                account: Some(account.id),
+                account_why: Some(why),
+                ..run
+            })),
+        })
+    }
+
+    /// Pause nach einem Nutzungslimit: nur der Account des Laufs, bis zur Rücksetzung seines
+    /// vollen Fensters laut Anthropic (falls bekannt), sonst `pause_minutes_on_limit`. Sind
+    /// danach alle aktiven Accounts pausiert, pausiert der ganze Dispatcher bis zur frühesten
+    /// Account-Pause (`global`). Mit nur einem aktiven Account pausiert immer der ganze
+    /// Dispatcher
+    pub async fn pause_account(&self, account: Option<&str>) -> Result<AccountPause> {
+        let id = account.unwrap_or(STANDARD_ACCOUNT_ID).to_string();
+        let now = self.now();
+        let mut until = iso(now + chrono::Duration::minutes(self.cfg.pause_minutes_on_limit));
+        let multi = match self.accounts.as_deref() {
+            Some(accounts) => accounts.multi().await,
+            None => false,
+        };
+        if let Some(accounts) = self.accounts.as_deref() {
+            let reset = accounts
+                .resets_at(&id, self.cfg.account_limit_percent)
+                .await;
+            if let Some(reset) = reset.filter(|at| after(at, now)) {
+                until = reset;
+            }
+        }
+        let enabled: Vec<String> = match self.accounts.as_deref() {
+            Some(accounts) => accounts
+                .enabled()
+                .await
+                .into_iter()
+                .map(|account| account.id)
+                .collect(),
+            None => vec![STANDARD_ACCOUNT_ID.to_string()],
+        };
+        let global = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let flag = global.clone();
+        let stored = until.clone();
+        let key = id.clone();
+        self.stores
+            .state
+            .update(move |state| {
+                state.account_pauses.retain(|_, at| after(at, now));
+                state.account_pauses.insert(key, stored.clone());
+                let pauses: Vec<Option<String>> = enabled
+                    .iter()
+                    .map(|id| state.account_pauses.get(id).cloned())
+                    .collect();
+                if !multi || pauses.iter().all(Option::is_some) {
+                    flag.store(true, std::sync::atomic::Ordering::SeqCst);
+                    state.paused_until = if multi {
+                        let mut all: Vec<String> = pauses.into_iter().flatten().collect();
+                        all.sort();
+                        all.first().cloned()
+                    } else {
+                        Some(stored)
+                    };
+                }
+            })
+            .await?;
+        Ok(AccountPause {
+            account: id,
+            until,
+            global: global.load(std::sync::atomic::Ordering::SeqCst),
+            multi,
+        })
+    }
+
+    /// HH:MM Ortszeit eines ISO-Zeitpunkts
+    pub fn hhmm(&self, at: &str) -> String {
+        hhmm(at)
+    }
+
     /// Legt den Lauf an und startet den Worker; scheitert der Start, bleibt kein Lauf zurück.
     /// Läuft der Worker, bleibt der Lauf auch dann, wenn die Prozessnummer nicht gespeichert
     /// werden kann (ohne Nummer gilt er nach 2 min als verschwunden).
@@ -408,6 +545,22 @@ impl DispatchContext {
             )
             .into());
         }
+        // Ohne gewählten Account (Planung, Recherche, Merge-Session) wählt der Start selbst;
+        // keiner frei → Fehler, nichts gestartet
+        let input = match self.with_account(input.run.clone()).await? {
+            ChosenAccount::Waiting(reason) => {
+                return Err(HarnessError::new(
+                    "account-unavailable",
+                    format!("Kein Claude-Account frei: {reason}"),
+                )
+                .into())
+            }
+            ChosenAccount::Run(run) => LaunchInput { run: *run, ..input },
+        };
+        let config_dir = match (self.accounts.as_deref(), input.run.account.as_deref()) {
+            (Some(accounts), Some(account)) => accounts.config_dir(account).await,
+            _ => None,
+        };
         let setup_timeout_minutes = input
             .setup
             .as_ref()
@@ -450,11 +603,13 @@ impl DispatchContext {
             RunKind::Research => None,
             _ => Some(input.ticket_id.as_str()),
         };
-        let env = self
-            .invocation
-            // Der Konfigurationsordner des gewählten Accounts kommt mit der Account-Wahl
-            // (NXS-0111); bis dahin bleibt die Umgebung des Servers
-            .env(&self.env, &self.cfg, ticket, git_bash.as_deref(), None);
+        let env = self.invocation.env(
+            &self.env,
+            &self.cfg,
+            ticket,
+            git_bash.as_deref(),
+            config_dir.as_deref(),
+        );
         let pid = match self.launcher.launch(&id, &env) {
             Ok(pid) => pid.map(i64::from),
             Err(error) => {
@@ -490,6 +645,13 @@ impl DispatchContext {
             },
         )
     }
+}
+
+/// Liegt der ISO-Zeitpunkt nach `now`? Ein unlesbarer Zeitpunkt zählt wie `NaN` in
+/// JavaScript: der Vergleich ist falsch
+fn after(at: &str, now: chrono::DateTime<chrono::Utc>) -> bool {
+    at.parse::<chrono::DateTime<chrono::Utc>>()
+        .is_ok_and(|at| at > now)
 }
 
 /// Name der Plattform wie `process.platform` in Node

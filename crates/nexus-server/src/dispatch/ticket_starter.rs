@@ -15,7 +15,7 @@ use nexus_core::worktrees::registry::SetupState;
 use nexus_core::Result;
 
 use crate::board_runtime::BoardRuntimeHolder;
-use crate::dispatch::context::{DispatchContext, LaunchInput, RepoWork};
+use crate::dispatch::context::{ChosenAccount, DispatchContext, LaunchInput, RepoWork};
 use crate::dispatch::prompt_values::PromptValues;
 use crate::dispatch::result_handler::ResultHandler;
 use crate::dispatch::run_recorder::{RunRecorder, StartFailed};
@@ -116,6 +116,14 @@ impl<'a> TicketStarter<'a> {
         let run = ctx
             .chooser()
             .choose(&ProfileTicket::from(&detail.ticket), attempt);
+        // Account vor dem Claim wählen: ist keiner frei, wartet das Ticket ungeclaimt (zählt
+        // nicht als Versuch)
+        let run = match ctx.with_account(run).await? {
+            ChosenAccount::Waiting(reason) => {
+                return Ok(StartOutcome::Skipped(format!("wartet – {reason}")))
+            }
+            ChosenAccount::Run(run) => *run,
+        };
         let agent = ctx.agent_name(&view.ticket.id);
         let claimed = ctx
             .services()
@@ -163,9 +171,21 @@ impl<'a> TicketStarter<'a> {
                     .await
             }
         };
+        let account_line = match (
+            launched.record.run.account.as_deref(),
+            launched.record.run.account_why.as_deref(),
+        ) {
+            (Some(account), Some(why)) => format!("\nAccount: {account} ({why})."),
+            _ => String::new(),
+        };
+        let warning_line = launched
+            .warning
+            .as_deref()
+            .map(|warning| format!("\nHinweis: {warning}"))
+            .unwrap_or_default();
         let comment = format!(
             "{}: an {agent} übergeben – Branch {}, Profil {} (Modell {}, Effort {}, max. {} \
-Schritte, {} min). Grund: {}.{}",
+Schritte, {} min). Grund: {}.{}{}",
             markers::START,
             launched.branch,
             launched.record.run.profile,
@@ -174,20 +194,24 @@ Schritte, {} min). Grund: {}.{}",
             launched.record.run.max_turns,
             launched.record.run.timeout_minutes,
             launched.record.run.why,
-            launched
-                .warning
-                .as_deref()
-                .map(|warning| format!("\nHinweis: {warning}"))
-                .unwrap_or_default(),
+            account_line,
+            warning_line,
         );
         match ctx.comment(&view.ticket.id, &comment).await {
             Ok(()) => ctx.log(&format!(
-                "gestartet {} → {agent} in {} [{}: {}/{}]",
+                "gestartet {} → {agent} in {} [{}: {}/{}{}]",
                 view.ticket.id,
                 launched.cwd,
                 launched.record.run.profile,
                 launched.record.run.model.as_deref().unwrap_or("-"),
                 launched.record.run.effort.as_deref().unwrap_or("-"),
+                launched
+                    .record
+                    .run
+                    .account
+                    .as_deref()
+                    .map(|account| format!(" @{account}"))
+                    .unwrap_or_default(),
             )),
             // Der Worker läuft bereits: kein Zurückgeben, sonst startet der nächste Durchlauf
             // ein zweites Mal
