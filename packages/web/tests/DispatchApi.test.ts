@@ -197,5 +197,29 @@ describe('dispatchForm – Accounts', () => {
     expect(toRaw(toForm({}), {})).not.toHaveProperty('accountLimitPercent');
     expect(checkForm({ ...form, accountLimit: '20' })).toBe('Account voll ab (%) muss eine ganze Zahl von 50 bis 100 sein.');
   });
+
+  it('liest die Reserve mit Vorgaben 10/2/30 und prüft ihre Bereiche', () => {
+    const form = toForm({});
+    expect([form.accountReserveFiveHour, form.accountReserveWeek, form.accountResetGrace]).toEqual(['10', '2', '30']);
+    expect(checkForm({ ...form, accountReserveFiveHour: '60' })).toBe('Reserve 5 Stunden (%) muss eine ganze Zahl von 0 bis 50 sein.');
+    expect(checkForm({ ...form, accountReserveWeek: '51' })).toBe('Reserve Woche (%) muss eine ganze Zahl von 0 bis 50 sein.');
+    expect(checkForm({ ...form, accountResetGrace: '301' })).toBe('Ohne Reserve, wenn 5 h zurücksetzt in (min) muss eine ganze Zahl von 0 bis 300 sein.');
+    expect(checkForm({ ...form, accountReserveFiveHour: '0', accountReserveWeek: '50', accountResetGrace: '300' })).toBeNull();
+  });
+
+  it('schreibt die Reserve nur zurück, wenn sie abweicht oder schon in der Einstellung steht', () => {
+    const plain = toRaw(toForm({}), {});
+    expect(plain).not.toHaveProperty('accountReserveFiveHour');
+    expect(plain).not.toHaveProperty('accountReserveWeek');
+    expect(plain).not.toHaveProperty('accountResetGraceMinutes');
+    const changed = toRaw({ ...toForm({}), accountReserveWeek: '5' }, {});
+    expect(changed.accountReserveWeek).toBe(5);
+    expect(changed).not.toHaveProperty('accountReserveFiveHour');
+    expect(changed).not.toHaveProperty('accountResetGraceMinutes');
+    const present = { accountReserveFiveHour: 10, accountResetGraceMinutes: 30 };
+    expect(toForm(present).accountReserveFiveHour).toBe('10');
+    expect(toRaw(toForm(present), present)).toMatchObject({ accountReserveFiveHour: 10, accountResetGraceMinutes: 30 });
+    expect(toRaw({ ...toForm({}), accountResetGrace: '0' }, {}).accountResetGraceMinutes).toBe(0);
+  });
 });
 

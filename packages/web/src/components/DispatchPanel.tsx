@@ -266,6 +266,15 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
             <SettingRow label="Account voll ab (%)" hint="Ab dieser Auslastung (5 Stunden oder Woche) nimmt er den Account nicht mehr.">
               <input className="short" inputMode="numeric" value={form.accountLimit} onChange={(e) => change({ accountLimit: e.target.value })} />
             </SettingRow>
+            <SettingRow label="Reserve 5 Stunden (%)" hint="So viel Prozentpunkte plant er für einen Lauf ein, solange es zu wenige frühere Läufe für eine Schätzung gibt.">
+              <input className="short" inputMode="numeric" value={form.accountReserveFiveHour} onChange={(e) => change({ accountReserveFiveHour: e.target.value })} />
+            </SettingRow>
+            <SettingRow label="Reserve Woche (%)" hint="So viel Prozentpunkte plant er für einen Lauf in der Woche ein, solange es zu wenige frühere Läufe für eine Schätzung gibt.">
+              <input className="short" inputMode="numeric" value={form.accountReserveWeek} onChange={(e) => change({ accountReserveWeek: e.target.value })} />
+            </SettingRow>
+            <SettingRow label="Ohne Reserve, wenn 5 h zurücksetzt in (min)" hint="Setzt sich das 5-Stunden-Fenster so bald zurück, startet er trotz knapper Auslastung.">
+              <input className="short" inputMode="numeric" value={form.accountResetGrace} onChange={(e) => change({ accountResetGrace: e.target.value })} />
+            </SettingRow>
           </SettingsSection>
           <SettingsSection title="Regeln" description="Die erste passende Regel bestimmt das Profil." info="Alle ausgefüllten Bedingungen einer Regel müssen zutreffen. „ab Dateien“ zählt die Zeilen der Tabelle unter „## Integration“ im Plan, „ab Zeichen Plan“ die Länge des Plans.">
             <div className="settings-card-body">
