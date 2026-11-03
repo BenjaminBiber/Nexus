@@ -164,6 +164,9 @@ pub fn dialog_message(kind: DialogKind, target: &str) -> String {
         DialogKind::Comment => format!("Was soll als Kommentar an {target}?"),
         DialogKind::QuestionText => format!("Wie ist {target} entschieden?"),
         DialogKind::QuestionDiscard => format!("Warum soll {target} verworfen werden?"),
+        // Der Ideen-Dialog fragt mit seinem eigenen Text, weil die Rückfragen schon in der
+        // Bestätigung stehen ([`crate::telegram::idea::views::correction_message`])
+        DialogKind::IdeaAnswer => "Was soll am Entwurf anders sein?".to_string(),
     };
     format!(
         "✍️ {}\nSchick es als Nachricht; /abbrechen beendet den Dialog.",

@@ -100,6 +100,11 @@ pub struct AppState {
     /// Der Telegram-Bot: Poller, Kopplung und Stand. [`crate::serve`] startet ihn, das
     /// Herunterfahren hält ihn an
     pub telegram: Arc<TelegramBot>,
+    /// Versteht die Ideen aus dem Bot; der Dienst gehört in den Zustand, weil er je Chat nur
+    /// einen Lauf zulässt
+    pub idea: Arc<crate::telegram::IdeaInterpreter>,
+    /// Die offenen Ideen-Entwürfe je Chat (`<home>/telegram/drafts.json`)
+    pub idea_drafts: Arc<crate::telegram::IdeaDraftStore>,
     /// Wird beim Beenden ausgelöst; eigene und durchgeleitete Ereignisströme enden daran
     pub shutdown: CancellationToken,
     /// Prozessnummer, wie `GET /api/health` sie meldet
@@ -371,6 +376,13 @@ impl AppState {
                 config.clock.clone(),
                 config.telegram_api.clone(),
                 bot_router(weak, config.clock.clone()),
+            )),
+            idea: config.idea_interpreter.clone().unwrap_or_else(|| {
+                Arc::new(crate::telegram::IdeaInterpreter::new(config.home.clone()))
+            }),
+            idea_drafts: Arc::new(crate::telegram::IdeaDraftStore::new(
+                config.home.clone(),
+                config.clock.clone(),
             )),
             notifications,
             notice_tabs,

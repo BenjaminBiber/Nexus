@@ -85,8 +85,14 @@ impl Bot {
     /// Ein Projekt mit einem aktiven Board; die Erkennung zeigt auf die Attrappe (`None`
     /// schaltet sie aus)
     async fn start(stub: Option<&SpeechStub>) -> Self {
-        let (server, backend) =
-            TestServer::start_with_board_and(TestServerOptions::default()).await;
+        let (server, backend) = TestServer::start_with_board_and(TestServerOptions {
+            // Freier Text wird hier zu einer Idee; die Attrappe antwortet darauf nichts
+            // Brauchbares, damit nie das echte `claude` startet (die Ideen prüft
+            // `telegram_ideas`)
+            claude: Some(common::fake_runners(common::FakeClaude::replying(""))),
+            ..TestServerOptions::default()
+        })
+        .await;
         let actor = backend.actor();
         backend
             .services
@@ -345,8 +351,8 @@ async fn ohne_offenen_dialog_geht_das_transkript_denselben_weg_wie_ein_getippter
     bot.speak(3, Some(13)).await;
     let gesprochen = bot.sent();
 
-    // Nach dem „Verstanden“ antwortet derselbe Weg wie auf den getippten Text; den freien
-    // Text nimmt noch kein Handler an, also kommt der Hinweis
+    // Nach dem „Verstanden“ antwortet derselbe Weg wie auf den getippten Text: beide werden
+    // zu einer neuen Idee
     assert_eq!(getippt.len(), 1, "{getippt:?}");
     assert_eq!(gesprochen.len(), 2, "{gesprochen:?}");
     assert!(

@@ -51,6 +51,10 @@ impl Bot {
             clock: Some(Clock::from_fn(move || {
                 start + TimeDelta::minutes(read.load(Ordering::Relaxed))
             })),
+            // Freier Text wird hier zu einer Idee; die Attrappe antwortet darauf nichts
+            // Brauchbares, damit nie das echte `claude` startet (die Ideen prüft
+            // `telegram_ideas`)
+            claude: Some(common::fake_runners(common::FakeClaude::replying(""))),
             ..TestServerOptions::default()
         })
         .await;
@@ -513,7 +517,11 @@ async fn abbrechen_und_der_ablauf_beenden_einen_dialog() {
     assert_eq!(bot.sent(), vec!["Abgebrochen."]);
     bot.clear();
     bot.send("nur so ein Satz").await;
-    assert_eq!(bot.sent(), vec!["Schick mir einen Befehl, z. B. /hilfe"]);
+    assert_eq!(
+        bot.sent(),
+        vec!["🤔 Ich schaue mir das Board an …"],
+        "ohne Dialog ist freier Text eine neue Idee"
+    );
     assert!(bot.comments(&id).await.is_empty());
 
     // Ohne offenen Dialog sagt /abbrechen das auch

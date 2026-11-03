@@ -78,6 +78,9 @@ pub struct ServerConfig {
     /// Zugriff auf die Bot-API von Telegram; ohne Angabe über reqwest (Tests setzen hier eine
     /// Attrappe ein, damit nie wirklich bei Telegram angefragt wird)
     pub telegram_api: Option<crate::telegram::TelegramApiFactory>,
+    /// Der Dienst, der die Ideen des Bots versteht; ohne Angabe einer mit der Umgebung des
+    /// Servers (Tests geben ihm die Umgebung ihres Claude-Ersatzes mit)
+    pub idea_interpreter: Option<std::sync::Arc<crate::telegram::IdeaInterpreter>>,
 }
 
 /// Woher der Dispatcher seine Claude-Accounts nimmt
@@ -152,6 +155,7 @@ impl ServerConfig {
             dispatch_accounts: DispatchAccounts::default(),
             mcacc_dir: None,
             telegram_api: None,
+            idea_interpreter: None,
         }
     }
 }

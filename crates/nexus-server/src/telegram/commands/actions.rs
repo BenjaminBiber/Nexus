@@ -234,8 +234,9 @@ impl Actions {
             DialogKind::ReturnFeedback => &[InboxKind::Accept, InboxKind::Blocked],
             // Ein Kommentar passt in jedem Zustand; nur geben muss es das Ticket
             DialogKind::Comment => &[],
-            // Die Dialoge der Fragen macht [`super::questions`] auf
-            DialogKind::QuestionText | DialogKind::QuestionDiscard => &[],
+            // Die Dialoge der Fragen macht [`super::questions`] auf, den der Ideen
+            // [`crate::telegram::idea::flow`]
+            DialogKind::QuestionText | DialogKind::QuestionDiscard | DialogKind::IdeaAnswer => &[],
         };
         let detail = match self.ticket(ctx, query_id, &state, id, allowed).await? {
             Some(detail) => detail,
@@ -325,9 +326,9 @@ impl Actions {
                 },
                 _ => ctx.reply(&hint_message(&stale(&id, RETURN))).await,
             },
-            // Die Dialoge der Fragen beantwortet [`super::questions`]; der Verteiler in
-            // [`super`] gibt sie nie hierher
-            DialogKind::QuestionText | DialogKind::QuestionDiscard => {
+            // Die Dialoge der Fragen beantwortet [`super::questions`], den der Ideen
+            // [`crate::telegram::idea::flow`]; der Verteiler in [`super`] gibt sie nie hierher
+            DialogKind::QuestionText | DialogKind::QuestionDiscard | DialogKind::IdeaAnswer => {
                 ctx.reply(&hint_message(OTHER_DIALOG)).await
             }
         }
