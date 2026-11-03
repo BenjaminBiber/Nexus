@@ -174,7 +174,7 @@
 /* Je Limit eine Zeile: Name | Auslastung / Grenze | Reset; Spalten über beide Zeilen bündig */
 .usage-tile-rows { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; column-gap: 14px; row-gap: 6px; min-width: 0; font-variant-numeric: tabular-nums; }
 .usage-tile-rows .usage-pop-row { display: contents; }
-.usage-tile-rows .usage-pop-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usage-tile-rows .usage-pop-label { grid-column: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .usage-tile-rows .usage-pop-reset { grid-column: 3; }
 .usage-tile-rows.empty { opacity: 0.5; }
 .account-tile .account-status { display: flex; flex-wrap: wrap; gap: 6px; }
