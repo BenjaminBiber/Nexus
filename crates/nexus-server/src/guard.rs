@@ -40,6 +40,11 @@ pub const TOKEN_HEADER: &str = "x-nexus-token";
 /// Abruf eines Protokolls keine Köpfe setzen können
 pub const TOKEN_QUERY: &str = "token";
 
+/// Pfade, die statt JSON eine Aufnahme als Körper annehmen. Der Schutz hängt an der Herkunft
+/// und am Pflichtkopf, nicht am Inhaltstyp: `audio/*` ist kein „einfacher“ Inhaltstyp, eine
+/// fremde Seite käme damit nicht an der Vorabfrage und der Herkunftsprüfung vorbei.
+pub const AUDIO_BODY_PATHS: [&str; 1] = ["/api/speech/test"];
+
 /// Methoden, die eine Vorabfrage der App freigibt
 const ALLOW_METHODS: &str = "GET, POST, PUT, PATCH, DELETE";
 /// Köpfe, die eine Vorabfrage der App freigibt
@@ -120,11 +125,13 @@ impl RequestGuard {
     }
 
     /// Prüft eine Anfrage; `None`, wenn sie zulässig ist, sonst der Ablehnungsgrund.
-    /// `query` ist der Abfrageteil der Adresse ohne `?`; daraus kommt bei `GET`/`HEAD` das
-    /// Token der App.
+    /// `path` ist der Pfad der Adresse (nur die Routen aus [`AUDIO_BODY_PATHS`] dürfen eine
+    /// Aufnahme statt JSON schicken), `query` ihr Abfrageteil ohne `?`; daraus kommt bei
+    /// `GET`/`HEAD` das Token der App.
     pub fn check(
         &self,
         method: &Method,
+        path: &str,
         headers: &HeaderMap,
         query: Option<&str>,
     ) -> Option<GuardDenial> {
@@ -155,7 +162,7 @@ impl RequestGuard {
                 aus_der_app = true;
             }
         }
-        if !is_read(method) && !json_content(headers) {
+        if !is_read(method) && !json_content(headers) && !audio_body(path, headers) {
             return Some(match aus_der_app {
                 true => GuardDenial {
                     code: "header-missing",
@@ -223,6 +230,18 @@ fn json_content(headers: &HeaderMap) -> bool {
         .is_some_and(|value| value.to_lowercase().starts_with("application/json"))
 }
 
+/// Eine Aufnahme als Körper – nur auf den Pfaden aus [`AUDIO_BODY_PATHS`] und nur mit einem
+/// Inhaltstyp, der Audio meint
+fn audio_body(path: &str, headers: &HeaderMap) -> bool {
+    if !AUDIO_BODY_PATHS.contains(&path) {
+        return false;
+    }
+    single(headers, "content-type").is_some_and(|value| {
+        let value = value.to_lowercase();
+        value.starts_with("audio/") || value.starts_with("application/octet-stream")
+    })
+}
+
 /// Köpfe können mehrfach vorkommen; wie in Node zählt der erste Wert. Köpfe, die sich nicht
 /// als Text lesen lassen, gelten als nicht vorhanden.
 fn single<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
@@ -245,9 +264,12 @@ pub async fn guard_middleware(
             return vorabfrage(origin);
         }
     }
-    let denial = state
-        .guard
-        .check(request.method(), request.headers(), request.uri().query());
+    let denial = state.guard.check(
+        request.method(),
+        request.uri().path(),
+        request.headers(),
+        request.uri().query(),
+    );
     let mut response = match denial {
         Some(denial) => (StatusCode::FORBIDDEN, crate::error::json(&denial)).into_response(),
         None => next.run(request).await,

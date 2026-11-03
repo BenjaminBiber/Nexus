@@ -7,6 +7,9 @@
 //! Zeichen in zwei Blöcken), `entkommt` (eigene Prozessgruppe, der Abbruch des Baums greift
 //! nicht) und `cwd` (schreibt den Arbeitsordner).
 //!
+//! Der Modus `antwort` liefert, was in `FAKE_CLAUDE_REPLY` steht: so geben Tests dem Ersatz
+//! eine fertige Antwort mit, ohne die Umgebung des Testprozesses zu ändern.
+//!
 //! Das Binary wird nicht ausgeliefert; Tests finden es über
 //! `env!("CARGO_BIN_EXE_nexus-fake-claude")`.
 
@@ -68,7 +71,9 @@ fn main() {
             let _ = std::io::stdout().write_all(format!("cwd={}\n", cwd.display()).as_bytes());
         }
         _ => {
-            let text = if modus == "limit" {
+            let text = if modus == "antwort" {
+                std::env::var("FAKE_CLAUDE_REPLY").unwrap_or_default()
+            } else if modus == "limit" {
                 "Claude usage limit reached".to_string()
             } else {
                 let key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_else(|_| "-".to_string());

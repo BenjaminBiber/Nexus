@@ -277,14 +277,16 @@ wo das Szenario Variablen nennt; die des Rahmens stehen hier im README und nicht
 ### Schritt-Art `httpStub`: Attrappe eines fremden Dienstes
 
 Manche Routen rufen einen Dienst außerhalb des Rechners auf – `POST /api/user-settings/test-ntfy` schickt eine
-Push-Meldung an einen ntfy-Server. Diese Art startet dafür einen Mini-HTTP-Server auf einem freien Port, der
-jede Anfrage mit einem festen Status beantwortet und aufzeichnet, was ankam.
+Push-Meldung an einen ntfy-Server, `POST /api/speech/test` eine Aufnahme an die Spracherkennung. Diese Art
+startet dafür einen Mini-HTTP-Server auf einem freien Port, der jede Anfrage mit einem festen Status und einem
+festen Körper beantwortet und aufzeichnet, was ankam.
 
 | Feld | Bedeutung |
 | --- | --- |
 | `stub` | Name der Attrappe in Großbuchstaben (`NTFY`), Pflicht. |
 | `action` | `start` (Standard) startet sie, `requests` zeichnet die empfangenen Anfragen auf. |
 | `status` | Antwortstatus der Attrappe, Standard `200` (nur bei `start`). |
+| `body` | Antwortkörper der Attrappe (nur bei `start`): fehlt er, bleibt die Antwort leer; ein Text geht als `text/plain`, jeder andere JSON-Wert als `application/json`. |
 
 ```json
 { "name": "Attrappe starten", "kind": "httpStub", "stub": "NTFY", "save": { "ntfyUrl": "json.url" } },
@@ -299,6 +301,8 @@ jede Anfrage mit einem festen Status beantwortet und aufzeichnet, was ankam.
 - `requests` liefert je Anfrage Methode, Pfad, die Köpfe `content-type` und `authorization` und den Körper als
   `json` oder `text`. Andere Köpfe hängen am HTTP-Client und gehören nicht zum Vertrag.
 - Die Attrappen leben nur in ihrem Szenario; der Runner beendet sie danach.
+- Ein Multipart-Körper (die Aufnahme der Spracherkennung) trägt je Lauf eine andere Grenze: dort gehören
+  `headers.content-type` und `text` der Anfrage in `ignore`, sonst passt die Golden-Datei nie zweimal.
 
 ### Schritt-Art `commit`: Arbeit im Repo
 
