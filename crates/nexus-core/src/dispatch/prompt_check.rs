@@ -76,6 +76,9 @@ fn ph(name: &str) -> String {
 }
 
 /// Toleriert mehr Leerraum und zusätzliche Flags zwischen den Wörtern eines Befehls
+/// Programmname im Pflichtteil: `nexus` oder der alte Name `harness` (ältere eigene Vorlagen)
+const CLI: &str = "(?:nexus|harness)";
+
 fn cmd(words: &[&str]) -> Regex {
     Regex::new(&words.join(r"\s+(?:--?\S+\s+)*")).unwrap()
 }
@@ -95,14 +98,14 @@ static RULES_WORK: LazyLock<Vec<Rule>> = LazyLock::new(|| {
         placeholder_rule("agent", "Platzhalter {{agent}}"),
         Rule {
             id: "done",
-            label: "Ausgang erledigt: harness board done {{ticketId}}",
-            test: cmd(&["harness", "board", "done", &ph("ticketId")]),
+            label: "Ausgang erledigt: nexus board done {{ticketId}}",
+            test: cmd(&[CLI, "board", "done", &ph("ticketId")]),
         },
         Rule {
             id: "blocked",
-            label: "Ausgang blockiert: harness board set {{ticketId}} --status blocked",
+            label: "Ausgang blockiert: nexus board set {{ticketId}} --status blocked",
             test: cmd(&[
-                "harness",
+                CLI,
                 "board",
                 "set",
                 &ph("ticketId"),
@@ -112,9 +115,9 @@ static RULES_WORK: LazyLock<Vec<Rule>> = LazyLock::new(|| {
         },
         Rule {
             id: "question",
-            label: "Ausgang Frage: harness board question add … --ticket {{ticketId}}",
+            label: "Ausgang Frage: nexus board question add … --ticket {{ticketId}}",
             test: cmd(&[
-                "harness",
+                CLI,
                 "board",
                 "question",
                 "add",
@@ -136,8 +139,8 @@ static RULES_PLAN: LazyLock<Vec<Rule>> = LazyLock::new(|| {
         placeholder_rule("agent", "Platzhalter {{agent}}"),
         Rule {
             id: "plan-json",
-            label: "Speichern: harness board plan-json {{ticketId}}",
-            test: cmd(&["harness", "board", "plan-json", &ph("ticketId")]),
+            label: "Speichern: nexus board plan-json {{ticketId}}",
+            test: cmd(&[CLI, "board", "plan-json", &ph("ticketId")]),
         },
         Rule {
             id: "plan-file",
@@ -153,9 +156,9 @@ static RULES_RESEARCH: LazyLock<Vec<Rule>> = LazyLock::new(|| {
         placeholder_rule("agent", "Platzhalter {{agent}}"),
         Rule {
             id: "question-research",
-            label: "Speichern: harness board question research {{questionId}}",
+            label: "Speichern: nexus board question research {{questionId}}",
             test: cmd(&[
-                "harness",
+                CLI,
                 "board",
                 "question",
                 "research",
@@ -242,21 +245,21 @@ mod tests {
         match kind {
             PromptKind::Work => [
                 "Du bist {{agent}}. Setze Ticket {{ticketId}} um.",
-                "erledigt: harness board done {{ticketId}} --acceptance \"<woran man es sieht>\" --by {{agent}};",
-                "blockiert: harness board set {{ticketId}} --status blocked --blocked-reason \"<Grund>\" --by {{agent}};",
-                "Frage: harness board question add \"<Frage>\" --description \"<Kontext>\" --ticket {{ticketId}} --author {{agent}}",
+                "erledigt: nexus board done {{ticketId}} --acceptance \"<woran man es sieht>\" --by {{agent}};",
+                "blockiert: nexus board set {{ticketId}} --status blocked --blocked-reason \"<Grund>\" --by {{agent}};",
+                "Frage: nexus board question add \"<Frage>\" --description \"<Kontext>\" --ticket {{ticketId}} --author {{agent}}",
             ]
             .join("\n"),
             PromptKind::Plan => [
                 "Du bist {{agent}}, ein Planungs-Agent. Plane Ticket {{ticketId}}.",
                 "Plan als JSON in die Datei plan.json schreiben, dann speichern:",
-                "harness board plan-json {{ticketId}} --file plan.json --by {{agent}}",
+                "nexus board plan-json {{ticketId}} --file plan.json --by {{agent}}",
             ]
             .join("\n"),
             PromptKind::Research => [
                 "Du bist {{agent}}, ein Recherche-Agent. Recherchiere Frage {{questionId}}.",
                 "Ergebnis in die Datei research.json schreiben, dann speichern:",
-                "harness board question research {{questionId}} --from research.json --author {{agent}}",
+                "nexus board question research {{questionId}} --from research.json --author {{agent}}",
             ]
             .join("\n"),
             PromptKind::Merge => [
@@ -275,13 +278,13 @@ mod tests {
             "questionId" => r"\{\{questionId\}\}",
             "branch" => r"\{\{branch\}\}",
             "target" => r"\{\{target\}\}",
-            "done" => r"harness board done \{\{ticketId\}\}",
-            "blocked" => r"harness board set \{\{ticketId\}\} --status blocked",
-            "question" => r"harness board question add[\s\S]*?--ticket \{\{ticketId\}\}",
+            "done" => r"(?:nexus|harness) board done \{\{ticketId\}\}",
+            "blocked" => r"(?:nexus|harness) board set \{\{ticketId\}\} --status blocked",
+            "question" => r"(?:nexus|harness) board question add[\s\S]*?--ticket \{\{ticketId\}\}",
             "by-agent" => r"--by \{\{agent\}\}",
-            "plan-json" => r"harness board plan-json \{\{ticketId\}\}",
+            "plan-json" => r"(?:nexus|harness) board plan-json \{\{ticketId\}\}",
             "plan-file" => r"plan\.json",
-            "question-research" => r"harness board question research \{\{questionId\}\}",
+            "question-research" => r"(?:nexus|harness) board question research \{\{questionId\}\}",
             "research-file" => r"research\.json",
             "merge-abort" => r"git merge --abort",
             other => panic!("Testlücke: kein Entferner für Pflichtteil {other}"),
@@ -353,12 +356,21 @@ mod tests {
     fn akzeptiert_zusatzlichen_leerraum_und_weitere_flags() {
         let check = PromptTemplateCheck::new();
         let tolerant = sample(PromptKind::Work).replace(
-            "harness board done {{ticketId}}",
-            "harness   board\tdone   {{ticketId}}",
+            "nexus board done {{ticketId}}",
+            "nexus   board\tdone   {{ticketId}}",
         );
         assert_eq!(check.missing(PromptKind::Work, &tolerant), vec![]);
         let flags = sample(PromptKind::Plan)
             .replace("plan-json {{ticketId}}", "plan-json --quiet {{ticketId}}");
         assert_eq!(check.missing(PromptKind::Plan, &flags), vec![]);
+    }
+
+    #[test]
+    fn eigene_vorlagen_mit_dem_alten_namen_harness_bleiben_vollstandig() {
+        let check = PromptTemplateCheck::new();
+        for kind in PromptTemplateCheck::KINDS {
+            let alt = sample(kind).replace("nexus board", "harness board");
+            assert_eq!(check.missing(kind, &alt), vec![], "{kind}");
+        }
     }
 }
