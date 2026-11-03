@@ -5,6 +5,10 @@ edition.workspace = true
 version.workspace = true
 rust-version.workspace = true
 
+[features]
+# Gibt Test-Attrappen (z. B. telegram::fake) auch außerhalb der Modultests frei
+testing = []
+
 [dependencies]
 axum = { workspace = true }
 chrono = { workspace = true }
