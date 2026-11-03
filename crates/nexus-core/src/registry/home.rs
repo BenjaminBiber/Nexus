@@ -182,6 +182,11 @@ impl NexusHome {
         self.dir.join("dispatch.yaml")
     }
 
+    /// Einstellung des Telegram-Bots (mit Geheimnissen, deshalb nur für den Benutzer)
+    pub fn telegram_config_file(&self) -> PathBuf {
+        self.dir.join("telegram.yaml")
+    }
+
     /// Ausblendungen und letzte Claude-Analyse der Optimierungs-Vorschläge
     pub fn dispatch_suggestions_file(&self) -> PathBuf {
         self.dir.join("dispatch-suggestions.json")
@@ -406,6 +411,10 @@ mod tests {
         assert_eq!(
             home.dispatch_config_file(),
             Path::new("h").join("dispatch.yaml")
+        );
+        assert_eq!(
+            home.telegram_config_file(),
+            Path::new("h").join("telegram.yaml")
         );
         assert_eq!(
             home.dispatch_suggestions_file(),
