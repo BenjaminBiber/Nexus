@@ -2772,6 +2772,7 @@ dependencies = [
  "nexus-core",
  "nexus-db",
  "nexus-platform",
+ "nexus-server",
  "nix",
  "regex",
  "reqwest 0.12.28",
