@@ -52,15 +52,14 @@ interface Drafts {
   assignee: string;
   labels: string;
   targetBranch: string;
-  acceptance: string;
   blockedReason: string;
 }
 
-const DRAFT_KEYS: Array<keyof Drafts> = ['title', 'assignee', 'labels', 'targetBranch', 'acceptance', 'blockedReason'];
+const DRAFT_KEYS: Array<keyof Drafts> = ['title', 'assignee', 'labels', 'targetBranch', 'blockedReason'];
 
 // Entwürfe aus dem geladenen Ticket
 function draftsOf(ticket: DbTicketDetailDto): Drafts {
-  return { title: ticket.title, assignee: ticket.assignee ?? '', labels: ticket.labels.join(', '), targetBranch: ticket.targetBranch ?? '', acceptance: ticket.acceptance, blockedReason: ticket.blockedReason ?? '' };
+  return { title: ticket.title, assignee: ticket.assignee ?? '', labels: ticket.labels.join(', '), targetBranch: ticket.targetBranch ?? '', blockedReason: ticket.blockedReason ?? '' };
 }
 
 // Wert, wie ihn der Server speichert (getrimmt, Labels als „a, b“); Grundlage für Vergleiche
@@ -390,15 +389,15 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
                   <input type="checkbox" checked={ticket.needsPlanning} disabled={t.busy} onChange={(e) => void t.save({ needsPlanning: e.target.checked })} />
                   <span>Braucht Planung</span>
                 </label>
-                <label className="field half">
+                <label className="field">
                   <span>Zuständig</span>
                   <input value={drafts.assignee} placeholder="Niemand zugewiesen" onChange={(e) => edit('assignee', e.target.value)} onBlur={() => commit('assignee')} onKeyDown={blurOnEnter} />
                 </label>
-                <label className="field half">
+                <label className="field">
                   <span>Labels</span>
                   <input value={drafts.labels} placeholder="kommagetrennt" onChange={(e) => edit('labels', e.target.value)} onBlur={() => commit('labels')} onKeyDown={blurOnEnter} />
                 </label>
-                <label className="field half">
+                <label className="field">
                   <span>Zielbranch</span>
                   <BranchCombo
                     value={drafts.targetBranch}
@@ -415,16 +414,11 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
                   <span>Blockiert-Grund</span>
                   <input value={drafts.blockedReason} placeholder="Nicht blockiert" onChange={(e) => edit('blockedReason', e.target.value)} onBlur={() => commit('blockedReason')} onKeyDown={blurOnEnter} />
                 </label>
-                <label className="field wide">
-                  <span>Abnahme</span>
-                  <textarea className="plain-text" rows={3} value={drafts.acceptance} onChange={(e) => edit('acceptance', e.target.value)} onBlur={() => commit('acceptance')} />
-                </label>
               </div>
               <DbMergeRetry ticket={ticket} mine={props.isOwnBoard?.(ticket.boardId) ?? false} onDone={() => { void reload(); props.onChanged(); }} />
               {showsReview(ticket, props.isOwnBoard?.(ticket.boardId) ?? false) && (
                 <DbReview ticket={ticket} onDone={() => { void reload(); props.onChanged(); }} />
               )}
-              <DbTicketQuestions ticket={ticket} onAsk={() => setAsking(true)} />
               <DbTicketTabs
                 ticket={ticket}
                 busy={t.busy}
@@ -434,6 +428,7 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
                 agentPrefix={props.agentPrefix}
                 userName={props.userName}
                 onDirtyChange={setTabsDirty}
+                questions={<DbTicketQuestions ticket={ticket} onAsk={() => setAsking(true)} />}
                 steps={
                   <DbTicketSteps
                     ticket={ticket}

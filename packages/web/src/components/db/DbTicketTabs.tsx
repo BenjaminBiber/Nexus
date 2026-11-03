@@ -10,11 +10,12 @@ import { DbCommentDialog } from './DbCommentDialog.js';
 import { DbTicketTimeline } from './DbTicketTimeline.js';
 import { Collapsible } from '../Collapsible.js';
 
-export type DbTextField = 'description' | 'plan' | 'handbook' | 'diagram';
-type TabKey = DbTextField | 'steps' | 'comments' | 'history' | 'agent';
+export type DbTextField = 'description' | 'acceptance' | 'plan' | 'handbook' | 'diagram';
+type TabKey = DbTextField | 'steps' | 'questions' | 'comments' | 'history' | 'agent';
 
 const TEXT_TABS: Array<{ key: DbTextField; label: string; empty: string }> = [
   { key: 'description', label: 'Beschreibung', empty: 'Noch keine Beschreibung.' },
+  { key: 'acceptance', label: 'Abnahme', empty: 'Noch keine Abnahmekriterien.' },
   { key: 'plan', label: 'Plan', empty: 'Noch kein Plan.' },
   { key: 'handbook', label: 'Handbuch', empty: 'Noch kein Handbuch.' },
   { key: 'diagram', label: 'Diagramm', empty: 'Kein Diagramm. Mermaid-Quelltext ohne Code-Zaun eintragen.' },
@@ -32,11 +33,13 @@ function ctrlEnter(action: () => void) {
 
 // Reiter des Ticket-Panels: Texte mit Vorschau/Bearbeiten, Kommentare, Verlauf und Agent (Läufe des Dispatchers, live);
 // meldet ungespeicherte Eingaben. Der Punkt am Reiter „Agent“: ein Lauf läuft oder ein Agent (agentPrefix) hat das Ticket in Arbeit.
-export function DbTicketTabs({ ticket, busy, conflictOpen = false, agentPrefix, userName, steps, onSave, onComment, onDirtyChange }: {
+export function DbTicketTabs({ ticket, busy, conflictOpen = false, agentPrefix, userName, steps, questions, onSave, onComment, onDirtyChange }: {
   ticket: DbTicketDetailDto;
   busy: boolean;
   // Inhalt des Reiters „Schritte“; bleibt beim Reiterwechsel eingehängt (nur versteckt), damit offene Entwürfe erhalten bleiben
   steps?: ReactNode;
+  // Inhalt des Reiters „Fragen“ (offene Fragen des Tickets, „Frage stellen“)
+  questions?: ReactNode;
   conflictOpen?: boolean;
   // Namensanfang der Agents des Dispatchers (z. B. „junior-“)
   agentPrefix?: string;
@@ -138,7 +141,9 @@ export function DbTicketTabs({ ticket, busy, conflictOpen = false, agentPrefix, 
   const tabs: Array<{ key: TabKey; label: string; filled: boolean }> = [
     textTab(TEXT_TABS[0]),
     ...(steps ? [{ key: 'steps' as TabKey, label: `Schritte (${ticket.stepsDone}/${ticket.stepsTotal})`, filled: false }] : []),
-    ...TEXT_TABS.slice(1).map(textTab),
+    textTab(TEXT_TABS[1]),
+    ...(questions ? [{ key: 'questions' as TabKey, label: `Fragen (${ticket.waitingOnQuestions.length})`, filled: ticket.waitingOnQuestions.length > 0 }] : []),
+    ...TEXT_TABS.slice(2).map(textTab),
     { key: 'comments', label: `Kommentare (${ticket.comments.length})`, filled: false },
     { key: 'history', label: 'Verlauf', filled: false },
     { key: 'agent', label: 'Agent', filled: agentActive },
@@ -251,6 +256,7 @@ export function DbTicketTabs({ ticket, busy, conflictOpen = false, agentPrefix, 
           </>
         )}
         {steps && <div className="db-steps-tab" hidden={tab !== 'steps'}>{steps}</div>}
+        {tab === 'questions' && questions}
         {tab === 'agent' && <AgentRuns id={ticket.id} refresh={`${ticket.status} ${ticket.assignee ?? ''}`} onRunning={setAgentRunning} />}
         {tab === 'history' && (
           <DbTicketTimeline

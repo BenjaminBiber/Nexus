@@ -245,7 +245,7 @@
 .db-rel-add input { flex: 1; min-width: 0; }
 .badge.question { background: var(--waiting-bg); color: var(--waiting-fg); }
 .badge.session { background: var(--running-bg); color: var(--running-fg); }
-.db-ticket-questions { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.db-ticket-questions { display: flex; flex-direction: column; gap: 6px; }
 .db-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 /* Umsetzung und Schritte im Ticket-Panel */
 .db-work-list { display: grid; gap: 4px 12px; margin: 0; }
