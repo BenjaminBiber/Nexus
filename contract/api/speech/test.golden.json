@@ -1,0 +1,249 @@
+[
+  {
+    "name": "Attrappe der Spracherkennung starten",
+    "request": {
+      "action": "start",
+      "body": {
+        "language": "german",
+        "text": "Hallo Nexus, das ist ein Test der Spracherkennung."
+      },
+      "status": 200,
+      "stub": "SPEECH"
+    },
+    "response": {
+      "json": {
+        "url": "<var:speechUrl>"
+      }
+    }
+  },
+  {
+    "name": "Spracherkennung auf die Attrappe einrichten",
+    "request": {
+      "content": "speech:\n  backend: openai-compatible\n  baseUrl: <var:speechUrl>\n  apiKey: \"\"\n  model: whisper-1\n  language: de\n",
+      "kind": "homeFile",
+      "path": "telegram.yaml"
+    },
+    "response": {
+      "json": {
+        "path": "<HOME>/telegram.yaml"
+      }
+    }
+  },
+  {
+    "name": "Test ohne Körper erkennt das Beispiel-Audio",
+    "request": {
+      "method": "POST",
+      "path": "/api/speech/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "backend": "openai-compatible",
+        "language": "german",
+        "text": "Hallo Nexus, das ist ein Test der Spracherkennung."
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Anfrage an der Attrappe",
+    "request": {
+      "action": "requests",
+      "stub": "SPEECH"
+    },
+    "response": {
+      "json": [
+        {
+          "headers": {},
+          "method": "POST",
+          "path": "/v1/audio/transcriptions"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Eigene Aufnahme statt des Beispiels (der Rahmen schickt Text als Körper)",
+    "request": {
+      "body": "OggS-Vertragsaufnahme",
+      "headers": {
+        "content-type": "audio/ogg"
+      },
+      "method": "POST",
+      "path": "/api/speech/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "backend": "openai-compatible",
+        "language": "german",
+        "text": "Hallo Nexus, das ist ein Test der Spracherkennung."
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Ein JSON-Körper ist keine Aufnahme",
+    "request": {
+      "body": {
+        "audio": "nein"
+      },
+      "method": "POST",
+      "path": "/api/speech/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "bad-request",
+        "message": "Ohne Aufnahme den Körper leer lassen, sonst die Audiodaten mit ihrem Inhaltstyp schicken (z. B. audio/ogg)."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Spracherkennung abschalten",
+    "request": {
+      "content": "speech:\n  backend: \"off\"\n",
+      "kind": "homeFile",
+      "path": "telegram.yaml"
+    },
+    "response": {
+      "json": {
+        "path": "<HOME>/telegram.yaml"
+      }
+    }
+  },
+  {
+    "name": "Test mit abgeschalteter Spracherkennung",
+    "request": {
+      "method": "POST",
+      "path": "/api/speech/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "speech-off",
+        "message": "Spracherkennung ist ausgeschaltet."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Spracherkennung auf whisper-cli stellen",
+    "request": {
+      "content": "speech:\n  backend: whisper-cli\n",
+      "kind": "homeFile",
+      "path": "telegram.yaml"
+    },
+    "response": {
+      "json": {
+        "path": "<HOME>/telegram.yaml"
+      }
+    }
+  },
+  {
+    "name": "Test mit whisper-cli",
+    "request": {
+      "method": "POST",
+      "path": "/api/speech/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "speech-off",
+        "message": "Die Spracherkennung über whisper-cli ist noch nicht verfügbar."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Attrappe mit Fehler starten",
+    "request": {
+      "action": "start",
+      "body": {
+        "error": {
+          "message": "Incorrect API key provided"
+        }
+      },
+      "status": 401,
+      "stub": "SPEECH_FEHLER"
+    },
+    "response": {
+      "json": {
+        "url": "<var:fehlerUrl>"
+      }
+    }
+  },
+  {
+    "name": "Spracherkennung auf die Attrappe mit Fehler umstellen",
+    "request": {
+      "content": "speech:\n  backend: openai-compatible\n  baseUrl: <var:fehlerUrl>\n  apiKey: vertrag-attrappe\n  model: whisper-1\n  language: de\n",
+      "kind": "homeFile",
+      "path": "telegram.yaml"
+    },
+    "response": {
+      "json": {
+        "path": "<HOME>/telegram.yaml"
+      }
+    }
+  },
+  {
+    "name": "Test gegen den Dienst mit Fehler",
+    "request": {
+      "method": "POST",
+      "path": "/api/speech/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "speech-failed",
+        "message": "Die Spracherkennung antwortete mit 401: {\"error\":{\"message\":\"Incorrect API key provided\"}}."
+      },
+      "status": 502
+    }
+  },
+  {
+    "name": "Anfrage an der Attrappe mit Fehler",
+    "request": {
+      "action": "requests",
+      "stub": "SPEECH_FEHLER"
+    },
+    "response": {
+      "json": [
+        {
+          "headers": {
+            "authorization": "Bearer vertrag-attrappe"
+          },
+          "method": "POST",
+          "path": "/v1/audio/transcriptions"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Spracherkennung auf einen Port ohne Dienst umstellen",
+    "request": {
+      "content": "speech:\n  backend: openai-compatible\n  baseUrl: http://127.0.0.1:9\n  apiKey: \"\"\n  model: whisper-1\n  language: de\n",
+      "kind": "homeFile",
+      "path": "telegram.yaml"
+    },
+    "response": {
+      "json": {
+        "path": "<HOME>/telegram.yaml"
+      }
+    }
+  },
+  {
+    "name": "Test ohne erreichbaren Dienst",
+    "request": {
+      "method": "POST",
+      "path": "/api/speech/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "speech-failed"
+      },
+      "status": 502
+    }
+  }
+]
