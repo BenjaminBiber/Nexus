@@ -1,4 +1,5 @@
-//! Routengruppe `telegram`: Einstellung, Stand, Kopplung, Entkoppeln und Testnachricht.
+//! Routengruppe `telegram`: Einstellung, Stand, Kopplung, Entkoppeln, Testnachricht und das
+//! Einrichten des Bot-Profils.
 //!
 //! Die Einstellung geht nur maskiert hinaus und kommt nur als Teil-Eingabe herein
 //! (`merge_update`): Bot-Token und API-Schlüssel behalten ihren Wert, wenn die Oberfläche die
@@ -15,8 +16,8 @@ use axum::response::Response;
 use axum::routing::{delete, get, post};
 use axum::Router;
 use nexus_core::telegram::{
-    BotState, TelegramConfigStore, TelegramPairingDto, TelegramStatusDto, TelegramTestDto,
-    TelegramTestError,
+    BotState, TelegramConfigStore, TelegramPairingDto, TelegramProfileDto, TelegramStatusDto,
+    TelegramTestDto, TelegramTestError,
 };
 use serde_json::Value;
 
@@ -52,6 +53,10 @@ pub fn routes() -> Router<Arc<AppState>> {
         .route(
             "/api/telegram/test",
             post(test).fallback(static_or_not_found),
+        )
+        .route(
+            "/api/telegram/profile",
+            post(profile).fallback(static_or_not_found),
         )
 }
 
@@ -135,6 +140,25 @@ async fn test(State(state): State<Arc<AppState>>) -> ApiResult<Response> {
         }
     }
     Ok(json(&TelegramTestDto { sent, errors }))
+}
+
+/// Richtet Profilbild, Name, Beschreibungen und Befehlsliste des Bots neu ein – erzwungen,
+/// also auch dann, wenn alles schon gesetzt war. Die Bot-ID kommt aus dem Stand des Pollers;
+/// ohne sie wüsste niemand, für welchen Bot das Profil gilt
+async fn profile(State(state): State<Arc<AppState>>) -> ApiResult<Response> {
+    let config = store(&state).read()?;
+    if !config.enabled || config.bot_token.is_empty() {
+        return Err(not_running());
+    }
+    let Some(bot_id) = state.telegram.status().await.bot_id else {
+        return Err(not_running());
+    };
+    let api = state.telegram.api(&config);
+    let outcome = state.telegram.sync_profile(api.as_ref(), bot_id).await;
+    Ok(json(&TelegramProfileDto {
+        applied: outcome.applied,
+        error: outcome.error,
+    }))
 }
 
 /// Der Store der Einstellung auf dem Benutzerordner des Servers
