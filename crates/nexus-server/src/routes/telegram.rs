@@ -98,9 +98,15 @@ async fn pair(State(state): State<Arc<AppState>>) -> ApiResult<Response> {
     Ok(json(&dto_of(&code, bot.bot_name.as_deref())))
 }
 
-/// Nimmt einen Chat aus der Freigabeliste
-async fn unpair(State(state): State<Arc<AppState>>, Path(id): Path<i64>) -> ApiResult<Response> {
-    if !store(&state).remove_chat(id)? {
+/// Nimmt einen Chat aus der Freigabeliste. Die Chat-ID kommt aus der Adresse; was keine Zahl
+/// ist, kann auch nicht gekoppelt sein – deshalb dieselbe Antwort wie für einen unbekannten Chat
+async fn unpair(State(state): State<Arc<AppState>>, Path(id): Path<String>) -> ApiResult<Response> {
+    let chat_id = id.parse::<i64>().ok();
+    let entkoppelt = match chat_id {
+        Some(chat_id) => store(&state).remove_chat(chat_id)?,
+        None => false,
+    };
+    if !entkoppelt {
         return Err(ApiError::new(
             "telegram-chat-not-found",
             format!("Der Chat {id} ist nicht gekoppelt."),

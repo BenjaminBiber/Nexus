@@ -46,6 +46,16 @@
   },
   {
     "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "DELETE",
+    "pattern": "/api/accounts/:id/run-token"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "PUT",
+    "pattern": "/api/accounts/:id/run-token"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
     "method": "POST",
     "pattern": "/api/accounts/login"
   },
@@ -658,6 +668,36 @@
     "file": "crates/nexus-server/src/routes/speech.rs",
     "method": "POST",
     "pattern": "/api/speech/test"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "DELETE",
+    "pattern": "/api/telegram/chats/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "GET",
+    "pattern": "/api/telegram/config"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "PUT",
+    "pattern": "/api/telegram/config"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "POST",
+    "pattern": "/api/telegram/pair"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "GET",
+    "pattern": "/api/telegram/status"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "POST",
+    "pattern": "/api/telegram/test"
   },
   {
     "file": "crates/nexus-server/src/routes/usage.rs",

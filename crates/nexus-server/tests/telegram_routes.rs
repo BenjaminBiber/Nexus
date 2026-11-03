@@ -265,6 +265,14 @@ async fn entkoppelt_einen_chat_und_meldet_einen_unbekannten() {
     let unbekannt = h.server.delete("/api/telegram/chats/42").await;
     assert_eq!(unbekannt.status, 404);
     assert_eq!(unbekannt.code().as_deref(), Some("telegram-chat-not-found"));
+
+    // Was keine Zahl ist, kann auch nicht gekoppelt sein
+    let keine_zahl = h.server.delete("/api/telegram/chats/abc").await;
+    assert_eq!(keine_zahl.status, 404);
+    assert_eq!(
+        keine_zahl.code().as_deref(),
+        Some("telegram-chat-not-found")
+    );
 }
 
 #[tokio::test]

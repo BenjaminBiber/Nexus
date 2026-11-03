@@ -284,9 +284,12 @@ festen Körper beantwortet und aufzeichnet, was ankam.
 | Feld | Bedeutung |
 | --- | --- |
 | `stub` | Name der Attrappe in Großbuchstaben (`NTFY`), Pflicht. |
-| `action` | `start` (Standard) startet sie, `requests` zeichnet die empfangenen Anfragen auf. |
+| `action` | `start` (Standard) startet sie, `await` wartet auf Anfragen, `requests` zeichnet die empfangenen Anfragen auf. |
 | `status` | Antwortstatus der Attrappe, Standard `200` (nur bei `start`). |
 | `body` | Antwortkörper der Attrappe (nur bei `start`): fehlt er, bleibt die Antwort leer; ein Text geht als `text/plain`, jeder andere JSON-Wert als `application/json`. |
+| `routes` | Eigene Antworten je Aufruf (nur bei `start`), siehe unten. |
+| `call` | Name des Aufrufs, auf den `await` wartet; ohne Angabe jede Anfrage. |
+| `count` | So viele Anfragen erwartet `await`, Standard `1`. |
 
 ```json
 { "name": "Attrappe starten", "kind": "httpStub", "stub": "NTFY", "save": { "ntfyUrl": "json.url" } },
@@ -303,6 +306,36 @@ festen Körper beantwortet und aufzeichnet, was ankam.
 - Die Attrappen leben nur in ihrem Szenario; der Runner beendet sie danach.
 - Ein Multipart-Körper (die Aufnahme der Spracherkennung) trägt je Lauf eine andere Grenze: dort gehören
   `headers.content-type` und `text` der Anfrage in `ignore`, sonst passt die Golden-Datei nie zweimal.
+- In jeder Adresse der Bot-API von Telegram steht das Bot-Token (`/bot123456:AA…/getMe`). Im aufgezeichneten
+  Pfad wird es zu `/bot<TOKEN>`, damit kein Geheimnis in eine Golden-Datei kommt.
+
+#### Antworten je Aufruf (`routes`) und Warten (`await`)
+
+Ein Dienst mit mehreren Aufrufen braucht je Aufruf eine eigene Antwort: Die Bot-API von Telegram beantwortet
+`getMe` mit dem Bot, `getUpdates` mit einer Liste und `sendMessage` mit der geschickten Nachricht. Schlüssel in
+`routes` ist das letzte Stück des Pfades, Wert ein Objekt mit `status`, `body` oder `bodies` (Antworten in ihrer
+Reihenfolge, die letzte wiederholt sich) und `delayMs` (so lange wartet die Attrappe – für das Long Polling von
+`getUpdates`, damit der Server sie nicht ohne Pause fragt). Ein Aufruf ohne eigenen Eintrag bekommt `status`
+und `body` der Attrappe. In `body`, `bodies` und `status` werden Variablen eingesetzt.
+
+`await` wartet, bis die Attrappe die erwarteten Anfragen gesehen hat. Damit hängt ein Szenario nicht am Takt
+einer Hintergrundaufgabe: Nach dem Einschalten des Bots steht erst mit dem Aufruf von `setMyCommands` fest, dass
+der Poller läuft und `GET /api/telegram/status` ihn als `running` meldet. Aufgezeichnet wird nur `{ "ok": true }`
+– wie viele Anfragen wirklich ankamen, ist in jedem Lauf anders.
+
+```json
+{ "name": "Attrappe der Bot-API starten", "kind": "httpStub", "stub": "TELEGRAM",
+  "body": { "ok": true, "result": true },
+  "routes": {
+    "getMe": { "body": { "ok": true, "result": { "id": 7012345678, "username": "nexus_vertrag_bot", "first_name": "Nexus" } } },
+    "getUpdates": { "body": { "ok": true, "result": [] }, "delayMs": 1000 }
+  },
+  "save": { "tgUrl": "json.url" } },
+{ "name": "Bot einschalten", "method": "PUT", "path": "/api/telegram/config",
+  "body": { "enabled": true, "apiBase": "{{tgUrl}}" } },
+{ "name": "warten, bis der Bot sich angemeldet hat", "kind": "httpStub", "action": "await",
+  "stub": "TELEGRAM", "call": "setMyCommands" }
+```
 
 ### Schritt-Art `commit`: Arbeit im Repo
 
