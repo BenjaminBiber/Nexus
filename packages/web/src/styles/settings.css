@@ -200,12 +200,27 @@
 .account-add-modal > .setting-row { padding: 6px 0; }
 .account-add-modal > .account-more { padding: 10px 0 0; }
 .account-add-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px; }
-.account-add-modal > .account-remove { padding: 14px 0 0; }
 .account-remove-start { margin-right: auto; }
-/* Einstellungen eines Accounts: zwei Spalten, schmal untereinander */
-.account-settings-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 32px; }
-@media (max-width: 720px) { .account-settings-cols { grid-template-columns: minmax(0, 1fr); } }
-.account-settings-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.account-settings-col > .setting-row { padding: 8px 0; }
-.account-settings-col > h3 { margin: 8px 0 0; }
-.account-settings-col > p { margin: 0; overflow-wrap: anywhere; }
+/* Einstellungen eines Accounts: Abschnitte wie auf den Einstellungsseiten, eine Spalte */
+.account-settings-modal { display: flex; flex-direction: column; gap: 20px; width: min(680px, 100%); }
+.account-settings-title { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.account-settings-title .mono { min-width: 0; overflow: hidden; font-size: 12.5px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.account-settings-modal > .notice { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.account-settings-modal .settings-section-title h3 { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.account-settings-modal .setting-row { padding: 12px 16px; }
+.account-settings-modal .setting-row.wide { row-gap: 8px; }
+.account-settings-modal .code { min-height: 36px; }
+.account-settings-modal .account-run-token { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; margin: 0; }
+@media (max-width: 560px) {
+  .account-settings-modal .account-run-token { grid-template-columns: minmax(0, 1fr) auto; }
+  .account-settings-modal .account-run-token > .code { grid-column: 1 / -1; }
+}
+.account-commands { display: flex; flex-direction: column; gap: 6px; }
+.account-terminal > summary { cursor: pointer; list-style: none; }
+.account-terminal > summary::-webkit-details-marker { display: none; }
+.account-terminal > summary::before { content: 'chevron_right'; font-family: 'Material Icons'; font-size: 18px; color: var(--muted); transition: transform 0.15s; }
+.account-terminal[open] > summary::before { transform: rotate(90deg); }
+.account-terminal > summary:hover h3 { color: var(--text); }
+.account-dir { max-width: 420px; font-size: 12.5px; color: var(--text-soft); text-align: right; overflow-wrap: anywhere; }
+.account-settings-modal > .account-remove { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-color: var(--blocked-fg); }
+.account-settings-modal > .account-remove > * + * { border-top: 0; }

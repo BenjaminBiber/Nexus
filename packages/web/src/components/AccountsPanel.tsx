@@ -12,7 +12,7 @@ import { LoadingState } from './LoadingState.js';
 import { InfoTip } from './settings/InfoTip.js';
 import { Notice } from './settings/Notice.js';
 import { SaveStatusSlot, SettingsPanel, useSaveStatus } from './settings/SettingsPanel.js';
-import { SettingRow } from './settings/SettingRow.js';
+import { SettingRow, SettingsSection } from './settings/SettingRow.js';
 
 const WINDOWS = typeof navigator !== 'undefined' && /win/i.test(navigator.platform);
 /** So oft fragt die Seite nach, solange eine Anmeldung läuft */
@@ -203,7 +203,8 @@ function AccountTile({ account, defaultLimit, pluginCommands, accountsDir, chang
   );
 }
 
-// Einstellungen eines Accounts im Dialog: Obergrenzen, Name, Plugin, Ordner und Terminal, Pause aufheben, Entfernen
+// Einstellungen eines Accounts im Dialog, aufgebaut wie die Einstellungsseiten: Abschnitte mit Zeilen, kurze Hinweise, Längeres
+// hinter dem (i). Oben eine laufende Pause, dann Dispatcher (Name, Obergrenzen, Plugin, Token) und Terminal; unten Entfernen
 function AccountSettingsDialog({ account, busy, act, paused, pluginCommands, accountsDir, onClose }: {
   account: AccountDto;
   busy: boolean;
@@ -232,43 +233,60 @@ function AccountSettingsDialog({ account, busy, act, paused, pluginCommands, acc
   };
 
   return (
-    <DbModal labelledBy={titleId} onEscape={() => (removing ? setRemoving(false) : onClose())} onBackdrop={onClose} className="panel db-modal wide account-add-modal">
+    <DbModal labelledBy={titleId} onEscape={() => (removing ? setRemoving(false) : onClose())} onBackdrop={onClose} className="panel db-modal account-settings-modal">
       <header className="account-add-head">
-        <h2 id={titleId}>{account.name}</h2>
+        <div className="account-settings-title">
+          <h2 id={titleId}>{account.name}</h2>
+          {account.email && account.email !== account.name && <span className="mono">{account.email}</span>}
+        </div>
         <button type="button" className="icon-btn" aria-label="Schließen" onClick={onClose}><Icon name="close" /></button>
       </header>
-      {/* Links was der Dispatcher nutzt (Grenzen, Name, Plugin), rechts Ordner und Befehle fürs Terminal */}
-      <div className="account-settings-cols">
-        <div className="account-settings-col">
-          <SettingRow label="Obergrenzen" hint="Über dieser Auslastung nimmt der Dispatcher den Account nicht mehr. Leer: Vorgabe des Dispatchers." wide group>
-            <div className="account-limits">
-              <LimitInput label="5 Stunden" value={account.limitFiveHour} disabled={busy} onSave={(limitFiveHour) => void act(() => api.updateAccount(account.id, { limitFiveHour }))} />
-              <LimitInput label="Woche" value={account.limitWeek} disabled={busy} onSave={(limitWeek) => void act(() => api.updateAccount(account.id, { limitWeek }))} />
-            </div>
+      {paused && (
+        <Notice tone="warn" role="note" label="Pausiert">
+          <span>Pausiert bis {hhmm(paused)} – das Limit war erreicht.</span>
+          <button type="button" className="btn small" disabled={busy} onClick={() => void act(() => api.resumeAccount(account.id))}>Pause aufheben</button>
+        </Notice>
+      )}
+      <SettingsSection title="Dispatcher">
+        <SettingRow label="Name">
+          <input value={name} maxLength={60} disabled={busy} onChange={(e) => setName(e.target.value)} onBlur={rename} onKeyDown={(e) => e.key === 'Enter' && rename()} />
+        </SettingRow>
+        <SettingRow label="Obergrenzen" hint="Leer: Vorgabe des Dispatchers." info={LIMITS_INFO} group>
+          <div className="account-limits">
+            <LimitInput label="5 Std." value={account.limitFiveHour} disabled={busy} onSave={(limitFiveHour) => void act(() => api.updateAccount(account.id, { limitFiveHour }))} />
+            <LimitInput label="Woche" value={account.limitWeek} disabled={busy} onSave={(limitWeek) => void act(() => api.updateAccount(account.id, { limitWeek }))} />
+          </div>
+        </SettingRow>
+        {account.loggedIn && !account.plugin && !running && (
+          <SettingRow label="Nexus-Plugin" hint="Fehlt – ohne Plugin wählt der Dispatcher den Account nicht." group>
+            <button type="button" className="btn small" disabled={busy || !pluginCommands.length} onClick={() => void act(() => api.installAccountPlugin(account.id))}>
+              Einrichten
+            </button>
           </SettingRow>
-          <SettingRow label="Name" wide>
-            <input value={name} maxLength={60} disabled={busy} onChange={(e) => setName(e.target.value)} onBlur={rename} onKeyDown={(e) => e.key === 'Enter' && rename()} />
+        )}
+        <RunTokenSetting account={account} busy={busy} act={act} />
+      </SettingsSection>
+      {/* Selten gebraucht: Ordner und Befehle fürs Terminal starten eingeklappt */}
+      <details className="settings-section account-terminal">
+        <summary className="settings-section-title"><h3>Ordner und Terminal</h3></summary>
+        <div className="settings-card">
+          <SettingRow label="Ordner" group>
+            <span className="mono account-dir">{account.effectiveDir}</span>
           </SettingRow>
-          {account.loggedIn && !account.plugin && !running && (
-            <SettingRow label="Nexus-Plugin" hint="Ohne Plugin arbeitet ein Lauf ohne Board-Anbindung; der Dispatcher wählt den Account dann nicht." wide group>
-              <button type="button" className="btn small" disabled={busy || !pluginCommands.length} onClick={() => void act(() => api.installAccountPlugin(account.id))}>
-                Plugin einrichten
-              </button>
+          <SettingRow label="Anmelden" hint={<>Setzt <code>CLAUDE_CONFIG_DIR</code>; danach <code>/login</code>.</>} wide group>
+            <CopyCommand command={`${prefix}claude`} compact />
+          </SettingRow>
+          {pluginCommands.length > 0 && (
+            <SettingRow label="Plugin einrichten" wide group>
+              <div className="account-commands">
+                {pluginCommands.map((c) => <CopyCommand key={c} command={`${prefix}${c}`} compact />)}
+              </div>
             </SettingRow>
           )}
-          <RunTokenSetting account={account} busy={busy} act={act} />
         </div>
-        <section className="account-settings-col" aria-labelledby={`${titleId}-dir`}>
-          <h3 id={`${titleId}-dir`} className="setting-label">Ordner und Terminal</h3>
-          <p className="setting-hint">Ordner: <span className="mono">{account.effectiveDir}</span></p>
-          <p className="setting-hint">Anmelden im Terminal (danach <code>/login</code>):</p>
-          <CopyCommand command={`${prefix}claude`} compact />
-          {pluginCommands.length > 0 && <p className="setting-hint">Plugin im Terminal einrichten:</p>}
-          {pluginCommands.map((c) => <CopyCommand key={c} command={`${prefix}${c}`} compact />)}
-        </section>
-      </div>
+      </details>
       {removing ? (
-        <div className="account-remove" role="group" aria-label={`${account.name} entfernen`}>
+        <div className="settings-card account-remove" role="group" aria-label={`${account.name} entfernen`}>
           <p>
             {account.references.length
               ? <>Der Account wird auch aus der Dispatcher-Einstellung entfernt ({account.references.join(', ')}).</>
@@ -288,9 +306,6 @@ function AccountSettingsDialog({ account, busy, act, paused, pluginCommands, acc
           {!standard && (
             <button type="button" className="btn small danger account-remove-start" disabled={busy} onClick={() => setRemoving(true)}>Entfernen …</button>
           )}
-          {paused && (
-            <button type="button" className="btn small" disabled={busy} onClick={() => void act(() => api.resumeAccount(account.id))}>Pause aufheben</button>
-          )}
           <button type="button" className="btn small primary" onClick={onClose}>Fertig</button>
         </div>
       )}
@@ -306,28 +321,36 @@ function RunTokenSetting({ account, busy, act }: { account: AccountDto; busy: bo
     if (!token.trim()) return;
     void act(() => api.setAccountRunToken(account.id, token.trim())).then(() => setToken(''));
   };
+  if (account.runToken) {
+    return (
+      <SettingRow label="Token für Läufe" info={RUN_TOKEN_INFO} group>
+        <Badge kind="running">gesetzt</Badge>
+        <button type="button" className="btn small" disabled={busy} onClick={() => void act(() => api.removeAccountRunToken(account.id))}>Entfernen</button>
+      </SettingRow>
+    );
+  }
   return (
-    <SettingRow label="Langzeit-Token für Läufe"
-      hint="Läufe melden sich damit an statt mit der Anmeldung im Ordner und erneuern sie nie – so machen parallele Läufe die Anmeldung nicht ungültig. Im Browser denselben Account wählen; das Token gilt ein Jahr."
-      wide group>
-      {account.runToken ? (
-        <div className="account-run-token">
-          <Badge kind="running">gesetzt</Badge>
-          <button type="button" className="btn small" disabled={busy} onClick={() => void act(() => api.removeAccountRunToken(account.id))}>Entfernen</button>
-        </div>
-      ) : (
-        <>
-          <CopyCommand command="claude setup-token" compact />
-          <div className="account-run-token">
-            <input type="password" autoComplete="off" value={token} placeholder="sk-ant-oat01-…" aria-label="Langzeit-Token" disabled={busy}
-              onChange={(e) => setToken(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} />
-            <button type="button" className="btn small" disabled={busy || !token.trim()} onClick={save}>Speichern</button>
-          </div>
-        </>
-      )}
+    <SettingRow label="Token für Läufe" hint="Im Terminal erzeugen, hier einfügen." info={RUN_TOKEN_INFO} wide group>
+      <div className="account-run-token">
+        <CopyCommand command="claude setup-token" compact />
+        <input type="password" autoComplete="off" value={token} placeholder="sk-ant-oat01-…" aria-label="Langzeit-Token" disabled={busy}
+          onChange={(e) => setToken(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} />
+        <button type="button" className="btn small" disabled={busy || !token.trim()} onClick={save}>Speichern</button>
+      </div>
     </SettingRow>
   );
 }
+
+const LIMITS_INFO = (
+  <p>Über dieser Auslastung (in Prozent) nimmt der Dispatcher den Account nicht mehr. Ohne Wert gilt die Vorgabe aus den Dispatcher-Einstellungen.</p>
+);
+
+const RUN_TOKEN_INFO = (
+  <p>
+    Läufe melden sich mit dem Langzeit-Token an statt mit der Anmeldung im Ordner und erneuern diese nie – so machen parallele
+    Läufe die Anmeldung nicht ungültig. Beim Erzeugen im Browser denselben Account wählen; das Token gilt ein Jahr.
+  </p>
+);
 
 // Stand der Anmeldung: läuft (Link zur Anmeldeseite, Code-Feld, Abbrechen) oder gescheitert (Grund, erneut); fertig zeigt
 // sich am Punkt vor dem Namen
