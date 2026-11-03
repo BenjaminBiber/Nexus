@@ -41,6 +41,8 @@ nix = { workspace = true, features = ["process"] }
 [dev-dependencies]
 # Die Standardwerte für Läufe des Dispatchers stecken im Merkmal `testing` des Fachkerns.
 nexus-core = { workspace = true, features = ["testing"] }
+# Auf sich selbst, damit die Integrationstests die Attrappe `telegram::fake` sehen
+nexus-server = { path = ".", features = ["testing"] }
 tempfile = { workspace = true }
 # Die Watcher-Tests lassen die Uhr springen (`#[tokio::test(start_paused = true)]`)
 tokio = { workspace = true, features = ["test-util"] }

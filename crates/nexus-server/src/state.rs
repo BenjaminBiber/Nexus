@@ -359,7 +359,11 @@ impl AppState {
             ),
             // Der Bot pollt erst, wenn `telegram.yaml` ihn einschaltet und ein Token nennt;
             // der Vertrag zeigt über `apiBase` auf seine eigene Attrappe
-            telegram: Arc::new(TelegramBot::new(config.home.clone(), config.clock.clone())),
+            telegram: Arc::new(TelegramBot::with_router(
+                config.home.clone(),
+                config.clock.clone(),
+                bot_router(weak, config.clock.clone()),
+            )),
             notifications,
             notice_tabs,
             shutdown: CancellationToken::new(),
@@ -379,6 +383,17 @@ impl AppState {
         self.spec_docs.close();
         self.notice_tabs.close();
     }
+}
+
+/// Der Router des Bots mit den angemeldeten Befehlen; die Handler halten den Zustand nur
+/// schwach, weil der Router im Bot und der Bot im Zustand liegt
+fn bot_router(
+    weak: &std::sync::Weak<AppState>,
+    clock: nexus_core::clock::Clock,
+) -> crate::telegram::UpdateRouter {
+    let mut router = crate::telegram::UpdateRouter::with_clock(clock);
+    crate::telegram::commands::register(&mut router, weak);
+    router
 }
 
 /// Die Kurzangaben der Tickets aus der Board-Datenbank; hält den Zustand nur schwach
