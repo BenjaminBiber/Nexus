@@ -14,6 +14,7 @@
 
 ### Sonstiges
 
+- Dispatcher startet ein Ticket nur noch, wenn der erwartete Verbrauch unter die Obergrenze des Accounts passt; kurz vor der Rücksetzung des 5-Stunden-Fensters gilt das nicht. Der Start-Kommentar nennt die Reserve und ihre Quelle („Reserve 5 h 10 %, Woche 2 % (Puffer)“).
 - Dispatcher merkt sich nach jedem Lauf, wie viel Limit er verbraucht hat (Probe mit Auslastung beim Start und am Ende in `~/.nexus/dispatch/account-usage.jsonl`).
 - Dispatcher: Der erwartete Verbrauch eines Laufs lässt sich aus vergangenen Proben schätzen – je Fenster das 75. Perzentil der letzten 20 Läufe mit gleichem Profil, Modell und Effort (sonst nur gleichem Profil), ab 5 Läufen; sonst gilt der feste Puffer. Läufe mit Rücksetzung des Fensters oder negativem Verbrauch zählen nicht. Noch nicht an die Account-Wahl angeschlossen – das Verhalten bleibt vorerst wie bisher.
 - Dispatcher: Ein Lauf merkt sich die Auslastung seines Accounts beim Start (`usageAtStart` in den Laufeinstellungen: 5 Stunden, Woche und deren Rücksetzung). Ältere Läufe ohne das Feld lesen weiter; ausgewertet wird es noch nicht.

@@ -439,8 +439,21 @@ impl DispatchContext {
             .account_pauses
             .into_iter()
             .collect();
+        // Nur Umsetzungsläufe, die noch laufen (ohne Ergebnis des Workers), haben Reserve offen
+        let mut running = Vec::new();
+        for record in self.stores.runs.list()? {
+            if record.kind == RunKind::Work && self.stores.runs.result(&record.id)?.is_none() {
+                running.push(record);
+            }
+        }
         let choice = accounts
-            .pick(&RunAccounts::from(&run), &self.cfg, self.now(), &pauses)
+            .pick(
+                &RunAccounts::from(&run),
+                &self.cfg,
+                self.now(),
+                &pauses,
+                &running,
+            )
             .await;
         Ok(match choice {
             AccountChoice::Waiting { reason, .. } => ChosenAccount::Waiting(reason),

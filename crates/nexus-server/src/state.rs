@@ -39,6 +39,7 @@ use crate::notifications::{
 use crate::projects::ProjectService;
 use crate::sessions::{SessionService, TicketInfoLookup, TicketSummaries};
 use nexus_core::accounts::{AccountPaths, AccountStore, AccountTokenStore};
+use nexus_core::dispatch::UsageHistory;
 
 /// Alles, was die Routen des Servers teilen
 pub struct AppState {
@@ -227,7 +228,8 @@ impl AppState {
                         account_usage.clone(),
                         paths.clone(),
                     )
-                    .with_tokens(AccountTokenStore::new(config.home.clone())),
+                    .with_tokens(AccountTokenStore::new(config.home.clone()))
+                    .with_history(UsageHistory::new(config.home.clone())),
                 )),
             };
         // Die Watcher fragen über den Zustand ab, in dem sie selbst liegen; sie halten ihn
