@@ -71,6 +71,15 @@ impl ErrorMapper {
         if code == "doc-range-invalid" || code == "bad-request" {
             return StatusCode::BAD_REQUEST;
         }
+        // Spracherkennung ist nicht eingerichtet: nicht die Schuld der Anfrage, aber auch
+        // nichts, was der Server reparieren kann
+        if code == "speech-off" {
+            return StatusCode::BAD_REQUEST;
+        }
+        // Der fremde Erkennungsdienst hat nicht oder falsch geantwortet
+        if code == "speech-failed" {
+            return StatusCode::BAD_GATEWAY;
+        }
         if UNAVAILABLE.contains(&code) {
             return StatusCode::SERVICE_UNAVAILABLE;
         }

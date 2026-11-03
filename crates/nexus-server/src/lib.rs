@@ -24,6 +24,7 @@ pub mod projects;
 pub mod routes;
 pub mod sessions;
 pub mod setup;
+pub mod speech;
 pub mod state;
 pub mod telegram;
 pub mod timeline;

@@ -303,6 +303,33 @@ impl TestServer {
         self.request("POST", url, Some(body), &[]).await
     }
 
+    /// `POST` mit rohem Körper und eigenem Inhaltstyp (Aufnahmen der Spracherkennung)
+    pub async fn post_bytes(&self, url: &str, content_type: &str, body: &[u8]) -> Reply {
+        let request = Request::builder()
+            .method("POST")
+            .uri(url)
+            .header("host", format!("127.0.0.1:{PORT}"))
+            .header("content-type", content_type)
+            .header("x-harness", "1")
+            .body(Body::from(body.to_vec()))
+            .expect("Anfrage");
+        let response = self
+            .router
+            .clone()
+            .oneshot(request)
+            .await
+            .expect("Antwort des Servers");
+        let (parts, body) = response.into_parts();
+        let bytes = axum::body::to_bytes(body, 8 * 1024 * 1024)
+            .await
+            .expect("Körper der Antwort");
+        Reply {
+            status: parts.status,
+            headers: parts.headers,
+            text: String::from_utf8_lossy(&bytes).into_owned(),
+        }
+    }
+
     /// `PUT` mit JSON-Körper
     pub async fn put(&self, url: &str, body: &str) -> Reply {
         self.request("PUT", url, Some(body), &[]).await

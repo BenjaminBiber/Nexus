@@ -655,6 +655,11 @@
     "pattern": "/api/projects/:pid/spec-progress"
   },
   {
+    "file": "crates/nexus-server/src/routes/speech.rs",
+    "method": "POST",
+    "pattern": "/api/speech/test"
+  },
+  {
     "file": "crates/nexus-server/src/routes/usage.rs",
     "method": "GET",
     "pattern": "/api/claude-usage"

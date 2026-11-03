@@ -22,6 +22,7 @@ pub mod sessions;
 pub mod settings;
 pub mod setup;
 pub mod spec;
+pub mod speech;
 pub mod static_files;
 pub mod usage;
 pub mod workflow;
@@ -69,6 +70,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(workflow::routes())
         .merge(dispatch::routes())
         .merge(dispatch_suggestions::routes())
+        .merge(speech::routes())
         .fallback(static_or_not_found)
         .layer(middleware::from_fn_with_state(
             state.clone(),

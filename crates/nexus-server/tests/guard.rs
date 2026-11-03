@@ -21,9 +21,25 @@ fn headers(entries: &[(&str, &str)]) -> HeaderMap {
     map
 }
 
+/// Pfad, der wie jede gewöhnliche Route nur JSON annimmt
+const PFAD: &str = "/api/db/boards";
+
 /// Der Code der Ablehnung, `None` wenn die Anfrage zulässig ist
 fn code(guard: &RequestGuard, method: &str, entries: &[(&str, &str)]) -> Option<&'static str> {
     code_mit_abfrage(guard, method, entries, None)
+}
+
+/// Wie [`code`], aber auf einem bestimmten Pfad (nur dort zählt eine Aufnahme als Körper)
+fn code_auf_pfad(
+    guard: &RequestGuard,
+    method: &str,
+    path: &str,
+    entries: &[(&str, &str)],
+) -> Option<&'static str> {
+    let method = Method::from_bytes(method.as_bytes()).unwrap();
+    guard
+        .check(&method, path, &headers(entries), None)
+        .map(|denial| denial.code)
 }
 
 /// Wie [`code`], aber mit einem Abfrageteil (dort steht das Token von `EventSource`)
@@ -35,7 +51,7 @@ fn code_mit_abfrage(
 ) -> Option<&'static str> {
     let method = Method::from_bytes(method.as_bytes()).unwrap();
     guard
-        .check(&method, &headers(entries), query)
+        .check(&method, PFAD, &headers(entries), query)
         .map(|denial| denial.code)
 }
 
@@ -43,7 +59,7 @@ fn code_mit_abfrage(
 fn meldung(guard: &RequestGuard, method: &str, entries: &[(&str, &str)]) -> Option<&'static str> {
     let method = Method::from_bytes(method.as_bytes()).unwrap();
     guard
-        .check(&method, &headers(entries), None)
+        .check(&method, PFAD, &headers(entries), None)
         .map(|denial| denial.message)
 }
 
@@ -135,6 +151,57 @@ fn verlangt_bei_schreibzugriffen_den_pflichtkopf_und_json() {
             ]
         ),
         None
+    );
+}
+
+#[test]
+fn nimmt_eine_aufnahme_nur_auf_der_testroute_der_spracherkennung() {
+    let guard = RequestGuard::new(4710);
+    let host = ("host", "127.0.0.1:4710");
+    let audio = [host, ("x-harness", "1"), ("content-type", "audio/ogg")];
+
+    // Auf der Testroute ist eine Aufnahme statt JSON erlaubt
+    assert_eq!(
+        code_auf_pfad(&guard, "POST", "/api/speech/test", &audio),
+        None
+    );
+    assert_eq!(
+        code_auf_pfad(
+            &guard,
+            "POST",
+            "/api/speech/test",
+            &[
+                host,
+                ("x-harness", "1"),
+                ("content-type", "application/octet-stream")
+            ]
+        ),
+        None
+    );
+    // Auf jedem anderen Pfad bleibt JSON Pflicht
+    assert_eq!(
+        code_auf_pfad(&guard, "POST", "/api/db/boards", &audio),
+        Some("header-missing")
+    );
+    // Der Pflichtkopf gilt auch mit Aufnahme
+    assert_eq!(
+        code_auf_pfad(
+            &guard,
+            "POST",
+            "/api/speech/test",
+            &[host, ("content-type", "audio/ogg")]
+        ),
+        Some("header-missing")
+    );
+    // Ein anderer Inhaltstyp bleibt auch auf der Testroute abgelehnt
+    assert_eq!(
+        code_auf_pfad(
+            &guard,
+            "POST",
+            "/api/speech/test",
+            &[host, ("x-harness", "1"), ("content-type", "text/plain")]
+        ),
+        Some("header-missing")
     );
 }
 
