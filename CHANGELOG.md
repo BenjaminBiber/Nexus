@@ -14,6 +14,7 @@
 
 ### Sonstiges
 
+- Dispatcher: Ein Lauf merkt sich die Auslastung seines Accounts beim Start (`usageAtStart` in den Laufeinstellungen: 5 Stunden, Woche und deren Rücksetzung). Ältere Läufe ohne das Feld lesen weiter; ausgewertet wird es noch nicht.
 - Dispatcher: Die Account-Wahl rechnet den erwarteten Verbrauch gegen die Obergrenze – ein Account gilt als „knapp“, wenn Auslastung plus Reserve des Laufs und der noch ausstehenden Reserve laufender Läufe die Grenze überschreitet; setzt sich das 5-Stunden-Fenster innerhalb von `accountResetGraceMinutes` zurück, zählt die Reserve dafür nicht, für die Woche gibt es keine Ausnahme. Noch mit Reserve 0 verdrahtet, bis die Schätzung folgt – das Verhalten bleibt vorerst wie bisher.
 - Einstellungen → Dispatcher: Reserve für Account-Limits einstellbar („Reserve 5 Stunden (%)“, „Reserve Woche (%)“, „Ohne Reserve, wenn 5 h zurücksetzt in (min)“).
 - Dispatcher: Einstellung für die Reserve bei Account-Limits – neu sind `accountReserveFiveHour` (Vorgabe 10, 0–50), `accountReserveWeek` (Vorgabe 2, 0–50) und `accountResetGraceMinutes` (Vorgabe 30, 0–300). Die Felder stehen in der Einstellung und im Beispiel, wirken aber noch nicht.
