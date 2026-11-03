@@ -1,0 +1,272 @@
+[
+  {
+    "name": "Code ohne laufenden Bot",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/telegram/pair"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "telegram-not-running",
+        "message": "Der Bot läuft nicht – erst einschalten und ein Bot-Token eintragen."
+      },
+      "status": 409
+    }
+  },
+  {
+    "name": "Attrappe der Bot-API starten",
+    "request": {
+      "action": "start",
+      "body": {
+        "ok": true,
+        "result": true
+      },
+      "routes": [
+        "getMe",
+        "getUpdates"
+      ],
+      "status": 200,
+      "stub": "TELEGRAM"
+    },
+    "response": {
+      "json": {
+        "url": "<var:tgUrl>"
+      }
+    }
+  },
+  {
+    "name": "Bot auf die Attrappe einschalten",
+    "request": {
+      "body": {
+        "apiBase": "<var:tgUrl>",
+        "enabled": true
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "<var:tgUrl>",
+        "botToken": "123456:…Dsaw",
+        "chats": [
+          4242
+        ],
+        "enabled": true,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": null,
+          "brand": true
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "warten, bis der Bot sich angemeldet hat",
+    "request": {
+      "action": "await",
+      "call": "setMyCommands",
+      "count": 1,
+      "stub": "TELEGRAM"
+    },
+    "response": {
+      "json": {
+        "ok": true
+      }
+    }
+  },
+  {
+    "name": "Einmal-Code ausgeben",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/telegram/pair"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "expiresAt": "<TIME>"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Stand mit offenem Code",
+    "request": {
+      "method": "GET",
+      "path": "/api/telegram/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "bot": {
+          "botId": 7012345678,
+          "botName": "nexus_vertrag_bot",
+          "lastError": null,
+          "lastUpdateAt": null,
+          "state": "running"
+        },
+        "openCodes": 1,
+        "pairedChats": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "gekoppelten Chat entkoppeln",
+    "request": {
+      "method": "DELETE",
+      "path": "/api/telegram/chats/4242"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "ok": true
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "denselben Chat erneut entkoppeln",
+    "request": {
+      "method": "DELETE",
+      "path": "/api/telegram/chats/4242"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "telegram-chat-not-found",
+        "message": "Der Chat 4242 ist nicht gekoppelt."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Chat-ID, die keine Zahl ist",
+    "request": {
+      "method": "DELETE",
+      "path": "/api/telegram/chats/abc"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "telegram-chat-not-found",
+        "message": "Der Chat abc ist nicht gekoppelt."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "unbekannte Chat-ID",
+    "request": {
+      "method": "DELETE",
+      "path": "/api/telegram/chats/-1001234567890"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "telegram-chat-not-found",
+        "message": "Der Chat -1001234567890 ist nicht gekoppelt."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Stand ohne gekoppelte Chats",
+    "request": {
+      "method": "GET",
+      "path": "/api/telegram/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "bot": {
+          "botId": 7012345678,
+          "botName": "nexus_vertrag_bot",
+          "lastError": null,
+          "lastUpdateAt": null,
+          "state": "running"
+        },
+        "openCodes": 1,
+        "pairedChats": 0
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Bot wieder abschalten",
+    "request": {
+      "body": {
+        "enabled": false
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "https://api.telegram.org",
+        "botToken": "123456:…Dsaw",
+        "chats": [],
+        "enabled": false,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": null,
+          "brand": true
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  }
+]

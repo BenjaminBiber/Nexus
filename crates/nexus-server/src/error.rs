@@ -64,8 +64,14 @@ impl ErrorMapper {
             || code == "doc-changed"
             || code == "setup-busy"
             || code == "plugin-not-bundled"
+            // Code und Testnachricht brauchen einen laufenden Bot
+            || code == "telegram-not-running"
         {
             return StatusCode::CONFLICT;
+        }
+        // Die Einstellung des Telegram-Bots ist falsch ausgefüllt (Token, Adresse, Uhrzeit)
+        if code == "telegram-config-invalid" {
+            return StatusCode::BAD_REQUEST;
         }
         // Zeilenbereich passt nicht zum Dokument: die Anfrage selbst ist falsch gebaut
         if code == "doc-range-invalid" || code == "bad-request" {

@@ -72,9 +72,16 @@ impl TelegramBot {
         Self::with_api(home, clock, reqwest_factory(), router)
     }
 
-    /// Wie [`Self::new`], mit einem Router, in dem schon Handler angemeldet sind
-    pub fn with_router(home: HarnessHome, clock: Clock, router: UpdateRouter) -> Self {
-        Self::with_api(home, clock, reqwest_factory(), router)
+    /// Wie [`Self::new`], mit einem Router, in dem schon Handler angemeldet sind, und mit dem
+    /// Zugriff aus den Einstellungen des Servers: ohne Angabe über reqwest, in Tests die
+    /// Attrappe
+    pub fn with_optional_api(
+        home: HarnessHome,
+        clock: Clock,
+        api: Option<TelegramApiFactory>,
+        router: UpdateRouter,
+    ) -> Self {
+        Self::with_api(home, clock, api.unwrap_or_else(reqwest_factory), router)
     }
 
     /// Bot mit eigenem Zugriff auf die Bot-API und eigenem Router (Tests, Vertrag)
@@ -147,6 +154,12 @@ impl TelegramBot {
     /// Der Router; spätere Tickets melden ihre Handler vor dem Start an
     pub fn router(&self) -> &UpdateRouter {
         &self.poller.router
+    }
+
+    /// Zugriff auf die Bot-API zu dieser Einstellung – derselbe Weg, den der Poller nimmt.
+    /// Die Routen brauchen ihn für die Testnachricht
+    pub fn api(&self, config: &TelegramConfig) -> Arc<dyn TelegramApi> {
+        (self.poller.api)(config)
     }
 }
 

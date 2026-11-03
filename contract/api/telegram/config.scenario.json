@@ -1,0 +1,62 @@
+{
+  "title": "Einstellung des Telegram-Bots lesen und speichern (Geheimnisse maskiert)",
+  "fixtures": {
+    "homeFiles": {
+      "telegram.yaml": "enabled: false\nbotToken: \"123456:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw\"\napiBase: https://api.telegram.org\nchats: [4242]\nspeech:\n  apiKey: sk-vertrag-1234abcd\n"
+    }
+  },
+  "steps": [
+    { "name": "Einstellung lesen", "method": "GET", "path": "/api/telegram/config" },
+    {
+      "name": "speichern mit den Masken der Geheimnisse",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": {
+        "botToken": "123456:…Dsaw",
+        "apiBase": "http://127.0.0.1:9",
+        "notify": { "review": true, "blocked": false, "question": true, "merge": true, "merged": true, "paused": false },
+        "quietHours": { "from": "22:00", "to": "07:00" },
+        "ideas": { "defaultTarget": "ticket", "maxRounds": 3 },
+        "speech": { "apiKey": "sk-…abcd", "model": "whisper-1", "language": "de" }
+      }
+    },
+    { "name": "Einstellung nach dem Speichern", "method": "GET", "path": "/api/telegram/config" },
+    {
+      "name": "nicht genannte Felder fallen auf die Vorgabe zurück, chats bleibt",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "chats": [1, 2, 3] }
+    },
+    {
+      "name": "Bot-Token ohne Muster",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "botToken": "kaputt:kurz" }
+    },
+    {
+      "name": "Nachtruhe ohne Uhrzeit",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "quietHours": { "from": "22:00", "to": "7 Uhr" } }
+    },
+    {
+      "name": "Runden außerhalb von eins bis zehn",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "ideas": { "maxRounds": 99 } }
+    },
+    {
+      "name": "Adresse ohne http",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "apiBase": "ftp://telegram.invalid" }
+    },
+    {
+      "name": "Geheimnisse löschen",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "botToken": "", "speech": { "apiKey": "" } }
+    },
+    { "name": "Einstellung ohne Geheimnisse", "method": "GET", "path": "/api/telegram/config" }
+  ]
+}

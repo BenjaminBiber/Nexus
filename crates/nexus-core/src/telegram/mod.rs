@@ -8,6 +8,7 @@ pub mod config;
 pub mod config_store;
 pub mod html;
 pub mod idea;
+pub mod routes;
 pub mod split;
 pub mod state_store;
 pub mod status;
@@ -26,6 +27,7 @@ pub use idea::{
     IdeaRelated, IdeaTargetRef, IdeaTicket, MAX_CONTEXT_CHARS, MAX_CONTEXT_TICKETS, MAX_DETAILS,
     MAX_QUESTIONS, MAX_TITLE,
 };
+pub use routes::{TelegramPairingDto, TelegramStatusDto, TelegramTestDto, TelegramTestError};
 pub use split::{split_message, MAX_MESSAGE_LEN};
 pub use state_store::{TelegramState, TelegramStateStore};
 pub use status::{BotState, BotStatus};

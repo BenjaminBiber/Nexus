@@ -165,6 +165,62 @@ merged: boolean,
 paused: boolean, };
 
 /**
+ * Antwort von `POST /api/telegram/pair`: ein Einmal-Code samt Link in den Chat
+ */
+export type TelegramPairingDto = { 
+/**
+ * Der Code, wie die Oberfläche ihn zeigt
+ */
+code: string, 
+/**
+ * Zeitpunkt, ab dem der Code nicht mehr zieht (ISO)
+ */
+expiresAt: string, 
+/**
+ * Link, der den Chat mit dem Bot öffnet und den Code gleich mitschickt
+ */
+link: string, };
+
+/**
+ * Antwort von `GET /api/telegram/status`
+ */
+export type TelegramStatusDto = { 
+/**
+ * Stand des Pollers
+ */
+bot: BotStatus, 
+/**
+ * Zahl der gekoppelten Chats
+ */
+pairedChats: number, 
+/**
+ * Zahl der ausgegebenen, noch gültigen Einmal-Codes
+ */
+openCodes: number, };
+
+/**
+ * Antwort von `POST /api/telegram/test`
+ */
+export type TelegramTestDto = { 
+/**
+ * Zahl der Chats, die die Nachricht bekommen haben
+ */
+sent: number, 
+/**
+ * Chats, an die sie nicht herauskam
+ */
+errors: Array<TelegramTestError>, };
+
+/**
+ * Ein Chat, an den die Testnachricht nicht herauskam
+ */
+export type TelegramTestError = { chatId: number, 
+/**
+ * Der Fehler in Worten; nie mit Adresse oder Token
+ */
+error: string, };
+
+/**
  * Aufruf des lokalen `whisper-cli`
  */
 export type WhisperCli = { 

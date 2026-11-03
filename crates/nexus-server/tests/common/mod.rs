@@ -125,6 +125,9 @@ pub struct TestServerOptions {
     pub plugin_bundle: Option<PathBuf>,
     /// Umgebung der Einrichtung; ohne Angabe ohne Claude und mit Claude-Ordner im Temp-Home
     pub setup: Option<nexus_server::setup::SetupContext>,
+    /// Zugriff auf die Bot-API von Telegram; ohne Angabe über reqwest (den Tests nie auslösen,
+    /// weil der Bot ohne Token und ohne Schalter ruht)
+    pub telegram_api: Option<nexus_server::telegram::TelegramApiFactory>,
 }
 
 /// Startet nichts und liefert keine Prozessnummer; so startet in Tests nie ein echter Worker
@@ -183,6 +186,7 @@ impl TestServer {
         if let Some(clock) = options.clock {
             config.clock = clock;
         }
+        config.telegram_api = options.telegram_api;
         config.account_usage = options.account_usage;
         config.account_login_spawner = options.account_login_spawner;
         config.account_plugins = options.account_plugins;
