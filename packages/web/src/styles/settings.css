@@ -224,3 +224,10 @@
 .account-dir { max-width: 420px; font-size: 12.5px; color: var(--text-soft); text-align: right; overflow-wrap: anywhere; }
 .account-settings-modal > .account-remove { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-color: var(--blocked-fg); }
 .account-settings-modal > .account-remove > * + * { border-top: 0; }
+
+/* Telegram: Liste der gekoppelten Chats und Vorschau des Bot-Profils */
+.telegram-chats { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.telegram-chats > li { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.bot-profile-preview { display: flex; align-items: center; gap: 12px; }
+.bot-profile-preview > img { border-radius: 50%; background: var(--surface-2, var(--bg)); }
+.bot-profile-preview p { margin: 2px 0 0; font-size: 12.5px; }

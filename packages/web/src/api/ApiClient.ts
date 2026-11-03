@@ -17,6 +17,9 @@ import type {
 import type { DispatchStatsDto, DispatchStatsFilter } from './statsTypes.js';
 import type { InboxListDto } from './inboxTypes.js';
 import type { AccountListDto, ClaudeUsageDto, UsageOverviewDto } from './usageTypes.js';
+import type {
+  TelegramConfig, TelegramConfigInput, TelegramPairingDto, TelegramProfileDto, TelegramStatusDto, TelegramTestDto,
+} from './telegramTypes.js';
 
 // Wie lange ein laufendes GET für dieselbe Adresse mitbenutzt wird: deckt gleichzeitiges Laden beim Seitenaufbau ab,
 // aber nicht ein Nachladen nach einem Ereignis des Servers
@@ -242,6 +245,41 @@ export class ApiClient {
   // Speichert die benutzerweiten Einstellungen
   saveUserSettings(settings: Partial<UserSettingsDto>): Promise<UserSettingsDto> {
     return this.request('PUT', '/api/user-settings', settings);
+  }
+
+  // Einstellung des Telegram-Bots; Geheimnisse kommen nur als Maske zurück
+  getTelegramConfig(): Promise<TelegramConfig> {
+    return this.request('GET', '/api/telegram/config');
+  }
+
+  // Speichert die Einstellung; ein Geheimnis in Maskenform bleibt unverändert, "" löscht es
+  saveTelegramConfig(config: TelegramConfigInput): Promise<TelegramConfig> {
+    return this.request('PUT', '/api/telegram/config', config);
+  }
+
+  // Stand des Pollers samt Zahl der gekoppelten Chats und offenen Codes
+  getTelegramStatus(): Promise<TelegramStatusDto> {
+    return this.request('GET', '/api/telegram/status');
+  }
+
+  // Gibt einen Einmal-Code samt Link in den Chat aus
+  pairTelegram(): Promise<TelegramPairingDto> {
+    return this.request('POST', '/api/telegram/pair');
+  }
+
+  // Nimmt einen Chat aus der Kopplung
+  unpairTelegramChat(chatId: number): Promise<{ ok: boolean }> {
+    return this.request('DELETE', `/api/telegram/chats/${chatId}`);
+  }
+
+  // Schickt die Testnachricht an alle gekoppelten Chats
+  testTelegram(): Promise<TelegramTestDto> {
+    return this.request('POST', '/api/telegram/test');
+  }
+
+  // Richtet Profilbild, Name, Beschreibungen und Befehlsliste des Bots neu ein
+  applyTelegramProfile(): Promise<TelegramProfileDto> {
+    return this.request('POST', '/api/telegram/profile');
   }
 
   getPluginSetup(): Promise<PluginSetupDto> {

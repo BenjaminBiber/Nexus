@@ -112,6 +112,13 @@ export function fakeApi(overrides: Partial<Record<keyof ApiClient, unknown>> = {
       server: '', port: 1433, database: 'AiHarness', user: '',
       hasPassword: false, encrypt: true, trustServerCertificate: true, userId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', userName: '', activeBoard: null,
     }),
+    getTelegramConfig: async () => ({
+      enabled: false, botToken: '', apiBase: 'https://api.telegram.org', chats: [],
+      notify: { review: true, blocked: true, question: true, merge: true, merged: false, paused: false },
+      quietHours: null, profile: { brand: true, applied: null }, ideas: { defaultTarget: 'note' as const, maxRounds: 3 },
+      speech: { backend: 'off' as const, baseUrl: 'https://api.openai.com/v1', apiKey: '', model: 'whisper-1', language: null, whisperCli: { binary: 'whisper-cli', model: '', ffmpeg: 'ffmpeg' } },
+    }),
+    getTelegramStatus: async () => ({ bot: { state: 'off' as const, botName: null, botId: null, lastUpdateAt: null, lastError: null, profileError: null }, pairedChats: 0, openCodes: 0 }),
     getDocs: async () => ({ source: { root: '/demo', boardId: 1, boardName: 'Sprint', reason: null }, docs: [] }),
     getDocTickets: async () => [],
     openDoc: async () => ({ ok: true }),
