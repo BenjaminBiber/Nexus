@@ -31,6 +31,7 @@ pub mod run_backfill;
 pub mod state;
 pub mod time_window;
 pub mod types;
+pub mod usage_estimate;
 
 pub use abort_reason::{AbortCategory, AbortReasonClassifier, ABORT_CATEGORIES};
 pub use account_chooser::{
@@ -81,3 +82,6 @@ pub use state::{
 };
 pub use time_window::TimeWindowCheck;
 pub use types::{RunResult, SetupFailure, TestRun};
+pub use usage_estimate::{
+    estimate_reserve, EstimatedReserve, ReserveFor, MAX_SAMPLES, MIN_SAMPLES,
+};
