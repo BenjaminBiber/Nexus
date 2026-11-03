@@ -11,6 +11,7 @@ use chrono::{DateTime, Duration, Local, Utc};
 
 use crate::accounts::ClaudeAccount;
 use crate::dispatch::config::AccountStrategy;
+use crate::dispatch::state::UsageSnapshot;
 
 /// Erwarteter Verbrauch eines Laufs in Prozentpunkten je Fenster
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -71,8 +72,13 @@ pub struct AccountChoiceInput<'a> {
 /// Ergebnis der Wahl
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AccountChoice {
-    /// Dieser Account übernimmt den Lauf, samt Begründung für den Start-Kommentar
-    Picked { account: ClaudeAccount, why: String },
+    /// Dieser Account übernimmt den Lauf, samt Begründung für den Start-Kommentar und seiner
+    /// Auslastung in diesem Moment
+    Picked {
+        account: ClaudeAccount,
+        why: String,
+        snapshot: UsageSnapshot,
+    },
     /// Kein Account frei: Grund fürs Warten und frühester Zeitpunkt, ab dem wieder einer frei
     /// ist (Pause oder Rücksetzung eines vollen Fensters); `None`, wenn einer der Kandidaten
     /// ohne bekanntes Ende ausfällt
@@ -217,12 +223,23 @@ impl AccountChooser {
         } else {
             format!("; übersprungen {}", excluded.join("; "))
         };
+        let snapshot = input
+            .states
+            .get(&pick.account.id)
+            .map(|state| UsageSnapshot {
+                five_hour: state.five_hour,
+                seven_day: state.seven_day,
+                five_hour_resets_at: state.five_hour_resets_at.clone(),
+                seven_day_resets_at: state.seven_day_resets_at.clone(),
+            })
+            .unwrap_or_default();
         AccountChoice::Picked {
             account: pick.account.clone(),
             why: format!(
                 "{from} → {}{fallback}{strategy}{loads}{skipped}",
                 pick.account.id
             ),
+            snapshot,
         }
     }
 }
@@ -585,6 +602,12 @@ mod tests {
                 account: account("pro-2"),
                 why: "Profil klein → pro-2, meiste freie Kapazität: pro-1 (70 %), pro-2 (41 %), max (?)"
                     .to_string(),
+                snapshot: UsageSnapshot {
+                    five_hour: Some(40),
+                    seven_day: Some(41),
+                    five_hour_resets_at: None,
+                    seven_day_resets_at: None,
+                },
             }
         );
     }
@@ -1163,6 +1186,68 @@ mod tests {
         );
         assert_eq!(picked(&choice), "zweiter");
         assert!(why(&choice).contains("übersprungen erster: knapp (5 h 88 % + 10 % erwartet"));
+    }
+
+    #[test]
+    fn die_wahl_bringt_die_auslastung_des_gewaehlten_accounts_mit() {
+        let accounts = vec![account("a"), account("b")];
+        let choice = choose(
+            &accounts,
+            None,
+            None,
+            states(vec![
+                (
+                    "a",
+                    AccountState {
+                        five_hour: Some(95),
+                        ..state()
+                    },
+                ),
+                (
+                    "b",
+                    AccountState {
+                        five_hour: Some(40),
+                        seven_day: Some(12),
+                        five_hour_resets_at: Some(at(2)),
+                        seven_day_resets_at: Some(at(50)),
+                        ..state()
+                    },
+                ),
+            ]),
+            AccountStrategy::MostFree,
+        );
+        let AccountChoice::Picked {
+            account, snapshot, ..
+        } = choice
+        else {
+            panic!("es sollte einer gewählt sein");
+        };
+        assert_eq!(account.id, "b");
+        assert_eq!(
+            snapshot,
+            UsageSnapshot {
+                five_hour: Some(40),
+                seven_day: Some(12),
+                five_hour_resets_at: Some(at(2)),
+                seven_day_resets_at: Some(at(50)),
+            }
+        );
+    }
+
+    #[test]
+    fn ohne_bekannten_zustand_ist_der_snapshot_leer() {
+        let accounts = vec![account("a")];
+        let choice = choose(
+            &accounts,
+            None,
+            None,
+            states(vec![]),
+            AccountStrategy::MostFree,
+        );
+        let AccountChoice::Picked { snapshot, .. } = choice else {
+            panic!("es sollte einer gewählt sein");
+        };
+        assert_eq!(snapshot, UsageSnapshot::default());
     }
 
     #[test]

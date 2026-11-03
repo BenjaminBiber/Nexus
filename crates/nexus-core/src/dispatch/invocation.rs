@@ -241,6 +241,7 @@ mod tests {
             accounts_from: None,
             account: None,
             account_why: None,
+            usage_at_start: None,
         }
     }
 
