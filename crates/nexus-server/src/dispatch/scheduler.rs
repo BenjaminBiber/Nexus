@@ -20,6 +20,10 @@ pub const STOP_WAIT: Duration = Duration::from_secs(30);
 /// Schreibt eine Zeile in die Protokolldatei des Servers
 pub type LogLine = Arc<dyn Fn(&str) + Send + Sync>;
 
+/// Darf dieser Takt gerade einen Durchlauf anstoßen? Im Server: nur, wenn ihm `server.json`
+/// gehört – zwei Server auf demselben Benutzerordner mergten und starteten sonst doppelt
+pub type TickGate = Arc<dyn Fn() -> bool + Send + Sync>;
+
 /// Was der Takt anstößt; im Betrieb der [`DispatchService`], in Tests ein Doppel
 #[async_trait]
 pub trait DispatchTick: Send + Sync + 'static {
@@ -80,9 +84,16 @@ impl DispatchScheduler {
         self
     }
 
-    /// Startet den Takt; ein Intervall von null und ein schon laufender Takt tun nichts. Der
-    /// erste Durchlauf kommt nach einem Intervall, nicht sofort
+    /// Startet den Takt ohne Freigabe-Prüfung (siehe [`Self::start_with`])
     pub async fn start(&self) {
+        self.start_with(Arc::new(|| true)).await;
+    }
+
+    /// Startet den Takt; ein Intervall von null und ein schon laufender Takt tun nichts. Der
+    /// erste Durchlauf kommt nach einem Intervall, nicht sofort. Vor jedem Durchlauf fragt er
+    /// `gate`; ohne Freigabe fällt der Durchlauf aus, und jeder Wechsel steht einmal im
+    /// Protokoll
+    pub async fn start_with(&self, gate: TickGate) {
         if self.interval.is_zero() {
             return;
         }
@@ -98,10 +109,23 @@ impl DispatchScheduler {
             let mut timer = interval_at(Instant::now() + every, every);
             // Ein langer Durchlauf schiebt den nächsten Takt, statt Versäumtes nachzuholen
             timer.set_missed_tick_behavior(MissedTickBehavior::Delay);
+            let mut resting = false;
             loop {
                 tokio::select! {
                     _ = stopped.changed() => return,
                     _ = timer.tick() => {}
+                }
+                let allowed = gate();
+                if allowed == resting {
+                    resting = !allowed;
+                    log(if resting {
+                        "Dispatcher: Takt ruht – ein anderer Server führt den Dispatcher"
+                    } else {
+                        "Dispatcher: Takt läuft wieder"
+                    });
+                }
+                if resting {
+                    continue;
                 }
                 if let Err(error) = service.tick().await {
                     log(&format!("Dispatcher: {error}"));

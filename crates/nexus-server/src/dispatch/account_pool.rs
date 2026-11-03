@@ -13,7 +13,7 @@ use nexus_core::accounts::{
 use nexus_core::clock::Clock;
 use nexus_core::dispatch::{
     AccountChoice, AccountChoiceInput, AccountChooser, AccountReserve, DispatchConfig,
-    DispatchStateStore, RunSettings,
+    DispatchStateStore, RunSettings, UsageSnapshot,
 };
 use nexus_core::HarnessHome;
 
@@ -66,6 +66,11 @@ pub trait AccountPool: Send + Sync {
     /// Nach einem Nutzungslimit: ab wann der Account wieder frei ist (frisch bei Anthropic
     /// gefragt) oder `None`
     async fn resets_at(&self, id: &str, limit_percent: i64) -> Option<String>;
+
+    /// Aktuelle Auslastung eines Accounts (frisch bei Anthropic gefragt); `None` = unbekannt
+    async fn usage_snapshot(&self, _id: &str) -> Option<UsageSnapshot> {
+        None
+    }
 }
 
 /// Accounts aus `~/.nexus/accounts.json`, Limits über den [`AccountUsageService`].
@@ -225,6 +230,30 @@ impl AccountPool for StoredAccountPool {
         let mut times: Vec<String> = full.into_iter().flatten().collect();
         times.sort();
         times.pop()
+    }
+
+    async fn usage_snapshot(&self, id: &str) -> Option<UsageSnapshot> {
+        let account = self
+            .store
+            .list()
+            .into_iter()
+            .find(|account| account.id == id)?;
+        let usage = self.usage.usage(&account, true).await;
+        if !usage.available {
+            return None;
+        }
+        Some(UsageSnapshot {
+            five_hour: usage.five_hour.as_ref().map(|window| window.percent),
+            seven_day: usage.seven_day.as_ref().map(|window| window.percent),
+            five_hour_resets_at: usage
+                .five_hour
+                .as_ref()
+                .and_then(|window| window.resets_at.clone()),
+            seven_day_resets_at: usage
+                .seven_day
+                .as_ref()
+                .and_then(|window| window.resets_at.clone()),
+        })
     }
 }
 

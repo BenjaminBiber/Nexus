@@ -47,6 +47,7 @@ use tokio::net::TcpListener;
 use crate::board_db::{ServerBoardDatabase, ServerBoardServices};
 use crate::board_runtime::{BoardBackendFactory, BoardBackendFuture};
 use crate::config::ServerConfig;
+use crate::dispatch::scheduler::TickGate;
 use crate::state::AppState;
 
 /// Ein laufender Server
@@ -174,7 +175,10 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
         "Dispatcher: Takt {} ms",
         state.config.dispatch_tick_ms
     ));
-    state.dispatch_scheduler.start().await;
+    state
+        .dispatch_scheduler
+        .start_with(dispatch_gate(info.clone(), state.pid))
+        .await;
 
     let router = routes::build_router(state.clone());
     let shutdown = state.shutdown.clone();
@@ -191,6 +195,13 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
         task,
         info,
     })
+}
+
+/// Freigabe des Dispatcher-Takts: nur der Server, der in `server.json` steht, stößt Durchläufe
+/// an. Zwei Server auf demselben Benutzerordner mergten und starteten sonst doppelt; ein
+/// zweiter Server übernimmt die Datei auch nicht, wenn der erste endet
+fn dispatch_gate(info: ServerInfoFile, pid: u32) -> TickGate {
+    Arc::new(move || info.owned_by(pid))
 }
 
 /// Wartet auf Strg+C bzw. SIGTERM; danach wird der Server geordnet beendet

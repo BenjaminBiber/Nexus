@@ -75,6 +75,12 @@ impl ServerInfoFile {
         Ok(true)
     }
 
+    /// Steht der Server `pid` in `server.json`? Liest nur: fehlende oder verwaiste Angaben
+    /// übernimmt nur ein Start (`claim`), sonst sprächen CLI und App einen anderen Server an
+    pub fn owned_by(&self, pid: u32) -> bool {
+        self.read().is_some_and(|current| current.pid == pid)
+    }
+
     /// Löscht die Angaben beim Beenden, aber nur, wenn sie zu diesem Server (`pid`) gehören
     pub fn release(&self, pid: u32) -> Result<()> {
         match self.read() {
@@ -206,5 +212,24 @@ mod tests {
 
         file.release(TOTE_PID).unwrap();
         assert_eq!(file.read(), None);
+    }
+
+    #[test]
+    fn gehoert_nur_dem_eingetragenen_server_und_schreibt_nie() {
+        let (_dir, file) = datei();
+        let ich = std::process::id();
+        assert!(!file.owned_by(ich), "ohne Datei gehört sie niemandem");
+        assert_eq!(
+            file.read(),
+            None,
+            "fehlende Angaben werden nicht übernommen"
+        );
+
+        file.write(&angaben(TOTE_PID, 4711)).unwrap();
+        assert!(!file.owned_by(ich), "auch verwaiste Angaben nicht");
+        assert_eq!(file.read(), Some(angaben(TOTE_PID, 4711)));
+
+        file.write(&angaben(ich, 4712)).unwrap();
+        assert!(file.owned_by(ich));
     }
 }
