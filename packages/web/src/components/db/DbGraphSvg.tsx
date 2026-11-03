@@ -1,9 +1,9 @@
-import { useMemo, useState, type KeyboardEvent } from 'react';
+import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import { DB_COLUMN_LABELS, type DbGraphDto } from '../../api/dbTypes.js';
 import { NODE_HEIGHT, NODE_WIDTH, edgePath, layoutGraph } from '../../dbboard/graphLayout.js';
 
 /** Zeichen des Titels, die in einen Knoten passen */
-const TITLE_CHARS = 28;
+const TITLE_CHARS = 26;
 
 // Kürzt einen Titel mit Auslassungszeichen
 function short(text: string): string {
@@ -26,6 +26,8 @@ export function graphSize(graph: DbGraphDto): { w: number; h: number } {
 // Hover oder Fokus auf einem Knoten markiert seine Voraussetzungs- und Abhängigen-Kanten samt Nachbarn; der Rest tritt zurück.
 export function DbGraphSvg({ graph, current, onOpen }: { graph: DbGraphDto; current?: string; onOpen: (id: string) => void }) {
   const layout = useMemo(() => layoutOf(graph), [graph]);
+  // Knotenumriss als Clip, damit der Statusstreifen bündig in den runden Ecken sitzt
+  const clipId = 'dgc' + useId().replace(/[^a-zA-Z0-9]/g, '');
   const critical = new Set(graph.criticalPath);
   // Knoten unter Maus oder Fokus
   const [hovered, setHovered] = useState<string | null>(null);
@@ -60,7 +62,10 @@ export function DbGraphSvg({ graph, current, onOpen }: { graph: DbGraphDto; curr
   return (
     <svg className={`dep-graph${hovered ? ' has-hover' : ''}`} width={layout.width} height={layout.height} viewBox={`0 0 ${layout.width} ${layout.height}`} role="group" aria-label="Abhängigkeitsgraph">
       <defs>
-        <marker id="dep-graph-arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <clipPath id={clipId}>
+          <rect width={NODE_WIDTH} height={NODE_HEIGHT} rx={8} />
+        </clipPath>
+        <marker id="dep-graph-arrow"viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M 0 0 L 10 5 L 0 10 z" className="dep-graph-arrow" />
         </marker>
         {(['upstream', 'downstream'] as const).map((r) => (
@@ -95,9 +100,9 @@ export function DbGraphSvg({ graph, current, onOpen }: { graph: DbGraphDto; curr
           >
             <title>{`${n.id} ${n.title}\n${DB_COLUMN_LABELS[n.column]} · Board ${n.boardName}${n.spec ? ` · ${n.spec}` : ''}`}</title>
             <rect className="dep-graph-box" width={NODE_WIDTH} height={NODE_HEIGHT} rx={8} />
-            <rect className="dep-graph-stripe" width={6} height={NODE_HEIGHT} rx={3} />
-            <text className="dep-graph-id" x={14} y={20}>{n.id}</text>
-            <text className="dep-graph-title" x={14} y={39}>{short(n.title)}</text>
+            <rect className="dep-graph-stripe" width={4} height={NODE_HEIGHT} clipPath={`url(#${clipId})`} />
+            <text className="dep-graph-id" x={16} y={25}>{n.id}</text>
+            <text className="dep-graph-title" x={16} y={46}>{short(n.title)}</text>
           </g>
         );
       })}

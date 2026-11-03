@@ -438,21 +438,51 @@
 [data-status='blocked'] { --node-status: var(--status-blocked); }
 [data-status='done'] { --node-status: var(--status-done); }
 [data-status='not_needed'] { --node-status: var(--status-not-needed); }
-.dep-graph-dialog .diagram-viewer-bar { flex-wrap: wrap; }
-.dep-graph-scopes { display: flex; gap: 4px; }
-.dep-graph-info { display: flex; flex-direction: column; gap: 6px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
-.dep-graph-info p { margin: 0; }
-.dep-graph-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 0; list-style: none; font-size: 12px; color: var(--muted); }
-.dep-graph-legend li { display: flex; align-items: center; gap: 6px; }
-.dep-graph-legend li[data-status] .column-dot { background: var(--node-status); }
-.dep-graph-legend .legend-critical::before { content: ''; width: 18px; height: 0; border-top: 3px solid var(--graph-critical); }
-.dep-graph-legend .legend-upstream::before { content: ''; width: 18px; height: 0; border-top: 3px solid var(--graph-upstream); }
-.dep-graph-legend .legend-downstream::before { content: ''; width: 18px; height: 0; border-top: 3px solid var(--graph-downstream); }
-.dep-graph-legend .legend-external::before { content: ''; width: 14px; height: 10px; border: 1px dashed var(--line-strong); border-radius: 3px; }
+.dep-graph-dialog { overflow: hidden; }
+.dep-graph-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 24px; padding: 12px 16px 12px 20px; border-bottom: 1px solid var(--line); }
+.dep-graph-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; min-width: 0; }
+.dep-graph-name { display: flex; align-items: center; gap: 10px; }
+.dep-graph-name h2 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.dep-graph-logo { flex: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: var(--accent-soft); color: var(--accent); }
+.dep-graph-chips { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.dep-graph-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: var(--line-soft); font-size: 12.5px; font-weight: 500; color: var(--text-soft); white-space: nowrap; }
+.dep-graph-chip.is-critical { background: var(--blocked-bg); color: var(--blocked-fg); }
+.dep-graph-chip.is-quiet { font-weight: 400; color: var(--muted); }
+.dep-graph-chip-line { width: 12px; height: 2px; border-radius: 2px; background: var(--graph-critical); }
+.dep-graph-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.dep-graph-tools .icon-btn { width: 36px; height: 36px; }
+.dep-graph-tools .icon-btn.on { background: var(--accent-soft); color: var(--accent); }
+.dep-graph-tools .icon-btn:focus-visible, .dep-graph-zoom-value:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.dep-graph-divider { flex: none; width: 1px; height: 24px; background: var(--line); }
+.dep-graph-switch { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px 0 8px; border-radius: 8px; font-size: 13px; color: var(--text-soft); cursor: pointer; }
+.dep-graph-switch:hover { background: var(--line-soft); color: var(--text); }
+.dep-graph-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.dep-graph-switch-track { position: relative; flex: none; width: 30px; height: 18px; border-radius: 999px; background: var(--line-strong); transition: background 0.15s; }
+.dep-graph-switch-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px var(--shadow-strong); transition: left 0.15s; }
+.dep-graph-switch input:checked + .dep-graph-switch-track { background: var(--accent); }
+.dep-graph-switch input:checked + .dep-graph-switch-track::after { left: 14px; }
+.dep-graph-switch input:focus-visible + .dep-graph-switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dep-graph-zoom { display: inline-flex; align-items: center; gap: 2px; height: 36px; padding: 2px; box-sizing: border-box; border: 1px solid var(--line-input); border-radius: 8px; }
+.dep-graph-zoom .icon-btn { width: 30px; height: 30px; border-radius: 6px; }
+.dep-graph-zoom-value { min-width: 54px; height: 30px; border: 0; border-radius: 6px; background: transparent; font: inherit; font-size: 12.5px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--text); cursor: pointer; }
+.dep-graph-zoom-value:hover { background: var(--line-soft); }
+.dep-graph-zoom-divider { width: 1px; height: 18px; background: var(--line); }
+.dep-graph-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 20px; padding: 8px 20px; background: var(--surface-alt); border-bottom: 1px solid var(--line); font-size: 12px; color: var(--text-soft); }
+.dep-graph-legend ul { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 0; padding: 0; list-style: none; }
+.dep-graph-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.dep-graph-legend .dep-graph-divider { height: 16px; }
+.dep-graph-legend-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.dep-graph-legend li[data-status] { gap: 5px; }
+.dep-graph-legend li[data-status] .column-dot { width: 8px; height: 8px; background: var(--node-status); }
+.dep-graph-legend .legend-critical::before { content: ''; width: 16px; height: 2px; border-radius: 2px; background: var(--graph-critical); }
+.dep-graph-legend .legend-upstream::before { content: ''; width: 16px; height: 2px; border-radius: 2px; background: var(--graph-upstream); }
+.dep-graph-legend .legend-downstream::before { content: ''; width: 16px; height: 2px; border-radius: 2px; background: var(--graph-downstream); }
+.dep-graph-legend .legend-external::before { content: ''; width: 14px; height: 10px; box-sizing: border-box; border: 1px dashed var(--line-strong); border-radius: 3px; }
+.dep-graph-stage { background-color: var(--surface-alt); background-image: radial-gradient(var(--line) 1px, transparent 1px); background-size: 20px 20px; }
 .dep-graph-state { padding: 12px 14px; margin: 0; }
 .dep-graph { display: block; overflow: visible; font-family: var(--font-sans); }
 .dep-graph-edge { fill: none; stroke: var(--graph-edge); stroke-width: 1.5; }
-.dep-graph-edge.is-critical { stroke: var(--graph-critical); stroke-width: 3; }
+.dep-graph-edge.is-critical { stroke: var(--graph-critical); stroke-width: 2; }
 .dep-graph-edge.is-cycle { stroke: var(--danger); stroke-dasharray: 6 4; }
 .dep-graph-arrow { fill: var(--graph-edge); }
 .dep-graph-arrow.is-upstream { fill: var(--graph-upstream); }
@@ -464,14 +494,14 @@
 .dep-graph-node.is-hovered .dep-graph-box { stroke: var(--accent); stroke-width: 2.5; }
 .dep-graph-node.is-neighbor .dep-graph-box { stroke: var(--line-strong); stroke-width: 2; }
 .dep-graph-node { cursor: pointer; outline: none; }
-.dep-graph-box { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1; }
+.dep-graph-box { fill: var(--surface); stroke: var(--line-dashed); stroke-width: 1; filter: drop-shadow(0 1px 1px var(--shadow-soft)); }
 .dep-graph-stripe { fill: var(--node-status); }
 .dep-graph-node.is-external .dep-graph-box { stroke-dasharray: 5 3; fill: var(--surface-alt); }
-.dep-graph-node.is-critical .dep-graph-box { stroke: var(--graph-critical); stroke-width: 2.5; }
+.dep-graph-node.is-critical .dep-graph-box { stroke: var(--graph-critical); stroke-width: 2; }
 .dep-graph-node.is-current .dep-graph-box { fill: var(--accent-soft); }
 .dep-graph-node:hover .dep-graph-box, .dep-graph-node:focus-visible .dep-graph-box { stroke: var(--accent); stroke-width: 2.5; }
-.dep-graph-id { fill: var(--muted); font-family: var(--font-mono); font-size: 11px; }
-.dep-graph-title { fill: var(--text); font-size: 13px; font-weight: 500; }
+.dep-graph-id { fill: var(--muted); font-family: var(--font-mono); font-size: 11.5px; }
+.dep-graph-title { fill: var(--text); font-size: 14px; font-weight: 600; }
 .dep-graph-open { margin-top: 6px; }
 .spec-progress { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .spec-progress-bar { display: flex; width: 200px; height: 8px; border-radius: 4px; background: var(--line-soft); overflow: hidden; flex: none; }

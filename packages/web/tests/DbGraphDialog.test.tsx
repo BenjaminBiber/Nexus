@@ -102,9 +102,23 @@ describe('DbGraphDialog', () => {
     await waitFor(() => expect(getDbGraph).toHaveBeenLastCalledWith({ kind: 'ticket', id: 'ARC-0002' }, true));
     await userEvent.click(screen.getByRole('button', { name: 'Spec 001-login' }));
     await waitFor(() => expect(getDbGraph).toHaveBeenLastCalledWith({ kind: 'spec', project: 'ARC', spec: '001-login' }, true));
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Erledigte zeigen' }));
+    await userEvent.click(screen.getByRole('switch', { name: 'Erledigte' }));
     await waitFor(() => expect(getDbGraph).toHaveBeenLastCalledWith({ kind: 'spec', project: 'ARC', spec: '001-login' }, false));
     expect(screen.getByRole('button', { name: 'Spec 001-login' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('zeigt Kennzahlen als Chips und blendet die Legende über den Knopf aus und ein', async () => {
+    open();
+    expect(await screen.findByText('Kritischer Pfad: 3 offen')).toBeTruthy();
+    expect(screen.getByText('4 Tickets')).toBeTruthy();
+    const toggle = screen.getByRole('button', { name: 'Legende ein-/ausblenden' });
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('group', { name: 'Legende' })).toBeTruthy();
+    await userEvent.click(toggle);
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    expect(screen.queryByRole('group', { name: 'Legende' })).toBeNull();
+    await userEvent.click(toggle);
+    expect(screen.getByRole('group', { name: 'Legende' })).toBeTruthy();
   });
 
   it('meldet einen Kreis in den Daten und markiert die Kante', async () => {
