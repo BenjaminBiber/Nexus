@@ -13,6 +13,7 @@ use nexus_core::Result;
 
 use crate::board_db::ServerBoardDatabase;
 use crate::state::AppState;
+use crate::telegram::api::{InlineButton, InlineKeyboard};
 use crate::telegram::commands::{report, Deps};
 use crate::telegram::router::{BotContext, CallbackHandler, CommandHandler};
 use crate::telegram::views::{
@@ -131,14 +132,30 @@ async fn send_page(
     let last = items.len().saturating_sub(1);
     for (index, item) in items.iter().enumerate() {
         let (text, own) = inbox_item_message(item, now);
-        // Die Knöpfe der Einträge kommen im Folgeticket; bis dahin hängt nur „Mehr“ unten
-        match (index == last, own, keyboard.clone()) {
-            (_, Some(own), _) => ctx.reply_with(&text, own).await?,
-            (true, None, Some(keyboard)) => ctx.reply_with(&text, keyboard).await?,
-            _ => ctx.reply(&text).await?,
+        // „Mehr“ hängt unter dem letzten Eintrag, unter dessen eigenen Knöpfen
+        let below = match index == last {
+            true => keyboard.clone(),
+            false => None,
+        };
+        match stacked(own, below) {
+            Some(keyboard) => ctx.reply_with(&text, keyboard).await?,
+            None => ctx.reply(&text).await?,
         }
     }
     Ok(())
+}
+
+/// Legt zwei Tastaturen untereinander; ohne beide gibt es keine
+fn stacked(own: Option<InlineKeyboard>, below: Option<InlineKeyboard>) -> Option<InlineKeyboard> {
+    let rows: Vec<Vec<InlineButton>> = own
+        .into_iter()
+        .chain(below)
+        .flat_map(|keyboard| keyboard.inline_keyboard)
+        .collect();
+    match rows.is_empty() {
+        true => None,
+        false => Some(InlineKeyboard::new(rows)),
+    }
 }
 
 /// Beantwortet den Knopfdruck, damit er beim Nutzer aufhört zu drehen

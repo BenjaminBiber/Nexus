@@ -293,10 +293,8 @@ fn section(title: &str, text: &str) -> String {
     )
 }
 
-/// Ein Eintrag aus „Meine Aufgaben“ als eigene Nachricht samt Knöpfen.
-///
-/// Die Knöpfe der Aktionen kommen im Folgeticket; hier bleibt die Tastatur leer, der Schnitt
-/// steht aber schon.
+/// Ein Eintrag aus „Meine Aufgaben“ als eigene Nachricht samt seinen Knöpfen
+/// ([`inbox_item_keyboard`]).
 pub fn inbox_item_message(
     item: &InboxItem,
     now: DateTime<Utc>,
@@ -322,7 +320,76 @@ pub fn inbox_item_message(
         escape(board),
         since_text(&item.since, now)
     ));
-    (out, None)
+    let keyboard = inbox_item_keyboard(item);
+    (out, keyboard)
+}
+
+/// Die Knöpfe eines Eintrags aus „Meine Aufgaben“, je nach Art. Fragen und gescheiterte
+/// Einrichtungen bekommen keine: die Fragen folgen in einem eigenen Ticket, und eine
+/// Einrichtung lässt sich nur am Rechner richten
+pub fn inbox_item_keyboard(item: &InboxItem) -> Option<InlineKeyboard> {
+    let buttons = match item.kind {
+        InboxKind::Accept => with_ticket(item, |id| {
+            vec![
+                InlineButton::callback("Übernehmen", CallbackAction::Accept(id.clone()).encode()),
+                InlineButton::callback(
+                    "Zurück an den Agenten",
+                    CallbackAction::Return(id.clone()).encode(),
+                ),
+                InlineButton::callback(
+                    "Geänderte Dateien",
+                    CallbackAction::Diff(id.clone()).encode(),
+                ),
+            ]
+        }),
+        InboxKind::Merge => with_ticket(item, |id| {
+            vec![
+                InlineButton::callback("Erneut mergen", CallbackAction::Merge(id.clone()).encode()),
+                InlineButton::callback("Grund", CallbackAction::BlockedReason(id.clone()).encode()),
+            ]
+        }),
+        InboxKind::Blocked => with_ticket(item, |id| {
+            vec![
+                InlineButton::callback("Grund", CallbackAction::BlockedReason(id.clone()).encode()),
+                InlineButton::callback(
+                    "Kommentar schreiben",
+                    CallbackAction::Comment(id.clone()).encode(),
+                ),
+                InlineButton::callback(
+                    "Zurück nach Geplant",
+                    CallbackAction::Return(id.clone()).encode(),
+                ),
+            ]
+        }),
+        InboxKind::Planning => with_ticket(item, |id| {
+            vec![InlineButton::callback(
+                "Planen starten",
+                CallbackAction::Replan(id.clone()).encode(),
+            )]
+        }),
+        InboxKind::Note => item.note_id.map(|note_id| {
+            vec![
+                InlineButton::callback(
+                    "Ticket daraus",
+                    CallbackAction::NoteToTicket(note_id).encode(),
+                ),
+                InlineButton::callback("Verwerfen", CallbackAction::NoteDrop(note_id).encode()),
+            ]
+        }),
+        InboxKind::Question | InboxKind::Setup => None,
+    };
+    let buttons = buttons?;
+    Some(InlineKeyboard::new(
+        buttons.chunks(2).map(<[InlineButton]>::to_vec).collect(),
+    ))
+}
+
+/// Die Knöpfe eines Ticket-Eintrags; ohne Ticket-ID gibt es keine
+fn with_ticket(
+    item: &InboxItem,
+    buttons: impl FnOnce(&String) -> Vec<InlineButton>,
+) -> Option<Vec<InlineButton>> {
+    item.ticket_id.as_ref().map(buttons)
 }
 
 /// Knöpfe „Mehr“ unter der letzten Nachricht von `/aufgaben`: je Art, von der noch Einträge
@@ -623,6 +690,20 @@ mod tests {
         }
     }
 
+    /// Die Knöpfe einer Tastatur als Paare (Beschriftung, Callback-Daten)
+    fn buttons(keyboard: &Option<InlineKeyboard>) -> Vec<(String, String)> {
+        keyboard
+            .iter()
+            .flat_map(|keyboard| keyboard.inline_keyboard.iter().flatten())
+            .map(|button| {
+                (
+                    button.text.clone(),
+                    button.callback_data.clone().unwrap_or_default(),
+                )
+            })
+            .collect()
+    }
+
     #[test]
     fn zeigt_zustand_laufe_accounts_und_aufgaben() {
         let status = run("NXS-0119", "2026-11-03T11:48:00Z", Some("standard"));
@@ -848,7 +929,80 @@ mod tests {
         assert!(text.contains("Login hängt"), "{text}");
         assert!(text.contains("Zugang fehlt &amp; wartet"), "{text}");
         assert!(text.contains("<i>Sprint · vor 2 d</i>"), "{text}");
-        assert!(keyboard.is_none(), "die Aktionen kommen im Folgeticket");
+        assert_eq!(
+            buttons(&keyboard),
+            vec![
+                ("Grund".to_string(), "blk:NXS-0042".to_string()),
+                (
+                    "Kommentar schreiben".to_string(),
+                    "cmt:NXS-0042".to_string()
+                ),
+                (
+                    "Zurück nach Geplant".to_string(),
+                    "ret:NXS-0042".to_string()
+                ),
+            ]
+        );
+    }
+
+    #[test]
+    fn jede_art_aus_meine_aufgaben_bekommt_ihre_eigenen_knoepfe() {
+        let abnahme = buttons(&inbox_item_keyboard(&item(
+            InboxKind::Accept,
+            "Fertig",
+            "2026-11-03T10:00:00Z",
+        )));
+        assert_eq!(
+            abnahme
+                .iter()
+                .map(|(_, data)| data.as_str())
+                .collect::<Vec<_>>(),
+            vec!["acc:NXS-0042", "ret:NXS-0042", "dif:NXS-0042"]
+        );
+
+        let merge = buttons(&inbox_item_keyboard(&item(
+            InboxKind::Merge,
+            "Konflikt",
+            "2026-11-03T10:00:00Z",
+        )));
+        assert_eq!(merge[0], ("Erneut mergen".into(), "mrg:NXS-0042".into()));
+
+        let planung = buttons(&inbox_item_keyboard(&item(
+            InboxKind::Planning,
+            "Plan fehlt",
+            "2026-11-03T10:00:00Z",
+        )));
+        assert_eq!(
+            planung,
+            vec![("Planen starten".into(), "rpl:NXS-0042".into())]
+        );
+
+        let mut eintrag = item(InboxKind::Note, "Cache", "2026-11-03T10:00:00Z");
+        eintrag.ticket_id = None;
+        eintrag.note_id = Some(7);
+        assert_eq!(
+            buttons(&inbox_item_keyboard(&eintrag)),
+            vec![
+                ("Ticket daraus".to_string(), "ntt:7".to_string()),
+                ("Verwerfen".to_string(), "ndr:7".to_string()),
+            ]
+        );
+
+        for ohne in [InboxKind::Question, InboxKind::Setup] {
+            let eintrag = item(ohne, "egal", "2026-11-03T10:00:00Z");
+            assert!(
+                inbox_item_keyboard(&eintrag).is_none(),
+                "{ohne} bekommt keine Knöpfe"
+            );
+        }
+    }
+
+    #[test]
+    fn ein_eintrag_ohne_id_bekommt_keine_knoepfe() {
+        let mut eintrag = item(InboxKind::Accept, "Fertig", "2026-11-03T10:00:00Z");
+        eintrag.ticket_id = None;
+
+        assert!(inbox_item_keyboard(&eintrag).is_none());
     }
 
     #[test]
