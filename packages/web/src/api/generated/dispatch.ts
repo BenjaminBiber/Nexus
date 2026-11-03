@@ -150,7 +150,21 @@ accountStrategy: AccountStrategy,
 /**
  * Ab dieser Auslastung in Prozent (5 Stunden oder Woche) gilt ein Account als voll (50–100)
  */
-accountLimitPercent: number, };
+accountLimitPercent: number, 
+/**
+ * Fester Puffer in Prozentpunkten fürs 5-Stunden-Fenster, solange es zu wenige Läufe für
+ * eine Schätzung gibt (0–50)
+ */
+accountReserveFiveHour: number, 
+/**
+ * Fester Puffer in Prozentpunkten für die Woche (0–50)
+ */
+accountReserveWeek: number, 
+/**
+ * Setzt sich das 5-Stunden-Fenster innerhalb dieser Minuten zurück, zählt die Reserve dort
+ * nicht (0–300)
+ */
+accountResetGraceMinutes: number, };
 
 /**
  * Eine Fassung der Dispatcher-Einstellung (Tabelle board.DispatchConfigVersions)

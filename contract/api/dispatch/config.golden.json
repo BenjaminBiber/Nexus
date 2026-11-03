@@ -53,6 +53,9 @@
       "json": {
         "config": {
           "accountLimitPercent": 90,
+          "accountReserveFiveHour": 10,
+          "accountReserveWeek": 2,
+          "accountResetGraceMinutes": 30,
           "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
@@ -352,6 +355,9 @@
         ],
         "raw": {
           "accountLimitPercent": 90,
+          "accountReserveFiveHour": 10,
+          "accountReserveWeek": 2,
+          "accountResetGraceMinutes": 30,
           "accountStrategy": "most-free",
           "allowFable": false,
           "boards": null,
@@ -476,6 +482,9 @@
     "request": {
       "body": {
         "accountLimitPercent": 90,
+        "accountReserveFiveHour": 10,
+        "accountReserveWeek": 2,
+        "accountResetGraceMinutes": 30,
         "accountStrategy": "most-free",
         "allowFable": false,
         "boards": null,
@@ -599,6 +608,9 @@
       "json": {
         "config": {
           "accountLimitPercent": 90,
+          "accountReserveFiveHour": 10,
+          "accountReserveWeek": 2,
+          "accountResetGraceMinutes": 30,
           "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
@@ -733,6 +745,9 @@
         "file": "<HOME>/dispatch.yaml",
         "raw": {
           "accountLimitPercent": 90,
+          "accountReserveFiveHour": 10,
+          "accountReserveWeek": 2,
+          "accountResetGraceMinutes": 30,
           "accountStrategy": "most-free",
           "allowFable": false,
           "boards": null,
@@ -863,6 +878,9 @@
       "json": {
         "config": {
           "accountLimitPercent": 90,
+          "accountReserveFiveHour": 10,
+          "accountReserveWeek": 2,
+          "accountResetGraceMinutes": 30,
           "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
@@ -997,6 +1015,9 @@
         "file": "<HOME>/dispatch.yaml",
         "raw": {
           "accountLimitPercent": 90,
+          "accountReserveFiveHour": 10,
+          "accountReserveWeek": 2,
+          "accountResetGraceMinutes": 30,
           "accountStrategy": "most-free",
           "allowFable": false,
           "boards": null,
@@ -1183,6 +1204,9 @@
       "json": {
         "config": {
           "accountLimitPercent": 90,
+          "accountReserveFiveHour": 10,
+          "accountReserveWeek": 2,
+          "accountResetGraceMinutes": 30,
           "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
@@ -1363,6 +1387,9 @@
       "json": {
         "config": {
           "accountLimitPercent": 90,
+          "accountReserveFiveHour": 10,
+          "accountReserveWeek": 2,
+          "accountResetGraceMinutes": 30,
           "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
@@ -1637,6 +1664,9 @@
       "json": {
         "config": {
           "accountLimitPercent": 90,
+          "accountReserveFiveHour": 10,
+          "accountReserveWeek": 2,
+          "accountResetGraceMinutes": 30,
           "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
@@ -1967,6 +1997,9 @@
       "json": {
         "config": {
           "accountLimitPercent": 90,
+          "accountReserveFiveHour": 10,
+          "accountReserveWeek": 2,
+          "accountResetGraceMinutes": 30,
           "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,

@@ -195,6 +195,24 @@ impl DispatchConfigNormalizer {
                 50,
                 Some(100),
             )?,
+            account_reserve_five_hour: int(
+                coalesce(field_or_null(input, "accountReserveFiveHour"), &json!(10)),
+                "accountReserveFiveHour",
+                0,
+                Some(50),
+            )?,
+            account_reserve_week: int(
+                coalesce(field_or_null(input, "accountReserveWeek"), &json!(2)),
+                "accountReserveWeek",
+                0,
+                Some(50),
+            )?,
+            account_reset_grace_minutes: int(
+                coalesce(field_or_null(input, "accountResetGraceMinutes"), &json!(30)),
+                "accountResetGraceMinutes",
+                0,
+                Some(300),
+            )?,
         })
     }
 
@@ -233,6 +251,9 @@ impl DispatchConfigNormalizer {
             // mit accounts: [id, …] festlegen
             "accountStrategy": "most-free",
             "accountLimitPercent": 90,
+            "accountReserveFiveHour": 10,
+            "accountReserveWeek": 2,
+            "accountResetGraceMinutes": 30,
             "research": { "auto": false, "wip": 1, "maxPerDay": 10 },
             "planning": { "auto": false, "wip": 1, "acceptance": true, "profile": null },
             "promptExtra": "",

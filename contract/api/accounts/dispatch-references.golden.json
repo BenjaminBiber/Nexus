@@ -127,6 +127,9 @@
       "json": {
         "config": {
           "accountLimitPercent": 90,
+          "accountReserveFiveHour": 10,
+          "accountReserveWeek": 2,
+          "accountResetGraceMinutes": 30,
           "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
@@ -366,6 +369,9 @@
       "json": {
         "config": {
           "accountLimitPercent": 90,
+          "accountReserveFiveHour": 10,
+          "accountReserveWeek": 2,
+          "accountResetGraceMinutes": 30,
           "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
