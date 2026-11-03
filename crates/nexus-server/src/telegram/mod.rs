@@ -8,7 +8,8 @@
 //! [`dialog`] hält je Chat den offenen Dialog einer Texteingabe, [`views`],
 //! [`action_views`] und [`question_views`] formatieren die Antworten als Telegram-HTML.
 //! [`profile`] richtet Profilbild, Name, Beschreibungen und Befehlsliste des Bots ein,
-//! [`texts`] hält die dafür gesetzten Texte.
+//! [`texts`] hält die dafür gesetzten Texte. [`voice`] macht aus einer Sprachnachricht Text
+//! und gibt ihn denselben Weg wie einen getippten.
 
 pub mod action_views;
 pub mod api;
@@ -25,6 +26,7 @@ pub mod reqwest_api;
 pub mod router;
 pub mod texts;
 pub mod views;
+pub mod voice;
 
 pub use bot::{TelegramApiFactory, TelegramBot};
 pub use dialog::{Dialog, DialogInput, DialogKind, Dialogs, DIALOG_TIMEOUT_MINUTES};
@@ -32,5 +34,7 @@ pub use idea::{IdeaInterpreter, IdeaRequest};
 pub use pairing::{PairingCode, PairingCodes};
 pub use profile::{BotProfileSync, ProfileOutcome};
 pub use router::{
-    BotContext, CallbackHandler, CommandHandler, MessageHandler, UpdateRouter, RATE_LIMIT,
+    BotContext, CallbackHandler, CommandHandler, MessageHandler, UpdateRouter, VoiceHandler,
+    VoiceOutcome, RATE_LIMIT,
 };
+pub use voice::VoiceMessages;

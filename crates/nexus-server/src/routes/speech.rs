@@ -13,7 +13,6 @@ use axum::http::{header, HeaderMap};
 use axum::response::Response;
 use axum::routing::post;
 use axum::Router;
-use nexus_core::board::config_store::BoardConfigStore;
 use nexus_core::telegram::TelegramConfigStore;
 use serde::Serialize;
 
@@ -67,7 +66,7 @@ async fn test(
     clip.within_limits()?;
 
     let speech = speech::from_config(&config.speech);
-    let hint = hint(&state, config.speech.language.clone()).await;
+    let hint = SpeechHint::for_state(&state, config.speech.language.clone()).await;
     let started = std::time::Instant::now();
     let transcript = speech.transcribe(clip, &hint).await?;
     Ok(json(&SpeechTestDto {
@@ -98,17 +97,4 @@ fn clip_of(headers: &HeaderMap, body: Bytes) -> ApiResult<AudioClip> {
         ));
     }
     Ok(AudioClip::new(body.to_vec(), mime))
-}
-
-/// Die Erkennungshilfe aus dem Board; ohne erreichbares Board bleibt nur die Sprache
-async fn hint(state: &Arc<AppState>, language: Option<String>) -> SpeechHint {
-    let active_board = BoardConfigStore::new(state.home.clone())
-        .read()
-        .ok()
-        .flatten()
-        .and_then(|config| config.active_board);
-    match state.board.get().await {
-        Ok(backend) => SpeechHint::collect(backend.services(), active_board, language).await,
-        Err(_) => SpeechHint::language_only(language),
-    }
 }

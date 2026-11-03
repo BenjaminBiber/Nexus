@@ -10,11 +10,14 @@
 
 use std::collections::BTreeSet;
 use std::path::Path;
+use std::sync::Arc;
 
 use nexus_core::board::board_service::BoardListFilter;
+use nexus_core::board::config_store::BoardConfigStore;
 use nexus_core::board::ticket_service::TicketListFilter;
 
 use crate::board_db::ServerBoardServices;
+use crate::state::AppState;
 
 /// Höchstlänge der Erkennungshilfe in Zeichen
 pub const MAX_HINT_CHARS: usize = 800;
@@ -112,6 +115,19 @@ impl SpeechHint {
             terms.extend(glossary_terms(Path::new(&repo)));
         }
         Self::from_terms(language, terms)
+    }
+
+    /// Die Hilfe aus dem Board des Servers; ohne erreichbares Board bleibt nur die Sprache
+    pub async fn for_state(state: &Arc<AppState>, language: Option<String>) -> Self {
+        let active_board = BoardConfigStore::new(state.home.clone())
+            .read()
+            .ok()
+            .flatten()
+            .and_then(|config| config.active_board);
+        match state.board.get().await {
+            Ok(backend) => Self::collect(backend.services(), active_board, language).await,
+            Err(_) => Self::language_only(language),
+        }
     }
 }
 
