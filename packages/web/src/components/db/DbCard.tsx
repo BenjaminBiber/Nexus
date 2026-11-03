@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DB_COLUMN_LABELS, DB_PRIORITY_LABELS, DB_STATUSES, type DbCardDto, type DbStatus } from '../../api/dbTypes.js';
 import { MERGE_PHASE_LABELS, type DispatchMergeDto } from '../../api/dispatchTypes.js';
+import { initials } from '../ClaudeUsageMeter.js';
 import { ClaudeIcon, GitMergeIcon } from '../NavIcons.js';
 
 // Ein Blockiert-Grund „Rückfrage“ wartet auf eine Antwort des Nutzers
@@ -12,8 +13,9 @@ const QUESTION_REASON = /^\s*r(ü|ue)ckfrage\s*$/i;
 // zum bloßen Claude-Logo und Zuständiger, Plan, Handbuch, Diagramm und Kommentarzahl entfallen; statt des
 // Fortschrittsbalkens steht nur die Schrittzahl rechts neben dem Tag-Umschalter.
 // Mergt der Dispatcher das Ticket gerade (merge: Phase), zeigt die Karte eine Pille „Merge“, kompakt ein animiertes Merge-Symbol.
-// Arbeitet gerade ein Agent-Lauf am Ticket (active), pulsiert kompakt das Claude-Logo – auch ohne Agent als Zuständigen.
-export function DbCard({ card, onOpen, onMove, agentPrefix, compact, merge, active }: { card: DbCardDto; onOpen: (id: string) => void; onMove: (id: string, status: DbStatus) => void; agentPrefix?: string; compact?: boolean; merge?: DispatchMergeDto['phase']; active?: boolean }) {
+// Arbeitet gerade ein Agent-Lauf am Ticket (active), pulsiert kompakt das Claude-Logo – auch ohne Agent als Zuständigen;
+// links davon steht das Kürzel des Claude-Accounts, mit dem der Lauf arbeitet (account: Name).
+export function DbCard({ card, onOpen, onMove, agentPrefix, compact, merge, active, account }: { card: DbCardDto; onOpen: (id: string) => void; onMove: (id: string, status: DbStatus) => void; agentPrefix?: string; compact?: boolean; merge?: DispatchMergeDto['phase']; active?: boolean; account?: string }) {
   const blocked = card.status === 'blocked' ? (QUESTION_REASON.test(card.blockedReason ?? '') ? 'Rückfrage' : 'Blockiert') : null;
   const questions = card.waitingOnQuestions;
   const isAgent = Boolean(agentPrefix && card.assignee?.startsWith(agentPrefix));
@@ -41,6 +43,11 @@ export function DbCard({ card, onOpen, onMove, agentPrefix, compact, merge, acti
               ) : (
                 <span className="badge running" title={MERGE_PHASE_LABELS[merge]}>Merge</span>
               ))}
+            {compact && active && account && (
+              <span className="card-agent-account" title={`Account: ${account}`}>
+                {initials(account)}
+              </span>
+            )}
             {compact && (isAgent || active) && (
               <span
                 className={`card-agent-logo${active ? ' active' : ''}`}

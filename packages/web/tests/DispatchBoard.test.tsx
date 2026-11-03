@@ -176,6 +176,13 @@ describe('Dispatcher am Board', () => {
     expect(screen.getByRole('img', { name: 'Agent arbeitet' }).classList.contains('active')).toBe(true);
   });
 
+  it('zeigt kompakt links neben dem Claude-Logo das Kürzel des Accounts, mit dem der Lauf arbeitet', () => {
+    render(<DbCard card={dbCard('ARC-0001', 'Login', 'in_progress')} compact active account="Privat-Max" onOpen={() => undefined} onMove={() => undefined} />);
+    const label = screen.getByText('PM');
+    expect(label.getAttribute('title')).toBe('Account: Privat-Max');
+    expect(label.nextElementSibling?.getAttribute('aria-label')).toBe('Agent arbeitet');
+  });
+
   it('„Erneut mergen“ nur bei Blockiert mit Grund „Merge:“', async () => {
     const retry = vi.fn(async () => ({ ...dispatchStatus(), result: { outcome: 'blocked' as const, text: 'ARC-0003: Merge blockiert – lokale Änderungen im Hauptordner: a.txt' } }));
     const done = vi.fn();

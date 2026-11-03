@@ -16,8 +16,8 @@ export function DbColumn(props: {
   compact?: boolean;
   /** Laufende Merges des Dispatchers: Ticket-ID → Phase */
   merges?: ReadonlyMap<string, DispatchMergeDto['phase']>;
-  /** Tickets, an denen gerade ein Agent-Lauf arbeitet */
-  activeRuns?: ReadonlySet<string>;
+  /** Tickets, an denen gerade ein Agent-Lauf arbeitet: Ticket-ID → Name des Claude-Accounts (fehlt ohne Account-Wahl) */
+  activeRuns?: ReadonlyMap<string, string | undefined>;
 }) {
   const { column } = props;
   const locked = column.id === 'waiting';
@@ -49,7 +49,7 @@ export function DbColumn(props: {
       </div>
       {props.cards.length === 0 && <div className="column-empty">Keine Tickets</div>}
       {props.cards.map((card) => (
-        <DbCard key={card.id} card={card} onOpen={props.onOpen} onMove={props.onMove} agentPrefix={props.agentPrefix} compact={props.compact} merge={props.merges?.get(card.id)} active={props.activeRuns?.has(card.id)} />
+        <DbCard key={card.id} card={card} onOpen={props.onOpen} onMove={props.onMove} agentPrefix={props.agentPrefix} compact={props.compact} merge={props.merges?.get(card.id)} active={props.activeRuns?.has(card.id)} account={props.activeRuns?.get(card.id)} />
       ))}
     </section>
   );

@@ -91,8 +91,14 @@ export function DbBoardPage() {
   const compactCards = useCompactCards();
   // Laufende Merges des Dispatchers je Ticket (Pille bzw. Symbol auf der Karte)
   const merges = useMemo(() => new Map((dispatch.status?.merges ?? []).map((m) => [m.ticketId, m.phase])), [dispatch.status]);
-  // Tickets mit laufendem Agent-Lauf (Recherchen gehören zu Fragen, nicht zu Tickets) – kompakt pulsiert das Claude-Logo
-  const activeRuns = useMemo(() => new Set((dispatch.status?.runs ?? []).filter((r) => r.kind !== 'research').map((r) => r.ticketId)), [dispatch.status]);
+  // Namen der Claude-Accounts für das Kürzel auf der kompakten Karte; ohne Liste bleibt die Account-ID stehen
+  const accounts = useAsync(() => api.getAccounts(), [api]);
+  const accountNames = useMemo(() => new Map(accounts.state.status === 'ready' ? accounts.state.data.accounts.map((a) => [a.id, a.name]) : []), [accounts.state]);
+  // Tickets mit laufendem Agent-Lauf (Recherchen gehören zu Fragen, nicht zu Tickets) samt Account-Name – kompakt pulsiert das Claude-Logo
+  const activeRuns = useMemo(
+    () => new Map((dispatch.status?.runs ?? []).filter((r) => r.kind !== 'research').map((r) => [r.ticketId, r.account ? accountNames.get(r.account) ?? r.account : undefined])),
+    [dispatch.status, accountNames],
+  );
   const cards = useMemo(() => view?.columns.flatMap((c) => c.tickets) ?? [], [view]);
   // Spalten „Nicht mehr nötig“ und „In Planung“ lassen sich unter Einstellungen › Darstellung ausblenden
   const userSettings = useAsync(() => api.getUserSettings(), [api]);

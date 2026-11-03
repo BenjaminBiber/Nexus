@@ -90,6 +90,7 @@ export function fakeApi(overrides: Partial<Record<keyof ApiClient, unknown>> = {
     getProjects: async () => projects,
     getClaudeUsage: async () => ({ available: false, reason: 'no-login', plan: null, fiveHour: null, sevenDay: null, fetchedAt: null }),
     getUsageOverview: async () => ({ enabled: false, defaultLimit: 90, accounts: [] }),
+    getAccounts: async () => ({ accounts: [], multi: false, accountsDir: '', suggestions: [], pluginCommands: [] }),
     getDbActive: async () => dbActive(),
     getDbProjects: async () => dbProjects,
     getDbBoards: async () => dbBoards,
