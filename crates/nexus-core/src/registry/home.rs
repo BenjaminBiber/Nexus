@@ -212,6 +212,11 @@ impl NexusHome {
         self.dispatch_dir().join("state.json")
     }
 
+    /// Verbrauchsproben der Accounts (eine JSON-Zeile je beendetem Lauf)
+    pub fn account_usage_file(&self) -> PathBuf {
+        self.dispatch_dir().join("account-usage.jsonl")
+    }
+
     /// Review-Einträge vor dem Merge (`<Ticket-ID>.json`)
     pub fn dispatch_reviews_dir(&self) -> PathBuf {
         self.dispatch_dir().join("reviews")

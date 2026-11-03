@@ -10,6 +10,7 @@ pub mod log_splitter;
 pub mod review_store;
 pub mod run_store;
 pub mod state_store;
+pub mod usage_history;
 
 #[cfg(test)]
 mod tests;
@@ -23,3 +24,4 @@ pub use state_store::{
     DispatchState, DispatchStateStore, MergeEntry, MergePhase, PlanningAutoState, PlanningEntry,
     ResearchAutoState, ResearchEntry,
 };
+pub use usage_history::{UsageHistory, UsageSample, UsageSnapshot};
