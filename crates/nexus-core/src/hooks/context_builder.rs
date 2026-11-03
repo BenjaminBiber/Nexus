@@ -215,7 +215,7 @@ impl<D: BoardDatabase> ContextBuilder<D> {
         );
         if tickets.is_empty() {
             return [
-                "AI Harness: Diese Session ist keinem Ticket zugeordnet. Mit `harness board claim ARC-0042 --agent claude` ordnest du sie einem Ticket zu (ID anpassen).".to_string(),
+                "Nexus: Diese Session ist keinem Ticket zugeordnet. Mit `nexus board claim ARC-0042 --agent claude` ordnest du sie einem Ticket zu (ID anpassen).".to_string(),
                 hint,
             ]
             .join("\n");
@@ -227,8 +227,8 @@ impl<D: BoardDatabase> ContextBuilder<D> {
             .join(", ");
         let first = &tickets[0].id;
         [
-            format!("AI Harness: Diese Session arbeitet an {names}."),
-            format!("Regeln: Tickets änderst du nur über `harness board …`. Nutze `harness board show {first}`, `harness board comment {first} \"…\" --author claude`, `harness board step {first} <nummer>` und zum Abschluss `harness board done {first} --acceptance \"…\"`. Begründe jede Änderung am Ticket mit einem Kommentar."),
+            format!("Nexus: Diese Session arbeitet an {names}."),
+            format!("Regeln: Tickets änderst du nur über `nexus board …`. Nutze `nexus board show {first}`, `nexus board comment {first} \"…\" --author claude`, `nexus board step {first} <nummer>` und zum Abschluss `nexus board done {first} --acceptance \"…\"`. Begründe jede Änderung am Ticket mit einem Kommentar."),
             hint,
         ]
         .join("\n")
@@ -304,7 +304,7 @@ fn question_list(questions: &[BoardQuestion], ticket_ids: &[String]) -> String {
         format!("- {} {} (betrifft {betrifft})", question.id, question.title)
     }));
     lines.push("Diese Fragen sperren ihre Tickets für In Arbeit und Erledigt. Triff die Entscheidungen nie selbst und nimm nichts stillschweigend an.".to_string());
-    lines.push(format!("Ergänze Kontext mit `harness board question research {first} --from <datei> --kind session` oder kommentiere mit `harness board question comment {first} \"…\" --kind session`."));
+    lines.push(format!("Ergänze Kontext mit `nexus board question research {first} --from <datei> --kind session` oder kommentiere mit `nexus board question comment {first} \"…\" --kind session`."));
     lines.join("\n")
 }
 
@@ -427,10 +427,10 @@ mod tests {
             .unwrap();
         assert!(out.contains("ARC-0001 „Login“ (Spec 001-x, Schritte 0/1)"));
         for part in [
-            "harness board comment ARC-0001",
-            "harness board show ARC-0001",
-            "harness board step ARC-0001",
-            "harness board done ARC-0001",
+            "nexus board comment ARC-0001",
+            "nexus board show ARC-0001",
+            "nexus board step ARC-0001",
+            "nexus board done ARC-0001",
             "Ablauf im Harness",
         ] {
             assert!(out.contains(part), "{part}");
@@ -442,11 +442,11 @@ mod tests {
                 }
             }
         }
-        assert!(out.contains("Stand: ARC-0001 ist Backlog. Vorschlag: vor dem Umsetzen planen: Plan, Handbuch und Diagramm mit `harness board plan-json ARC-0001 --file payload.json --by claude` schreiben (setzt Geplant); erst danach mit /nexus:harness-implement ARC-0001 umsetzen."));
+        assert!(out.contains("Stand: ARC-0001 ist Backlog. Vorschlag: vor dem Umsetzen planen: Plan, Handbuch und Diagramm mit `nexus board plan-json ARC-0001 --file payload.json --by claude` schreiben (setzt Geplant); erst danach mit /nexus:harness-implement ARC-0001 umsetzen."));
         assert!(
             out.contains("Aus einem Superpowers-Plan legst du auf Wunsch je Task ein Ticket an")
         );
-        assert!(out.contains("Tickets mit Planungsbedarf (etwa aus der Ticket-Auswahl der Docs-Seite) werden vor dem Umsetzen geplant: `harness --json board next-planning --claim claude` holt das nächste"));
+        assert!(out.contains("Tickets mit Planungsbedarf (etwa aus der Ticket-Auswahl der Docs-Seite) werden vor dem Umsetzen geplant: `nexus --json board next-planning --claim claude` holt das nächste"));
         assert!(!out.contains("/speckit-"));
     }
 
@@ -461,7 +461,7 @@ mod tests {
         assert!(planning.contains(
             "Stand: ARC-0001 ist In Planung. Vorschlag: den Plan mit dem Nutzer abschließen"
         ));
-        assert!(planning.contains("harness board plan-json ARC-0001"));
+        assert!(planning.contains("nexus board plan-json ARC-0001"));
         set_status(&u, "ARC-0001", TicketStatus::Planned).await;
         assert!(u
             .text(ContextKind::SessionStart, &["ARC-0001"], None)
@@ -474,7 +474,7 @@ mod tests {
     async fn weist_ohne_ticket_auf_claim_hin() {
         let u = Umgebung::neu().await;
         let out = u.text(ContextKind::SessionStart, &[], None).await.unwrap();
-        assert!(out.contains("harness board claim"));
+        assert!(out.contains("nexus board claim"));
         assert!(out.contains("Stand: keinem Ticket zugeordnet"));
     }
 
@@ -486,7 +486,7 @@ mod tests {
             .text(ContextKind::SessionStart, &["ARC-0001"], None)
             .await
             .unwrap()
-            .contains("Stand: ARC-0001 ist In Arbeit. Vorschlag: nach der Umsetzung Review und Abschluss mit `harness board done` vorschlagen."));
+            .contains("Stand: ARC-0001 ist In Arbeit. Vorschlag: nach der Umsetzung Review und Abschluss mit `nexus board done` vorschlagen."));
         u.f.tickets
             .move_to(
                 "ARC-0001",
@@ -504,7 +504,7 @@ mod tests {
             .await
             .unwrap();
         assert!(done.contains("Stand: ARC-0001 ist erledigt."));
-        assert!(done.contains("harness board list --status geplant --md"));
+        assert!(done.contains("nexus board list --status geplant --md"));
     }
 
     #[tokio::test]
@@ -578,7 +578,7 @@ mod tests {
         assert!(start.contains("Offene Fragen (1, nicht entscheiden):"));
         assert!(start.contains(&format!("- {q} Welcher Speicher? (betrifft ARC-0001)")));
         assert!(start.contains(&format!(
-            "harness board question research {q} --from <datei> --kind session"
+            "nexus board question research {q} --from <datei> --kind session"
         )));
         assert!(!start.contains("Andere Frage"));
         assert_eq!(
