@@ -114,22 +114,11 @@
 }
 
 /* Accounts */
-.accounts-mode { margin: 12px 20px 16px; }
-.account-status { display: flex; flex-wrap: wrap; gap: 6px; padding: 14px 20px 4px; }
-.account-usage { display: flex; flex-direction: column; gap: 8px; padding: 10px 20px 14px; }
-.account-usage-row { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto; align-items: center; gap: 12px; font-size: 13px; }
-.account-usage-label { color: var(--muted); }
-.account-usage-value { font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
-.account-usage-row .progress-bar span.full { background: var(--danger); }
-.account-usage-none { padding: 6px 20px 12px; margin: 0; }
 .account-plugin { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; }
 .account-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--line-soft); }
 .account-remove { display: flex; flex-direction: column; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--line-soft); }
 .account-remove p { margin: 0; }
 .account-remove .actions { display: flex; justify-content: flex-end; gap: 8px; }
-@media (max-width: 640px) {
-  .account-usage-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
-}
 .account-more { padding: 10px 20px 12px; border-top: 1px solid var(--line-soft); }
 .account-more summary { cursor: pointer; font-size: 13px; color: var(--muted); list-style: none; }
 .account-more summary::-webkit-details-marker { display: none; }
@@ -144,27 +133,68 @@
 .account-login .actions { display: flex; justify-content: flex-end; }
 .account-login-code { display: flex; gap: 8px; flex-wrap: wrap; }
 .account-login-code input { flex: 1 1 220px; min-width: 0; }
+.account-run-token { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+.account-run-token input { flex: 1 1 220px; min-width: 0; }
 .account-login-output { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--font-mono); font-size: 12px; }
 .account-login-note { padding: 4px 20px 10px; margin: 0; }
-.account-head {
-  display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 20px; border: 0; background: none; color: inherit;
-  font: inherit; text-align: left; cursor: pointer; border-radius: inherit;
-}
-.account-head:hover { background: var(--column-bg); }
-.account-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.account-chevron { flex: none; width: 14px; font-size: 16px; line-height: 1; text-align: center; color: var(--text-soft); transition: transform 0.15s; }
-.account-head[aria-expanded="true"] .account-chevron { transform: rotate(90deg); }
-.account-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
-.account-head-text strong { font-size: 14px; font-weight: 600; }
-.account-head-text .mono { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.account-head-side { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; flex: 0 1 auto; }
-.account-head-usage { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.account-body { border-top: 1px solid var(--line-soft); }
-.account-body .account-status:empty { display: none; }
-@media (prefers-reduced-motion: reduce) { .account-chevron { transition: none; } }
-.account-usage-bar { position: relative; overflow: visible; width: 100%; }
-.account-usage-bar > span { border-radius: inherit; }
-.account-usage-limit { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--text-soft); border-radius: 1px; }
 .account-limits { display: flex; gap: 16px; flex-wrap: wrap; }
 .account-limit { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
 .account-limit input { width: 64px; text-align: right; }
+/* Accounts als Kacheln (zwei Spalten): Kopf mit Name und Icon-Schaltern, Limits als Doppelring, die
+   Einstellungen im Dialog. Der Hinweis zu den Nutzungsbedingungen steht unten am Bildschirmrand. */
+.settings-content:has(> .accounts-panel) { display: flex; flex-direction: column; }
+.accounts-panel { flex: 1; gap: 16px; margin-bottom: -48px; }
+.accounts-toolbar { display: flex; align-items: center; gap: 8px; }
+.settings-status-slot:has(> .accounts-toolbar) { display: flex; align-items: center; gap: 12px; padding-top: 0; }
+.accounts-toolbar .setting-hint { flex: 0 1 auto; min-width: 0; }
+.accounts-add { flex: none; margin-left: auto; color: var(--text); background: var(--line-soft); }
+.accounts-add .material-icons { font-size: 22px; }
+.account-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+@media (max-width: 1000px) { .account-tiles { grid-template-columns: minmax(0, 1fr); } }
+.account-tile { display: flex; flex-direction: column; min-width: 0; }
+.account-tile.off .account-tile-main { opacity: 0.55; }
+.account-tile-main { display: flex; align-items: flex-start; gap: 18px; padding: 16px 20px; }
+.account-tile-ring { flex: none; }
+.account-tile-ring .usage-ring { width: 76px; height: 76px; }
+.account-tile-info { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; }
+.account-tile-title { display: flex; align-items: baseline; gap: 10px; min-width: 0; margin-bottom: 8px; }
+.account-tile-title > .state-dot { flex: none; align-self: center; }
+.account-tile-title > .state-dot.blocked { background: var(--danger); }
+.account-tile-tools { margin-top: auto; }
+.account-tile-title > .badge { flex: none; margin-left: auto; align-self: center; }
+.account-tile-title strong { flex: none; max-width: 50%; overflow: hidden; font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.account-tile-title .mono { min-width: 0; overflow: hidden; font-size: 12px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+/* Je Limit eine Zeile: Name | Auslastung / Grenze | Reset; Spalten über beide Zeilen bündig */
+.usage-tile-rows { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; column-gap: 14px; row-gap: 6px; min-width: 0; font-variant-numeric: tabular-nums; }
+.usage-tile-rows .usage-pop-row { display: contents; }
+.usage-tile-rows .usage-pop-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usage-tile-rows .usage-pop-reset { grid-column: 3; }
+.usage-tile-rows.empty { opacity: 0.5; }
+.account-tile .account-status { display: flex; flex-wrap: wrap; gap: 6px; }
+.account-tile .account-status:empty { display: none; }
+/* Aktionen am Fuß der Kachel, gleichmäßig über die Breite verteilt */
+.account-tile-tools { display: flex; justify-content: space-around; padding: 6px 12px; }
+.account-tile-tools .icon-btn { width: 40px; height: 36px; }
+.account-tile-tools .material-icons { font-size: 20px; }
+.account-tile-tools .icon-btn:disabled { opacity: 0.4; cursor: default; }
+.account-toggle[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.account-toggle[aria-pressed="true"]:hover:not(:disabled) { background: var(--accent-soft-hover); color: var(--accent); }
+.accounts-notice { position: sticky; bottom: 16px; z-index: 2; margin-top: auto; box-shadow: 0 8px 24px var(--shadow-soft); border-radius: var(--radius-control); }
+.accounts-notice .notice { margin: 0; }
+/* Dialog „Account hinzufügen“ */
+.account-add-modal { gap: 12px; }
+.account-add-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.account-add-head h2 { margin: 0; font-size: 17px; }
+.account-add-modal > .setting-hint { margin: 0; }
+.account-add-modal > .setting-row { padding: 6px 0; }
+.account-add-modal > .account-more { padding: 10px 0 0; }
+.account-add-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px; }
+.account-add-modal > .account-remove { padding: 14px 0 0; }
+.account-remove-start { margin-right: auto; }
+/* Einstellungen eines Accounts: zwei Spalten, schmal untereinander */
+.account-settings-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 32px; }
+@media (max-width: 720px) { .account-settings-cols { grid-template-columns: minmax(0, 1fr); } }
+.account-settings-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.account-settings-col > .setting-row { padding: 8px 0; }
+.account-settings-col > h3 { margin: 8px 0 0; }
+.account-settings-col > p { margin: 0; overflow-wrap: anywhere; }

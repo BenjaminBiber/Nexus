@@ -7,11 +7,11 @@ export type SaveState = { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved' 
 export const SaveStatusSlot = createContext<HTMLElement | null>(null);
 
 // Ein Bereich der Einstellungen. status: Bereich speichert jede Änderung sofort und meldet den Stand im Seitenkopf.
-export function SettingsPanel({ label, status, children }: { label: string; status?: SaveState; children: ReactNode }) {
+export function SettingsPanel({ label, status, className, children }: { label: string; status?: SaveState; className?: string; children: ReactNode }) {
   const slot = useContext(SaveStatusSlot);
   const line = status && <SaveStatus state={status} />;
   return (
-    <section className="settings-panel" aria-label={label}>
+    <section className={className ? `settings-panel ${className}` : 'settings-panel'} aria-label={label}>
       {line && (slot ? createPortal(line, slot) : line)}
       {children}
     </section>

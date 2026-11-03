@@ -15,14 +15,14 @@ import { SaveStatusSlot } from '../components/settings/SettingsPanel.js';
 import { useSettings } from '../hooks/useSettings.js';
 import { AccountsPanel } from '../components/AccountsPanel.js';
 
-interface Section { id: string; label: string; icon: string; hint: string }
+interface Section { id: string; label: string; icon: string; hint?: string }
 
 // Bereiche der Einstellungen, gruppiert; die ID ist zugleich der URL-Hash (z. B. #board-db).
 const GROUPS: Array<{ title: string; sections: Section[] }> = [
   { title: 'Arbeitsbereich', sections: [
     { id: 'projects', label: 'Arbeitsverzeichnisse', icon: 'folder', hint: 'Lokale Repos, in denen eine Claude-Session lief, und ob sie erreichbar sind.' },
     { id: 'token', label: 'Zugriff', icon: 'key', hint: 'Token, mit dem sich Plugin und Terminal beim Harness anmelden.' },
-    { id: 'accounts', label: 'Accounts', icon: 'group', hint: 'Claude-Accounts, auf die der Dispatcher seine Läufe verteilt.' },
+    { id: 'accounts', label: 'Accounts', icon: 'group' },
   ] },
   { title: 'Oberfläche', sections: [
     { id: 'appearance', label: 'Darstellung', icon: 'palette', hint: 'Farbschema und Aussehen des Boards.' },
@@ -98,7 +98,7 @@ export function SettingsPage() {
         <header className="settings-head">
           <div className="settings-head-text">
             <h2>{active.label}{dispatchSub && <span className="settings-head-sub"> / {dispatchSub.label}</span>}</h2>
-            <p className="muted">{active.hint}</p>
+            {active.hint && <p className="muted">{active.hint}</p>}
           </div>
           <div className="settings-status-slot" ref={setSlot} />
         </header>

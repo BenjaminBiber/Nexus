@@ -85,6 +85,14 @@ export class ApiClient {
     return this.request('POST', `/api/accounts/${encodeURIComponent(id)}/resume`, {});
   }
 
+  setAccountRunToken(id: string, token: string): Promise<AccountListDto> {
+    return this.request('PUT', `/api/accounts/${encodeURIComponent(id)}/run-token`, { token });
+  }
+
+  removeAccountRunToken(id: string): Promise<AccountListDto> {
+    return this.request('DELETE', `/api/accounts/${encodeURIComponent(id)}/run-token`, {});
+  }
+
   // Alle angemeldeten Projekte
   getProjects(): Promise<ProjectDto[]> {
     return this.request('GET', '/api/projects');

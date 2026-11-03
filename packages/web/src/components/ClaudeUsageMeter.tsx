@@ -174,24 +174,29 @@ export function resetDetail(resetsAt: string | null, now: Date): string {
   return `Reset ${label}${clock}`;
 }
 
+// Ein Fenster als Zeile: Auslastung / Grenze (ohne eigene die Vorgabe), darunter, wann es zurückgesetzt wird
+function UsageLine({ label, window: w, own, defaultLimit, tone: t, now }: { label: string; window: UsageWindowDto | null; own: number | null; defaultLimit: number; tone: Tone; now: Date }) {
+  const reset = w ? resetDetail(w.resetsAt, now) : '';
+  return (
+    <div className="usage-pop-row">
+      <span className="usage-pop-label">{label}</span>
+      <span className="usage-pop-value">
+        {w ? <span className={`usage-num${t === 'ok' ? '' : ` ${t}`}`}>{w.percent} %</span> : '–'}
+        <span className="usage-pop-limit" title={own === null ? 'Vorgabe' : undefined}> / {own ?? defaultLimit} %</span>
+      </span>
+      {reset && <span className="usage-pop-reset">{reset}</span>}
+    </div>
+  );
+}
+
 // Genaue Werte eines Accounts beim Darüberfahren über seinen Ring in der Seitenleiste: je Fenster Auslastung / Grenze und
 // darunter, wann es zurückgesetzt wird
 function Details({ row, defaultLimit, now }: { row: Row; defaultLimit: number; now: Date }) {
   const { entry, usage, stale } = row;
   const { five, week, fiveTone, weekTone } = measure(row, defaultLimit, now);
-  const line = (label: string, w: UsageWindowDto | null, own: number | null, t: Tone) => {
-    const reset = w ? resetDetail(w.resetsAt, now) : '';
-    return (
-      <div className="usage-pop-row">
-        <span className="usage-pop-label">{label}</span>
-        <span className="usage-pop-value">
-          {w ? <span className={`usage-num${t === 'ok' ? '' : ` ${t}`}`}>{w.percent} %</span> : '–'}
-          <span className="usage-pop-limit" title={own === null ? 'Vorgabe' : undefined}> / {own ?? defaultLimit} %</span>
-        </span>
-        {reset && <span className="usage-pop-reset">{reset}</span>}
-      </div>
-    );
-  };
+  const line = (label: string, w: UsageWindowDto | null, own: number | null, t: Tone) => (
+    <UsageLine label={label} window={w} own={own} defaultLimit={defaultLimit} tone={t} now={now} />
+  );
   const at = usage?.fetchedAt ? new Date(usage.fetchedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : null;
   const plan = usage?.plan ?? entry.usage.plan;
   const reason = why(row);
@@ -221,6 +226,28 @@ function AccountCard({ row, defaultLimit, now }: { row: Row; defaultLimit: numbe
           </>
         ) : <span className="usage-acc-why">{why(row)}</span>}
       </div>
+    </div>
+  );
+}
+
+// Doppelring eines Accounts (Kacheln der Accounts); ohne Werte der leere Ring als Platzhalter
+export function AccountRing({ entry, defaultLimit }: { entry: AccountUsageEntryDto; defaultLimit: number }) {
+  const row: Row = { entry, usage: shows(entry.usage) ? entry.usage : null, stale: false };
+  return <Ring row={row} defaultLimit={defaultLimit} now={new Date()} />;
+}
+
+// Werte je Fenster zum Ring eines Accounts (Kacheln der Accounts), je Fenster eine Zeile; ohne Werte dieselben Zeilen
+// mit „–“, damit alle Kacheln gleich hoch bleiben
+export function AccountUsageLines({ entry, defaultLimit }: { entry: AccountUsageEntryDto; defaultLimit: number }) {
+  const now = new Date();
+  const known = shows(entry.usage);
+  const { five, week, fiveTone, weekTone } = known
+    ? measure({ entry, usage: entry.usage, stale: false }, defaultLimit, now)
+    : { five: null, week: null, fiveTone: 'ok' as Tone, weekTone: 'ok' as Tone };
+  return (
+    <div className={`usage-tile-rows${known ? '' : ' empty'}`}>
+      <UsageLine label="Sitzung (5 Std.)" window={five} own={entry.limitFiveHour} defaultLimit={defaultLimit} tone={fiveTone} now={now} />
+      <UsageLine label="Woche" window={week} own={entry.limitWeek} defaultLimit={defaultLimit} tone={weekTone} now={now} />
     </div>
   );
 }

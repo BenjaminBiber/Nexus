@@ -49,6 +49,8 @@ export interface AccountDto {
   loggedIn: boolean;
   email: string | null;
   plugin: boolean;
+  /** Läufe nutzen ein Langzeit-Token (`claude setup-token`); das Token selbst kommt nie an */
+  runToken: boolean;
   usage: ClaudeUsageDto;
   pausedUntil: string | null;
   /** Stellen in der Dispatcher-Einstellung, die den Account nennen */

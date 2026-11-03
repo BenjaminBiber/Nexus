@@ -1,30 +1,43 @@
-import { useEffect, useState } from 'react';
-import { USAGE_REASONS } from './ClaudeUsageMeter.js';
+import { useContext, useEffect, useId, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useApi } from '../api/ApiContext.js';
-import type { AccountDto, AccountListDto, UsageWindowDto } from '../api/usageTypes.js';
+import type { AccountDto, AccountListDto } from '../api/usageTypes.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { Badge } from './Badge.js';
-import { ClaudeUsageMeter } from './ClaudeUsageMeter.js';
+import { AccountRing, AccountUsageLines, USAGE_REASONS } from './ClaudeUsageMeter.js';
 import { CopyCommand } from './CopyCommand.js';
+import { DbModal } from './db/DbModal.js';
 import { ErrorState } from './ErrorState.js';
 import { LoadingState } from './LoadingState.js';
+import { InfoTip } from './settings/InfoTip.js';
 import { Notice } from './settings/Notice.js';
-import { SettingsPanel, useSaveStatus } from './settings/SettingsPanel.js';
-import { SettingRow, SettingsSection } from './settings/SettingRow.js';
+import { SaveStatusSlot, SettingsPanel, useSaveStatus } from './settings/SettingsPanel.js';
+import { SettingRow } from './settings/SettingRow.js';
 
 const WINDOWS = typeof navigator !== 'undefined' && /win/i.test(navigator.platform);
 /** So oft fragt die Seite nach, solange eine Anmeldung läuft */
 const LOGIN_POLL_MS = 2000;
+/** Grenze, ab der ein Ring ohne eigene Obergrenze orange wird, bis die Vorgabe des Dispatchers geladen ist */
+const FALLBACK_LIMIT = 90;
 
 type Change = (fn: () => Promise<AccountListDto>) => Promise<boolean>;
 
-// Claude-Accounts des Dispatchers: mit Claude anmelden (der Ordner entsteht von selbst), Plugin einrichten, abschalten,
-// entfernen; je Account Anmeldung, Plugin, Limits und eine laufende Pause. Einen vorhandenen Ordner zu übernehmen ist eine
-// erweiterte Option. Welche Profile welche Accounts nutzen, steht in den Dispatcher-Einstellungen.
+function Icon({ name }: { name: string }) {
+  return <span className="material-icons" aria-hidden="true">{name}</span>;
+}
+
+// Claude-Accounts des Dispatchers als Kacheln: je Account Limits als Doppelring, Schalter für Aktiv und Fallback, neu
+// anmelden; hinter dem Zahnrad im Dialog Obergrenzen, Name, Plugin, Ordner und Entfernen. Hinzufügen (mit Claude anmelden oder einen
+// vorhandenen Ordner übernehmen) im Dialog. Welche Profile welche Accounts nutzen, steht in den Dispatcher-Einstellungen.
 export function AccountsPanel() {
   const api = useApi();
   const loaded = useAsync(() => api.getAccounts(), [api]);
+  // Nur für die Vorgabe der Obergrenze (Farbe der Ringe ohne eigene Grenze)
+  const overview = useAsync(() => api.getUsageOverview(), [api]);
+  const defaultLimit = overview.state.status === 'ready' ? overview.state.data.defaultLimit : FALLBACK_LIMIT;
   const { state, run } = useSaveStatus();
+  const [adding, setAdding] = useState(false);
+  const headSlot = useContext(SaveStatusSlot);
   const data = loaded.state.status === 'ready' ? loaded.state.data : null;
   const loggingIn = data?.accounts.some((a) => a.login?.state === 'running') ?? false;
 
@@ -47,58 +60,60 @@ export function AccountsPanel() {
   else if (loaded.state.status === 'error') body = <ErrorState message={loaded.state.message} onRetry={loaded.retry} />;
   else {
     const list = loaded.state.data;
+    // Info und Hinzufügen stehen in der Kopfzeile neben „Accounts“ (ohne Kopfzeile, etwa in Tests, über den Kacheln)
+    const toolbar = (
+      <div className="accounts-toolbar">
+        <InfoTip label="Accounts">{INFO}</InfoTip>
+        <button type="button" className="icon-btn accounts-add" aria-label="Account hinzufügen" title="Account hinzufügen" onClick={() => setAdding(true)}>
+          <Icon name="add" />
+        </button>
+      </div>
+    );
     body = (
       <>
-        <SettingsSection info={INFO}>
-          <Notice tone="warn" role="note" label="Hinweis">
-            Mehrere Abo-Accounts, um die Limits eines einzelnen Abos zu umgehen, können gegen die Nutzungsbedingungen von Anthropic verstoßen. Nutze nur Accounts, die dafür vorgesehen sind (z. B. mehrere Team-Plätze).
-          </Notice>
-          <p className="setting-hint accounts-mode">
-            {list.multi
-              ? 'Mehrere Accounts aktiv: Der Dispatcher verteilt die Läufe und liest dafür die Limits jedes aktiven Accounts aus.'
-              : 'Ein Account aktiv: Der Dispatcher arbeitet wie bisher mit einem Account und fragt keine Limits ab.'}
-          </p>
-        </SettingsSection>
-        {list.accounts.map((account) => (
-          <AccountCard key={account.id} account={account} pluginCommands={list.pluginCommands} accountsDir={list.accountsDir} change={change} />
-        ))}
-        <AddAccount data={list} change={change} />
+        {headSlot ? createPortal(toolbar, headSlot) : toolbar}
+        <div className="account-tiles">
+          {list.accounts.map((account) => (
+            <AccountTile key={account.id} account={account} defaultLimit={defaultLimit} pluginCommands={list.pluginCommands} accountsDir={list.accountsDir} change={change} />
+          ))}
+        </div>
+        {adding && <AddAccountDialog data={list} change={change} onClose={() => setAdding(false)} />}
       </>
     );
   }
-  // Oben die Limits aller aktiven Accounts als Ringe mit Werten (wie in der Seitenleiste, dort nur die Ringe)
   return (
-    <SettingsPanel label="Accounts" status={state}>
-      <ClaudeUsageMeter variant="full" />
+    // Speicherstand nur bei einem Fehler; Erfolg zeigt sich an den Kacheln selbst
+    <SettingsPanel label="Accounts" status={state.kind === 'error' ? state : undefined} className="accounts-panel">
       {body}
+      <div className="accounts-notice">
+        <Notice tone="warn" role="note" label="Hinweis">
+          Mehrere Abo-Accounts, um die Limits eines einzelnen Abos zu umgehen, können gegen die Nutzungsbedingungen von Anthropic verstoßen. Nutze nur Accounts, die dafür vorgesehen sind (z. B. mehrere Team-Plätze).
+        </Notice>
+      </div>
     </SettingsPanel>
   );
 }
 
-function AccountCard({ account, pluginCommands, accountsDir, change }: { account: AccountDto; pluginCommands: string[]; accountsDir: string; change: Change }) {
+// Schaltknopf mit Icon (Aktiv, Fallback): gedrückt = eingeschaltet
+function IconToggle({ icon, label, pressed, disabled, onChange }: { icon: string; label: string; pressed: boolean; disabled: boolean; onChange: (next: boolean) => void }) {
+  return (
+    <button type="button" className="icon-btn account-toggle" aria-label={label} aria-pressed={pressed} title={`${label}: ${pressed ? 'an' : 'aus'}`} disabled={disabled} onClick={() => onChange(!pressed)}>
+      <Icon name={icon} />
+    </button>
+  );
+}
+
+// Anmeldestatus je Farbe des Punkts vor dem Namen
+const LOGIN_STATES = { running: 'angemeldet', waiting: 'Anmeldung läuft', blocked: 'nicht angemeldet' } as const;
+
+function AccountTile({ account, defaultLimit, pluginCommands, accountsDir, change }: { account: AccountDto; defaultLimit: number; pluginCommands: string[]; accountsDir: string; change: Change }) {
   const api = useApi();
-  const [name, setName] = useState(account.name);
-  const [removing, setRemoving] = useState(false);
-  const [deleteDir, setDeleteDir] = useState(false);
   const [busy, setBusy] = useState(false);
-  const standard = account.configDir === null;
+  const [editing, setEditing] = useState(false);
   const running = account.login?.state === 'running';
   const paused = account.pausedUntil && new Date(account.pausedUntil) > new Date() ? account.pausedUntil : null;
-  const prefix = standard ? '' : WINDOWS ? `$env:CLAUDE_CONFIG_DIR="${account.effectiveDir}"; ` : `CLAUDE_CONFIG_DIR="${account.effectiveDir}" `;
-  // Braucht der Account Aufmerksamkeit (Anmeldung läuft oder fehlt), ist die Kachel offen; sonst gilt die gemerkte Wahl
-  const attention = running || account.login?.state === 'failed' || !account.loggedIn;
-  const [open, setOpen] = useState(() => attention || readOpen(account.id));
-  const toggle = () => {
-    setOpen(!open);
-    writeOpen(account.id, !open);
-  };
-
-  // Name folgt dem Server (z. B. nach der Anmeldung die E-Mail), solange niemand tippt
-  useEffect(() => setName(account.name), [account.name]);
-  // Eine neue Anmeldung oder ein Fehler klappt die Kachel auf
-  useEffect(() => {
-    if (attention) setOpen(true);
-  }, [attention]);
+  const loginState: keyof typeof LOGIN_STATES = running ? 'waiting' : account.loggedIn ? 'running' : 'blocked';
+  const reason = !account.usage.available && account.usage.reason && account.usage.reason !== 'no-login' ? USAGE_REASONS[account.usage.reason] : null;
 
   // Knopf, der während der Anfrage gesperrt bleibt
   const act = async (fn: () => Promise<AccountListDto>) => {
@@ -110,6 +125,79 @@ function AccountCard({ account, pluginCommands, accountsDir, change }: { account
     }
   };
 
+  return (
+    <article className={`settings-card account-tile${account.enabled ? '' : ' off'}`} aria-label={account.name}>
+      <div className="account-tile-main">
+        {/* Ohne Werte ein leerer Ring; den Grund zeigt erst das Darüberfahren */}
+        <div className="account-tile-ring" title={account.usage.available ? undefined : reason ?? (account.loggedIn ? 'Keine Limits' : 'Nicht angemeldet – keine Limits')}>
+          <AccountRing entry={account} defaultLimit={defaultLimit} />
+        </div>
+        <div className="account-tile-info">
+          {/* Eine Zeile: Anmeldestatus als Punkt, Name, E-Mail (falls anders als der Name) und Abo */}
+          <div className="account-tile-title">
+            <span className={`state-dot ${loginState}`} role="img" aria-label={LOGIN_STATES[loginState]} title={LOGIN_STATES[loginState]} />
+            <strong>{account.name}</strong>
+            {account.email && account.email !== account.name && <span className="mono">{account.email}</span>}
+            {account.usage.plan && <Badge>Abo {account.usage.plan}</Badge>}
+          </div>
+          <AccountUsageLines entry={account} defaultLimit={defaultLimit} />
+          <div className="account-status">
+            {!account.enabled && <Badge>abgeschaltet</Badge>}
+            {account.enabled && account.fallback && <Badge>Fallback</Badge>}
+            {!account.plugin && <Badge kind="waiting">Plugin fehlt</Badge>}
+            {account.runToken && <Badge>Langzeit-Token</Badge>}
+            {paused && <Badge kind="waiting">pausiert bis {hhmm(paused)}</Badge>}
+          </div>
+        </div>
+      </div>
+      {account.login && <LoginBox account={account} busy={busy} act={act} />}
+      {!account.loggedIn && !running && account.login?.state !== 'failed' && (
+        <div className="account-actions">
+          <button type="button" className="btn small primary" disabled={busy} onClick={() => void act(() => api.loginAccount(account.id))}>Mit Claude anmelden</button>
+        </div>
+      )}
+      <div className="account-tile-tools" role="toolbar" aria-label={`${account.name}: Aktionen`}>
+        <IconToggle icon="power_settings_new" label="Aktiv" pressed={account.enabled} disabled={busy}
+          onChange={(enabled) => void act(() => api.updateAccount(account.id, { enabled }))} />
+        <IconToggle icon="support" label="Nur als Fallback" pressed={account.fallback} disabled={busy || !account.enabled}
+          onChange={(fallback) => void act(() => api.updateAccount(account.id, { fallback }))} />
+        <button type="button" className="icon-btn" aria-label={account.loggedIn ? 'Neu anmelden' : 'Mit Claude anmelden'} title={account.loggedIn ? 'Neu anmelden' : 'Mit Claude anmelden'}
+          disabled={busy || running} onClick={() => void act(() => api.loginAccount(account.id))}>
+          <Icon name="login" />
+        </button>
+        <button type="button" className="icon-btn" aria-label="Einstellungen" title="Einstellungen" onClick={() => setEditing(true)}>
+          <Icon name="settings" />
+        </button>
+      </div>
+      {editing && (
+        <AccountSettingsDialog account={account} busy={busy} act={act} paused={paused} pluginCommands={pluginCommands} accountsDir={accountsDir} onClose={() => setEditing(false)} />
+      )}
+    </article>
+  );
+}
+
+// Einstellungen eines Accounts im Dialog: Obergrenzen, Name, Plugin, Ordner und Terminal, Pause aufheben, Entfernen
+function AccountSettingsDialog({ account, busy, act, paused, pluginCommands, accountsDir, onClose }: {
+  account: AccountDto;
+  busy: boolean;
+  act: (fn: () => Promise<AccountListDto>) => Promise<void>;
+  paused: string | null;
+  pluginCommands: string[];
+  accountsDir: string;
+  onClose: () => void;
+}) {
+  const api = useApi();
+  const titleId = useId();
+  const [name, setName] = useState(account.name);
+  const [removing, setRemoving] = useState(false);
+  const [deleteDir, setDeleteDir] = useState(false);
+  const standard = account.configDir === null;
+  const running = account.login?.state === 'running';
+  const prefix = standard ? '' : WINDOWS ? `$env:CLAUDE_CONFIG_DIR="${account.effectiveDir}"; ` : `CLAUDE_CONFIG_DIR="${account.effectiveDir}" `;
+
+  // Name folgt dem Server (z. B. nach der Anmeldung die E-Mail), solange niemand tippt
+  useEffect(() => setName(account.name), [account.name]);
+
   const rename = () => {
     const next = name.trim();
     if (next && next !== account.name) void act(() => api.updateAccount(account.id, { name: next }));
@@ -117,83 +205,42 @@ function AccountCard({ account, pluginCommands, accountsDir, change }: { account
   };
 
   return (
-    <SettingsSection>
-      <button type="button" className="account-head" aria-expanded={open} aria-controls={`account-${account.id}`} onClick={toggle}>
-        <span className="account-chevron" aria-hidden="true">▸</span>
-        <span className="account-head-text">
-          <strong>{account.name}</strong>
-          <span className="mono">{account.id}{account.email && account.email !== account.name ? ` · ${account.email}` : ''}</span>
-        </span>
-        <span className="account-head-side">
-          {!account.enabled && <Badge>abgeschaltet</Badge>}
-          {account.enabled && account.fallback && <Badge>Fallback</Badge>}
-          {running
-            ? <Badge kind="waiting">Anmeldung läuft</Badge>
-            : account.loggedIn ? <Badge kind="running">angemeldet</Badge> : <Badge kind="blocked">nicht angemeldet</Badge>}
-          {!account.plugin && <Badge kind="waiting">Plugin fehlt</Badge>}
-          {paused && <Badge kind="waiting">pausiert bis {hhmm(paused)}</Badge>}
-          {account.usage.available && <span className="account-head-usage">{usageSummary(account)}</span>}
-        </span>
-      </button>
-      {open && <div id={`account-${account.id}`} className="account-body">
-      <div className="account-status">
-        {account.loggedIn && account.email && <Badge kind="running">angemeldet als {account.email}</Badge>}
-        {account.usage.plan && <Badge>Abo {account.usage.plan}</Badge>}
-        {account.plugin && <Badge kind="running">Plugin eingerichtet</Badge>}
-      </div>
-      <UsageRows account={account} />
-      {account.login && <LoginBox account={account} busy={busy} act={act} />}
-      {!account.loggedIn && !running && account.login?.state !== 'failed' && (
-        <SettingRow label="Anmelden" hint="Öffnet die Anmeldeseite von Claude im Browser. Melde dich dort mit diesem Account an." group>
-          <button type="button" className="btn small primary" disabled={busy} onClick={() => void act(() => api.loginAccount(account.id))}>Mit Claude anmelden</button>
-        </SettingRow>
-      )}
-      <SettingRow label="Aktiv" hint="Abgeschaltete Accounts wählt der Dispatcher nie.">
-        <input type="checkbox" checked={account.enabled} disabled={busy} onChange={(e) => void act(() => api.updateAccount(account.id, { enabled: e.target.checked }))} />
-      </SettingRow>
-      <SettingRow label="Nur als Fallback" hint="Der Dispatcher nimmt diesen Account erst, wenn kein anderer erlaubter Account frei ist.">
-        <input type="checkbox" checked={account.fallback} disabled={busy || !account.enabled} onChange={(e) => void act(() => api.updateAccount(account.id, { fallback: e.target.checked }))} />
-      </SettingRow>
-      <SettingRow label="Obergrenzen" hint="Über dieser Auslastung nimmt der Dispatcher den Account nicht mehr. Leer: keine eigene Grenze (Vorgabe des Dispatchers)." wide group>
-        <div className="account-limits">
-          <LimitInput label="5 Stunden" value={account.limitFiveHour} disabled={busy} onSave={(limitFiveHour) => void act(() => api.updateAccount(account.id, { limitFiveHour }))} />
-          <LimitInput label="Woche" value={account.limitWeek} disabled={busy} onSave={(limitWeek) => void act(() => api.updateAccount(account.id, { limitWeek }))} />
+    <DbModal labelledBy={titleId} onEscape={() => (removing ? setRemoving(false) : onClose())} onBackdrop={onClose} className="panel db-modal wide account-add-modal">
+      <header className="account-add-head">
+        <h2 id={titleId}>{account.name}</h2>
+        <button type="button" className="icon-btn" aria-label="Schließen" onClick={onClose}><Icon name="close" /></button>
+      </header>
+      {/* Links was der Dispatcher nutzt (Grenzen, Name, Plugin), rechts Ordner und Befehle fürs Terminal */}
+      <div className="account-settings-cols">
+        <div className="account-settings-col">
+          <SettingRow label="Obergrenzen" hint="Über dieser Auslastung nimmt der Dispatcher den Account nicht mehr. Leer: Vorgabe des Dispatchers." wide group>
+            <div className="account-limits">
+              <LimitInput label="5 Stunden" value={account.limitFiveHour} disabled={busy} onSave={(limitFiveHour) => void act(() => api.updateAccount(account.id, { limitFiveHour }))} />
+              <LimitInput label="Woche" value={account.limitWeek} disabled={busy} onSave={(limitWeek) => void act(() => api.updateAccount(account.id, { limitWeek }))} />
+            </div>
+          </SettingRow>
+          <SettingRow label="Name" wide>
+            <input value={name} maxLength={60} disabled={busy} onChange={(e) => setName(e.target.value)} onBlur={rename} onKeyDown={(e) => e.key === 'Enter' && rename()} />
+          </SettingRow>
+          {account.loggedIn && !account.plugin && !running && (
+            <SettingRow label="Nexus-Plugin" hint="Ohne Plugin arbeitet ein Lauf ohne Board-Anbindung; der Dispatcher wählt den Account dann nicht." wide group>
+              <button type="button" className="btn small" disabled={busy || !pluginCommands.length} onClick={() => void act(() => api.installAccountPlugin(account.id))}>
+                Plugin einrichten
+              </button>
+            </SettingRow>
+          )}
+          <RunTokenSetting account={account} busy={busy} act={act} />
         </div>
-      </SettingRow>
-      <SettingRow label="Name">
-        <input value={name} maxLength={60} disabled={busy} onChange={(e) => setName(e.target.value)} onBlur={rename} onKeyDown={(e) => e.key === 'Enter' && rename()} />
-      </SettingRow>
-      {account.loggedIn && !account.plugin && !running && (
-        <SettingRow label="Nexus-Plugin" hint="Ohne Plugin arbeitet ein Lauf ohne Board-Anbindung; der Dispatcher wählt den Account dann nicht." group>
-          <button type="button" className="btn small" disabled={busy || !pluginCommands.length} onClick={() => void act(() => api.installAccountPlugin(account.id))}>
-            Plugin einrichten
-          </button>
-        </SettingRow>
-      )}
-      <details className="account-more">
-        <summary>Ordner und Terminal</summary>
-        <div className="account-more-body">
+        <section className="account-settings-col" aria-labelledby={`${titleId}-dir`}>
+          <h3 id={`${titleId}-dir`} className="setting-label">Ordner und Terminal</h3>
           <p className="setting-hint">Ordner: <span className="mono">{account.effectiveDir}</span></p>
           <p className="setting-hint">Anmelden im Terminal (danach <code>/login</code>):</p>
           <CopyCommand command={`${prefix}claude`} compact />
           {pluginCommands.length > 0 && <p className="setting-hint">Plugin im Terminal einrichten:</p>}
           {pluginCommands.map((c) => <CopyCommand key={c} command={`${prefix}${c}`} compact />)}
-        </div>
-      </details>
-      {(paused || !standard || (account.loggedIn && !running)) && !removing && (
-        <div className="account-actions">
-          {account.loggedIn && !running && (
-            <button type="button" className="btn small" disabled={busy} onClick={() => void act(() => api.loginAccount(account.id))}>Neu anmelden</button>
-          )}
-          {paused && (
-            <button type="button" className="btn small" disabled={busy} onClick={() => void act(() => api.resumeAccount(account.id))}>Pause aufheben</button>
-          )}
-          {!standard && (
-            <button type="button" className="btn small danger" disabled={busy} onClick={() => setRemoving(true)}>Entfernen …</button>
-          )}
-        </div>
-      )}
-      {removing && (
+        </section>
+      </div>
+      {removing ? (
         <div className="account-remove" role="group" aria-label={`${account.name} entfernen`}>
           <p>
             {account.references.length
@@ -209,44 +256,59 @@ function AccountCard({ account, pluginCommands, accountsDir, change }: { account
             <button type="button" className="btn small danger" disabled={busy} onClick={() => void act(() => api.deleteAccount(account.id, deleteDir))}>Entfernen</button>
           </div>
         </div>
+      ) : (
+        <div className="account-add-actions">
+          {!standard && (
+            <button type="button" className="btn small danger account-remove-start" disabled={busy} onClick={() => setRemoving(true)}>Entfernen …</button>
+          )}
+          {paused && (
+            <button type="button" className="btn small" disabled={busy} onClick={() => void act(() => api.resumeAccount(account.id))}>Pause aufheben</button>
+          )}
+          <button type="button" className="btn small primary" onClick={onClose}>Fertig</button>
+        </div>
       )}
-      </div>}
-    </SettingsSection>
+    </DbModal>
   );
 }
 
-// Kurzfassung der Limits für den Kopf der Kachel, z. B. „5 h 22 % · Woche 35 %“
-function usageSummary(account: AccountDto): string {
-  const { fiveHour, sevenDay } = account.usage;
-  return [fiveHour ? `5 h ${fiveHour.percent} %` : null, sevenDay ? `Woche ${sevenDay.percent} %` : null].filter(Boolean).join(' · ');
+// Langzeit-Token für die Läufe: einfügen oder entfernen. Das Token selbst zeigt die Oberfläche nie, nur ob eins gesetzt ist
+function RunTokenSetting({ account, busy, act }: { account: AccountDto; busy: boolean; act: (fn: () => Promise<AccountListDto>) => Promise<void> }) {
+  const api = useApi();
+  const [token, setToken] = useState('');
+  const save = () => {
+    if (!token.trim()) return;
+    void act(() => api.setAccountRunToken(account.id, token.trim())).then(() => setToken(''));
+  };
+  return (
+    <SettingRow label="Langzeit-Token für Läufe"
+      hint="Läufe melden sich damit an statt mit der Anmeldung im Ordner und erneuern sie nie – so machen parallele Läufe die Anmeldung nicht ungültig. Im Browser denselben Account wählen; das Token gilt ein Jahr."
+      wide group>
+      {account.runToken ? (
+        <div className="account-run-token">
+          <Badge kind="running">gesetzt</Badge>
+          <button type="button" className="btn small" disabled={busy} onClick={() => void act(() => api.removeAccountRunToken(account.id))}>Entfernen</button>
+        </div>
+      ) : (
+        <>
+          <CopyCommand command="claude setup-token" compact />
+          <div className="account-run-token">
+            <input type="password" autoComplete="off" value={token} placeholder="sk-ant-oat01-…" aria-label="Langzeit-Token" disabled={busy}
+              onChange={(e) => setToken(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} />
+            <button type="button" className="btn small" disabled={busy || !token.trim()} onClick={save}>Speichern</button>
+          </div>
+        </>
+      )}
+    </SettingRow>
+  );
 }
 
-// Auf- oder zugeklappt je Account im Browser merken; ohne Speicher (privates Fenster) bleibt es beim Standard
-function readOpen(id: string): boolean {
-  try {
-    return localStorage.getItem(`harness.account-open.${id}`) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function writeOpen(id: string, open: boolean): void {
-  try {
-    localStorage.setItem(`harness.account-open.${id}`, open ? '1' : '0');
-  } catch {
-    /* nur Komfort */
-  }
-}
-
-// Stand der Anmeldung: läuft (Link zur Anmeldeseite, Code-Feld, Abbrechen), gescheitert (Grund, erneut) oder fertig (Plugin)
+// Stand der Anmeldung: läuft (Link zur Anmeldeseite, Code-Feld, Abbrechen) oder gescheitert (Grund, erneut); fertig zeigt
+// sich am Punkt vor dem Namen
 function LoginBox({ account, busy, act }: { account: AccountDto; busy: boolean; act: (fn: () => Promise<AccountListDto>) => Promise<void> }) {
   const api = useApi();
   const [code, setCode] = useState('');
   const login = account.login!;
-  if (login.state === 'cancelled') return null;
-  if (login.state === 'done') {
-    return login.plugin ? <p className="setting-hint account-login-note">Angemeldet. {login.plugin}.</p> : null;
-  }
+  if (login.state === 'cancelled' || login.state === 'done') return null;
   if (login.state === 'failed') {
     return (
       <div className="account-login">
@@ -280,37 +342,6 @@ function LoginBox({ account, busy, act }: { account: AccountDto; busy: boolean; 
   );
 }
 
-// Zwei Balken: 5 Stunden und Woche; ohne Werte der Grund
-function UsageRows({ account }: { account: AccountDto }) {
-  const { usage } = account;
-  if (!usage.available) {
-    const reason = usage.reason && usage.reason !== 'no-login' ? USAGE_REASONS[usage.reason] : null;
-    return reason ? <p className="setting-hint account-usage-none">{reason}</p> : null;
-  }
-  return (
-    <div className="account-usage">
-      <UsageBar label="5 Stunden" window={usage.fiveHour} limit={account.limitFiveHour} />
-      <UsageBar label="Woche" window={usage.sevenDay} limit={account.limitWeek} />
-    </div>
-  );
-}
-
-// Balken mit eigener Obergrenze als Strich; ab der Grenze (sonst ab 90 %) rot
-function UsageBar({ label, window, limit }: { label: string; window: UsageWindowDto | null; limit: number | null }) {
-  if (!window) return null;
-  const percent = Math.min(100, window.percent);
-  const full = percent >= (limit ?? 90);
-  return (
-    <div className="account-usage-row">
-      <span className="account-usage-label">{label}</span>
-      <div className="progress-bar account-usage-bar" role="img" aria-label={`${label}: ${window.percent} % genutzt${limit != null ? `, Obergrenze ${limit} %` : ''}`}>
-        <span style={{ width: `${percent}%` }} className={full ? 'full' : undefined} />
-        {limit != null && <i className="account-usage-limit" style={{ left: `${limit}%` }} aria-hidden="true" />}
-      </div>
-      <span className="account-usage-value">{window.percent} %{limit != null ? ` von max. ${limit} %` : ''}{window.resetsAt ? ` · zurück ${when(window.resetsAt)}` : ''}</span>
-    </div>
-  );
-}
 
 // Eingabe einer Obergrenze in Prozent; leer = keine eigene. Gespeichert wird beim Verlassen des Felds oder mit Enter
 function LimitInput({ label, value, disabled, onSave }: { label: string; value: number | null; disabled: boolean; onSave: (value: number | null) => void }) {
@@ -335,36 +366,36 @@ function LimitInput({ label, value, disabled, onSave }: { label: string; value: 
   );
 }
 
-// Neuer Account: Anmelden ist der Normalfall (Ordner entsteht von selbst); einen vorhandenen Ordner übernehmen nur unter „Erweitert“
-function AddAccount({ data, change }: { data: AccountListDto; change: Change }) {
+
+// Neuer Account im Dialog: Anmelden ist der Normalfall (Ordner entsteht von selbst); einen vorhandenen Ordner übernehmen nur
+// unter „Erweitert“. Klappt es, schließt der Dialog und die neue Kachel zeigt die Anmeldung.
+function AddAccountDialog({ data, change, onClose }: { data: AccountListDto; change: Change; onClose: () => void }) {
   const api = useApi();
+  const titleId = useId();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [dirName, setDirName] = useState('');
   const [dir, setDir] = useState('');
-  const login = async () => {
-    if (await change(() => api.loginNewAccount(name.trim(), email.trim()))) {
-      setName('');
-      setEmail('');
-    }
-  };
-  const adopt = async () => {
-    if (await change(() => api.createAccount(dirName.trim(), dir.trim()))) {
-      setDirName('');
-      setDir('');
-    }
+  const [busy, setBusy] = useState(false);
+  const submit = async (fn: () => Promise<AccountListDto>) => {
+    setBusy(true);
+    const ok = await change(fn);
+    setBusy(false);
+    if (ok) onClose();
   };
   return (
-    <SettingsSection title="Account hinzufügen" description="Melde dich mit einem weiteren Claude-Account an; Ordner und Plugin richtet Nexus selbst ein.">
+    <DbModal labelledBy={titleId} onEscape={onClose} onBackdrop={onClose} className="panel db-modal account-add-modal">
+      <header className="account-add-head">
+        <h2 id={titleId}>Account hinzufügen</h2>
+        <button type="button" className="icon-btn" aria-label="Schließen" onClick={onClose}><Icon name="close" /></button>
+      </header>
+      <p className="setting-hint">Melde dich mit einem weiteren Claude-Account an; Ordner und Plugin richtet Nexus selbst ein.</p>
       <SettingRow label="Name (optional)" hint="Leer: der Account heißt nach der Anmeldung wie seine E-Mail.">
-        <input value={name} maxLength={60} placeholder="Max privat" onChange={(e) => setName(e.target.value)} />
+        <input value={name} maxLength={60} placeholder="Max privat" autoFocus onChange={(e) => setName(e.target.value)} />
       </SettingRow>
       <SettingRow label="E-Mail (optional)" hint="Wird auf der Anmeldeseite vorausgefüllt.">
         <input type="email" value={email} placeholder="ich@example.com" onChange={(e) => setEmail(e.target.value)} />
       </SettingRow>
-      <div className="account-actions">
-        <button type="button" className="btn small primary" onClick={() => void login()}>Mit Claude anmelden</button>
-      </div>
       <details className="account-more">
         <summary>Erweitert: vorhandenen Ordner übernehmen</summary>
         <div className="account-more-body">
@@ -379,14 +410,17 @@ function AddAccount({ data, change }: { data: AccountListDto; change: Change }) 
             {data.suggestions.map((s) => <option key={s} value={s} />)}
           </datalist>
           <div className="actions">
-            <button type="button" className="btn small" disabled={!dirName.trim() || !dir.trim()} onClick={() => void adopt()}>Übernehmen</button>
+            <button type="button" className="btn small" disabled={busy || !dirName.trim() || !dir.trim()} onClick={() => void submit(() => api.createAccount(dirName.trim(), dir.trim()))}>Übernehmen</button>
           </div>
         </div>
       </details>
-    </SettingsSection>
+      <div className="account-add-actions">
+        <button type="button" className="btn small" onClick={onClose}>Abbrechen</button>
+        <button type="button" className="btn small primary" disabled={busy} onClick={() => void submit(() => api.loginNewAccount(name.trim(), email.trim()))}>Mit Claude anmelden</button>
+      </div>
+    </DbModal>
   );
 }
-
 
 // Grund einer gescheiterten Anmeldung: ohne Hinweis aufs Browser-Öffnen, Anmeldelink und Eingabeaufforderung
 function tail(text: string): string {
@@ -402,19 +436,13 @@ function hhmm(iso: string): string {
   return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
 
-// Uhrzeit, bei mehr als einem Tag Abstand mit Datum
-function when(iso: string): string {
-  const at = new Date(iso);
-  const sameDay = at.getTime() - Date.now() < 24 * 3_600_000;
-  return sameDay ? hhmm(iso) : at.toLocaleString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
-
 const INFO = (
   <ul>
     <li>„Mit Claude anmelden“ legt einen eigenen Ordner für Claude Code an (unter <code>~/.nexus/accounts</code>), öffnet die Anmeldeseite im Browser und richtet danach das Nexus-Plugin ein. „Standard“ ist die Anmeldung des Servers.</li>
     <li>Der Dispatcher startet jeden Lauf mit <code>CLAUDE_CONFIG_DIR</code> des gewählten Accounts. Welche Accounts ein Profil nutzen darf, legst du unter Dispatcher → Profile fest; ein Profil ohne Accounts darf jeden aktiven verwenden.</li>
     <li>Ein Account „Nur als Fallback“ kommt erst zum Zug, wenn alle anderen erlaubten Accounts voll, pausiert oder abgemeldet sind – etwa ein privater Account, der nur einspringen soll.</li>
     <li>Erreicht ein Account sein Nutzungslimit, pausiert nur er – bis sein Limit zurückgesetzt wird. Das Ticket startet auf einem anderen freien Account neu.</li>
-    <li>Die Limits liest Nexus mit dem Anmelde-Token des Accounts (macOS: Schlüsselbund, sonst <code>.credentials.json</code>) über einen nicht dokumentierten Anthropic-Endpunkt, höchstens einmal pro Minute je Account. Das Token wird nie gespeichert oder erneuert.</li>
+    <li>Die Limits liest Nexus mit dem Anmelde-Token des Accounts (macOS: Schlüsselbund, sonst <code>.credentials.json</code>) über einen nicht dokumentierten Anthropic-Endpunkt, höchstens einmal pro Minute je Account. Das Token wird nie gespeichert.</li>
+    <li>Mit einem Langzeit-Token (<code>claude setup-token</code>) erneuern die Läufe die Anmeldung im Ordner nicht mehr. Parallele Läufe können sich dann nicht gegenseitig abmelden. Ist das Token im Ordner danach abgelaufen, erneuert Nexus es selbst, damit die Limits lesbar bleiben.</li>
   </ul>
 );
