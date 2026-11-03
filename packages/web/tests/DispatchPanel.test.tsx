@@ -220,6 +220,50 @@ describe('DispatchPanel', () => {
 describe('DispatchPanel Prüfungen', () => {
   const rawWith = (extra: Partial<RawDispatchConfigDto>): RawDispatchConfigDto => ({ ...RAW, ...extra });
 
+  it('wählt die Accounts eines Profils im Dropdown aus und behält unbekannte IDs', async () => {
+    const raw = rawWith({ profiles: { standard: { accounts: ['alt'] } } });
+    const save = vi.fn(async (r: RawDispatchConfigDto) => ({ ...VIEW, raw: r }));
+    const account = (id: string, name: string, enabled = true) => ({ id, name, configDir: null, effectiveDir: '', enabled, fallback: false });
+    open({
+      getDispatchConfig: async () => ({ ...VIEW, raw }),
+      saveDispatchConfig: save,
+      getAccounts: async () => ({ accounts: [account('max', 'Max'), account('pro', 'Pro', false)], multi: true, accountsDir: '', suggestions: [], pluginCommands: [] }),
+    });
+    const button = await screen.findByRole('button', { name: 'Profil 1 Accounts' });
+    expect(button.textContent).toBe('alt');
+    await userEvent.click(button);
+    const menu = screen.getByRole('group', { name: 'Profil 1 Accounts' });
+    expect(within(menu).getByText('aus')).toBeTruthy();
+    expect(within(menu).getByText('unbekannt')).toBeTruthy();
+    await userEvent.click(within(menu).getByLabelText('Max'));
+    await userEvent.click(within(menu).getByLabelText('alt'));
+    expect(button.textContent).toBe('Max');
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('group', { name: 'Profil 1 Accounts' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ profiles: { standard: expect.objectContaining({ accounts: ['max'] }) } }));
+  });
+
+  it('wählt die Accounts einer Regel im Dropdown aus', async () => {
+    const raw = rawWith({ rules: [{ when: { labels: ['doku'] }, profile: 'standard' }] });
+    const save = vi.fn(async (r: RawDispatchConfigDto) => ({ ...VIEW, raw: r }));
+    const account = (id: string, name: string) => ({ id, name, configDir: null, effectiveDir: '', enabled: true, fallback: false });
+    open({
+      getDispatchConfig: async () => ({ ...VIEW, raw }),
+      saveDispatchConfig: save,
+      getAccounts: async () => ({ accounts: [account('max', 'Max'), account('pro', 'Pro')], multi: true, accountsDir: '', suggestions: [], pluginCommands: [] }),
+    });
+    const button = await screen.findByRole('button', { name: 'Regel 1 Accounts' });
+    expect(button.textContent).toBe('wie Profil');
+    await userEvent.click(button);
+    const menu = screen.getByRole('group', { name: 'Regel 1 Accounts' });
+    await userEvent.click(await within(menu).findByLabelText('Pro'));
+    await userEvent.click(within(menu).getByLabelText('Max'));
+    expect(button.textContent).toBe('Pro, Max');
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ rules: [{ when: { labels: ['doku'] }, profile: 'standard', accounts: ['pro', 'max'] }] }));
+  });
+
   it('sortiert Profile per Ziehen und Pfeiltasten um, ohne Verweise zu verändern', async () => {
     const raw = rawWith({ profiles: { klein: {}, standard: {}, schwer: {} }, defaultProfile: 'standard', rules: [{ when: { labels: ['doku'] }, profile: 'klein' }] });
     const save = vi.fn(async (r: RawDispatchConfigDto) => ({ ...VIEW, raw: r }));

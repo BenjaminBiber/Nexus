@@ -219,7 +219,7 @@
 [data-theme='win95'] :is(.sheet, .db-panel) { border-radius: 0; border: 0; padding: 3px; box-shadow: var(--w95-outer); }
 
 /* Aufklapp-Menüs und Popover: erhabene Fläche, Auswahl blau */
-[data-theme='win95'] :is(.board-picker-pop, .doc-open-menu, .selection-popover, .search-dialog, .dd-modal) { border: 0; border-radius: 0; background: var(--w95-face); box-shadow: var(--w95-outer); animation: none; }
+[data-theme='win95'] :is(.board-picker-pop, .doc-open-menu, .account-select-menu, .selection-popover, .search-dialog, .dd-modal) { border: 0; border-radius: 0; background: var(--w95-face); box-shadow: var(--w95-outer); animation: none; }
 [data-theme='win95'] .board-picker-pop > * { animation: none; }
 [data-theme='win95'] .goo-morph { display: none; }
 [data-theme='win95'] :is(.bp-item, .branch-combo-option, .search-hit) { border-radius: 0; }

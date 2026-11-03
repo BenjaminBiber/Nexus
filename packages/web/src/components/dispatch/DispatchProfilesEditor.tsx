@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { EFFORT_OPTIONS } from '../../api/dispatchTypes.js';
+import { AccountMultiSelect, useAccountChoices } from './AccountMultiSelect.js';
 import type { ProfileRow } from './dispatchForm.js';
 
 interface Props {
@@ -8,11 +9,12 @@ interface Props {
   onMove: (from: number, to: number) => void;
 }
 
-// Tabelle der Profile: Name, Modell, Effort, Schritte, Minuten, Accounts (IDs durch Komma, leer = jeder aktive); hinzufügen, entfernen und umsortieren (die Reihenfolge ist
+// Tabelle der Profile: Name, Modell, Effort, Schritte, Minuten, Accounts (Mehrfachauswahl, leer = jeder aktive); hinzufügen, entfernen und umsortieren (die Reihenfolge ist
 // die Eskalationsreihenfolge). Umsortiert wird per Ziehen am Griff oder per Pfeiltasten auf dem Griff.
 export function DispatchProfilesEditor({ rows, onChange, onMove }: Props) {
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
+  const accounts = useAccountChoices();
   const set = (index: number, patch: Partial<ProfileRow>) => onChange(rows.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   const endDrag = () => { setDragFrom(null); setDragOver(null); };
   return (
@@ -70,7 +72,7 @@ export function DispatchProfilesEditor({ rows, onChange, onMove }: Props) {
           </select>
           <input aria-label={`Profil ${i + 1} Schritte`} inputMode="numeric" value={row.maxTurns} onChange={(e) => set(i, { maxTurns: e.target.value })} />
           <input aria-label={`Profil ${i + 1} Minuten`} inputMode="numeric" value={row.timeoutMinutes} onChange={(e) => set(i, { timeoutMinutes: e.target.value })} />
-          <input aria-label={`Profil ${i + 1} Accounts`} value={row.accounts} placeholder="alle" onChange={(e) => set(i, { accounts: e.target.value })} />
+          <AccountMultiSelect label={`Profil ${i + 1} Accounts`} value={row.accounts} accounts={accounts} emptyText="alle" onChange={(accounts) => set(i, { accounts })} />
           <button type="button" className="btn" onClick={() => onChange(rows.filter((_, j) => j !== i))}>Entfernen</button>
         </div>
       ))}

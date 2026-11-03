@@ -1,8 +1,10 @@
+import { AccountMultiSelect, useAccountChoices } from './AccountMultiSelect.js';
 import type { RuleRow } from './dispatchForm.js';
 import { ProfileOptions } from './ProfileOptions.js';
 
 // Regeln: erste passende gewinnt; alle ausgefüllten Bedingungen müssen zutreffen.
 export function DispatchRulesEditor({ rows, profiles, onChange }: { rows: RuleRow[]; profiles: string[]; onChange: (rows: RuleRow[]) => void }) {
+  const accounts = useAccountChoices();
   const set = (index: number, patch: Partial<RuleRow>) => onChange(rows.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   return (
     <div className="dispatch-table">
@@ -19,7 +21,7 @@ export function DispatchRulesEditor({ rows, profiles, onChange }: { rows: RuleRo
             <option value="">–</option>
             <ProfileOptions names={profiles} value={row.profile} />
           </select>
-          <input aria-label={`Regel ${i + 1} Accounts`} value={row.accounts} placeholder="wie Profil" onChange={(e) => set(i, { accounts: e.target.value })} />
+          <AccountMultiSelect label={`Regel ${i + 1} Accounts`} value={row.accounts} accounts={accounts} emptyText="wie Profil" onChange={(accounts) => set(i, { accounts })} />
           <button type="button" className="btn" onClick={() => onChange(rows.filter((_, j) => j !== i))}>Entfernen</button>
         </div>
       ))}

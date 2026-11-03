@@ -313,6 +313,18 @@
 .dispatch-row.setup { grid-template-columns: 1fr 2fr auto; }
 .dispatch-row.head { font-size: 12px; font-weight: 600; color: var(--muted); }
 .dispatch-row input, .dispatch-row select { min-width: 0; }
+.account-select { position: relative; min-width: 0; }
+.account-select-btn { width: 100%; min-height: var(--control-height); padding: 0 30px 0 12px; border: 1px solid var(--line-input); border-radius: var(--radius-control); background-color: var(--surface); background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 15px) 52%, calc(100% - 10px) 52%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; color: var(--text); font-size: 14px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 1px 2px var(--shadow-faint); cursor: pointer; }
+.account-select-btn.empty { color: var(--muted); }
+.account-select-btn:focus-visible { outline: none; border-color: var(--line-strong); box-shadow: 0 0 0 3px var(--accent-soft); }
+.account-select-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 30; display: flex; flex-direction: column; min-width: 100%; width: max-content; max-width: 320px; max-height: 280px; overflow-y: auto; padding: 4px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); box-shadow: 0 12px 32px var(--shadow-strong); }
+.account-select-menu label { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+.account-select-menu label:hover { background: var(--surface-alt); }
+.account-select-menu input { min-height: 0; }
+.account-select-menu small { margin-left: auto; padding-left: 12px; color: var(--muted); font-size: 12px; }
+.account-select-none { margin: 0; padding: 6px 8px; color: var(--muted); font-size: 13px; }
+.account-select-clear { margin-top: 4px; padding: 6px 8px; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; color: var(--text-soft); font-size: 12px; text-align: left; cursor: pointer; }
+.account-select-clear:hover { color: var(--text); }
 
 /* Dispatcher am Board */
 .dispatch-indicator.state-running { border-color: var(--running-bg); background: var(--running-bg); color: var(--running-fg); }

@@ -395,7 +395,7 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
 // Erklärung der Account-Einstellungen hinter dem (i)
 const ACCOUNTS_INFO = (
   <ul>
-    <li>Accounts legst du unter Einstellungen → Accounts an. In der Spalte „Accounts“ der Profile stehen ihre IDs, durch Komma getrennt, z. B. <code>max</code> beim Profil <code>schwer</code>.</li>
+    <li>Accounts legst du unter Einstellungen → Accounts an. In der Spalte „Accounts“ der Profile wählst du sie im Dropdown aus, z. B. <code>max</code> beim Profil <code>schwer</code>.</li>
     <li>Ein Profil ohne Accounts darf jeden aktiven Account verwenden. Eine Regel mit Accounts überschreibt die des Profils, ein Label <code>account:&lt;id&gt;</code> am Ticket beide.</li>
     <li>Bei der Eskalation bringt das größere Profil seine eigenen Accounts mit.</li>
     <li>Accounts mit „Nur als Fallback“ (Einstellungen → Accounts) nimmt er erst, wenn kein anderer erlaubter Account frei ist.</li>
