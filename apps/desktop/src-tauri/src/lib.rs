@@ -1,6 +1,7 @@
 // Einstieg der Desktop-App: Plugins, Zustand und Fenster einrichten.
 mod http;
 mod instance;
+mod legacy;
 mod lifecycle;
 mod server;
 mod tray;
@@ -60,6 +61,7 @@ pub fn run() {
         .setup(|app| {
             lifecycle::init(app.handle());
             server::init(app.handle());
+            legacy::init();
             tray::init(app.handle());
             instance::setup(app.handle());
             updater::init(app.handle());
