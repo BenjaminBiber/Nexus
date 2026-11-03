@@ -44,6 +44,22 @@ impl LauncherWriter {
         self.write_all(bin_dir, &windows_target, &format!("\"{target}\""))
     }
 
+    /// Leitet alte Node-Startdateien (rufen `cli.mjs` auf) in `legacy_bin` auf das Binary um.
+    /// Fehlt der Ordner, fehlen die Dateien oder zeigen sie schon auf ein Binary, bleibt alles,
+    /// wie es ist (`false`). Nur die beiden Startdateien werden angefasst, keine Daten.
+    pub fn redirect_node_launchers(&self, legacy_bin: &Path, binary: &Path) -> Result<bool> {
+        let is_node = LAUNCHER_NAMES.iter().any(|name| {
+            fs::read_to_string(legacy_bin.join(name))
+                .map(|text| text.contains("cli.mjs"))
+                .unwrap_or(false)
+        });
+        if !is_node {
+            return Ok(false);
+        }
+        self.write_forwarders(legacy_bin, binary)?;
+        Ok(true)
+    }
+
     /// Schreibt beide Startdateien mit dem jeweils aufzurufenden Binary
     fn write_all(&self, bin_dir: &Path, windows: &str, unix: &str) -> Result<Vec<PathBuf>> {
         fs::create_dir_all(bin_dir).map_err(Error::unexpected)?;
@@ -149,6 +165,71 @@ mod tests {
             cmd.contains(&binary.display().to_string().replace('/', "\\")),
             "{cmd}"
         );
+    }
+
+    #[test]
+    fn leitet_alte_node_startdateien_auf_das_binary_um() {
+        let dir = tempfile::Builder::new()
+            .prefix("harness-launcher-")
+            .tempdir()
+            .unwrap();
+        let alt = dir.path().join("bin");
+        fs::create_dir_all(&alt).unwrap();
+        fs::write(
+            alt.join("harness.cmd"),
+            "@echo off\r\nnode \"%USERPROFILE%\\.harness\\app\\lib\\cli.mjs\" %*\r\n",
+        )
+        .unwrap();
+        let binary = dir.path().join("Nexus").join(BINARY_NAME);
+
+        let umgeleitet = LauncherWriter::new()
+            .redirect_node_launchers(&alt, &binary)
+            .unwrap();
+
+        assert!(umgeleitet);
+        let cmd = fs::read_to_string(alt.join("harness.cmd")).unwrap();
+        assert!(!cmd.contains("cli.mjs"), "{cmd}");
+        assert!(cmd.contains("set \"NEXUS_INVOKED_AS=harness\""), "{cmd}");
+        let sh = fs::read_to_string(alt.join("harness")).unwrap();
+        assert!(sh.contains(&binary.display().to_string()), "{sh}");
+        assert!(sh.contains("NEXUS_INVOKED_AS=harness"), "{sh}");
+    }
+
+    #[test]
+    fn schon_umgeleitete_startdateien_bleiben_unverandert() {
+        let dir = tempfile::Builder::new()
+            .prefix("harness-launcher-")
+            .tempdir()
+            .unwrap();
+        let alt = dir.path().join("bin");
+        let alt_binary = dir.path().join("alt").join(BINARY_NAME);
+        LauncherWriter::new()
+            .write_forwarders(&alt, &alt_binary)
+            .unwrap();
+        let vorher = fs::read_to_string(alt.join("harness")).unwrap();
+
+        let umgeleitet = LauncherWriter::new()
+            .redirect_node_launchers(&alt, &dir.path().join("neu").join(BINARY_NAME))
+            .unwrap();
+
+        assert!(!umgeleitet);
+        assert_eq!(fs::read_to_string(alt.join("harness")).unwrap(), vorher);
+    }
+
+    #[test]
+    fn ohne_alten_ordner_gibt_es_nichts_umzuleiten() {
+        let dir = tempfile::Builder::new()
+            .prefix("harness-launcher-")
+            .tempdir()
+            .unwrap();
+        let alt = dir.path().join("fehlt");
+
+        let umgeleitet = LauncherWriter::new()
+            .redirect_node_launchers(&alt, &dir.path().join(BINARY_NAME))
+            .unwrap();
+
+        assert!(!umgeleitet);
+        assert!(!alt.exists());
     }
 
     #[cfg(unix)]
