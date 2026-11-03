@@ -14,6 +14,7 @@
 
 ### Sonstiges
 
+- Dispatcher merkt sich nach jedem Lauf, wie viel Limit er verbraucht hat (Probe mit Auslastung beim Start und am Ende in `~/.nexus/dispatch/account-usage.jsonl`).
 - Dispatcher: Der erwartete Verbrauch eines Laufs lässt sich aus vergangenen Proben schätzen – je Fenster das 75. Perzentil der letzten 20 Läufe mit gleichem Profil, Modell und Effort (sonst nur gleichem Profil), ab 5 Läufen; sonst gilt der feste Puffer. Läufe mit Rücksetzung des Fensters oder negativem Verbrauch zählen nicht. Noch nicht an die Account-Wahl angeschlossen – das Verhalten bleibt vorerst wie bisher.
 - Dispatcher: Ein Lauf merkt sich die Auslastung seines Accounts beim Start (`usageAtStart` in den Laufeinstellungen: 5 Stunden, Woche und deren Rücksetzung). Ältere Läufe ohne das Feld lesen weiter; ausgewertet wird es noch nicht.
 - Dispatcher: Die Account-Wahl rechnet den erwarteten Verbrauch gegen die Obergrenze – ein Account gilt als „knapp“, wenn Auslastung plus Reserve des Laufs und der noch ausstehenden Reserve laufender Läufe die Grenze überschreitet; setzt sich das 5-Stunden-Fenster innerhalb von `accountResetGraceMinutes` zurück, zählt die Reserve dafür nicht, für die Woche gibt es keine Ausnahme. Noch mit Reserve 0 verdrahtet, bis die Schätzung folgt – das Verhalten bleibt vorerst wie bisher.

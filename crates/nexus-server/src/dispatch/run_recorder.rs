@@ -13,7 +13,7 @@ use nexus_core::board::dispatch_run_types::{
 use nexus_core::clock::iso;
 use nexus_core::dispatch::{
     AbortReasonClassifier, DispatchConfigFingerprint, ModelUsage, OutputSummary, RunEnd, RunKind,
-    RunRecord, RunSettings, RunUsage,
+    RunRecord, RunSettings, RunUsage, UsageHistory, UsageSample,
 };
 use nexus_core::{Error, Result};
 use serde_json::{Map, Number, Value};
@@ -145,6 +145,7 @@ impl<'a> RunRecorder<'a> {
     /// Zeile zu einem beendeten Lauf vormerken; Fehler nur ins Protokoll (nie werfen: der Lauf
     /// ist schon ausgewertet und darf nicht ein zweites Mal ausgewertet werden)
     pub async fn keep(&self, record: &RunRecord, end: &RunEnd, result: &HandleResult) {
+        self.keep_usage_sample(record, end).await;
         // Planungen erfasst board.DispatchRuns (noch) nicht: die Spalte Kind kennt nur work,
         // merge, research
         if record.kind == RunKind::Plan {
@@ -153,6 +154,41 @@ impl<'a> RunRecorder<'a> {
         if let Err(error) = self.try_keep(record, end, result).await {
             self.ctx.log(&format!(
                 "FEHLER {}: Lauf nicht für die Auswertung vorgemerkt: {error}",
+                record.ticket_id
+            ));
+        }
+    }
+
+    /// Verbrauchsprobe eines beendeten Umsetzungslaufs: Auslastung beim Start aus dem Lauf, am
+    /// Ende frisch gefragt. Ohne Account-Verwaltung, ohne Start-Auslastung oder ohne Antwort
+    /// entsteht keine; Fehler nur ins Protokoll
+    async fn keep_usage_sample(&self, record: &RunRecord, end: &RunEnd) {
+        if record.kind != RunKind::Work {
+            return;
+        }
+        let (Some(account), Some(before), Some(accounts)) = (
+            record.run.account.as_deref(),
+            record.run.usage_at_start.as_ref(),
+            self.ctx.accounts(),
+        ) else {
+            return;
+        };
+        let Some(after) = accounts.usage_snapshot(account).await else {
+            return;
+        };
+        let sample = UsageSample {
+            account: account.to_string(),
+            profile: record.run.profile.clone(),
+            model: record.run.model.clone(),
+            effort: record.run.effort.clone(),
+            started_at: record.started_at.clone(),
+            ended_at: end.ended_at.clone(),
+            before: before.clone(),
+            after,
+        };
+        if let Err(error) = UsageHistory::new(self.ctx.home.clone()).append(&sample) {
+            self.ctx.log(&format!(
+                "FEHLER {}: Verbrauchsprobe nicht gespeichert: {error}",
                 record.ticket_id
             ));
         }
