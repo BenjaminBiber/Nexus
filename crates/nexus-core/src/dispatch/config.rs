@@ -357,6 +357,14 @@ pub struct DispatchConfig {
     pub account_strategy: AccountStrategy,
     /// Ab dieser Auslastung in Prozent (5 Stunden oder Woche) gilt ein Account als voll (50–100)
     pub account_limit_percent: i64,
+    /// Fester Puffer in Prozentpunkten fürs 5-Stunden-Fenster, solange es zu wenige Läufe für
+    /// eine Schätzung gibt (0–50)
+    pub account_reserve_five_hour: i64,
+    /// Fester Puffer in Prozentpunkten für die Woche (0–50)
+    pub account_reserve_week: i64,
+    /// Setzt sich das 5-Stunden-Fenster innerhalb dieser Minuten zurück, zählt die Reserve dort
+    /// nicht (0–300)
+    pub account_reset_grace_minutes: i64,
 }
 
 /// Werkzeuge, die ein Umsetzungslauf ohne Rückfrage benutzen darf

@@ -88,6 +88,25 @@ fn lehnt_ungueltige_ids_strategien_und_grenzen_ab() {
 }
 
 #[test]
+fn reserve_und_ruecksetz_ausnahme_haben_standardwerte() {
+    let cfg = DispatchConfigNormalizer::new()
+        .normalize(&json!({}))
+        .unwrap();
+    assert_eq!(cfg.account_reserve_five_hour, 10);
+    assert_eq!(cfg.account_reserve_week, 2);
+    assert_eq!(cfg.account_reset_grace_minutes, 30);
+}
+
+#[test]
+fn lehnt_reserve_und_ruecksetz_ausnahme_ausserhalb_der_bereiche_ab() {
+    assert!(problem(&json!({ "accountReserveFiveHour": 60 })).contains("accountReserveFiveHour"));
+    assert!(problem(&json!({ "accountReserveWeek": -1 })).contains("accountReserveWeek"));
+    assert!(
+        problem(&json!({ "accountResetGraceMinutes": 301 })).contains("accountResetGraceMinutes")
+    );
+}
+
+#[test]
 fn aendert_den_confighash_einer_einstellung_ohne_accounts_nicht() {
     let plain = DispatchConfigNormalizer::new()
         .normalize(&json!({ "profiles": { "standard": { "model": "opus" } } }))
