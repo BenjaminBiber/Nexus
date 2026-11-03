@@ -330,42 +330,13 @@ pub fn inbox_item_message(
 /// am Rechner richten
 pub fn inbox_item_keyboard(item: &InboxItem) -> Option<InlineKeyboard> {
     let buttons = match item.kind {
-        InboxKind::Accept => with_ticket(item, |id| {
-            vec![
-                InlineButton::callback("Übernehmen", CallbackAction::Accept(id.clone()).encode()),
-                InlineButton::callback(
-                    "Zurück an den Agenten",
-                    CallbackAction::Return(id.clone()).encode(),
-                ),
-                InlineButton::callback(
-                    "Geänderte Dateien",
-                    CallbackAction::Diff(id.clone()).encode(),
-                ),
-            ]
-        }),
-        InboxKind::Merge => with_ticket(item, |id| {
-            vec![
-                InlineButton::callback("Erneut mergen", CallbackAction::Merge(id.clone()).encode()),
-                InlineButton::callback("Grund", CallbackAction::BlockedReason(id.clone()).encode()),
-            ]
-        }),
-        InboxKind::Blocked => with_ticket(item, |id| {
-            vec![
-                InlineButton::callback("Grund", CallbackAction::BlockedReason(id.clone()).encode()),
-                InlineButton::callback(
-                    "Kommentar schreiben",
-                    CallbackAction::Comment(id.clone()).encode(),
-                ),
-                InlineButton::callback(
-                    "Zurück nach Geplant",
-                    CallbackAction::Return(id.clone()).encode(),
-                ),
-            ]
-        }),
+        InboxKind::Accept => with_ticket(item, accept_buttons),
+        InboxKind::Merge => with_ticket(item, merge_buttons),
+        InboxKind::Blocked => with_ticket(item, blocked_buttons),
         InboxKind::Planning => with_ticket(item, |id| {
             vec![InlineButton::callback(
                 "Planen starten",
-                CallbackAction::Replan(id.clone()).encode(),
+                CallbackAction::Replan(id.to_string()).encode(),
             )]
         }),
         InboxKind::Note => item.note_id.map(|note_id| {
@@ -379,18 +350,70 @@ pub fn inbox_item_keyboard(item: &InboxItem) -> Option<InlineKeyboard> {
         }),
         InboxKind::Question | InboxKind::Setup => None,
     };
-    let buttons = buttons?;
-    Some(InlineKeyboard::new(
-        buttons.chunks(2).map(<[InlineButton]>::to_vec).collect(),
-    ))
+    Some(rows_of_two(buttons?))
+}
+
+/// Die Knöpfe einer Abnahme: übernehmen, zurück an den Agenten, geänderte Dateien
+pub fn accept_buttons(id: &str) -> Vec<InlineButton> {
+    vec![
+        InlineButton::callback(
+            "Übernehmen",
+            CallbackAction::Accept(id.to_string()).encode(),
+        ),
+        InlineButton::callback(
+            "Zurück an den Agenten",
+            CallbackAction::Return(id.to_string()).encode(),
+        ),
+        InlineButton::callback(
+            "Geänderte Dateien",
+            CallbackAction::Diff(id.to_string()).encode(),
+        ),
+    ]
+}
+
+/// Die Knöpfe eines gescheiterten Merges: erneut mergen, Grund
+pub fn merge_buttons(id: &str) -> Vec<InlineButton> {
+    vec![
+        InlineButton::callback(
+            "Erneut mergen",
+            CallbackAction::Merge(id.to_string()).encode(),
+        ),
+        InlineButton::callback(
+            "Grund",
+            CallbackAction::BlockedReason(id.to_string()).encode(),
+        ),
+    ]
+}
+
+/// Die Knöpfe eines blockierten Tickets: Grund, Kommentar, zurück nach Geplant
+pub fn blocked_buttons(id: &str) -> Vec<InlineButton> {
+    vec![
+        InlineButton::callback(
+            "Grund",
+            CallbackAction::BlockedReason(id.to_string()).encode(),
+        ),
+        InlineButton::callback(
+            "Kommentar schreiben",
+            CallbackAction::Comment(id.to_string()).encode(),
+        ),
+        InlineButton::callback(
+            "Zurück nach Geplant",
+            CallbackAction::Return(id.to_string()).encode(),
+        ),
+    ]
+}
+
+/// Die Knöpfe zu je zwei in einer Zeile
+pub fn rows_of_two(buttons: Vec<InlineButton>) -> InlineKeyboard {
+    InlineKeyboard::new(buttons.chunks(2).map(<[InlineButton]>::to_vec).collect())
 }
 
 /// Die Knöpfe eines Ticket-Eintrags; ohne Ticket-ID gibt es keine
 fn with_ticket(
     item: &InboxItem,
-    buttons: impl FnOnce(&String) -> Vec<InlineButton>,
+    buttons: impl FnOnce(&str) -> Vec<InlineButton>,
 ) -> Option<Vec<InlineButton>> {
-    item.ticket_id.as_ref().map(buttons)
+    item.ticket_id.as_deref().map(buttons)
 }
 
 /// Knöpfe „Mehr“ unter der letzten Nachricht von `/aufgaben`: je Art, von der noch Einträge

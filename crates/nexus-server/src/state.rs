@@ -177,6 +177,13 @@ impl AppState {
             // Der Vertrag prüft ntfy gegen eine Attrappe im eigenen Netz; der Abruf bleibt
             // deshalb auch dort der echte
             ntfy: NtfySender::default(),
+            // Der dritte Weg: die gekoppelten Chats des Bots. Er liest `telegram.yaml` selbst,
+            // kommt also ohne den Bot aus (der entsteht erst mit dem Zustand)
+            telegram: Some(Arc::new(crate::telegram::TelegramNotifier::new(
+                config.home.clone(),
+                config.clock.clone(),
+                config.telegram_api.clone(),
+            ))),
         }));
         // Der Verteiler entsteht vor dem Zustand: die Sessions melden über ihn, und die
         // Ereignisströme nehmen denselben
