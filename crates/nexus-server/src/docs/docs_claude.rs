@@ -13,7 +13,7 @@ use nexus_core::{HarnessError, HarnessHome, Result};
 use serde_json::Value;
 use tokio_util::sync::CancellationToken;
 
-use crate::dispatch::account_pool::side_run_config_dir;
+use crate::dispatch::account_pool::side_run_account;
 use crate::dispatch::claude_process::ClaudeRunInput;
 use crate::dispatch::result_envelope::excerpt;
 use nexus_core::dispatch::optimization::AnalysisWorkspace;
@@ -65,13 +65,16 @@ pub async fn run_input(
 ) -> Result<ClaudeRunInput> {
     let env: BTreeMap<String, String> = std::env::vars().collect();
     // Läufe außerhalb des Dispatchers nehmen den Account mit der meisten freien Kapazität
-    let config_dir = side_run_config_dir(home, cfg, chrono::Utc::now()).await;
+    let account = side_run_account(home, cfg, chrono::Utc::now()).await;
+    let invocation = ClaudeInvocation::new();
+    let mut env = invocation.env(&env, cfg, None, None, account.config_dir.as_deref());
+    invocation.apply_oauth_token(&mut env, cfg, account.oauth_token.as_deref());
     Ok(ClaudeRunInput {
         command: cfg.claude.command.clone(),
         args: args(cfg),
         prompt,
         cwd: AnalysisWorkspace::new(home.clone()).dir()?,
-        env: ClaudeInvocation::new().env(&env, cfg, None, None, config_dir.as_deref()),
+        env,
         timeout: TIMEOUT,
         cancel,
     })

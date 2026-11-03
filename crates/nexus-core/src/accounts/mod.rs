@@ -4,6 +4,7 @@
 pub mod account;
 pub mod paths;
 pub mod store;
+pub mod tokens;
 
 pub use account::{
     account_limit, is_account_id, standard_account, ClaudeAccount, MAX_ACCOUNT_NAME_LENGTH,
@@ -11,3 +12,4 @@ pub use account::{
 };
 pub use paths::{has_plugin, keychain_service, AccountFiles, AccountPaths};
 pub use store::{AccountPatch, AccountStore, NewAccount};
+pub use tokens::AccountTokenStore;

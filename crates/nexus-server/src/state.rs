@@ -38,7 +38,7 @@ use crate::notifications::{
 };
 use crate::projects::ProjectService;
 use crate::sessions::{SessionService, TicketInfoLookup, TicketSummaries};
-use nexus_core::accounts::{AccountPaths, AccountStore};
+use nexus_core::accounts::{AccountPaths, AccountStore, AccountTokenStore};
 
 /// Alles, was die Routen des Servers teilen
 pub struct AppState {
@@ -204,6 +204,8 @@ impl AppState {
                         false => crate::accounts::system_keychain(),
                     },
                     fetch: config.is_contract().then(crate::usage::no_fetch),
+                    tokens: Some(AccountTokenStore::new(config.home.clone())),
+                    token_post: config.is_contract().then(crate::oauth_refresh::no_post),
                     ..AccountUsageOptions::default()
                 },
             ))
@@ -219,11 +221,14 @@ impl AppState {
             match (&config.dispatch_accounts, config.is_contract()) {
                 (_, true) | (DispatchAccounts::Off, _) => None,
                 (DispatchAccounts::Pool(pool), _) => Some(pool.clone()),
-                (DispatchAccounts::Stored, _) => Some(Arc::new(StoredAccountPool::new(
-                    Arc::new(AccountStore::with_paths(config.home.clone(), paths.clone())),
-                    account_usage.clone(),
-                    paths.clone(),
-                ))),
+                (DispatchAccounts::Stored, _) => Some(Arc::new(
+                    StoredAccountPool::new(
+                        Arc::new(AccountStore::with_paths(config.home.clone(), paths.clone())),
+                        account_usage.clone(),
+                        paths.clone(),
+                    )
+                    .with_tokens(AccountTokenStore::new(config.home.clone())),
+                )),
             };
         // Die Watcher fragen über den Zustand ab, in dem sie selbst liegen; sie halten ihn
         // deshalb nur schwach – sonst hielte sich der Zustand selbst am Leben

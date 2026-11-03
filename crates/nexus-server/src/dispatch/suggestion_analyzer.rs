@@ -18,7 +18,7 @@ use nexus_core::dispatch::{
 use nexus_core::{HarnessError, HarnessHome, Result};
 use serde_json::{json, Value};
 
-use crate::dispatch::account_pool::side_run_config_dir;
+use crate::dispatch::account_pool::side_run_account;
 use crate::dispatch::claude_process::ClaudeRunInput;
 use crate::dispatch::claude_runner::ClaudeRunner;
 use crate::dispatch::result_envelope::{excerpt, ClaudeResultEnvelope};
@@ -102,6 +102,17 @@ impl SuggestionAnalyzer {
         let context = self.service.context().await?;
         let cfg = context.read.config.clone();
         let cwd = self.workspace.dir()?;
+        // Läufe außerhalb des Dispatchers nehmen den Account mit der meisten freien Kapazität
+        let account = side_run_account(&self.home, &cfg, self.clock.now()).await;
+        let mut env = self.invocation.env(
+            &process_env(),
+            &cfg,
+            None,
+            None,
+            account.config_dir.as_deref(),
+        );
+        self.invocation
+            .apply_oauth_token(&mut env, &cfg, account.oauth_token.as_deref());
         let result = self
             .claude
             .run(ClaudeRunInput {
@@ -109,17 +120,7 @@ impl SuggestionAnalyzer {
                 args: self.args(&cfg),
                 prompt: self.prompt(&context)?,
                 cwd,
-                env: self.invocation.env(
-                    &process_env(),
-                    &cfg,
-                    None,
-                    None,
-                    // Läufe außerhalb des Dispatchers nehmen den Account mit der meisten
-                    // freien Kapazität
-                    side_run_config_dir(&self.home, &cfg, self.clock.now())
-                        .await
-                        .as_deref(),
-                ),
+                env,
                 timeout: TIMEOUT,
                 cancel: None,
             })

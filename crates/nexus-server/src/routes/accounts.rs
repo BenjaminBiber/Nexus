@@ -9,9 +9,11 @@ use std::sync::Arc;
 
 use axum::extract::{Path as UrlPath, State};
 use axum::response::Response;
-use axum::routing::{get, patch, post};
+use axum::routing::{get, patch, post, put};
 use axum::Router;
-use nexus_core::accounts::{AccountPatch, ClaudeAccount, NewAccount, STANDARD_ACCOUNT_ID};
+use nexus_core::accounts::{
+    AccountPatch, AccountTokenStore, ClaudeAccount, NewAccount, STANDARD_ACCOUNT_ID,
+};
 use nexus_core::dispatch::{AccountReferences, DispatchConfigStore};
 use serde::Serialize;
 use serde_json::Value;
@@ -95,6 +97,12 @@ pub fn routes() -> Router<Arc<AppState>> {
         .route(
             "/api/accounts/{id}/resume",
             post(resume).fallback(static_or_not_found),
+        )
+        .route(
+            "/api/accounts/{id}/run-token",
+            put(set_run_token)
+                .delete(remove_run_token)
+                .fallback(static_or_not_found),
         )
 }
 
@@ -263,6 +271,7 @@ async fn remove(
         .remove(&id);
     let delete_dir = query.first("deleteDir") == Some("1");
     state.accounts.store.remove(&id, delete_dir)?;
+    AccountTokenStore::new(state.home.clone()).remove(&id)?;
     state.dispatch.resume_account(&id).await?;
     Ok(json(&listing(&state).await?))
 }
@@ -283,6 +292,28 @@ async fn resume(
     UrlPath(id): UrlPath<String>,
 ) -> ApiResult<Response> {
     state.dispatch.resume_account(&id).await?;
+    Ok(json(&listing(&state).await?))
+}
+
+/// `PUT /api/accounts/{id}/run-token`: Langzeit-Token (`claude setup-token`) für die Läufe
+async fn set_run_token(
+    State(state): State<Arc<AppState>>,
+    UrlPath(id): UrlPath<String>,
+    JsonBody(body): JsonBody,
+) -> ApiResult<Response> {
+    require(&state, &id)?;
+    let token = text(object(&body)?.get("token"), "token")?;
+    AccountTokenStore::new(state.home.clone()).set(&id, &token)?;
+    Ok(json(&listing(&state).await?))
+}
+
+/// `DELETE /api/accounts/{id}/run-token`: Läufe nutzen wieder die Anmeldung im Ordner
+async fn remove_run_token(
+    State(state): State<Arc<AppState>>,
+    UrlPath(id): UrlPath<String>,
+) -> ApiResult<Response> {
+    require(&state, &id)?;
+    AccountTokenStore::new(state.home.clone()).remove(&id)?;
     Ok(json(&listing(&state).await?))
 }
 

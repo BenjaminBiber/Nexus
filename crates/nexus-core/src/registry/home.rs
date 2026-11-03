@@ -152,6 +152,11 @@ impl NexusHome {
         self.dir.join("accounts.json")
     }
 
+    /// Langzeit-Tokens der Accounts für die Läufe (`claude setup-token`); nur für den Benutzer
+    pub fn account_tokens_file(&self) -> PathBuf {
+        self.dir.join("account-tokens.json")
+    }
+
     /// Konfigurationsordner neu angelegter Accounts (`<id>/`)
     pub fn accounts_dir(&self) -> PathBuf {
         self.dir.join("accounts")

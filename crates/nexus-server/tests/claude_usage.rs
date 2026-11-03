@@ -312,6 +312,98 @@ async fn lasst_ein_fehlendes_fenster_leer() {
     assert_eq!(usage.seven_day, None);
 }
 
+/// Ein Abruf, der jedes Token außer `good` mit 401 abweist und die gesehenen Tokens sammelt
+fn accepts(good: &'static str) -> (UsageFetch, Arc<std::sync::Mutex<Vec<String>>>) {
+    let seen = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let tokens = seen.clone();
+    let fetch: UsageFetch = Arc::new(move |request| {
+        let bearer = request
+            .headers
+            .iter()
+            .find(|(name, _)| name == "Authorization")
+            .map(|(_, value)| value.trim_start_matches("Bearer ").to_string())
+            .unwrap_or_default();
+        let status = if bearer == good { 200 } else { 401 };
+        tokens.lock().unwrap().push(bearer);
+        Box::pin(async move { Ok(UsageReply::new(status, Some(body()))) })
+    });
+    (fetch, seen)
+}
+
+#[tokio::test]
+async fn liest_eine_halb_geschriebene_anmeldung_noch_einmal_und_nimmt_sonst_die_letzte() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    // Noch nie gelesen: vorübergehender Fehler statt „nicht angemeldet“
+    std::fs::write(&file, "{\"claudeAiOauth\": {\"accessTo").unwrap();
+    let at = Arc::new(AtomicI64::new(now_ms()));
+    let (fetch, calls) = answers(200, body());
+    let service = ClaudeUsageService::with(file.clone(), fetch, clock(at.clone()), 1_000);
+    assert_eq!(
+        service.current(false).await.reason.as_deref(),
+        Some("request-failed")
+    );
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+
+    login(&file, json!({}));
+    at.fetch_add(5_000, Ordering::SeqCst);
+    assert!(service.current(false).await.available);
+
+    // Claude Code schreibt gerade: die zuletzt gelesene Anmeldung gilt weiter
+    std::fs::write(&file, "").unwrap();
+    at.fetch_add(5_000, Ordering::SeqCst);
+    assert!(service.current(false).await.available);
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
+}
+
+#[tokio::test]
+async fn fragt_nach_401_mit_dem_token_noch_einmal_das_ein_anderer_prozess_erneuert_hat() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    login(&file, json!({ "accessToken": "tok-old" }));
+    let renewed = file.clone();
+    let (inner, seen) = accepts("tok-new");
+    // Während der ersten Anfrage erneuert Claude Code sein Token
+    let fetch: UsageFetch = Arc::new(move |request| {
+        login(&renewed, json!({ "accessToken": "tok-new" }));
+        inner(request)
+    });
+    let service = ClaudeUsageService::with(
+        file,
+        fetch,
+        Clock::fixed(NOW.parse().unwrap()),
+        DEFAULT_TTL_MS,
+    );
+    assert!(service.current(false).await.available);
+    assert_eq!(*seen.lock().unwrap(), vec!["tok-old", "tok-new"]);
+}
+
+#[tokio::test]
+async fn wartet_nach_fehlschlaegen_in_folge_immer_laenger_bis_zu_einer_minute() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join(".credentials.json");
+    login(&file, json!({}));
+    let at = Arc::new(AtomicI64::new(now_ms()));
+    let (fetch, calls) = answers(500, body());
+    let service = ClaudeUsageService::with(file, fetch, clock(at.clone()), DEFAULT_TTL_MS);
+    let mut asked_after = Vec::new();
+    let mut waited = 0;
+    for _ in 0..80 {
+        let before = calls.load(Ordering::SeqCst);
+        service.current(false).await;
+        if calls.load(Ordering::SeqCst) > before {
+            asked_after.push(waited);
+            waited = 0;
+        }
+        at.fetch_add(5_000, Ordering::SeqCst);
+        waited += 5_000;
+    }
+    assert_eq!(
+        &asked_after[..7],
+        &[0, 5_000, 10_000, 20_000, 40_000, 60_000, 60_000]
+    );
+}
+
 /// Ein Account-Dienst, dessen Standard-Account seine Anmeldung aus dieser Datei liest
 fn standard_usage(
     file: std::path::PathBuf,
@@ -335,6 +427,8 @@ fn standard_usage(
             keychain: nexus_server::accounts::no_keychain(),
             fetch: Some(fetch),
             clock: Clock::fixed(NOW.parse().unwrap()),
+            tokens: None,
+            token_post: None,
         },
     ))
 }

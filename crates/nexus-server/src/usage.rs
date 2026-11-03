@@ -3,8 +3,14 @@
 //!
 //! Der OAuth-Endpunkt von Anthropic ist nicht dokumentiert und kann sich ändern; Fehler
 //! bleiben darum leise (`available: false`) und gelten nur kurz, damit ein Aussetzer die
-//! Anzeige nicht minutenlang leer lässt. Das Token wird nur gelesen, nie erneuert (das
-//! übernimmt Claude Code selbst) und nie ausgegeben.
+//! Anzeige nicht minutenlang leer lässt – wiederholte Fehlschläge warten aber zunehmend
+//! länger, damit der Endpunkt nicht mit 429 sperrt. Das Token wird nie ausgegeben und
+//! normalerweise nur gelesen (das Erneuern übernimmt Claude Code selbst); nur mit
+//! [`ClaudeUsageService::with_refresh`] erneuert der Dienst ein abgelaufenes selbst.
+//!
+//! Claude Code schreibt `.credentials.json` unter Windows nicht atomar: eine halb geschriebene
+//! Datei liest der Dienst kurz danach noch einmal und nimmt sonst die zuletzt gelesene
+//! Anmeldung – sie gilt nicht als „nicht angemeldet“.
 
 use std::future::Future;
 use std::path::PathBuf;
@@ -24,6 +30,13 @@ pub const DEFAULT_TTL_MS: i64 = 60_000;
 /// Fehlschläge gelten nur kurz: erneuert Claude Code gleich danach sein Token, soll der
 /// nächste Aufruf es schon sehen
 pub const FAILURE_TTL_MS: i64 = 5_000;
+/// Höchste Gültigkeit eines Fehlschlags nach wiederholten Fehlern beim Endpunkt (die
+/// Gültigkeit verdoppelt sich je Fehlschlag in Folge)
+pub const MAX_FAILURE_TTL_MS: i64 = 60_000;
+/// So oft liest der Dienst eine halb geschriebene Anmeldedatei erneut
+const UNREADABLE_RETRIES: u32 = 2;
+/// Pause vor dem erneuten Lesen
+const UNREADABLE_DELAY: Duration = Duration::from_millis(150);
 /// Nach 429 (zu viele Anfragen) fragt der Dienst mindestens so lange nicht neu – länger, wenn
 /// `Retry-After` es verlangt
 pub const RATE_LIMIT_TTL_MS: i64 = 5 * 60_000;
@@ -106,6 +119,11 @@ pub type UsageFetch = Arc<
 pub type ReadCredentials =
     Arc<dyn Fn() -> Pin<Box<dyn Future<Output = Option<String>> + Send>> + Send + Sync>;
 
+/// Erneuert die Anmeldung, wenn ihr Token abgelaufen ist; `true` = danach liegt ein gültiges
+/// Token in der Quelle (selbst erneuert oder schon von einem anderen Prozess)
+pub type RefreshCredentials =
+    Arc<dyn Fn() -> Pin<Box<dyn Future<Output = bool> + Send>> + Send + Sync>;
+
 /// Liest den Inhalt einer Anmeldedatei
 pub fn file_credentials(file: PathBuf) -> ReadCredentials {
     Arc::new(move || {
@@ -130,6 +148,18 @@ struct Cached {
 struct Loaded {
     value: ClaudeUsageDto,
     ttl: i64,
+    /// Fehlschlag beim Endpunkt: die Gültigkeit wächst mit jedem weiteren in Folge
+    backoff: bool,
+}
+
+/// Was die Anmeldung beim Lesen ergab
+enum ReadLogin {
+    /// Keine Quelle oder keine Anmeldung darin
+    Missing,
+    /// Die Quelle war auch nach erneutem Lesen kein JSON, und es gab noch keine gelesene
+    /// Anmeldung
+    Unreadable,
+    Found(Login),
 }
 
 /// Liest die Abo-Limits über den OAuth-Endpunkt von Anthropic und hält sie kurz vor
@@ -142,6 +172,12 @@ pub struct ClaudeUsageService {
     /// Gleichzeitige Aufrufe teilen eine Anfrage: der zweite wartet und findet sie im
     /// Zwischenspeicher
     loading: tokio::sync::Mutex<()>,
+    /// Erneuert ein abgelaufenes Token; `None` = nur lesen
+    refresh: Option<RefreshCredentials>,
+    /// Fehlschläge beim Endpunkt in Folge
+    failures: Mutex<u32>,
+    /// Zuletzt gelesene Anmeldung (falls die Quelle gerade halb geschrieben ist)
+    last_login: Mutex<Option<Login>>,
 }
 
 impl ClaudeUsageService {
@@ -169,7 +205,18 @@ impl ClaudeUsageService {
             ttl_ms,
             cached: Mutex::new(None),
             loading: tokio::sync::Mutex::new(()),
+            refresh: None,
+            failures: Mutex::new(0),
+            last_login: Mutex::new(None),
         }
+    }
+
+    /// Der Dienst erneuert ein abgelaufenes Token selbst. Nur sinnvoll, wenn sonst kaum ein
+    /// Prozess die Anmeldung erneuert (die Läufe nutzen ein Langzeit-Token): zwei Prozesse,
+    /// die gleichzeitig erneuern, verbrauchen dasselbe Refresh-Token
+    pub fn with_refresh(mut self, refresh: RefreshCredentials) -> Self {
+        self.refresh = Some(refresh);
+        self
     }
 
     /// Aktuelle Werte (aus dem Zwischenspeicher, solange er frisch ist); `fresh` fragt neu
@@ -185,14 +232,31 @@ impl ClaudeUsageService {
             return value;
         }
         let loaded = self.load().await;
+        let ttl = self.backoff(&loaded);
         // Erst nach dem Laden stempeln: sonst zählt die Laufzeit der Anfrage (bis zum
         // Zeitlimit) gegen die Gültigkeit
         *self.cached.lock().expect("Sperre der Abo-Limits") = Some(Cached {
             at: self.now_ms(),
-            ttl: loaded.ttl,
+            ttl,
             value: loaded.value.clone(),
         });
         loaded.value
+    }
+
+    /// Gültigkeit im Zwischenspeicher: nach einem Erfolg zählt die Folge von vorn, jeder
+    /// Fehlschlag beim Endpunkt in Folge verdoppelt sie bis [`MAX_FAILURE_TTL_MS`]
+    fn backoff(&self, loaded: &Loaded) -> i64 {
+        let mut failures = self.failures.lock().expect("Sperre der Fehlschläge");
+        if loaded.value.available {
+            *failures = 0;
+            return loaded.ttl;
+        }
+        if !loaded.backoff {
+            return loaded.ttl;
+        }
+        let ttl = (loaded.ttl << (*failures).min(10)).min(MAX_FAILURE_TTL_MS);
+        *failures += 1;
+        ttl
     }
 
     /// Der Wert des Zwischenspeichers, solange er gilt; `fresh` übergeht ihn, außer nach 429
@@ -210,25 +274,40 @@ impl ClaudeUsageService {
         let failed = |reason: &str, plan: Option<String>, ttl: i64| Loaded {
             value: ClaudeUsageDto::unavailable(reason, plan),
             ttl,
+            backoff: false,
         };
-        let Some(login) = self.read_login().await else {
-            return failed("no-login", None, FAILURE_TTL_MS);
+        // Fehlschlag beim Endpunkt selbst: wiederholt er sich, wartet der Dienst länger
+        let rejected = |reason: &str, plan: Option<String>| Loaded {
+            backoff: true,
+            ..failed(reason, plan, FAILURE_TTL_MS)
         };
-        if login.expires_at.is_some_and(|at| at <= self.now_ms()) {
-            return failed("token-expired", login.plan, FAILURE_TTL_MS);
+        let mut login = match self.read_login().await {
+            ReadLogin::Found(login) => login,
+            ReadLogin::Missing => return failed("no-login", None, FAILURE_TTL_MS),
+            // Halb geschrieben und nichts Gelesenes zum Ausweichen: gleich noch einmal
+            ReadLogin::Unreadable => return failed("request-failed", None, FAILURE_TTL_MS),
+        };
+        if self.expired(&login) {
+            match self.renewed(&login.token).await {
+                Some(renewed) => login = renewed,
+                None => return failed("token-expired", login.plan, FAILURE_TTL_MS),
+            }
         }
-        let request = UsageRequest {
-            url: USAGE_URL.to_string(),
-            headers: vec![
-                ("Authorization".into(), format!("Bearer {}", login.token)),
-                ("anthropic-beta".into(), "oauth-2025-04-20".into()),
-                ("User-Agent".into(), "ai-harness".into()),
-            ],
-        };
-        let reply = match (self.fetch)(request).await {
+        let mut reply = match self.ask(&login.token).await {
             Ok(reply) => reply,
-            Err(_) => return failed("request-failed", login.plan, FAILURE_TTL_MS),
+            Err(_) => return rejected("request-failed", login.plan),
         };
+        // 401 kurz nach dem Erneuern durch einen anderen Prozess: mit dem neuen Token noch
+        // einmal fragen
+        if reply.status == 401 {
+            if let Some(renewed) = self.renewed(&login.token).await {
+                login = renewed;
+                reply = match self.ask(&login.token).await {
+                    Ok(reply) => reply,
+                    Err(_) => return rejected("request-failed", login.plan),
+                };
+            }
+        }
         if reply.status == 429 {
             let ttl = self.retry_after(reply.retry_after.as_deref());
             return failed("rate-limited", login.plan, ttl);
@@ -239,7 +318,7 @@ impl ClaudeUsageService {
             } else {
                 "request-failed"
             };
-            return failed(reason, login.plan, FAILURE_TTL_MS);
+            return rejected(reason, login.plan);
         }
         let body = reply.body.unwrap_or(serde_json::Value::Null);
         Loaded {
@@ -252,7 +331,43 @@ impl ClaudeUsageService {
                 fetched_at: Some(self.clock.iso()),
             },
             ttl: self.ttl_ms,
+            backoff: false,
         }
+    }
+
+    /// Eine Anfrage an den Endpunkt mit diesem Token
+    async fn ask(&self, token: &str) -> Result<UsageReply, String> {
+        (self.fetch)(UsageRequest {
+            url: USAGE_URL.to_string(),
+            headers: vec![
+                ("Authorization".into(), format!("Bearer {token}")),
+                ("anthropic-beta".into(), "oauth-2025-04-20".into()),
+                ("User-Agent".into(), "ai-harness".into()),
+            ],
+        })
+        .await
+    }
+
+    /// Ist das Token laut Anmeldung abgelaufen?
+    fn expired(&self, login: &Login) -> bool {
+        login.expires_at.is_some_and(|at| at <= self.now_ms())
+    }
+
+    /// Ein gültiges Token statt `old`: zuerst, ob ein anderer Prozess es schon erneuert hat,
+    /// sonst (falls erlaubt) selbst erneuert; `None` = keins
+    async fn renewed(&self, old: &str) -> Option<Login> {
+        let usable = |read: ReadLogin| match read {
+            ReadLogin::Found(login) if login.token != old && !self.expired(&login) => Some(login),
+            _ => None,
+        };
+        if let Some(login) = usable(self.read_login().await) {
+            return Some(login);
+        }
+        let refresh = self.refresh.as_ref()?;
+        if !refresh().await {
+            return None;
+        }
+        usable(self.read_login().await)
     }
 
     /// Sperre nach 429: `Retry-After` (Sekunden oder HTTP-Datum), aber nie kürzer als
@@ -273,23 +388,34 @@ impl ClaudeUsageService {
         ms.max(RATE_LIMIT_TTL_MS)
     }
 
-    /// Token, Ablauf (ms) und Abo-Art aus der Anmeldung; `None` ohne Anmeldung
-    async fn read_login(&self) -> Option<Login> {
-        let text = (self.read_credentials)().await?;
-        let json: serde_json::Value = serde_json::from_str(&text).ok()?;
-        let oauth = json.get("claudeAiOauth")?;
-        let token = oauth
-            .get("accessToken")
-            .and_then(serde_json::Value::as_str)
-            .filter(|token| !token.is_empty())?;
-        Some(Login {
-            token: token.to_string(),
-            expires_at: oauth.get("expiresAt").and_then(serde_json::Value::as_i64),
-            plan: oauth
-                .get("subscriptionType")
-                .and_then(serde_json::Value::as_str)
-                .map(str::to_string),
-        })
+    /// Token, Ablauf (ms) und Abo-Art aus der Anmeldung. Kein JSON (Claude Code schreibt die
+    /// Datei gerade): kurz danach noch einmal, sonst die zuletzt gelesene Anmeldung
+    async fn read_login(&self) -> ReadLogin {
+        for attempt in 0..=UNREADABLE_RETRIES {
+            let Some(text) = (self.read_credentials)().await else {
+                return ReadLogin::Missing;
+            };
+            let Ok(json) = serde_json::from_str::<serde_json::Value>(&text) else {
+                if attempt < UNREADABLE_RETRIES {
+                    tokio::time::sleep(UNREADABLE_DELAY).await;
+                }
+                continue;
+            };
+            let Some(login) = parse_login(&json) else {
+                return ReadLogin::Missing;
+            };
+            *self.last_login.lock().expect("Sperre der Anmeldung") = Some(login.clone());
+            return ReadLogin::Found(login);
+        }
+        match self
+            .last_login
+            .lock()
+            .expect("Sperre der Anmeldung")
+            .clone()
+        {
+            Some(login) => ReadLogin::Found(login),
+            None => ReadLogin::Unreadable,
+        }
     }
 
     /// Jetzt in Millisekunden seit der Epoche
@@ -299,10 +425,28 @@ impl ClaudeUsageService {
 }
 
 /// Die gelesene Anmeldung
+#[derive(Clone)]
 struct Login {
     token: String,
     expires_at: Option<i64>,
     plan: Option<String>,
+}
+
+/// Die Anmeldung aus dem Inhalt der Quelle; `None` ohne `claudeAiOauth` oder Token
+fn parse_login(json: &serde_json::Value) -> Option<Login> {
+    let oauth = json.get("claudeAiOauth")?;
+    let token = oauth
+        .get("accessToken")
+        .and_then(serde_json::Value::as_str)
+        .filter(|token| !token.is_empty())?;
+    Some(Login {
+        token: token.to_string(),
+        expires_at: oauth.get("expiresAt").and_then(serde_json::Value::as_i64),
+        plan: oauth
+            .get("subscriptionType")
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_string),
+    })
 }
 
 /// Ein Limit-Fenster der Antwort; ohne brauchbare Auslastung bleibt es leer

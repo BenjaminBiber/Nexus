@@ -557,10 +557,14 @@ impl DispatchContext {
             }
             ChosenAccount::Run(run) => LaunchInput { run: *run, ..input },
         };
-        let config_dir = match (self.accounts.as_deref(), input.run.account.as_deref()) {
-            (Some(accounts), Some(account)) => accounts.config_dir(account).await,
-            _ => None,
-        };
+        let (config_dir, oauth_token) =
+            match (self.accounts.as_deref(), input.run.account.as_deref()) {
+                (Some(accounts), Some(account)) => (
+                    accounts.config_dir(account).await,
+                    accounts.oauth_token(account).await,
+                ),
+                _ => (None, None),
+            };
         let setup_timeout_minutes = input
             .setup
             .as_ref()
@@ -603,13 +607,15 @@ impl DispatchContext {
             RunKind::Research => None,
             _ => Some(input.ticket_id.as_str()),
         };
-        let env = self.invocation.env(
+        let mut env = self.invocation.env(
             &self.env,
             &self.cfg,
             ticket,
             git_bash.as_deref(),
             config_dir.as_deref(),
         );
+        self.invocation
+            .apply_oauth_token(&mut env, &self.cfg, oauth_token.as_deref());
         let pid = match self.launcher.launch(&id, &env) {
             Ok(pid) => pid.map(i64::from),
             Err(error) => {

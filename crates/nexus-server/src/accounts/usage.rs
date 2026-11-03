@@ -12,11 +12,14 @@ use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use nexus_core::accounts::{has_plugin, AccountPaths, AccountStore, ClaudeAccount};
+use nexus_core::accounts::{
+    has_plugin, AccountPaths, AccountStore, AccountTokenStore, ClaudeAccount,
+};
 use nexus_core::clock::Clock;
 use nexus_core::dispatch::AccountState;
 use serde::{Deserialize, Serialize};
 
+use crate::oauth_refresh::{file_refresh, TokenPost};
 use crate::usage::{
     ClaudeUsageDto, ClaudeUsageService, ReadCredentials, UsageFetch, DEFAULT_TTL_MS,
 };
@@ -47,6 +50,9 @@ pub struct AccountInfoDto {
     pub email: Option<String>,
     /// Nexus-Plugin in der Plugin-Liste von Claude Code
     pub plugin: bool,
+    /// Läufe nutzen ein Langzeit-Token (`claude setup-token`); das Token selbst geht nie
+    /// hinaus
+    pub run_token: bool,
     pub usage: ClaudeUsageDto,
     /// Pause des Dispatchers für diesen Account (ISO)
     pub paused_until: Option<String>,
@@ -128,6 +134,11 @@ pub struct AccountUsageOptions {
     /// Abruf des OAuth-Endpunkts; `None` = der echte über HTTPS
     pub fetch: Option<UsageFetch>,
     pub clock: Clock,
+    /// Langzeit-Tokens der Läufe. Hat ein Account eins, erneuert der Dienst ein abgelaufenes
+    /// Token in seinem Ordner selbst (sonst täte es niemand mehr); `None` = nie
+    pub tokens: Option<AccountTokenStore>,
+    /// Aufruf des Token-Endpunkts beim Erneuern; `None` = der echte über HTTPS
+    pub token_post: Option<TokenPost>,
 }
 
 impl Default for AccountUsageOptions {
@@ -138,6 +149,8 @@ impl Default for AccountUsageOptions {
             keychain: system_keychain(),
             fetch: None,
             clock: Clock::system(),
+            tokens: None,
+            token_post: None,
         }
     }
 }
@@ -267,6 +280,11 @@ impl AccountUsageService {
             logged_in,
             email: identity,
             plugin,
+            run_token: self
+                .options
+                .tokens
+                .as_ref()
+                .is_some_and(|tokens| tokens.has(&account.id)),
             usage: usage.unwrap_or_else(|| ClaudeUsageDto::unavailable("disabled", None)),
             paused_until,
         }
@@ -335,12 +353,26 @@ impl AccountUsageService {
             .fetch
             .clone()
             .unwrap_or_else(crate::usage::http_fetch);
-        let service = Arc::new(ClaudeUsageService::with_credentials(
+        let mut service = ClaudeUsageService::with_credentials(
             read,
             fetch,
             self.options.clock.clone(),
             DEFAULT_TTL_MS,
-        ));
+        );
+        // Erneuert nur die Datei; unter macOS liegt die Anmeldung im Schlüsselbund
+        if let (Some(tokens), false) = (&self.options.tokens, self.options.platform == "darwin") {
+            let (tokens, id) = (tokens.clone(), account.id.clone());
+            service = service.with_refresh(file_refresh(
+                files.credentials_file.clone(),
+                self.options
+                    .token_post
+                    .clone()
+                    .unwrap_or_else(crate::oauth_refresh::http_post),
+                self.options.clock.clone(),
+                Arc::new(move || tokens.has(&id)),
+            ));
+        }
+        let service = Arc::new(service);
         services.insert(
             account.id.clone(),
             PerAccount {

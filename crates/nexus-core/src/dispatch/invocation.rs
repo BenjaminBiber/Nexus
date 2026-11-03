@@ -190,6 +190,22 @@ impl ClaudeInvocation {
         }
         out
     }
+
+    /// Langzeit-Token des gewählten Accounts (`claude setup-token`) in die Umgebung eines
+    /// Laufs: Claude Code meldet sich dann damit an und erneuert die Anmeldung im Ordner des
+    /// Accounts nie. Nur bei Abrechnung über die Anmeldung; ohne Token bleibt die Umgebung
+    pub fn apply_oauth_token(
+        &self,
+        env: &mut BTreeMap<String, String>,
+        cfg: &DispatchConfig,
+        token: Option<&str>,
+    ) {
+        if let Some(token) = token.filter(|token| !token.is_empty()) {
+            if cfg.claude.use_subscription {
+                env.insert("CLAUDE_CODE_OAUTH_TOKEN".to_string(), token.to_string());
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -308,6 +324,23 @@ mod tests {
                 &"Bash(nexus board list:*)",
             ]
         );
+    }
+
+    #[test]
+    fn gibt_das_langzeit_token_nur_bei_abrechnung_ueber_die_anmeldung_mit() {
+        let mut cfg = cfg();
+        let invocation = ClaudeInvocation::new();
+        let mut out = env(&[]);
+        invocation.apply_oauth_token(&mut out, &cfg, None);
+        invocation.apply_oauth_token(&mut out, &cfg, Some(""));
+        assert!(!out.contains_key("CLAUDE_CODE_OAUTH_TOKEN"));
+        cfg.claude.use_subscription = true;
+        invocation.apply_oauth_token(&mut out, &cfg, Some("sk-ant-oat01-x"));
+        assert_eq!(out["CLAUDE_CODE_OAUTH_TOKEN"], "sk-ant-oat01-x");
+        let mut api = env(&[]);
+        cfg.claude.use_subscription = false;
+        invocation.apply_oauth_token(&mut api, &cfg, Some("sk-ant-oat01-x"));
+        assert!(!api.contains_key("CLAUDE_CODE_OAUTH_TOKEN"));
     }
 
     #[test]

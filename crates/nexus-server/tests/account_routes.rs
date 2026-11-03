@@ -240,3 +240,57 @@ async fn schlaegt_mcacc_profile_vor_die_noch_keinem_account_gehoeren() {
     assert_eq!(created.status, 200);
     assert_eq!(body(&created.text)["suggestions"], json!([]));
 }
+
+#[tokio::test]
+async fn setzt_und_entfernt_das_langzeit_token_ohne_es_je_auszugeben() {
+    let server = server();
+    let tokens = nexus_core::accounts::AccountTokenStore::new(server.home.clone());
+
+    let rejected = server
+        .put(
+            "/api/accounts/standard/run-token",
+            r#"{"token":"sk-ant-api03-x"}"#,
+        )
+        .await;
+    assert_eq!(rejected.status, 422);
+    assert_eq!(
+        server
+            .put(
+                "/api/accounts/gibt-es-nicht/run-token",
+                r#"{"token":"sk-ant-oat01-x"}"#
+            )
+            .await
+            .status,
+        404
+    );
+
+    let set = server
+        .put(
+            "/api/accounts/standard/run-token",
+            r#"{"token":"sk-ant-oat01-geheim"}"#,
+        )
+        .await;
+    assert_eq!(set.status, 200);
+    assert_eq!(body(&set.text)["accounts"][0]["runToken"], true);
+    assert!(!set.text.contains("sk-ant-oat01-geheim"));
+    assert_eq!(
+        tokens.get("standard").as_deref(),
+        Some("sk-ant-oat01-geheim")
+    );
+
+    let removed = server.delete("/api/accounts/standard/run-token").await;
+    assert_eq!(removed.status, 200);
+    assert_eq!(body(&removed.text)["accounts"][0]["runToken"], false);
+    assert!(!tokens.has("standard"));
+
+    // Ein entfernter Account nimmt sein Token mit
+    server.post("/api/accounts", r#"{"name":"Pro"}"#).await;
+    server
+        .put(
+            "/api/accounts/pro/run-token",
+            r#"{"token":"sk-ant-oat01-pro"}"#,
+        )
+        .await;
+    assert_eq!(server.delete("/api/accounts/pro").await.status, 200);
+    assert!(!tokens.has("pro"));
+}

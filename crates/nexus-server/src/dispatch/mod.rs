@@ -33,7 +33,8 @@ pub mod worker_launcher;
 pub mod worktree_setup;
 
 pub use account_pool::{
-    side_run_config_dir, side_run_config_dir_with, AccountPool, RunAccounts, StoredAccountPool,
+    side_run_account, side_run_account_with, AccountPool, RunAccounts, SideRunAccount,
+    StoredAccountPool,
 };
 pub use claude_process::{ClaudeProcess, ClaudeRunInput, OutputSource, RunResult};
 pub use claude_runner::{ClaudeRunner, ClaudeRunners, FixedClaudeRunner, ProcessClaudeRunner};

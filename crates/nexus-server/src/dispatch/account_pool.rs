@@ -7,7 +7,9 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use nexus_core::accounts::{AccountPaths, AccountStore, ClaudeAccount, STANDARD_ACCOUNT_ID};
+use nexus_core::accounts::{
+    AccountPaths, AccountStore, AccountTokenStore, ClaudeAccount, STANDARD_ACCOUNT_ID,
+};
 use nexus_core::clock::Clock;
 use nexus_core::dispatch::{
     AccountChoice, AccountChoiceInput, AccountChooser, DispatchConfig, DispatchStateStore,
@@ -50,6 +52,11 @@ pub trait AccountPool: Send + Sync {
     /// Wert für `CLAUDE_CONFIG_DIR`; `None` = Standard (Umgebung des Servers)
     async fn config_dir(&self, id: &str) -> Option<String>;
 
+    /// Langzeit-Token des Accounts für `CLAUDE_CODE_OAUTH_TOKEN` oder `None`
+    async fn oauth_token(&self, _id: &str) -> Option<String> {
+        None
+    }
+
     /// Aktive Accounts
     async fn enabled(&self) -> Vec<ClaudeAccount>;
 
@@ -66,6 +73,8 @@ pub struct StoredAccountPool {
     store: Arc<dyn AccountList>,
     usage: Arc<dyn AccountLimits>,
     paths: AccountPaths,
+    /// Langzeit-Tokens der Läufe; `None` = Läufe nutzen die Anmeldung im Ordner
+    tokens: Option<AccountTokenStore>,
 }
 
 impl std::fmt::Debug for StoredAccountPool {
@@ -85,17 +94,25 @@ impl StoredAccountPool {
             store,
             usage,
             paths,
+            tokens: None,
         }
+    }
+
+    /// Läufe bekommen das Langzeit-Token ihres Accounts aus diesem Speicher
+    pub fn with_tokens(mut self, tokens: AccountTokenStore) -> Self {
+        self.tokens = Some(tokens);
+        self
     }
 
     /// Pool über dem Benutzerordner mit den Pfaden des Rechners
     pub fn create(home: HarnessHome, usage: Arc<AccountUsageService>) -> Self {
         let paths = AccountPaths::from_process_env();
         Self::new(
-            Arc::new(AccountStore::with_paths(home, paths.clone())),
+            Arc::new(AccountStore::with_paths(home.clone(), paths.clone())),
             usage,
             paths,
         )
+        .with_tokens(AccountTokenStore::new(home))
     }
 }
 
@@ -155,6 +172,10 @@ impl AccountPool for StoredAccountPool {
         Some(self.paths.expand(&dir).to_string_lossy().into_owned())
     }
 
+    async fn oauth_token(&self, id: &str) -> Option<String> {
+        self.tokens.as_ref()?.get(id)
+    }
+
     async fn enabled(&self) -> Vec<ClaudeAccount> {
         self.store
             .list()
@@ -204,38 +225,49 @@ impl AccountPool for StoredAccountPool {
     }
 }
 
+/// Anmeldung eines Claude-Aufrufs außerhalb des Dispatchers; leer = Standard (Umgebung des
+/// Servers)
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SideRunAccount {
+    /// Wert für `CLAUDE_CONFIG_DIR`
+    pub config_dir: Option<String>,
+    /// Langzeit-Token für `CLAUDE_CODE_OAUTH_TOKEN`
+    pub oauth_token: Option<String>,
+}
+
 /// Account für Claude-Aufrufe außerhalb des Dispatchers (Doku überarbeiten, Entwürfe,
 /// Analyse): jeder aktive Account, meiste freie Kapazität; ist keiner frei, der Standard
-/// (Umgebung des Servers). Liefert den Wert für `CLAUDE_CONFIG_DIR` oder `None`
-pub async fn side_run_config_dir(
+/// (Umgebung des Servers)
+pub async fn side_run_account(
     home: &HarnessHome,
     cfg: &DispatchConfig,
     now: DateTime<Utc>,
-) -> Option<String> {
+) -> SideRunAccount {
     let usage = Arc::new(AccountUsageService::new(
         Arc::new(AccountStore::new(home.clone())),
         Clock::system(),
     ));
     let pool = StoredAccountPool::create(home.clone(), usage);
-    side_run_config_dir_with(home, cfg, now, &pool).await
+    side_run_account_with(home, cfg, now, &pool).await
 }
 
-/// Wie [`side_run_config_dir`], mit einem vorhandenen Pool (der Server teilt seinen)
-pub async fn side_run_config_dir_with(
+/// Wie [`side_run_account`], mit einem vorhandenen Pool (der Server teilt seinen)
+pub async fn side_run_account_with(
     home: &HarnessHome,
     cfg: &DispatchConfig,
     now: DateTime<Utc>,
     pool: &dyn AccountPool,
-) -> Option<String> {
-    let pauses: BTreeMap<String, String> = DispatchStateStore::new(home.clone())
-        .read()
-        .ok()?
-        .account_pauses
-        .into_iter()
-        .collect();
+) -> SideRunAccount {
+    let Ok(state) = DispatchStateStore::new(home.clone()).read() else {
+        return SideRunAccount::default();
+    };
+    let pauses: BTreeMap<String, String> = state.account_pauses.into_iter().collect();
     let choice = pool.pick(&RunAccounts::default(), cfg, now, &pauses).await;
     match choice {
-        AccountChoice::Picked { account, .. } => pool.config_dir(&account.id).await,
-        AccountChoice::Waiting { .. } => None,
+        AccountChoice::Picked { account, .. } => SideRunAccount {
+            config_dir: pool.config_dir(&account.id).await,
+            oauth_token: pool.oauth_token(&account.id).await,
+        },
+        AccountChoice::Waiting { .. } => SideRunAccount::default(),
     }
 }

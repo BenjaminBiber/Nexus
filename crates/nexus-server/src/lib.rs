@@ -19,6 +19,7 @@ pub mod input;
 pub mod log;
 pub mod notices;
 pub mod notifications;
+pub mod oauth_refresh;
 pub mod projects;
 pub mod routes;
 pub mod sessions;
