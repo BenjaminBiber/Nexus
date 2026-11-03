@@ -25,6 +25,7 @@ pub mod routes;
 pub mod sessions;
 pub mod setup;
 pub mod state;
+pub mod telegram;
 pub mod timeline;
 pub mod usage;
 
