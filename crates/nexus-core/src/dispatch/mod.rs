@@ -75,7 +75,7 @@ pub use state::{
     DispatchLog, DispatchState, DispatchStateStore, MergeEntry, MergePhase, PlanningAutoState,
     PlanningEntry, ResearchAutoState, ResearchEntry, ReviewEntry, ReviewStore, RunEnd, RunLogEntry,
     RunLogOutcome, RunLogParts, RunLogSplitter, RunOutcome, RunRecord, RunState, RunStore,
-    RUN_LOG_OUTPUT_MARKER, RUN_LOG_PROMPT_MARKER,
+    UsageHistory, UsageSample, UsageSnapshot, RUN_LOG_OUTPUT_MARKER, RUN_LOG_PROMPT_MARKER,
 };
 pub use time_window::TimeWindowCheck;
 pub use types::{RunResult, SetupFailure, TestRun};

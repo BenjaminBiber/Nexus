@@ -971,6 +971,27 @@ from: string,
 to: string, };
 
 /**
+ * Auslastung eines Accounts zu einem Zeitpunkt; `None` = unbekannt
+ */
+export type UsageSnapshot = { 
+/**
+ * Auslastung des 5-Stunden-Fensters in Prozent
+ */
+fiveHour: number | null, 
+/**
+ * Auslastung der Woche in Prozent
+ */
+sevenDay: number | null, 
+/**
+ * Rücksetzung des 5-Stunden-Fensters
+ */
+fiveHourResetsAt: string | null, 
+/**
+ * Rücksetzung der Woche
+ */
+sevenDayResetsAt: string | null, };
+
+/**
  * Einrichtungsbefehl für einen neu angelegten Worktree (z. B. npm ci);
  * cwd relativ zum Worktree, „.“ = Worktree selbst
  */
