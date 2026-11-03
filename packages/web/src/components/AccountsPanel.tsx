@@ -200,7 +200,7 @@ function AccountCard({ account, pluginCommands, accountsDir, change }: { account
               ? <>Der Account wird auch aus der Dispatcher-Einstellung entfernt ({account.references.join(', ')}).</>
               : <>Der Account wird aus der Liste entfernt.</>}
           </p>
-          <label className="option-row">
+          <label className="option-row ack">
             <input type="checkbox" checked={deleteDir} onChange={(e) => setDeleteDir(e.target.checked)} />
             <span>Auch den Ordner samt Anmeldung löschen (nur unter <span className="mono">{accountsDir}</span>)</span>
           </label>
