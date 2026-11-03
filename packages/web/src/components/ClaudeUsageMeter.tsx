@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { useApi } from '../api/ApiContext.js';
 import type { AccountUsageEntryDto, ClaudeUsageDto, UsageOverviewDto, UsageWindowDto } from '../api/usageTypes.js';
 
-const REFRESH_MS = 120_000;
+/** So oft werden die Limits neu geladen */
+export const REFRESH_MS = 120_000;
 /** Nach einem vorübergehenden Fehlschlag (Netz, abgelaufenes Token) wird schnell wiederholt statt erst nach REFRESH_MS */
 export const RETRY_MS = 8_000;
 
@@ -18,7 +19,7 @@ export const USAGE_REASONS: Record<NonNullable<ClaudeUsageDto['reason']>, string
 
 // Gründe, die von allein wieder vergehen – nur bei ihnen wird schnell wiederholt, der letzte gute Stand behalten und ein Account
 // ohne Stand als grauer Ring gezeigt
-function transient(value: ClaudeUsageDto): boolean {
+export function transient(value: ClaudeUsageDto): boolean {
   return value.reason === 'request-failed' || value.reason === 'token-expired' || value.reason === 'rate-limited';
 }
 

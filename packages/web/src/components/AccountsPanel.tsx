@@ -4,7 +4,7 @@ import { useApi } from '../api/ApiContext.js';
 import type { AccountDto, AccountListDto } from '../api/usageTypes.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { Badge } from './Badge.js';
-import { AccountRing, AccountUsageLines, USAGE_REASONS } from './ClaudeUsageMeter.js';
+import { AccountRing, AccountUsageLines, REFRESH_MS, RETRY_MS, transient, USAGE_REASONS } from './ClaudeUsageMeter.js';
 import { CopyCommand } from './CopyCommand.js';
 import { DbModal } from './db/DbModal.js';
 import { ErrorState } from './ErrorState.js';
@@ -47,6 +47,21 @@ export function AccountsPanel() {
     const timer = setInterval(() => void loaded.reload(), LOGIN_POLL_MS);
     return () => clearInterval(timer);
   }, [loggingIn, loaded.reload]);
+
+  // Sonst die Limits nachladen wie der Ring in der Seitenleiste: nach einem vorübergehenden Fehlschlag (etwa gleich nach
+  // einer Anmeldung, während das Token wechselt) schnell, sonst alle zwei Minuten. Scheitert das Nachladen, bleibt die Liste
+  // und der nächste Versuch kommt ebenso.
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    if (!data || loggingIn) return;
+    const quick = data.accounts.some((a) => a.enabled && transient(a.usage));
+    const timer = setTimeout(() => {
+      void loaded.refresh().then((error) => {
+        if (error) setAttempt((n) => n + 1);
+      });
+    }, quick ? RETRY_MS : REFRESH_MS);
+    return () => clearTimeout(timer);
+  }, [data, loggingIn, attempt, loaded.refresh]);
 
   // Ändert etwas und übernimmt die neue Liste
   const change: Change = async (fn) => {

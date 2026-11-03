@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../src/api/ApiContext.js';
 import { AccountsPanel } from '../src/components/AccountsPanel.js';
+import { REFRESH_MS, RETRY_MS } from '../src/components/ClaudeUsageMeter.js';
 import type { AccountDto, AccountListDto } from '../src/api/usageTypes.js';
 import { fakeApi } from './helpers/fakeApi.js';
 
@@ -55,6 +56,30 @@ describe('AccountsPanel', () => {
     const ring = await screen.findByRole('img', { name: 'Sitzung unbekannt, Woche unbekannt' });
     expect(ring.parentElement!.getAttribute('title')).toBe('Nicht angemeldet – keine Limits');
     expect(screen.queryByText('Nicht angemeldet – keine Limits')).toBeNull();
+  });
+
+  it('lädt nach einem vorübergehenden Fehlschlag schnell nach, sonst erst nach zwei Minuten', async () => {
+    vi.useFakeTimers();
+    try {
+      const failed = { ...NO_USAGE, reason: 'token-expired' as const, plan: 'team' };
+      const usage = { available: true, reason: null, plan: 'team', fiveHour: { percent: 43, resetsAt: null }, sevenDay: { percent: 32, resetsAt: null }, fetchedAt: null };
+      let value = list(account('standard', { name: 'Standard', usage: failed }));
+      let calls = 0;
+      open(value, { getAccounts: async () => { calls++; return value; } });
+      await act(() => vi.advanceTimersByTimeAsync(10));
+      expect(screen.getByRole('img', { name: 'Sitzung unbekannt, Woche unbekannt' })).toBeTruthy();
+      value = list(account('standard', { name: 'Standard', usage }));
+      await act(() => vi.advanceTimersByTimeAsync(RETRY_MS + 10));
+      expect(calls).toBe(2);
+      expect(screen.getByRole('img', { name: 'Sitzung 43 %, Woche 32 %' })).toBeTruthy();
+      // mit Werten erst nach REFRESH_MS
+      await act(() => vi.advanceTimersByTimeAsync(RETRY_MS + 10));
+      expect(calls).toBe(2);
+      await act(() => vi.advanceTimersByTimeAsync(REFRESH_MS));
+      expect(calls).toBe(3);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('legt im Dialog über „Erweitert“ einen Account aus einem vorhandenen Ordner an', async () => {
