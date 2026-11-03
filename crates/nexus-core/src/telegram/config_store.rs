@@ -73,6 +73,18 @@ impl TelegramConfigStore {
         }
         self.write(&config)
     }
+
+    /// Nimmt einen Chat aus der Freigabeliste (entkoppeln); `false`, wenn er nicht darin stand
+    pub fn remove_chat(&self, chat_id: i64) -> Result<bool> {
+        let mut config = self.read()?;
+        let vorher = config.chats.len();
+        config.chats.retain(|chat| *chat != chat_id);
+        if config.chats.len() == vorher {
+            return Ok(false);
+        }
+        self.write(&config)?;
+        Ok(true)
+    }
 }
 
 #[cfg(test)]
@@ -228,6 +240,27 @@ mod tests {
         assert_eq!(store.read().unwrap().chats, vec![42]);
         // Die übrige Einstellung bleibt unberührt
         assert_eq!(saved.bot_token, TOKEN);
+    }
+
+    #[test]
+    fn nimmt_einen_chat_aus_der_freigabeliste() {
+        let (_dir, store) = store();
+        store
+            .write(&TelegramConfig {
+                bot_token: TOKEN.to_string(),
+                chats: vec![42, 7],
+                ..TelegramConfig::default()
+            })
+            .unwrap();
+
+        assert!(store.remove_chat(42).unwrap());
+
+        assert_eq!(store.read().unwrap().chats, vec![7]);
+        assert!(
+            !store.remove_chat(42).unwrap(),
+            "ein Chat, der nicht darin steht, ändert nichts"
+        );
+        assert_eq!(store.read().unwrap().bot_token, TOKEN);
     }
 
     #[cfg(unix)]

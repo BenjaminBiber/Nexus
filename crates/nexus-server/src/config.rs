@@ -75,6 +75,9 @@ pub struct ServerConfig {
     /// Ordner der MCACC-Profile für die Vorschläge in `GET /api/accounts`; ohne Angabe
     /// `~/.mcacc/profiles`
     pub mcacc_dir: Option<PathBuf>,
+    /// Zugriff auf die Bot-API von Telegram; ohne Angabe über reqwest (Tests setzen hier eine
+    /// Attrappe ein, damit nie wirklich bei Telegram angefragt wird)
+    pub telegram_api: Option<crate::telegram::TelegramApiFactory>,
 }
 
 /// Woher der Dispatcher seine Claude-Accounts nimmt
@@ -148,6 +151,7 @@ impl ServerConfig {
             account_plugins: None,
             dispatch_accounts: DispatchAccounts::default(),
             mcacc_dir: None,
+            telegram_api: None,
         }
     }
 }

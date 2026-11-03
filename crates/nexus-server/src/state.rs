@@ -359,7 +359,11 @@ impl AppState {
             ),
             // Der Bot pollt erst, wenn `telegram.yaml` ihn einschaltet und ein Token nennt;
             // der Vertrag zeigt über `apiBase` auf seine eigene Attrappe
-            telegram: Arc::new(TelegramBot::new(config.home.clone(), config.clock.clone())),
+            telegram: Arc::new(TelegramBot::with_optional_api(
+                config.home.clone(),
+                config.clock.clone(),
+                config.telegram_api.clone(),
+            )),
             notifications,
             notice_tabs,
             shutdown: CancellationToken::new(),
