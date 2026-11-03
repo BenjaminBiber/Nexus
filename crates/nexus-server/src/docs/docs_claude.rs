@@ -2,7 +2,8 @@
 //! das Schneiden des JSON-Arrays aus der Antwort und das Dokument mit Zeilennummern.
 //!
 //! Die Stücke stehen in TypeScript wortgleich in `TicketDraftService.ts`,
-//! `DocQuestionService.ts` und `DocRevisionService.ts`; hier stehen sie einmal.
+//! `DocQuestionService.ts` und `DocRevisionService.ts`; hier stehen sie einmal. Der
+//! Ideen-Interpreter des Telegram-Bots ([`crate::telegram::idea`]) ruft Claude genauso.
 
 use std::collections::BTreeMap;
 use std::time::Duration;
@@ -64,6 +65,19 @@ pub async fn run_input(
     cancel: Option<CancellationToken>,
 ) -> Result<ClaudeRunInput> {
     let env: BTreeMap<String, String> = std::env::vars().collect();
+    run_input_with_env(home, cfg, prompt, cancel, env).await
+}
+
+/// Wie [`run_input`], mit einer mitgegebenen Umgebung. Tests, die den Ersatz
+/// `nexus-fake-claude` wirklich starten, geben hier seinen Modus mit, statt die Umgebung des
+/// Testprozesses zu ändern (wie [`crate::dispatch::DispatchContext`] mit seiner `env`).
+pub async fn run_input_with_env(
+    home: &HarnessHome,
+    cfg: &DispatchConfig,
+    prompt: String,
+    cancel: Option<CancellationToken>,
+    env: BTreeMap<String, String>,
+) -> Result<ClaudeRunInput> {
     // Läufe außerhalb des Dispatchers nehmen den Account mit der meisten freien Kapazität
     let account = side_run_account(home, cfg, chrono::Utc::now()).await;
     let invocation = ClaudeInvocation::new();
