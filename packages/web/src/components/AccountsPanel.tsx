@@ -110,9 +110,9 @@ export function AccountsPanel() {
 }
 
 // Schaltknopf mit Icon (Aktiv, Fallback): gedrückt = eingeschaltet
-function IconToggle({ icon, label, pressed, disabled, onChange }: { icon: string; label: string; pressed: boolean; disabled: boolean; onChange: (next: boolean) => void }) {
+function IconToggle({ icon, label, pressed, disabled, onChange, className }: { icon: string; label: string; pressed: boolean; disabled: boolean; onChange: (next: boolean) => void; className?: string }) {
   return (
-    <button type="button" className="icon-btn account-toggle" aria-label={label} aria-pressed={pressed} title={`${label}: ${pressed ? 'an' : 'aus'}`} disabled={disabled} onClick={() => onChange(!pressed)}>
+    <button type="button" className={`icon-btn account-toggle${className ? ` ${className}` : ''}`} aria-label={label} aria-pressed={pressed} title={`${label}: ${pressed ? 'an' : 'aus'}`} disabled={disabled} onClick={() => onChange(!pressed)}>
       <Icon name={icon} />
     </button>
   );
@@ -144,20 +144,24 @@ function AccountTile({ account, defaultLimit, pluginCommands, accountsDir, chang
     <article className={`settings-card account-tile${account.enabled ? '' : ' off'}`} aria-label={account.name}>
       <div className="account-tile-main">
         {/* Ohne Werte ein leerer Ring; den Grund zeigt erst das Darüberfahren */}
+        {/* Abgeschaltet: grauer Ring mit Ein/Aus-Zeichen statt der Initialen */}
         <div className="account-tile-ring" title={account.usage.available ? undefined : reason ?? (account.loggedIn ? 'Keine Limits' : 'Nicht angemeldet – keine Limits')}>
           <AccountRing entry={account} defaultLimit={defaultLimit} />
+          {!account.enabled && <Icon name="power_settings_new" />}
         </div>
         <div className="account-tile-info">
-          {/* Eine Zeile: Anmeldestatus als Punkt, Name, E-Mail (falls anders als der Name) und Abo */}
+          {/* Eine Zeile: Anmeldestatus als Punkt (nur aktiv), Name, E-Mail (falls anders als der Name), „Aus“ und Abo */}
           <div className="account-tile-title">
-            <span className={`state-dot ${loginState}`} role="img" aria-label={LOGIN_STATES[loginState]} title={LOGIN_STATES[loginState]} />
+            {account.enabled && <span className={`state-dot ${loginState}`} role="img" aria-label={LOGIN_STATES[loginState]} title={LOGIN_STATES[loginState]} />}
             <strong>{account.name}</strong>
             {account.email && account.email !== account.name && <span className="mono">{account.email}</span>}
-            {account.usage.plan && <Badge>Abo {account.usage.plan}</Badge>}
+            <span className="account-tile-badges">
+              {!account.enabled && <Badge>Aus</Badge>}
+              {account.usage.plan && <Badge>Abo {account.usage.plan}</Badge>}
+            </span>
           </div>
           <AccountUsageLines entry={account} defaultLimit={defaultLimit} />
           <div className="account-status">
-            {!account.enabled && <Badge>abgeschaltet</Badge>}
             {account.enabled && account.fallback && <Badge>Fallback</Badge>}
             {!account.plugin && <Badge kind="waiting">Plugin fehlt</Badge>}
             {account.runToken && <Badge>Langzeit-Token</Badge>}
@@ -172,8 +176,16 @@ function AccountTile({ account, defaultLimit, pluginCommands, accountsDir, chang
         </div>
       )}
       <div className="account-tile-tools" role="toolbar" aria-label={`${account.name}: Aktionen`}>
-        <IconToggle icon="power_settings_new" label="Aktiv" pressed={account.enabled} disabled={busy}
-          onChange={(enabled) => void act(() => api.updateAccount(account.id, { enabled }))} />
+        {/* Aktiv als gedrückter Schalter; abgeschaltet als deutlicher Knopf zum Einschalten */}
+        {account.enabled ? (
+          <IconToggle icon="power_settings_new" label="Aktiv" className="account-power" pressed disabled={busy}
+            onChange={(enabled) => void act(() => api.updateAccount(account.id, { enabled }))} />
+        ) : (
+          <button type="button" className="btn primary account-power-on" disabled={busy} onClick={() => void act(() => api.updateAccount(account.id, { enabled: true }))}>
+            <Icon name="power_settings_new" />
+            Einschalten
+          </button>
+        )}
         <IconToggle icon="support" label="Nur als Fallback" pressed={account.fallback} disabled={busy || !account.enabled}
           onChange={(fallback) => void act(() => api.updateAccount(account.id, { fallback }))} />
         <button type="button" className="icon-btn" aria-label={account.loggedIn ? 'Neu anmelden' : 'Mit Claude anmelden'} title={account.loggedIn ? 'Neu anmelden' : 'Mit Claude anmelden'}

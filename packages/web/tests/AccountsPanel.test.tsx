@@ -112,8 +112,14 @@ describe('AccountsPanel', () => {
     open(list(account('privat', { configDir: '~/privat' })), { updateAccount });
     await userEvent.click(await screen.findByRole('button', { name: 'Aktiv' }));
     expect(updateAccount).toHaveBeenCalledWith('privat', { enabled: false });
-    expect(await screen.findByText('abgeschaltet')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Aktiv' }).getAttribute('aria-pressed')).toBe('false');
+    expect(await screen.findByText('Aus')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Aktiv' })).toBeNull();
+    // abgeschaltet ohne Anmeldepunkt, eingeschaltet wird über den eigenen Knopf
+    expect(screen.queryByRole('img', { name: 'angemeldet' })).toBeNull();
+    updateAccount.mockResolvedValueOnce(list(account('privat', { configDir: '~/privat' })));
+    await userEvent.click(screen.getByRole('button', { name: 'Einschalten' }));
+    expect(updateAccount).toHaveBeenLastCalledWith('privat', { enabled: true });
+    expect((await screen.findByRole('button', { name: 'Aktiv' })).getAttribute('aria-pressed')).toBe('true');
   });
 
   it('benennt einen Account im Einstellungsdialog um', async () => {

@@ -152,16 +152,23 @@
 .account-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
 @media (max-width: 1000px) { .account-tiles { grid-template-columns: minmax(0, 1fr); } }
 .account-tile { display: flex; flex-direction: column; min-width: 0; }
-.account-tile.off .account-tile-main { opacity: 0.55; }
+/* Abgeschaltet: gestrichelter Rahmen, grauer Ring mit Ein/Aus-Zeichen */
+.account-tile.off { border-style: dashed; border-color: var(--line-dashed); background: var(--bg); box-shadow: none; }
+.account-tile.off > * + * { border-top-style: dashed; border-top-color: var(--line-dashed); }
+.account-tile.off .usage-ring-arc.outer { stroke: var(--muted); }
+.account-tile.off .usage-ring-arc.inner { stroke: color-mix(in srgb, var(--muted) 45%, transparent); }
+.account-tile.off .usage-ring-tick, .account-tile.off .usage-ring-initials { display: none; }
+.account-tile.off .usage-num.over, .account-tile.off .usage-num.crit { color: inherit; }
 .account-tile-main { display: flex; align-items: flex-start; gap: 18px; padding: 16px 20px; }
-.account-tile-ring { flex: none; }
+.account-tile-ring { position: relative; flex: none; }
+.account-tile-ring > .material-icons { position: absolute; inset: 0; display: grid; place-items: center; font-size: 24px; color: var(--text); pointer-events: none; }
 .account-tile-ring .usage-ring { width: 76px; height: 76px; }
 .account-tile-info { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; }
 .account-tile-title { display: flex; align-items: baseline; gap: 10px; min-width: 0; margin-bottom: 8px; }
 .account-tile-title > .state-dot { flex: none; align-self: center; }
 .account-tile-title > .state-dot.blocked { background: var(--danger); }
 .account-tile-tools { margin-top: auto; }
-.account-tile-title > .badge { flex: none; margin-left: auto; align-self: center; }
+.account-tile-badges { display: flex; flex: none; gap: 6px; margin-left: auto; align-self: center; }
 .account-tile-title strong { flex: none; max-width: 50%; overflow: hidden; font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .account-tile-title .mono { min-width: 0; overflow: hidden; font-size: 12px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 /* Je Limit eine Zeile: Name | Auslastung / Grenze | Reset; Spalten über beide Zeilen bündig */
@@ -173,8 +180,12 @@
 .account-tile .account-status { display: flex; flex-wrap: wrap; gap: 6px; }
 .account-tile .account-status:empty { display: none; }
 /* Aktionen am Fuß der Kachel, gleichmäßig über die Breite verteilt */
-.account-tile-tools { display: flex; justify-content: space-around; padding: 6px 12px; }
-.account-tile-tools .icon-btn { width: 40px; height: 36px; }
+.account-tile-tools { display: grid; grid-template-columns: minmax(max-content, 1fr) repeat(3, minmax(0, 1fr)); gap: 12px; padding: 10px 16px; }
+.account-tile-tools .icon-btn { justify-self: center; width: 40px; height: 36px; }
+/* Ein/Aus füllt seine Spalte: aktiv als hinterlegter Schalter, abgeschaltet als Knopf „Einschalten“ */
+.account-tile-tools .account-power { justify-self: stretch; width: auto; }
+.btn.account-power-on { gap: 8px; min-height: 36px; padding: 0 14px; background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.account-power-on:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, black); border-color: color-mix(in srgb, var(--accent) 88%, black); }
 .account-tile-tools .material-icons { font-size: 20px; }
 .account-tile-tools .icon-btn:disabled { opacity: 0.4; cursor: default; }
 .account-toggle[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
