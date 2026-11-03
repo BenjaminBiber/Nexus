@@ -56,7 +56,7 @@ pub fn merge_question(id: &str) -> (String, InlineKeyboard) {
 }
 
 /// Eine Sicherheitsfrage: fetter Text, ein Knopf für „Ja“ und einer für den Abbruch
-fn question(text: &str, yes: &str, action: CallbackAction) -> (String, InlineKeyboard) {
+pub fn question(text: &str, yes: &str, action: CallbackAction) -> (String, InlineKeyboard) {
     let keyboard = InlineKeyboard::row(vec![
         InlineButton::callback(yes, action.encode()),
         InlineButton::callback("Abbrechen", CallbackAction::Cancel.encode()),
@@ -156,12 +156,14 @@ pub fn reason_message(ticket: &Ticket) -> String {
 }
 
 /// Der Text, mit dem ein Dialog beginnt: was der Bot erwartet und wie man abbricht
-pub fn dialog_message(kind: DialogKind, ticket: &str) -> String {
+pub fn dialog_message(kind: DialogKind, target: &str) -> String {
     let what = match kind {
         DialogKind::ReturnFeedback => {
-            format!("Was soll der Agent an {ticket} anders machen?")
+            format!("Was soll der Agent an {target} anders machen?")
         }
-        DialogKind::Comment => format!("Was soll als Kommentar an {ticket}?"),
+        DialogKind::Comment => format!("Was soll als Kommentar an {target}?"),
+        DialogKind::QuestionText => format!("Wie ist {target} entschieden?"),
+        DialogKind::QuestionDiscard => format!("Warum soll {target} verworfen werden?"),
     };
     format!(
         "✍️ {}\nSchick es als Nachricht; /abbrechen beendet den Dialog.",

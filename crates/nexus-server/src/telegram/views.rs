@@ -325,8 +325,9 @@ pub fn inbox_item_message(
 }
 
 /// Die Knöpfe eines Eintrags aus „Meine Aufgaben“, je nach Art. Fragen und gescheiterte
-/// Einrichtungen bekommen keine: die Fragen folgen in einem eigenen Ticket, und eine
-/// Einrichtung lässt sich nur am Rechner richten
+/// Einrichtungen bekommen hier keine: eine Frage zeigt ihre Optionen samt Knöpfen über
+/// [`crate::telegram::question_views::question_message`], und eine Einrichtung lässt sich nur
+/// am Rechner richten
 pub fn inbox_item_keyboard(item: &InboxItem) -> Option<InlineKeyboard> {
     let buttons = match item.kind {
         InboxKind::Accept => with_ticket(item, |id| {
@@ -467,7 +468,7 @@ fn minutes_text(minutes: i64) -> String {
 }
 
 /// „vor 12 min“ zu einem ISO-Zeitpunkt in der Vergangenheit; unlesbare Zeitpunkte ergeben „?“
-fn since_text(iso: &str, now: DateTime<Utc>) -> String {
+pub(crate) fn since_text(iso: &str, now: DateTime<Utc>) -> String {
     match seconds_between(iso, now) {
         None => "?".to_string(),
         Some(seconds) if seconds < 0 => format!("in {}", duration_text(-seconds)),
@@ -507,7 +508,7 @@ fn duration_text(seconds: i64) -> String {
 }
 
 /// Kürzt `text` auf `max` UTF-16-Einheiten und hängt ein Auslassungszeichen an
-fn shortened(text: &str, max: usize) -> String {
+pub(crate) fn shortened(text: &str, max: usize) -> String {
     if utf16_len(text) <= max {
         return text.to_string();
     }
