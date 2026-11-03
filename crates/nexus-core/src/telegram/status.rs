@@ -40,6 +40,9 @@ pub struct BotStatus {
     pub last_update_at: Option<String>,
     /// Letzter Fehler in Worten; null = keiner seit dem letzten Erfolg
     pub last_error: Option<String>,
+    /// Woran das Einrichten des Bot-Profils zuletzt scheiterte (Bild, Name, Beschreibungen,
+    /// Befehlsliste); null = alles gesetzt oder abgeschaltet. Der Poller läuft deswegen weiter
+    pub profile_error: Option<String>,
 }
 
 impl BotStatus {
@@ -75,6 +78,7 @@ mod tests {
                 "botId": 7,
                 "lastUpdateAt": null,
                 "lastError": null,
+                "profileError": null,
             })
         );
     }

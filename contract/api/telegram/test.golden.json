@@ -184,7 +184,11 @@
           "review": true
         },
         "profile": {
-          "applied": null,
+          "applied": {
+            "botId": 7012345678,
+            "photo": "31bd7f7de04f11dfe8c1a1093279495c16fcff82",
+            "texts": "f06e2ba7dc2479d3139e794548a8320a7115b607"
+          },
           "brand": true
         },
         "quietHours": null,

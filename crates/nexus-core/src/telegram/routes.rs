@@ -57,6 +57,17 @@ pub struct TelegramTestDto {
     pub errors: Vec<TelegramTestError>,
 }
 
+/// Antwort von `POST /api/telegram/profile`
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "telegram.ts")]
+pub struct TelegramProfileDto {
+    /// true = Profilbild, Name, Beschreibungen und Befehlsliste wurden gerade gesetzt
+    pub applied: bool,
+    /// Woran es scheiterte; null = kein Fehler. Nie mit Adresse oder Token
+    pub error: Option<String>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -96,5 +107,17 @@ mod tests {
 
         assert_eq!(json["sent"], 1);
         assert_eq!(json["errors"][0]["chatId"], 42);
+    }
+
+    #[test]
+    fn schreibt_das_ergebnis_des_profils_in_camelcase() {
+        let json = serde_json::to_value(TelegramProfileDto {
+            applied: false,
+            error: Some("Profilbild nicht gesetzt: Telegram bremst".into()),
+        })
+        .unwrap();
+
+        assert_eq!(json["applied"], false);
+        assert!(json["error"].as_str().unwrap().starts_with("Profilbild"));
     }
 }

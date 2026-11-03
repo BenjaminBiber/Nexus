@@ -21,6 +21,7 @@ use tokio_util::sync::CancellationToken;
 use crate::log::ServerLog;
 use crate::telegram::api::{Message, TelegramApi, TelegramError, Update, User};
 use crate::telegram::pairing::PairingCodes;
+use crate::telegram::profile::{BotProfileSync, ProfileOutcome};
 use crate::telegram::reqwest_api::ReqwestTelegramApi;
 use crate::telegram::router::{BotContext, UpdateRouter};
 
@@ -96,6 +97,7 @@ impl TelegramBot {
             poller: Arc::new(Poller {
                 config: TelegramConfigStore::new(home.clone()),
                 state: TelegramStateStore::new(home.clone()),
+                profile: BotProfileSync::new(home.clone()),
                 api,
                 router: Arc::new(router),
                 pairing: PairingCodes::with_clock(clock.clone()),
@@ -161,6 +163,12 @@ impl TelegramBot {
     pub fn api(&self, config: &TelegramConfig) -> Arc<dyn TelegramApi> {
         (self.poller.api)(config)
     }
+
+    /// Richtet Profilbild, Name, Beschreibungen und Befehlsliste des Bots ein – erzwungen,
+    /// also auch dann, wenn sich nichts geändert hat. Das macht `POST /api/telegram/profile`
+    pub async fn sync_profile(&self, api: &dyn TelegramApi, bot_id: i64) -> ProfileOutcome {
+        self.poller.sync_profile(api, bot_id, true).await
+    }
 }
 
 /// Was nach einem Abruf von `getUpdates` geschehen soll
@@ -191,6 +199,7 @@ enum Cycle {
 struct Poller {
     config: TelegramConfigStore,
     state: TelegramStateStore,
+    profile: BotProfileSync,
     api: TelegramApiFactory,
     router: Arc<UpdateRouter>,
     pairing: PairingCodes,
@@ -250,11 +259,9 @@ impl Poller {
             }
         };
         self.running(&me).await;
-        // Die Befehlsliste des Bots stammt aus dem Router; ein Fehler dabei hält nichts auf
-        if let Err(error) = api.set_my_commands(&self.router.command_list()).await {
-            self.log
-                .write(&format!("Telegram: Befehlsliste nicht gesetzt – {error}"));
-        }
+        // Profilbild, Name, Beschreibungen und Befehlsliste; gesetzt wird nur, was sich
+        // geändert hat. Ein Fehler dabei hält den Poller nicht auf
+        self.sync_profile(api.as_ref(), me.id, false).await;
         self.poll(shutdown, &api, &me).await
     }
 
@@ -525,6 +532,31 @@ impl Poller {
     /// Telegram lehnt das Token ab: Zustand merken und bis zur nächsten Einstellung ruhen
     async fn token_invalid(&self) {
         self.fail(BotState::TokenInvalid, TOKEN_MESSAGE).await;
+    }
+
+    /// Richtet das Profil des Bots ein und merkt einen Fehler im Stand.
+    ///
+    /// Der Zustand des Pollers bleibt davon unberührt: ein Bot ohne Profilbild läuft
+    /// trotzdem
+    async fn sync_profile(
+        &self,
+        api: &dyn TelegramApi,
+        bot_id: i64,
+        force: bool,
+    ) -> ProfileOutcome {
+        let outcome = self
+            .profile
+            .sync(api, bot_id, &self.router.command_list(), force)
+            .await;
+        let mut status = self.status.write().await;
+        // Dieselbe Meldung nicht in jedem Anlauf protokollieren
+        if let Some(error) = &outcome.error {
+            if status.profile_error.as_ref() != Some(error) {
+                self.log.write(&format!("Telegram: {error}"));
+            }
+        }
+        status.profile_error = outcome.error.clone();
+        outcome
     }
 }
 
@@ -837,6 +869,104 @@ mod tests {
         let commands = calls[0].params["commands"].as_array().unwrap().clone();
         assert_eq!(commands[0][0], "start");
         assert_eq!(commands[1][0], "hilfe");
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn richtet_beim_start_das_profil_des_bots_ein() {
+        let h = Harness::enabled(vec![CHAT]);
+
+        h.start().await;
+        h.durchlaufen().await;
+        h.beenden().await;
+
+        assert_eq!(h.fake.calls_of("setMyProfilePhoto").len(), 1);
+        assert_eq!(h.fake.calls_of("setMyName")[0].params["name"], "Nexus");
+        assert_eq!(h.bot.status().await.profile_error, None);
+        // Gemerkt wird es in der Einstellung, damit der nächste Start es nicht wiederholt
+        assert!(h.config().profile.applied.is_some());
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn lasst_das_profil_beim_zweiten_start_in_ruhe() {
+        let h = Harness::enabled(vec![CHAT]);
+        h.start().await;
+        h.durchlaufen().await;
+        h.beenden().await;
+        assert_eq!(h.fake.calls_of("setMyProfilePhoto").len(), 1);
+
+        // Ein zweiter Bot auf demselben Benutzerordner ist der Server nach dem Neustart
+        let fake = Arc::new(FakeTelegram::new());
+        fake.wait_when_empty();
+        let api: TelegramApiFactory = {
+            let fake = fake.clone();
+            Arc::new(move |_config| fake.clone() as Arc<dyn TelegramApi>)
+        };
+        let neu = Arc::new(TelegramBot::with_api(
+            h.home.clone(),
+            Clock::system(),
+            api,
+            UpdateRouter::new(),
+        ));
+        let shutdown = CancellationToken::new();
+        neu.start(shutdown.clone()).await;
+        for _ in 0..100 {
+            tokio::task::yield_now().await;
+        }
+        shutdown.cancel();
+        neu.stop().await;
+
+        assert!(
+            fake.calls_of("setMyProfilePhoto").is_empty(),
+            "{:?}",
+            fake.calls()
+        );
+        assert_eq!(neu.status().await.profile_error, None);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn pollt_weiter_wenn_das_profilbild_nicht_durchgeht() {
+        let h = Harness::enabled(vec![CHAT]);
+        h.fake.fail(
+            "setMyProfilePhoto",
+            TelegramError::Api {
+                code: 400,
+                description: "method not found".to_string(),
+            },
+        );
+
+        h.start().await;
+        h.durchlaufen().await;
+
+        let status = h.bot.status().await;
+        assert_eq!(status.state, BotState::Running, "der Bot läuft trotzdem");
+        assert_eq!(status.last_error, None);
+        let profil = status.profile_error.expect("Fehler im Stand");
+        assert!(profil.starts_with("Profilbild nicht gesetzt: "), "{profil}");
+        assert!(h.polls() > 0, "er holt weiter Updates ab");
+        assert_eq!(h.config().profile.applied, None);
+        h.beenden().await;
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn ruhrt_das_profil_ohne_brand_nicht_an() {
+        let h = Harness::new(TelegramConfig {
+            enabled: true,
+            bot_token: TOKEN.to_string(),
+            profile: nexus_core::telegram::BotProfile {
+                brand: false,
+                applied: None,
+            },
+            ..TelegramConfig::default()
+        });
+
+        h.start().await;
+        h.durchlaufen().await;
+
+        assert!(h.fake.calls_of("setMyProfilePhoto").is_empty());
+        assert!(h.fake.calls_of("setMyCommands").is_empty());
+        assert_eq!(h.bot.status().await.profile_error, None);
+        assert!(h.polls() > 0, "der Bot läuft ganz normal");
+        h.beenden().await;
     }
 
     #[tokio::test(start_paused = true)]

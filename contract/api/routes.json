@@ -691,6 +691,11 @@
   },
   {
     "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "POST",
+    "pattern": "/api/telegram/profile"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
     "method": "GET",
     "pattern": "/api/telegram/status"
   },

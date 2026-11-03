@@ -5,7 +5,8 @@
 //! [`fake`] steht in Tests an deren Stelle. [`bot`] ist der Poller samt Kopplung,
 //! [`router`] verteilt die Updates an die Handler, [`pairing`] gibt die Einmal-Codes aus.
 //! [`commands`] sind die lesenden Befehle samt Pause/Weiter, [`views`] formatiert ihre
-//! Antworten als Telegram-HTML.
+//! Antworten als Telegram-HTML. [`profile`] richtet Profilbild, Name, Beschreibungen und
+//! Befehlsliste des Bots ein, [`texts`] hält die dafür gesetzten Texte.
 
 pub mod api;
 pub mod bot;
@@ -14,13 +15,16 @@ pub mod commands;
 pub mod fake;
 pub mod idea;
 pub mod pairing;
+pub mod profile;
 pub mod reqwest_api;
 pub mod router;
+pub mod texts;
 pub mod views;
 
 pub use bot::{TelegramApiFactory, TelegramBot};
 pub use idea::{IdeaInterpreter, IdeaRequest};
 pub use pairing::{PairingCode, PairingCodes};
+pub use profile::{BotProfileSync, ProfileOutcome};
 pub use router::{
     BotContext, CallbackHandler, CommandHandler, MessageHandler, UpdateRouter, RATE_LIMIT,
 };
