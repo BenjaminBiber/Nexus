@@ -18,8 +18,43 @@
         document.documentElement.dataset.themeMode = mode;
       })();
     </script>
+    <style>
+      /* Startanimation: liegt über der Oberfläche, bis das Video einmal durchgelaufen ist. Hintergründe = --bg je Schema (variables.css) */
+      #start-anim { position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center; justify-content: center; background: #f7f7f8; transition: opacity 0.3s ease; }
+      [data-theme="dark"] #start-anim { background: #0c0c0e; }
+      [data-theme="signal"] #start-anim { background: #f4f6f8; }
+      [data-theme="pastel"] #start-anim { background: #f3eadf; }
+      [data-theme="win95"] #start-anim { background: #c0c0c0; }
+      #start-anim video { width: min(480px, 60vw); height: auto; }
+      /* Das X ist schwarz; auf dunklem Grund wird es hell */
+      [data-theme="dark"] #start-anim video { filter: invert(1); }
+      #start-anim.is-done { opacity: 0; pointer-events: none; }
+    </style>
   </head>
   <body>
+    <div id="start-anim" aria-hidden="true">
+      <video src="/start-x.webm" autoplay muted playsinline preload="auto"></video>
+    </div>
+    <script>
+      // Startanimation einmal abspielen, dann ausblenden; ohne Bewegung, bei Fehler oder Hänger sofort bzw. spätestens nach 4 s weg
+      (function () {
+        var box = document.getElementById("start-anim");
+        var video = box.querySelector("video");
+        var gone = false;
+        function hide() {
+          if (gone) return;
+          gone = true;
+          box.classList.add("is-done");
+          setTimeout(function () { box.remove(); }, 300);
+        }
+        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return box.remove();
+        video.addEventListener("ended", hide);
+        video.addEventListener("error", hide);
+        var played = video.play();
+        if (played && played.catch) played.catch(hide);
+        setTimeout(hide, 4000);
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
