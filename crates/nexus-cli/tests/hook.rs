@@ -437,7 +437,7 @@ fn weist_ohne_ticket_auf_claim_hin() {
         &[],
     );
     assert!(
-        Umgebung::kontext(&ausgabe).contains("harness board claim"),
+        Umgebung::kontext(&ausgabe).contains("nexus board claim"),
         "{ausgabe:?}"
     );
 }

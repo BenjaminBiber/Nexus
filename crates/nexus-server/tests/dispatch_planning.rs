@@ -174,7 +174,7 @@ async fn startet_die_planung_im_losgelosten_worktree_eingeschrankt_mit_claim_und
     );
     assert_eq!(record.args[allowed + 1..], PLANNING_TOOLS.map(String::from));
     assert!(record.prompt.contains(&format!(
-        "harness board plan-json {id} --file plan.json --by planner-{id}"
+        "nexus board plan-json {id} --file plan.json --by planner-{id}"
     )));
     assert!(record.prompt.contains("## Aufwand"));
     assert_eq!(
