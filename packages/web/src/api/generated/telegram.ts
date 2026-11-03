@@ -54,7 +54,12 @@ lastUpdateAt: string | null,
 /**
  * Letzter Fehler in Worten; null = keiner seit dem letzten Erfolg
  */
-lastError: string | null, };
+lastError: string | null, 
+/**
+ * Woran das Einrichten des Bot-Profils zuletzt scheiterte (Bild, Name, Beschreibungen,
+ * Befehlsliste); null = alles gesetzt oder abgeschaltet. Der Poller läuft deswegen weiter
+ */
+profileError: string | null, };
 
 /**
  * Erfassen von Ideen über den Bot
@@ -180,6 +185,19 @@ expiresAt: string,
  * Link, der den Chat mit dem Bot öffnet und den Code gleich mitschickt
  */
 link: string, };
+
+/**
+ * Antwort von `POST /api/telegram/profile`
+ */
+export type TelegramProfileDto = { 
+/**
+ * true = Profilbild, Name, Beschreibungen und Befehlsliste wurden gerade gesetzt
+ */
+applied: boolean, 
+/**
+ * Woran es scheiterte; null = kein Fehler. Nie mit Adresse oder Token
+ */
+error: string | null, };
 
 /**
  * Antwort von `GET /api/telegram/status`

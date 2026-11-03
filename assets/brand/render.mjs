@@ -29,19 +29,24 @@ const [, mw, mh] = markSvg.match(/viewBox="0 0 (\d+) (\d+)"/).map(Number);
 const markPath = markSvg.match(/ d="([^"]+)"/)[1];
 
 // Kachel im 1024er-Raster, Bildmarke auf 62,5 % der Breite zentriert; mit Plakette
-// kleiner und nach links oben gerückt, damit das rechte Bein frei bleibt
-function tile(badge = '') {
+// kleiner und nach links oben gerückt, damit das rechte Bein frei bleibt.
+// `rx` ist der Radius der Ecken – 0 ergibt die quadratische Kachel
+function tile(badge = '', rx = 224) {
   const w = badge ? 580 : 640;
   const s = w / mw;
   const [cx, cy] = badge ? [452, 440] : [512, 512];
   const x = cx - w / 2;
   const y = cy - (mh * s) / 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" rx="224" fill="${COLORS.tile}"/>
+  <rect width="1024" height="1024" rx="${rx}" fill="${COLORS.tile}"/>
   <path transform="translate(${x} ${y}) scale(${+s.toFixed(5)})" fill="${COLORS.mark}" d="${markPath}"/>${badge}
 </svg>
 `;
 }
+
+// Profilbild des Telegram-Bots: dieselbe Kachel ohne runde Ecken, weil Telegram das Bild
+// selbst rund zuschneidet und runde Ecken dabei weiße Zacken ergäben
+const avatar = () => tile('', 0);
 
 // Zustandsplakette unten rechts wie bisher (Mittelpunkt 788/788, weißer Ring)
 function badge(fill, glyph) {
@@ -68,6 +73,12 @@ const png = (svg, size, file) => sharp(Buffer.from(svg)).resize(size, size).png(
 
 writeFileSync(join(root, 'apps/desktop/app-icon.svg'), tile());
 writeFileSync(join(root, 'packages/web/public/favicon.svg'), tile());
+
+// Profilbild des Telegram-Bots: 640 × 640 JPEG, wie Telegram es für `setMyProfilePhoto` mag
+await sharp(Buffer.from(avatar()))
+  .resize(640, 640)
+  .jpeg({ quality: 90 })
+  .toFile(join(root, 'crates/nexus-server/assets/telegram-avatar.jpg'));
 
 const toast = 'crates/nexus-server/assets/toast';
 await png(tile(), 256, `${toast}/logo-app.png`);

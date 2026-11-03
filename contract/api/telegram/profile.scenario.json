@@ -1,0 +1,52 @@
+{
+  "title": "Profil des Bots einrichten: Bild, Name, Beschreibungen und Befehle gegen eine Attrappe",
+  "fixtures": {
+    "homeFiles": {
+      "telegram.yaml": "enabled: false\nbotToken: \"123456:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw\"\napiBase: https://api.telegram.org\nchats: [4242]\n"
+    }
+  },
+  "steps": [
+    { "name": "Einrichten ohne eingeschalteten Bot", "method": "POST", "path": "/api/telegram/profile" },
+
+    {
+      "name": "Attrappe der Bot-API starten",
+      "kind": "httpStub",
+      "stub": "TELEGRAM",
+      "body": { "ok": true, "result": true },
+      "routes": {
+        "getMe": { "body": { "ok": true, "result": { "id": 7012345678, "username": "nexus_vertrag_bot", "first_name": "Nexus" } } },
+        "getUpdates": { "body": { "ok": true, "result": [] }, "delayMs": 1000 }
+      },
+      "save": { "tgUrl": "json.url" }
+    },
+    {
+      "name": "Bot auf die Attrappe einschalten",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "enabled": true, "apiBase": "{{tgUrl}}" }
+    },
+    { "name": "warten, bis der Bot sein Profil eingerichtet hat", "kind": "httpStub", "action": "await", "stub": "TELEGRAM", "call": "setMyCommands" },
+    {
+      "name": "die Einstellung merkt sich das eingerichtete Profil",
+      "method": "GET",
+      "path": "/api/telegram/config"
+    },
+    { "name": "Profil erzwungen neu einrichten", "method": "POST", "path": "/api/telegram/profile" },
+    { "name": "das Profilbild ging dabei ein zweites Mal hinaus", "kind": "httpStub", "action": "await", "stub": "TELEGRAM", "call": "setMyProfilePhoto", "count": 2 },
+
+    {
+      "name": "Einrichten abschalten",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "enabled": true, "apiBase": "{{tgUrl}}", "profile": { "brand": false } }
+    },
+    { "name": "ohne brand richtet die Route nichts ein", "method": "POST", "path": "/api/telegram/profile" },
+
+    {
+      "name": "Bot wieder abschalten",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "enabled": false }
+    }
+  ]
+}
