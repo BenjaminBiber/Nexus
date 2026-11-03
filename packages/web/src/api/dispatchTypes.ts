@@ -55,6 +55,12 @@ export interface RawDispatchConfigDto {
   accountStrategy?: 'most-free' | 'order';
   /** Ab dieser Auslastung (Prozent) gilt ein Account als voll */
   accountLimitPercent?: number;
+  /** Erwarteter Verbrauch eines Laufs im 5-Stunden-Fenster (Prozentpunkte), solange Schätzdaten fehlen */
+  accountReserveFiveHour?: number;
+  /** Erwarteter Verbrauch eines Laufs in der Woche (Prozentpunkte), solange Schätzdaten fehlen */
+  accountReserveWeek?: number;
+  /** Setzt sich das 5-Stunden-Fenster in so vielen Minuten zurück, entfällt dessen Reserve */
+  accountResetGraceMinutes?: number;
   research?: { auto?: boolean; wip?: number; maxPerDay?: number; profile?: string | null } | null;
   planning?: { auto?: boolean; wip?: number; acceptance?: boolean; profile?: string | null } | null;
 }
