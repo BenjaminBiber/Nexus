@@ -26,6 +26,7 @@ use crate::telegram::action_views::DIALOG_EXPIRED;
 use crate::telegram::api::Message;
 use crate::telegram::dialog::{DialogAnswer, DialogInput, DialogKind, Dialogs};
 use crate::telegram::router::{BotContext, MessageHandler, UpdateRouter};
+use crate::telegram::voice::{ConfiguredSpeech, VoiceMessages};
 
 /// Die Befehle samt Beschreibung für `/hilfe` und `setMyCommands`, in dieser Reihenfolge
 pub const COMMANDS: &[(&str, &str)] = &[
@@ -81,7 +82,7 @@ pub fn register(router: &mut UpdateRouter, state: &Weak<AppState>, clock: Clock)
     router.register_callback(Arc::new(board::BoardButton(deps.clone())));
     router.register_callback(Arc::new(tasks::MoreButton(deps.clone())));
     let actions = Arc::new(actions::Actions::new(deps.clone(), dialogs.clone()));
-    let questions = Arc::new(questions::Questions::new(deps, dialogs.clone()));
+    let questions = Arc::new(questions::Questions::new(deps.clone(), dialogs.clone()));
     router.register_callback(actions.clone());
     router.register_callback(questions.clone());
     // Die Texte der Dialoge nimmt genau ein Handler ab und gibt sie weiter
@@ -90,6 +91,10 @@ pub fn register(router: &mut UpdateRouter, state: &Weak<AppState>, clock: Clock)
         actions,
         questions,
     }));
+    // Eine Sprachnachricht wird vorher zu Text und läuft dann denselben Weg
+    router.set_voice(Arc::new(VoiceMessages::new(Arc::new(ConfiguredSpeech(
+        deps,
+    )))));
 }
 
 /// Nimmt die Antwort auf den offenen Dialog eines Chats ab und gibt sie an den Handler, der
@@ -103,7 +108,8 @@ struct DialogAnswers {
 #[async_trait]
 impl MessageHandler for DialogAnswers {
     async fn run(&self, ctx: &BotContext, message: &Message) -> Result<bool> {
-        // Sprachnachrichten nimmt ein späteres Ticket an; der Dialog bleibt bis dahin offen
+        // Eine Sprachnachricht kommt hier als ihr Transkript an (der Router erkennt sie
+        // vorher); jeder andere Anhang lässt den Dialog offen
         let Some(text) = message.text.as_deref() else {
             return Ok(false);
         };

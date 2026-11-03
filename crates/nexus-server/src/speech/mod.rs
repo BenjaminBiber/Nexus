@@ -58,21 +58,30 @@ impl AudioClip {
 
     /// Prüft die Grenzen, die vor jedem Upload gelten (20 MB und 300 s)
     pub fn within_limits(&self) -> Result<()> {
-        if self.bytes.len() > MAX_BYTES {
-            return Err(too_large(format!(
-                "Die Aufnahme ist {} MB groß; erkannt werden höchstens {} MB.",
-                self.bytes.len() / (1024 * 1024),
-                MAX_BYTES / (1024 * 1024)
-            )));
-        }
-        if self.seconds.is_some_and(|seconds| seconds > MAX_SECONDS) {
-            return Err(too_large(format!(
-                "Die Aufnahme ist länger als {} s.",
-                MAX_SECONDS as i64
-            )));
-        }
-        Ok(())
+        check_limits(Some(self.bytes.len()), self.seconds)
     }
+}
+
+/// Prüft Größe und Länge einer Aufnahme gegen [`MAX_BYTES`] und [`MAX_SECONDS`]; was
+/// unbekannt ist, gilt als in der Grenze.
+///
+/// Getrennt von [`AudioClip`], weil Telegram Größe und Dauer schon ankündigt – eine zu große
+/// Sprachnachricht wird so gar nicht erst geladen.
+pub fn check_limits(bytes: Option<usize>, seconds: Option<f64>) -> Result<()> {
+    if bytes.is_some_and(|bytes| bytes > MAX_BYTES) {
+        return Err(too_large(format!(
+            "Die Aufnahme ist {} MB groß; erkannt werden höchstens {} MB.",
+            bytes.unwrap_or_default() / (1024 * 1024),
+            MAX_BYTES / (1024 * 1024)
+        )));
+    }
+    if seconds.is_some_and(|seconds| seconds > MAX_SECONDS) {
+        return Err(too_large(format!(
+            "Die Aufnahme ist länger als {} s.",
+            MAX_SECONDS as i64
+        )));
+    }
+    Ok(())
 }
 
 /// Dateiendung zum Inhaltstyp; alles Unbekannte geht als `ogg` durch, weil Telegram

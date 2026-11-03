@@ -51,6 +51,12 @@ impl BotContext {
         self.send(html, Some(keyboard)).await
     }
 
+    /// Wie [`Self::reply`], aber als Antwort auf eine Nachricht des Chats (so hängt die
+    /// Antwort auf eine Sprachnachricht sichtbar an ihr)
+    pub async fn reply_to(&self, html: &str, reply_to: i64) -> Result<()> {
+        self.send_parts(html, None, Some(reply_to)).await
+    }
+
     /// Ersetzt Text und Knöpfe der auslösenden Nachricht; ohne `message_id` (sehr alter
     /// Knopf) geht der Text als neue Nachricht in den Chat
     pub async fn update(&self, html: &str, keyboard: Option<InlineKeyboard>) -> Result<()> {
@@ -65,6 +71,17 @@ impl BotContext {
 
     /// Schickt `html` geteilt; die Knöpfe hängen unter dem letzten Stück
     async fn send(&self, html: &str, keyboard: Option<InlineKeyboard>) -> Result<()> {
+        self.send_parts(html, keyboard, None).await
+    }
+
+    /// Wie [`Self::send`], zusätzlich als Antwort auf eine Nachricht; bei mehreren Stücken
+    /// hängt nur das erste an ihr
+    async fn send_parts(
+        &self,
+        html: &str,
+        keyboard: Option<InlineKeyboard>,
+        reply_to: Option<i64>,
+    ) -> Result<()> {
         let chunks = split_message(html, MAX_MESSAGE_LEN);
         let last = chunks.len() - 1;
         for (index, chunk) in chunks.iter().enumerate() {
@@ -73,8 +90,12 @@ impl BotContext {
             } else {
                 None
             };
+            let reply_to = match index {
+                0 => reply_to,
+                _ => None,
+            };
             self.api
-                .send_message(self.chat_id, chunk, keyboard, None)
+                .send_message(self.chat_id, chunk, keyboard, reply_to)
                 .await
                 .map_err(nexus_core::Error::unexpected)?;
         }
@@ -112,6 +133,29 @@ pub trait MessageHandler: Send + Sync {
     /// Verarbeitet die Nachricht; `false` heißt „nicht für mich“, dann antwortet der Router
     /// mit dem Hinweis auf `/hilfe`
     async fn run(&self, ctx: &BotContext, message: &Message) -> Result<bool>;
+}
+
+/// Was aus einer Nachricht wurde, die der Router der Spracherkennung vorgelegt hat
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum VoiceOutcome {
+    /// Keine Sprach- oder Audionachricht; die Nachricht läuft unverändert weiter
+    NotVoice,
+    /// Der erkannte Text; er läuft weiter wie ein getippter Text
+    Text(String),
+    /// Die Nachricht ist beantwortet (Grenze gesprengt, Erkennung gescheitert); weiter geht
+    /// nichts
+    Answered,
+}
+
+/// Macht aus einer Sprach- oder Audionachricht Text.
+///
+/// Der Router legt ihm jede Nachricht ohne Text vor und schickt den erkannten Text danach
+/// denselben Weg wie einen getippten: erst in einen offenen Dialog, sonst an die
+/// [`MessageHandler`].
+#[async_trait]
+pub trait VoiceHandler: Send + Sync {
+    /// Erkennt die Nachricht; antwortet bei einem Fehler selbst (siehe [`VoiceOutcome`])
+    async fn run(&self, ctx: &BotContext, message: &Message) -> Result<VoiceOutcome>;
 }
 
 /// Ein angemeldeter Befehl samt Beschreibung für `/hilfe` und `setMyCommands`
@@ -159,6 +203,7 @@ pub struct UpdateRouter {
     commands: Vec<Command>,
     callbacks: Vec<Arc<dyn CallbackHandler>>,
     messages: Vec<Arc<dyn MessageHandler>>,
+    voice: Option<Arc<dyn VoiceHandler>>,
     limits: RateLimits,
 }
 
@@ -187,6 +232,7 @@ impl UpdateRouter {
             commands: Vec::new(),
             callbacks: Vec::new(),
             messages: Vec::new(),
+            voice: None,
             limits: RateLimits::new(clock),
         }
     }
@@ -224,6 +270,13 @@ impl UpdateRouter {
     /// Meldet einen Handler für Nachrichten ohne Befehl an (freier Text, Sprachnachricht)
     pub fn register_message(&mut self, handler: Arc<dyn MessageHandler>) {
         self.messages.push(handler);
+    }
+
+    /// Setzt die Spracherkennung für Nachrichten ohne Text; ohne sie bleibt eine
+    /// Sprachnachricht unbeantwortet wie jeder andere Anhang. Ein zweiter Aufruf ersetzt den
+    /// ersten
+    pub fn set_voice(&mut self, handler: Arc<dyn VoiceHandler>) {
+        self.voice = Some(handler);
     }
 
     /// Die angemeldeten Befehle samt Beschreibung, wie `setMyCommands` sie braucht;
@@ -323,14 +376,39 @@ impl UpdateRouter {
         }
     }
 
-    /// Gibt eine Nachricht ohne Befehl an die Handler; nimmt keiner sie, kommt der Hinweis
+    /// Gibt eine Nachricht ohne Befehl an die Handler; nimmt keiner sie, kommt der Hinweis.
+    /// Eine Sprachnachricht wird vorher erkannt und läuft dann als ihr Transkript weiter
     async fn run_message(&self, ctx: &BotContext, message: &Message) -> Result<()> {
+        let transcribed;
+        let message = match self.transcribe(ctx, message).await? {
+            VoiceOutcome::NotVoice => message,
+            VoiceOutcome::Answered => return Ok(()),
+            VoiceOutcome::Text(text) => {
+                transcribed = Message {
+                    text: Some(text),
+                    ..message.clone()
+                };
+                &transcribed
+            }
+        };
         for handler in &self.messages {
             if handler.run(ctx, message).await? {
                 return Ok(());
             }
         }
         ctx.reply(PLAIN_TEXT_HINT).await
+    }
+
+    /// Legt eine Nachricht ohne Text der Spracherkennung vor; mit Text oder ohne eingerichtete
+    /// Erkennung bleibt alles, wie es war
+    async fn transcribe(&self, ctx: &BotContext, message: &Message) -> Result<VoiceOutcome> {
+        if message.text.is_some() {
+            return Ok(VoiceOutcome::NotVoice);
+        }
+        match &self.voice {
+            Some(voice) => voice.run(ctx, message).await,
+            None => Ok(VoiceOutcome::NotVoice),
+        }
     }
 
     /// „Dieser Knopf ist veraltet“ als Hinweisfenster
