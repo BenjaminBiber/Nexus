@@ -51,6 +51,18 @@ impl BotContext {
         self.send(html, Some(keyboard)).await
     }
 
+    /// Ersetzt Text und Knöpfe der auslösenden Nachricht; ohne `message_id` (sehr alter
+    /// Knopf) geht der Text als neue Nachricht in den Chat
+    pub async fn update(&self, html: &str, keyboard: Option<InlineKeyboard>) -> Result<()> {
+        let Some(message_id) = self.message_id else {
+            return self.send(html, keyboard).await;
+        };
+        self.api
+            .edit_message_text(self.chat_id, message_id, html, keyboard)
+            .await
+            .map_err(nexus_core::Error::unexpected)
+    }
+
     /// Schickt `html` geteilt; die Knöpfe hängen unter dem letzten Stück
     async fn send(&self, html: &str, keyboard: Option<InlineKeyboard>) -> Result<()> {
         let chunks = split_message(html, MAX_MESSAGE_LEN);

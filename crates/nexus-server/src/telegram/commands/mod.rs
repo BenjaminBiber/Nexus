@@ -1,4 +1,4 @@
-//! Die lesenden Befehle des Bots und Pause/Weiter des Dispatchers.
+//! Die Befehle des Bots, Pause/Weiter des Dispatchers und die Knöpfe an „Meine Aufgaben“.
 //!
 //! Jeder Handler ruft im Prozess dieselben Dienste wie die Routen (`state.dispatch`,
 //! `state.board`, `state.accounts`) – nie über HTTP. Den Zustand hält er nur schwach: die
@@ -7,6 +7,7 @@
 //!
 //! Die Formatierung steckt in [`crate::telegram::views`]; hier steht nur, was gelesen wird.
 
+mod actions;
 mod board;
 mod control;
 mod status;
@@ -15,9 +16,11 @@ mod ticket;
 
 use std::sync::{Arc, Weak};
 
+use nexus_core::clock::Clock;
 use nexus_core::{HarnessError, Result};
 
 use crate::state::AppState;
+use crate::telegram::dialog::Dialogs;
 use crate::telegram::router::{BotContext, UpdateRouter};
 
 /// Die Befehle samt Beschreibung für `/hilfe` und `setMyCommands`, in dieser Reihenfolge
@@ -28,12 +31,14 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("aufgaben", "Was gerade auf dich wartet"),
     ("pause", "Dispatcher pausieren (/pause 30, Vorgabe 60 min)"),
     ("weiter", "Dispatcher fortsetzen"),
+    ("abbrechen", "Einen offenen Dialog beenden"),
 ];
 
 /// Meldet die Handler dieses Tickets im Router an. Der Zustand wird schwach gehalten, weil
-/// der Router im Bot und der Bot im Zustand liegt
-pub fn register(router: &mut UpdateRouter, state: &Weak<AppState>) {
+/// der Router im Bot und der Bot im Zustand liegt; die Uhr lässt die Dialoge ablaufen
+pub fn register(router: &mut UpdateRouter, state: &Weak<AppState>, clock: Clock) {
     let deps = Deps(state.clone());
+    let dialogs = Arc::new(Dialogs::with_clock(clock));
     router.register_command(
         "status",
         description("status"),
@@ -64,8 +69,17 @@ pub fn register(router: &mut UpdateRouter, state: &Weak<AppState>) {
         description("weiter"),
         Arc::new(control::ResumeCommand(deps.clone())),
     );
+    router.register_command(
+        "abbrechen",
+        description("abbrechen"),
+        Arc::new(actions::CancelCommand(dialogs.clone())),
+    );
     router.register_callback(Arc::new(board::BoardButton(deps.clone())));
-    router.register_callback(Arc::new(tasks::MoreButton(deps)));
+    router.register_callback(Arc::new(tasks::MoreButton(deps.clone())));
+    // Die Knöpfe der Aufgaben beantworten auch die Texte ihrer Dialoge
+    let actions = Arc::new(actions::Actions::new(deps, dialogs));
+    router.register_callback(actions.clone());
+    router.register_message(actions);
 }
 
 /// Die Beschreibung eines Befehls aus [`COMMANDS`]
