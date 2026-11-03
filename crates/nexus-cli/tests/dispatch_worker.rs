@@ -153,6 +153,7 @@ fn lauf(id: &str, cwd: &Path, log_file: &Path) -> RunRecord {
             accounts_from: None,
             account: None,
             account_why: None,
+            usage_at_start: None,
         },
         attempt: None,
         command: fake_claude().to_string_lossy().into_owned(),

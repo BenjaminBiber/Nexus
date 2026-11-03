@@ -444,9 +444,14 @@ impl DispatchContext {
             .await;
         Ok(match choice {
             AccountChoice::Waiting { reason, .. } => ChosenAccount::Waiting(reason),
-            AccountChoice::Picked { account, why } => ChosenAccount::Run(Box::new(RunSettings {
+            AccountChoice::Picked {
+                account,
+                why,
+                snapshot,
+            } => ChosenAccount::Run(Box::new(RunSettings {
                 account: Some(account.id),
                 account_why: Some(why),
+                usage_at_start: Some(snapshot),
                 ..run
             })),
         })

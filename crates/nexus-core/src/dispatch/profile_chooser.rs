@@ -261,6 +261,7 @@ impl<'a> ProfileChooser<'a> {
             accounts_from: None,
             account: None,
             account_why: None,
+            usage_at_start: None,
         };
         if let Some(model) = &labels.model {
             if normalizer
@@ -366,6 +367,7 @@ impl<'a> ProfileChooser<'a> {
             accounts_from: None,
             account: None,
             account_why: None,
+            usage_at_start: None,
         };
         let from = format!("Profil {}", run.profile);
         allow(&mut run, base.accounts.as_deref(), &from);

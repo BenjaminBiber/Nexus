@@ -17,7 +17,7 @@ use crate::dispatch::state::{
     RunRecord, RunState, RunStore, RUN_LOG_OUTPUT_MARKER,
 };
 use crate::dispatch::types::{RunResult, TestRun};
-use crate::dispatch::RunSettings;
+use crate::dispatch::{RunSettings, UsageSnapshot};
 use crate::registry::HarnessHome;
 use crate::test_support::make_temp_dir;
 
@@ -45,6 +45,7 @@ fn run_settings() -> RunSettings {
         accounts_from: None,
         account: None,
         account_why: None,
+        usage_at_start: None,
     }
 }
 
@@ -558,6 +559,39 @@ fn run_log_splitter_kommt_mit_crlf_zurecht() {
             body: "09:00:01  B\r\n".to_string(),
         }
     );
+}
+
+#[test]
+fn ein_lauf_ohne_usage_at_start_laesst_sich_lesen() {
+    let alt = json!({
+        "model": "opus",
+        "effort": "high",
+        "maxTurns": 80,
+        "timeoutMinutes": 90,
+        "profile": "standard",
+        "why": "x",
+        "account": "standard"
+    });
+    let run: RunSettings = serde_json::from_value(alt).unwrap();
+    assert_eq!(run.usage_at_start, None);
+    // Ohne Wert wird das Feld auch nicht geschrieben
+    assert!(serde_json::to_value(&run)
+        .unwrap()
+        .get("usageAtStart")
+        .is_none());
+
+    let neu = RunSettings {
+        usage_at_start: Some(UsageSnapshot {
+            five_hour: Some(40),
+            seven_day: Some(12),
+            five_hour_resets_at: None,
+            seven_day_resets_at: None,
+        }),
+        ..run
+    };
+    let value = serde_json::to_value(&neu).unwrap();
+    assert_eq!(value["usageAtStart"]["fiveHour"], json!(40));
+    assert_eq!(serde_json::from_value::<RunSettings>(value).unwrap(), neu);
 }
 
 /// Benutzerordner der Fixtures, die ein tsx-Skript aus den TS-Klassen geschrieben hat
