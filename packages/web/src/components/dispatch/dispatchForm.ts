@@ -62,6 +62,12 @@ export interface DispatchForm {
   accountStrategy: 'most-free' | 'order';
   /** Ab dieser Auslastung (Prozent) gilt ein Account als voll */
   accountLimit: string;
+  /** Reserve (Prozentpunkte) eines Laufs im 5-Stunden-Fenster */
+  accountReserveFiveHour: string;
+  /** Reserve (Prozentpunkte) eines Laufs in der Woche */
+  accountReserveWeek: string;
+  /** Minuten bis zur Rücksetzung des 5-Stunden-Fensters, ab denen die Reserve entfällt */
+  accountResetGrace: string;
   command: string;
   permissionMode: string;
   gitBashPath: string;
@@ -119,6 +125,9 @@ export function toForm(raw: RawDispatchConfigDto): DispatchForm {
     allowFable: raw.allowFable === true,
     accountStrategy: raw.accountStrategy === 'order' ? 'order' : 'most-free',
     accountLimit: text(raw.accountLimitPercent ?? 90),
+    accountReserveFiveHour: text(raw.accountReserveFiveHour ?? 10),
+    accountReserveWeek: text(raw.accountReserveWeek ?? 2),
+    accountResetGrace: text(raw.accountResetGraceMinutes ?? 30),
     command: raw.claude?.command ?? 'claude',
     permissionMode: text(raw.claude?.permissionMode),
     gitBashPath: text(raw.claude?.gitBashPath),
@@ -151,6 +160,9 @@ export function checkForm(form: DispatchForm): string | null {
     numberError('Versuche', form.maxAttempts, 1),
     numberError('Pause nach Limit (min)', form.pause, 1),
     numberError('Account voll ab (%)', form.accountLimit, 50, 100),
+    numberError('Reserve 5 Stunden (%)', form.accountReserveFiveHour, 0, 50),
+    numberError('Reserve Woche (%)', form.accountReserveWeek, 0, 50),
+    numberError('Ohne Reserve, wenn 5 h zurücksetzt in (min)', form.accountResetGrace, 0, 300),
     numberError('Gleichzeitige Recherchen', form.researchWip, 1, 5),
     numberError('Automatische Recherchen je Tag', form.researchMaxPerDay, 1),
     numberError('Gleichzeitige Planungen', form.planningWip, 1, 5),
@@ -284,6 +296,9 @@ export function toRaw(form: DispatchForm, base: RawDispatchConfigDto): RawDispat
     // Ohne Eintrag in der Datei und ohne Abweichung von den Vorgaben kommen keine Felder dazu
     ...(form.accountStrategy !== 'most-free' || base.accountStrategy !== undefined ? { accountStrategy: form.accountStrategy } : {}),
     ...(form.accountLimit.trim() !== '90' || base.accountLimitPercent !== undefined ? { accountLimitPercent: num(form.accountLimit) } : {}),
+    ...(form.accountReserveFiveHour.trim() !== '10' || base.accountReserveFiveHour !== undefined ? { accountReserveFiveHour: num(form.accountReserveFiveHour) } : {}),
+    ...(form.accountReserveWeek.trim() !== '2' || base.accountReserveWeek !== undefined ? { accountReserveWeek: num(form.accountReserveWeek) } : {}),
+    ...(form.accountResetGrace.trim() !== '30' || base.accountResetGraceMinutes !== undefined ? { accountResetGraceMinutes: num(form.accountResetGrace) } : {}),
     promptExtra: form.promptExtra,
     ...prompts(form, base),
     ...research(form, base),
