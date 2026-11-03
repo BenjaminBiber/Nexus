@@ -12,8 +12,8 @@ use nexus_core::accounts::{
 };
 use nexus_core::clock::Clock;
 use nexus_core::dispatch::{
-    AccountChoice, AccountChoiceInput, AccountChooser, DispatchConfig, DispatchStateStore,
-    RunSettings,
+    AccountChoice, AccountChoiceInput, AccountChooser, AccountReserve, DispatchConfig,
+    DispatchStateStore, RunSettings,
 };
 use nexus_core::HarnessHome;
 
@@ -156,6 +156,9 @@ impl AccountPool for StoredAccountPool {
             strategy: cfg.account_strategy,
             limit_percent: cfg.account_limit_percent,
             now,
+            reserve: AccountReserve::default(),
+            pending: BTreeMap::new(),
+            reset_grace_minutes: cfg.account_reset_grace_minutes,
         })
     }
 

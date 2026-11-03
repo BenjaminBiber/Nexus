@@ -7,10 +7,29 @@
 
 use std::collections::BTreeMap;
 
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Duration, Local, Utc};
 
 use crate::accounts::ClaudeAccount;
 use crate::dispatch::config::AccountStrategy;
+
+/// Erwarteter Verbrauch eines Laufs in Prozentpunkten je Fenster
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct AccountReserve {
+    /// Prozentpunkte im 5-Stunden-Fenster
+    pub five_hour: i64,
+    /// Prozentpunkte in der Woche
+    pub week: i64,
+}
+
+impl AccountReserve {
+    /// Summe zweier Reserven
+    pub fn plus(self, other: AccountReserve) -> AccountReserve {
+        AccountReserve {
+            five_hour: self.five_hour + other.five_hour,
+            week: self.week + other.week,
+        }
+    }
+}
 
 /// Was über einen Account beim Start bekannt ist; `None` = unbekannt (schließt nicht aus)
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -41,6 +60,12 @@ pub struct AccountChoiceInput<'a> {
     pub strategy: AccountStrategy,
     pub limit_percent: i64,
     pub now: DateTime<Utc>,
+    /// Erwarteter Verbrauch dieses Laufs
+    pub reserve: AccountReserve,
+    /// Noch ausstehender Verbrauch laufender Läufe je Account-ID
+    pub pending: BTreeMap<String, AccountReserve>,
+    /// Rücksetzung des 5-Stunden-Fensters innerhalb dieser Minuten: Reserve zählt dort nicht
+    pub reset_grace_minutes: i64,
 }
 
 /// Ergebnis der Wahl
@@ -259,23 +284,9 @@ fn excluded_reason(
         ));
     }
     if full.is_empty() {
-        return None;
+        return tight(account, state, input, five, week);
     }
-    // Frei erst, wenn jedes volle Fenster zurückgesetzt ist; fehlt eine Rücksetzzeit (oder liegt
-    // sie zurück), ist das Ende unbekannt
-    let known = full
-        .iter()
-        .all(|(_, resets_at)| resets_at.as_deref().is_some_and(|at| after(at, input.now)));
-    let until = if known {
-        let mut times: Vec<String> = full
-            .iter()
-            .filter_map(|(_, resets_at)| resets_at.clone())
-            .collect();
-        times.sort();
-        times.last().cloned()
-    } else {
-        None
-    };
+    let until = latest_reset(&full, input.now);
     let bis = match &until {
         Some(at) => format!(" bis {}", hhmm(at)),
         None => String::new(),
@@ -283,6 +294,69 @@ fn excluded_reason(
     Some(Excluded {
         reason: format!("voll ({}){bis}", full[0].0),
         until,
+    })
+}
+
+/// Frei erst, wenn jedes der Fenster zurückgesetzt ist: die späteste Rücksetzung; fehlt eine
+/// Rücksetzzeit (oder liegt sie zurück), ist das Ende unbekannt
+fn latest_reset(windows: &[(String, Option<String>)], now: DateTime<Utc>) -> Option<String> {
+    let known = windows
+        .iter()
+        .all(|(_, resets_at)| resets_at.as_deref().is_some_and(|at| after(at, now)));
+    if !known {
+        return None;
+    }
+    let mut times: Vec<String> = windows
+        .iter()
+        .filter_map(|(_, resets_at)| resets_at.clone())
+        .collect();
+    times.sort();
+    times.last().cloned()
+}
+
+/// Knapp: kein Fenster ist voll, aber Auslastung plus erwarteter Verbrauch (Reserve des Laufs
+/// und ausstehende Reserve laufender Läufe) überschreitet die Grenze. Das 5-Stunden-Fenster
+/// zählt nicht, wenn es sich innerhalb der Kulanz zurücksetzt; die Woche kennt keine Ausnahme.
+/// Unbekannte Auslastung schließt nie aus.
+fn tight(
+    account: &ClaudeAccount,
+    state: &AccountState,
+    input: &AccountChoiceInput<'_>,
+    five: i64,
+    week: i64,
+) -> Option<Excluded> {
+    let need = input
+        .reserve
+        .plus(input.pending.get(&account.id).copied().unwrap_or_default());
+    let grace_end = input.now + Duration::minutes(input.reset_grace_minutes);
+    let resets_soon = state
+        .five_hour_resets_at
+        .as_deref()
+        .is_some_and(|at| after(at, input.now) && !after(at, grace_end));
+    let mut tight: Vec<(String, Option<String>)> = Vec::new();
+    if let Some(used) = state.five_hour {
+        if need.five_hour > 0 && used + need.five_hour > five && !resets_soon {
+            tight.push((
+                format!(
+                    "5 h {used} % + {} % erwartet, Grenze {five} %",
+                    need.five_hour
+                ),
+                state.five_hour_resets_at.clone(),
+            ));
+        }
+    }
+    if let Some(used) = state.seven_day {
+        if need.week > 0 && used + need.week > week {
+            tight.push((
+                format!("Woche {used} % + {} % erwartet, Grenze {week} %", need.week),
+                state.seven_day_resets_at.clone(),
+            ));
+        }
+    }
+    let first = tight.first()?;
+    Some(Excluded {
+        reason: format!("knapp ({})", first.0),
+        until: latest_reset(&tight, input.now),
     })
 }
 
@@ -416,7 +490,36 @@ mod tests {
             strategy,
             limit_percent: 90,
             now: now(),
+            reserve: AccountReserve::default(),
+            pending: BTreeMap::new(),
+            reset_grace_minutes: 30,
         })
+    }
+
+    /// Wahl mit Reserve des Laufs, ausstehender Reserve und Ausnahme von 30 Minuten
+    fn choose_with_reserve(
+        accounts: &[ClaudeAccount],
+        states: BTreeMap<String, AccountState>,
+        reserve: AccountReserve,
+        pending: BTreeMap<String, AccountReserve>,
+    ) -> AccountChoice {
+        AccountChooser::new().choose(&AccountChoiceInput {
+            allowed_accounts: None,
+            accounts_from: None,
+            accounts,
+            states,
+            strategy: AccountStrategy::Order,
+            limit_percent: 90,
+            now: now(),
+            reserve,
+            pending,
+            reset_grace_minutes: 30,
+        })
+    }
+
+    /// `m` Minuten nach `NOW` als ISO-Text
+    fn in_minutes(m: i64) -> String {
+        crate::clock::iso(now() + Duration::minutes(m))
     }
 
     /// Die ID des gewählten Accounts
@@ -922,5 +1025,174 @@ mod tests {
             panic!("es sollte warten");
         };
         assert!(reason.contains("privat: voll (Woche 96 %, Grenze 95 %)"));
+    }
+
+    #[test]
+    fn knapp_schliesst_aus_wenn_verbrauch_plus_reserve_die_grenze_ueberschreitet() {
+        let accounts = vec![account("a")];
+        let choice = choose_with_reserve(
+            &accounts,
+            states(vec![(
+                "a",
+                AccountState {
+                    five_hour: Some(88),
+                    five_hour_resets_at: Some(at(2)),
+                    ..state()
+                },
+            )]),
+            AccountReserve {
+                five_hour: 10,
+                week: 0,
+            },
+            BTreeMap::new(),
+        );
+        let AccountChoice::Waiting { reason, resume_at } = choice else {
+            panic!("es sollte warten");
+        };
+        assert!(reason.contains("knapp (5 h 88 % + 10 % erwartet, Grenze 90 %)"));
+        assert_eq!(resume_at, Some(at(2)));
+    }
+
+    #[test]
+    fn bevorstehende_ruecksetzung_des_5_stunden_fensters_hebt_die_reserve_auf() {
+        let accounts = vec![account("a")];
+        let choice = choose_with_reserve(
+            &accounts,
+            states(vec![(
+                "a",
+                AccountState {
+                    five_hour: Some(88),
+                    five_hour_resets_at: Some(in_minutes(10)),
+                    ..state()
+                },
+            )]),
+            AccountReserve {
+                five_hour: 10,
+                week: 0,
+            },
+            BTreeMap::new(),
+        );
+        assert_eq!(picked(&choice), "a");
+    }
+
+    #[test]
+    fn die_woche_kennt_keine_ausnahme_bei_naher_ruecksetzung() {
+        let accounts = vec![account("a")];
+        let choice = choose_with_reserve(
+            &accounts,
+            states(vec![(
+                "a",
+                AccountState {
+                    seven_day: Some(88),
+                    seven_day_resets_at: Some(in_minutes(10)),
+                    ..state()
+                },
+            )]),
+            AccountReserve {
+                five_hour: 0,
+                week: 5,
+            },
+            BTreeMap::new(),
+        );
+        let AccountChoice::Waiting { reason, resume_at } = choice else {
+            panic!("es sollte warten");
+        };
+        assert!(reason.contains("knapp (Woche 88 % + 5 % erwartet, Grenze 90 %)"));
+        assert_eq!(resume_at, Some(in_minutes(10)));
+    }
+
+    #[test]
+    fn ausstehende_reserve_laufender_laeufe_wird_addiert() {
+        let accounts = vec![account("a")];
+        let pending = BTreeMap::from([(
+            "a".to_string(),
+            AccountReserve {
+                five_hour: 15,
+                week: 0,
+            },
+        )]);
+        let choice = choose_with_reserve(
+            &accounts,
+            states(vec![(
+                "a",
+                AccountState {
+                    five_hour: Some(70),
+                    five_hour_resets_at: Some(at(2)),
+                    ..state()
+                },
+            )]),
+            AccountReserve {
+                five_hour: 10,
+                week: 0,
+            },
+            pending,
+        );
+        let AccountChoice::Waiting { reason, .. } = choice else {
+            panic!("es sollte warten");
+        };
+        assert!(reason.contains("knapp (5 h 70 % + 25 % erwartet, Grenze 90 %)"));
+    }
+
+    #[test]
+    fn ein_knapper_account_wird_uebersprungen_und_der_freie_gewaehlt() {
+        let accounts = vec![account("erster"), account("zweiter")];
+        let choice = choose_with_reserve(
+            &accounts,
+            states(vec![
+                (
+                    "erster",
+                    AccountState {
+                        five_hour: Some(88),
+                        five_hour_resets_at: Some(at(2)),
+                        ..state()
+                    },
+                ),
+                (
+                    "zweiter",
+                    AccountState {
+                        five_hour: Some(20),
+                        ..state()
+                    },
+                ),
+            ]),
+            AccountReserve {
+                five_hour: 10,
+                week: 0,
+            },
+            BTreeMap::new(),
+        );
+        assert_eq!(picked(&choice), "zweiter");
+        assert!(why(&choice).contains("übersprungen erster: knapp (5 h 88 % + 10 % erwartet"));
+    }
+
+    #[test]
+    fn ohne_reserve_und_bei_unbekannter_auslastung_schliesst_knapp_nie_aus() {
+        let accounts = vec![account("a"), account("b")];
+        let choice = choose_with_reserve(
+            &accounts,
+            states(vec![
+                (
+                    "a",
+                    AccountState {
+                        five_hour: Some(89),
+                        ..state()
+                    },
+                ),
+                ("b", state()),
+            ]),
+            AccountReserve::default(),
+            BTreeMap::new(),
+        );
+        assert_eq!(picked(&choice), "a");
+        let choice = choose_with_reserve(
+            &accounts[1..],
+            states(vec![("b", state())]),
+            AccountReserve {
+                five_hour: 50,
+                week: 50,
+            },
+            BTreeMap::new(),
+        );
+        assert_eq!(picked(&choice), "b");
     }
 }
