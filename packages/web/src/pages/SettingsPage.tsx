@@ -48,7 +48,7 @@ export function SettingsPage() {
   const dispatchSub = active.id === 'dispatch' ? DISPATCH_SECTIONS.find((s) => s.id === subId) ?? DISPATCH_SECTIONS[0] : undefined;
 
   let content: ReactNode;
-  if (settings.state.status === 'loading' || projects.state.status === 'loading') content = <LoadingState variant="detail" text="Einstellungen werden geladen …" />;
+  if (settings.state.status === 'loading' || projects.state.status === 'loading') content = <LoadingState text="Einstellungen werden geladen …" />;
   else if (settings.state.status === 'error') content = <ErrorState message={settings.state.message} onRetry={settings.retry} />;
   else if (projects.state.status === 'error') content = <ErrorState message={projects.state.message} onRetry={projects.retry} />;
   else {

@@ -268,7 +268,7 @@ export function DbBoardPage() {
           <p>Über den Stift neben der Board-Auswahl ein Board anlegen.</p>
         </div>
       )}
-      {showsActive && active?.boardId != null && board.view.state.status === 'loading' && <LoadingState variant="board" text="Board wird geladen …" />}
+      {showsActive && active?.boardId != null && board.view.state.status === 'loading' && <LoadingState text="Board wird geladen …" />}
       {board.view.state.status === 'error' && <ErrorState message={board.view.state.message} onRetry={board.view.retry} />}
       {view && showsActive && (
         <div className="columns db-columns" style={{ '--db-column-count': shownColumns.length } as CSSProperties}>

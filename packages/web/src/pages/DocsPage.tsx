@@ -141,7 +141,7 @@ export function DocsPage() {
     <DocsBoardSwitcher boards={boards} shown={shown} all={selection === 'all'} onAll={toggleAll} onToggle={toggleBoard} />
   );
 
-  if (docs.state.status === 'loading') return <div className="page"><LoadingState variant="doc" text="Dokumente werden geladen …" /></div>;
+  if (docs.state.status === 'loading') return <div className="page"><LoadingState text="Dokumente werden geladen …" /></div>;
   if (docs.state.status === 'error') return <ErrorState message={docs.state.message} onRetry={docs.retry} />;
   if (source?.reason && foreignIds.length === 0) {
     const reason = source.reason;
@@ -163,7 +163,7 @@ export function DocsPage() {
     );
   }
   if (list.length === 0) {
-    if (foreign.state.status === 'loading') return <div className="page">{switcher}<LoadingState variant="doc" text="Dokumente werden geladen …" /></div>;
+    if (foreign.state.status === 'loading') return <div className="page">{switcher}<LoadingState text="Dokumente werden geladen …" /></div>;
     return (
       <div className="page">
         {switcher}

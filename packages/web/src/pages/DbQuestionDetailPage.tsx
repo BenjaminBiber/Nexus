@@ -67,7 +67,7 @@ function DbQuestionDetail() {
       </div>
     );
   }
-  if (q.state.status === 'loading') return <div className="page"><LoadingState variant="detail" text="Frage wird geladen …" /></div>;
+  if (q.state.status === 'loading') return <div className="page"><LoadingState text="Frage wird geladen …" /></div>;
   if (q.state.status === 'error') {
     return (
       <div className="page">

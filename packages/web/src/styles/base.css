@@ -233,19 +233,11 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
 .state.empty svg { color: var(--line-strong); }
 .state.empty h2 { color: var(--text); font-size: 16px; }
 .state.empty p { max-width: 36ch; margin: 0; }
-.state.loading { align-items: stretch; text-align: left; }
-/* Platzhalter: ruhiger Schimmer, bei reduzierter Bewegung statisch */
-.sk { display: block; max-width: 100%; background: linear-gradient(90deg, var(--sk-base) 30%, var(--sk-shine) 50%, var(--sk-base) 70%) 0 0 / 300% 100%; border-radius: 8px; animation: sk-shimmer 1.4s ease-in-out infinite; }
-.sk.round { border-radius: 999px; }
-@keyframes sk-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
-@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
-.sk-caption { align-self: center; font-size: 12px; }
-.sk-list { gap: 0; padding: 4px 20px; }
-.sk-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line-soft); }
-.sk-row:first-child { border-top: 0; }
-.sk-grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.sk-doc { display: flex; flex-direction: column; gap: 12px; padding-top: 32px; }
-.toc .sk { margin: 8px 12px; }
+/* Ladezustand: animiertes „N“ (schwarz auf transparent) zentriert in der freien Fläche; auf dunklem Grund hell */
+.state.loading { flex: 1; justify-content: center; min-height: min(40vh, 320px); }
+.loader-n { width: 96px; height: 96px; }
+[data-theme='dark'] .loader-n { filter: invert(1); }
+.loader-caption { font-size: 12px; }
 .code { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 4px 6px 4px 16px; background: var(--code-bg); color: var(--code-fg); border-radius: var(--radius-control); font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
 .code::before { content: '$'; color: var(--code-muted); }
 .code > span { flex: 1; overflow-wrap: anywhere; }

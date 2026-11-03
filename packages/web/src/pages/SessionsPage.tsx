@@ -4,7 +4,7 @@ import type { SessionDto } from '../api/types.js';
 import { CopyCommand } from '../components/CopyCommand.js';
 import { EmptyState } from '../components/EmptyState.js';
 import { ErrorState } from '../components/ErrorState.js';
-import { SessionsSkeleton } from '../components/skeleton/SessionsSkeleton.js';
+import { LoadingState } from '../components/LoadingState.js';
 import { DEFAULT_STATE_FILTER, SessionFilter, type StateFilter } from '../components/SessionFilter.js';
 import { SessionGroup } from '../components/SessionGroup.js';
 import { FavoritesPanel } from '../components/FavoritesPanel.js';
@@ -102,7 +102,7 @@ export function SessionsPage() {
     }
   };
 
-  if (state.status === 'loading') return <SessionsSkeleton />;
+  if (state.status === 'loading') return <div className="page"><LoadingState text="Sessions werden geladen …" /></div>;
   if (state.status === 'error') return <ErrorState message={state.message} onRetry={retry} />;
 
   return (

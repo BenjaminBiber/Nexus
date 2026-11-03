@@ -149,7 +149,7 @@ export function QuestionDraftDialog({ pid, path, result, created, creating, erro
         </div>
       )}
       <footer className="draft-foot">
-        {creating && <LoadingState variant="detail" text="Fragen werden angelegt …" />}
+        {creating && <LoadingState text="Fragen werden angelegt …" />}
         {error && <p role="alert" className="error">{error}</p>}
         {confirmClose && !created ? (
           <div role="alertdialog" aria-labelledby="question-drafts-close" className="conflict doc-tickets-again">

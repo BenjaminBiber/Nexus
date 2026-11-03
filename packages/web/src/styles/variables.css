@@ -65,8 +65,6 @@
   /* Ring über der Grenze eines Accounts (Seitenleiste) */
   --usage-over: #f59e0b;
   --row-waiting-bg: #fffcf2;
-  --sk-base: #ececf0;
-  --sk-shine: #f6f6f8;
   --quote-line: #a5b4fc;
   --mark: #fef08a;
   --mark-comment: #e0e7ff;
@@ -199,8 +197,6 @@
   --usage-crit: #f472b6;
   --usage-over: #f59e0b;
   --row-waiting-bg: #1f1a0d;
-  --sk-base: #1f1f24;
-  --sk-shine: #2a2a31;
   --quote-line: #6366f1;
   --mark: #5c4a0f;
   --mark-comment: #23264f;
@@ -291,8 +287,6 @@
   --unread-fg: #155e75;
   --unread-bg: #e0f4f8;
   --unread-row-bg: #f2fafc;
-  --sk-base: #e5eaf0;
-  --sk-shine: #f3f6f9;
   --quote-line: #67c3d6;
   --mark-comment: #d5f0f6;
   --mark-comment-hover: #b4e4ee;
@@ -383,8 +377,6 @@
   --usage-warn: #ea9d34;
   --usage-crit: #b4637a;
   --row-waiting-bg: #fcf5e8;
-  --sk-base: #efe5db;
-  --sk-shine: #f8f1ea;
   --quote-line: #c4a7e7;
   --mark: #f6e3b4;
   --mark-comment: #ece2f5;
@@ -507,8 +499,6 @@
   --usage-warn: #808000;
   --usage-crit: #800000;
   --row-waiting-bg: #ffffe1;
-  --sk-base: #c0c0c0;
-  --sk-shine: #dfdfdf;
   --quote-line: #000080;
   --mark: #ffff00;
   --mark-comment: #00ffff;

@@ -280,7 +280,7 @@ export function DocViewer({ pid, path, doc, term, root = null, board }: { pid: s
   };
 
   if (missing) return <EmptyState title="Diese Datei existiert nicht mehr." />;
-  if (loaded.state.status === 'loading') return <LoadingState variant="doc" text="Dokument wird geladen …" />;
+  if (loaded.state.status === 'loading') return <LoadingState text="Dokument wird geladen …" />;
   if (loaded.state.status === 'error') return <ErrorState message={loaded.state.message} onRetry={loaded.retry} />;
   return (
     <div className="doc-layout" ref={layoutRef}>

@@ -35,7 +35,7 @@ export function ReviseDialog({ quote, running, result, error, saving, onRequest,
         <strong>Mit Claude ändern</strong>
       </div>
       <blockquote className="doc-comment-draft-quote">{quote}</blockquote>
-      {running && <LoadingState variant="detail" text="Claude arbeitet – das kann bis zu 5 Minuten dauern" />}
+      {running && <LoadingState text="Claude arbeitet – das kann bis zu 5 Minuten dauern" />}
       {!running && result && (
         <>
           <LineDiffView original={result.original} proposal={proposal} />

@@ -71,7 +71,7 @@ export function AccountsPanel() {
   };
 
   let body;
-  if (loaded.state.status === 'loading') body = <LoadingState variant="detail" text="Accounts werden geladen …" />;
+  if (loaded.state.status === 'loading') body = <LoadingState text="Accounts werden geladen …" />;
   else if (loaded.state.status === 'error') body = <ErrorState message={loaded.state.message} onRetry={loaded.retry} />;
   else {
     const list = loaded.state.data;

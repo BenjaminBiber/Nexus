@@ -348,7 +348,7 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
             </div>
           </div>
         )}
-        {t.state.status === 'loading' && <LoadingState variant="detail" text="Ticket wird geladen …" />}
+        {t.state.status === 'loading' && <LoadingState text="Ticket wird geladen …" />}
         {t.state.status === 'error' && <ErrorState message={t.state.message} onRetry={t.retry} />}
         {ticket && drafts && (
           <div className="db-panel-body">
