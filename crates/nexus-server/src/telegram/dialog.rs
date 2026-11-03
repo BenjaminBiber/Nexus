@@ -24,6 +24,10 @@ pub enum DialogKind {
     ReturnFeedback,
     /// Kommentar an ein Ticket
     Comment,
+    /// Eigener Text als Entscheidung einer Frage
+    QuestionText,
+    /// Begründung, mit der eine Frage verworfen wird (Pflicht)
+    QuestionDiscard,
 }
 
 /// Die Antwort auf einen Dialog. Eine Sprachnachricht kommt später als Transkript
@@ -46,8 +50,8 @@ impl DialogInput {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dialog {
     pub kind: DialogKind,
-    /// Ticket, um das es geht
-    pub ticket: String,
+    /// Ticket oder Frage, um das bzw. die es geht
+    pub target: String,
     /// Seit wann der Dialog wartet
     pub since: DateTime<Utc>,
 }
@@ -88,10 +92,10 @@ impl Dialogs {
 
     /// Öffnet einen Dialog; ein noch offener desselben Chats wird verdrängt und
     /// zurückgegeben
-    pub fn open(&self, chat_id: i64, kind: DialogKind, ticket: &str) -> Option<Dialog> {
+    pub fn open(&self, chat_id: i64, kind: DialogKind, target: &str) -> Option<Dialog> {
         let dialog = Dialog {
             kind,
-            ticket: ticket.to_string(),
+            target: target.to_string(),
             since: self.clock.now(),
         };
         let replaced = self.chats().insert(chat_id, dialog);
@@ -156,7 +160,7 @@ mod tests {
             dialogs.take(42),
             DialogAnswer::Open(Dialog {
                 kind: DialogKind::Comment,
-                ticket: "NXS-0042".into(),
+                target: "NXS-0042".into(),
                 since: START.parse().expect("Zeitpunkt"),
             })
         );
@@ -177,11 +181,11 @@ mod tests {
         let DialogAnswer::Open(zweiter) = dialogs.take(99) else {
             panic!("der zweite Chat wartet");
         };
-        assert_eq!(zweiter.ticket, "NXS-0007");
+        assert_eq!(zweiter.target, "NXS-0007");
         let DialogAnswer::Open(erster) = dialogs.take(42) else {
             panic!("der erste Chat wartet weiter");
         };
-        assert_eq!(erster.ticket, "NXS-0042");
+        assert_eq!(erster.target, "NXS-0042");
     }
 
     #[test]
@@ -192,7 +196,7 @@ mod tests {
         let verdraengt = dialogs.open(42, DialogKind::ReturnFeedback, "NXS-0007");
 
         assert_eq!(
-            verdraengt.map(|dialog| dialog.ticket),
+            verdraengt.map(|dialog| dialog.target),
             Some("NXS-0042".into())
         );
         let DialogAnswer::Open(dialog) = dialogs.take(42) else {
@@ -227,7 +231,7 @@ mod tests {
 
         dialogs.open(42, DialogKind::Comment, "NXS-0042");
         assert_eq!(
-            dialogs.cancel(42).map(|dialog| dialog.ticket),
+            dialogs.cancel(42).map(|dialog| dialog.target),
             Some("NXS-0042".into())
         );
         assert_eq!(dialogs.take(42), DialogAnswer::None);

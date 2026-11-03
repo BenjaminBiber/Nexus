@@ -27,12 +27,12 @@ use nexus_core::Result;
 use crate::state::AppState;
 use crate::telegram::action_views::{
     accept_question, dialog_message, diff_message, done_message, hint_message, merge_question,
-    reason_message, via_telegram, DIALOG_CANCELLED, DIALOG_EXPIRED, NOTHING_CHANGED, NO_DIALOG,
+    reason_message, via_telegram, DIALOG_CANCELLED, NOTHING_CHANGED, NO_DIALOG,
 };
-use crate::telegram::api::{InlineKeyboard, Message};
+use crate::telegram::api::InlineKeyboard;
 use crate::telegram::commands::{report, Deps};
-use crate::telegram::dialog::{Dialog, DialogAnswer, DialogInput, DialogKind, Dialogs};
-use crate::telegram::router::{BotContext, CallbackHandler, CommandHandler, MessageHandler};
+use crate::telegram::dialog::{Dialog, DialogInput, DialogKind, Dialogs};
+use crate::telegram::router::{BotContext, CallbackHandler, CommandHandler};
 
 /// Die Knöpfe der Aufgaben und die Antworten auf ihre Dialoge
 pub(crate) struct Actions {
@@ -234,6 +234,8 @@ impl Actions {
             DialogKind::ReturnFeedback => &[InboxKind::Accept, InboxKind::Blocked],
             // Ein Kommentar passt in jedem Zustand; nur geben muss es das Ticket
             DialogKind::Comment => &[],
+            // Die Dialoge der Fragen macht [`super::questions`] auf
+            DialogKind::QuestionText | DialogKind::QuestionDiscard => &[],
         };
         let detail = match self.ticket(ctx, query_id, &state, id, allowed).await? {
             Some(detail) => detail,
@@ -258,7 +260,7 @@ impl Actions {
             return ctx.reply(&hint_message(EMPTY_ANSWER)).await;
         }
         let state = self.deps.state()?;
-        let detail = match ticket_detail(&state, &dialog.ticket).await {
+        let detail = match ticket_detail(&state, &dialog.target).await {
             Ok(detail) => detail,
             Err(error) => return report(ctx, &error).await,
         };
@@ -323,6 +325,11 @@ impl Actions {
                 },
                 _ => ctx.reply(&hint_message(&stale(&id, RETURN))).await,
             },
+            // Die Dialoge der Fragen beantwortet [`super::questions`]; der Verteiler in
+            // [`super`] gibt sie nie hierher
+            DialogKind::QuestionText | DialogKind::QuestionDiscard => {
+                ctx.reply(&hint_message(OTHER_DIALOG)).await
+            }
         }
     }
 
@@ -487,28 +494,6 @@ impl CallbackHandler for Actions {
     }
 }
 
-#[async_trait]
-impl MessageHandler for Actions {
-    async fn run(&self, ctx: &BotContext, message: &Message) -> Result<bool> {
-        // Sprachnachrichten nimmt ein späteres Ticket an; der Dialog bleibt bis dahin offen
-        let Some(text) = message.text.as_deref() else {
-            return Ok(false);
-        };
-        match self.dialogs.take(ctx.chat_id) {
-            DialogAnswer::None => Ok(false),
-            DialogAnswer::Expired(_) => {
-                ctx.reply(DIALOG_EXPIRED).await?;
-                Ok(true)
-            }
-            DialogAnswer::Open(dialog) => {
-                self.submit(ctx, &dialog, DialogInput::Text(text.to_string()))
-                    .await?;
-                Ok(true)
-            }
-        }
-    }
-}
-
 /// Der Befehl `/abbrechen`: beendet den offenen Dialog
 #[derive(Debug)]
 pub(crate) struct CancelCommand(pub(crate) Arc<Dialogs>);
@@ -528,6 +513,9 @@ type Question = fn(&str) -> (String, InlineKeyboard);
 
 /// Antwort auf eine Antwort ohne Inhalt
 const EMPTY_ANSWER: &str = "Da war kein Text dabei – nichts gespeichert.";
+
+/// Antwort auf einen Dialog, der nicht zu einem Ticket gehört
+const OTHER_DIALOG: &str = "Dieser Dialog gehört nicht zu einem Ticket – nichts gespeichert.";
 
 /// Was ein Knopf erwartet, für den Hinweis „… wartet nicht mehr auf …“
 const ACCEPT: &str = "eine Abnahme";
@@ -569,7 +557,7 @@ async fn ticket_detail(state: &Arc<AppState>, id: &str) -> Result<TicketDetail> 
 
 /// Beantwortet den Knopfdruck, damit er beim Nutzer aufhört zu drehen; mit `hint` als
 /// Hinweisfenster
-async fn answer(ctx: &BotContext, query_id: &str, hint: Option<&str>) -> Result<()> {
+pub(crate) async fn answer(ctx: &BotContext, query_id: &str, hint: Option<&str>) -> Result<()> {
     ctx.api
         .answer_callback_query(query_id, hint, hint.is_some())
         .await

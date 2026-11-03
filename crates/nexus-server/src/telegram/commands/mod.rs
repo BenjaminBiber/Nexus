@@ -10,18 +10,22 @@
 mod actions;
 mod board;
 mod control;
+mod questions;
 mod status;
 mod tasks;
 mod ticket;
 
 use std::sync::{Arc, Weak};
 
+use async_trait::async_trait;
 use nexus_core::clock::Clock;
 use nexus_core::{HarnessError, Result};
 
 use crate::state::AppState;
-use crate::telegram::dialog::Dialogs;
-use crate::telegram::router::{BotContext, UpdateRouter};
+use crate::telegram::action_views::DIALOG_EXPIRED;
+use crate::telegram::api::Message;
+use crate::telegram::dialog::{DialogAnswer, DialogInput, DialogKind, Dialogs};
+use crate::telegram::router::{BotContext, MessageHandler, UpdateRouter};
 
 /// Die Befehle samt Beschreibung für `/hilfe` und `setMyCommands`, in dieser Reihenfolge
 pub const COMMANDS: &[(&str, &str)] = &[
@@ -76,10 +80,52 @@ pub fn register(router: &mut UpdateRouter, state: &Weak<AppState>, clock: Clock)
     );
     router.register_callback(Arc::new(board::BoardButton(deps.clone())));
     router.register_callback(Arc::new(tasks::MoreButton(deps.clone())));
-    // Die Knöpfe der Aufgaben beantworten auch die Texte ihrer Dialoge
-    let actions = Arc::new(actions::Actions::new(deps, dialogs));
+    let actions = Arc::new(actions::Actions::new(deps.clone(), dialogs.clone()));
+    let questions = Arc::new(questions::Questions::new(deps, dialogs.clone()));
     router.register_callback(actions.clone());
-    router.register_message(actions);
+    router.register_callback(questions.clone());
+    // Die Texte der Dialoge nimmt genau ein Handler ab und gibt sie weiter
+    router.register_message(Arc::new(DialogAnswers {
+        dialogs,
+        actions,
+        questions,
+    }));
+}
+
+/// Nimmt die Antwort auf den offenen Dialog eines Chats ab und gibt sie an den Handler, der
+/// ihn aufgemacht hat. Höchstens ein Dialog je Chat, deshalb nimmt ihn auch nur einer ab.
+struct DialogAnswers {
+    dialogs: Arc<Dialogs>,
+    actions: Arc<actions::Actions>,
+    questions: Arc<questions::Questions>,
+}
+
+#[async_trait]
+impl MessageHandler for DialogAnswers {
+    async fn run(&self, ctx: &BotContext, message: &Message) -> Result<bool> {
+        // Sprachnachrichten nimmt ein späteres Ticket an; der Dialog bleibt bis dahin offen
+        let Some(text) = message.text.as_deref() else {
+            return Ok(false);
+        };
+        let dialog = match self.dialogs.take(ctx.chat_id) {
+            DialogAnswer::None => return Ok(false),
+            DialogAnswer::Expired(_) => {
+                ctx.reply(DIALOG_EXPIRED).await?;
+                return Ok(true);
+            }
+            DialogAnswer::Open(dialog) => dialog,
+        };
+        let input = DialogInput::Text(text.to_string());
+        match dialog.kind {
+            DialogKind::QuestionText | DialogKind::QuestionDiscard => {
+                self.questions.submit(ctx, &dialog, input).await?
+            }
+            DialogKind::Comment | DialogKind::ReturnFeedback => {
+                self.actions.submit(ctx, &dialog, input).await?
+            }
+        }
+        Ok(true)
+    }
 }
 
 /// Die Beschreibung eines Befehls aus [`COMMANDS`]

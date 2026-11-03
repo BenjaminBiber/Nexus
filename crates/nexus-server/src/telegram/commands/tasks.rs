@@ -4,6 +4,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use nexus_core::board::inbox::order::InboxOrder;
 use nexus_core::board::inbox::order_file::InboxOrderFile;
 use nexus_core::board::inbox::service::{InboxFilter, InboxService};
@@ -14,7 +15,9 @@ use nexus_core::Result;
 use crate::board_db::ServerBoardDatabase;
 use crate::state::AppState;
 use crate::telegram::api::{InlineButton, InlineKeyboard};
+use crate::telegram::commands::questions::question_detail;
 use crate::telegram::commands::{report, Deps};
+use crate::telegram::question_views::question_message;
 use crate::telegram::router::{BotContext, CallbackHandler, CommandHandler};
 use crate::telegram::views::{
     inbox_item_message, more_keyboard, more_page_title, no_more_items, remaining_per_kind,
@@ -131,7 +134,10 @@ async fn send_page(
     let keyboard = more_keyboard(remaining, next_page);
     let last = items.len().saturating_sub(1);
     for (index, item) in items.iter().enumerate() {
-        let (text, own) = inbox_item_message(item, now);
+        let (text, own) = match question_message_of(state, item, now).await {
+            Some(question) => question,
+            None => inbox_item_message(item, now),
+        };
         // „Mehr“ hängt unter dem letzten Eintrag, unter dessen eigenen Knöpfen
         let below = match index == last {
             true => keyboard.clone(),
@@ -143,6 +149,24 @@ async fn send_page(
         }
     }
     Ok(())
+}
+
+/// Die Nachricht einer offenen Frage samt ihren Knöpfen (Optionen der neuesten Recherche,
+/// Freitext, Recherche, Verwerfen). `None` bei jedem anderen Eintrag und auch dann, wenn die
+/// Frage gerade nicht lesbar ist – dann steht der Eintrag wie bisher ohne Knöpfe da
+async fn question_message_of(
+    state: &Arc<AppState>,
+    item: &InboxItem,
+    now: DateTime<Utc>,
+) -> Option<(String, Option<InlineKeyboard>)> {
+    if item.kind != InboxKind::Question {
+        return None;
+    }
+    let detail = question_detail(state, item.question_id.as_deref()?)
+        .await
+        .ok()?;
+    let (text, keyboard) = question_message(&detail, now);
+    Some((text, Some(keyboard)))
 }
 
 /// Legt zwei Tastaturen untereinander; ohne beide gibt es keine
