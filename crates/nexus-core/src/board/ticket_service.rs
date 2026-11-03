@@ -298,7 +298,7 @@ impl<D: BoardDatabase> TicketService<D> {
         let id = id.to_string();
         tx!(self.db, [id], |u| {
             let ticket = load(u, &id, None, false).await?;
-            detail(u, &ticket.id).await
+            detail_of(u, ticket).await
         })
         .await
     }
@@ -1073,11 +1073,17 @@ pub async fn detail(u: &mut dyn BoardUnitOfWork, id: &str) -> Result<TicketDetai
         .by_id(id, false)
         .await?
         .ok_or_else(|| Error::unexpected_message(format!("Ticket {id} fehlt")))?;
+    detail_of(u, ticket).await
+}
+
+/// Detailfassung eines schon gelesenen Tickets; spart das erneute Lesen
+pub async fn detail_of(u: &mut dyn BoardUnitOfWork, ticket: Ticket) -> Result<TicketDetail> {
+    let id = ticket.id.clone();
     Ok(TicketDetail {
         view: view(u, ticket).await?,
-        comments: u.comments().list(id).await?,
-        history: u.history().list(id).await?,
-        steps: u.steps().list(id).await?,
+        comments: u.comments().list(&id).await?,
+        history: u.history().list(&id).await?,
+        steps: u.steps().list(&id).await?,
     })
 }
 

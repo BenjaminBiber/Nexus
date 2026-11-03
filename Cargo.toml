@@ -94,3 +94,9 @@ lto = "fat"
 codegen-units = 1
 strip = true
 panic = "abort"
+
+# Entwicklungsprofil: fremde Crates (SQL-Treiber, TLS, JSON) optimiert, die eigenen bleiben
+# schnell übersetzt und gut zu debuggen. Ohne das ist jeder Server-Aufruf in `tauri dev` etwa
+# dreimal so langsam wie im Release-Build.
+[profile.dev.package."*"]
+opt-level = 2
