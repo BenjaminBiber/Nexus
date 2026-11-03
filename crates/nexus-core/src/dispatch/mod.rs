@@ -33,7 +33,9 @@ pub mod time_window;
 pub mod types;
 
 pub use abort_reason::{AbortCategory, AbortReasonClassifier, ABORT_CATEGORIES};
-pub use account_chooser::{hhmm, AccountChoice, AccountChoiceInput, AccountChooser, AccountState};
+pub use account_chooser::{
+    hhmm, AccountChoice, AccountChoiceInput, AccountChooser, AccountReserve, AccountState,
+};
 pub use account_references::AccountReferences;
 pub use attempts::{limit_account, AttemptCounter};
 pub use comments::CommentLike;
