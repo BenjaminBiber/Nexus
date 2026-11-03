@@ -392,8 +392,8 @@ fn bot_router(
     weak: &std::sync::Weak<AppState>,
     clock: nexus_core::clock::Clock,
 ) -> crate::telegram::UpdateRouter {
-    let mut router = crate::telegram::UpdateRouter::with_clock(clock);
-    crate::telegram::commands::register(&mut router, weak);
+    let mut router = crate::telegram::UpdateRouter::with_clock(clock.clone());
+    crate::telegram::commands::register(&mut router, weak, clock);
     router
 }
 

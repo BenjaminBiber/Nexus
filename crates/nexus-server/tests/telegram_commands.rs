@@ -436,9 +436,16 @@ async fn aufgaben_listet_hoechstens_zehn_eintraege_mit_knopf_mehr() {
         "{}",
         nachrichten[0]
     );
+    // Unter dem letzten Eintrag hängen seine eigenen Knöpfe und darunter „Mehr“
+    let knoepfe = bot.buttons();
+    assert_eq!(knoepfe.len(), 3, "{knoepfe:?}");
+    assert_eq!(knoepfe[0].0, "Ticket daraus");
+    assert!(knoepfe[0].1.starts_with("ntt:"), "{knoepfe:?}");
+    assert_eq!(knoepfe[1].0, "Verwerfen");
+    assert!(knoepfe[1].1.starts_with("ndr:"), "{knoepfe:?}");
     assert_eq!(
-        bot.buttons(),
-        vec![("Mehr: Notiz (2)".to_string(), "mo:note:2".to_string())]
+        knoepfe[2],
+        ("Mehr: Notiz (2)".to_string(), "mo:note:2".to_string())
     );
 
     // Der Knopf zeigt die restlichen zwei und bietet kein weiteres „Mehr“ an
@@ -451,7 +458,13 @@ async fn aufgaben_listet_hoechstens_zehn_eintraege_mit_knopf_mehr() {
         "eine Kopfzeile und zwei Einträge: {weitere:?}"
     );
     assert!(weitere[0].contains("Notiz – Seite 2"), "{}", weitere[0]);
-    assert!(bot.buttons().is_empty(), "{:?}", bot.buttons());
+    assert!(
+        !bot.buttons()
+            .iter()
+            .any(|(_, data)| data.starts_with("mo:")),
+        "kein weiteres „Mehr“: {:?}",
+        bot.buttons()
+    );
 }
 
 #[tokio::test]
@@ -572,7 +585,17 @@ async fn meldet_die_befehle_fuer_das_telegram_menue() {
     let namen: Vec<&str> = liste.iter().map(|(name, _)| name.as_str()).collect();
     assert_eq!(
         namen,
-        vec!["start", "hilfe", "status", "board", "ticket", "aufgaben", "pause", "weiter"]
+        vec![
+            "start",
+            "hilfe",
+            "status",
+            "board",
+            "ticket",
+            "aufgaben",
+            "pause",
+            "weiter",
+            "abbrechen"
+        ]
     );
     assert!(liste.iter().all(|(_, text)| !text.is_empty()));
 }
