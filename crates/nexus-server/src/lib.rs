@@ -69,6 +69,7 @@ impl ServerHandle {
         self.state.shutdown.cancel();
         // Vor dem Abbau der Board-Laufzeit anhalten, damit kein Durchlauf sie neu aufbaut
         self.state.dispatch_scheduler.stop().await;
+        self.state.telegram.stop().await;
         self.state.db_questions.stop();
         // Ausstehende Änderungen der Sessions landen noch in `sessions.json`
         self.state.sessions.close().await;
@@ -180,6 +181,9 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
         .dispatch_scheduler
         .start_with(dispatch_gate(info.clone(), state.pid))
         .await;
+    // Der Telegram-Bot pollt nur, wenn `telegram.yaml` ihn einschaltet; sonst ruht er, bis
+    // die Einstellung gespeichert wird
+    state.telegram.start(state.shutdown.clone()).await;
 
     let router = routes::build_router(state.clone());
     let shutdown = state.shutdown.clone();

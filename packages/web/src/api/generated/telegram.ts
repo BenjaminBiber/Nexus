@@ -31,6 +31,32 @@ brand: boolean,
 applied: AppliedProfile | null, };
 
 /**
+ * Woran der Poller gerade ist
+ */
+export type BotState = "off" | "starting" | "running" | "conflict" | "tokenInvalid" | "error";
+
+/**
+ * Stand des Bots samt letztem Fehler
+ */
+export type BotStatus = { state: BotState, 
+/**
+ * Benutzername des Bots aus `getMe` (ohne @); null = noch nicht gefragt
+ */
+botName: string | null, 
+/**
+ * Bot-ID aus `getMe`; null = noch nicht gefragt
+ */
+botId: number | null, 
+/**
+ * Zeitpunkt des letzten verarbeiteten Updates (ISO); null = noch keines
+ */
+lastUpdateAt: string | null, 
+/**
+ * Letzter Fehler in Worten; null = keiner seit dem letzten Erfolg
+ */
+lastError: string | null, };
+
+/**
  * Erfassen von Ideen über den Bot
  */
 export type IdeaSettings = { 

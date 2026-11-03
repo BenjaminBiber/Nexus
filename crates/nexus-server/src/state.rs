@@ -38,6 +38,7 @@ use crate::notifications::{
 };
 use crate::projects::ProjectService;
 use crate::sessions::{SessionService, TicketInfoLookup, TicketSummaries};
+use crate::telegram::TelegramBot;
 use nexus_core::accounts::{AccountPaths, AccountStore, AccountTokenStore};
 use nexus_core::dispatch::UsageHistory;
 
@@ -96,6 +97,9 @@ pub struct AppState {
     pub notifications: Arc<NotificationService>,
     /// Beobachtet die offenen eigenen Fragen der Board-Datenbank
     pub db_questions: Arc<DbQuestionWatch>,
+    /// Der Telegram-Bot: Poller, Kopplung und Stand. [`crate::serve`] startet ihn, das
+    /// Herunterfahren hält ihn an
+    pub telegram: Arc<TelegramBot>,
     /// Wird beim Beenden ausgelöst; eigene und durchgeleitete Ereignisströme enden daran
     pub shutdown: CancellationToken,
     /// Prozessnummer, wie `GET /api/health` sie meldet
@@ -353,6 +357,9 @@ impl AppState {
                 notifications.clone(),
                 config.db_question_poll_ms,
             ),
+            // Der Bot pollt erst, wenn `telegram.yaml` ihn einschaltet und ein Token nennt;
+            // der Vertrag zeigt über `apiBase` auf seine eigene Attrappe
+            telegram: Arc::new(TelegramBot::new(config.home.clone(), config.clock.clone())),
             notifications,
             notice_tabs,
             shutdown: CancellationToken::new(),

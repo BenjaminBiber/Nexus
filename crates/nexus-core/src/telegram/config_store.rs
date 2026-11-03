@@ -63,6 +63,16 @@ impl TelegramConfigStore {
         let merged = self.read()?.merge_update(input)?;
         self.write(&merged)
     }
+
+    /// Nimmt einen Chat in die Freigabeliste auf (die Kopplung); ein schon freigegebener
+    /// Chat steht danach nicht doppelt darin. Liefert die neue Einstellung
+    pub fn add_chat(&self, chat_id: i64) -> Result<TelegramConfig> {
+        let mut config = self.read()?;
+        if !config.chats.contains(&chat_id) {
+            config.chats.push(chat_id);
+        }
+        self.write(&config)
+    }
 }
 
 #[cfg(test)]
@@ -199,6 +209,25 @@ mod tests {
         assert_eq!(saved.bot_token, TOKEN);
         assert_eq!(saved.chats, vec![7]);
         assert_eq!(store.read().unwrap(), saved);
+    }
+
+    #[test]
+    fn nimmt_einen_chat_in_die_freigabeliste_auf() {
+        let (_dir, store) = store();
+        store
+            .write(&TelegramConfig {
+                bot_token: TOKEN.to_string(),
+                ..TelegramConfig::default()
+            })
+            .unwrap();
+
+        store.add_chat(42).unwrap();
+        let saved = store.add_chat(42).unwrap();
+
+        assert_eq!(saved.chats, vec![42], "ein Chat steht nur einmal darin");
+        assert_eq!(store.read().unwrap().chats, vec![42]);
+        // Die übrige Einstellung bleibt unberührt
+        assert_eq!(saved.bot_token, TOKEN);
     }
 
     #[cfg(unix)]
