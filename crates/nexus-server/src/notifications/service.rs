@@ -1,5 +1,5 @@
-//! Entscheidet, ob eine Meldung erscheint, und verteilt sie auf Tab, System und ntfy;
-//! portiert aus `packages/server/src/notifications/NotificationService.ts`.
+//! Entscheidet, ob eine Meldung erscheint, und verteilt sie auf Tab, System, ntfy und
+//! Telegram; portiert aus `packages/server/src/notifications/NotificationService.ts`.
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU16, Ordering};
@@ -19,6 +19,7 @@ use crate::notifications::ntfy::{NtfySender, NtfyTarget};
 use crate::notifications::question_changes::QuestionChangeKind;
 use crate::notifications::texts::{QuestionInput, SingleInput, TicketRef, ToastTexts};
 use crate::notifications::toast_xml::ToastXmlBuilder;
+use crate::telegram::notifier::{TelegramNotice, TelegramNotifier};
 
 /// Dateiname des App-Symbols in den Meldungsbildern
 pub const APP_ICON: &str = "logo-app.png";
@@ -58,6 +59,8 @@ pub struct NotificationService {
     log: ServerLog,
     tabs: Option<Arc<BrowserNoticeHub>>,
     ntfy: NtfySender,
+    /// Der dritte Weg: die gekoppelten Chats des Telegram-Bots; `None` = ohne Telegram
+    telegram: Option<Arc<TelegramNotifier>>,
     tracker: Mutex<AttentionTracker>,
     texts: ToastTexts,
     xml: ToastXmlBuilder,
@@ -78,6 +81,8 @@ pub struct NotificationSetup {
     /// Offene Tabs mit `notify=1`; `None` = immer der Weg des Betriebssystems
     pub tabs: Option<Arc<BrowserNoticeHub>>,
     pub ntfy: NtfySender,
+    /// Der Weg nach Telegram; `None` = der Server meldet nicht nach Telegram
+    pub telegram: Option<Arc<TelegramNotifier>>,
 }
 
 impl NotificationService {
@@ -92,6 +97,7 @@ impl NotificationService {
             log: setup.log,
             tabs: setup.tabs,
             ntfy: setup.ntfy,
+            telegram: setup.telegram,
             tracker: Mutex::new(AttentionTracker::new()),
             texts: ToastTexts,
             xml: ToastXmlBuilder,
@@ -147,7 +153,8 @@ impl NotificationService {
                 ),
             })
         };
-        self.deliver(&model, &settings, None).await;
+        // Sessions meldet Telegram nicht: der Bot meldet nur die Anlässe aus `notify.*`
+        self.deliver(&model, &settings, None, None).await;
     }
 
     /// Meldet eine neue Frage oder Recherche eines Agenten; gezeigt wird nur im Modus
@@ -191,6 +198,12 @@ impl NotificationService {
             &model,
             &settings,
             Some(format!("question-{project}-{}", question.id)),
+            Some(TelegramNotice::Question {
+                id: &question.id,
+                options: latest
+                    .map(|latest| latest.options.as_slice())
+                    .unwrap_or(&[]),
+            }),
         )
         .await;
     }
@@ -213,7 +226,13 @@ impl NotificationService {
                 .unwrap_or_else(|| notice.kind.as_str().to_string())
         );
         let model = self.texts.dispatch(notice, &open_url);
-        self.deliver(&model, &settings, Some(tag)).await;
+        self.deliver(
+            &model,
+            &settings,
+            Some(tag),
+            Some(TelegramNotice::Dispatch(notice)),
+        )
+        .await;
     }
 
     /// Zeigt eine Beispielmeldung (Schaltfläche „Testmeldung“); liefert den Fehlertext oder
@@ -248,9 +267,19 @@ impl NotificationService {
         })
     }
 
-    /// Ob überhaupt gemeldet wird: Modus „windows“ oder eingeschaltetes ntfy mit Thema
+    /// Ob überhaupt gemeldet wird: Modus „windows“, eingeschaltetes ntfy mit Thema oder ein
+    /// eingeschalteter Telegram-Bot mit gekoppeltem Chat
     fn wanted(&self, settings: &UserSettings) -> bool {
-        settings.notifications == NotificationMode::Windows || Self::ntfy_on(settings)
+        settings.notifications == NotificationMode::Windows
+            || Self::ntfy_on(settings)
+            || self.telegram_on()
+    }
+
+    /// Ist Telegram eingeschaltet und ein Chat gekoppelt?
+    fn telegram_on(&self) -> bool {
+        self.telegram
+            .as_ref()
+            .is_some_and(|telegram| telegram.wanted())
     }
 
     /// Ist ntfy eingeschaltet und ein Thema eingetragen?
@@ -258,8 +287,15 @@ impl NotificationService {
         settings.ntfy && !settings.ntfy_topic.is_empty()
     }
 
-    /// Verteilt die Meldung auf die eingeschalteten Wege (System bzw. Tab, ntfy)
-    async fn deliver(&self, model: &ToastModel, settings: &UserSettings, tag: Option<String>) {
+    /// Verteilt die Meldung auf die eingeschalteten Wege (System bzw. Tab, ntfy, Telegram).
+    /// `notice` sagt Telegram, woran die Knöpfe hängen; ohne Angabe geht nichts dorthin
+    async fn deliver(
+        &self,
+        model: &ToastModel,
+        settings: &UserSettings,
+        tag: Option<String>,
+        notice: Option<TelegramNotice<'_>>,
+    ) {
         let system = async {
             if settings.notifications == NotificationMode::Windows {
                 self.show(model, settings.hero_images, tag.clone()).await;
@@ -270,7 +306,13 @@ impl NotificationService {
                 self.push(model, settings).await;
             }
         };
-        tokio::join!(system, push);
+        // Ein Fehler in Telegram hält die übrigen Wege nicht auf: der Melder protokolliert ihn
+        let telegram = async {
+            if let (Some(telegram), Some(notice)) = (&self.telegram, &notice) {
+                telegram.send(model, notice).await;
+            }
+        };
+        tokio::join!(system, push, telegram);
     }
 
     /// Zeigt die Meldung in einem offenen Tab, sonst baut es das XML und übergibt es dem

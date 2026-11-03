@@ -90,29 +90,34 @@ pub fn question_message(
 /// Die Knöpfe einer offenen Frage: je Option der neuesten Recherche einer, darunter Freitext,
 /// Recherche und Verwerfen
 pub fn question_keyboard(detail: &BoardQuestionDetail) -> InlineKeyboard {
-    let id = &detail.view.question.id;
-    let mut rows: Vec<Vec<InlineButton>> = options(detail)
+    question_buttons(&detail.view.question.id, options(detail))
+}
+
+/// Wie [`question_keyboard`], aber nur über ID und den Optionen der neuesten Recherche – so
+/// bauen auch die Meldungen des Bots ihre Knöpfe
+pub fn question_buttons(id: &str, options: &[BoardQuestionOption]) -> InlineKeyboard {
+    let mut rows: Vec<Vec<InlineButton>> = options
         .iter()
         .map(|option| {
             vec![InlineButton::callback(
                 option_button(option),
-                CallbackAction::QuestionOption(id.clone(), option.id.clone()).encode(),
+                CallbackAction::QuestionOption(id.to_string(), option.id.clone()).encode(),
             )]
         })
         .collect();
     rows.push(vec![
         InlineButton::callback(
             "Eigener Text",
-            CallbackAction::QuestionFree(id.clone()).encode(),
+            CallbackAction::QuestionFree(id.to_string()).encode(),
         ),
         InlineButton::callback(
             "Recherche starten",
-            CallbackAction::QuestionResearch(id.clone()).encode(),
+            CallbackAction::QuestionResearch(id.to_string()).encode(),
         ),
     ]);
     rows.push(vec![InlineButton::callback(
         "Verwerfen",
-        CallbackAction::QuestionDiscard(id.clone()).encode(),
+        CallbackAction::QuestionDiscard(id.to_string()).encode(),
     )]);
     InlineKeyboard::new(rows)
 }
