@@ -37,6 +37,8 @@ struct FakeState {
     infos: HashMap<String, FileInfo>,
     /// Die `message_id` der nächsten geschickten Nachricht
     next_message_id: i64,
+    /// Wartet `getUpdates` bei leerer Warteschlange wie Telegram sein Zeitlimit ab?
+    wait_when_empty: bool,
 }
 
 /// Attrappe der Bot-API
@@ -76,6 +78,13 @@ impl FakeTelegram {
     /// Legt die Antwort eines weiteren `getUpdates` in die Warteschlange
     pub fn push_updates(&self, updates: Vec<Update>) {
         self.locked().updates.push_back(updates);
+    }
+
+    /// Lässt `getUpdates` bei leerer Warteschlange sein Zeitlimit abwarten, wie Telegram
+    /// beim Long Polling. Ohne das kehrt die Attrappe sofort zurück – ein Poller in einer
+    /// Schleife würde sie dann ohne Pause fragen
+    pub fn wait_when_empty(&self) {
+        self.locked().wait_when_empty = true;
     }
 
     /// Lässt `method` ab jetzt mit `error` fehlschlagen
@@ -156,7 +165,17 @@ impl TelegramApi for FakeTelegram {
             "getUpdates",
             json!({ "offset": offset, "timeout": timeout_secs }),
         )?;
-        Ok(self.locked().updates.pop_front().unwrap_or_default())
+        let (updates, warten) = {
+            let mut state = self.locked();
+            (state.updates.pop_front(), state.wait_when_empty)
+        };
+        if let Some(updates) = updates {
+            return Ok(updates);
+        }
+        if warten {
+            tokio::time::sleep(std::time::Duration::from_secs(timeout_secs)).await;
+        }
+        Ok(Vec::new())
     }
 
     async fn send_message(

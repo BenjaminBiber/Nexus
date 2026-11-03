@@ -1,7 +1,7 @@
 //! Telegram-Bot: Einstellung in `~/.nexus/telegram.yaml` samt Prüfung, Maskierung der
 //! Geheimnisse und Store; reine Logik ohne Netz für HTML-Texte, Teilen langer Nachrichten
-//! und die Kodierung der Knopf-Aktionen, dazu das Verstehen von Ideen (Board-Kontext,
-//! Prompt, Prüfer).
+//! und die Kodierung der Knopf-Aktionen; Stand des Bots und sein Laufzeit-Zustand, dazu
+//! das Verstehen von Ideen (Board-Kontext, Prompt, Prüfer).
 
 pub mod callback;
 pub mod config;
@@ -9,6 +9,8 @@ pub mod config_store;
 pub mod html;
 pub mod idea;
 pub mod split;
+pub mod state_store;
+pub mod status;
 
 pub use callback::{CallbackAction, MAX_CALLBACK_LEN};
 pub use config::{
@@ -25,3 +27,5 @@ pub use idea::{
     MAX_QUESTIONS, MAX_TITLE,
 };
 pub use split::{split_message, MAX_MESSAGE_LEN};
+pub use state_store::{TelegramState, TelegramStateStore};
+pub use status::{BotState, BotStatus};
