@@ -191,9 +191,90 @@ async fn startet_mit_dem_account_des_profils_und_nennt_ihn_im_start_kommentar() 
         .find(|comment| comment.starts_with("[dispatch] Start"))
         .expect("Start-Kommentar");
     assert!(
-        start.contains("\nAccount: max (Profil schwer → max)."),
+        start.contains(
+            "\nAccount: max (Profil schwer → max; Reserve 5 h 10 %, Woche 2 % (Puffer))."
+        ),
         "{start}"
     );
+}
+
+/// Ticket auf dem Profil `schwer` (nur Account `max`)
+async fn ready_schwer(f: &DispatchFixture, title: &str) -> String {
+    f.ready(
+        title,
+        TicketPatch {
+            labels: Some(vec!["auto".into(), "profil:schwer".into()]),
+            ..TicketPatch::default()
+        },
+    )
+    .await
+}
+
+/// Warum ein Ticket wartet, wie die Zeile im Zustand es nennt
+async fn waiting_reason(f: &DispatchFixture, id: &str) -> String {
+    let status = f.service.status(Some(f.board.id)).await.expect("Zustand");
+    status
+        .tickets
+        .iter()
+        .find(|row| row.id == id)
+        .expect("Zeile des Tickets")
+        .reason
+        .clone()
+}
+
+#[tokio::test]
+async fn ein_knapper_account_laesst_das_ticket_warten_bis_die_ruecksetzung_nah_ist() {
+    let (f, usage, _dirs) = setup(json!({})).await;
+    usage.set_load("max", 88);
+    usage.set_resets_at(Some(&f.now_iso_in(120)));
+    let id = ready_schwer(&f, "Knapp").await;
+
+    let report = f.tick().await;
+
+    // 88 % + Puffer 10 liegt über der Grenze 90, die Rücksetzung ist noch zwei Stunden fern
+    assert!(report.started.is_empty());
+    let reason = waiting_reason(&f, &id).await;
+    assert!(
+        reason.contains("knapp (5 h 88 % + 10 % erwartet, Grenze 90 %)"),
+        "{reason}"
+    );
+
+    // Setzt sich das Fenster in 10 Minuten zurück, zählt die Reserve nicht
+    usage.set_resets_at(Some(&f.now_iso_in(10)));
+    let report = f.tick().await;
+
+    assert_eq!(report.started, vec![id.clone()]);
+    let start = f
+        .comments(&id)
+        .await
+        .into_iter()
+        .find(|comment| comment.starts_with("[dispatch] Start"))
+        .expect("Start-Kommentar");
+    assert!(
+        start.contains("Reserve 5 h 10 %, Woche 2 % (Puffer)"),
+        "{start}"
+    );
+}
+
+#[tokio::test]
+async fn die_ausstehende_reserve_eines_laufenden_laufs_zaehlt_fuer_das_naechste_ticket() {
+    let (f, usage, _dirs) = setup(json!({ "wip": 2 })).await;
+    usage.set_load("max", 75);
+    usage.set_resets_at(Some(&f.now_iso_in(120)));
+    let first = ready_schwer(&f, "Erstes").await;
+    let second = ready_schwer(&f, "Zweites").await;
+
+    let report = f.tick().await;
+
+    // 75 % + 10 % passen; das zweite Ticket muss die 10 % des laufenden mitrechnen: 75 + 20 > 90
+    assert_eq!(report.started.len(), 1, "{:?}", report.started);
+    let waiting = if report.started[0] == first {
+        &second
+    } else {
+        &first
+    };
+    let reason = waiting_reason(&f, waiting).await;
+    assert!(reason.contains("5 h 75 % + 20 % erwartet"), "{reason}");
 }
 
 #[tokio::test]
@@ -208,7 +289,10 @@ async fn waehlt_unter_mehreren_accounts_den_mit_der_meisten_freien_kapazitaet() 
     assert_eq!(config_dir_of(&f).as_deref(), Some(dirs["pro-2"].as_str()));
     assert_eq!(
         f.run(&id).run.account_why.as_deref(),
-        Some("Profil standard → pro-2, meiste freie Kapazität: pro-1 (70 %), pro-2 (20 %)")
+        Some(
+            "Profil standard → pro-2, meiste freie Kapazität: pro-1 (70 %), pro-2 (20 %); \
+Reserve 5 h 10 %, Woche 2 % (Puffer)"
+        )
     );
 }
 
@@ -401,6 +485,7 @@ async fn fragt_die_limits_erst_ab_wenn_es_etwas_zu_verteilen_gibt() {
             &cfg,
             chrono::Utc::now(),
             &BTreeMap::new(),
+            &[],
         )
         .await;
     assert!(
@@ -424,6 +509,7 @@ async fn fragt_die_limits_erst_ab_wenn_es_etwas_zu_verteilen_gibt() {
             &cfg,
             chrono::Utc::now(),
             &BTreeMap::new(),
+            &[],
         )
         .await;
     match choice {
