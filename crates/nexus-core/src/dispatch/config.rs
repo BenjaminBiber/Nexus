@@ -11,6 +11,7 @@ use ts_rs::TS;
 use crate::board::DispatchProfileReason;
 use crate::dispatch::markers;
 use crate::dispatch::prompt_check::PromptKind;
+use crate::dispatch::state::UsageSnapshot;
 
 pub use crate::dispatch::merge_strategy::MergeStrategy;
 
@@ -183,6 +184,10 @@ pub struct RunSettings {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub account_why: Option<String>,
+    /// Auslastung des gewählten Accounts beim Start; fehlt bei Läufen älterer Stände
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub usage_at_start: Option<UsageSnapshot>,
 }
 
 /// Recherche-Läufe zu offenen Fragen

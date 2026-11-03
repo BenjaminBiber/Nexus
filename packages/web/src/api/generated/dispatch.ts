@@ -883,7 +883,11 @@ account?: string,
 /**
  * Begründung der Account-Wahl
  */
-accountWhy?: string, };
+accountWhy?: string, 
+/**
+ * Auslastung des gewählten Accounts beim Start; fehlt bei Läufen älterer Stände
+ */
+usageAtStart?: UsageSnapshot, };
 
 /**
  * Stand eines Laufs laut Ende seines Protokolls
