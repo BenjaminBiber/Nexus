@@ -42,6 +42,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: '1.99.1'
+      # Cargo.toml übersetzt fremde Crates im dev-Profil mit opt-level 2 (schnelleres `tauri dev`).
+      # In der CI kostet das je Lauf viele Minuten Kompilierzeit und brachte den Windows-Rust-Job
+      # über sein Zeitlimit; Tests brauchen die Optimierung nicht. Die Cargo-Konfiguration geht vor.
+      - name: Fremde Crates in der CI unoptimiert übersetzen
+        shell: bash
+        run: printf '\n[profile.dev.package."*"]\nopt-level = 0\n' >> .cargo/config.toml
       - uses: Swatinem/rust-cache@v2
       - run: npm ci
       # Die Plugin-Tests bauen das Plugin und brauchen dafür die gebaute Oberfläche
@@ -148,6 +154,10 @@ jobs:
         with:
           toolchain: '1.99.1'
           components: rustfmt, clippy
+      # Wie im test-Job: fremde Crates ohne das opt-level 2 aus Cargo.toml übersetzen
+      - name: Fremde Crates in der CI unoptimiert übersetzen
+        shell: bash
+        run: printf '\n[profile.dev.package."*"]\nopt-level = 0\n' >> .cargo/config.toml
       - uses: Swatinem/rust-cache@v2
       # Nur Linux braucht die Systembibliotheken von Tauri; Windows hat WebView2 ab Werk
       - name: Systempakete für Tauri installieren
