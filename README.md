@@ -9,7 +9,7 @@ Bestandteile:
 - Desktop-App (Tauri), die Server und Oberfläche in einem Fenster startet
 - Claude-Code-Plugin `nexus` (Hooks, Skills, Output-Style, Doku- und Board-Regel)
 
-Inhalt: [Einrichten](#einrichten-einmal-pro-rechner) · [Aktualisieren](#aktualisieren) · [Umstieg vom AI Harness](#umstieg-vom-ai-harness) · [Verwenden](#verwenden) · [Board-Datenbank](#board-datenbank) · [Dispatcher](#dispatcher-tickets-automatisch-umsetzen-lassen) · [Anpassen](#anpassen) · [Daten und Einstellungen](#daten-und-einstellungen) · [Fehlersuche](#fehlersuche) · [Entwicklung](#entwicklung-an-nexus)
+Inhalt: [Einrichten](#einrichten-einmal-pro-rechner) · [Aktualisieren](#aktualisieren) · [Umstieg vom AI Harness](#umstieg-vom-ai-harness) · [Verwenden](#verwenden) · [Board-Datenbank](#board-datenbank) · [Dispatcher](#dispatcher-tickets-automatisch-umsetzen-lassen) · [Telegram-Bot](#telegram-bot) · [Anpassen](#anpassen) · [Daten und Einstellungen](#daten-und-einstellungen) · [Fehlersuche](#fehlersuche) · [Entwicklung](#entwicklung-an-nexus)
 
 ## Einrichten (einmal pro Rechner)
 
@@ -178,6 +178,68 @@ Unter **Einstellungen → Dispatcher → Recherchen** lässt sich einschalten, d
 
 Lauf-, Pause- und Merge-Zustand liegen unter `~/.nexus/dispatch/`, Protokolle unter `~/.nexus/dispatch-logs/`; ausgewertete Läufe landen zusätzlich in der Board-Datenbank (Dashboard). Die Worker laufen losgelöst weiter, wenn der Server neu startet. Erlaubte Werkzeuge stehen in der Einstellung „Erlaubte Tools“; braucht ein Projekt z. B. `dotnet test`, gehört `Bash(dotnet test:*)` dazu. Arbeitet derselbe Nutzer auf mehreren Rechnern, den Dispatcher nur auf einem davon einschalten – sonst übernehmen beide Rechner Tickets derselben Boards.
 
+### Telegram-Bot
+
+Nexus lässt sich per Telegram vom Handy aus bedienen: Status und Board abfragen, Freigaben und Fragen per Knopf entscheiden, Ideen per Sprachnachricht als Notiz, Ticket oder Kommentar anlegen. Der Bot läuft im Server selbst (auch in der Desktop-App) und holt seine Nachrichten per Long Polling ab – kein offener Port, kein eigenes Zertifikat nötig.
+
+**Einrichten:**
+
+1. Bei [@BotFather](https://t.me/BotFather) in Telegram mit `/newbot` einen Bot anlegen und das Token kopieren.
+2. **Einstellungen → Telegram** → Bereich „Bot“: Schalter „Telegram-Bot“ einschalten, Token eintragen, speichern (die „Adresse der Bot-API“ ist nur für einen selbst betriebenen `telegram-bot-api`-Server gedacht).
+3. Bereich „Kopplung“ → „Koppeln“ zeigt einen Einmal-Code (6 Zeichen, 10 Minuten gültig) und einen Link `https://t.me/<bot>?start=<code>`. Link öffnen oder `/start <code>` im Chat mit dem Bot schicken koppelt den Chat (nur private Chats, keine Gruppen); mehrere Chats derselben Person (z. B. Handy und Tablet) sind möglich, „Entkoppeln“ nimmt einen wieder heraus.
+
+**Befehle:**
+
+| Befehl | Wirkung |
+|---|---|
+| `/status` | Dispatcher, Läufe, Accounts und Aufgaben |
+| `/board [name\|id]` | Spalten des Boards; mit Name oder ID ein anderes |
+| `/ticket <ID>` | Kurzansicht eines Tickets (`/ticket NXS-0042`) |
+| `/aufgaben` | was gerade auf dich wartet |
+| `/idee <Text>` | Idee erfassen (`/idee Der Cache läuft nie ab`) |
+| `/pause [min]` | Dispatcher pausieren (`/pause 30`, Vorgabe 60 min) |
+| `/weiter` | Dispatcher fortsetzen |
+| `/abbrechen` | einen offenen Dialog beenden |
+| `/hilfe` | diese Liste (auch im Telegram-Menü über die Befehlsliste des Bots) |
+
+**Freigaben per Knopf:** Meldungen zu Review, gescheitertem Merge, Blockiert und Fragen kommen mit Knöpfen. Kritische Aktionen (Übernehmen, Mergen, eine Frage entscheiden) verlangen einen zweiten Klick auf eine Sicherheitsfrage (z. B. „NXS-0042 wirklich mergen?“ mit „Ja, mergen“/„Abbrechen“); passt der Zustand beim Klick nicht mehr zum Knopf (z. B. schon gemergt), ändert sich nichts und der Bot sagt, woran es liegt. Rückmeldung an den Agenten, Kommentare, Freitext-Entscheidungen und Begründungen beim Verwerfen lassen sich per Text oder Sprachnachricht beantworten (ein offener Dialog je Chat, läuft nach 15 Minuten ab). Aktionen über Telegram tragen in Kommentaren und Verlauf den Zusatz „(über Telegram)“.
+
+**Meldungen und Nachtruhe:** Unter **Einstellungen → Telegram** → Bereich „Meldungen“ lässt sich je Anlass ein-/ausschalten, ob der Bot von sich aus schreibt (Review, Blockiert, Frage, Merge gescheitert: an; Gemergt, Pause: aus). Eine „Nachtruhe“ (Vorgabe 22:00–07:00 Uhr, Zeiten einstellbar) unterdrückt Meldungen in diesem Fenster (Ortszeit des Servers); wer in der Zeit doch etwas erledigen will, nutzt die Oberfläche.
+
+**Ideen per Sprache:** Eine Sprachnachricht, eine Audiodatei, `/idee <Text>` oder freier Text ohne offenen Dialog startet eine Idee. Der Bot transkribiert (nur bei Audio), sammelt Kontext aus den eigenen Boards (offene Tickets, Notizen, Fragen, ähnliche Notizen) und lässt Claude (`claude -p`, ohne Werkzeuge) daraus einen **Ideen-Entwurf** machen: Zusammenfassung, Ziel (Notiz, Ticket oder Kommentar an ein Ticket), Titel, Details, Bezüge zu vorhandenen Tickets, mögliche Dubletten, ggf. Rückfragen. Der Bot schickt diesen Entwurf zur Bestätigung mit den Knöpfen **Anlegen**, **Als Notiz**/**Als Ticket**, **Anderes Board**, **Korrigieren**, **Verwerfen**. Offene Rückfragen oder „Korrigieren“ beantwortet man einfach mit der nächsten Text- oder Sprachnachricht; nach höchstens 5 Korrekturrunden (einstellbar, 1–10) bleiben nur noch Anlegen/Verwerfen. Erst **Anlegen** erzeugt etwas im Board: eine Notiz (Vorgabe), ein Ticket im Backlog mit Kommentar „Aus Telegram-Sprachnotiz“, oder – wenn Claude das vorschlägt – einen Kommentar am genannten Ticket.
+
+**Bot-Profil:** Nexus richtet von sich aus Profilbild (Nexus-Logo), Namen „Nexus“, Kurzbeschreibung, Beschreibung und Befehlsliste des Bots ein – über @BotFather ist dafür nichts nötig. Abschaltbar unter **Einstellungen → Telegram** → „Profil des Bots von Nexus einrichten“ (dann bleibt, was in @BotFather eingetragen ist); „Profil neu setzen“ erzwingt das erneute Einrichten auch ohne Änderung.
+
+**Spracherkennung:** Unter **Einstellungen → Spracherkennung** lässt sich ein Dienst mit der Schnittstelle von OpenAI für die Transkription einstellen (Adresse, Schlüssel, Modell, Sprache), mit Vorlagen:
+
+| Vorlage | Adresse | Modell | Hinweis |
+|---|---|---|---|
+| OpenAI | `https://api.openai.com` | `gpt-4o-mini-transcribe` | Schlüssel nötig; Aufnahmen gehen zu OpenAI |
+| Speaches | `http://localhost:8000` | `Systran/faster-whisper-small` | selbst gehostet per Docker, kein Schlüssel |
+| whisper.cpp-Server | `http://localhost:8080` | `whisper-1` | Server mit `--inference-path /v1/audio/transcriptions --convert` starten; das Modell wählt er selbst |
+| LocalAI | `http://localhost:8080` | `whisper-1` | selbst gehostet, Schlüssel optional |
+
+„Eigene“ nimmt jede andere Adresse mit derselben Schnittstelle (z. B. Groq oder ein Rechner im Heimnetz). „Testen“ schickt eine mitgelieferte kurze Aufnahme an den Dienst und zeigt Text, Dienst und Dauer.
+
+Speaches per Docker starten (CPU; für GPU `--gpus=all` und das Abbild `:latest-cuda`):
+
+```sh
+docker run --publish 8000:8000 \
+  --volume hf-hub-cache:/home/ubuntu/.cache/huggingface/hub \
+  --env WHISPER__MODEL=Systran/faster-whisper-small \
+  --detach ghcr.io/speaches-ai/speaches:latest-cpu
+```
+
+whisper.cpp als Server mit der Schnittstelle von OpenAI (Bau und weitere Optionen in dessen eigener Dokumentation):
+
+```sh
+./server -m models/ggml-small.bin --inference-path /v1/audio/transcriptions --convert --port 8080
+```
+
+**Datenschutz:** Bei der Vorlage OpenAI verlassen die Aufnahmen den eigenen Rechner und gehen zu OpenAI; bei selbst gehosteten Diensten (Speaches, whisper.cpp-Server, LocalAI, eigene Adresse) bleiben sie im eigenen Netz (Telegram selbst sieht die Sprachnachricht trotzdem). Nexus speichert Aufnahmen nicht dauerhaft, nur das Transkript landet im Chatverlauf und ggf. im angelegten Eintrag. Bot-Token und Schlüssel liegen nur lokal in `~/.nexus/telegram.yaml` (Dateirechte `0600`) und erscheinen in der Oberfläche und in Fehlermeldungen nie im Klartext.
+
+**Nur ein Rechner:** Wie beim Dispatcher darf der Bot (Long Polling) nur auf einem Rechner laufen. Pollen zwei Server mit demselben Token, meldet Telegram `409 Conflict`; der Bot zeigt dann „Bot läuft auf einem anderen Rechner“ und versucht es nur noch alle 5 Minuten.
+
 ## Anpassen
 
 Workflow, Skills und Output-Styles lassen sich pro Dev ersetzen oder ergänzen. Die Anpassungen liegen in `custom/` in diesem Ordner; Git ignoriert ihn, Updates laufen ohne Merge.
@@ -210,6 +272,7 @@ Ungültige Anpassungen fallen mit Warnung auf den Standard zurück; die Ausgabe 
 | Anbieter und Verbindung der Board-Datenbank, eigene Benutzer-ID, aktives Board | `~/.nexus/board.yaml` |
 | Einstellung des Dispatchers | `~/.nexus/dispatch.yaml` |
 | Claude-Accounts des Dispatchers | `~/.nexus/accounts.json`, Ordner neuer Accounts unter `~/.nexus/accounts/` |
+| Einstellung des Telegram-Bots und der Spracherkennung (Token, Schlüssel, gekoppelte Chats) | `~/.nexus/telegram.yaml` (Dateirechte `0600`) |
 | Läufe, Pause, Reviews und Merges des Dispatchers, Protokolle | `~/.nexus/dispatch/`, `~/.nexus/dispatch-logs/` |
 | Reihenfolge in „Meine Aufgaben“ | `~/.nexus/inbox-order.json` |
 | Programm und Aufrufe | `~/.nexus/app/`, `~/.nexus/bin/` |

@@ -83,3 +83,11 @@ _Avoid_: Konto, Profil (ein Profil legt Modell und Grenzen fest)
 **Account-Pause**:
 Die Pause eines einzelnen Accounts nach einem Nutzungslimit; die übrigen Accounts arbeiten weiter.
 _Avoid_: Limit-Sperre
+
+**Kopplung**:
+Die Zuordnung eines Telegram-Chats zum eigenen Server über einen in den Einstellungen erzeugten Einmal-Code; erst ein gekoppelter Chat bekommt Meldungen und darf Befehle an den Bot schicken.
+_Avoid_: Pairing, Verknüpfung, Verbindung
+
+**Ideen-Entwurf**:
+Der von Claude aus einer Sprachnachricht oder einem Text im Telegram-Bot erstellte Vorschlag (Zusammenfassung, Ziel, Titel, Details, Bezüge, mögliche Dubletten); entsteht als Notiz, Ticket oder Kommentar im Board erst, nachdem man ihn über den Knopf „Anlegen“ bestätigt hat.
+_Avoid_: Entwurf, Draft, Vorschlag
