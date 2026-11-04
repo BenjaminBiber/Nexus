@@ -14,4 +14,16 @@
 
 ### Sonstiges
 
+## 0.0.1 – 2026-11-04
+
+### Vertrag
+
+- Keine Änderungen.
+
+### Angekündigt
+
+- Keine.
+
+### Sonstiges
+
 - Erste öffentliche Version.

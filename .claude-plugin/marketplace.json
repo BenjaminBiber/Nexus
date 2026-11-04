@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "nexus",
-      "version": "0.0.0",
+      "version": "0.0.1",
       "source": "./packages/plugin/dist/nexus",
       "defaultEnabled": false,
       "description": "Tickets, Sessions und Board für parallele Claude-Code-Sessions (Hooks, Skills, nexus-Befehl)"
