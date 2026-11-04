@@ -6,6 +6,18 @@
 
 ### Vertrag
 
+- Keine Änderungen.
+
+### Angekündigt
+
+- Keine.
+
+### Sonstiges
+
+## 0.2.0 – 2026-11-04
+
+### Vertrag
+
 - `TelegramConfig.profile.brand` entfällt: Nexus richtet das Profil des Bots immer ein. Ein altes `brand` in `telegram.yaml` oder in `PUT /api/telegram/config` wird überlesen.
 
 ### Angekündigt
