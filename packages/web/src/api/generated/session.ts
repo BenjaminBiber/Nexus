@@ -7,6 +7,60 @@ import type { SessionClient } from "./sessionDetail";
 export type DisplayState = "idle" | "running" | "waiting" | "ended" | "stale";
 
 /**
+ * Gemerkte Session eines Projekts: Notiz plus Momentaufnahme, damit sie auch nach der
+ * 7-Tage-Frist erhalten bleibt.
+ */
+export type Favorite = { projectId: string, sessionId: string, note: string, tickets: Array<string>, cwd: string, title?: string, markedAt: string, lastState: SessionState, lastEventAt: string, 
+/**
+ * Kennungen fortgesetzter Sessions, die diesem Favoriten zugeordnet wurden
+ */
+resumedAs: Array<string>, };
+
+/**
+ * Normalisiertes Ereignis eines Hooks (CLI → Server).
+ */
+export type HookEvent = { kind: HookKind, sessionId: string, cwd: string, at?: string, tickets?: Array<string>, agentId?: string, agentType?: string, notificationType?: string, title?: string, model?: string, 
+/**
+ * Quelle des Sessionstarts bei Claude Code, z. B. startup oder resume
+ */
+source?: string, 
+/**
+ * Pfad des Transcripts (`transcript_path` der Eingabe von Claude Code)
+ */
+transcriptPath?: string, 
+/**
+ * Quelle laut Umgebung des Hooks (`CLAUDE_CODE_ENTRYPOINT`)
+ */
+client?: SessionClient, 
+/**
+ * Lauf-Protokoll des Dispatchers (`NEXUS_RUN` bzw. `HARNESS_RUN`)
+ */
+run?: string, };
+
+/**
+ * Die Ereignisse, die Claude Code über die Hooks meldet
+ */
+export type HookKind = "session-start" | "user-prompt" | "notification" | "stop" | "subagent-start" | "subagent-stop" | "session-end";
+
+/**
+ * Ein Claude-Lauf mit Zuordnung zu Tickets und seinen Subagenten.
+ */
+export type Session = { id: string, projectId: string, tickets: Array<string>, cwd: string, state: SessionState, startedAt: string, lastEventAt: string, endedAt?: string, title?: string, model?: string, subagents: Array<Subagent>, 
+/**
+ * Pfad des Transcripts (JSONL von Claude Code), wie der Hook ihn meldet
+ */
+transcriptPath?: string, 
+/**
+ * Quelle der Session; `nexus` bleibt, wenn ein Lauf des Dispatchers sie gestartet hat
+ */
+client?: SessionClient, 
+/**
+ * Name des Lauf-Protokolls des Dispatchers (`NEXUS_RUN`), z. B.
+ * `ARC-0001-20261104-091500.log`
+ */
+runName?: string, };
+
+/**
  * Eine Session im Antwortformat (fehlende Angaben als `null`)
  */
 export type SessionDto = { id: string, projectId: string, tickets: Array<string>, ticketInfo: Array<TicketInfo>, cwd: string, state: SessionState, displayState: DisplayState, listening: boolean, startedAt: string, lastEventAt: string, endedAt: string | null, runtimeMs: number, title: string | null, model: string | null, subagents: Array<SubagentDto>, 
@@ -20,9 +74,37 @@ client: SessionClient,
 runName: string | null, };
 
 /**
+ * Momentaufnahme einer Session beim Markieren oder Aktualisieren
+ */
+export type SessionSnapshot = { sessionId: string, tickets: Array<string>, cwd: string, title?: string, state: SessionState, lastEventAt: string, };
+
+/**
  * Zustand einer Session, wie ihn die Hook-Ereignisse setzen
  */
 export type SessionState = "idle" | "running" | "waiting" | "ended";
+
+/**
+ * Beim Lesen berechnete Angaben: Anzeigezustand, Lauschen und Laufzeit.
+ */
+export type SessionView = { displayState: DisplayState, listening: boolean, runtimeMs: number, id: string, projectId: string, tickets: Array<string>, cwd: string, state: SessionState, startedAt: string, lastEventAt: string, endedAt?: string, title?: string, model?: string, subagents: Array<Subagent>, 
+/**
+ * Pfad des Transcripts (JSONL von Claude Code), wie der Hook ihn meldet
+ */
+transcriptPath?: string, 
+/**
+ * Quelle der Session; `nexus` bleibt, wenn ein Lauf des Dispatchers sie gestartet hat
+ */
+client?: SessionClient, 
+/**
+ * Name des Lauf-Protokolls des Dispatchers (`NEXUS_RUN`), z. B.
+ * `ARC-0001-20261104-091500.log`
+ */
+runName?: string, };
+
+/**
+ * Ein Subagent einer Session mit Beginn und (nach dem Ende) Endzeitpunkt
+ */
+export type Subagent = { id: string, type: string, state: SubagentState, startedAt: string, endedAt?: string, };
 
 /**
  * Ein Subagent im Antwortformat (fehlendes Ende als `null`)
