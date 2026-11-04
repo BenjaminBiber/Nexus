@@ -5,13 +5,11 @@ describe('ExpectedAssets', () => {
   it('listet die Installer und CLI-Archive je Plattform', () => {
     expect(baseAssetNames('1.2.3')).toEqual([
       'Nexus_1.2.3_aarch64.dmg',
-      'Nexus_1.2.3_x64.dmg',
       'Nexus_1.2.3_x64-setup.exe',
       'Nexus_1.2.3_amd64.AppImage',
       'Nexus_1.2.3_amd64.deb',
       'Nexus-1.2.3-1.x86_64.rpm',
       'nexus-cli-1.2.3-aarch64-apple-darwin.tar.gz',
-      'nexus-cli-1.2.3-x86_64-apple-darwin.tar.gz',
       'nexus-cli-1.2.3-x86_64-pc-windows-msvc.zip',
       'nexus-cli-1.2.3-x86_64-unknown-linux-gnu.tar.gz',
     ]);
@@ -22,8 +20,6 @@ describe('ExpectedAssets', () => {
       'latest.json',
       'Nexus_aarch64.app.tar.gz',
       'Nexus_aarch64.app.tar.gz.sig',
-      'Nexus_x64.app.tar.gz',
-      'Nexus_x64.app.tar.gz.sig',
       'Nexus_1.2.3_x64-setup.exe.sig',
       'Nexus_1.2.3_amd64.AppImage.sig',
     ]);

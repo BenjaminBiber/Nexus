@@ -116,7 +116,9 @@ Vorabversion gilt dabei als Weg zu ihrer eigenen Version: `1.4.2-rc.1` + `patch`
 ## Release-Workflow
 
 `.github/workflows/release.yml` wird von Hand gestartet (`workflow_dispatch`) und nimmt drei Eingaben: `bump`
-(`patch`, `minor` oder `major`), `dry_run` (Probelauf) und `skip_ci` (ohne Prüfung der CI). `concurrency: release` lässt nur ein Release zur Zeit zu.
+(`patch`, `minor` oder `major`), `dry_run` (Probelauf) und `skip_ci` (CI nicht laufen lassen). Ohne `skip_ci` ruft der Job `ci` die
+`ci.yml` als wiederverwendbaren Workflow auf, parallel zu `version` und `build`; `publish` veröffentlicht erst, wenn sie
+grün ist. Scheitert sie, bleibt das Release ein Entwurf, Tag und Versions-Commit sind aber schon gepusht. `concurrency: release` lässt nur ein Release zur Zeit zu.
 Der erste Job `version` läuft in der Umgebung `release` – dort liegt `RELEASE_TOKEN`, mit dem der Checkout
 arbeitet; ohne dieses Token lösen Commit und Tag keine weiteren Workflows aus. Er liefert die Ausgaben `version`,
 `tag` und `release_id` für den Job `build` (unten) und den Job, der den Entwurf veröffentlicht (P6-5).
@@ -125,7 +127,7 @@ Die Logik steckt in drei Skripten, nicht im Workflow:
 
 | Skript | Aufgabe |
 | --- | --- |
-| `check-ci.sh <ref> <sha> <dry_run> [skip_ci]` | bricht ab, wenn der Lauf nicht auf `main` steht oder der jüngste Lauf von `ci.yml` für genau diesen Commit nicht `completed`/`success` ist; im Probelauf nur eine Warnung. Mit der Eingabe `skip_ci` entfällt die Prüfung der CI, die des Branches bleibt. `ci.yml` läuft nur für Tags `v*` und von Hand – vor dem Release also die CI auf `main` von Hand starten |
+| `check-branch.sh <ref> <dry_run>` | bricht ab, wenn der Lauf nicht auf `main` steht; im Probelauf nur eine Warnung |
 | `version-job.sh <stelle> <dry_run>` | `bump.mjs next` → `bump.mjs set --changelog`, Commit „Release vX.Y.Z“, Tag `vX.Y.Z`, Push nach `main` (im Probelauf kein Push); schreibt `version` und `tag` |
 | `draft-release.sh <tag> <version>` | prüft, dass der Tag bei GitHub liegt, und legt mit `POST /releases` den Entwurf an, Text aus `bump.mjs notes` plus erzeugte Notizen; schreibt `release_id` |
 
@@ -144,7 +146,7 @@ GITHUB_OUTPUT=$T/out bash scripts/release/version-job.sh patch true
 cat "$T/out"; git log -1 --oneline; git tag --list 'v*'; node scripts/release/bump.mjs check
 ```
 
-`check-ci.sh` und `draft-release.sh` brauchen `gh` samt Token und ein Repo bei GitHub; lokal werden sie nur mit
+`draft-release.sh` braucht `gh` samt Token und ein Repo bei GitHub; lokal werden sie nur mit
 `shellcheck` geprüft. Den Workflow selbst prüft `actionlint .github/workflows/release.yml`.
 
 ## Job `build`: Installer und CLI-Archiv
@@ -155,7 +157,6 @@ Im Probelauf ist das Tag nie bei GitHub angekommen: dann baut `build` den gestar
 | Runner | Ziel | Pakete |
 | --- | --- | --- |
 | `macos-14` | `aarch64-apple-darwin` | `app`, `dmg` |
-| `macos-15-intel` | `x86_64-apple-darwin` | `app`, `dmg` |
 | `windows-latest` | `x86_64-pc-windows-msvc` | `nsis` |
 | `ubuntu-22.04` | `x86_64-unknown-linux-gnu` | `appimage`, `deb`, `rpm` |
 
@@ -167,8 +168,9 @@ einmal: `NEXUS_RELEASE_TARGET=<ziel>` lässt `copy-server.mjs` mit `--target` ba
 dmg, NSIS-Installer, AppImage, deb und rpm an den Entwurf; `includeUpdaterJson` bleibt aus (P6-7). Der Job läuft in
 der Umgebung `release`, nutzt aber noch keine Secrets – gebaut wird unsigniert, die Signatur kommt mit P6-6.
 
-**x64-macOS baut nativ** auf `macos-15-intel` statt als Cross-Build: So braucht keine Plattform eine fremde
-Rust-Toolchain. ARM-Linux gibt es nicht; die Entscheidung dazu ist offen.
+**Intel-Macs werden nicht gebaut**: Das Release enthält für macOS nur Apple Silicon (`aarch64`). Der Intel-Runner
+war mit rund 45 Minuten der langsamste Job und bestimmte die Dauer des ganzen Releases. ARM-Linux gibt es nicht;
+die Entscheidung dazu ist offen.
 
 `projectPath` zeigt auf `apps/desktop`, denn dort liegt `@tauri-apps/cli`. Version und Produktname der Dateien
 kommen aus dem Crate (`Nexus_<version>_aarch64.dmg`), nicht aus dem Workflow. Dass der Tauri-Build das Binary
@@ -214,7 +216,7 @@ Der lokale Build ist unsigniert; Gatekeeper-Warnungen sind dabei erwartet.
 | `lib/Changelog.mjs` | Abschnitt umbenennen, leeren Abschnitt einsetzen, Abschnitt einer Version lesen |
 | `lib/TomlText.mjs` | TOML zeilenweise lesen und einzelne Schlüssel setzen |
 | `lib/JsonText.mjs` | JSON-Werte an ihrer Textstelle setzen, einfügen und entfernen |
-| `check-ci.sh` | Branch und CI-Status des Commits prüfen (erster Schritt des Release-Workflows) |
+| `check-branch.sh` | Branch prüfen (erster Schritt des Release-Workflows) |
 | `version-job.sh` | Version setzen, committen, taggen, pushen |
 | `draft-release.sh` | Entwurfs-Release anlegen und seine Id ausgeben |
 | `cli-archive.mjs` | CLI und Plugin zu `nexus-cli-<version>-<ziel>.tar.gz` bzw. `.zip` packen |

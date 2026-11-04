@@ -90,8 +90,10 @@ nexus-platform = { path = "crates/nexus-platform" }
 # Debug-Symbole weg (sie machen bei uns mehr als ein Drittel der Datei aus).
 [profile.release]
 opt-level = 3
-lto = "fat"
-codegen-units = 1
+# Thin-LTO mit den üblichen 16 Codegen-Units: Release-Builds (zweimal je Plattform: Server und App)
+# werden damit deutlich schneller, das Binary wird nur wenig größer. Vorher „fat“ mit codegen-units = 1
+lto = "thin"
+codegen-units = 16
 strip = true
 panic = "abort"
 

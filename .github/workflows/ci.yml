@@ -1,14 +1,15 @@
 # Baut die Oberfläche und führt Typcheck und Tests auf macOS, Windows und Linux aus.
-# Name und Dateiname sind fest: der Release-Workflow prüft über sie, ob die CI für den Release-Commit grün ist.
-# Läuft nur für Versions-Tags „v*“ und von Hand (workflow_dispatch). Vor einem Release die CI darum
-# auf „main“ von Hand starten, sonst findet check-ci.sh keinen Lauf für den Commit.
+# Läuft von Hand (workflow_dispatch) und als Teil des Release-Workflows (workflow_call, Job „ci“), dort
+# parallel zu den Builds; ein Release wird erst veröffentlicht, wenn sie grün ist. Für Tags läuft sie nicht
+# mehr eigens: das wäre derselbe Stand ein zweites Mal.
 name: CI
 on:
-  push:
-    tags: ['v*']
   workflow_dispatch:
+  workflow_call:
+# Aus dem Release heraus ist github.workflow „Release“: so verdrängen sich ein Lauf von Hand und der
+# des Releases auf demselben Branch nicht gegenseitig
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 permissions:
   contents: read
