@@ -12,12 +12,13 @@
 //! Adresse oder ein Schlüssel; die Fehlertexte der Erkennung sind darauf schon angelegt.
 
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
-use nexus_core::telegram::{escape, TelegramConfigStore};
+use nexus_core::telegram::{escape, SpeechBackend, TelegramConfigStore};
 use nexus_core::Result;
 
-use crate::speech::{self, AudioClip, SpeechHint, SpeechToText};
+use crate::speech::{self, AudioClip, SpeechHint, SpeechToText, SpeechVia, Transcript};
 use crate::telegram::api::{AudioFile, Message, TelegramApi};
 use crate::telegram::commands::Deps;
 use crate::telegram::router::{BotContext, VoiceHandler, VoiceOutcome};
@@ -44,6 +45,9 @@ pub const TYPING_ALWAYS_WORKS: &str = "Tippen geht immer.";
 pub trait SpeechSource: Send + Sync {
     /// Die Erkennung samt Hilfe; `Err`, wenn schon die Einstellung nicht zu lesen ist
     async fn prepare(&self) -> Result<(Box<dyn SpeechToText>, SpeechHint)>;
+
+    /// Merkt sich das Ergebnis einer Erkennung für die Einstellungsseite; Attrappen lassen es weg
+    fn record(&self, _backend: SpeechBackend, _took: Duration, _result: &Result<Transcript>) {}
 }
 
 /// Die Erkennung aus `telegram.yaml` samt Hilfe aus dem Board des Servers
@@ -56,6 +60,12 @@ impl SpeechSource for ConfiguredSpeech {
         let config = TelegramConfigStore::new(state.home.clone()).read()?;
         let hint = SpeechHint::for_state(&state, config.speech.language.clone()).await;
         Ok((speech::from_config(&config.speech), hint))
+    }
+
+    fn record(&self, backend: SpeechBackend, took: Duration, result: &Result<Transcript>) {
+        if let Ok(state) = self.0.state() {
+            state.speech_activity.record(backend, SpeechVia::Voice, took, result);
+        }
     }
 }
 
@@ -86,7 +96,10 @@ impl VoiceMessages {
         let (speech, hint) = self.speech.prepare().await?;
         let clip = download(api, audio).await?;
         clip.within_limits()?;
-        Ok(speech.transcribe(clip, &hint).await?.text)
+        let started = Instant::now();
+        let result = speech.transcribe(clip, &hint).await;
+        self.speech.record(speech.backend(), started.elapsed(), &result);
+        Ok(result?.text)
     }
 }
 
@@ -187,7 +200,6 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::speech::Transcript;
     use crate::telegram::api::FileInfo;
     use crate::telegram::fake::FakeTelegram;
     use crate::telegram::router::{MessageHandler, UpdateRouter};

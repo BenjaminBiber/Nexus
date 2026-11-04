@@ -666,6 +666,11 @@
   },
   {
     "file": "crates/nexus-server/src/routes/speech.rs",
+    "method": "GET",
+    "pattern": "/api/speech/status"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/speech.rs",
     "method": "POST",
     "pattern": "/api/speech/test"
   },

@@ -1,0 +1,80 @@
+{
+  "title": "Stand der Spracherkennung: anfangs leer, dann letzte Erkennung und letzter Fehler",
+  "steps": [
+    {
+      "name": "Stand vor der ersten Erkennung",
+      "method": "GET",
+      "path": "/api/speech/status"
+    },
+
+    {
+      "name": "Attrappe der Spracherkennung starten",
+      "kind": "httpStub",
+      "stub": "SPEECH",
+      "body": { "text": "Hallo Nexus.", "language": "german" },
+      "save": { "speechUrl": "json.url" }
+    },
+    {
+      "name": "Spracherkennung auf die Attrappe einrichten",
+      "kind": "homeFile",
+      "path": "telegram.yaml",
+      "content": "speech:\n  backend: openai-compatible\n  baseUrl: {{speechUrl}}\n  apiKey: \"\"\n  model: whisper-1\n  language: de\n"
+    },
+    {
+      "name": "Test erkennt das Beispiel-Audio",
+      "method": "POST",
+      "path": "/api/speech/test",
+      "ignore": ["json.millis"]
+    },
+    {
+      "name": "Stand nach der erfolgreichen Erkennung",
+      "method": "GET",
+      "path": "/api/speech/status",
+      "ignore": ["json.lastSuccessAt", "json.lastMillis"]
+    },
+
+    {
+      "name": "Spracherkennung abschalten",
+      "kind": "homeFile",
+      "path": "telegram.yaml",
+      "content": "speech:\n  backend: \"off\"\n"
+    },
+    {
+      "name": "Test mit abgeschalteter Spracherkennung",
+      "method": "POST",
+      "path": "/api/speech/test"
+    },
+    {
+      "name": "Eine abgeschaltete Erkennung ist kein Fehler",
+      "method": "GET",
+      "path": "/api/speech/status",
+      "ignore": ["json.lastSuccessAt", "json.lastMillis"]
+    },
+
+    {
+      "name": "Attrappe mit Fehler starten",
+      "kind": "httpStub",
+      "stub": "SPEECH_FEHLER",
+      "status": 401,
+      "body": { "error": { "message": "Incorrect API key provided" } },
+      "save": { "fehlerUrl": "json.url" }
+    },
+    {
+      "name": "Spracherkennung auf die Attrappe mit Fehler umstellen",
+      "kind": "homeFile",
+      "path": "telegram.yaml",
+      "content": "speech:\n  backend: openai-compatible\n  baseUrl: {{fehlerUrl}}\n  apiKey: vertrag-attrappe\n  model: whisper-1\n  language: de\n"
+    },
+    {
+      "name": "Test gegen den Dienst mit Fehler",
+      "method": "POST",
+      "path": "/api/speech/test"
+    },
+    {
+      "name": "Stand nach dem Fehler: Erfolg bleibt, Fehler kommt dazu",
+      "method": "GET",
+      "path": "/api/speech/status",
+      "ignore": ["json.lastSuccessAt", "json.lastMillis", "json.lastErrorAt"]
+    }
+  ]
+}

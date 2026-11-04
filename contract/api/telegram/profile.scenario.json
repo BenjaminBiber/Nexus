@@ -35,14 +35,6 @@
     { "name": "das Profilbild ging dabei ein zweites Mal hinaus", "kind": "httpStub", "action": "await", "stub": "TELEGRAM", "call": "setMyProfilePhoto", "count": 2 },
 
     {
-      "name": "Einrichten abschalten",
-      "method": "PUT",
-      "path": "/api/telegram/config",
-      "body": { "enabled": true, "apiBase": "{{tgUrl}}", "profile": { "brand": false } }
-    },
-    { "name": "ohne brand richtet die Route nichts ein", "method": "POST", "path": "/api/telegram/profile" },
-
-    {
       "name": "Bot wieder abschalten",
       "method": "PUT",
       "path": "/api/telegram/config",

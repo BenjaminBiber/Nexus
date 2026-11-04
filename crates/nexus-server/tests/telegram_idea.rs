@@ -187,7 +187,7 @@ async fn liefert_einen_geprueften_entwurf_aus_dem_board_kontext() {
             .collect::<Vec<_>>(),
         ["NXS-0001"]
     );
-    assert_eq!(draft.questions, ["Auch für SQL Server?"]);
+    assert_eq!(draft.questions[0].text, "Auch für SQL Server?");
     assert_eq!(draft.confidence, 0.7);
     assert_eq!(
         draft.transcript,

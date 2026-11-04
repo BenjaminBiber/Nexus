@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../src/api/ApiContext.js';
-import type { SpeechConfig, TelegramConfig, TelegramConfigInput } from '../src/api/telegramTypes.js';
+import type { SpeechConfig, SpeechStatusDto, TelegramConfig, TelegramConfigInput } from '../src/api/telegramTypes.js';
 import { SpeechPanel } from '../src/components/settings/SpeechPanel.js';
 import { fakeApi } from './helpers/fakeApi.js';
 
@@ -28,10 +28,15 @@ const CONFIG: TelegramConfig = {
   chats: [4711],
   notify: { review: true, blocked: true, question: true, merge: true, merged: false, paused: false },
   quietHours: null,
-  profile: { brand: true, applied: null },
+  profile: { applied: null },
   ideas: { defaultTarget: 'note', maxRounds: 3 },
   speech: SPEECH,
 };
+
+const NO_STATUS: SpeechStatusDto = { lastSuccessAt: null, lastSuccessVia: null, lastMillis: null, lastErrorAt: null, lastError: null };
+
+// Zeitpunkt vor n Minuten im Format des Servers
+const minutesAgo = (n: number) => new Date(Date.now() - n * 60_000).toISOString();
 
 // Rendert das Panel mit austauschbaren Aufrufen
 function open(overrides: Record<string, unknown> = {}, speech: SpeechConfig = SPEECH) {
@@ -50,25 +55,26 @@ function saveSpy() {
 describe('SpeechPanel', () => {
   it('erkennt die Vorlage und füllt mit ihr Adresse und Modell', async () => {
     open();
-    expect((await screen.findByLabelText('Vorlage') as HTMLSelectElement).value).toBe('speaches');
-    await userEvent.selectOptions(screen.getByLabelText('Vorlage'), 'localai');
+    expect((await screen.findByRole('radio', { name: 'Speaches' }) as HTMLInputElement).checked).toBe(true);
+    await userEvent.click(screen.getByRole('radio', { name: 'LocalAI' }));
     expect((screen.getByLabelText('Adresse') as HTMLInputElement).value).toBe('http://localhost:8080');
     expect((screen.getByLabelText('Modell') as HTMLInputElement).value).toBe('whisper-1');
-    expect((screen.getByLabelText('Vorlage') as HTMLSelectElement).value).toBe('localai');
+    expect((screen.getByRole('radio', { name: 'LocalAI' }) as HTMLInputElement).checked).toBe(true);
   });
 
   it('zeigt bei OpenAI den Datenschutz-Hinweis, bei einem lokalen Dienst nicht', async () => {
     open();
-    expect((await screen.findByLabelText('Datenschutz')).textContent).toContain('bleiben im eigenen Netz');
-    await userEvent.selectOptions(screen.getByLabelText('Vorlage'), 'openai');
+    await screen.findByRole('radio', { name: 'Speaches' });
+    expect(screen.queryByLabelText('Datenschutz')).toBeNull();
+    await userEvent.click(screen.getByRole('radio', { name: 'OpenAI' }));
     expect(screen.getByLabelText('Datenschutz').textContent).toContain('verlassen den Rechner');
   });
 
   it('zeigt den Schlüssel nur als Maske und schickt ihn nicht mit', async () => {
     const save = saveSpy();
     open({ saveTelegramConfig: save });
-    expect((await screen.findByLabelText('Gespeicherter Schlüssel') as HTMLInputElement).value).toBe(MASKED);
-    await userEvent.selectOptions(screen.getByLabelText('Vorlage'), 'openai');
+    expect((await screen.findByLabelText('Gespeicherter Schlüssel')).textContent).toBe(MASKED);
+    await userEvent.click(screen.getByRole('radio', { name: 'OpenAI' }));
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
     const input = save.mock.calls[0]![0];
     expect(input.speech).not.toHaveProperty('apiKey');
@@ -103,5 +109,86 @@ describe('SpeechPanel', () => {
   it('lässt den Test aus, solange die Erkennung aus ist', async () => {
     open({}, { ...SPEECH, backend: 'off' });
     expect((await screen.findByRole('button', { name: 'Testen' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('zeigt im Kopf Dienst, Modell und die letzte Erkennung', async () => {
+    const status: SpeechStatusDto = { ...NO_STATUS, lastSuccessAt: minutesAgo(20), lastSuccessVia: 'voice', lastMillis: 1240 };
+    open({ getSpeechStatus: async () => status });
+    const hero = await screen.findByRole('note', { name: 'Stand der Spracherkennung' });
+    expect(hero.textContent).toContain('Speaches');
+    expect(hero.textContent).toContain('Systran/faster-whisper-small');
+    expect(await screen.findByText(/Zuletzt erkannt vor 20 min \(Sprachnachricht, 1,2 s\)/)).toBeTruthy();
+    expect(hero.textContent).toContain('Funktioniert');
+  });
+
+  it('meldet einen Fehler, der neuer ist als die letzte Erkennung', async () => {
+    const status: SpeechStatusDto = {
+      ...NO_STATUS,
+      lastSuccessAt: minutesAgo(60),
+      lastSuccessVia: 'test',
+      lastMillis: 500,
+      lastErrorAt: minutesAgo(5),
+      lastError: 'Die Spracherkennung antwortete mit 401.',
+    };
+    open({ getSpeechStatus: async () => status });
+    expect((await screen.findByRole('note', { name: 'Letzter Fehler' })).textContent).toContain('401');
+    expect(screen.getByRole('note', { name: 'Stand der Spracherkennung' }).textContent).toContain('Fehler');
+  });
+
+  it('zeigt „Noch nicht genutzt“, solange nichts erkannt wurde, und „Aus“ bei ausgeschalteter Erkennung', async () => {
+    open();
+    expect((await screen.findByRole('note', { name: 'Stand der Spracherkennung' })).textContent).toContain('Noch nicht genutzt');
+    cleanup();
+    open({}, { ...SPEECH, backend: 'off' });
+    const hero = await screen.findByRole('note', { name: 'Stand der Spracherkennung' });
+    expect(hero.textContent).toContain('Aus');
+    expect(hero.textContent).toContain('nicht verarbeitet');
+  });
+
+  it('zeigt im Kopf bis zum Speichern den laufenden Dienst', async () => {
+    open();
+    await userEvent.click(await screen.findByRole('radio', { name: 'OpenAI' }));
+    const hero = screen.getByRole('note', { name: 'Stand der Spracherkennung' });
+    expect(hero.textContent).toContain('Speaches');
+    expect(hero.textContent).not.toContain('OpenAI');
+  });
+
+  it('schaltet die Erkennung mit dem Ein/Aus-Knopf', async () => {
+    const save = saveSpy();
+    open({ saveTelegramConfig: save });
+    const power = await screen.findByRole('button', { name: 'Erkennung aktiv' });
+    expect(power.getAttribute('aria-pressed')).toBe('true');
+    await userEvent.click(power);
+    expect(power.getAttribute('aria-pressed')).toBe('false');
+    expect((screen.getByRole('group', { name: 'Vorlage' }) as HTMLFieldSetElement).disabled).toBe(true);
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(save.mock.calls[0]![0].speech?.backend).toBe('off');
+  });
+
+  it('zählt ungespeicherte Änderungen und verwirft sie', async () => {
+    open();
+    await userEvent.click(await screen.findByRole('radio', { name: 'OpenAI' }));
+    expect(screen.getByText('2 ungespeicherte Änderungen')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Verwerfen' }));
+    expect(screen.getByText('Alles gespeichert.')).toBeTruthy();
+    expect((screen.getByLabelText('Adresse') as HTMLInputElement).value).toBe('http://localhost:8000');
+  });
+
+  it('lädt den Stand nach einem Test neu', async () => {
+    const getSpeechStatus = vi.fn(async () => NO_STATUS);
+    open({ getSpeechStatus, testSpeech: async () => ({ text: 'Hallo', language: 'de', backend: 'openai-compatible', millis: 10 }) });
+    await userEvent.click(await screen.findByRole('button', { name: 'Testen' }));
+    await screen.findByLabelText('Ergebnis des Tests');
+    expect(getSpeechStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it('zeigt statt eines fehlenden Logos eine Kachel mit Kürzel', async () => {
+    open();
+    const hero = await screen.findByRole('note', { name: 'Stand der Spracherkennung' });
+    const img = hero.querySelector('img.speech-logo') as HTMLImageElement;
+    expect(img.getAttribute('src')).toBe('/speech-logos/speaches.svg');
+    fireEvent.error(img);
+    expect(hero.querySelector('img.speech-logo')).toBeNull();
+    expect(hero.querySelector('.speech-logo')?.textContent).toBe('Sp');
   });
 });

@@ -20,6 +20,7 @@ use chrono::{DateTime, TimeDelta, Utc};
 use nexus_core::clock::Clock;
 use nexus_core::locking::AtomicWriter;
 use nexus_core::telegram::idea::IdeaDraft;
+use nexus_core::telegram::Questionnaire;
 use nexus_core::{Error, HarnessHome, Result};
 use serde::{Deserialize, Serialize};
 
@@ -35,6 +36,9 @@ pub struct IdeaEntry {
     pub draft: IdeaDraft,
     /// Wann der Entwurf entstand (ISO); davon hängt der Ablauf ab
     pub created_at: String,
+    /// Der Fragebogen zu den Rückfragen, solange sie einzeln durchgegangen werden
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub questionnaire: Option<Questionnaire>,
 }
 
 /// Was ein Chat an Ideen offen hat
@@ -123,6 +127,7 @@ impl IdeaDraftStore {
             id: self.new_id(),
             draft,
             created_at: self.clock.iso(),
+            questionnaire: None,
         };
         {
             let mut chats = self.chats();
@@ -151,6 +156,29 @@ impl IdeaDraftStore {
                 return Ok(false);
             };
             entry.draft = draft;
+        }
+        self.save()?;
+        Ok(true)
+    }
+
+    /// Setzt den Fragebogen des Entwurfs unter dieser ID (`None` räumt ihn weg); `false`, wenn
+    /// der Chat diesen Entwurf nicht mehr hält
+    pub fn set_questionnaire(
+        &self,
+        chat_id: i64,
+        draft_id: &str,
+        questionnaire: Option<Questionnaire>,
+    ) -> Result<bool> {
+        {
+            let mut chats = self.chats();
+            let Some(entry) = chats
+                .get_mut(&chat_id)
+                .and_then(|chat| chat.draft.as_mut())
+                .filter(|entry| entry.id == draft_id)
+            else {
+                return Ok(false);
+            };
+            entry.questionnaire = questionnaire;
         }
         self.save()?;
         Ok(true)
@@ -418,6 +446,63 @@ mod tests {
             nach_neustart.take_pending(CHAT).unwrap(),
             Some("Und die Spalte fehlt auch".into())
         );
+    }
+
+    #[test]
+    fn der_fragebogen_haengt_am_entwurf_und_uebersteht_einen_neustart() {
+        let (dir, store, _) = store();
+        let entry = store.put(CHAT, draft("Cache läuft nie ab")).unwrap();
+        assert_eq!(entry.questionnaire, None);
+
+        let mut bogen = Questionnaire::new(2);
+        bogen.current = 1;
+        assert!(store
+            .set_questionnaire(CHAT, &entry.id, Some(bogen.clone()))
+            .unwrap());
+        assert!(
+            !store.set_questionnaire(CHAT, "dfremd", None).unwrap(),
+            "eine fremde ID ändert nichts"
+        );
+
+        let start: DateTime<Utc> = START.parse().expect("Zeitpunkt");
+        let nach_neustart = IdeaDraftStore::new(HarnessHome::at(dir.path()), Clock::fixed(start));
+        assert_eq!(
+            nach_neustart
+                .get(CHAT)
+                .and_then(|entry| entry.questionnaire),
+            Some(bogen)
+        );
+    }
+
+    #[test]
+    fn liest_entwuerfe_von_vor_den_fragebogen() {
+        let dir = tempfile::tempdir().expect("Benutzerordner");
+        fs::create_dir_all(dir.path().join("telegram")).unwrap();
+        let alt = serde_json::json!({ "chats": { "42": { "draft": {
+            "id": "d1",
+            "createdAt": START,
+            "draft": {
+                "summary": "s", "target": { "kind": "note", "boardId": 3, "ticketId": null },
+                "title": "t", "details": "", "related": [], "duplicates": [],
+                "questions": ["Auch für SQL Server?"], "confidence": 0.5,
+                "transcript": "x", "rounds": 1
+            }
+        } } } });
+        fs::write(
+            dir.path().join("telegram").join("drafts.json"),
+            alt.to_string(),
+        )
+        .unwrap();
+
+        let store = IdeaDraftStore::new(
+            HarnessHome::at(dir.path()),
+            Clock::fixed(START.parse().expect("Zeitpunkt")),
+        );
+
+        let entry = store.get(CHAT).expect("der alte Entwurf ist lesbar");
+        assert_eq!(entry.draft.questions[0].text, "Auch für SQL Server?");
+        assert!(entry.draft.questions[0].options.is_empty());
+        assert_eq!(entry.questionnaire, None);
     }
 
     #[test]

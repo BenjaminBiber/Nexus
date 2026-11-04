@@ -83,9 +83,6 @@ impl BotProfileSync {
                 return ProfileOutcome::failed(format!("Einstellung nicht lesbar: {error}"))
             }
         };
-        if !config.profile.brand {
-            return ProfileOutcome::skipped();
-        }
         let description = texts::description(commands);
         // Die Befehlsliste gehört zum Fingerabdruck der Texte: meldet ein späteres Ticket
         // einen Befehl an, setzt der nächste Start sie neu
@@ -309,7 +306,6 @@ mod tests {
     async fn setzt_bei_einem_neuen_bild_erneut() {
         // Ein anderes Bild heißt: der gemerkte Fingerabdruck passt nicht mehr
         let h = Harness::new(BotProfile {
-            brand: true,
             applied: Some(AppliedProfile {
                 bot_id: BOT_ID,
                 photo: "ein alter Abdruck".to_string(),
@@ -353,20 +349,6 @@ mod tests {
 
         assert_eq!(outcome, ProfileOutcome::done());
         assert_eq!(h.methods(), alle_aufrufe());
-    }
-
-    #[tokio::test]
-    async fn ruft_ohne_brand_nichts_auf() {
-        let h = Harness::new(BotProfile {
-            brand: false,
-            applied: None,
-        });
-
-        let outcome = h.sync_of(BOT_ID, true).await;
-
-        assert_eq!(outcome, ProfileOutcome::skipped());
-        assert!(h.methods().is_empty());
-        assert_eq!(h.config().profile.applied, None);
     }
 
     #[tokio::test]

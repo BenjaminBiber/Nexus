@@ -105,6 +105,8 @@ pub struct AppState {
     pub idea: Arc<crate::telegram::IdeaInterpreter>,
     /// Die offenen Ideen-Entwürfe je Chat (`<home>/telegram/drafts.json`)
     pub idea_drafts: Arc<crate::telegram::IdeaDraftStore>,
+    /// Letzte erfolgreiche Erkennung und letzter Fehler der Spracherkennung (nur im Speicher)
+    pub speech_activity: Arc<crate::speech::SpeechActivity>,
     /// Wird beim Beenden ausgelöst; eigene und durchgeleitete Ereignisströme enden daran
     pub shutdown: CancellationToken,
     /// Prozessnummer, wie `GET /api/health` sie meldet
@@ -384,6 +386,7 @@ impl AppState {
                 config.home.clone(),
                 config.clock.clone(),
             )),
+            speech_activity: Arc::new(crate::speech::SpeechActivity::new()),
             notifications,
             notice_tabs,
             shutdown: CancellationToken::new(),

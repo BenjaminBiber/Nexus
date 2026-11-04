@@ -105,6 +105,7 @@ impl TelegramBot {
                 clock,
                 log: ServerLog::new(&home),
                 greeted: std::sync::Mutex::new(HashSet::new()),
+                awaiting_code: std::sync::Mutex::new(HashSet::new()),
                 woken,
             }),
             task: Mutex::new(None),
@@ -208,6 +209,9 @@ struct Poller {
     log: ServerLog,
     /// Chats, die ohne Kopplung geschrieben haben; jeder steht nur einmal im Protokoll
     greeted: std::sync::Mutex<HashSet<i64>>,
+    /// Einzelchats, die nach `/start` ohne Code nach dem Code gefragt wurden; ihre nächste
+    /// Textnachricht gilt als Code. Nur im Speicher – nach einem Neustart fragt `/start` neu
+    awaiting_code: std::sync::Mutex<HashSet<i64>>,
     /// Zählt hoch, sobald sich die Einstellung geändert hat
     woken: watch::Receiver<u64>,
 }
@@ -391,11 +395,17 @@ impl Poller {
             }
             return;
         }
-        if let Some(code) = pairing_code(&message) {
+        if let Some(attempt) = self.pairing_attempt(&message) {
             // Auch ein Versuch zu koppeln zählt auf die Rate-Grenze; sonst ließe sich der
             // Bot aus einem fremden Chat endlos antworten lassen
             match self.router.allow(&ctx).await {
-                Ok(true) => self.pair(&ctx, &message, &code).await,
+                Ok(true) => match attempt {
+                    Attempt::Code(code) => self.pair(&ctx, &message, &code).await,
+                    Attempt::AskForCode => {
+                        self.awaiting().insert(chat_id);
+                        let _ = ctx.reply(CODE_PROMPT).await;
+                    }
+                },
                 Ok(false) => {}
                 Err(error) => self.log.write(&format!("Telegram: Kopplung – {error}")),
             }
@@ -440,8 +450,34 @@ impl Poller {
             .lock()
             .expect("Sperre der ungekoppelten Chats")
             .remove(&message.chat.id);
+        self.awaiting().remove(&message.chat.id);
         let begruessung = format!("{}\n\n{}", paired_text(ctx), self.router.help_text());
         let _ = ctx.reply(&begruessung).await;
+    }
+
+    /// Was eine Nachricht aus einem nicht gekoppelten Chat für die Kopplung bedeutet:
+    /// `/start <code>` löst ein, `/start` allein fragt im Einzelchat nach dem Code, und nach
+    /// dieser Frage gilt die nächste Textnachricht ohne `/` als Code
+    fn pairing_attempt(&self, message: &Message) -> Option<Attempt> {
+        if let Some(code) = pairing_code(message) {
+            return Some(Attempt::Code(code));
+        }
+        let text = message.text.as_deref()?.trim();
+        if let Some(command) = crate::telegram::router::parse_command(text) {
+            let private = message.chat.chat_type == "private";
+            return (command.name == "start" && private).then_some(Attempt::AskForCode);
+        }
+        if text.is_empty() || !self.awaiting().contains(&message.chat.id) {
+            return None;
+        }
+        Some(Attempt::Code(text.to_string()))
+    }
+
+    /// Die Einzelchats, die auf ihren Code gefragt wurden
+    fn awaiting(&self) -> std::sync::MutexGuard<'_, HashSet<i64>> {
+        self.awaiting_code
+            .lock()
+            .expect("Sperre der Chats, die nach dem Code gefragt wurden")
     }
 
     /// Kontext für die Handler
@@ -565,6 +601,19 @@ const CONFLICT_MESSAGE: &str = "Bot läuft auf einem anderen Rechner";
 
 /// Meldung im Zustand [`BotState::TokenInvalid`]
 const TOKEN_MESSAGE: &str = "Telegram lehnt das Bot-Token ab – bitte in den Einstellungen prüfen";
+
+/// Ein Versuch, einen nicht gekoppelten Chat zu koppeln
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Attempt {
+    /// Den Code einlösen
+    Code(String),
+    /// `/start` ohne Code: nach dem Code fragen
+    AskForCode,
+}
+
+/// Antwort auf `/start` ohne Code in einem nicht gekoppelten Einzelchat
+const CODE_PROMPT: &str = "<b>Nexus</b>\nDieser Chat ist noch nicht gekoppelt. Schick mir den \
+Kopplungscode – du bekommst ihn in Nexus unter Einstellungen → Telegram → „Koppeln“.";
 
 /// Antwort auf einen falschen oder abgelaufenen Code
 const CODE_INVALID: &str = "Code ungültig oder abgelaufen";
@@ -790,6 +839,88 @@ mod tests {
     }
 
     #[tokio::test(start_paused = true)]
+    async fn fragt_auf_start_ohne_code_nach_dem_code() {
+        let h = Harness::enabled(vec![]);
+        h.fake.push_updates(vec![aus_chat(1, "/start")]);
+
+        h.start().await;
+        h.durchlaufen().await;
+        h.beenden().await;
+
+        assert!(h.config().chats.is_empty());
+        assert_eq!(h.sent(), vec![CODE_PROMPT.to_string()]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn koppelt_mit_dem_code_aus_der_nachricht_nach_der_nachfrage() {
+        let h = Harness::enabled(vec![]);
+        let code = h.bot.pairing().create().code;
+        h.fake.push_updates(vec![
+            aus_chat(1, "/start"),
+            aus_chat(2, &format!(" {code} ")),
+        ]);
+
+        h.start().await;
+        h.durchlaufen().await;
+        h.beenden().await;
+
+        assert_eq!(h.config().chats, vec![CHAT]);
+        let texts = h.sent();
+        assert_eq!(texts.len(), 2, "{texts:?}");
+        assert_eq!(texts[0], CODE_PROMPT);
+        assert!(texts[1].contains("Gekoppelt mit Nexus"), "{}", texts[1]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn wartet_nach_einem_falschen_code_auf_den_nachsten() {
+        let h = Harness::enabled(vec![]);
+        let code = h.bot.pairing().create().code;
+        h.fake.push_updates(vec![
+            aus_chat(1, "/start"),
+            aus_chat(2, "ZZZZZZ"),
+            aus_chat(3, &code),
+        ]);
+
+        h.start().await;
+        h.durchlaufen().await;
+        h.beenden().await;
+
+        assert_eq!(h.config().chats, vec![CHAT]);
+        let texts = h.sent();
+        assert_eq!(texts.len(), 3, "{texts:?}");
+        assert_eq!(texts[1], CODE_INVALID);
+        assert!(texts[2].contains("Gekoppelt mit Nexus"), "{}", texts[2]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn nimmt_ohne_nachfrage_keinen_code_als_nachricht_an() {
+        let h = Harness::enabled(vec![]);
+        let code = h.bot.pairing().create().code;
+        h.fake.push_updates(vec![aus_chat(1, &code)]);
+
+        h.start().await;
+        h.durchlaufen().await;
+        h.beenden().await;
+
+        assert!(h.config().chats.is_empty());
+        assert!(h.sent().is_empty(), "{:?}", h.sent());
+        assert_eq!(h.bot.pairing().open_count(), 1, "der Code bleibt offen");
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn fragt_in_einer_gruppe_nicht_nach_dem_code() {
+        let h = Harness::enabled(vec![]);
+        h.fake
+            .push_updates(vec![text_update(1, -100777, "group", "/start")]);
+
+        h.start().await;
+        h.durchlaufen().await;
+        h.beenden().await;
+
+        assert!(h.sent().is_empty(), "{:?}", h.sent());
+    }
+
+    #[tokio::test(start_paused = true)]
     async fn koppelt_eine_gruppe_nie() {
         let h = Harness::enabled(vec![]);
         let code = h.bot.pairing().create().code;
@@ -944,28 +1075,6 @@ mod tests {
         assert!(profil.starts_with("Profilbild nicht gesetzt: "), "{profil}");
         assert!(h.polls() > 0, "er holt weiter Updates ab");
         assert_eq!(h.config().profile.applied, None);
-        h.beenden().await;
-    }
-
-    #[tokio::test(start_paused = true)]
-    async fn ruhrt_das_profil_ohne_brand_nicht_an() {
-        let h = Harness::new(TelegramConfig {
-            enabled: true,
-            bot_token: TOKEN.to_string(),
-            profile: nexus_core::telegram::BotProfile {
-                brand: false,
-                applied: None,
-            },
-            ..TelegramConfig::default()
-        });
-
-        h.start().await;
-        h.durchlaufen().await;
-
-        assert!(h.fake.calls_of("setMyProfilePhoto").is_empty());
-        assert!(h.fake.calls_of("setMyCommands").is_empty());
-        assert_eq!(h.bot.status().await.profile_error, None);
-        assert!(h.polls() > 0, "der Bot läuft ganz normal");
         h.beenden().await;
     }
 

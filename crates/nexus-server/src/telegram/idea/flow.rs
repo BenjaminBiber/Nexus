@@ -3,9 +3,12 @@
 //!
 //! Der Weg ist immer derselbe: Ansage „🤔 Ich schaue mir das Board an …“, dann der
 //! [`IdeaInterpreter`], dann ersetzt der Entwurf die Ansage. Die Knöpfe schalten das Ziel
-//! (Notiz/Ticket) und das Board um, starten eine Korrekturrunde oder verwerfen. Offene
-//! Rückfragen öffnen gleich einen Dialog: die nächste Nachricht – Text oder Sprache – ist
-//! die Antwort und läuft als Korrekturrunde mit `previous` durch den Interpreter. Ab
+//! (Notiz/Ticket) und das Board um, starten eine Korrekturrunde oder verwerfen.
+//!
+//! Hat der Entwurf Rückfragen, kommen sie vorher einzeln ([`Questionnaire`]): je Frage ihre
+//! Antwortmöglichkeiten als Knöpfe, dazu Überspringen, Zurück und Abbrechen; eine Nachricht –
+//! Text oder Sprache – ist die freie Antwort. Erst nach der letzten Frage läuft eine
+//! Korrekturrunde mit allen Antworten (`previous`) durch den Interpreter. Ab
 //! `ideas.maxRounds` bleiben nur noch Anlegen und Verwerfen.
 //!
 //! Angelegt wird über dieselben Dienste wie die Routen (`state.board`): die Notiz über den
@@ -23,7 +26,9 @@ use nexus_core::board::basics::TicketStatus;
 use nexus_core::board::note_service::{AddNoteOptions, NewNoteText};
 use nexus_core::board::ticket_service::{NewTicketInput, WriteOptions};
 use nexus_core::telegram::idea::{IdeaDraft, IdeaKind};
-use nexus_core::telegram::{CallbackAction, IdeaTarget, TelegramConfigStore};
+use nexus_core::telegram::{
+    AskError, AskStep, CallbackAction, IdeaTarget, Questionnaire, TelegramConfigStore,
+};
 use nexus_core::Result;
 
 use crate::state::AppState;
@@ -33,9 +38,10 @@ use crate::telegram::commands::{active_board, answer, own_boards, report, troubl
 use crate::telegram::dialog::{Dialog, DialogInput, DialogKind, Dialogs};
 use crate::telegram::idea::store::IdeaEntry;
 use crate::telegram::idea::views::{
-    board_list, correction_message, created_message, draft_keyboard, draft_message,
-    dropped_message, replace_question, DROPPED, EMPTY_CORRECTION, FROM_TELEGRAM_VOICE,
-    IDEA_WITHOUT_TEXT, NO_DRAFT, ROUNDS_SPENT, THINKING, TRANSCRIPT,
+    ask_message, asks_done_message, board_list, correction_message, created_message,
+    draft_keyboard, draft_message, dropped_message, replace_question, retry_keyboard, ASK_STALE,
+    DROPPED, EMPTY_ANSWER, EMPTY_CORRECTION, FROM_TELEGRAM_VOICE, IDEA_WITHOUT_TEXT,
+    NOTHING_TICKED, NO_DRAFT, ROUNDS_SPENT, THINKING, TRANSCRIPT, UNKNOWN_ANSWER,
 };
 use crate::telegram::idea::IdeaRequest;
 use crate::telegram::router::{BotContext, CallbackHandler, CommandHandler, MessageHandler};
@@ -101,7 +107,17 @@ impl IdeaFlow {
             .await;
         let check = match made {
             Ok(check) => check,
-            Err(error) => return self.edit(ctx, thinking, &trouble(&error), None).await,
+            Err(error) => {
+                // Nach einem Fragebogen bleiben die Antworten liegen: „Nochmal“ rechnet neu
+                let retry = previous.as_ref().and_then(|entry| {
+                    entry
+                        .questionnaire
+                        .as_ref()
+                        .filter(|questionnaire| questionnaire.is_done())
+                        .map(|questionnaire| retry_keyboard(&entry.id, questionnaire.answers.len()))
+                });
+                return self.edit(ctx, thinking, &trouble(&error), retry).await;
+            }
         };
         let config = TelegramConfigStore::new(state.home.clone())
             .read()
@@ -131,18 +147,140 @@ impl IdeaFlow {
             None => state.idea_drafts.put(ctx.chat_id, draft)?,
         };
         let rounds_left = entry.draft.rounds < config.ideas.max_rounds;
-        let (text, keyboard) = self.confirmation(state, &entry, rounds_left).await;
+        // Offene Rückfragen kommen einzeln, solange noch eine Runde übrig ist, sie einzuarbeiten;
+        // der Entwurf selbst erscheint erst danach
+        let questionnaire = (!entry.draft.questions.is_empty() && rounds_left)
+            .then(|| Questionnaire::new(entry.draft.questions.len()));
+        if !state
+            .idea_drafts
+            .set_questionnaire(ctx.chat_id, &entry.id, questionnaire.clone())?
+        {
+            return self
+                .edit(ctx, thinking, &hint_message(NO_DRAFT), None)
+                .await;
+        }
+        let (text, keyboard) = match &questionnaire {
+            Some(questionnaire) => ask_message(&entry.id, &entry.draft, questionnaire),
+            None => self.confirmation(state, &entry, rounds_left).await,
+        };
         let text = match dropped_message(&check.dropped) {
             Some(hints) => format!("{text}\n\n{hints}"),
             None => text,
         };
         self.edit(ctx, thinking, &text, Some(keyboard)).await?;
-        // Offene Rückfragen warten gleich auf die Antwort; ein Knopf ist dafür nicht nötig
-        if !entry.draft.questions.is_empty() && rounds_left {
+        // Die aktuelle Rückfrage wartet gleich auf eine freie Antwort per Text oder Sprache
+        if questionnaire.is_some() {
             self.dialogs
                 .open(ctx.chat_id, DialogKind::IdeaAnswer, &entry.id);
         }
         Ok(())
+    }
+
+    // ---------------------------------------------------------------- Rückfragen
+
+    /// Ein Knopf an einer Rückfrage: antworten, ankreuzen, überspringen oder zurück. Ist danach
+    /// alles beantwortet, beginnt die Verfeinerungsrunde
+    async fn ask(&self, ctx: &BotContext, query_id: &str, draft_id: &str, op: AskOp) -> Result<()> {
+        let state = self.deps.state()?;
+        let Some(entry) = self.open(ctx, query_id, &state, draft_id).await? else {
+            return Ok(());
+        };
+        let Some(mut questionnaire) = entry.questionnaire.clone() else {
+            return answer(ctx, query_id, Some(ASK_STALE)).await;
+        };
+        // „Nochmal“ nach einer gescheiterten Runde: dieselben Antworten neu einarbeiten
+        if questionnaire.is_done() {
+            if op == AskOp::Confirm(questionnaire.answers.len()) {
+                answer(ctx, query_id, None).await?;
+                ctx.update(&asks_done_message(&entry.draft, &questionnaire), None)
+                    .await?;
+                return self.finish(ctx, &state, entry, questionnaire).await;
+            }
+            return answer(ctx, query_id, Some(ASK_STALE)).await;
+        }
+        let asks = &entry.draft.questions;
+        let step = match op {
+            AskOp::Choose(question, option) => questionnaire.choose(asks, question, option),
+            AskOp::Toggle(question, option) => questionnaire
+                .toggle(asks, question, option)
+                .map(|()| AskStep::Next),
+            AskOp::Confirm(question) => questionnaire.confirm(asks, question),
+            AskOp::Skip(question) => questionnaire.skip(asks, question),
+            AskOp::Back(question) => questionnaire.back(asks, question).map(|()| AskStep::Next),
+        };
+        let step = match step {
+            Ok(step) => step,
+            Err(error) => return answer(ctx, query_id, Some(ask_hint(error))).await,
+        };
+        if !state.idea_drafts.set_questionnaire(
+            ctx.chat_id,
+            &entry.id,
+            Some(questionnaire.clone()),
+        )? {
+            return self.stale(ctx, query_id, NO_DRAFT).await;
+        }
+        answer(ctx, query_id, None).await?;
+        match step {
+            AskStep::Next => {
+                let (text, keyboard) = ask_message(&entry.id, &entry.draft, &questionnaire);
+                self.dialogs
+                    .open(ctx.chat_id, DialogKind::IdeaAnswer, &entry.id);
+                ctx.update(&text, Some(keyboard)).await
+            }
+            AskStep::Done => {
+                ctx.update(&asks_done_message(&entry.draft, &questionnaire), None)
+                    .await?;
+                self.finish(ctx, &state, entry, questionnaire).await
+            }
+        }
+    }
+
+    /// Eine freie Antwort (Text oder Sprache) auf die aktuelle Rückfrage; die nächste Frage
+    /// kommt als neue Nachricht
+    async fn ask_free(
+        &self,
+        ctx: &BotContext,
+        state: &Arc<AppState>,
+        entry: IdeaEntry,
+        mut questionnaire: Questionnaire,
+        text: &str,
+    ) -> Result<()> {
+        let step = match questionnaire.free(&entry.draft.questions, text) {
+            Ok(step) => step,
+            Err(error) => return ctx.reply(&hint_message(ask_hint(error))).await,
+        };
+        if !state.idea_drafts.set_questionnaire(
+            ctx.chat_id,
+            &entry.id,
+            Some(questionnaire.clone()),
+        )? {
+            return ctx.reply(&hint_message(NO_DRAFT)).await;
+        }
+        match step {
+            AskStep::Next => {
+                let (text, keyboard) = ask_message(&entry.id, &entry.draft, &questionnaire);
+                self.dialogs
+                    .open(ctx.chat_id, DialogKind::IdeaAnswer, &entry.id);
+                ctx.reply_with(&text, keyboard).await
+            }
+            AskStep::Done => self.finish(ctx, state, entry, questionnaire).await,
+        }
+    }
+
+    /// Alle Rückfragen beantwortet: eine Verfeinerungsrunde mit allen Antworten
+    async fn finish(
+        &self,
+        ctx: &BotContext,
+        state: &Arc<AppState>,
+        entry: IdeaEntry,
+        questionnaire: Questionnaire,
+    ) -> Result<()> {
+        let answers = questionnaire.answers_text(&entry.draft.questions);
+        let entry = IdeaEntry {
+            questionnaire: Some(questionnaire),
+            ..entry
+        };
+        self.run(ctx, state, &answers, Some(entry)).await
     }
 
     // ---------------------------------------------------------------- Knöpfe am Entwurf
@@ -287,16 +425,33 @@ impl IdeaFlow {
         input: DialogInput,
     ) -> Result<()> {
         let text = input.text().trim().to_string();
-        if text.is_empty() {
-            return ctx.reply(&hint_message(EMPTY_CORRECTION)).await;
-        }
         let state = self.deps.state()?;
         let Some(entry) = state.idea_drafts.with_id(ctx.chat_id, &dialog.target) else {
             return ctx.reply(&hint_message(NO_DRAFT)).await;
         };
+        // Eine offene Rückfrage: die Nachricht ist ihre Antwort
+        if let Some(questionnaire) = entry.questionnaire.clone().filter(|q| !q.is_done()) {
+            if text.is_empty() {
+                // Die Frage wartet weiter
+                self.dialogs
+                    .open(ctx.chat_id, DialogKind::IdeaAnswer, &entry.id);
+                return ctx.reply(&hint_message(EMPTY_ANSWER)).await;
+            }
+            return self
+                .ask_free(ctx, &state, entry, questionnaire, &text)
+                .await;
+        }
+        if text.is_empty() {
+            return ctx.reply(&hint_message(EMPTY_CORRECTION)).await;
+        }
         if !self.rounds_left(&state, &entry.draft) {
             return ctx.reply(&hint_message(ROUNDS_SPENT)).await;
         }
+        // Nach einer gescheiterten Runde gehören die Antworten auf die Rückfragen mit dazu
+        let text = match entry.questionnaire.as_ref() {
+            Some(done) => format!("{}\n{text}", done.answers_text(&entry.draft.questions)),
+            None => text,
+        };
         self.run(ctx, &state, &text, Some(entry)).await
     }
 
@@ -395,6 +550,26 @@ impl IdeaFlow {
     }
 }
 
+/// Was ein Knopf an einer Rückfrage auslöst (Nummer der Frage, ggf. der Möglichkeit)
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum AskOp {
+    Choose(usize, usize),
+    Toggle(usize, usize),
+    Confirm(usize),
+    Skip(usize),
+    Back(usize),
+}
+
+/// Der Hinweis zu einem Schritt im Fragebogen, der nichts geändert hat
+fn ask_hint(error: AskError) -> &'static str {
+    match error {
+        AskError::Stale => ASK_STALE,
+        AskError::UnknownOption => UNKNOWN_ANSWER,
+        AskError::NothingTicked => NOTHING_TICKED,
+        AskError::Empty => EMPTY_ANSWER,
+    }
+}
+
 /// Antwort auf einen Knopf, dessen Board es nicht mehr gibt
 const UNKNOWN_BOARD: &str = "So ein Board habe ich nicht";
 
@@ -443,6 +618,27 @@ impl CallbackHandler for IdeaFlow {
             CallbackAction::IdeaEdit(draft) => self.correct(ctx, query_id, draft).await?,
             CallbackAction::IdeaDrop(draft) => self.drop_draft(ctx, query_id, draft).await?,
             CallbackAction::IdeaReplace(draft) => self.replace(ctx, query_id, draft).await?,
+            CallbackAction::IdeaAskChoose(draft, question, option) => {
+                self.ask(ctx, query_id, draft, AskOp::Choose(*question, *option))
+                    .await?
+            }
+            CallbackAction::IdeaAskToggle(draft, question, option) => {
+                self.ask(ctx, query_id, draft, AskOp::Toggle(*question, *option))
+                    .await?
+            }
+            CallbackAction::IdeaAskDone(draft, question) => {
+                self.ask(ctx, query_id, draft, AskOp::Confirm(*question))
+                    .await?
+            }
+            CallbackAction::IdeaAskSkip(draft, question) => {
+                self.ask(ctx, query_id, draft, AskOp::Skip(*question))
+                    .await?
+            }
+            CallbackAction::IdeaAskBack(draft, question) => {
+                self.ask(ctx, query_id, draft, AskOp::Back(*question))
+                    .await?
+            }
+            CallbackAction::IdeaAskCancel(draft) => self.drop_draft(ctx, query_id, draft).await?,
             // „Abbrechen“ beantwortet [`crate::telegram::commands`]; hier fällt nur die
             // wartende Idee weg, damit sie nicht später noch angelegt wird
             CallbackAction::Cancel => {

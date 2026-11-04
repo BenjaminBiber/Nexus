@@ -67,8 +67,7 @@
           "review": true
         },
         "profile": {
-          "applied": null,
-          "brand": true
+          "applied": null
         },
         "quietHours": null,
         "speech": {
@@ -133,8 +132,7 @@
             "botId": 7012345678,
             "photo": "31bd7f7de04f11dfe8c1a1093279495c16fcff82",
             "texts": "7e0cbdddcb507d501c1b690e69d575621ac2e3d9"
-          },
-          "brand": true
+          }
         },
         "quietHours": null,
         "speech": {
@@ -183,80 +181,6 @@
     }
   },
   {
-    "name": "Einrichten abschalten",
-    "request": {
-      "body": {
-        "apiBase": "<var:tgUrl>",
-        "enabled": true,
-        "profile": {
-          "brand": false
-        }
-      },
-      "method": "PUT",
-      "path": "/api/telegram/config"
-    },
-    "response": {
-      "contentType": "application/json",
-      "json": {
-        "apiBase": "<var:tgUrl>",
-        "botToken": "123456:…Dsaw",
-        "chats": [
-          4242
-        ],
-        "enabled": true,
-        "ideas": {
-          "defaultTarget": "note",
-          "maxRounds": 5
-        },
-        "notify": {
-          "blocked": true,
-          "merge": true,
-          "merged": false,
-          "paused": false,
-          "question": true,
-          "review": true
-        },
-        "profile": {
-          "applied": {
-            "botId": 7012345678,
-            "photo": "31bd7f7de04f11dfe8c1a1093279495c16fcff82",
-            "texts": "7e0cbdddcb507d501c1b690e69d575621ac2e3d9"
-          },
-          "brand": false
-        },
-        "quietHours": null,
-        "speech": {
-          "apiKey": "",
-          "backend": "openai-compatible",
-          "baseUrl": "https://api.openai.com",
-          "language": "de",
-          "model": "gpt-4o-mini-transcribe",
-          "whisperCli": {
-            "binary": "whisper-cli",
-            "ffmpeg": "ffmpeg",
-            "model": ""
-          }
-        }
-      },
-      "status": 200
-    }
-  },
-  {
-    "name": "ohne brand richtet die Route nichts ein",
-    "request": {
-      "method": "POST",
-      "path": "/api/telegram/profile"
-    },
-    "response": {
-      "contentType": "application/json",
-      "json": {
-        "applied": false,
-        "error": null
-      },
-      "status": 200
-    }
-  },
-  {
     "name": "Bot wieder abschalten",
     "request": {
       "body": {
@@ -291,8 +215,7 @@
             "botId": 7012345678,
             "photo": "31bd7f7de04f11dfe8c1a1093279495c16fcff82",
             "texts": "7e0cbdddcb507d501c1b690e69d575621ac2e3d9"
-          },
-          "brand": true
+          }
         },
         "quietHours": null,
         "speech": {

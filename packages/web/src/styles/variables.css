@@ -7,6 +7,8 @@
   --bg: #f7f7f8;
   --surface: #ffffff;
   --surface-alt: #fbfbfc;
+  /* Helle Unterlage für Markenlogos, in allen Themen gleich: viele Logos sind schwarz */
+  --logo-plate: #ffffff;
   --sidebar-bg: #fbfbfc;
   --nav-active-bg: #ffffff;
   --line: #e8e8ec;
@@ -140,6 +142,7 @@
   --bg: #0c0c0e;
   --surface: #161619;
   --surface-alt: #121215;
+  --logo-plate: #ffffff;
   --sidebar-bg: #111114;
   --nav-active-bg: #1f1f24;
   --line: #26262b;

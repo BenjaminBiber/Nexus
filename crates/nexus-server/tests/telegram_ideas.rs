@@ -456,25 +456,19 @@ async fn eine_sprachnachricht_wird_ueber_zwei_korrekturrunden_zur_notiz() {
 
     bot.speak().await;
 
-    // Die Bestätigung nennt Ziel samt Board, Bezüge und die Rückfrage – und fragt gleich
+    // Erst die Rückfrage, einzeln; ohne Antwortmöglichkeiten bleibt nur die freie Antwort
     let (text, knoepfe) = bot.edit();
-    assert!(text.starts_with("<b>Bevor ich es anlege:</b>"), "{text}");
-    assert!(text.contains("Auch für SQL Server?"), "{text}");
     assert!(
-        text.contains(&format!("<b>Notiz auf Board {} „Sprint“</b>", bot.board_id)),
+        text.contains("<b>Frage 1/1</b>\nAuch für SQL Server?"),
         "{text}"
     );
-    assert!(text.contains("NXS-0001 – baut dieselbe Ansicht"), "{text}");
-    assert!(text.contains("<i>Runde 1</i>"), "{text}");
+    assert!(
+        !text.contains("Notiz auf Board"),
+        "der Entwurf kommt danach: {text}"
+    );
     assert_eq!(
         knoepfe.iter().map(|(label, _)| label).collect::<Vec<_>>(),
-        [
-            "Anlegen",
-            "Als Ticket",
-            "Anderes Board",
-            "Korrigieren",
-            "Verwerfen"
-        ]
+        ["Überspringen", "Abbrechen"]
     );
     assert!(
         bot.sent().iter().any(|text| text.contains("🤔")),
@@ -489,9 +483,25 @@ async fn eine_sprachnachricht_wird_ueber_zwei_korrekturrunden_zur_notiz() {
     ));
     bot.clear();
     bot.send("Nein, nur für MSSQL").await;
-    let (text, _) = bot.edit();
+    // Die Bestätigung nennt Ziel samt Board und Bezüge
+    let (text, knoepfe) = bot.edit();
     assert!(text.contains("(nur MSSQL)"), "{text}");
     assert!(text.contains("<i>Runde 2</i>"), "{text}");
+    assert!(
+        text.contains(&format!("<b>Notiz auf Board {} „Sprint“</b>", bot.board_id)),
+        "{text}"
+    );
+    assert!(text.contains("NXS-0001 – baut dieselbe Ansicht"), "{text}");
+    assert_eq!(
+        knoepfe.iter().map(|(label, _)| label).collect::<Vec<_>>(),
+        [
+            "Anlegen",
+            "Als Ticket",
+            "Anderes Board",
+            "Korrigieren",
+            "Verwerfen"
+        ]
+    );
 
     // Zweite Korrekturrunde: diesmal über den Knopf
     bot.tap("Korrigieren").await;
@@ -540,6 +550,179 @@ async fn eine_sprachnachricht_wird_ueber_zwei_korrekturrunden_zur_notiz() {
     bot.press(&anlegen).await;
     assert_eq!(bot.alerts(), ["Diesen Entwurf gibt es nicht mehr"]);
     assert_eq!(bot.notes(bot.board_id).await.len(), 1);
+}
+
+/// Drei Rückfragen wie aus dem Beispiel: Wahl mit Empfehlung, Mehrfachauswahl, frei
+fn drei_rueckfragen() -> Value {
+    json!([
+        {
+            "text": "Welche Engine?",
+            "options": [
+                { "label": "faster-whisper", "detail": "läuft gut auf CPU" },
+                { "label": "Vosk", "detail": null },
+                { "label": "anderes", "detail": null },
+            ],
+            "recommended": 0,
+            "multiSelect": false,
+        },
+        {
+            "text": "Welche Hardware?",
+            "options": [{ "label": "CPU" }, { "label": "NVIDIA-GPU" }],
+            "recommended": null,
+            "multiSelect": true,
+        },
+        { "text": "Wo soll die Datei liegen?", "options": [] },
+    ])
+}
+
+#[tokio::test]
+async fn rueckfragen_kommen_einzeln_und_werden_in_einer_runde_eingearbeitet() {
+    let bot = Bot::simple().await;
+    bot.answers(entwurf(
+        bot.board_id,
+        json!({ "title": "Compose-Datei für STT anlegen", "questions": drei_rueckfragen() }),
+    ));
+
+    bot.send("/idee Docker-Compose-Datei für einen Speech-to-Text-Dienst")
+        .await;
+
+    // Frage 1: die Möglichkeiten als Knöpfe, die empfohlene mit Stern
+    let (text, _) = bot.edit();
+    assert!(text.contains("<b>Frage 1/3</b>\nWelche Engine?"), "{text}");
+    assert!(
+        text.contains("<b>faster-whisper</b> ★ – läuft gut auf CPU"),
+        "{text}"
+    );
+    assert_eq!(
+        bot.labels(),
+        [
+            "★ faster-whisper",
+            "Vosk",
+            "anderes",
+            "Überspringen",
+            "Abbrechen"
+        ]
+    );
+    let alter_knopf = bot.button("★ faster-whisper");
+
+    // Antwort per Knopf, dann zurück und doch anders – ohne Claude-Lauf dazwischen
+    bot.tap("★ faster-whisper").await;
+    let (text, _) = bot.edit();
+    assert!(text.contains("✓ Welche Engine?: faster-whisper"), "{text}");
+    assert!(text.contains("<b>Frage 2/3</b>"), "{text}");
+    bot.tap("Zurück").await;
+    assert!(bot.edit().0.contains("<b>Frage 1/3</b>"));
+    bot.tap("Vosk").await;
+    assert!(bot.sent().is_empty(), "kein Claude-Lauf: {:?}", bot.sent());
+    let fertig = bot.button("Fertig");
+    let cpu = bot.button("☐ CPU");
+
+    // Ein Knopf aus der überholten Frage ändert nichts
+    bot.clear();
+    bot.press(&alter_knopf).await;
+    assert_eq!(
+        bot.alerts(),
+        ["Diese Frage ist schon beantwortet – nichts geändert."]
+    );
+    assert!(
+        bot.calls("editMessageText").is_empty(),
+        "die Nachricht bleibt"
+    );
+
+    // Frage 2: Mehrfachauswahl – „Fertig“ ohne Häkchen geht nicht, dann überspringen
+    bot.press(&fertig).await;
+    assert!(
+        bot.alerts()
+            .contains(&"Erst mindestens eine Antwort ankreuzen.".to_string()),
+        "{:?}",
+        bot.alerts()
+    );
+    bot.clear();
+    bot.press(&cpu).await;
+    assert_eq!(bot.labels()[0], "☑ CPU");
+    bot.tap("Überspringen").await;
+    let (text, _) = bot.edit();
+    assert!(
+        text.contains("<b>Frage 3/3</b>\nWo soll die Datei liegen?"),
+        "{text}"
+    );
+
+    // Frage 3: frei per Text; danach genau eine Verfeinerungsrunde
+    bot.answers(entwurf(
+        bot.board_id,
+        json!({ "title": "Compose-Datei für STT unter deploy/ anlegen", "questions": [] }),
+    ));
+    bot.clear();
+    bot.send("deploy/").await;
+    let gedacht = bot.sent().iter().filter(|text| text.contains("🤔")).count();
+    assert_eq!(gedacht, 1, "{:?}", bot.sent());
+    let (text, _) = bot.edit();
+    assert!(text.contains("unter deploy/ anlegen"), "{text}");
+    assert!(text.contains("<i>Runde 2</i>"), "{text}");
+
+    // Die Antworten stehen im Transkript der Notiz
+    bot.tap("Anlegen").await;
+    let notes = bot.notes(bot.board_id).await;
+    assert_eq!(notes.len(), 1, "{notes:?}");
+    for antwort in [
+        "Welche Engine? → Vosk",
+        "Welche Hardware? → keine Vorgabe – entscheide selbst",
+        "Wo soll die Datei liegen? → deploy/",
+    ] {
+        assert!(
+            notes[0].1.contains(antwort),
+            "{antwort} fehlt: {:?}",
+            notes[0]
+        );
+    }
+}
+
+#[tokio::test]
+async fn nach_einer_gescheiterten_runde_rechnet_nochmal_mit_denselben_antworten() {
+    let bot = Bot::simple().await;
+    bot.answers(entwurf(bot.board_id, json!({})));
+    bot.send("/idee Der Cache läuft nie ab").await;
+
+    // Die Runde nach der letzten Antwort scheitert: kaputte Antwort von Claude
+    std::fs::write(&bot.reply, "kein Entwurf").expect("Antwort schreiben");
+    bot.clear();
+    bot.send("Nur für MSSQL").await;
+    assert_eq!(bot.labels(), ["Nochmal", "Verwerfen"]);
+
+    bot.answers(entwurf(
+        bot.board_id,
+        json!({ "title": "Cache läuft nie ab (nur MSSQL)", "questions": [] }),
+    ));
+    bot.tap("Nochmal").await;
+    let (text, _) = bot.edit();
+    assert!(text.contains("(nur MSSQL)"), "{text}");
+    assert!(text.contains("<i>Runde 2</i>"), "{text}");
+
+    bot.tap("Anlegen").await;
+    let notes = bot.notes(bot.board_id).await;
+    assert!(
+        notes[0].1.contains("Auch für SQL Server? → Nur für MSSQL"),
+        "{notes:?}"
+    );
+}
+
+#[tokio::test]
+async fn abbrechen_an_einer_rueckfrage_verwirft_die_idee() {
+    let bot = Bot::simple().await;
+    bot.answers(entwurf(
+        bot.board_id,
+        json!({ "questions": drei_rueckfragen() }),
+    ));
+    bot.send("/idee Docker-Compose-Datei für STT").await;
+
+    bot.tap("Abbrechen").await;
+
+    assert_eq!(bot.edit().0, "🗑 Verworfen – nichts angelegt.");
+    // Auch eine Textnachricht beantwortet die Frage nicht mehr: sie ist eine neue Idee
+    bot.answers(entwurf(bot.board_id, json!({ "questions": [] })));
+    bot.send("Und noch etwas").await;
+    assert!(bot.edit().0.contains("<i>Runde 1</i>"));
+    assert!(bot.notes(bot.board_id).await.is_empty());
 }
 
 #[tokio::test]
