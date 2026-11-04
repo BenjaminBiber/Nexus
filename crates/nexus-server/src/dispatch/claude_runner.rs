@@ -32,14 +32,17 @@ impl ClaudeRunner for ProcessClaudeRunner {
 }
 
 /// Die Läufe, die der Zustand des Servers bereithält: einer für die Entwürfe (Tickets und
-/// Fragen), einer für das Umschreiben, einer für die Analyse der Optimierungs-Vorschläge.
-/// Getrennte Einträge, damit Tests sie einzeln ersetzen können (wie `ticketDraftClaude`,
-/// `reviseClaude` und `suggestionClaude` in `TestServer.ts`).
+/// Fragen), einer für das Umschreiben, einer für die Analyse der Optimierungs-Vorschläge,
+/// einer für die Ideen des Telegram-Bots. Getrennte Einträge, damit Tests sie einzeln
+/// ersetzen können (wie `ticketDraftClaude`, `reviseClaude` und `suggestionClaude` in
+/// `TestServer.ts`).
 #[derive(Clone)]
 pub struct ClaudeRunners {
     pub ticket_draft: Arc<dyn ClaudeRunner>,
     pub revise: Arc<dyn ClaudeRunner>,
     pub suggestion: Arc<dyn ClaudeRunner>,
+    /// Versteht die Ideen aus dem Telegram-Bot
+    pub idea: Arc<dyn ClaudeRunner>,
 }
 
 impl Default for ClaudeRunners {
@@ -48,6 +51,7 @@ impl Default for ClaudeRunners {
             ticket_draft: Arc::new(ProcessClaudeRunner),
             revise: Arc::new(ProcessClaudeRunner),
             suggestion: Arc::new(ProcessClaudeRunner),
+            idea: Arc::new(ProcessClaudeRunner),
         }
     }
 }
@@ -91,6 +95,8 @@ impl ClaudeRunners {
             ticket_draft: Arc::new(FixedClaudeRunner::new("[]")),
             revise: Arc::new(FixedClaudeRunner::new("Ersatztext")),
             suggestion: Arc::new(FixedClaudeRunner::new("[]")),
+            // Der Vertrag fährt den Bot nicht; über HTTP ist der Ideen-Lauf nicht erreichbar
+            idea: Arc::new(FixedClaudeRunner::new("{}")),
         }
     }
 }

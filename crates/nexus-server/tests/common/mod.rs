@@ -128,6 +128,9 @@ pub struct TestServerOptions {
     /// Zugriff auf die Bot-API von Telegram; ohne Angabe über reqwest (den Tests nie auslösen,
     /// weil der Bot ohne Token und ohne Schalter ruht)
     pub telegram_api: Option<nexus_server::telegram::TelegramApiFactory>,
+    /// Der Dienst, der die Ideen des Bots versteht; ohne Angabe einer mit der Umgebung des
+    /// Testprozesses (den Tests nie auslösen, weil der freie Text einen Chat braucht)
+    pub idea_interpreter: Option<Arc<nexus_server::telegram::IdeaInterpreter>>,
 }
 
 /// Startet nichts und liefert keine Prozessnummer; so startet in Tests nie ein echter Worker
@@ -187,6 +190,7 @@ impl TestServer {
             config.clock = clock;
         }
         config.telegram_api = options.telegram_api;
+        config.idea_interpreter = options.idea_interpreter;
         config.account_usage = options.account_usage;
         config.account_login_spawner = options.account_login_spawner;
         config.account_plugins = options.account_plugins;
@@ -975,6 +979,7 @@ pub fn fake_runners(fake: Arc<FakeClaude>) -> ClaudeRunners {
     ClaudeRunners {
         ticket_draft: fake.clone(),
         revise: fake.clone(),
-        suggestion: fake,
+        suggestion: fake.clone(),
+        idea: fake,
     }
 }

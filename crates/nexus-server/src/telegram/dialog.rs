@@ -28,6 +28,8 @@ pub enum DialogKind {
     QuestionText,
     /// Begründung, mit der eine Frage verworfen wird (Pflicht)
     QuestionDiscard,
+    /// Antwort auf die Rückfragen eines Ideen-Entwurfs oder eine Korrektur daran
+    IdeaAnswer,
 }
 
 /// Die Antwort auf einen Dialog. Eine Sprachnachricht kommt später als Transkript

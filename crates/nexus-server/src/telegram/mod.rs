@@ -10,7 +10,8 @@
 //! [`notifier`] schickt die Meldungen des Servers in die gekoppelten Chats,
 //! [`profile`] richtet Profilbild, Name, Beschreibungen und Befehlsliste des Bots ein,
 //! [`texts`] hält die dafür gesetzten Texte. [`voice`] macht aus einer Sprachnachricht Text
-//! und gibt ihn denselben Weg wie einen getippten.
+//! und gibt ihn denselben Weg wie einen getippten. [`idea`] hält dazu den Ideen-Dialog:
+//! Entwurf, Rückfragen, Korrektur und das Anlegen als Notiz, Ticket oder Kommentar.
 
 pub mod action_views;
 pub mod api;
@@ -32,7 +33,7 @@ pub mod voice;
 
 pub use bot::{TelegramApiFactory, TelegramBot};
 pub use dialog::{Dialog, DialogInput, DialogKind, Dialogs, DIALOG_TIMEOUT_MINUTES};
-pub use idea::{IdeaInterpreter, IdeaRequest};
+pub use idea::{IdeaDraftStore, IdeaEntry, IdeaInterpreter, IdeaRequest, IDEA_EXPIRY_HOURS};
 pub use notifier::{Occasion, TelegramNotice, TelegramNotifier};
 pub use pairing::{PairingCode, PairingCodes};
 pub use profile::{BotProfileSync, ProfileOutcome};

@@ -156,7 +156,7 @@ pub(crate) async fn own_boards(state: &Arc<AppState>) -> Result<Vec<BoardChoice>
 }
 
 /// Das aktive Board aus `board.yaml`; eine unlesbare Datei gilt als „keins“
-fn active_board(state: &Arc<AppState>) -> Option<i32> {
+pub(crate) fn active_board(state: &Arc<AppState>) -> Option<i32> {
     BoardConfigStore::new(state.home.clone())
         .read()
         .ok()

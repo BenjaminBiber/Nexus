@@ -197,6 +197,11 @@ impl NexusHome {
         self.telegram_dir().join("state.json")
     }
 
+    /// Offene Ideen-Entwürfe des Telegram-Bots je Chat; keine Geheimnisse
+    pub fn telegram_drafts_file(&self) -> PathBuf {
+        self.telegram_dir().join("drafts.json")
+    }
+
     /// Ausblendungen und letzte Claude-Analyse der Optimierungs-Vorschläge
     pub fn dispatch_suggestions_file(&self) -> PathBuf {
         self.dir.join("dispatch-suggestions.json")

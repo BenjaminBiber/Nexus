@@ -25,8 +25,14 @@ use crate::state::AppState;
 use crate::telegram::action_views::DIALOG_EXPIRED;
 use crate::telegram::api::Message;
 use crate::telegram::dialog::{DialogAnswer, DialogInput, DialogKind, Dialogs};
+use crate::telegram::idea::flow::IdeaFlow;
 use crate::telegram::router::{BotContext, MessageHandler, UpdateRouter};
 use crate::telegram::voice::{ConfiguredSpeech, VoiceMessages};
+
+/// Beantwortet einen Knopfdruck; die Knöpfe des ganzen Bots nutzen denselben Weg
+pub(crate) use actions::answer;
+/// Die eigenen Boards und das aktive aus `board.yaml`
+pub(crate) use board::{active_board, own_boards};
 
 /// Die Befehle samt Beschreibung für `/hilfe` und `setMyCommands`, in dieser Reihenfolge
 pub const COMMANDS: &[(&str, &str)] = &[
@@ -34,6 +40,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("board", "Spalten des Boards; mit Name oder ID ein anderes"),
     ("ticket", "Kurzansicht eines Tickets (/ticket NXS-0042)"),
     ("aufgaben", "Was gerade auf dich wartet"),
+    ("idee", "Idee erfassen (/idee Der Cache läuft nie ab)"),
     ("pause", "Dispatcher pausieren (/pause 30, Vorgabe 60 min)"),
     ("weiter", "Dispatcher fortsetzen"),
     ("abbrechen", "Einen offenen Dialog beenden"),
@@ -64,6 +71,8 @@ pub fn register(router: &mut UpdateRouter, state: &Weak<AppState>, clock: Clock)
         description("aufgaben"),
         Arc::new(tasks::TasksCommand(deps.clone())),
     );
+    let ideas = Arc::new(IdeaFlow::new(deps.clone(), dialogs.clone()));
+    router.register_command("idee", description("idee"), ideas.clone());
     router.register_command(
         "pause",
         description("pause"),
@@ -83,6 +92,9 @@ pub fn register(router: &mut UpdateRouter, state: &Weak<AppState>, clock: Clock)
     router.register_callback(Arc::new(tasks::MoreButton(deps.clone())));
     let actions = Arc::new(actions::Actions::new(deps.clone(), dialogs.clone()));
     let questions = Arc::new(questions::Questions::new(deps.clone(), dialogs.clone()));
+    // Der Ideen-Dialog steht vor den anderen Knöpfen, damit „Abbrechen“ eine wartende Idee
+    // wegräumt, bevor [`actions`] die Nachricht ersetzt
+    router.register_callback(ideas.clone());
     router.register_callback(actions.clone());
     router.register_callback(questions.clone());
     // Die Texte der Dialoge nimmt genau ein Handler ab und gibt sie weiter
@@ -90,7 +102,10 @@ pub fn register(router: &mut UpdateRouter, state: &Weak<AppState>, clock: Clock)
         dialogs,
         actions,
         questions,
+        ideas: ideas.clone(),
     }));
+    // Freier Text ohne offenen Dialog ist eine neue Idee; deshalb steht er hinter den Dialogen
+    router.register_message(ideas);
     // Eine Sprachnachricht wird vorher zu Text und läuft dann denselben Weg
     router.set_voice(Arc::new(VoiceMessages::new(Arc::new(ConfiguredSpeech(
         deps,
@@ -103,6 +118,7 @@ struct DialogAnswers {
     dialogs: Arc<Dialogs>,
     actions: Arc<actions::Actions>,
     questions: Arc<questions::Questions>,
+    ideas: Arc<IdeaFlow>,
 }
 
 #[async_trait]
@@ -129,6 +145,7 @@ impl MessageHandler for DialogAnswers {
             DialogKind::Comment | DialogKind::ReturnFeedback => {
                 self.actions.submit(ctx, &dialog, input).await?
             }
+            DialogKind::IdeaAnswer => self.ideas.submit(ctx, &dialog, input).await?,
         }
         Ok(true)
     }
@@ -166,15 +183,19 @@ impl Deps {
 /// Chat, damit niemand auf eine Antwort wartet, die nie kommt; der Fehler selbst steht
 /// zusätzlich im Protokoll des Servers (der Poller schreibt ihn)
 pub(crate) async fn report(ctx: &BotContext, error: &nexus_core::Error) -> Result<()> {
+    ctx.reply(&trouble(error)).await
+}
+
+/// Derselbe Satz als Text – für Antworten, die eine schon geschickte Nachricht ersetzen
+pub(crate) fn trouble(error: &nexus_core::Error) -> String {
     let message = match error.harness() {
         Some(harness) => harness.message.clone(),
         None => error.to_string(),
     };
-    ctx.reply(&format!(
+    format!(
         "Das ging gerade nicht: {}",
         nexus_core::telegram::escape(&message)
-    ))
-    .await
+    )
 }
 
 #[cfg(test)]

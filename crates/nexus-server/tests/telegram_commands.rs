@@ -592,6 +592,7 @@ async fn meldet_die_befehle_fuer_das_telegram_menue() {
             "board",
             "ticket",
             "aufgaben",
+            "idee",
             "pause",
             "weiter",
             "abbrechen"
