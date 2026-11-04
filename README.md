@@ -2,6 +2,8 @@
 
 Lokale Werkbank für mehrere Claude-Code-Sessions gleichzeitig (früher „AI Harness“): Kanban-Board mit Tickets, Fragen und Notizen, Übersicht der Sessions, konfliktfreie Parallelarbeit mit Branches und Worktrees, ein Dispatcher, der geplante Tickets selbst umsetzen lässt, und Favoriten zum Fortsetzen von Sessions. Tickets, Fragen und Boards liegen in einer Board-Datenbank: gemeinsam im Team auf SQL Server oder als lokale SQLite-Datei für einen einzelnen Rechner.
 
+![Board-Ansicht von Nexus mit Tickets in den Spalten Backlog, Wartet, In Planung, Geplant, In Arbeit und Blockiert](assets/screenshots/board.png)
+
 Bestandteile:
 
 - CLI `nexus` (Alias `harness`, alte Befehle laufen weiter)
@@ -78,6 +80,20 @@ Danach `/reload-plugins` eingeben oder Claude Code neu starten.
 Jedes Repo gehört zu einem Board: einmal `nexus board boards repo <id> <pfad>` (Pfad = Hauptordner des Repos; `nexus board boards list` zeigt die Boards) oder „Mein Repo-Pfad“ in der Verwaltung. Der Repo-Pfad ist je Person lokal (`~/.nexus/board-repos.yaml`), nicht in der gemeinsamen Datenbank. Im eingerichteten Repo arbeiten `nexus board list`, `create` und `note` ohne `--board` auf diesem Board, sonst auf dem aktiven Board aus `~/.nexus/board.yaml`. `nexus board start` und `done` nehmen nur Tickets des Boards an, das dem Repo zugeordnet ist.
 
 Die Oberfläche hat in der Seitenleiste u. a. **Board**, **Meine Aufgaben** (alles, was gerade auf dich wartet: gescheiterte Merges, eigene Fragen, Abnahmen, Tickets in Planung, Notizen), **Dashboard** (Durchsatz, Erfolgsquote, Durchlaufzeiten und Kosten des Dispatchers), **Fragen**, **Docs**, **Sessions** und **Anleitung**; **Suchen** bzw. Strg+K (Cmd+K) durchsucht alle Boards und Projekte.
+
+Ein Klick auf eine Karte öffnet das Ticket mit Status, Zuständigem, Schritten, Plan und Kommentaren:
+
+![Ticketdetails mit Fortschritt, Abhängigkeiten und geöffnetem Tab „Plan“](assets/screenshots/ticket.png)
+
+**Meine Aufgaben** sammelt, was auf dich wartet: offene Fragen, blockierte Tickets, Tickets in Planung und Notizen, aus denen du ein Ticket machen kannst:
+
+![Meine Aufgaben mit einer offenen Frage, einem blockierten Ticket, einem Ticket in Planung und zwei Notizen](assets/screenshots/aufgaben.png)
+
+Offene Fragen entscheidest du auf ihrer eigenen Seite, mit Beschreibung, Varianten und Empfehlung:
+
+![Seite einer offenen Frage mit Beschreibung, Varianten und Empfehlung](assets/screenshots/frage.png)
+
+Die Bilder zeigen erfundene Demodaten; wie sie entstehen, steht unter [Lokal testen](#lokal-testen).
 
 **Ablauf:** Der Workflow von der Anforderung bis zum fertigen Ticket steht im Board im Tab **Anleitung**, mit allen Befehlen zum Kopieren. Zusätzlich gibt ihn ein Hook zu Beginn jeder Session an Claude: Claude kennt damit den Ablauf und den Stand der Tickets, schlägt nach jedem Schritt den nächsten vor und führt dich so durch den Workflow. Beides folgt deinem angepassten Workflow, falls es einen gibt (siehe [Anpassen](#anpassen)).
 
@@ -360,6 +376,15 @@ cargo run -q -p nexus-cli -- board list
 Statt `cargo run …` geht nach dem Bauen auch direkt `target/debug/nexus …`. Nur den Server ohne Vite (gebaute Oberfläche, eigener Port): `cargo run -q -p nexus-cli -- serve --port 4800 --web-dir packages/web/dist`, dann http://127.0.0.1:4800.
 
 Zum Aufräumen genügt es, den Ordner aus `NEXUS_HOME` zu löschen und die Variable zu entfernen.
+
+**Screenshots neu erzeugen:** Die Bilder unter `assets/screenshots/` entstehen mit erfundenen Demodaten aus `scripts/screenshots/capture.mjs`. Das Skript legt ein eigenes `NEXUS_HOME` mit SQLite-Board an, startet einen Server auf einem freien Port und räumt am Ende alles wieder auf; dein Board unter `~/.nexus` und ein laufender Server auf Port 4710 bleiben unberührt. Nach `npm run build` und `cargo build -p nexus-cli --bin nexus`:
+
+```sh
+npm i --no-save playwright && npx playwright install chromium   # Playwright steht nicht in der package.json
+node scripts/screenshots/capture.mjs
+```
+
+Danach jedes Bild ansehen, bevor es committet wird. Ein anderes Binary lässt sich mit `NEXUS_BIN=<pfad>` angeben.
 
 **3. Plugin und Hooks in Claude Code testen**, ohne `nexus install`:
 
