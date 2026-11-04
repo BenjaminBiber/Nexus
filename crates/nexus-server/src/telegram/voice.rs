@@ -64,7 +64,9 @@ impl SpeechSource for ConfiguredSpeech {
 
     fn record(&self, backend: SpeechBackend, took: Duration, result: &Result<Transcript>) {
         if let Ok(state) = self.0.state() {
-            state.speech_activity.record(backend, SpeechVia::Voice, took, result);
+            state
+                .speech_activity
+                .record(backend, SpeechVia::Voice, took, result);
         }
     }
 }
@@ -98,7 +100,8 @@ impl VoiceMessages {
         clip.within_limits()?;
         let started = Instant::now();
         let result = speech.transcribe(clip, &hint).await;
-        self.speech.record(speech.backend(), started.elapsed(), &result);
+        self.speech
+            .record(speech.backend(), started.elapsed(), &result);
         Ok(result?.text)
     }
 }

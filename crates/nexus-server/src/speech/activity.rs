@@ -53,7 +53,10 @@ impl SpeechActivity {
             return;
         }
         let now = Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true);
-        let mut last = self.last.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let mut last = self
+            .last
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         match result {
             Ok(_) => {
                 last.last_success_at = Some(now);
@@ -69,7 +72,10 @@ impl SpeechActivity {
 
     /// Der Stand für `GET /api/speech/status`
     pub fn snapshot(&self) -> SpeechStatusDto {
-        self.last.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone()
+        self.last
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .clone()
     }
 }
 
@@ -87,17 +93,33 @@ mod tests {
     fn merkt_sich_erfolg_und_fehler_getrennt() {
         let activity = SpeechActivity::new();
         let ok: nexus_core::Result<()> = Ok(());
-        activity.record(SpeechBackend::OpenaiCompatible, SpeechVia::Voice, Duration::from_millis(420), &ok);
-        let failed: nexus_core::Result<()> =
-            Err(HarnessError::new("speech-failed", "Die Spracherkennung antwortete mit 401.").into());
-        activity.record(SpeechBackend::OpenaiCompatible, SpeechVia::Test, Duration::ZERO, &failed);
+        activity.record(
+            SpeechBackend::OpenaiCompatible,
+            SpeechVia::Voice,
+            Duration::from_millis(420),
+            &ok,
+        );
+        let failed: nexus_core::Result<()> = Err(HarnessError::new(
+            "speech-failed",
+            "Die Spracherkennung antwortete mit 401.",
+        )
+        .into());
+        activity.record(
+            SpeechBackend::OpenaiCompatible,
+            SpeechVia::Test,
+            Duration::ZERO,
+            &failed,
+        );
 
         let status = activity.snapshot();
         assert!(status.last_success_at.is_some());
         assert_eq!(status.last_success_via.as_deref(), Some("voice"));
         assert_eq!(status.last_millis, Some(420));
         assert!(status.last_error_at.is_some());
-        assert_eq!(status.last_error.as_deref(), Some("Die Spracherkennung antwortete mit 401."));
+        assert_eq!(
+            status.last_error.as_deref(),
+            Some("Die Spracherkennung antwortete mit 401.")
+        );
     }
 
     #[test]

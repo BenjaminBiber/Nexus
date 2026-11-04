@@ -62,9 +62,12 @@ async fn test(
     let hint = SpeechHint::for_state(&state, config.speech.language.clone()).await;
     let started = std::time::Instant::now();
     let result = speech.transcribe(clip, &hint).await;
-    state
-        .speech_activity
-        .record(speech.backend(), SpeechVia::Test, started.elapsed(), &result);
+    state.speech_activity.record(
+        speech.backend(),
+        SpeechVia::Test,
+        started.elapsed(),
+        &result,
+    );
     let transcript = result?;
     Ok(json(&SpeechTestDto {
         text: transcript.text,
