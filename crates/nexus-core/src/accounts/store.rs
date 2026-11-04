@@ -95,7 +95,8 @@ impl AccountStore {
         let config_dir = match given {
             Some(given) => {
                 let dir = self.paths.expand(given);
-                if !dir.is_absolute() {
+                // has_root statt is_absolute: unter Windows gilt „/ordner“ sonst als relativ
+                if !dir.has_root() {
                     return Err(invalid(
                         "Der Ordner muss ein absoluter Pfad sein (oder mit ~ beginnen).",
                     ));
