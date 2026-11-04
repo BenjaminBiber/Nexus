@@ -13,8 +13,7 @@ use axum::http::{header, HeaderMap};
 use axum::response::Response;
 use axum::routing::post;
 use axum::Router;
-use nexus_core::telegram::TelegramConfigStore;
-use serde::Serialize;
+use nexus_core::telegram::{SpeechTestDto, TelegramConfigStore};
 
 use crate::error::{json, ApiError, ApiResult};
 use crate::routes::static_or_not_found;
@@ -29,20 +28,6 @@ pub const SAMPLE_MIME: &str = "audio/ogg";
 
 /// Länge des Beispiels in Sekunden (aus der Datei; nur für die Grenzprüfung)
 pub const SAMPLE_SECONDS: f64 = 3.4;
-
-/// Das Ergebnis der Testerkennung
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SpeechTestDto {
-    /// Der erkannte Text
-    pub text: String,
-    /// Die Sprache, die der Dienst gemeldet hat; `null`, wenn er keine nennt
-    pub language: Option<String>,
-    /// Der Weg, der erkannt hat (`openai-compatible`, `whisper-cli`, `off`)
-    pub backend: String,
-    /// Wie lange die Erkennung gebraucht hat
-    pub millis: u64,
-}
 
 /// Meldet die Route der Gruppe an. Der Körper darf so groß sein wie die größte Aufnahme –
 /// der Standard von axum liegt weit darunter.

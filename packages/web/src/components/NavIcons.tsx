@@ -66,6 +66,7 @@ const SETTINGS_ICONS: Record<string, string> = {
   event_note:'M4 6h16v15H4zM4 10h16M8 3v4M16 3v4M8 14h8M8 17h5',
   description: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h6',
   chat: 'M4 5h16v11H9l-5 4zM8 9h8M8 12h5',
+  mic: 'M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3M9 21h6',
 };
 export const SettingsIcon = ({ name }: { name: string }) => <Icon d={SETTINGS_ICONS[name] ?? ''} />;
 

@@ -11,6 +11,7 @@ import { LoadingState } from '../components/LoadingState.js';
 import { ProjectsPanel } from '../components/ProjectsPanel.js';
 import { TokenPanel } from '../components/TokenPanel.js';
 import { TelegramPanel } from '../components/TelegramPanel.js';
+import { SpeechPanel } from '../components/settings/SpeechPanel.js';
 import { SettingsIcon } from '../components/NavIcons.js';
 import { SaveStatusSlot } from '../components/settings/SettingsPanel.js';
 import { useSettings } from '../hooks/useSettings.js';
@@ -35,6 +36,7 @@ const GROUPS: Array<{ title: string; sections: Section[] }> = [
     { id: 'board-db', label: 'Board-Datenbank', icon: 'storage', hint: 'Wo die Boards gespeichert sind und wer du dort bist.' },
     { id: 'dispatch', label: 'Dispatcher', icon: 'send', hint: 'Lässt bereite Tickets automatisch von Claude umsetzen und mergen.' },
     { id: 'telegram', label: 'Telegram', icon: 'chat', hint: 'Bot für Meldungen, Freigaben und Ideen per Chat.' },
+    { id: 'speech', label: 'Spracherkennung', icon: 'mic', hint: 'Dienst, der Sprachnachrichten in Text verwandelt.' },
   ] },
 ];
 const SECTIONS = GROUPS.flatMap((g) => g.sections);
@@ -65,6 +67,7 @@ export function SettingsPage() {
       'board-db': <BoardConfigPanel />,
       dispatch: <DispatchPanel sub={dispatchSub?.id} />,
       telegram: <TelegramPanel />,
+      speech: <SpeechPanel />,
     };
     content = panels[active.id];
   }
