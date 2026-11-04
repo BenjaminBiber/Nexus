@@ -312,6 +312,12 @@
 .w95-pie-total { padding-top: 5px; box-shadow: inset 0 1px var(--w95-shadow), inset 0 2px var(--w95-light); }
 .w95-pie-total dt { padding-left: 18px; }
 
+/* Session-Details: eckig, Felder vertieft, Kopfangaben in Titelleistenfarbe */
+[data-theme='win95'] :is(.tx-tool, .tx-bubble, .tx-code, .tx-diff, .tx-new, .fc-list, .fc-note, .fc-status, .ri-list, .ri-stat, .ri .subagents, .tx-thinking-head) { border-radius: 0; }
+[data-theme='win95'] :is(.tx-tool, .fc-list, .ri-list, .ri-stat) { border: 0; background: var(--w95-field); box-shadow: var(--w95-shallow); }
+[data-theme='win95'] .tx-bubble { border: 0; background: var(--w95-tooltip); box-shadow: inset 0 0 0 1px var(--w95-dark); }
+[data-theme='win95'] .sp-head :is(.sp-facts, .sp-fact .material-icons, .sp-kicker .muted) { color: var(--w95-title-fg); }
+
 /* Schmale Fenster: Symbole oben als Leiste */
 @media (max-width: 700px) {
   .w95-desktop { flex-direction: column; }

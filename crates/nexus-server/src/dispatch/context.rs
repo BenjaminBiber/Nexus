@@ -634,6 +634,8 @@ impl DispatchContext {
         );
         self.invocation
             .apply_oauth_token(&mut env, &self.cfg, oauth_token.as_deref());
+        // Name des Lauf-Protokolls (wie `log_file`): der Hook meldet ihn an die Session
+        self.invocation.apply_run(&mut env, &format!("{id}.log"));
         let pid = match self.launcher.launch(&id, &env) {
             Ok(pid) => pid.map(i64::from),
             Err(error) => {

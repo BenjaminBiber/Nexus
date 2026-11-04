@@ -17,6 +17,8 @@ export interface LiveHandler {
   onNotice?: (notice: TabNotice) => void;
   /** Sessions haben sich geändert */
   onSessions?: () => void;
+  /** In einer Session ist etwas passiert (Hook oder gewachsenes Transcript): offene Details nachladen */
+  onSessionActivity?: (sessionId: string) => void;
   /** Ein beobachtetes DB-Board hat sich geändert */
   onDbBoard?: (boardId: number) => void;
   /** Fragen eines beobachteten Board-Projekts haben sich geändert */

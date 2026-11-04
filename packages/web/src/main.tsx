@@ -18,6 +18,7 @@ import './styles/dbboard.css';
 import './styles/dashboard.css';
 import './styles/inbox.css';
 import './styles/settings.css';
+import './styles/sessions.css';
 import './styles/themes.css';
 import './styles/win95.css';
 import { StrictMode } from 'react';

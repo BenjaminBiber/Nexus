@@ -42,4 +42,14 @@ describe('Variables', () => {
       expect(variables().apply('{{!agent}}')).toBe('{{agent}}');
     });
   });
+
+  describe('JSON-Formen der Pfade', () => {
+    it('legt zu jedem genannten Wert NAME_JSON an, escaped für einen JSON-Text', () => {
+      const values = Variables.withJsonForms({ REPO1: 'C:\\tmp\\repo "1"', HOME: '/tmp/home', PORT: '4711' }, ['REPO1', 'HOME']);
+      expect(values.REPO1_JSON).toBe('C:\\\\tmp\\\\repo \\"1\\"');
+      expect(values.HOME_JSON).toBe('/tmp/home');
+      expect(values.PORT_JSON).toBeUndefined();
+      expect(JSON.parse(`"${values.REPO1_JSON}"`)).toBe(values.REPO1);
+    });
+  });
 });

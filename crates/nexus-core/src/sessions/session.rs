@@ -63,6 +63,53 @@ impl From<SessionState> for DisplayState {
     }
 }
 
+/// Woher eine Session stammt: Dispatcher von Nexus, Claude Code (CLI) oder der Code-Tab der
+/// Claude-Desktop-App
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "sessionDetail.ts")]
+pub enum SessionClient {
+    Nexus,
+    ClaudeCode,
+    ClaudeDesktop,
+    #[default]
+    Unknown,
+}
+
+impl SessionClient {
+    /// Schreibweise in JSON
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SessionClient::Nexus => "nexus",
+            SessionClient::ClaudeCode => "claude-code",
+            SessionClient::ClaudeDesktop => "claude-desktop",
+            SessionClient::Unknown => "unknown",
+        }
+    }
+
+    /// Die Quelle zu ihrer Schreibweise; unbekannte Namen ergeben nichts
+    pub fn from_str_opt(name: &str) -> Option<SessionClient> {
+        [
+            SessionClient::Nexus,
+            SessionClient::ClaudeCode,
+            SessionClient::ClaudeDesktop,
+            SessionClient::Unknown,
+        ]
+        .into_iter()
+        .find(|client| client.as_str() == name)
+    }
+
+    /// Quelle zum Einstiegspunkt von Claude Code (`entrypoint` im Transcript,
+    /// `CLAUDE_CODE_ENTRYPOINT` im Hook): die Desktop-App, sonst Claude Code
+    pub fn from_entrypoint(entrypoint: &str) -> SessionClient {
+        if entrypoint == "claude-desktop" {
+            SessionClient::ClaudeDesktop
+        } else {
+            SessionClient::ClaudeCode
+        }
+    }
+}
+
 /// Zustand eines Subagenten
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "kebab-case")]
@@ -110,6 +157,19 @@ pub struct Session {
     #[ts(optional)]
     pub model: Option<String>,
     pub subagents: Vec<Subagent>,
+    /// Pfad des Transcripts (JSONL von Claude Code), wie der Hook ihn meldet
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub transcript_path: Option<String>,
+    /// Quelle der Session; `nexus` bleibt, wenn ein Lauf des Dispatchers sie gestartet hat
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub client: Option<SessionClient>,
+    /// Name des Lauf-Protokolls des Dispatchers (`NEXUS_RUN`), z. B.
+    /// `ARC-0001-20261104-091500.log`
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub run_name: Option<String>,
 }
 
 /// Beim Lesen berechnete Angaben: Anzeigezustand, Lauschen und Laufzeit.
@@ -211,6 +271,18 @@ pub struct HookEvent {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub source: Option<String>,
+    /// Pfad des Transcripts (`transcript_path` der Eingabe von Claude Code)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub transcript_path: Option<String>,
+    /// Quelle laut Umgebung des Hooks (`CLAUDE_CODE_ENTRYPOINT`)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub client: Option<SessionClient>,
+    /// Lauf-Protokoll des Dispatchers (`NEXUS_RUN` bzw. `HARNESS_RUN`)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub run: Option<String>,
 }
 
 impl HookEvent {
@@ -228,6 +300,9 @@ impl HookEvent {
             title: None,
             model: None,
             source: None,
+            transcript_path: None,
+            client: None,
+            run: None,
         }
     }
 }
@@ -268,5 +343,40 @@ mod tests {
             serde_json::to_string(&event).unwrap(),
             r#"{"kind":"subagent-start","sessionId":"abc","cwd":"D:/wt","tickets":["ARC-0001"],"agentType":"Explore"}"#
         );
+    }
+
+    #[test]
+    fn schreibt_transcript_quelle_und_lauf_des_ereignisses() {
+        let event = HookEvent {
+            transcript_path: Some("C:/t/s.jsonl".into()),
+            client: Some(SessionClient::ClaudeDesktop),
+            run: Some("ARC-0001-20261104-091500.log".into()),
+            ..HookEvent::new(HookKind::Stop, "abc", "D:/wt")
+        };
+        assert_eq!(
+            serde_json::to_string(&event).unwrap(),
+            r#"{"kind":"stop","sessionId":"abc","cwd":"D:/wt","transcriptPath":"C:/t/s.jsonl","client":"claude-desktop","run":"ARC-0001-20261104-091500.log"}"#
+        );
+    }
+
+    #[test]
+    fn leitet_die_quelle_aus_dem_einstiegspunkt_ab() {
+        assert_eq!(
+            SessionClient::from_entrypoint("claude-desktop"),
+            SessionClient::ClaudeDesktop
+        );
+        assert_eq!(
+            SessionClient::from_entrypoint("cli"),
+            SessionClient::ClaudeCode
+        );
+        assert_eq!(
+            SessionClient::from_entrypoint("sdk-cli"),
+            SessionClient::ClaudeCode
+        );
+        assert_eq!(
+            SessionClient::from_str_opt("claude-code"),
+            Some(SessionClient::ClaudeCode)
+        );
+        assert_eq!(SessionClient::from_str_opt("quatsch"), None);
     }
 }

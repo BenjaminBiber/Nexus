@@ -52,7 +52,7 @@ export function LiveProvider({ pid, children, releaseDelayMs = 1000 }: { pid: st
       ? api.openEvents(pid, dbBoard, dbProject, true)
       : dbProject === null ? api.openEvents(pid, dbBoard) : api.openEvents(pid, dbBoard, dbProject);
     source.onmessage = (event) => {
-      const message = JSON.parse(event.data) as { type: string; boardId?: number; projectId?: number };
+      const message = JSON.parse(event.data) as { type: string; boardId?: number; projectId?: number; sessionId?: string };
       if (message.type === 'notice') return handlers.current.forEach((h) => h.onNotice?.(message as unknown as TabNotice));
       setLastSync(new Date());
       if (message.type === 'hello') {
@@ -61,6 +61,8 @@ export function LiveProvider({ pid, children, releaseDelayMs = 1000 }: { pid: st
         wasDown = false;
       } else if (message.type === 'sessions') {
         handlers.current.forEach((h) => h.onSessions?.());
+      } else if (message.type === 'session-activity' && typeof message.sessionId === 'string') {
+        handlers.current.forEach((h) => h.onSessionActivity?.(message.sessionId!));
       } else if (message.type === 'dbboard' && typeof message.boardId === 'number') {
         handlers.current.forEach((h) => h.onDbBoard?.(message.boardId!));
       } else if (message.type === 'dbquestions' && typeof message.projectId === 'number') {

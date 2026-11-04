@@ -16,6 +16,7 @@ export function useLiveHandler(handler: LiveHandler): void {
       register({
         onNotice: (notice) => latest.current.onNotice?.(notice),
         onSessions: () => latest.current.onSessions?.(),
+        onSessionActivity: (sessionId) => latest.current.onSessionActivity?.(sessionId),
         onDbBoard: (boardId) => latest.current.onDbBoard?.(boardId),
         onDbQuestions: (projectId) => latest.current.onDbQuestions?.(projectId),
         onDocsChanged: () => latest.current.onDocsChanged?.(),

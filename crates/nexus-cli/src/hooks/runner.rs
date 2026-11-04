@@ -20,7 +20,7 @@ use nexus_core::hooks::{
 };
 use nexus_core::project::{HarnessLayout, TokenStore};
 use nexus_core::registry::DEFAULT_SERVER_PORT;
-use nexus_core::sessions::{HookEvent, HookKind, SessionTitle};
+use nexus_core::sessions::{HookEvent, HookKind, SessionClient, SessionTitle};
 use nexus_core::workflow::{WorkflowPhase, WorkflowSource};
 use nexus_core::{HarnessHome, HarnessProject};
 use serde_json::{json, Value};
@@ -190,6 +190,7 @@ impl<O: BoardOpener, L: Launcher> HookRunner<O, L> {
         else {
             return Ok(());
         };
+        apply_origin(&mut event, env);
         let title = Self::name_session(kind, &project, &session_id, &mut event, payload)?;
         if kind == HookKind::SessionStart {
             // Beide Namen: `NEXUS_*` für Nexus, `HARNESS_*` für alte Skills und den Node-Server
@@ -455,5 +456,58 @@ fn debug_enabled(env: &HashMap<String, String>) -> bool {
 fn debug(job: &BoardJob, message: &str) {
     if job.debug {
         eprintln!("Hook {}: Board-DB: {message}", job.kind.as_str());
+    }
+}
+
+/// Herkunft der Session aus der Umgebung des Hooks: der Lauf des Dispatchers (`NEXUS_RUN`,
+/// sonst `HARNESS_RUN`) und die Quelle laut `CLAUDE_CODE_ENTRYPOINT` (`claude-desktop` →
+/// Desktop-App, alles andere Claude Code)
+fn apply_origin(event: &mut HookEvent, env: &HashMap<String, String>) {
+    event.run = nexus_core::env::var_in(env, "RUN");
+    let entrypoint = env
+        .get("CLAUDE_CODE_ENTRYPOINT")
+        .map(String::as_str)
+        .unwrap_or_default();
+    event.client = Some(SessionClient::from_entrypoint(entrypoint));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Ereignis nach dem Anwenden dieser Umgebung
+    fn mit(pairs: &[(&str, &str)]) -> HookEvent {
+        let env: HashMap<String, String> = pairs
+            .iter()
+            .map(|(name, value)| (name.to_string(), value.to_string()))
+            .collect();
+        let mut event = HookEvent::new(HookKind::Stop, "s1", "/x");
+        apply_origin(&mut event, &env);
+        event
+    }
+
+    #[test]
+    fn liest_lauf_und_quelle_aus_der_umgebung() {
+        let event = mit(&[
+            ("NEXUS_RUN", "ARC-0001-20261104-091500.log"),
+            ("CLAUDE_CODE_ENTRYPOINT", "sdk-cli"),
+        ]);
+        assert_eq!(event.run.as_deref(), Some("ARC-0001-20261104-091500.log"));
+        assert_eq!(event.client, Some(SessionClient::ClaudeCode));
+        assert_eq!(
+            mit(&[("HARNESS_RUN", "alt.log")]).run.as_deref(),
+            Some("alt.log")
+        );
+    }
+
+    #[test]
+    fn erkennt_die_desktop_app_und_sonst_claude_code() {
+        assert_eq!(
+            mit(&[("CLAUDE_CODE_ENTRYPOINT", "claude-desktop")]).client,
+            Some(SessionClient::ClaudeDesktop)
+        );
+        let ohne = mit(&[]);
+        assert_eq!(ohne.client, Some(SessionClient::ClaudeCode));
+        assert_eq!(ohne.run, None);
     }
 }

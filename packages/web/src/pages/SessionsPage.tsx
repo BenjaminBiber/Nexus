@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import type { SessionDto } from '../api/types.js';
 import { CopyCommand } from '../components/CopyCommand.js';
 import { EmptyState } from '../components/EmptyState.js';
@@ -8,6 +8,7 @@ import { LoadingState } from '../components/LoadingState.js';
 import { DEFAULT_STATE_FILTER, SessionFilter, type StateFilter } from '../components/SessionFilter.js';
 import { SessionGroup } from '../components/SessionGroup.js';
 import { FavoritesPanel } from '../components/FavoritesPanel.js';
+import { SessionDetailPanel } from '../components/sessions/SessionDetailPanel.js';
 import { STATE_LABEL } from '../sessions/format.js';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { useSessions } from '../hooks/useSessions.js';
@@ -56,8 +57,18 @@ function summarize(sessions: SessionDto[]): string {
 }
 
 // Sessions des Projekts: nach Ticket gruppiert, mit Zuständen, Subagenten und Filter; aktualisiert sich live.
+// Unter sessions/:sid liegt das Slide-Over mit den Details einer Session über der Liste (teilbar, Zurück schließt).
 export function SessionsPage() {
-  const { pid = '' } = useParams();
+  const { pid = '', '*': rest = '' } = useParams();
+  const sid = rest.split('/')[0] ?? '';
+  const navigate = useNavigate();
+  const location = useLocation();
+  const fromList = (location.state as { fromList?: boolean } | null)?.fromList === true;
+  // Aus der Liste geöffnet: zurück im Verlauf (dann öffnet „Vorwärts“ es wieder); per Link geöffnet: zur Liste
+  const closeDetail = useCallback(() => {
+    if (fromList) navigate(-1);
+    else navigate(`/p/${pid}/sessions`, { replace: true });
+  }, [fromList, navigate, pid]);
   const { state, retry } = useSessions(pid);
   const favorites = useFavorites(pid);
   const [problem, setProblem] = useState<string | null>(null);
@@ -102,8 +113,10 @@ export function SessionsPage() {
     }
   };
 
-  if (state.status === 'loading') return <div className="page"><LoadingState text="Sessions werden geladen …" /></div>;
-  if (state.status === 'error') return <ErrorState message={state.message} onRetry={retry} />;
+  const detail = sid ? <SessionDetailPanel key={sid} pid={pid} sid={sid} fallback={all.find((s) => s.id === sid)} now={now} onClose={closeDetail} /> : null;
+
+  if (state.status === 'loading') return <div className="page"><LoadingState text="Sessions werden geladen …" />{detail}</div>;
+  if (state.status === 'error') return <><ErrorState message={state.message} onRetry={retry} />{detail}</>;
 
   return (
     <div className="page stack">
@@ -138,6 +151,7 @@ export function SessionsPage() {
       {groups.map((g) => (
         <SessionGroup key={g.ticket?.id ?? 'loose'} pid={pid} ticket={g.ticket} sessions={g.sessions} now={now} favorites={favoriteIds} showEndedAgents={filter.has('ended')} onToggleFavorite={(s) => void toggle(s)} />
       ))}
+      {detail}
     </div>
   );
 }

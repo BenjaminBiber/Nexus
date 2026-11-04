@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-// Kleiner Knopf, der eine ID in die Zwischenablage kopiert und es kurz zurückmeldet.
-export function CopyIdButton({ id, label }: { id: string; label: string }) {
+// Kleiner Knopf, der eine ID (oder einen anderen Wert, Beschriftung über `caption`) in die Zwischenablage kopiert und es kurz zurückmeldet.
+export function CopyIdButton({ id, label, caption = 'ID kopieren' }: { id: string; label: string; caption?: string }) {
   const [copied, setCopied] = useState(false);
 
   // Kopiert die volle ID; ohne Zugriff auf die Zwischenablage bleibt der Knopf unverändert
@@ -17,7 +17,7 @@ export function CopyIdButton({ id, label }: { id: string; label: string }) {
 
   return (
     <button type="button" className="btn small copy-id" onClick={copy} title={id} aria-label={`${label} kopieren: ${id}`}>
-      {copied ? 'Kopiert' : 'ID kopieren'}
+      {copied ? 'Kopiert' : caption}
     </button>
   );
 }

@@ -186,6 +186,9 @@ den Inhalten von `homeFiles` eingesetzt, auch verschachtelt. Bekannt sind:
 
 - die Repo-Namen der Fixtures (`{{REPO1}}` → Pfad des Repos),
 - `{{HOME}}` (das `HARNESS_HOME` des Laufs) und `{{PORT}}`,
+- zu jedem dieser Pfade die JSON-Form `{{REPO1_JSON}}`, `{{HOME_JSON}}`: der Pfad escaped für das Innere eines
+  JSON-Texts – für Dateien, die selbst JSON enthalten (Transcripts als JSON Lines in `homeFiles`), in denen ein
+  Windows-Pfad sonst ungültige Escapes ergäbe,
 - `{{NOW}}` (ISO-Zeit beim Start des Szenarios; für Daten, die in einem Zeitfenster liegen müssen, etwa
   Läufe in der Auswertung der Vorschläge – der Normalisierer macht daraus `<TIME>`),
 - alle mit `save` gemerkten Werte.

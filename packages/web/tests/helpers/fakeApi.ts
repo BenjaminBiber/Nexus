@@ -1,7 +1,8 @@
 import type { ApiClient } from '../../src/api/ApiClient.js';
 import type { DispatchStatusDto, SuggestionDto, SuggestionListDto } from '../../src/api/dispatchTypes.js';
 import { FakeEventSource } from './FakeEventSource.js';
-import type { ProjectDto } from '../../src/api/types.js';
+import type { ProjectDto, SessionDto } from '../../src/api/types.js';
+import type { SessionChanges, SessionDetail, TranscriptEntry, TranscriptPage } from '../../src/api/sessionDetailTypes.js';
 import {
   DB_COLUMN_LABELS, type DbActiveDto, type DbBoardDto, type DbBoardViewDto, type DbCardDto, type DbColumnId, type DbProjectDto,
   type DbQuestionDetailDto, type DbQuestionDto, type DbQuestionListDto, type DbStatus, type DbTicketDetailDto,
@@ -130,6 +131,9 @@ export function fakeApi(overrides: Partial<Record<keyof ApiClient, unknown>> = {
     getDbSpecProgress: async () => [],
     getSessions: async () => [],
     getFavorites: async () => [],
+    getSessionDetail: async (_pid: string, sid: string) => sessionDetail(sessionDto(sid)),
+    getSessionTranscript: async () => transcriptPage([]),
+    getSessionChanges: async () => sessionChanges(),
     getUserSettings: async () => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, hideInPlanning: false, setupPrompts: { pluginDismissed: false, migrationDismissed: [] } }),
     getPluginSetup: async () => ({ bundled: false, claude: false, state: 'missing', installedVersion: null, bundledVersion: null }),
     getBoardMigration: async () => ({ needed: false, repoPath: null, reasons: [] }),
@@ -199,4 +203,31 @@ export function inboxItem(key: string, kind: InboxItemDto['kind'], title: string
 export function inboxList(items: InboxItemDto[]): InboxListDto {
   const counts = Object.fromEntries(INBOX_KINDS.map((k) => [k, items.filter((i) => i.kind === k).length])) as InboxListDto['counts'];
   return { items, counts, total: items.length };
+}
+// Session der Liste; nicht genannte Felder haben Standardwerte (läuft, Claude Code, ohne Ticket)
+export function sessionDto(id: string, extra: Partial<SessionDto> = {}): SessionDto {
+  return {
+    id, projectId: 'p1', tickets: [], ticketInfo: [], cwd: 'D:/wt/T-0042', state: 'running', displayState: 'running', listening: true,
+    startedAt: '2026-10-10T10:00:00.000Z', lastEventAt: new Date().toISOString(), endedAt: null, runtimeMs: 125000,
+    title: null, model: null, subagents: [], client: 'claude-code', runName: null, ...extra,
+  };
+}
+
+// Details einer Session (Transcript vorhanden, keine Tokens, keine Todos, kein Nexus-Lauf)
+export function sessionDetail(session: SessionDto, extra: Partial<SessionDetail> = {}): SessionDetail {
+  return {
+    session, client: session.client, transcript: { available: true, path: `C:/Users/x/.claude/projects/D--wt-T-0042/${session.id}.jsonl`, sizeBytes: 20480 },
+    branch: null, claudeVersion: null, tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, costUsd: null, durationMs: null,
+    context: null, todos: [], run: null, ...extra,
+  };
+}
+
+// Seite des Verlaufs; ohne Angabe mit Cursor „c1“ und ohne kaputte Zeilen
+export function transcriptPage(entries: TranscriptEntry[], extra: Partial<TranscriptPage> = {}): TranscriptPage {
+  return { entries, cursor: 'c1', skipped: 0, available: true, ...extra };
+}
+
+// Geänderte Dateien (Standard: keine, Herkunft Git gegen main)
+export function sessionChanges(extra: Partial<SessionChanges> = {}): SessionChanges {
+  return { origin: 'git', base: 'main', note: null, files: [], ...extra };
 }

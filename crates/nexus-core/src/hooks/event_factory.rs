@@ -37,6 +37,9 @@ impl HookEventFactory {
             title: text("session_title"),
             model: text("model"),
             source: text("source"),
+            transcript_path: text("transcript_path").map(|path| slashes(&path)),
+            client: None,
+            run: None,
         })
     }
 }
@@ -82,6 +85,9 @@ mod tests {
                 title: Some("Titel".into()),
                 model: Some("m".into()),
                 source: None,
+                transcript_path: None,
+                client: None,
+                run: None,
             }
         );
     }
@@ -115,6 +121,26 @@ mod tests {
             Some("resume".into())
         );
         assert_eq!(quelle(json!({ "session_id": "s" })), None);
+    }
+
+    #[test]
+    fn liest_den_pfad_des_transcripts_mit_schraegstrichen() {
+        let pfad = |payload| {
+            HookEventFactory::create(HookKind::Stop, &payload, "/x", Vec::new())
+                .unwrap()
+                .transcript_path
+        };
+        assert_eq!(
+            pfad(
+                json!({ "session_id": "s", "transcript_path": "C:\\Users\\x\\.claude\\projects\\C--x\\s.jsonl" })
+            ),
+            Some("C:/Users/x/.claude/projects/C--x/s.jsonl".into())
+        );
+        assert_eq!(
+            pfad(json!({ "session_id": "s", "transcript_path": "" })),
+            None
+        );
+        assert_eq!(pfad(json!({ "session_id": "s" })), None);
     }
 
     #[test]

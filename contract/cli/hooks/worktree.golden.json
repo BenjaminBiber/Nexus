@@ -36,6 +36,7 @@
       "contentType": "application/json",
       "json": [
         {
+          "client": "claude-code",
           "cwd": "<REPO1>-worktrees/ARC-0001",
           "displayState": "idle",
           "endedAt": null,
@@ -44,6 +45,7 @@
           "listening": true,
           "model": null,
           "projectId": "<var:pid>",
+          "runName": null,
           "runtimeMs": 0,
           "startedAt": "<TIME>",
           "state": "idle",

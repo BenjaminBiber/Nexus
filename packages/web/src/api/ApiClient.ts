@@ -15,6 +15,7 @@ import type {
   DbQuestionPatch, DbSearchKind, DbSearchResultDto, DbStepChange, DbStepInput, DbTicketDetailDto, DbTicketDto, DbTicketPatch, DbTicketTimelineDto,
 } from './dbTypes.js';
 import type { DispatchStatsDto, DispatchStatsFilter } from './statsTypes.js';
+import type { FileDiff, SessionChanges, SessionDetail, TranscriptPage } from './sessionDetailTypes.js';
 import type { InboxListDto } from './inboxTypes.js';
 import type { AccountListDto, ClaudeUsageDto, UsageOverviewDto } from './usageTypes.js';
 import type {
@@ -210,6 +211,30 @@ export class ApiClient {
   // Sessions eines Projekts (letzte 7 Tage)
   getSessions(pid: string): Promise<SessionDto[]> {
     return this.request('GET', `/api/projects/${pid}/sessions`);
+  }
+
+  // Details einer Session: Kopf, Tokens, Kosten, Kontext, Todos und bei Nexus-Läufen die Laufdaten
+  getSessionDetail(pid: string, sid: string): Promise<SessionDetail> {
+    return this.request('GET', `/api/projects/${pid}/sessions/${encodeURIComponent(sid)}/detail`);
+  }
+
+  // Verlauf einer Session in Seiten; ohne `after` von Anfang an, sonst ab dem Cursor der letzten Seite
+  getSessionTranscript(pid: string, sid: string, after?: string | null, limit?: number): Promise<TranscriptPage> {
+    const query = new URLSearchParams();
+    if (after) query.set('after', after);
+    if (limit !== undefined) query.set('limit', String(limit));
+    const qs = query.toString();
+    return this.request('GET', `/api/projects/${pid}/sessions/${encodeURIComponent(sid)}/transcript${qs ? `?${qs}` : ''}`);
+  }
+
+  // Geänderte Dateien einer Session (aus Git oder dem Transcript)
+  getSessionChanges(pid: string, sid: string): Promise<SessionChanges> {
+    return this.request('GET', `/api/projects/${pid}/sessions/${encodeURIComponent(sid)}/changes`);
+  }
+
+  // Diff einer geänderten Datei der Session
+  getSessionFileDiff(pid: string, sid: string, path: string): Promise<FileDiff> {
+    return this.request('GET', `/api/projects/${pid}/sessions/${encodeURIComponent(sid)}/changes/file?path=${encodeURIComponent(path)}`);
   }
 
   // Favoriten eines Projekts

@@ -225,21 +225,21 @@ fn cut(text: &str, max: usize) -> String {
 }
 
 /// Eine Datei aus `--name-status`
-struct StatusEntry {
-    path: String,
-    old_path: Option<String>,
-    status: String,
+pub(crate) struct StatusEntry {
+    pub(crate) path: String,
+    pub(crate) old_path: Option<String>,
+    pub(crate) status: String,
 }
 
 /// Zeilenzahlen einer Datei aus `--numstat`
-struct Stat {
-    additions: u64,
-    deletions: u64,
-    binary: bool,
+pub(crate) struct Stat {
+    pub(crate) additions: u64,
+    pub(crate) deletions: u64,
+    pub(crate) binary: bool,
 }
 
 /// Ausgabe von `--name-status -z`: Status, Pfad; bei R/C Status, alter Pfad, neuer Pfad
-fn name_status(out: &str) -> Vec<StatusEntry> {
+pub(crate) fn name_status(out: &str) -> Vec<StatusEntry> {
     let parts = fields(out);
     let mut list = Vec::new();
     let mut index = 0;
@@ -269,7 +269,7 @@ fn name_status(out: &str) -> Vec<StatusEntry> {
 
 /// Ausgabe von `--numstat -z`: „plus\tminus\tpfad“ oder bei Umbenennung
 /// „plus\tminus\t“, alter, neuer Pfad; „-“ = binär
-fn numstat(out: &str) -> HashMap<String, Stat> {
+pub(crate) fn numstat(out: &str) -> HashMap<String, Stat> {
     let parts = fields(out);
     let mut map = HashMap::new();
     let mut index = 0;

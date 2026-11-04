@@ -83,6 +83,9 @@ mod tests {
             title: None,
             model: None,
             subagents: Vec::new(),
+            transcript_path: None,
+            client: None,
+            run_name: None,
         }
     }
 

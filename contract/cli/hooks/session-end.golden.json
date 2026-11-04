@@ -33,6 +33,7 @@
       "contentType": "application/json",
       "json": [
         {
+          "client": "claude-code",
           "cwd": "<REPO1>",
           "displayState": "ended",
           "endedAt": "<TIME>",
@@ -41,6 +42,7 @@
           "listening": false,
           "model": null,
           "projectId": "<var:pid>",
+          "runName": null,
           "runtimeMs": 0,
           "startedAt": "<TIME>",
           "state": "ended",
