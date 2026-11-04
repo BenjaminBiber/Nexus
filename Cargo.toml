@@ -100,3 +100,13 @@ panic = "abort"
 # dreimal so langsam wie im Release-Build.
 [profile.dev.package."*"]
 opt-level = 2
+# Fremde Crates ohne Debug-Infos: in ihnen setzt niemand Haltepunkte, sie machten aber einen
+# großen Teil von target/ aus.
+debug = false
+
+# Eigene Crates mit reduzierten Debug-Infos: Funktionen und Zeilennummern für Backtraces und
+# Haltepunkte bleiben, die vollständigen Typ- und Variableninfos fallen weg. Das schrumpft
+# rlibs, PDBs und incremental/ auf einen Bruchteil. Wer für eine Sitzung Variablen im Debugger
+# sehen will: CARGO_PROFILE_DEV_DEBUG=full setzen. Gilt auch für `cargo test` (erbt von dev).
+[profile.dev]
+debug = "limited"
