@@ -590,6 +590,26 @@
     "pattern": "/api/db/questions/:id/tickets"
   },
   {
+    "file": "crates/nexus-server/src/routes/session_detail.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/sessions/:sid/changes"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/session_detail.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/sessions/:sid/changes/file"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/session_detail.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/sessions/:sid/detail"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/session_detail.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/sessions/:sid/transcript"
+  },
+  {
     "file": "crates/nexus-server/src/routes/sessions.rs",
     "method": "GET",
     "pattern": "/api/projects/:pid/sessions"

@@ -1,5 +1,6 @@
 import type { DbColumnId, DbStatus } from './dbTypes.js';
 import type { WorkflowPhase } from './generated/workflow.js';
+import type { SessionClient } from './sessionDetailTypes.js';
 // Antwortformate des Servers
 
 export interface ProjectDto {
@@ -41,6 +42,10 @@ export interface SessionDto {
   title: string | null;
   model: string | null;
   subagents: SubagentDto[];
+  /** Quelle der Session (Nexus-Lauf, Claude Code, Desktop-App) */
+  client: SessionClient;
+  /** Name des Lauf-Protokolls bei Nexus-Läufen, sonst null */
+  runName: string | null;
 }
 
 export interface DocFileDto {

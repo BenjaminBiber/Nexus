@@ -18,6 +18,7 @@ pub mod health;
 pub mod hook;
 pub mod notifications;
 pub mod questions;
+pub mod session_detail;
 pub mod sessions;
 pub mod settings;
 pub mod setup;
@@ -64,6 +65,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(docs_claude::routes())
         .merge(hook::routes())
         .merge(sessions::routes())
+        .merge(session_detail::routes())
         .merge(favorites::routes())
         .merge(usage::routes())
         .merge(accounts::routes())

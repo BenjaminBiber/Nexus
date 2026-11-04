@@ -37,7 +37,9 @@ use crate::notifications::{
     DbQuestionWatch, NotificationService, NotificationSetup, NtfySender, Query,
 };
 use crate::projects::ProjectService;
-use crate::sessions::{SessionService, TicketInfoLookup, TicketSummaries};
+use crate::sessions::{
+    SessionDetails, SessionService, TicketInfoLookup, TicketSummaries, TranscriptWatch,
+};
 use crate::telegram::TelegramBot;
 use nexus_core::accounts::{AccountPaths, AccountStore, AccountTokenStore};
 use nexus_core::dispatch::UsageHistory;
@@ -75,6 +77,10 @@ pub struct AppState {
     pub claude: ClaudeRunners,
     /// Die Sessions des Servers: Hook-Ereignisse, Liste und `sessions.json`
     pub sessions: SessionService,
+    /// Zwischenspeicher der Transcripts für die Detailansicht
+    pub session_details: Arc<SessionDetails>,
+    /// Beobachtet die Transcripts offener Detailansichten
+    pub transcript_watch: Arc<TranscriptWatch>,
     /// Die gemerkten Sessions des Servers (`favorites.json`)
     pub favorites: FavoriteService,
     /// Titel und Status von Tickets für Sessions, Favoriten und Meldungen (mit Zeitlimit)
@@ -309,6 +315,8 @@ impl AppState {
             doc_revisions: DocRevisionService::new(config.home.clone()),
             claude,
             sessions,
+            session_details: SessionDetails::new(),
+            transcript_watch: TranscriptWatch::new(events.clone()),
             favorites,
             ticket_info: TicketInfoLookup::new(ticket_summaries(weak)),
             accounts: AccountServices {
@@ -405,6 +413,7 @@ impl AppState {
         self.question_changes.close();
         self.spec_docs.close();
         self.notice_tabs.close();
+        self.transcript_watch.close();
     }
 }
 

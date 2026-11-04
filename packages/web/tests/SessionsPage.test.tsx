@@ -20,7 +20,7 @@ function session(id: string, extra: Partial<SessionDto> = {}): SessionDto {
   return {
     id, projectId: 'p1', tickets: [], ticketInfo: [], cwd: 'D:/wt/T-0042', state: 'running', displayState: 'running', listening: true,
     startedAt: '2026-10-10T10:00:00.000Z', lastEventAt: new Date().toISOString(), endedAt: null, runtimeMs: 125000,
-    title: null, model: null, subagents: [], ...extra,
+    title: null, model: null, subagents: [], client: 'claude-code', runName: null, ...extra,
   };
 }
 

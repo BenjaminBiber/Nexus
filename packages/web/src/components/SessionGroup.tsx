@@ -27,7 +27,7 @@ export function SessionGroup(props: { pid: string; ticket: { id: string; title: 
         )}
       </div>
       {props.sessions.map((session) => (
-        <SessionRow key={session.id} session={session} now={props.now} favorite={props.favorites?.has(session.id)} showEndedAgents={props.showEndedAgents} onToggleFavorite={props.onToggleFavorite} />
+        <SessionRow key={session.id} session={session} href={`/p/${props.pid}/sessions/${encodeURIComponent(session.id)}`} now={props.now} favorite={props.favorites?.has(session.id)} showEndedAgents={props.showEndedAgents} onToggleFavorite={props.onToggleFavorite} />
       ))}
     </section>
   );

@@ -1,0 +1,190 @@
+{
+  "title": "Detailansicht einer Sitzung: Kopf, Verlauf in Abschnitten, Änderungen und Diff",
+  "fixtures": {
+    "repos": [
+      {
+        "name": "REPO1",
+        "git": true,
+        "harnessInit": true
+      }
+    ],
+    "homeFiles": {
+      "transcripts/s1.jsonl": "{\"type\":\"custom-title\",\"customTitle\":\"Vertrag Detailansicht\",\"sessionId\":\"s1\"}\n{\"type\":\"user\",\"uuid\":\"u-prompt\",\"timestamp\":\"2026-11-04T08:00:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"role\":\"user\",\"content\":\"Bitte <system-reminder>versteckt</system-reminder>ergänze die README und lege eine Notiz an.\"},\"origin\":{\"kind\":\"human\"}}\n{\"type\":\"assistant\",\"uuid\":\"a-text\",\"timestamp\":\"2026-11-04T08:01:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"id\":\"m1\",\"model\":\"claude-demo\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Ich plane die Schritte.\"}],\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cache_read_input_tokens\":100,\"cache_creation_input_tokens\":50}}}\n{\"type\":\"assistant\",\"uuid\":\"a-todo\",\"timestamp\":\"2026-11-04T08:01:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"id\":\"m1\",\"model\":\"claude-demo\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_todo\",\"name\":\"TodoWrite\",\"input\":{\"todos\":[{\"content\":\"README ergänzen\",\"status\":\"completed\",\"activeForm\":\"Ergänze README\"},{\"content\":\"Notiz anlegen\",\"status\":\"in_progress\",\"activeForm\":\"Lege Notiz an\"}]}}],\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cache_read_input_tokens\":100,\"cache_creation_input_tokens\":50}}}\n{\"type\":\"user\",\"uuid\":\"u-todo\",\"timestamp\":\"2026-11-04T08:01:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_todo\",\"content\":\"Todos have been modified successfully.\",\"is_error\":false}]},\"toolUseResult\":{\"oldTodos\":[],\"newTodos\":[{\"content\":\"README ergänzen\",\"status\":\"completed\",\"activeForm\":\"Ergänze README\"},{\"content\":\"Notiz anlegen\",\"status\":\"in_progress\",\"activeForm\":\"Lege Notiz an\"}]}}\n{\"type\":\"assistant\",\"uuid\":\"a-read\",\"timestamp\":\"2026-11-04T08:02:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"id\":\"m2\",\"model\":\"claude-demo\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_read\",\"name\":\"Read\",\"input\":{\"file_path\":\"{{REPO1_JSON}}/README.md\"}}],\"usage\":{\"input_tokens\":2,\"output_tokens\":8,\"cache_read_input_tokens\":150,\"cache_creation_input_tokens\":10}},\"cwd\":\"{{REPO1_JSON}}\"}\n{\"type\":\"user\",\"uuid\":\"u-read\",\"timestamp\":\"2026-11-04T08:02:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_read\",\"content\":\"1\\t# Demo\",\"is_error\":false}]},\"toolUseResult\":{\"type\":\"text\",\"file\":{\"filePath\":\"{{REPO1_JSON}}/README.md\"}},\"cwd\":\"{{REPO1_JSON}}\"}\n{\"type\":\"assistant\",\"uuid\":\"a-edit\",\"timestamp\":\"2026-11-04T08:03:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"id\":\"m3\",\"model\":\"claude-demo\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_edit\",\"name\":\"Edit\",\"input\":{\"file_path\":\"{{REPO1_JSON}}/README.md\",\"old_string\":\"# Demo\",\"new_string\":\"# Demo\\n\\nEin Beispiel.\",\"replace_all\":false}}],\"usage\":{\"input_tokens\":3,\"output_tokens\":20,\"cache_read_input_tokens\":160,\"cache_creation_input_tokens\":0}},\"cwd\":\"{{REPO1_JSON}}\"}\n{\"type\":\"user\",\"uuid\":\"u-edit\",\"timestamp\":\"2026-11-04T08:03:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_edit\",\"content\":\"The file has been updated successfully.\",\"is_error\":false}]},\"toolUseResult\":{\"filePath\":\"{{REPO1_JSON}}/README.md\",\"oldString\":\"# Demo\",\"newString\":\"# Demo\\n\\nEin Beispiel.\",\"originalFile\":\"# Demo\\n\",\"structuredPatch\":[],\"replaceAll\":false},\"cwd\":\"{{REPO1_JSON}}\"}\n{\"type\":\"assistant\",\"uuid\":\"a-write\",\"timestamp\":\"2026-11-04T08:04:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"id\":\"m4\",\"model\":\"claude-demo\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_write\",\"name\":\"Write\",\"input\":{\"file_path\":\"{{REPO1_JSON}}/docs/notiz.md\",\"content\":\"Erste Zeile\\nZweite Zeile\\n\"}}],\"usage\":{\"input_tokens\":1,\"output_tokens\":30,\"cache_read_input_tokens\":170,\"cache_creation_input_tokens\":0}},\"cwd\":\"{{REPO1_JSON}}\"}\n{\"type\":\"user\",\"uuid\":\"u-write\",\"timestamp\":\"2026-11-04T08:04:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_write\",\"content\":\"File created successfully\",\"is_error\":false}]},\"toolUseResult\":{\"type\":\"create\",\"filePath\":\"{{REPO1_JSON}}/docs/notiz.md\",\"content\":\"Erste Zeile\\nZweite Zeile\\n\",\"structuredPatch\":[],\"originalFile\":null},\"cwd\":\"{{REPO1_JSON}}\"}\n{\"type\":\"assistant\",\"uuid\":\"a-bash\",\"timestamp\":\"2026-11-04T08:05:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"id\":\"m5\",\"model\":\"claude-demo\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_bash\",\"name\":\"Bash\",\"input\":{\"command\":\"make pruefen\",\"description\":\"Prüfen\"}}],\"usage\":{\"input_tokens\":1,\"output_tokens\":2,\"cache_read_input_tokens\":180,\"cache_creation_input_tokens\":0}},\"cwd\":\"{{REPO1_JSON}}\"}\n{\"type\":\"user\",\"uuid\":\"u-bash\",\"timestamp\":\"2026-11-04T08:05:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_bash\",\"content\":\"make: *** Keine Regel, um „pruefen“ zu erstellen.\",\"is_error\":true}]},\"toolUseResult\":\"Error: make: *** Keine Regel\",\"cwd\":\"{{REPO1_JSON}}\"}\n{\"type\":\"system\",\"subtype\":\"api_error\",\"uuid\":\"s-api\",\"timestamp\":\"2026-11-04T08:06:00.000Z\",\"isSidechain\":false,\"error\":{\"formatted\":\"Überlastet – neuer Versuch\"}}\n{\"type\":\"assistant\",\"uuid\":\"a-ende\",\"timestamp\":\"2026-11-04T08:07:00.000Z\",\"sessionId\":\"s1\",\"entrypoint\":\"claude-desktop\",\"gitBranch\":\"main\",\"version\":\"2.1.0\",\"isSidechain\":false,\"message\":{\"id\":\"m6\",\"model\":\"claude-demo\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Fertig: README ergänzt, Notiz angelegt.\"}],\"usage\":{\"input_tokens\":1,\"output_tokens\":12,\"cache_read_input_tokens\":190,\"cache_creation_input_tokens\":0}},\"cwd\":\"{{REPO1_JSON}}\"}\n{kaputte Zeile\n"
+    }
+  },
+  "steps": [
+    {
+      "name": "Projekt anmelden",
+      "method": "POST",
+      "path": "/api/projects",
+      "body": {
+        "path": "{{REPO1}}"
+      },
+      "save": {
+        "pid": "json.id"
+      },
+      "compare": "status"
+    },
+    {
+      "name": "Token des Projekts lesen",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/settings",
+      "save": {
+        "token": "json.token"
+      },
+      "record": false
+    },
+    {
+      "name": "Sitzung mit Transcript und Lauf anlegen",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": {
+        "project": "{{REPO1}}",
+        "event": {
+          "kind": "session-start",
+          "sessionId": "s1",
+          "cwd": "{{REPO1}}",
+          "model": "opus",
+          "transcriptPath": "{{HOME}}/transcripts/s1.jsonl",
+          "run": "ARC-0001-20261104-091500.log"
+        }
+      },
+      "headers": {
+        "x-harness-token": "{{token}}"
+      },
+      "compare": "status"
+    },
+    {
+      "name": "Sitzung ohne Transcript anlegen",
+      "method": "POST",
+      "path": "/api/hook",
+      "body": {
+        "project": "{{REPO1}}",
+        "event": {
+          "kind": "session-start",
+          "sessionId": "s2",
+          "cwd": "{{REPO1}}",
+          "client": "claude-code"
+        }
+      },
+      "headers": {
+        "x-harness-token": "{{token}}"
+      },
+      "compare": "status"
+    },
+    {
+      "name": "Sitzungen mit Herkunft und Lauf",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions"
+    },
+    {
+      "name": "Details mit Transcript",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s1/detail",
+      "ignore": [
+        "json.transcript.sizeBytes"
+      ]
+    },
+    {
+      "name": "erster Abschnitt des Verlaufs",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s1/transcript?limit=3",
+      "save": {
+        "cursor": "json.cursor"
+      }
+    },
+    {
+      "name": "Verlauf ab dem Cursor",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s1/transcript?after={{cursor}}",
+      "ignore": [
+        "json.cursor"
+      ]
+    },
+    {
+      "name": "Verlauf mit negativem after",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s1/transcript?after=-1"
+    },
+    {
+      "name": "Verlauf mit ungültigem limit",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s1/transcript?limit=viele"
+    },
+    {
+      "name": "Änderungen aus dem Transcript",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s1/changes"
+    },
+    {
+      "name": "Diff einer geänderten Datei",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s1/changes/file?path=README.md"
+    },
+    {
+      "name": "Diff einer neuen Datei",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s1/changes/file?path=docs/notiz.md"
+    },
+    {
+      "name": "Diff einer unveränderten Datei",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s1/changes/file?path=gibtsnicht.txt"
+    },
+    {
+      "name": "Diff mit Pfad außerhalb des Repos",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s1/changes/file?path=../draussen.txt"
+    },
+    {
+      "name": "Diff ohne Pfad",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s1/changes/file"
+    },
+    {
+      "name": "Details ohne Transcript",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s2/detail"
+    },
+    {
+      "name": "Verlauf ohne Transcript",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s2/transcript?after=7"
+    },
+    {
+      "name": "Änderungen ohne Transcript",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s2/changes"
+    },
+    {
+      "name": "Diff ohne Transcript",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/s2/changes/file?path=README.md"
+    },
+    {
+      "name": "Details einer unbekannten Sitzung",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/gibtsnicht/detail"
+    },
+    {
+      "name": "Verlauf einer unbekannten Sitzung",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/gibtsnicht/transcript"
+    },
+    {
+      "name": "Änderungen einer unbekannten Sitzung",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/gibtsnicht/changes"
+    },
+    {
+      "name": "Diff einer unbekannten Sitzung",
+      "method": "GET",
+      "path": "/api/projects/{{pid}}/sessions/gibtsnicht/changes/file?path=README.md"
+    },
+    {
+      "name": "Details in einem unbekannten Projekt",
+      "method": "GET",
+      "path": "/api/projects/gibtsnicht/sessions/s1/detail"
+    }
+  ]
+}

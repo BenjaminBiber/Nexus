@@ -96,6 +96,10 @@ export class CliStep {
     delete env.HARNESS_SESSION;
     delete env.HARNESS_TICKET;
     delete env.CLAUDE_ENV_FILE;
+    // Ebenso Herkunft und Lauf der Session, in der der Vertrag gerade läuft (die Hooks melden sie mit)
+    delete env.CLAUDE_CODE_ENTRYPOINT;
+    delete env.NEXUS_RUN;
+    delete env.HARNESS_RUN;
     if (context.envFile) env.CLAUDE_ENV_FILE = context.envFile;
     return { ...env, ...declared };
   }

@@ -18,7 +18,7 @@ import { ThemeSync } from './theme/ThemeSync.js';
 import { usePlatform } from './platform/PlatformContext.js';
 
 // Alle Adressen der Oberfläche; Seiten unter /p/:pid teilen sich den Rahmen. ThemeSync setzt das Farbschema.
-// Board und Fragen kommen aus der Board-Datenbank; das Ticket-Panel liegt unter board/t/:id.
+// Board und Fragen kommen aus der Board-Datenbank; das Ticket-Panel liegt unter board/t/:id, die Details einer Session unter sessions/:sid.
 // Ticket- und Fragen-Erzeugungen aus Dokumenten (DocTicketJobsProvider, DocQuestionJobsProvider) laufen über Seiten- und Projektwechsel weiter.
 // /open/:kind/:id ist die Weiterleitung für nexus://-Links; sie ergänzt die fehlende Projekt-ID.
 // Unbekannte Adressen eines Projekts (alte Lesezeichen wie board-alt, tickets/…, questions-alt) führen zum Board.
@@ -35,7 +35,7 @@ export function App() {
             <Route path="board/*" element={<DbBoardPage />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="inbox" element={<InboxPage />} />
-            <Route path="sessions" element={<SessionsPage />} />
+            <Route path="sessions/*" element={<SessionsPage />} />
             <Route path="questions" element={<DbQuestionsPage />} />
             <Route path="questions/:id" element={<DbQuestionDetailPage />} />
             <Route path="docs/*" element={<DocsPage />} />

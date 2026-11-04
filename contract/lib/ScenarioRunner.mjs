@@ -46,7 +46,8 @@ export class ScenarioRunner {
     let server = null;
     try {
       const repos = fixture.create(scenario.fixtures.repos);
-      const variables = new Variables({ ...repos, HOME: home, PORT: String(port), NOW: new Date().toISOString() });
+      const paths = Variables.withJsonForms({ ...repos, HOME: home }, [...Object.keys(repos), 'HOME']);
+      const variables = new Variables({ ...paths, PORT: String(port), NOW: new Date().toISOString() });
       // Dateien im Home liegen vor dem Start, damit der Server sie von der ersten Anfrage an sieht
       new HomeFiles(home).write(scenario.fixtures.homeFiles, variables);
       server = own

@@ -14,10 +14,11 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::post;
 use axum::Router;
 use nexus_core::project::TokenStore;
-use nexus_core::sessions::{DisplayState, HookEvent, HookKind, SessionView};
+use nexus_core::sessions::{DisplayState, HookEvent, HookKind, SessionClient, SessionView};
 use nexus_core::{HarnessError, HarnessProject};
 
 use crate::error::ApiResult;
+use crate::events::LiveEvent;
 use crate::extract::JsonBody;
 use crate::notifications::{SessionChange, TicketRef};
 use crate::routes::static_or_not_found;
@@ -27,7 +28,7 @@ use crate::state::AppState;
 const TOKEN_HEADER: &str = "x-harness-token";
 
 /// Die optionalen Textfelder des Ereignisses
-const TEXTS: [&str; 7] = [
+const TEXTS: [&str; 10] = [
     "at",
     "agentId",
     "agentType",
@@ -35,6 +36,9 @@ const TEXTS: [&str; 7] = [
     "title",
     "model",
     "source",
+    "transcriptPath",
+    "client",
+    "run",
 ];
 
 /// Meldet die Route an; andere Methoden auf demselben Pfad fallen in den Rückfall, damit
@@ -68,6 +72,13 @@ async fn hook(
         .find(&pid, &event.session_id)
         .map(|view| view.display_state);
     state.sessions.apply(&pid, &event);
+    // Nach `sessions`: offene Detailansichten laden nach
+    state.events.publish(
+        &pid,
+        LiveEvent::SessionActivity {
+            session_id: event.session_id.clone(),
+        },
+    );
     follow_favorites(&state, &pid, &event);
     notify(&state, &opened.entry.id, &opened.entry.name, &event, before).await;
     Ok(StatusCode::NO_CONTENT.into_response())
@@ -194,6 +205,9 @@ fn parse_event(value: Option<&serde_json::Value>) -> ApiResult<HookEvent> {
             "notificationType" => event.notification_type = Some(found),
             "title" => event.title = Some(found),
             "model" => event.model = Some(found),
+            "transcriptPath" => event.transcript_path = Some(found.replace('\\', "/")),
+            "client" => event.client = SessionClient::from_str_opt(&found),
+            "run" => event.run = Some(found),
             _ => event.source = Some(found),
         }
     }

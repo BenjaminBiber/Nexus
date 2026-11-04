@@ -48,7 +48,7 @@ describe('Farbschema', () => {
   });
 
   it('verwendet außerhalb von variables.css keine fest codierten Farben', () => {
-    for (const name of ['base.css', 'questions.css', 'dbboard.css', 'dashboard.css', 'inbox.css', 'themes.css', 'win95.css']) {
+    for (const name of ['base.css', 'questions.css', 'dbboard.css', 'dashboard.css', 'inbox.css', 'sessions.css', 'themes.css', 'win95.css']) {
       expect(styles(name).split('\n').filter((line) => COLOR.test(line)), name).toEqual([]);
     }
   });

@@ -1,0 +1,678 @@
+[
+  {
+    "name": "Projekt anmelden",
+    "request": {
+      "body": {
+        "path": "<REPO1>"
+      },
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    "response": {
+      "status": 201
+    }
+  },
+  {
+    "name": "Sitzung mit Transcript und Lauf anlegen",
+    "request": {
+      "body": {
+        "event": {
+          "cwd": "<REPO1>",
+          "kind": "session-start",
+          "model": "opus",
+          "run": "ARC-0001-20261104-091500.log",
+          "sessionId": "s1",
+          "transcriptPath": "<HOME>/transcripts/s1.jsonl"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "status": 204
+    }
+  },
+  {
+    "name": "Sitzung ohne Transcript anlegen",
+    "request": {
+      "body": {
+        "event": {
+          "client": "claude-code",
+          "cwd": "<REPO1>",
+          "kind": "session-start",
+          "sessionId": "s2"
+        },
+        "project": "<REPO1>"
+      },
+      "headers": {
+        "x-harness-token": "<var:token>"
+      },
+      "method": "POST",
+      "path": "/api/hook"
+    },
+    "response": {
+      "status": 204
+    }
+  },
+  {
+    "name": "Sitzungen mit Herkunft und Lauf",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "client": "claude-code",
+          "cwd": "<REPO1>",
+          "displayState": "idle",
+          "endedAt": null,
+          "id": "s2",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": null,
+          "projectId": "<var:pid>",
+          "runName": null,
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "idle",
+          "subagents": [],
+          "ticketInfo": [],
+          "tickets": [],
+          "title": null
+        },
+        {
+          "client": "nexus",
+          "cwd": "<REPO1>",
+          "displayState": "idle",
+          "endedAt": null,
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": "opus",
+          "projectId": "<var:pid>",
+          "runName": "ARC-0001-20261104-091500.log",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "idle",
+          "subagents": [],
+          "ticketInfo": [],
+          "tickets": [],
+          "title": null
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Details mit Transcript",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s1/detail"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "branch": "main",
+        "claudeVersion": "2.1.0",
+        "client": "nexus",
+        "context": {
+          "limitTokens": 200000,
+          "usedTokens": 191
+        },
+        "costUsd": null,
+        "durationMs": null,
+        "run": {
+          "abortReason": null,
+          "account": null,
+          "endedAt": null,
+          "kind": "work",
+          "name": "ARC-0001-20261104-091500.log",
+          "outcome": null,
+          "profile": null,
+          "startedAt": null
+        },
+        "session": {
+          "client": "nexus",
+          "cwd": "<REPO1>",
+          "displayState": "idle",
+          "endedAt": null,
+          "id": "s1",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": "opus",
+          "projectId": "<var:pid>",
+          "runName": "ARC-0001-20261104-091500.log",
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "idle",
+          "subagents": [],
+          "ticketInfo": [],
+          "tickets": [],
+          "title": "Vertrag Detailansicht"
+        },
+        "todos": [
+          {
+            "content": "README ergänzen",
+            "status": "completed"
+          },
+          {
+            "content": "Notiz anlegen",
+            "status": "in_progress"
+          }
+        ],
+        "tokens": {
+          "cacheRead": 950,
+          "cacheWrite": 60,
+          "input": 18,
+          "output": 77
+        },
+        "transcript": {
+          "available": true,
+          "path": "<HOME>/transcripts/s1.jsonl"
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "erster Abschnitt des Verlaufs",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s1/transcript?limit=3"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "available": true,
+        "cursor": "1431",
+        "entries": [
+          {
+            "at": "<TIME>",
+            "id": "u-prompt",
+            "kind": "prompt",
+            "text": "Bitte ergänze die README und lege eine Notiz an."
+          },
+          {
+            "at": "<TIME>",
+            "id": "a-text:0",
+            "kind": "text",
+            "text": "Ich plane die Schritte."
+          },
+          {
+            "at": "<TIME>",
+            "id": "toolu_todo",
+            "input": {
+              "todos": [
+                {
+                  "activeForm": "Ergänze README",
+                  "content": "README ergänzen",
+                  "status": "completed"
+                },
+                {
+                  "activeForm": "Lege Notiz an",
+                  "content": "Notiz anlegen",
+                  "status": "in_progress"
+                }
+              ]
+            },
+            "kind": "tool",
+            "name": "TodoWrite",
+            "result": {
+              "isError": false,
+              "text": "Todos have been modified successfully.",
+              "truncated": false
+            },
+            "summary": "TodoWrite (2 Aufgaben)"
+          }
+        ],
+        "skipped": 0
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Verlauf ab dem Cursor",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s1/transcript?after=1431"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "available": true,
+        "entries": [
+          {
+            "at": "<TIME>",
+            "id": "toolu_read",
+            "input": {
+              "file_path": "<REPO1>/README.md"
+            },
+            "kind": "tool",
+            "name": "Read",
+            "result": {
+              "isError": false,
+              "text": "1\t# Demo",
+              "truncated": false
+            },
+            "summary": "Read README.md"
+          },
+          {
+            "at": "<TIME>",
+            "id": "toolu_edit",
+            "input": {
+              "file_path": "<REPO1>/README.md",
+              "new_string": "# Demo\n\nEin Beispiel.",
+              "old_string": "# Demo",
+              "replace_all": false
+            },
+            "kind": "tool",
+            "name": "Edit",
+            "result": {
+              "isError": false,
+              "text": "The file has been updated successfully.",
+              "truncated": false
+            },
+            "summary": "Edit README.md (+2 −0)"
+          },
+          {
+            "at": "<TIME>",
+            "id": "toolu_write",
+            "input": {
+              "content": "Erste Zeile\nZweite Zeile\n",
+              "file_path": "<REPO1>/docs/notiz.md"
+            },
+            "kind": "tool",
+            "name": "Write",
+            "result": {
+              "isError": false,
+              "text": "File created successfully",
+              "truncated": false
+            },
+            "summary": "Write docs/notiz.md (+2)"
+          },
+          {
+            "at": "<TIME>",
+            "id": "toolu_bash",
+            "input": {
+              "command": "make pruefen",
+              "description": "Prüfen"
+            },
+            "kind": "tool",
+            "name": "Bash",
+            "result": {
+              "isError": true,
+              "text": "make: *** Keine Regel, um „pruefen“ zu erstellen.",
+              "truncated": false
+            },
+            "summary": "Bash: make pruefen"
+          },
+          {
+            "at": "<TIME>",
+            "id": "s-api",
+            "kind": "system",
+            "level": "error",
+            "text": "Überlastet – neuer Versuch"
+          },
+          {
+            "at": "<TIME>",
+            "id": "a-ende:0",
+            "kind": "text",
+            "text": "Fertig: README ergänzt, Notiz angelegt."
+          }
+        ],
+        "skipped": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Verlauf mit negativem after",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s1/transcript?after=-1"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "after muss eine nicht negative ganze Zahl sein."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Verlauf mit ungültigem limit",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s1/transcript?limit=viele"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "limit muss eine nicht negative ganze Zahl sein."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Änderungen aus dem Transcript",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s1/changes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "base": null,
+        "files": [
+          {
+            "added": 2,
+            "path": "README.md",
+            "removed": 0,
+            "status": "modified"
+          },
+          {
+            "added": 2,
+            "path": "docs/notiz.md",
+            "removed": 0,
+            "status": "added"
+          }
+        ],
+        "note": "Änderungen per Bash sind nicht enthalten.",
+        "origin": "transcript"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Diff einer geänderten Datei",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s1/changes/file?path=README.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "hunks": [
+          {
+            "header": "@@ -1,1 +1,3 @@",
+            "lines": [
+              {
+                "kind": "context",
+                "text": "# Demo"
+              },
+              {
+                "kind": "add",
+                "text": ""
+              },
+              {
+                "kind": "add",
+                "text": "Ein Beispiel."
+              }
+            ]
+          }
+        ],
+        "path": "README.md",
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Diff einer neuen Datei",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s1/changes/file?path=docs/notiz.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "hunks": [
+          {
+            "header": "@@ -0,0 +1,2 @@",
+            "lines": [
+              {
+                "kind": "add",
+                "text": "Erste Zeile"
+              },
+              {
+                "kind": "add",
+                "text": "Zweite Zeile"
+              }
+            ]
+          }
+        ],
+        "path": "docs/notiz.md",
+        "truncated": false
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Diff einer unveränderten Datei",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s1/changes/file?path=gibtsnicht.txt"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "change-not-found",
+        "message": "Die Datei „gibtsnicht.txt“ gehört nicht zu den Änderungen der Session."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Diff mit Pfad außerhalb des Repos",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s1/changes/file?path=../draussen.txt"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Der Pfad „../draussen.txt“ liegt nicht im Repository."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Diff ohne Pfad",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s1/changes/file"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "input-invalid",
+        "message": "Der Pfad der Datei fehlt (path)."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Details ohne Transcript",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s2/detail"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "branch": null,
+        "claudeVersion": null,
+        "client": "claude-code",
+        "context": null,
+        "costUsd": null,
+        "durationMs": null,
+        "run": null,
+        "session": {
+          "client": "claude-code",
+          "cwd": "<REPO1>",
+          "displayState": "idle",
+          "endedAt": null,
+          "id": "s2",
+          "lastEventAt": "<TIME>",
+          "listening": true,
+          "model": null,
+          "projectId": "<var:pid>",
+          "runName": null,
+          "runtimeMs": 0,
+          "startedAt": "<TIME>",
+          "state": "idle",
+          "subagents": [],
+          "ticketInfo": [],
+          "tickets": [],
+          "title": null
+        },
+        "todos": [],
+        "tokens": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 0,
+          "output": 0
+        },
+        "transcript": {
+          "available": false,
+          "path": null,
+          "sizeBytes": null
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Verlauf ohne Transcript",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s2/transcript?after=7"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "available": false,
+        "cursor": "7",
+        "entries": [],
+        "skipped": 0
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Änderungen ohne Transcript",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s2/changes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "base": null,
+        "files": [],
+        "note": null,
+        "origin": "none"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Diff ohne Transcript",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/s2/changes/file?path=README.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "change-not-found",
+        "message": "Die Datei „README.md“ gehört nicht zu den Änderungen der Session."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Details einer unbekannten Sitzung",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/gibtsnicht/detail"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "session-not-found",
+        "message": "Session gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Verlauf einer unbekannten Sitzung",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/gibtsnicht/transcript"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "session-not-found",
+        "message": "Session gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Änderungen einer unbekannten Sitzung",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/gibtsnicht/changes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "session-not-found",
+        "message": "Session gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Diff einer unbekannten Sitzung",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/<var:pid>/sessions/gibtsnicht/changes/file?path=README.md"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "session-not-found",
+        "message": "Session gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Details in einem unbekannten Projekt",
+    "request": {
+      "method": "GET",
+      "path": "/api/projects/gibtsnicht/sessions/s1/detail"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "project-not-found",
+        "message": "Projekt gibtsnicht gibt es nicht."
+      },
+      "status": 404
+    }
+  }
+]
