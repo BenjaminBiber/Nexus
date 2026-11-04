@@ -28,7 +28,8 @@ pub use idea::{
     MAX_QUESTIONS, MAX_TITLE,
 };
 pub use routes::{
-    TelegramPairingDto, TelegramProfileDto, TelegramStatusDto, TelegramTestDto, TelegramTestError,
+    SpeechTestDto, TelegramPairingDto, TelegramProfileDto, TelegramStatusDto, TelegramTestDto,
+    TelegramTestError,
 };
 pub use split::{split_message, MAX_MESSAGE_LEN};
 pub use state_store::{TelegramState, TelegramStateStore};

@@ -18,7 +18,7 @@ import type { DispatchStatsDto, DispatchStatsFilter } from './statsTypes.js';
 import type { InboxListDto } from './inboxTypes.js';
 import type { AccountListDto, ClaudeUsageDto, UsageOverviewDto } from './usageTypes.js';
 import type {
-  TelegramConfig, TelegramConfigInput, TelegramPairingDto, TelegramProfileDto, TelegramStatusDto, TelegramTestDto,
+  SpeechTestDto, TelegramConfig, TelegramConfigInput, TelegramPairingDto, TelegramProfileDto, TelegramStatusDto, TelegramTestDto,
 } from './telegramTypes.js';
 
 // Wie lange ein laufendes GET für dieselbe Adresse mitbenutzt wird: deckt gleichzeitiges Laden beim Seitenaufbau ab,
@@ -280,6 +280,11 @@ export class ApiClient {
   // Richtet Profilbild, Name, Beschreibungen und Befehlsliste des Bots neu ein
   applyTelegramProfile(): Promise<TelegramProfileDto> {
     return this.request('POST', '/api/telegram/profile');
+  }
+
+  // Probiert die eingerichtete Spracherkennung mit dem mitgelieferten Beispiel aus
+  testSpeech(): Promise<SpeechTestDto> {
+    return this.request('POST', '/api/speech/test');
   }
 
   getPluginSetup(): Promise<PluginSetupDto> {

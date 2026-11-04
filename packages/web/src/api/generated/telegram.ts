@@ -115,6 +115,27 @@ apiKey: string, model: string,
 language: string | null, whisperCli: WhisperCli, };
 
 /**
+ * Antwort von `POST /api/speech/test`
+ */
+export type SpeechTestDto = { 
+/**
+ * Der erkannte Text
+ */
+text: string, 
+/**
+ * Die Sprache, die der Dienst gemeldet hat; null, wenn er keine nennt
+ */
+language: string | null, 
+/**
+ * Der Weg, der erkannt hat (`openai-compatible`, `whisper-cli`, `off`)
+ */
+backend: string, 
+/**
+ * Wie lange die Erkennung gebraucht hat, in Millisekunden
+ */
+millis: number, };
+
+/**
  * Einstellung des Telegram-Bots, vollständig aufgelöst
  */
 export type TelegramConfig = { 

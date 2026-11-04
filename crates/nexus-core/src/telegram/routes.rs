@@ -68,6 +68,21 @@ pub struct TelegramProfileDto {
     pub error: Option<String>,
 }
 
+/// Antwort von `POST /api/speech/test`
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "telegram.ts")]
+pub struct SpeechTestDto {
+    /// Der erkannte Text
+    pub text: String,
+    /// Die Sprache, die der Dienst gemeldet hat; null, wenn er keine nennt
+    pub language: Option<String>,
+    /// Der Weg, der erkannt hat (`openai-compatible`, `whisper-cli`, `off`)
+    pub backend: String,
+    /// Wie lange die Erkennung gebraucht hat, in Millisekunden
+    pub millis: u64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
