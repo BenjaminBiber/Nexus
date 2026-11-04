@@ -1,0 +1,187 @@
+[
+  {
+    "name": "Stand vor der ersten Erkennung",
+    "request": {
+      "method": "GET",
+      "path": "/api/speech/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "lastError": null,
+        "lastErrorAt": null,
+        "lastMillis": null,
+        "lastSuccessAt": null,
+        "lastSuccessVia": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Attrappe der Spracherkennung starten",
+    "request": {
+      "action": "start",
+      "body": {
+        "language": "german",
+        "text": "Hallo Nexus."
+      },
+      "status": 200,
+      "stub": "SPEECH"
+    },
+    "response": {
+      "json": {
+        "url": "<var:speechUrl>"
+      }
+    }
+  },
+  {
+    "name": "Spracherkennung auf die Attrappe einrichten",
+    "request": {
+      "content": "speech:\n  backend: openai-compatible\n  baseUrl: <var:speechUrl>\n  apiKey: \"\"\n  model: whisper-1\n  language: de\n",
+      "kind": "homeFile",
+      "path": "telegram.yaml"
+    },
+    "response": {
+      "json": {
+        "path": "<HOME>/telegram.yaml"
+      }
+    }
+  },
+  {
+    "name": "Test erkennt das Beispiel-Audio",
+    "request": {
+      "method": "POST",
+      "path": "/api/speech/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "backend": "openai-compatible",
+        "language": "german",
+        "text": "Hallo Nexus."
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Stand nach der erfolgreichen Erkennung",
+    "request": {
+      "method": "GET",
+      "path": "/api/speech/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "lastError": null,
+        "lastErrorAt": null,
+        "lastSuccessVia": "test"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Spracherkennung abschalten",
+    "request": {
+      "content": "speech:\n  backend: \"off\"\n",
+      "kind": "homeFile",
+      "path": "telegram.yaml"
+    },
+    "response": {
+      "json": {
+        "path": "<HOME>/telegram.yaml"
+      }
+    }
+  },
+  {
+    "name": "Test mit abgeschalteter Spracherkennung",
+    "request": {
+      "method": "POST",
+      "path": "/api/speech/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "speech-off",
+        "message": "Spracherkennung ist ausgeschaltet."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Eine abgeschaltete Erkennung ist kein Fehler",
+    "request": {
+      "method": "GET",
+      "path": "/api/speech/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "lastError": null,
+        "lastErrorAt": null,
+        "lastSuccessVia": "test"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Attrappe mit Fehler starten",
+    "request": {
+      "action": "start",
+      "body": {
+        "error": {
+          "message": "Incorrect API key provided"
+        }
+      },
+      "status": 401,
+      "stub": "SPEECH_FEHLER"
+    },
+    "response": {
+      "json": {
+        "url": "<var:fehlerUrl>"
+      }
+    }
+  },
+  {
+    "name": "Spracherkennung auf die Attrappe mit Fehler umstellen",
+    "request": {
+      "content": "speech:\n  backend: openai-compatible\n  baseUrl: <var:fehlerUrl>\n  apiKey: vertrag-attrappe\n  model: whisper-1\n  language: de\n",
+      "kind": "homeFile",
+      "path": "telegram.yaml"
+    },
+    "response": {
+      "json": {
+        "path": "<HOME>/telegram.yaml"
+      }
+    }
+  },
+  {
+    "name": "Test gegen den Dienst mit Fehler",
+    "request": {
+      "method": "POST",
+      "path": "/api/speech/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "speech-failed",
+        "message": "Die Spracherkennung antwortete mit 401: {\"error\":{\"message\":\"Incorrect API key provided\"}}."
+      },
+      "status": 502
+    }
+  },
+  {
+    "name": "Stand nach dem Fehler: Erfolg bleibt, Fehler kommt dazu",
+    "request": {
+      "method": "GET",
+      "path": "/api/speech/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "lastError": "Die Spracherkennung antwortete mit 401: {\"error\":{\"message\":\"Incorrect API key provided\"}}.",
+        "lastSuccessVia": "test"
+      },
+      "status": 200
+    }
+  }
+]

@@ -24,6 +24,10 @@ pub const MAX_TITLE: usize = 120;
 pub const MAX_DETAILS: usize = 4000;
 /// Höchstlänge der kurzen Begleittexte (Zusammenfassung, Begründungen, Rückfragen)
 pub const MAX_SHORT: usize = 400;
+/// Höchstens so viele Antwortmöglichkeiten hat eine Rückfrage (mehr passen nicht als Knöpfe)
+pub const MAX_OPTIONS: usize = 4;
+/// Höchstlänge der Beschriftung einer Antwortmöglichkeit (sie steht auf einem Knopf)
+pub const MAX_OPTION_LABEL: usize = 40;
 
 // ---------------------------------------------------------------------------------------------
 // Der Entwurf
@@ -88,6 +92,80 @@ pub struct IdeaDuplicate {
     pub why: String,
 }
 
+/// Eine Antwortmöglichkeit einer Rückfrage
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IdeaAskOption {
+    /// Kurz genug für einen Knopf (höchstens [`MAX_OPTION_LABEL`] Zeichen)
+    pub label: String,
+    /// Ein Satz dazu, was die Wahl bedeutet
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
+/// Eine Rückfrage vor dem Anlegen: Text und – wenn es naheliegende Antworten gibt – zwei bis
+/// [`MAX_OPTIONS`] Möglichkeiten zum Antippen. Frei antworten geht immer.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", from = "IdeaAskRepr")]
+pub struct IdeaAsk {
+    pub text: String,
+    /// Leer oder zwei bis [`MAX_OPTIONS`] Möglichkeiten
+    pub options: Vec<IdeaAskOption>,
+    /// Die empfohlene Möglichkeit (Index in `options`)
+    pub recommended: Option<usize>,
+    /// Passen mehrere Möglichkeiten zugleich?
+    pub multi_select: bool,
+}
+
+impl IdeaAsk {
+    /// Eine Rückfrage ohne Möglichkeiten; beantwortet wird sie frei
+    pub fn open(text: &str) -> Self {
+        Self {
+            text: text.to_string(),
+            options: Vec::new(),
+            recommended: None,
+            multi_select: false,
+        }
+    }
+}
+
+/// Wie eine Rückfrage gespeichert sein kann: früher als reiner Text, heute als Objekt. So
+/// bleiben Entwürfe aus `drafts.json` vor der Umstellung lesbar
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum IdeaAskRepr {
+    Text(String),
+    #[serde(rename_all = "camelCase")]
+    Full {
+        text: String,
+        #[serde(default)]
+        options: Vec<IdeaAskOption>,
+        #[serde(default)]
+        recommended: Option<usize>,
+        #[serde(default)]
+        multi_select: bool,
+    },
+}
+
+impl From<IdeaAskRepr> for IdeaAsk {
+    fn from(repr: IdeaAskRepr) -> Self {
+        match repr {
+            IdeaAskRepr::Text(text) => IdeaAsk::open(&text),
+            IdeaAskRepr::Full {
+                text,
+                options,
+                recommended,
+                multi_select,
+            } => IdeaAsk {
+                text,
+                options,
+                recommended,
+                multi_select,
+            },
+        }
+    }
+}
+
 /// Der geprüfte Entwurf einer Idee
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -100,7 +178,7 @@ pub struct IdeaDraft {
     pub related: Vec<IdeaRelated>,
     pub duplicates: Vec<IdeaDuplicate>,
     /// Rückfragen vor dem Anlegen (höchstens [`MAX_QUESTIONS`])
-    pub questions: Vec<String>,
+    pub questions: Vec<IdeaAsk>,
     /// Wie sicher sich Claude ist (0–1)
     pub confidence: f64,
     /// Die Eingabe, aus der der Entwurf entstand (Transkript oder Text)
@@ -247,7 +325,8 @@ const SCHEMA: &str = concat!(
     "\"title\": string, \"details\": string, ",
     "\"related\": [{\"ticketId\": string, \"why\": string}], ",
     "\"duplicates\": [{\"id\": string, \"why\": string}], ",
-    "\"questions\": string[], ",
+    "\"questions\": [{\"text\": string, \"options\": [{\"label\": string, \"detail\": string | null}], ",
+    "\"recommended\": number | null, \"multiSelect\": boolean}], ",
     "\"confidence\": number}"
 );
 
@@ -266,6 +345,7 @@ pub fn build_prompt(
         "- Nenne ausschließlich Boards und Ticketnummern, die unten im Board-Kontext stehen; erfinde nichts dazu.".into(),
         "- Im Zweifel wird die Idee eine Notiz („note“). Ein Ticket („ticket“) nur, wenn die Idee eine klar umsetzbare Aufgabe beschreibt; ein Kommentar („comment“) nur, wenn sie erkennbar zu einem genannten Ticket gehört – dann ist „ticketId“ Pflicht.".into(),
         format!("- Höchstens {MAX_QUESTIONS} Rückfragen, und nur zu dem, was ohne Antwort nicht entschieden werden kann. Ist alles klar, bleibt „questions“ leer."),
+        format!("- Jede Rückfrage bietet 2 bis {MAX_OPTIONS} naheliegende Antworten als „options“ (Beschriftung höchstens {MAX_OPTION_LABEL} Zeichen, „detail“ ein kurzer Satz oder null); frei antworten kann der Nutzer immer. „recommended“ ist der Index der naheliegendsten Antwort oder null, „multiSelect“ nur true, wenn mehrere Antworten zugleich passen. Gibt es keine sinnvollen Vorschläge, bleibt „options“ leer."),
         format!("- „title“ ist ein ganzer Satz mit höchstens {MAX_TITLE} Zeichen, „details“ hat höchstens {MAX_DETAILS} Zeichen (wo, woran man es sieht, vermutete Ursache, Vorschlag)."),
         "- „related“ nennt Tickets, die inhaltlich dazugehören; „duplicates“ nur Tickets oder Notizen, die denselben Punkt schon beschreiben.".into(),
         "- „confidence“ liegt zwischen 0 und 1 und sagt, wie sicher du dir bei Ziel und Inhalt bist.".into(),
@@ -426,7 +506,12 @@ fn previous_part(previous: Option<IdeaRefinement<'_>>) -> Vec<String> {
         format!("Details: {}", cut(&draft.details, MAX_DETAILS)),
     ];
     if !draft.questions.is_empty() {
-        lines.push(format!("Rückfragen: {}", draft.questions.join(" | ")));
+        let asked: Vec<&str> = draft
+            .questions
+            .iter()
+            .map(|ask| ask.text.as_str())
+            .collect();
+        lines.push(format!("Rückfragen: {}", asked.join(" | ")));
     }
     lines.push(String::new());
     lines.push("## Antwort des Nutzers".into());
@@ -604,13 +689,12 @@ fn duplicates(
     out
 }
 
-/// Höchstens [`MAX_QUESTIONS`] Rückfragen, jede ohne Rand und nicht zu lang
-fn questions(value: Option<&Value>, dropped: &mut Vec<String>) -> Vec<String> {
-    let all: Vec<String> = array(value)
+/// Höchstens [`MAX_QUESTIONS`] Rückfragen, jede ohne Rand und nicht zu lang. Eine Rückfrage
+/// als reiner Text wird eine ohne Möglichkeiten
+fn questions(value: Option<&Value>, dropped: &mut Vec<String>) -> Vec<IdeaAsk> {
+    let all: Vec<IdeaAsk> = array(value)
         .iter()
-        .map(|item| text(Some(item)))
-        .filter(|item| !item.is_empty())
-        .map(|item| cut(&item, MAX_SHORT))
+        .filter_map(|item| ask(item, dropped))
         .collect();
     if all.len() > MAX_QUESTIONS {
         dropped.push(format!(
@@ -619,6 +703,65 @@ fn questions(value: Option<&Value>, dropped: &mut Vec<String>) -> Vec<String> {
         ));
     }
     all.into_iter().take(MAX_QUESTIONS).collect()
+}
+
+/// Eine Rückfrage; ohne Text fällt sie weg
+fn ask(item: &Value, dropped: &mut Vec<String>) -> Option<IdeaAsk> {
+    if item.is_string() {
+        let question = text(Some(item));
+        return (!question.is_empty()).then(|| IdeaAsk::open(&cut(&question, MAX_SHORT)));
+    }
+    let question = text(item.get("text"));
+    if question.is_empty() {
+        return None;
+    }
+    let question = cut(&question, MAX_SHORT);
+    let mut options: Vec<IdeaAskOption> = Vec::new();
+    for option in array(item.get("options")) {
+        let label = match option.is_string() {
+            true => text(Some(&option)),
+            false => text(option.get("label")),
+        };
+        if label.is_empty() {
+            continue;
+        }
+        if label.chars().count() > MAX_OPTION_LABEL {
+            dropped.push(format!(
+                "Antwort „{}…“ auf {MAX_OPTION_LABEL} Zeichen gekürzt.",
+                cut(&label, 20)
+            ));
+        }
+        let detail = text(option.get("detail"));
+        options.push(IdeaAskOption {
+            label: cut(&label, MAX_OPTION_LABEL),
+            detail: (!detail.is_empty()).then(|| cut(&detail, MAX_SHORT)),
+        });
+    }
+    if options.len() > MAX_OPTIONS {
+        dropped.push(format!(
+            "Nur die ersten {MAX_OPTIONS} von {} Antworten auf „{question}“ übernommen.",
+            options.len()
+        ));
+        options.truncate(MAX_OPTIONS);
+    }
+    // Eine einzige Möglichkeit ist keine Wahl
+    if options.len() == 1 {
+        options.clear();
+    }
+    let recommended = integer(item.get("recommended"))
+        .and_then(|index| usize::try_from(index).ok())
+        .filter(|index| *index < options.len());
+    let multi_select = item
+        .get("multiSelect")
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+        && options.len() > 1;
+    Some(IdeaAsk {
+        text: question,
+        options,
+        recommended,
+        multi_select,
+    })
 }
 
 /// Sicherheit zwischen 0 und 1; Werte daneben werden gekappt, Unbrauchbares wird 0
@@ -949,12 +1092,99 @@ mod tests {
             json!({ "questions": ["a?", "b?", "", "c?", "d?"] }),
         ));
 
-        assert_eq!(check.draft.questions, ["a?", "b?", "c?"]);
+        assert_eq!(
+            check.draft.questions,
+            [
+                IdeaAsk::open("a?"),
+                IdeaAsk::open("b?"),
+                IdeaAsk::open("c?")
+            ]
+        );
         assert!(
             check.dropped.iter().any(|hint| hint.contains("Rückfragen")),
             "{:?}",
             check.dropped
         );
+    }
+
+    #[test]
+    fn uebernimmt_rueckfragen_mit_antworten_empfehlung_und_mehrfachauswahl() {
+        let check = checked(&answer(json!({ "questions": [
+            {
+                "text": "Welche Engine?",
+                "options": [
+                    { "label": "faster-whisper", "detail": "schnell auf CPU" },
+                    { "label": "Vosk", "detail": null },
+                ],
+                "recommended": 0,
+                "multiSelect": false,
+            },
+            {
+                "text": "Welche Sprachen?",
+                "options": [{ "label": "Deutsch" }, { "label": "Englisch" }],
+                "recommended": null,
+                "multiSelect": true,
+            },
+        ] })));
+
+        assert!(check.dropped.is_empty(), "{:?}", check.dropped);
+        let engine = &check.draft.questions[0];
+        assert_eq!(engine.text, "Welche Engine?");
+        assert_eq!(engine.options[0].label, "faster-whisper");
+        assert_eq!(engine.options[0].detail.as_deref(), Some("schnell auf CPU"));
+        assert_eq!(engine.options[1].detail, None);
+        assert_eq!(engine.recommended, Some(0));
+        assert!(!engine.multi_select);
+        assert!(check.draft.questions[1].multi_select);
+        assert_eq!(check.draft.questions[1].recommended, None);
+    }
+
+    #[test]
+    fn biegt_unbrauchbare_antworten_zurecht() {
+        let check = checked(&answer(json!({ "questions": [
+            {
+                "text": "Wohin?",
+                "options": ["a", "b", "c", "d", "e", { "label": "x".repeat(60) }],
+                "recommended": 9,
+                "multiSelect": true,
+            },
+            { "text": "Nur eine?", "options": [{ "label": "ja" }], "recommended": 0, "multiSelect": true },
+            { "text": "  ", "options": [] },
+        ] })));
+
+        let wohin = &check.draft.questions[0];
+        assert_eq!(wohin.options.len(), MAX_OPTIONS);
+        assert_eq!(wohin.recommended, None, "Index außerhalb fällt weg");
+        assert!(wohin.multi_select);
+        assert!(check
+            .dropped
+            .iter()
+            .any(|hint| hint.contains("Antworten auf „Wohin?“")));
+        assert!(check.dropped.iter().any(|hint| hint.contains("gekürzt")));
+        let eine = &check.draft.questions[1];
+        assert!(eine.options.is_empty(), "eine Möglichkeit ist keine Wahl");
+        assert_eq!(eine.recommended, None);
+        assert!(!eine.multi_select);
+        assert_eq!(check.draft.questions.len(), 2, "die leere Frage fällt weg");
+    }
+
+    #[test]
+    fn liest_alte_rueckfragen_als_text_aus_gespeicherten_entwuerfen() {
+        let ask: IdeaAsk = serde_json::from_value(json!("Auch für SQL Server?")).unwrap();
+        assert_eq!(ask, IdeaAsk::open("Auch für SQL Server?"));
+
+        let neu = IdeaAsk {
+            options: vec![IdeaAskOption {
+                label: "ja".into(),
+                detail: None,
+            }],
+            recommended: Some(0),
+            multi_select: true,
+            ..IdeaAsk::open("Frage?")
+        };
+        let rundreise: IdeaAsk =
+            serde_json::from_value(serde_json::to_value(&neu).unwrap()).unwrap();
+        assert_eq!(rundreise, neu);
     }
 
     #[test]

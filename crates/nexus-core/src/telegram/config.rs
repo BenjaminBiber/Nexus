@@ -92,24 +92,14 @@ pub struct AppliedProfile {
     pub texts: String,
 }
 
-/// Profil des Bots (Bild, Name, Beschreibungen)
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+/// Profil des Bots (Bild, Name, Beschreibungen). Nexus richtet es immer ein; gemerkt wird
+/// nur, was zuletzt gesetzt wurde. Ein altes `brand` in `telegram.yaml` wird überlesen
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(default, rename_all = "camelCase")]
 #[ts(export, export_to = "telegram.ts")]
 pub struct BotProfile {
-    /// true = Nexus richtet Profilbild, Name und Beschreibung des Bots ein
-    pub brand: bool,
     /// Was zuletzt eingerichtet wurde; null = noch nichts
     pub applied: Option<AppliedProfile>,
-}
-
-impl Default for BotProfile {
-    fn default() -> Self {
-        Self {
-            brand: true,
-            applied: None,
-        }
-    }
 }
 
 /// Wohin eine per Bot erfasste Idee standardmäßig geht
@@ -456,7 +446,7 @@ mod tests {
         assert!(config.notify.review);
         assert!(!config.notify.merged);
         assert_eq!(config.quiet_hours, None);
-        assert!(config.profile.brand);
+        assert_eq!(config.profile.applied, None);
         assert_eq!(config.ideas.default_target, IdeaTarget::Note);
         assert_eq!(config.ideas.max_rounds, 5);
         assert_eq!(config.speech.backend, SpeechBackend::OpenaiCompatible);
@@ -471,6 +461,12 @@ mod tests {
             TelegramConfig::from_value(&Value::Null).unwrap(),
             TelegramConfig::default()
         );
+    }
+
+    #[test]
+    fn uberliest_den_alten_schalter_brand() {
+        let config = TelegramConfig::from_value(&json!({ "profile": { "brand": false } })).unwrap();
+        assert_eq!(config.profile, BotProfile::default());
     }
 
     #[test]
@@ -600,7 +596,6 @@ mod tests {
             bot_token: TOKEN.to_string(),
             chats: vec![123, 456],
             profile: BotProfile {
-                brand: true,
                 applied: Some(AppliedProfile {
                     bot_id: 7012345678,
                     photo: "3f2a".into(),
@@ -665,7 +660,6 @@ mod tests {
             }))
             .unwrap();
         assert_eq!(merged.chats, vec![123, 456]);
-        assert!(!merged.profile.brand);
         assert_eq!(merged.profile.applied.unwrap().bot_id, 7012345678);
     }
 

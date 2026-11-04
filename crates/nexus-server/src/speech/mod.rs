@@ -8,6 +8,7 @@
 //! Tests und der Vertragslauf rufen nie einen echten Dienst: die Adresse zeigt dort auf eine
 //! Attrappe im eigenen Prozess.
 
+pub mod activity;
 pub mod hint;
 pub mod openai_compatible;
 
@@ -15,6 +16,7 @@ use async_trait::async_trait;
 use nexus_core::telegram::{SpeechBackend, SpeechConfig};
 use nexus_core::{HarnessError, Result};
 
+pub use activity::{SpeechActivity, SpeechVia};
 pub use hint::{glossary_terms, SpeechHint, MAX_HINT_CHARS, MAX_TICKETS};
 pub use openai_compatible::OpenAiCompatibleSpeech;
 

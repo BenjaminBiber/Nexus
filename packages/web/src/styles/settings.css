@@ -225,9 +225,165 @@
 .account-settings-modal > .account-remove { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-color: var(--blocked-fg); }
 .account-settings-modal > .account-remove > * + * { border-top: 0; }
 
-/* Telegram: Liste der gekoppelten Chats und Vorschau des Bot-Profils */
-.telegram-chats { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.telegram-chats > li { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
-.bot-profile-preview { display: flex; align-items: center; gap: 12px; }
-.bot-profile-preview > img { border-radius: 50%; background: var(--surface-2, var(--bg)); }
-.bot-profile-preview p { margin: 2px 0 0; font-size: 12.5px; }
+/* Telegram: Stand oben als eigene Fläche, darunter Meldungen (nach Dringlichkeit), Chats, Ideen und Verbindung;
+   unten eine Leiste mit der Zahl ungespeicherter Änderungen */
+.telegram-panel { gap: 40px; }
+.telegram-panel > .notice { margin-top: -24px; }
+.qr-code { flex: none; border-radius: 6px; }
+
+/* Schalter außerhalb der Einstellungszeilen */
+.telegram-panel input.switch {
+  appearance: none; position: relative; flex: none; width: 40px; height: 24px; min-height: 0; margin: 0; padding: 0;
+  border: 0; border-radius: 999px; background: var(--line-dashed); cursor: pointer; transition: background-color 0.15s ease-out;
+}
+.telegram-panel input.switch::before {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--surface); box-shadow: 0 1px 2px var(--shadow-soft); transition: transform 0.15s ease-out;
+}
+.telegram-panel input.switch:checked { background: var(--primary); }
+.telegram-panel input.switch:checked::before { transform: translateX(16px); }
+.telegram-panel input.switch:hover:not(:disabled) { background: var(--line-strong); }
+.telegram-panel input.switch:checked:hover:not(:disabled) { background: var(--primary-hover); }
+.telegram-panel input.switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Kopf: Profil, Stand, Kurzüberblick, Testnachricht und Ein/Aus */
+.tg-hero { display: flex; align-items: center; gap: 20px; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1px 2px var(--shadow-faint); }
+.tg-avatar { flex: none; width: 56px; height: 56px; border-radius: 50%; background: var(--bg); }
+.tg-hero-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.tg-hero-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tg-hero-title strong { font-size: 18px; font-weight: 600; }
+.tg-hero-title .mono { font-size: 13px; color: var(--muted); }
+.tg-hero-summary { font-size: 14px; color: var(--muted); }
+.tg-hero-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+/* Ein/Aus im Kopf (wie bei den Accounts, nur Zeichen): an hinterlegt, aus als Akzentknopf */
+.card-power { width: 40px; height: 36px; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); }
+.card-power:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
+.card-power.on { border-color: transparent; background: var(--accent-soft); color: var(--accent); }
+.card-power.on:hover { background: var(--accent-soft-hover); }
+.card-power:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card-power .material-icons { font-size: 20px; }
+.tg-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.tg-badge > span { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.tg-badge.ok { background: var(--running-bg); color: var(--running-fg); }
+.tg-badge.ok > span { background: var(--ok); }
+.tg-badge.info { background: var(--idle-bg); color: var(--idle-fg); }
+.tg-badge.warn { background: var(--waiting-bg); color: var(--waiting-fg); }
+.tg-badge.error { background: var(--blocked-bg); color: var(--blocked-fg); }
+
+/* Abschnitte und Karten */
+.tg-section { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.tg-section-head { display: flex; flex-direction: column; gap: 6px; }
+.tg-section-head h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.tg-section-head p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.tg-section > .tg-card + .tg-card { margin-top: 4px; }
+.tg-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-panel); overflow: hidden; }
+.tg-card-head { padding: 12px 20px; border-bottom: 1px solid var(--line-soft); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.tg-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tg-row-label { font-size: 14px; font-weight: 500; color: var(--text); }
+.tg-row-hint { font-size: 13px; color: var(--muted); }
+.tg-row-hint.mono { font-size: 12px; }
+
+/* Anlässe in zwei Spalten; die ganze Zeile ist die Beschriftung des Schalters */
+.tg-grid2 { display: grid; grid-template-columns: 1fr 1fr; }
+.tg-toggle-row { display: flex; align-items: center; gap: 16px; padding: 14px 20px; cursor: pointer; box-shadow: inset -1px -1px 0 var(--line-soft); }
+.tg-toggle-row:hover { background: var(--surface-alt); }
+.tg-grid2 > .tg-toggle-row:nth-child(2n) { box-shadow: inset 0 -1px 0 var(--line-soft); }
+.tg-grid2 > .tg-toggle-row:nth-last-child(-n+2):nth-child(2n+1) { box-shadow: inset -1px 0 0 var(--line-soft); }
+.tg-grid2 > .tg-toggle-row:last-child:nth-child(2n) { box-shadow: none; }
+
+.tg-quiet { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px 20px; }
+.tg-quiet > .tg-row-text { min-width: 200px; }
+.tg-quiet-times { display: flex; align-items: center; gap: 8px; }
+.tg-quiet-times label { font-size: 13px; color: var(--muted); }
+.tg-quiet-times input:disabled { opacity: 0.5; }
+
+/* Chats */
+.tg-chats { margin: 0; padding: 0; list-style: none; }
+.tg-chat { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line-soft); }
+.tg-chat-icon { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--line-soft); display: flex; align-items: center; justify-content: center; color: var(--muted); }
+.tg-chat-icon .material-icons { font-size: 18px; }
+.tg-chat-icon.add { background: none; border: 1px dashed var(--line-strong); }
+.tg-pair {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 0; padding: 14px 20px; border: 0; border-radius: 0;
+  background: none; color: var(--text); font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer;
+}
+.tg-pair:hover { background: var(--surface-alt); }
+.tg-pair:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Dialog „Chat koppeln“: QR-Code links, Code und Stand rechts */
+.tg-pair-modal { display: flex; flex-direction: column; gap: 16px; width: min(560px, 100%); }
+.tg-pair-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tg-pair-modal-head h2 { margin: 0; font-size: 17px; }
+.tg-pair-modal-head .material-icons { font-size: 20px; }
+.tg-pair-modal-body { display: flex; align-items: flex-start; gap: 24px; }
+.tg-pair-modal-body > .qr-code { flex: none; border: 1px solid var(--line); border-radius: 12px; }
+.tg-pair-modal-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.tg-pair-modal-hint { margin: 0; font-size: 13px; line-height: 1.55; color: var(--muted); }
+.tg-pair-modal-hint code { font-family: var(--font-mono); background: var(--line-soft); padding: 1px 6px; border-radius: 4px; }
+.tg-pair-code { display: flex; flex-direction: column; gap: 2px; }
+.tg-pair-code strong { font-size: 24px; font-weight: 500; letter-spacing: 0.08em; color: var(--text); }
+.tg-pair-waiting { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; color: var(--text-soft); }
+.tg-pulse { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: tg-pulse 1.4s ease-in-out infinite; }
+@keyframes tg-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.tg-pair-modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+@media (max-width: 560px) { .tg-pair-modal-body { flex-direction: column; align-items: center; } }
+
+/* Ideen und Verbindung: Beschriftung links, Feld rechts */
+.tg-field-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 20px; }
+.tg-field-row + .tg-field-row { border-top: 1px solid var(--line-soft); }
+.tg-field-row > .tg-row-text { min-width: 200px; }
+.tg-field-row > select { width: 200px; }
+.tg-field-row > input.short { width: 88px; }
+.tg-token { font-size: 13px; color: var(--text-soft); }
+.tg-token-input { width: 260px; max-width: 100%; }
+.tg-advanced { border-top: 1px solid var(--line-soft); }
+.tg-advanced > summary { display: flex; align-items: center; gap: 6px; padding: 14px 20px; font-size: 14px; font-weight: 500; color: var(--text-soft); cursor: pointer; list-style: none; }
+.tg-advanced > summary::-webkit-details-marker { display: none; }
+.tg-advanced > summary .material-icons { font-size: 18px; transition: transform 0.15s; }
+.tg-advanced[open] > summary .material-icons { transform: rotate(90deg); }
+.tg-advanced-body { display: flex; flex-direction: column; gap: 6px; padding: 0 20px 18px; }
+.tg-advanced-body label { font-size: 13px; font-weight: 500; }
+.tg-advanced-body input { width: 100%; box-sizing: border-box; font-size: 13px; }
+.tg-advanced-body .tg-row-hint { font-size: 12px; }
+
+/* Leiste unten: ungespeicherte Änderungen, Verwerfen, Speichern */
+.tg-savebar {
+  position: sticky; bottom: 16px; z-index: 2; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: -16px;
+  padding: 12px 12px 12px 20px; border: 1px solid var(--line); border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(8px); box-shadow: 0 8px 24px var(--shadow-soft);
+}
+.tg-savebar-state { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-soft); }
+.tg-savebar-state .notice { padding: 6px 10px; }
+.tg-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+
+/* Spracherkennung: Logo des Dienstes, Kacheln der Vorlagen und Hinweise (Rest wie Telegram, tg-*) */
+.speech-logo { flex: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 56px; height: 56px; border-radius: 14px; background: var(--surface-alt); border: 1px solid var(--line); color: var(--text-soft); font-size: 18px; font-weight: 600; }
+.speech-logo.small { border-radius: 9px; font-size: 12px; }
+.speech-logo .material-icons { font-size: 26px; }
+.speech-logo.small .material-icons { font-size: 18px; }
+.speech-logo.img { padding: 7px; object-fit: contain; background: var(--logo-plate); }
+.speech-logo.img.small { padding: 4px; }
+.speech-logo.off { color: var(--muted); }
+.speech-services { margin: 0; padding: 0; border: 0; min-width: 0; }
+.speech-services:disabled { opacity: 0.55; }
+.speech-service-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+.speech-service { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 13px; font-weight: 500; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.speech-service:hover { border-color: var(--line-strong); }
+.speech-service.on { border-color: var(--primary); background: var(--surface-alt); box-shadow: inset 0 0 0 1px var(--primary); }
+.speech-service > input { position: absolute; opacity: 0; pointer-events: none; }
+.speech-service:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.speech-note { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text-soft); }
+.speech-note .material-icons { font-size: 18px; color: var(--muted); }
+.speech-note.warn .material-icons { color: var(--warn); }
+.tg-field-row > input.speech-wide { flex: 1; min-width: 220px; }
+
+@media (max-width: 860px) {
+  .tg-hero { flex-direction: column; align-items: flex-start; }
+  .tg-grid2 { grid-template-columns: 1fr; }
+  .tg-grid2 > .tg-toggle-row, .tg-grid2 > .tg-toggle-row:nth-child(n) { box-shadow: inset 0 -1px 0 var(--line-soft); }
+  .tg-grid2 > .tg-toggle-row:last-child { box-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .telegram-panel input.switch, .telegram-panel input.switch::before, .tg-advanced > summary .material-icons { transition: none; }
+  .tg-pulse { animation: none; }
+}

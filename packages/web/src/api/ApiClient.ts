@@ -18,7 +18,7 @@ import type { DispatchStatsDto, DispatchStatsFilter } from './statsTypes.js';
 import type { InboxListDto } from './inboxTypes.js';
 import type { AccountListDto, ClaudeUsageDto, UsageOverviewDto } from './usageTypes.js';
 import type {
-  SpeechTestDto, TelegramConfig, TelegramConfigInput, TelegramPairingDto, TelegramProfileDto, TelegramStatusDto, TelegramTestDto,
+  SpeechStatusDto, SpeechTestDto, TelegramConfig, TelegramConfigInput, TelegramPairingDto, TelegramProfileDto, TelegramStatusDto, TelegramTestDto,
 } from './telegramTypes.js';
 
 // Wie lange ein laufendes GET für dieselbe Adresse mitbenutzt wird: deckt gleichzeitiges Laden beim Seitenaufbau ab,
@@ -285,6 +285,11 @@ export class ApiClient {
   // Probiert die eingerichtete Spracherkennung mit dem mitgelieferten Beispiel aus
   testSpeech(): Promise<SpeechTestDto> {
     return this.request('POST', '/api/speech/test');
+  }
+
+  // Wann die Spracherkennung zuletzt geklappt hat und woran sie zuletzt gescheitert ist
+  getSpeechStatus(): Promise<SpeechStatusDto> {
+    return this.request('GET', '/api/speech/status');
   }
 
   getPluginSetup(): Promise<PluginSetupDto> {

@@ -70,8 +70,7 @@
           "review": true
         },
         "profile": {
-          "applied": null,
-          "brand": true
+          "applied": null
         },
         "quietHours": null,
         "speech": {
@@ -188,8 +187,7 @@
             "botId": 7012345678,
             "photo": "31bd7f7de04f11dfe8c1a1093279495c16fcff82",
             "texts": "7e0cbdddcb507d501c1b690e69d575621ac2e3d9"
-          },
-          "brand": true
+          }
         },
         "quietHours": null,
         "speech": {

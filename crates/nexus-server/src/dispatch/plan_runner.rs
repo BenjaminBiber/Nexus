@@ -13,7 +13,9 @@ use nexus_core::board::ticket_service::{TicketDetail, TicketListFilter, TicketVi
 use nexus_core::board::types::Board;
 use nexus_core::clock::{iso, parse_millis};
 use nexus_core::dispatch::git::{ResearchWorktree, ResearchWorktreeOptions, WorktreePurpose};
-use nexus_core::dispatch::{markers, PlanPromptInput, RunEnd, RunKind, RunRecord};
+use nexus_core::dispatch::{
+    markers, PlanPromptInput, PlanningAutoState, RunEnd, RunKind, RunRecord,
+};
 use nexus_core::{HarnessError, Result};
 
 use crate::board_runtime::BoardRuntimeHolder;
@@ -223,13 +225,29 @@ impl<'a> PlanRunner<'a> {
         if free <= 0 {
             return Ok(report);
         }
-        for ticket in self.candidates(&since, now.timestamp_millis()).await? {
+        // Boards, deren Repo sich nicht öffnen lässt (z. B. Repo-Pfad ohne Git): ihre Tickets
+        // bleiben in diesem Tick außen vor, die übrigen Boards werden weiter bedient
+        let mut broken: Vec<(i32, String)> = Vec::new();
+        for (board, ticket) in self.candidates(&since, now.timestamp_millis()).await? {
             if free <= 0 {
                 break;
             }
             let id = ticket.ticket.id.clone();
             // Schon einmal angestoßen (automatisch oder von Hand): kein automatischer Neuversuch
             if state.planning.contains_key(&id) {
+                continue;
+            }
+            if broken.iter().any(|(board_id, _)| *board_id == board.id) {
+                continue;
+            }
+            if let Err(error) = ctx.repo(&board).await {
+                if BoardRuntimeHolder::is_connection_error(&error) {
+                    return Err(error);
+                }
+                broken.push((
+                    board.id,
+                    format!("Board {} ({}): {error}", board.name, board.id),
+                ));
                 continue;
             }
             match self.start(&id, StartMode::Auto).await {
@@ -273,11 +291,54 @@ impl<'a> PlanRunner<'a> {
                             hhmm(retry_at)
                         ));
                     }
-                    break;
+                    return Ok(report);
                 }
             }
         }
+        self.note_broken_boards(&broken, &auto, &mut report).await?;
         Ok(report)
+    }
+
+    /// Hält die Boards mit nicht nutzbarem Repo als Fehler der Automatik fest (ohne Pause, je
+    /// Text nur einmal gemeldet). Ist kein Board mehr betroffen, verschwindet ein solcher Fehler
+    /// wieder; der Fehler einer Pause (`retry_at` gesetzt) bleibt bis zum nächsten Start stehen.
+    async fn note_broken_boards(
+        &self,
+        broken: &[(i32, String)],
+        auto: &PlanningAutoState,
+        report: &mut PlanAutoReport,
+    ) -> Result<()> {
+        if broken.is_empty() {
+            if auto.retry_at.is_none() && auto.last_error.is_some() {
+                self.ctx
+                    .stores
+                    .state
+                    .update(|state| {
+                        if state.planning_auto.retry_at.is_none() {
+                            state.planning_auto.last_error = None;
+                        }
+                    })
+                    .await?;
+            }
+            return Ok(());
+        }
+        let message = broken
+            .iter()
+            .map(|(_, text)| text.as_str())
+            .collect::<Vec<_>>()
+            .join("; ");
+        let noted = message.clone();
+        self.ctx
+            .stores
+            .state
+            .update(move |state| state.planning_auto.last_error = Some(noted))
+            .await?;
+        if auto.last_error.as_deref() != Some(message.as_str()) {
+            report
+                .errors
+                .push(format!("Planungs-Automatik überspringt {message}"));
+        }
+        Ok(())
     }
 
     /// Wertet einen beendeten Planungslauf aus; der Worktree wird in jedem Fall entfernt
@@ -306,7 +367,7 @@ impl<'a> PlanRunner<'a> {
     /// Kandidaten der Automatik: Tickets mit Planungsbedarf auf eigenen Boards mit Repo-Pfad, die
     /// seit `since` angelegt oder geändert wurden, ohne offene Frage und ohne fremden Claim
     /// ([`PlanningCandidate`]); Priorität, dann Nummer
-    async fn candidates(&self, since: &str, now: i64) -> Result<Vec<TicketView>> {
+    async fn candidates(&self, since: &str, now: i64) -> Result<Vec<(Board, TicketView)>> {
         let ctx = self.ctx;
         let boards: Vec<Board> = ctx
             .services()
@@ -318,7 +379,7 @@ impl<'a> PlanRunner<'a> {
             .filter(|board| board.repo_path.is_some())
             .collect();
         let from = parse_millis(since).unwrap_or(i64::MAX);
-        let mut found: Vec<TicketView> = Vec::new();
+        let mut found: Vec<(Board, TicketView)> = Vec::new();
         for board in boards {
             let views = ctx
                 .services()
@@ -329,15 +390,23 @@ impl<'a> PlanRunner<'a> {
                     ..TicketListFilter::default()
                 })
                 .await?;
-            found.extend(views.into_iter().filter(|view| {
-                PlanningCandidate::matches(&view.ticket, now, view.waiting_on_questions.len())
-                    && parse_millis(&view.ticket.created_at)
-                        .unwrap_or(0)
-                        .max(parse_millis(&view.ticket.updated_at).unwrap_or(0))
-                        >= from
-            }));
+            found.extend(
+                views
+                    .into_iter()
+                    .filter(|view| {
+                        PlanningCandidate::matches(
+                            &view.ticket,
+                            now,
+                            view.waiting_on_questions.len(),
+                        ) && parse_millis(&view.ticket.created_at)
+                            .unwrap_or(0)
+                            .max(parse_millis(&view.ticket.updated_at).unwrap_or(0))
+                            >= from
+                    })
+                    .map(|view| (board.clone(), view)),
+            );
         }
-        found.sort_by(|a, b| {
+        found.sort_by(|(_, a), (_, b)| {
             a.ticket
                 .priority
                 .rank()

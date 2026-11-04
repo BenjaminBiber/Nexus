@@ -4,8 +4,8 @@
 //! Wie in [`crate::telegram::views`] steht hier nur Formatierung über schon gelesenen Daten;
 //! jeder fremde Text geht durch die Bausteine aus [`nexus_core::telegram::html`].
 
-use nexus_core::telegram::idea::{IdeaDraft, IdeaKind};
-use nexus_core::telegram::{bold, escape, italic, CallbackAction, IdeaTarget};
+use nexus_core::telegram::idea::{IdeaAsk, IdeaDraft, IdeaKind};
+use nexus_core::telegram::{bold, escape, italic, CallbackAction, IdeaTarget, Questionnaire};
 
 use crate::telegram::api::{InlineButton, InlineKeyboard};
 use crate::telegram::views::{rows_of_two, BoardChoice};
@@ -46,7 +46,7 @@ pub fn draft_message(draft: &IdeaDraft, board: Option<&str>) -> String {
     if !draft.questions.is_empty() {
         out.push_str(&bold("Bevor ich es anlege:"));
         for question in &draft.questions {
-            out.push_str(&format!("\n• {}", escape(question)));
+            out.push_str(&format!("\n• {}", escape(&question.text)));
         }
         out.push_str("\n\n");
     }
@@ -224,6 +224,172 @@ pub fn created_message(what: &str, id: &str, title: &str) -> String {
     format!("✅ {} {}\n{}", escape(what), escape(id), escape(title))
 }
 
+// ---------------------------------------------------------------------------------------------
+// Die Rückfragen, einzeln
+// ---------------------------------------------------------------------------------------------
+
+/// Hinweis an einem Knopf einer Rückfrage, die nicht mehr dran ist
+pub const ASK_STALE: &str = "Diese Frage ist schon beantwortet – nichts geändert.";
+
+/// Hinweis an „Fertig“ ohne Häkchen
+pub const NOTHING_TICKED: &str = "Erst mindestens eine Antwort ankreuzen.";
+
+/// Hinweis an einer Möglichkeit, die es an der Frage nicht gibt
+pub const UNKNOWN_ANSWER: &str = "Diese Antwort steht nicht mehr zur Wahl – nichts geändert.";
+
+/// Antwort auf eine leere freie Antwort
+pub const EMPTY_ANSWER: &str = "Da war kein Text dabei – die Frage bleibt offen.";
+
+/// Marke an der empfohlenen Möglichkeit (wie bei den Board-Fragen)
+pub const RECOMMENDED_MARK: &str = "★";
+
+/// Die Nachricht zur aktuellen Rückfrage: Zusammenfassung, schon Beantwortetes, dann
+/// „Frage n/m“ samt Möglichkeiten und Knöpfen
+pub fn ask_message(
+    draft_id: &str,
+    draft: &IdeaDraft,
+    questionnaire: &Questionnaire,
+) -> (String, InlineKeyboard) {
+    let asks = &draft.questions;
+    let current = questionnaire.current.min(asks.len().saturating_sub(1));
+    let mut out = escape(&draft.summary);
+    let answered = answered_lines(asks, questionnaire, Some(current));
+    if !answered.is_empty() {
+        out.push_str(&format!("\n\n{answered}"));
+    }
+    let Some(ask) = asks.get(current) else {
+        return (out, InlineKeyboard::new(Vec::new()));
+    };
+    out.push_str(&format!(
+        "\n\n{}\n{}",
+        bold(&format!("Frage {}/{}", current + 1, asks.len())),
+        escape(&ask.text)
+    ));
+    for (index, option) in ask.options.iter().enumerate() {
+        let mark = match ask.recommended == Some(index) {
+            true => format!(" {RECOMMENDED_MARK}"),
+            false => String::new(),
+        };
+        out.push_str(&format!("\n{}. {}{mark}", index + 1, bold(&option.label)));
+        if let Some(detail) = option.detail.as_deref().filter(|d| !d.trim().is_empty()) {
+            out.push_str(&format!(" – {}", escape(detail)));
+        }
+    }
+    let how = match (ask.options.is_empty(), ask.multi_select) {
+        (true, _) => "Antworte mit Text oder Sprache.",
+        (false, true) => {
+            "Kreuze an, was passt, und tippe „Fertig“ – oder antworte frei mit Text oder Sprache."
+        }
+        (false, false) => "Tippe eine Antwort oder antworte frei mit Text oder Sprache.",
+    };
+    out.push_str(&format!("\n\n{}", italic(how)));
+    (out, ask_keyboard(draft_id, draft, questionnaire, current))
+}
+
+/// Die Knöpfe einer Rückfrage: je Möglichkeit einer (bei Mehrfachauswahl mit Häkchen und
+/// „Fertig“), darunter Überspringen, Zurück (ab Frage 2) und Abbrechen
+fn ask_keyboard(
+    draft_id: &str,
+    draft: &IdeaDraft,
+    questionnaire: &Questionnaire,
+    current: usize,
+) -> InlineKeyboard {
+    let ask = &draft.questions[current];
+    let id = draft_id.to_string();
+    let mut rows: Vec<Vec<InlineButton>> = ask
+        .options
+        .iter()
+        .enumerate()
+        .map(|(index, option)| {
+            let star = match ask.recommended == Some(index) {
+                true => format!("{RECOMMENDED_MARK} "),
+                false => String::new(),
+            };
+            let button = match ask.multi_select {
+                true => {
+                    let tick = match questionnaire.ticked.contains(&index) {
+                        true => "☑",
+                        false => "☐",
+                    };
+                    InlineButton::callback(
+                        format!("{tick} {star}{}", option.label),
+                        CallbackAction::IdeaAskToggle(id.clone(), current, index).encode(),
+                    )
+                }
+                false => InlineButton::callback(
+                    format!("{star}{}", option.label),
+                    CallbackAction::IdeaAskChoose(id.clone(), current, index).encode(),
+                ),
+            };
+            vec![button]
+        })
+        .collect();
+    if ask.multi_select {
+        rows.push(vec![InlineButton::callback(
+            "Fertig",
+            CallbackAction::IdeaAskDone(id.clone(), current).encode(),
+        )]);
+    }
+    let mut last = vec![InlineButton::callback(
+        "Überspringen",
+        CallbackAction::IdeaAskSkip(id.clone(), current).encode(),
+    )];
+    if current > 0 {
+        last.push(InlineButton::callback(
+            "Zurück",
+            CallbackAction::IdeaAskBack(id.clone(), current).encode(),
+        ));
+    }
+    last.push(InlineButton::callback(
+        "Abbrechen",
+        CallbackAction::IdeaAskCancel(id).encode(),
+    ));
+    rows.push(last);
+    InlineKeyboard::new(rows)
+}
+
+/// Die Nachricht, wenn alle Rückfragen beantwortet sind: die Antworten zum Nachlesen
+pub fn asks_done_message(draft: &IdeaDraft, questionnaire: &Questionnaire) -> String {
+    format!(
+        "{}\n\n{}\n\n{}",
+        escape(&draft.summary),
+        answered_lines(&draft.questions, questionnaire, None),
+        italic("Danke – ich arbeite die Antworten ein.")
+    )
+}
+
+/// Der Knopf, der eine gescheiterte Verfeinerungsrunde mit denselben Antworten neu startet
+pub fn retry_keyboard(draft_id: &str, questions: usize) -> InlineKeyboard {
+    InlineKeyboard::row(vec![
+        InlineButton::callback(
+            "Nochmal",
+            CallbackAction::IdeaAskDone(draft_id.to_string(), questions).encode(),
+        ),
+        InlineButton::callback(
+            "Verwerfen",
+            CallbackAction::IdeaDrop(draft_id.to_string()).encode(),
+        ),
+    ])
+}
+
+/// „✓ Frage: Antwort“ je beantworteter Frage; `except` lässt die aktuelle aus
+fn answered_lines(
+    asks: &[IdeaAsk],
+    questionnaire: &Questionnaire,
+    except: Option<usize>,
+) -> String {
+    asks.iter()
+        .enumerate()
+        .filter(|(index, _)| Some(*index) != except)
+        .filter_map(|(index, ask)| {
+            questionnaire
+                .answer_text(asks, index)
+                .map(|answer| format!("✓ {}: {}", escape(&ask.text), escape(&answer)))
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 /// Was der Prüfer am Entwurf zurechtgebogen hat; leer, wenn alles passte
 pub fn dropped_message(dropped: &[String]) -> Option<String> {
     if dropped.is_empty() {
@@ -297,7 +463,7 @@ mod tests {
     #[test]
     fn rueckfragen_stehen_oben_und_bezuege_mit_dubletten_unten() {
         let draft = IdeaDraft {
-            questions: vec!["Auch für SQL Server?".into()],
+            questions: vec![IdeaAsk::open("Auch für SQL Server?")],
             related: vec![IdeaRelated {
                 ticket_id: "NXS-0042".into(),
                 why: "baut dieselbe Ansicht".into(),
@@ -456,6 +622,132 @@ mod tests {
         assert_eq!(
             created_message("Notiz angelegt:", "7", "Cache läuft nie ab"),
             "✅ Notiz angelegt: 7\nCache läuft nie ab"
+        );
+    }
+
+    /// Ein Entwurf mit drei Rückfragen: Wahl mit Empfehlung, Mehrfachauswahl, frei
+    fn mit_fragen() -> IdeaDraft {
+        use nexus_core::telegram::idea::IdeaAskOption;
+        let option = |label: &str, detail: Option<&str>| IdeaAskOption {
+            label: label.into(),
+            detail: detail.map(str::to_string),
+        };
+        IdeaDraft {
+            summary: "Compose-Datei für einen STT-Dienst.".into(),
+            questions: vec![
+                IdeaAsk {
+                    options: vec![
+                        option("faster-whisper", Some("schnell auf CPU")),
+                        option("Vosk", None),
+                    ],
+                    recommended: Some(0),
+                    ..IdeaAsk::open("Welche Engine?")
+                },
+                IdeaAsk {
+                    options: vec![option("Deutsch", None), option("Englisch", None)],
+                    multi_select: true,
+                    ..IdeaAsk::open("Welche Sprachen?")
+                },
+                IdeaAsk::open("Wo soll die Datei liegen?"),
+            ],
+            ..draft()
+        }
+    }
+
+    #[test]
+    fn die_erste_rueckfrage_zeigt_moeglichkeiten_empfehlung_und_knoepfe() {
+        let draft = mit_fragen();
+        let (text, keyboard) = ask_message("d7", &draft, &Questionnaire::new(3));
+
+        assert!(
+            text.starts_with("Compose-Datei für einen STT-Dienst."),
+            "{text}"
+        );
+        assert!(text.contains("<b>Frage 1/3</b>\nWelche Engine?"), "{text}");
+        assert!(
+            text.contains("1. <b>faster-whisper</b> ★ – schnell auf CPU"),
+            "{text}"
+        );
+        assert!(text.contains("2. <b>Vosk</b>\n"), "{text}");
+        assert!(!text.contains("✓"), "noch nichts beantwortet: {text}");
+        assert_eq!(
+            buttons(&keyboard),
+            vec![
+                ("★ faster-whisper".into(), "iqa:d7:0:0".into()),
+                ("Vosk".into(), "iqa:d7:0:1".into()),
+                ("Überspringen".into(), "iqs:d7:0".into()),
+                ("Abbrechen".into(), "iqx:d7".into()),
+            ]
+        );
+    }
+
+    #[test]
+    fn die_mehrfachauswahl_zeigt_haekchen_fertig_und_zurueck() {
+        let draft = mit_fragen();
+        let mut bogen = Questionnaire::new(3);
+        bogen.choose(&draft.questions, 0, 1).unwrap();
+        bogen.toggle(&draft.questions, 1, 1).unwrap();
+
+        let (text, keyboard) = ask_message("d7", &draft, &bogen);
+
+        assert!(text.contains("✓ Welche Engine?: Vosk"), "{text}");
+        assert!(text.contains("<b>Frage 2/3</b>"), "{text}");
+        assert_eq!(
+            buttons(&keyboard),
+            vec![
+                ("☐ Deutsch".into(), "iqt:d7:1:0".into()),
+                ("☑ Englisch".into(), "iqt:d7:1:1".into()),
+                ("Fertig".into(), "iqd:d7:1".into()),
+                ("Überspringen".into(), "iqs:d7:1".into()),
+                ("Zurück".into(), "iqb:d7:1".into()),
+                ("Abbrechen".into(), "iqx:d7".into()),
+            ]
+        );
+    }
+
+    #[test]
+    fn eine_freie_rueckfrage_hat_nur_die_zusatzknoepfe() {
+        let draft = mit_fragen();
+        let mut bogen = Questionnaire::new(3);
+        bogen.skip(&draft.questions, 0).unwrap();
+        bogen.toggle(&draft.questions, 1, 0).unwrap();
+        bogen.confirm(&draft.questions, 1).unwrap();
+
+        let (text, keyboard) = ask_message("d7", &draft, &bogen);
+
+        assert!(text.contains("Antworte mit Text oder Sprache."), "{text}");
+        assert!(text.contains("✓ Welche Sprachen?: Deutsch"), "{text}");
+        assert_eq!(
+            buttons(&keyboard)
+                .into_iter()
+                .map(|(label, _)| label)
+                .collect::<Vec<_>>(),
+            ["Überspringen", "Zurück", "Abbrechen"]
+        );
+    }
+
+    #[test]
+    fn nach_der_letzten_antwort_stehen_alle_antworten_da() {
+        let draft = mit_fragen();
+        let mut bogen = Questionnaire::new(3);
+        bogen.choose(&draft.questions, 0, 0).unwrap();
+        bogen.skip(&draft.questions, 1).unwrap();
+        bogen.free(&draft.questions, "deploy/").unwrap();
+
+        let text = asks_done_message(&draft, &bogen);
+
+        assert!(text.contains("✓ Welche Engine?: faster-whisper"), "{text}");
+        assert!(text.contains("✓ Welche Sprachen?: keine Vorgabe"), "{text}");
+        assert!(
+            text.contains("✓ Wo soll die Datei liegen?: deploy/"),
+            "{text}"
+        );
+        assert_eq!(
+            buttons(&retry_keyboard("d7", 3)),
+            vec![
+                ("Nochmal".into(), "iqd:d7:3".into()),
+                ("Verwerfen".into(), "idp:d7".into()),
+            ]
         );
     }
 

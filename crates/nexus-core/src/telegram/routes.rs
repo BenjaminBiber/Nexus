@@ -83,6 +83,24 @@ pub struct SpeechTestDto {
     pub millis: u64,
 }
 
+/// Antwort von `GET /api/speech/status`: wann die Spracherkennung zuletzt geklappt hat und
+/// woran sie zuletzt gescheitert ist. Der Server merkt sich das nur, solange er läuft.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "telegram.ts")]
+pub struct SpeechStatusDto {
+    /// Zeitpunkt der letzten erfolgreichen Erkennung (RFC 3339); null = seit dem Start keine
+    pub last_success_at: Option<String>,
+    /// Woher die letzte erfolgreiche Erkennung kam: `voice` (Sprachnachricht) oder `test`
+    pub last_success_via: Option<String>,
+    /// Wie lange die letzte erfolgreiche Erkennung gebraucht hat, in Millisekunden
+    pub last_millis: Option<u64>,
+    /// Zeitpunkt des letzten Fehlers (RFC 3339); null = seit dem Start keiner
+    pub last_error_at: Option<String>,
+    /// Der letzte Fehler in Worten; nie mit Adresse oder Schlüssel
+    pub last_error: Option<String>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -27,8 +27,7 @@
           "review": true
         },
         "profile": {
-          "applied": null,
-          "brand": true
+          "applied": null
         },
         "quietHours": null,
         "speech": {
@@ -100,8 +99,7 @@
           "review": true
         },
         "profile": {
-          "applied": null,
-          "brand": true
+          "applied": null
         },
         "quietHours": {
           "from": "22:00",
@@ -151,8 +149,7 @@
           "review": true
         },
         "profile": {
-          "applied": null,
-          "brand": true
+          "applied": null
         },
         "quietHours": {
           "from": "22:00",
@@ -209,8 +206,7 @@
           "review": true
         },
         "profile": {
-          "applied": null,
-          "brand": true
+          "applied": null
         },
         "quietHours": null,
         "speech": {
@@ -340,8 +336,7 @@
           "review": true
         },
         "profile": {
-          "applied": null,
-          "brand": true
+          "applied": null
         },
         "quietHours": null,
         "speech": {
@@ -388,8 +383,7 @@
           "review": true
         },
         "profile": {
-          "applied": null,
-          "brand": true
+          "applied": null
         },
         "quietHours": null,
         "speech": {

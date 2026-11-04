@@ -18,13 +18,10 @@ photo: string,
 texts: string, };
 
 /**
- * Profil des Bots (Bild, Name, Beschreibungen)
+ * Profil des Bots (Bild, Name, Beschreibungen). Nexus richtet es immer ein; gemerkt wird
+ * nur, was zuletzt gesetzt wurde. Ein altes `brand` in `telegram.yaml` wird überlesen
  */
 export type BotProfile = { 
-/**
- * true = Nexus richtet Profilbild, Name und Beschreibung des Bots ein
- */
-brand: boolean, 
 /**
  * Was zuletzt eingerichtet wurde; null = noch nichts
  */
@@ -113,6 +110,32 @@ apiKey: string, model: string,
  * Sprache der Aufnahme als Kürzel; null = der Dienst erkennt sie selbst
  */
 language: string | null, whisperCli: WhisperCli, };
+
+/**
+ * Antwort von `GET /api/speech/status`: wann die Spracherkennung zuletzt geklappt hat und
+ * woran sie zuletzt gescheitert ist. Der Server merkt sich das nur, solange er läuft.
+ */
+export type SpeechStatusDto = { 
+/**
+ * Zeitpunkt der letzten erfolgreichen Erkennung (RFC 3339); null = seit dem Start keine
+ */
+lastSuccessAt: string | null, 
+/**
+ * Woher die letzte erfolgreiche Erkennung kam: `voice` (Sprachnachricht) oder `test`
+ */
+lastSuccessVia: string | null, 
+/**
+ * Wie lange die letzte erfolgreiche Erkennung gebraucht hat, in Millisekunden
+ */
+lastMillis: number | null, 
+/**
+ * Zeitpunkt des letzten Fehlers (RFC 3339); null = seit dem Start keiner
+ */
+lastErrorAt: string | null, 
+/**
+ * Der letzte Fehler in Worten; nie mit Adresse oder Schlüssel
+ */
+lastError: string | null, };
 
 /**
  * Antwort von `POST /api/speech/test`

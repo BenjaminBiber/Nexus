@@ -69,6 +69,19 @@ pub enum CallbackAction {
     IdeaDrop(String),
     /// Vorhandenen offenen Entwurf durch einen neuen ersetzen
     IdeaReplace(String),
+    /// Rückfrage: Möglichkeit wählen (Entwurf, Frage, Möglichkeit)
+    IdeaAskChoose(String, usize, usize),
+    /// Rückfrage mit Mehrfachauswahl: Möglichkeit an-/abhaken (Entwurf, Frage, Möglichkeit)
+    IdeaAskToggle(String, usize, usize),
+    /// Rückfrage mit Mehrfachauswahl abschließen; mit der Fragenzahl als Nummer startet es die
+    /// gescheiterte Verfeinerungsrunde neu
+    IdeaAskDone(String, usize),
+    /// Rückfrage überspringen
+    IdeaAskSkip(String, usize),
+    /// Zurück zur vorigen Rückfrage
+    IdeaAskBack(String, usize),
+    /// Rückfragen abbrechen und den Entwurf verwerfen
+    IdeaAskCancel(String),
     /// Aktives Board umschalten
     Board(i32),
     /// Weitere Einträge einer Art aus „Meine Aufgaben“ (Seite ab 2)
@@ -111,6 +124,16 @@ impl CallbackAction {
             CallbackAction::IdeaEdit(draft) => format!("ied:{draft}"),
             CallbackAction::IdeaDrop(draft) => format!("idp:{draft}"),
             CallbackAction::IdeaReplace(draft) => format!("irp:{draft}"),
+            CallbackAction::IdeaAskChoose(draft, question, option) => {
+                format!("iqa:{draft}:{question}:{option}")
+            }
+            CallbackAction::IdeaAskToggle(draft, question, option) => {
+                format!("iqt:{draft}:{question}:{option}")
+            }
+            CallbackAction::IdeaAskDone(draft, question) => format!("iqd:{draft}:{question}"),
+            CallbackAction::IdeaAskSkip(draft, question) => format!("iqs:{draft}:{question}"),
+            CallbackAction::IdeaAskBack(draft, question) => format!("iqb:{draft}:{question}"),
+            CallbackAction::IdeaAskCancel(draft) => format!("iqx:{draft}"),
             CallbackAction::Board(board_id) => format!("brd:{board_id}"),
             CallbackAction::More(kind, page) => format!("mo:{}:{page}", kind.as_str()),
             CallbackAction::Cancel => "x".to_string(),
@@ -162,6 +185,35 @@ impl CallbackAction {
             "ied" => Some(CallbackAction::IdeaEdit(single(felder)?)),
             "idp" => Some(CallbackAction::IdeaDrop(single(felder)?)),
             "irp" => Some(CallbackAction::IdeaReplace(single(felder)?)),
+            "iqa" => {
+                let (draft, question, option) = triple(felder)?;
+                Some(CallbackAction::IdeaAskChoose(
+                    draft,
+                    question.parse().ok()?,
+                    option.parse().ok()?,
+                ))
+            }
+            "iqt" => {
+                let (draft, question, option) = triple(felder)?;
+                Some(CallbackAction::IdeaAskToggle(
+                    draft,
+                    question.parse().ok()?,
+                    option.parse().ok()?,
+                ))
+            }
+            "iqd" => {
+                let (draft, question) = pair(felder)?;
+                Some(CallbackAction::IdeaAskDone(draft, question.parse().ok()?))
+            }
+            "iqs" => {
+                let (draft, question) = pair(felder)?;
+                Some(CallbackAction::IdeaAskSkip(draft, question.parse().ok()?))
+            }
+            "iqb" => {
+                let (draft, question) = pair(felder)?;
+                Some(CallbackAction::IdeaAskBack(draft, question.parse().ok()?))
+            }
+            "iqx" => Some(CallbackAction::IdeaAskCancel(single(felder)?)),
             "brd" => Some(CallbackAction::Board(single_i32(felder)?)),
             "mo" => {
                 let (kind, page) = pair(felder)?;
@@ -198,6 +250,17 @@ fn pair(mut felder: std::str::Split<'_, char>) -> Option<(String, String)> {
         return None;
     }
     Some((a.to_string(), b.to_string()))
+}
+
+/// Genau drei restliche, nicht leere Felder, sonst `None`
+fn triple(mut felder: std::str::Split<'_, char>) -> Option<(String, String, String)> {
+    let a = felder.next()?;
+    let b = felder.next()?;
+    let c = felder.next()?;
+    if a.is_empty() || b.is_empty() || c.is_empty() || felder.next().is_some() {
+        return None;
+    }
+    Some((a.to_string(), b.to_string(), c.to_string()))
 }
 
 /// Kurzcode für das Ziel eines Ideen-Entwurfs
@@ -265,6 +328,12 @@ mod tests {
             CallbackAction::IdeaEdit(DRAFT_MAX.into()),
             CallbackAction::IdeaDrop(DRAFT_MAX.into()),
             CallbackAction::IdeaReplace(DRAFT_MAX.into()),
+            CallbackAction::IdeaAskChoose(DRAFT_MAX.into(), 2, 3),
+            CallbackAction::IdeaAskToggle(DRAFT_MAX.into(), 2, 3),
+            CallbackAction::IdeaAskDone(DRAFT_MAX.into(), 3),
+            CallbackAction::IdeaAskSkip(DRAFT_MAX.into(), 2),
+            CallbackAction::IdeaAskBack(DRAFT_MAX.into(), 2),
+            CallbackAction::IdeaAskCancel(DRAFT_MAX.into()),
             CallbackAction::Board(i32::MAX),
             CallbackAction::More(InboxKind::Planning, u32::MAX),
             CallbackAction::Cancel,
@@ -322,6 +391,11 @@ mod tests {
             "qo:NXS-F0007",
             "qo:NXS-F0007:O2:zuviel",
             "itg:d1234567:falsch",
+            "iqa:d1234567:0",
+            "iqa:d1234567:x:1",
+            "iqa:d1234567:0:1:zuviel",
+            "iqd:d1234567:-1",
+            "iqx:d1234567:0",
             "mo:kaputt:1",
             "mo:note:keine-zahl",
             "x:zuviel",
