@@ -93,7 +93,7 @@
     "name": "warten, bis der Bot sich angemeldet hat",
     "request": {
       "action": "await",
-      "call": "setMyCommands",
+      "call": "getUpdates",
       "count": 1,
       "stub": "TELEGRAM"
     },

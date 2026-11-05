@@ -31,7 +31,7 @@
       "path": "/api/telegram/config",
       "body": { "enabled": true, "apiBase": "{{tgUrl}}" }
     },
-    { "name": "warten, bis der Bot sich angemeldet hat", "kind": "httpStub", "action": "await", "stub": "TELEGRAM", "call": "setMyCommands" },
+    { "name": "warten, bis der Bot sich angemeldet hat", "kind": "httpStub", "action": "await", "stub": "TELEGRAM", "call": "getUpdates" },
 
     { "name": "Testnachricht an beide Chats", "method": "POST", "path": "/api/telegram/test", "body": {} },
     { "name": "die geschickten Nachrichten an der Attrappe", "kind": "httpStub", "action": "await", "stub": "TELEGRAM", "call": "sendMessage", "count": 2 },

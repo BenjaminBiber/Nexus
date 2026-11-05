@@ -25,7 +25,7 @@
       "path": "/api/telegram/config",
       "body": { "enabled": true, "apiBase": "{{tgUrl}}" }
     },
-    { "name": "warten, bis der Bot sich angemeldet hat", "kind": "httpStub", "action": "await", "stub": "TELEGRAM", "call": "setMyCommands" },
+    { "name": "warten, bis der Bot sich angemeldet hat", "kind": "httpStub", "action": "await", "stub": "TELEGRAM", "call": "getUpdates" },
 
     {
       "name": "Einmal-Code ausgeben",

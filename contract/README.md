@@ -322,9 +322,10 @@ Reihenfolge, die letzte wiederholt sich) und `delayMs` (so lange wartet die Attr
 und `body` der Attrappe. In `body`, `bodies` und `status` werden Variablen eingesetzt.
 
 `await` wartet, bis die Attrappe die erwarteten Anfragen gesehen hat. Damit hängt ein Szenario nicht am Takt
-einer Hintergrundaufgabe: Nach dem Einschalten des Bots steht erst mit dem Aufruf von `setMyCommands` fest, dass
-der Poller läuft und `GET /api/telegram/status` ihn als `running` meldet. Aufgezeichnet wird nur `{ "ok": true }`
-– wie viele Anfragen wirklich ankamen, ist in jedem Lauf anders.
+einer Hintergrundaufgabe: Nach dem Einschalten des Bots steht erst mit dem ersten Aufruf von `getUpdates` fest, dass
+der Poller läuft, `GET /api/telegram/status` ihn als `running` meldet und der Bot sein Profil eingerichtet und in
+`telegram.yaml` gemerkt hat. `setMyCommands` reicht dafür nicht: das Merken kommt erst nach der Antwort darauf.
+Aufgezeichnet wird nur `{ "ok": true }` – wie viele Anfragen wirklich ankamen, ist in jedem Lauf anders.
 
 ```json
 { "name": "Attrappe der Bot-API starten", "kind": "httpStub", "stub": "TELEGRAM",

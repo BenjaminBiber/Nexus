@@ -90,7 +90,7 @@
     "name": "warten, bis der Bot sein Profil eingerichtet hat",
     "request": {
       "action": "await",
-      "call": "setMyCommands",
+      "call": "getUpdates",
       "count": 1,
       "stub": "TELEGRAM"
     },

@@ -31,6 +31,31 @@ pub fn canonical(path: &Path) -> PathBuf {
     resolved
 }
 
+/// Legt einen Link auf einen Ordner an, unter Windows als Junction wie der Agent selbst
+/// (`mklink /J`). Ein Verzeichnis-Symlink bräuchte dort Adminrechte oder den Entwicklermodus.
+pub fn link_dir(target: &Path, link: &Path) {
+    #[cfg(windows)]
+    {
+        let output = Command::new("cmd")
+            .arg("/C")
+            .arg("mklink")
+            .arg("/J")
+            .arg(link)
+            .arg(target)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "mklink /J {} {}: {}",
+            link.display(),
+            target.display(),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    #[cfg(not(windows))]
+    std::os::unix::fs::symlink(target, link).unwrap();
+}
+
 /// Vereinheitlicht einen Pfad auf Schrägstriche, wie `GitPaths` es tut
 pub fn slashes(path: &Path) -> String {
     path.to_string_lossy().replace('\\', "/")
@@ -43,7 +68,23 @@ static GIT_CONFIG: OnceLock<TempDir> = OnceLock::new();
 /// entscheidet z. B. ein global gesetztes `core.longpaths` über das Ergebnis
 /// (entspricht `vi.stubEnv('GIT_CONFIG_GLOBAL', …)` in den TypeScript-Tests).
 fn isolate_git_config() {
-    let home = GIT_CONFIG.get_or_init(|| make_temp_dir("harness-gitconfig-"));
+    let home = GIT_CONFIG.get_or_init(|| {
+        let home = make_temp_dir("harness-gitconfig-");
+        // Ignore- und Attributdatei liest Git ohne Eintrag aus `~/.config/git/`, auch mit
+        // GIT_CONFIG_GLOBAL. Claude Code trägt dort `**/.claude/settings.local.json` ein, und
+        // die Tests sähen die Datei nicht mehr. Beide zeigen deshalb auf Dateien, die es nicht gibt
+        let missing = |name: &str| slashes(&home.path().join(name));
+        std::fs::write(
+            home.path().join("gitconfig"),
+            format!(
+                "[core]\n\texcludesFile = \"{}\"\n\tattributesFile = \"{}\"\n",
+                missing("ignore"),
+                missing("attributes")
+            ),
+        )
+        .unwrap();
+        home
+    });
     std::env::set_var("GIT_CONFIG_GLOBAL", home.path().join("gitconfig"));
     std::env::set_var("GIT_CONFIG_NOSYSTEM", "1");
 }
