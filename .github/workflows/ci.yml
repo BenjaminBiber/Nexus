@@ -14,20 +14,45 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  # Eigene Runner (self-hosted) für macOS und Windows, wenn einer online ist, sonst die von GitHub.
+  # Die Runner-Liste darf nur ein Token mit „Administration: read“ lesen (RUNNER_TOKEN, ersatzweise
+  # RELEASE_TOKEN); ohne beide gelten die gehosteten. Linux läuft immer gehostet.
+  # Logik und Labels: scripts/ci/pick-runners.mjs
+  runners:
+    name: Runner wählen
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      windows: ${{ steps.pick.outputs.windows }}
+      macos: ${{ steps.pick.outputs.macos }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/ci
+      - id: pick
+        env:
+          RUNNER_TOKEN: ${{ secrets.RUNNER_TOKEN || secrets.RELEASE_TOKEN }}
+        run: node scripts/ci/pick-runners.mjs
+
   test:
     name: test (${{ matrix.os }})
+    needs: runners
     strategy:
       # Jede Plattform läuft zu Ende, damit ein Fehler auf einer die anderen nicht verdeckt
       fail-fast: false
       matrix:
         os: [ubuntu-22.04, macos-14, windows-latest]
-    runs-on: ${{ matrix.os }}
+    # macOS und Windows nach der Wahl von „runners“; die Matrix-Werte bleiben die gehosteten Namen
+    runs-on: ${{ fromJSON(matrix.os == 'windows-latest' && needs.runners.outputs.windows || matrix.os == 'macos-14' && needs.runners.outputs.macos || format('"{0}"', matrix.os)) }}
     timeout-minutes: 45
     steps:
-      # Vor dem Checkout: die Tests legen eigene Git-Projekte an, und autocrlf false hält Golden-Dateien unter Windows bei \n
+      # Vor dem Checkout: die Tests legen eigene Git-Projekte an, und autocrlf false hält Golden-Dateien unter Windows bei \n.
+      # GIT_CONFIG_GLOBAL lenkt „--global“ in eine Datei des Laufs: ein eigener Runner behält so seine Git-Konfiguration
       - name: Git für Tests einrichten
         shell: bash
         run: |
+          export GIT_CONFIG_GLOBAL="$RUNNER_TEMP/ci.gitconfig"
+          echo "GIT_CONFIG_GLOBAL=$GIT_CONFIG_GLOBAL" >> "$GITHUB_ENV"
           git config --global user.name "CI"
           git config --global user.email "ci@example.invalid"
           git config --global init.defaultBranch main
@@ -66,6 +91,8 @@ jobs:
 
   # Misst Server, Hooks und Ereignisstrom auf jedem Runner und vergleicht mit dessen Ausgangswerten.
   # Scheitert, sobald eine Messgröße mehr als 10 % schlechter ist als in contract/baseline-ci-<os>.json.
+  # Bleibt bewusst auf den Runnern von GitHub: die Ausgangswerte gelten für deren Hardware, auf einem
+  # eigenen Rechner wäre der Vergleich bedeutungslos
   bench:
     name: bench (${{ matrix.os }})
     strategy:
@@ -126,12 +153,14 @@ jobs:
   # Formatiert, lintet und testet den Cargo-Workspace (nexus-core, nexus-db, Desktop-App).
   rust:
     name: rust (${{ matrix.os }})
+    needs: runners
     strategy:
       # Jede Plattform läuft zu Ende, damit ein Fehler auf einer die anderen nicht verdeckt
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-14, windows-latest]
-    runs-on: ${{ matrix.os }}
+    # Wie im test-Job: macOS und Windows nach der Wahl von „runners“
+    runs-on: ${{ fromJSON(matrix.os == 'windows-latest' && needs.runners.outputs.windows || matrix.os == 'macos-14' && needs.runners.outputs.macos || format('"{0}"', matrix.os)) }}
     timeout-minutes: 45
     # Ohne Debug-Info: die Testbinaries des ganzen Workspace samt Tauri füllen sonst die Platte
     # des Linux-Runners, und der Linker bricht mit „Bus error“ ab
@@ -140,10 +169,12 @@ jobs:
       CARGO_PROFILE_TEST_DEBUG: '0'
     steps:
       # Wie im test-Job vor dem Checkout: die Tests legen eigene Git-Projekte an, und autocrlf
-      # false hält Vergleichsdateien wie tests/fixtures unter Windows bei \n
+      # false hält Vergleichsdateien wie tests/fixtures unter Windows bei \n; GIT_CONFIG_GLOBAL wie dort
       - name: Git für Tests einrichten
         shell: bash
         run: |
+          export GIT_CONFIG_GLOBAL="$RUNNER_TEMP/ci.gitconfig"
+          echo "GIT_CONFIG_GLOBAL=$GIT_CONFIG_GLOBAL" >> "$GITHUB_ENV"
           git config --global user.name "CI"
           git config --global user.email "ci@example.invalid"
           git config --global init.defaultBranch main

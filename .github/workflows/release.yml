@@ -66,13 +66,33 @@ jobs:
     name: CI
     if: ${{ !inputs.skip_ci }}
     uses: ./.github/workflows/ci.yml
+    # Die CI wählt ihre Runner selbst und braucht dafür RUNNER_TOKEN bzw. RELEASE_TOKEN
+    secrets: inherit
     permissions:
       contents: read
+
+  # Wie in der CI: eigene Runner für macOS und Windows, wenn einer online ist, sonst die von GitHub.
+  # Siehe scripts/ci/pick-runners.mjs
+  runners:
+    name: Runner wählen
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      windows: ${{ steps.pick.outputs.windows }}
+      macos: ${{ steps.pick.outputs.macos }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/ci
+      - id: pick
+        env:
+          RUNNER_TOKEN: ${{ secrets.RUNNER_TOKEN || secrets.RELEASE_TOKEN }}
+        run: node scripts/ci/pick-runners.mjs
 
   # Baut je Plattform die Installer, hängt sie an den Entwurf und legt ein CLI-Archiv dazu
   build:
     name: Installer (${{ matrix.target }})
-    needs: version
+    needs: [version, runners]
     # „release“ trägt die Signatur-Secrets: Apple, Azure und den privaten Schlüssel des Updaters
     environment: release
     strategy:
@@ -83,7 +103,8 @@ jobs:
           - { runner: macos-14, target: aarch64-apple-darwin, bundles: 'app,dmg' }
           - { runner: windows-latest, target: x86_64-pc-windows-msvc, bundles: 'nsis' }
           - { runner: ubuntu-22.04, target: x86_64-unknown-linux-gnu, bundles: 'appimage,deb,rpm' }
-    runs-on: ${{ matrix.runner }}
+    # macOS und Windows nach der Wahl von „runners“; matrix.runner bleibt der gehostete Name
+    runs-on: ${{ fromJSON(matrix.runner == 'windows-latest' && needs.runners.outputs.windows || matrix.runner == 'macos-14' && needs.runners.outputs.macos || format('"{0}"', matrix.runner)) }}
     timeout-minutes: 60
     # copy-server.mjs baut den Server damit wie die App mit --target: beide teilen sich
     # target/<ziel>/release, und das CLI-Archiv findet den Server dort
@@ -97,14 +118,15 @@ jobs:
           ref: ${{ inputs.dry_run && github.sha || needs.version.outputs.tag }}
       # Windows baut auf einem Dev Drive (ReFS, ohne Echtzeit-Scan von Defender) spürbar schneller als auf
       # NTFS. target/ wird per Junction dorthin umgelenkt: copy-server.mjs und cli-archive.mjs erwarten
-      # den Ordner fest unter <repo>/target, und rust-cache stellt ihn durch die Junction hindurch wieder her
+      # den Ordner fest unter <repo>/target, und rust-cache stellt ihn durch die Junction hindurch wieder her.
+      # Nur auf den Runnern von GitHub: auf einem eigenen Rechner soll kein Lauf ein virtuelles Laufwerk anlegen
       - name: Dev Drive für target/ anlegen
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && runner.environment == 'github-hosted'
         uses: samypr100/setup-dev-drive@v3
         with:
           drive-size: 40GB
       - name: target/ auf das Dev Drive umlenken
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && runner.environment == 'github-hosted'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force "$env:DEV_DRIVE\target" | Out-Null
