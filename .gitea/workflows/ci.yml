@@ -23,6 +23,13 @@ jobs:
     runs-on: ${{ matrix.runner }}
     # Ohne rust-cache baut jeder Lauf den Workspace von vorn
     timeout-minutes: 90
+    # Checkout mit \n statt \r\n: Git for Windows setzt core.autocrlf=true in seiner Systemkonfiguration, und Tests
+    # vergleichen Fixtures Zeichen für Zeichen. GIT_CONFIG_* gilt schon für actions/checkout, anders als
+    # setup_git_for_tests in common.sh, das erst danach läuft (GitHub stellt das in einem Schritt vor dem Checkout ein)
+    env:
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: 'false'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -53,6 +60,11 @@ jobs:
           - { platform: windows, runner: nexus-windows }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
+    # Checkout mit \n statt \r\n, wie im test-Job
+    env:
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: 'false'
     steps:
       - uses: actions/checkout@v4
       - name: Linux-Container einrichten

@@ -110,7 +110,8 @@ Auf den Rechnern im Host-Modus muss vorhanden sein:
 Im Linux-Container richtet `linux-setup.sh` bei jedem Lauf Systempakete, Rust und `gh` ein.
 
 Die Jobs schreiben nicht in die globale Git-Konfiguration des Rechners (`GIT_CONFIG_GLOBAL` zeigt auf eine
-Datei im Temp-Ordner des Laufs).
+Datei im Temp-Ordner des Laufs). Die Test-Jobs checken mit `core.autocrlf=false` aus (`GIT_CONFIG_*` unter `env`
+des Jobs), auch wenn der Rechner anderes einstellt.
 
 **Bauzeit:** act_runner legt je Job einen frischen Arbeitsordner an, und `rust-cache` aus den GitHub-Workflows
 fehlt hier. Rust baut also jedes Mal von vorn; deshalb sind die Zeitlimits auf 90 Minuten gesetzt.
@@ -136,6 +137,16 @@ Prüfen, während ein Job läuft (Ausgabe `true`):
 
 ```bash
 docker inspect --format '{{.HostConfig.Init}}' $(docker ps -q --filter name=GITEA-ACTIONS | head -n 1)
+```
+
+**Windows: Tests erwarten `\n` und bekommen `\r\n`, oder `SyntaxError: Invalid or unexpected token` in
+`HelpScenarios.test.mjs`.** Der Checkout hat die Zeilenenden auf CRLF umgestellt: Git for Windows setzt
+`core.autocrlf=true` in seiner Systemkonfiguration. Vitest scheitert an einer Shebang-Zeile mit `\r`. Die Test-Jobs
+setzen deshalb `core.autocrlf=false` über `GIT_CONFIG_*` unter `env`; fehlt das, die Workflows mit
+`.github/workflows/ci.yml` vergleichen. Prüfen im Arbeitsordner des Jobs (`w/crlf` heißt umgestellt):
+
+```bash
+git ls-files --eol scripts/release/tests/fixtures/repo/CHANGELOG.md
 ```
 
 **`cargo: command not found` auf dem Mac.** act_runner läuft als launchd-Dienst mit knappem PATH, ohne die

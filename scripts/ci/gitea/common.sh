@@ -34,7 +34,7 @@ require_tool() {
 
 # Git-Einstellungen der Tests landen in einer Datei des Laufs statt in der globalen Konfiguration
 # des Runner-Rechners. Die Tests legen eigene Git-Projekte an; autocrlf false hält Vergleichsdateien
-# unter Windows bei \n.
+# unter Windows bei \n. Für den Checkout kommt das zu spät: dafür setzen die Workflows GIT_CONFIG_* unter env.
 setup_git_for_tests() {
   export GIT_CONFIG_GLOBAL="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/nexus-ci.gitconfig"
   git config --global user.name "CI"

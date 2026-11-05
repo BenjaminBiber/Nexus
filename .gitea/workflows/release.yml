@@ -76,6 +76,12 @@ jobs:
           - { platform: windows, runner: nexus-windows }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
+    # Checkout mit \n statt \r\n wie in ci.yml (Begründung dort). Die Builds behalten wie bei GitHub die Einstellung
+    # des Rechners
+    env:
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: 'false'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -106,6 +112,11 @@ jobs:
           - { platform: windows, runner: nexus-windows }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
+    # Checkout mit \n statt \r\n wie in ci.yml
+    env:
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: 'false'
     steps:
       - uses: actions/checkout@v4
       - name: Linux-Container einrichten
