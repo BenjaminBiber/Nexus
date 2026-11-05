@@ -86,6 +86,18 @@ Für `nexus-linux` eignet sich der Windows-Rechner mit Docker Desktop: ein act_r
 Jobs nacheinander. Auf dem Mac würde der x64-Container emuliert und wäre sehr langsam. Ohne Runner mit
 passendem Label bleiben die Jobs in der Warteschlange.
 
+Der Runner mit dem Label `nexus-linux` braucht in seiner `config.yaml` einen Init-Prozess für die Job-Container,
+danach den Runner neu starten:
+
+```yaml
+container:
+  options: --init
+```
+
+Ohne ihn ist PID 1 im Container das `sleep`, mit dem der Runner den Container am Leben hält. Das räumt beendete
+verwaiste Prozesse nie ab, sie bleiben als Zombies stehen, und die Tests, die das Beenden von Enkelprozessen prüfen,
+scheitern (siehe „Häufige Fehler“).
+
 Auf den Rechnern im Host-Modus muss vorhanden sein:
 - **Git**, **Node** (act_runner braucht es für die Actions; die Version 26 holt `actions/setup-node`),
   **rustup** (die Toolchain aus `rust-toolchain.toml` lädt rustup selbst)
@@ -114,6 +126,16 @@ Server: das Zertifikat mit Kette ausliefern, also eigenes Zertifikat und Zwische
 
 ```bash
 echo | openssl s_client -connect <gitea-host>:443 -servername <gitea-host> -showcerts 2>/dev/null | grep -c 'BEGIN CERTIFICATE'
+```
+
+**Linux: `beendet beim Stoppen auch Enkelprozesse …` (`ServerHandle.test.mjs`) oder
+`process_group::tests::beendet_auch_das_enkelkind` schlagen fehl.** Der beendete Enkelprozess bleibt als Zombie
+stehen, weil im Job-Container kein Init-Prozess läuft; `kill(pid, 0)` meldet ihn dann weiter als vorhanden. Abhilfe:
+`container.options: --init` in der `config.yaml` des Runners (siehe Abschnitt 3), danach den Runner neu starten.
+Prüfen, während ein Job läuft (Ausgabe `true`):
+
+```bash
+docker inspect --format '{{.HostConfig.Init}}' $(docker ps -q --filter name=GITEA-ACTIONS | head -n 1)
 ```
 
 **`cargo: command not found` auf dem Mac.** act_runner läuft als launchd-Dienst mit knappem PATH, ohne die
