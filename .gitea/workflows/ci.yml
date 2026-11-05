@@ -1,0 +1,69 @@
+# CI auf Gitea: Oberfläche bauen, Typcheck, Tests, fmt, clippy auf macOS, Windows und Linux.
+# Entspricht .github/workflows/ci.yml; Gitea liest .gitea/workflows und übergeht dann .github/workflows.
+# Alle Jobs laufen auf den eigenen Runnern (act_runner) mit den Labels nexus-macos, nexus-windows und
+# nexus-linux; Einrichtung in scripts/ci/gitea/README.md. Die Logik steckt in scripts/ci/gitea/*.sh.
+# Ohne reusable Workflows (workflow_call), weil Gitea sie nicht verlässlich kann: release.yml hat
+# dieselben zwei Jobs noch einmal. Beim Ändern beide Dateien anpassen.
+# „bench“ fehlt: seine Ausgangswerte gelten nur für die gehosteten Runner von GitHub.
+name: CI
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: test (${{ matrix.platform }})
+    strategy:
+      # Jede Plattform läuft zu Ende, damit ein Fehler auf einer die anderen nicht verdeckt
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux, runner: nexus-linux }
+          - { platform: macos, runner: nexus-macos }
+          - { platform: windows, runner: nexus-windows }
+    runs-on: ${{ matrix.runner }}
+    # Ohne rust-cache baut jeder Lauf den Workspace von vorn
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+      - name: Linux-Container einrichten
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: bash scripts/ci/gitea/linux-setup.sh full
+      - name: Tests
+        if: matrix.platform != 'windows'
+        shell: bash
+        run: bash scripts/ci/gitea/ci-test.sh
+      # Unter Windows ausdrücklich das Bash von Git for Windows: „bash“ allein kann das von WSL sein
+      - name: Tests (Windows)
+        if: matrix.platform == 'windows'
+        shell: powershell
+        run: '& "$env:ProgramFiles\Git\bin\bash.exe" scripts/ci/gitea/ci-test.sh; exit $LASTEXITCODE'
+
+  rust:
+    name: rust (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux, runner: nexus-linux }
+          - { platform: macos, runner: nexus-macos }
+          - { platform: windows, runner: nexus-windows }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux-Container einrichten
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: bash scripts/ci/gitea/linux-setup.sh full
+      - name: fmt, clippy, Tests
+        if: matrix.platform != 'windows'
+        shell: bash
+        run: bash scripts/ci/gitea/ci-rust.sh
+      - name: fmt, clippy, Tests (Windows)
+        if: matrix.platform == 'windows'
+        shell: powershell
+        run: '& "$env:ProgramFiles\Git\bin\bash.exe" scripts/ci/gitea/ci-rust.sh; exit $LASTEXITCODE'

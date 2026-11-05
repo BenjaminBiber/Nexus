@@ -1,0 +1,207 @@
+# Release auf Gitea von Hand starten: Version erhöhen, bauen, bei GitHub veröffentlichen.
+# Entspricht .github/workflows/release.yml. Gebaut wird auf den eigenen Runnern (act_runner, Labels
+# nexus-macos, nexus-windows, nexus-linux); das Release landet aber bei GitHub: Versions-Commit und Tag auf
+# GitHubs main, Installer, latest.json und SHA256SUMS am GitHub-Release, denn dort sucht der Updater der App.
+# Statt tauri-action übernehmen scripts/release/upload-bundles.mjs und updater-json.mjs den Upload.
+# Einrichtung in scripts/ci/gitea/README.md; die Logik steckt in scripts/ci/gitea/*.sh.
+#
+# Immer nur ein Release zur Zeit starten: ein halber Lauf hinterlässt ein Tag ohne Artefakte.
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Art der Änderungen
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+        required: true
+      # Als Auswahl statt boolean: so ist der Wert in Gitea und in jedem Ausdruck sicher der Text 'true'/'false'
+      dry_run:
+        description: Probelauf ohne Push und ohne Release
+        type: choice
+        options: ['false', 'true']
+        default: 'false'
+      skip_ci:
+        description: CI nicht laufen lassen (sonst läuft sie parallel zu den Builds, und veröffentlicht wird erst, wenn sie grün ist)
+        type: choice
+        options: ['false', 'true']
+        default: 'false'
+
+# Ziel bei GitHub. Die Namen beginnen absichtlich nicht mit GITHUB_: GITHUB_REPOSITORY nennt in Gitea das Gitea-Repo
+env:
+  RELEASE_GITHUB_REPO: BenjaminBiber/Nexus
+  GH_REPO: BenjaminBiber/Nexus
+  GH_HOST: github.com
+
+jobs:
+  # Prüft den Branch, setzt die Version, pusht Commit und Tag nach GitHub und legt dort den Entwurf an
+  version:
+    name: Version und Entwurf
+    runs-on: nexus-linux
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+    env:
+      RELEASE_GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+    steps:
+      # Volle Historie: der Versions-Commit wird auf GitHubs main gepusht
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+      - name: GitHub-CLI einrichten
+        shell: bash
+        run: bash scripts/ci/gitea/linux-setup.sh gh
+      - name: Version setzen und Entwurf anlegen
+        id: v
+        shell: bash
+        run: bash scripts/ci/gitea/release-version.sh "${{ github.event.inputs.bump }}" "${{ github.event.inputs.dry_run }}" "${{ github.ref }}"
+
+  # Die CI parallel zu den Builds, wie die Jobs in .gitea/workflows/ci.yml; entfällt mit skip_ci.
+  # Getestet wird der Stand vor dem Versions-Commit, der nur Versionsnummern und den Changelog ändert
+  ci_test:
+    name: CI test (${{ matrix.platform }})
+    if: github.event.inputs.skip_ci != 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux, runner: nexus-linux }
+          - { platform: macos, runner: nexus-macos }
+          - { platform: windows, runner: nexus-windows }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+      - name: Linux-Container einrichten
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: bash scripts/ci/gitea/linux-setup.sh full
+      - name: Tests
+        if: matrix.platform != 'windows'
+        shell: bash
+        run: bash scripts/ci/gitea/ci-test.sh
+      - name: Tests (Windows)
+        if: matrix.platform == 'windows'
+        shell: powershell
+        run: '& "$env:ProgramFiles\Git\bin\bash.exe" scripts/ci/gitea/ci-test.sh; exit $LASTEXITCODE'
+
+  ci_rust:
+    name: CI rust (${{ matrix.platform }})
+    if: github.event.inputs.skip_ci != 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux, runner: nexus-linux }
+          - { platform: macos, runner: nexus-macos }
+          - { platform: windows, runner: nexus-windows }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux-Container einrichten
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: bash scripts/ci/gitea/linux-setup.sh full
+      - name: fmt, clippy, Tests
+        if: matrix.platform != 'windows'
+        shell: bash
+        run: bash scripts/ci/gitea/ci-rust.sh
+      - name: fmt, clippy, Tests (Windows)
+        if: matrix.platform == 'windows'
+        shell: powershell
+        run: '& "$env:ProgramFiles\Git\bin\bash.exe" scripts/ci/gitea/ci-rust.sh; exit $LASTEXITCODE'
+
+  # Baut je Plattform die Installer und hängt sie samt CLI-Archiv an den Entwurf
+  build:
+    name: Installer (${{ matrix.target }})
+    needs: version
+    strategy:
+      # Jede Plattform läuft zu Ende, damit ein Fehler auf einer die anderen nicht verdeckt
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: macos, runner: nexus-macos, target: aarch64-apple-darwin, bundles: 'app,dmg' }
+          - { platform: windows, runner: nexus-windows, target: x86_64-pc-windows-msvc, bundles: 'nsis' }
+          - { platform: linux, runner: nexus-linux, target: x86_64-unknown-linux-gnu, bundles: 'appimage,deb,rpm' }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    env:
+      RELEASE_VERSION: ${{ needs.version.outputs.version }}
+      RELEASE_TAG: ${{ needs.version.outputs.tag }}
+      RELEASE_GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+      # Updater-Schlüssel: ohne ihn bricht der Build ab (tauri.release.conf.json schaltet die Updater-Dateien ein)
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      # Signaturen; fehlende Secrets kommen leer an, release-build.sh entfernt sie dann
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+      APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      AZURE_SIGNING_ENDPOINT: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+      AZURE_SIGNING_ACCOUNT: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+      AZURE_SIGNING_PROFILE: ${{ vars.AZURE_SIGNING_PROFILE }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      # Im Container gibt es kein FUSE; linuxdeploy entpackt sich dann selbst, statt sich einzuhängen
+      APPIMAGE_EXTRACT_AND_RUN: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+      - name: Linux-Container einrichten
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: bash scripts/ci/gitea/linux-setup.sh full
+      - name: Bauen und hochladen
+        if: matrix.platform != 'windows'
+        shell: bash
+        run: bash scripts/ci/gitea/release-build.sh "${{ matrix.target }}" "${{ matrix.bundles }}" "${{ github.event.inputs.dry_run }}"
+      - name: Bauen und hochladen (Windows)
+        if: matrix.platform == 'windows'
+        shell: powershell
+        run: '& "$env:ProgramFiles\Git\bin\bash.exe" scripts/ci/gitea/release-build.sh "${{ matrix.target }}" "${{ matrix.bundles }}" "${{ github.event.inputs.dry_run }}"; exit $LASTEXITCODE'
+
+  # latest.json bauen, Dateien prüfen, Prüfsummen anhängen, veröffentlichen. Im Probelauf gibt es keinen Entwurf.
+  # „ci_*“ dürfen nur fehlen, wenn skip_ci sie abgeschaltet hat; !cancelled() ist nötig, weil ein
+  # übersprungenes needs den Job sonst mit überspringt
+  publish:
+    name: Veröffentlichen
+    needs: [version, build, ci_test, ci_rust]
+    if: >-
+      ${{ !cancelled() && github.event.inputs.dry_run != 'true'
+        && needs.version.result == 'success' && needs.build.result == 'success'
+        && ((needs.ci_test.result == 'success' && needs.ci_rust.result == 'success')
+          || (github.event.inputs.skip_ci == 'true' && needs.ci_test.result == 'skipped' && needs.ci_rust.result == 'skipped')) }}
+    runs-on: nexus-linux
+    timeout-minutes: 15
+    env:
+      RELEASE_VERSION: ${{ needs.version.outputs.version }}
+      RELEASE_TAG: ${{ needs.version.outputs.tag }}
+      RELEASE_GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+      - name: GitHub-CLI einrichten
+        shell: bash
+        run: bash scripts/ci/gitea/linux-setup.sh gh
+      - name: latest.json, prüfen, veröffentlichen
+        shell: bash
+        run: bash scripts/ci/gitea/release-publish.sh
