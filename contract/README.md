@@ -206,7 +206,7 @@ Texte durch, die selbst Platzhalter enthalten – etwa die Vorlagen der Prompts 
 ### Schritte
 
 Jeder Schritt hat einen eindeutigen `name`. `kind` wählt die Art (Standard `http`); bekannt sind `http`,
-`cli`, `httpStub`, `sseOpen`, `sseExpect`, `sseClose`, `commit` und `homeFile`, eine unbekannte Art ist ein
+`cli`, `httpStub`, `sseOpen`, `sseExpect`, `sseClose`, `commit`, `homeFile` und `wait`, eine unbekannte Art ist ein
 Fehler. Diese Felder gelten für jede Art:
 
 | Feld | Bedeutung |
@@ -383,6 +383,28 @@ die Zustände nach einem beendeten Lauf (Freigabe vor dem Merge, Merge, Abbruch)
 { "name": "Ergebnis des Workers", "kind": "homeFile", "path": "dispatch/runs/{{lauf}}.result.json",
   "content": { "code": 0, "timedOut": false, "endedAt": "2020-03-02T08:45:00.000Z", "output": "…" } }
 ```
+
+### Schritt-Art `wait`: Zeitstempel trennen
+
+Der Server schreibt Zeitstempel auf die Millisekunde genau. Auf einem schnellen Rechner landen zwei Anfragen
+direkt hintereinander in derselben Millisekunde. Ereignisse aus verschiedenen Quellen stehen dann in der
+Reihenfolge, in der der Server sie sammelt, nicht in der, in der sie geschahen. Die Zeitleiste eines Tickets
+zum Beispiel nimmt bei gleicher Zeit den Verlauf vor die Kommentare. Ein Szenario, das so eine Reihenfolge
+aufzeichnet, setzt ein kurzes `wait` zwischen die beiden Anfragen.
+
+| Feld | Bedeutung |
+| --- | --- |
+| `ms` | Wartezeit in Millisekunden, ganze Zahl von 1 bis 1000; Pflicht. |
+
+```json
+{ "name": "erster Kommentar", "method": "POST", "path": "/api/db/tickets/VTR-0001/comments",
+  "body": { "body": "Erster Blick" }, "record": false },
+{ "name": "Zeitstempel von Kommentar und Verschieben trennen", "kind": "wait", "ms": 5, "record": false },
+{ "name": "in Planung", "method": "POST", "path": "/api/db/tickets/VTR-0001/move", "body": { "status": "in_planning" },
+  "record": false }
+```
+
+Auf Ereignisse des Servers wartet `sseExpect` oder `httpStub` mit `await`, nicht `wait`.
 
 ## Ereignisstrom (`sseOpen`, `sseExpect`, `sseClose`)
 
@@ -695,6 +717,7 @@ contract/
 │  ├─ SseEvents.mjs           # Herzschläge, Zusammenfassen, until als Teilobjekt
 │  ├─ CommitStep.mjs          # Schritt-Art „commit“
 │  ├─ HomeFileStep.mjs        # Schritt-Art „homeFile“
+│  ├─ WaitStep.mjs            # Schritt-Art „wait“
 │  ├─ ServerHandle.mjs        # Server starten/beenden oder --base nutzen
 │  ├─ Normalizer.mjs          # ersetzt die wechselnden Werte
 │  ├─ GoldenStore.mjs         # lesen, schreiben, vergleichen
