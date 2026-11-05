@@ -83,7 +83,10 @@ impl SessionStore {
         }
         take_origin(session, event);
         transition(session, event, &at);
-        let session = session.clone();
+        // Die zuletzt gemeldete Session ans Ende: so ordnet `list` Sessions mit gleichem Zeitpunkt
+        // (Meldungen in derselben Millisekunde) nach der Reihenfolge der Meldungen
+        let session = self.sessions.remove(index);
+        self.sessions.push(session.clone());
         self.prune();
         session
     }
@@ -113,9 +116,12 @@ impl SessionStore {
 
     /// Ansichten, neueste Aktivität zuerst; ohne Projekt alle
     pub fn list(&self, project_id: Option<&str>) -> Vec<SessionView> {
+        // Rückwärts, weil `apply` die zuletzt gemeldete Session ans Ende hängt: bei gleichem Zeitpunkt
+        // steht sie so vorn (`sort_by` ist stabil)
         let mut views: Vec<SessionView> = self
             .sessions
             .iter()
+            .rev()
             .filter(|s| project_id.is_none_or(|id| s.project_id == id))
             .map(|s| self.view(s))
             .collect();
@@ -635,6 +641,18 @@ mod tests {
         c.advance(1000);
         c.store.apply(P, &ev_id(HookKind::SessionStart, "neu"));
         assert_eq!(ids(&c.store.list(Some(P))), ["neu", "alt"]);
+    }
+
+    /// Meldungen in derselben Millisekunde (schneller Rechner): die zuletzt gemeldete steht vorn
+    #[test]
+    fn ordnet_bei_gleicher_zeit_die_zuletzt_gemeldete_session_zuerst() {
+        let mut c = clock();
+        c.store.apply(P, &ev_id(HookKind::SessionStart, "alt"));
+        c.store.apply(P, &ev_id(HookKind::SessionStart, "neu"));
+        assert_eq!(ids(&c.store.list(Some(P))), ["neu", "alt"]);
+
+        c.store.apply(P, &ev_id(HookKind::UserPrompt, "alt"));
+        assert_eq!(ids(&c.store.list(Some(P))), ["alt", "neu"]);
     }
 
     #[test]
