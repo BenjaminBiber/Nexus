@@ -5,6 +5,7 @@ set -euo pipefail
 # shellcheck source=common.sh
 source "$(dirname "$0")/common.sh"
 
+require_tool cargo "Rust über https://rustup.rs installieren."
 setup_git_for_tests
 unoptimized_dependencies
 

@@ -5,6 +5,7 @@ set -euo pipefail
 # shellcheck source=common.sh
 source "$(dirname "$0")/common.sh"
 
+require_tool cargo "Rust über https://rustup.rs installieren."
 setup_git_for_tests
 unoptimized_dependencies
 # Ohne Debug-Info: die Testbinaries des ganzen Workspace samt Tauri füllen sonst die Platte

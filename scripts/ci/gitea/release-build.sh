@@ -13,6 +13,9 @@ dry="${3:?Aufruf: release-build.sh <rust-ziel> <bundles> <dry_run>}"
 version="${RELEASE_VERSION:?RELEASE_VERSION fehlt – kommt aus dem Job „version“.}"
 tag="${RELEASE_TAG:?RELEASE_TAG fehlt – kommt aus dem Job „version“.}"
 
+require_tool rustup "Rust über https://rustup.rs installieren."
+if [ "$dry" != 'true' ]; then require_tool gh "GitHub-CLI installieren (Mac: brew install gh)."; fi
+
 # Ein nicht angelegtes Secret kommt als leerer Text an. Tauri signiert aber schon, sobald APPLE_CERTIFICATE
 # gesetzt ist, auch leer; deshalb verschwinden leere Werte ganz
 for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_API_KEY APPLE_API_ISSUER \

@@ -102,3 +102,20 @@ Datei im Temp-Ordner des Laufs).
 
 **Bauzeit:** act_runner legt je Job einen frischen Arbeitsordner an, und `rust-cache` aus den GitHub-Workflows
 fehlt hier. Rust baut also jedes Mal von vorn; deshalb sind die Zeitlimits auf 90 Minuten gesetzt.
+
+## Häufige Fehler
+
+**Checkout im Linux-Container: `server certificate verification failed` oder `unable to get local issuer
+certificate`.** Der Gitea-Server schickt nur sein eigenes Zertifikat ohne das Zwischenzertifikat der
+Zertifizierungsstelle. Browser, Windows und macOS laden es selbst nach, `git` und `curl` unter Linux nicht. Abhilfe am
+Server: das Zertifikat mit Kette ausliefern, also eigenes Zertifikat und Zwischenzertifikat in einer Datei
+(„fullchain“). Bei Nginx Proxy Manager gehört das Zwischenzertifikat beim eigenen Zertifikat in das Feld
+„Intermediate Certificate“. Prüfen, ob der Server jetzt beide schickt (Ausgabe `2`):
+
+```bash
+echo | openssl s_client -connect <gitea-host>:443 -servername <gitea-host> -showcerts 2>/dev/null | grep -c 'BEGIN CERTIFICATE'
+```
+
+**`cargo: command not found` auf dem Mac.** act_runner läuft als launchd-Dienst mit knappem PATH, ohne die
+Ergänzungen aus `.zshrc`. `common.sh` nimmt deshalb `~/.cargo/bin`, `/opt/homebrew/bin` und `/usr/local/bin` dazu.
+Liegt Rust woanders, den PATH des Dienstes ergänzen (im plist unter `EnvironmentVariables`).

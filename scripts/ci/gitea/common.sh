@@ -6,6 +6,32 @@ is_windows() {
   case "$(uname -s)" in MINGW* | MSYS* | CYGWIN*) return 0 ;; *) return 1 ;; esac
 }
 
+# Ein Runner als Dienst (launchd auf dem Mac, systemd) startet mit knappem PATH, ohne die Ergänzungen der
+# Login-Shell: cargo aus rustup und gh aus Homebrew fehlen dann. Die üblichen Orte kommen vorn dazu, soweit
+# es sie gibt. Unter Windows nicht: dort stimmt der PATH, und ein CARGO_HOME wie C:\… zerlegte ihn am Doppelpunkt
+add_tool_paths() {
+  if is_windows; then return 0; fi
+  local dir
+  for dir in /usr/local/bin /opt/homebrew/bin "${CARGO_HOME:-$HOME/.cargo}/bin"; do
+    if [ -d "$dir" ]; then
+      case ":$PATH:" in
+        *":$dir:"*) ;;
+        *) PATH="$dir:$PATH" ;;
+      esac
+    fi
+  done
+  export PATH
+}
+add_tool_paths
+
+# Bricht mit Hinweis ab, wenn ein Programm auf dem Runner-Rechner fehlt
+require_tool() {
+  if ! command -v "$1" > /dev/null; then
+    echo "$1 fehlt auf dem Runner-Rechner (PATH: $PATH). $2" >&2
+    exit 1
+  fi
+}
+
 # Git-Einstellungen der Tests landen in einer Datei des Laufs statt in der globalen Konfiguration
 # des Runner-Rechners. Die Tests legen eigene Git-Projekte an; autocrlf false hält Vergleichsdateien
 # unter Windows bei \n.
