@@ -301,7 +301,9 @@ impl TempProject {
     }
 
     /// Startet das Binary; `HARNESS_SESSION` und `HARNESS_TICKET` werden nicht geerbt, sonst
-    /// gilt der Testlauf als innerhalb einer Session bzw. einem Ticket zugeordnet
+    /// gilt der Testlauf als innerhalb einer Session bzw. einem Ticket zugeordnet.
+    /// `CLAUDE_CONFIG_DIR` zeigt in den Temp-Ordner: sonst gibt `init` den Import in der
+    /// `.claude.json` des Benutzers frei, und parallele Tests überschreiben einander die Datei.
     fn spawn(&self, cwd: &Path, home: &Path, args: &[&str], input: Option<&str>) -> Lauf {
         self.spawn_with(cwd, home, args, input, &[])
     }
@@ -320,6 +322,7 @@ impl TempProject {
             .args(args)
             .current_dir(cwd)
             .env("NEXUS_HOME", home)
+            .env("CLAUDE_CONFIG_DIR", self.base().join("claude"))
             .env_remove("HARNESS_HOME")
             .env_remove("NEXUS_SESSION")
             .env_remove("NEXUS_TICKET")
