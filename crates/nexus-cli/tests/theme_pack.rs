@@ -137,7 +137,10 @@ fn manifest_und_css_der_vorlage_sind_pack_und_installierbar() {
     let tmp = TempDir::new().unwrap();
     let dir = tmp.path().join("vorlage");
     for name in ["manifest.json", "theme.css"] {
-        datei(&dir.join(name), &std::fs::read_to_string(vorlage().join(name)).unwrap());
+        datei(
+            &dir.join(name),
+            &std::fs::read_to_string(vorlage().join(name)).unwrap(),
+        );
     }
     let paket = nexus_core::themes::pack_theme(&dir).unwrap();
     assert_eq!(paket.manifest.id, "my-theme");
