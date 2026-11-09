@@ -9,5 +9,6 @@ pub use manifest::{
     ThemePermissions,
 };
 pub use package::{
-    install_theme, install_theme_file, list_themes, remove_theme, InstalledTheme, ThemePackageError,
+    install_theme, install_theme_file, list_themes, pack_theme, remove_theme, InstalledTheme,
+    PackedTheme, ThemePackageError,
 };

@@ -67,8 +67,26 @@ pub enum ThemePackageError {
     NotInstalled { id: String },
     #[error("Ungültige Theme-ID: {id}")]
     InvalidId { id: String },
+    #[error("manifest.json ist ungültig: {0}")]
+    ManifestFile(ManifestErrors),
+    #[error("Versteckte Dateien und Ordner sind nicht erlaubt: {path}")]
+    HiddenFile { path: String },
+    #[error("Symbolische Links sind nicht erlaubt: {path}")]
+    Symlink { path: String },
+    #[error("Ordner nicht gefunden: {path}")]
+    DirNotFound { path: String },
     #[error("Dateifehler: {0}")]
     Io(#[from] std::io::Error),
+}
+
+/// Ein aus einem Ordner gebautes Paket
+#[derive(Debug, Clone)]
+pub struct PackedTheme {
+    pub manifest: ThemeManifest,
+    /// Inhalt der `.nexus`-Datei
+    pub bytes: Vec<u8>,
+    /// Zahl der Dateien im Paket
+    pub files: usize,
 }
 
 /// Ein installiertes Theme mit seinem Ordner
@@ -171,6 +189,111 @@ fn install_with_limits(
     }
     drop(old);
     Ok(manifest)
+}
+
+/// Baut aus einem Theme-Ordner ein `.nexus`-Paket mit denselben Prüfungen wie bei der
+/// Installation. Versteckte Dateien und Ordner sowie symbolische Links werden abgelehnt,
+/// nicht übersprungen. Reihenfolge und Zeitstempel sind fest, damit derselbe Ordner
+/// byte-gleiche Pakete ergibt.
+pub fn pack_theme(dir: &Path) -> Result<PackedTheme, ThemePackageError> {
+    pack_with_limits(dir, DEFAULT_LIMITS)
+}
+
+fn pack_with_limits(dir: &Path, limits: Limits) -> Result<PackedTheme, ThemePackageError> {
+    if !dir.is_dir() {
+        return Err(ThemePackageError::DirNotFound {
+            path: dir.display().to_string(),
+        });
+    }
+    let mut files = Vec::new();
+    collect_files(dir, "", limits, &mut files)?;
+
+    let file = |name: &str| {
+        files
+            .iter()
+            .find(|(path, _)| path == name)
+            .map(|(_, data)| data)
+            .ok_or_else(|| ThemePackageError::MissingFile {
+                name: name.to_string(),
+            })
+    };
+    let manifest = parse_manifest(&String::from_utf8_lossy(file(MANIFEST_FILE)?))
+        .map_err(ThemePackageError::ManifestFile)?;
+    let css = std::str::from_utf8(file(THEME_CSS_FILE)?).map_err(|_| {
+        ThemePackageError::ForbiddenCss {
+            reason: "kein gültiges UTF-8".to_string(),
+        }
+    })?;
+    check_theme_css(css)?;
+
+    let mut writer = zip::ZipWriter::new(Cursor::new(Vec::new()));
+    let options = zip::write::SimpleFileOptions::default()
+        .compression_method(zip::CompressionMethod::Deflated)
+        .last_modified_time(zip::DateTime::default())
+        .unix_permissions(0o644);
+    let zip_error = |error: zip::result::ZipError| ThemePackageError::NotZip(error.to_string());
+    for (path, data) in &files {
+        writer.start_file(path.as_str(), options).map_err(zip_error)?;
+        std::io::Write::write_all(&mut writer, data)?;
+    }
+    let bytes = writer.finish().map_err(zip_error)?.into_inner();
+    // Selbstprüfung: das Paket muss die Prüfung der Installation bestehen
+    read_package(&bytes, limits)?;
+    Ok(PackedTheme {
+        manifest,
+        bytes,
+        files: files.len(),
+    })
+}
+
+/// Sammelt die Dateien eines Ordners rekursiv und sortiert, mit relativem Pfad (`/`-getrennt)
+fn collect_files(
+    dir: &Path,
+    prefix: &str,
+    limits: Limits,
+    files: &mut Vec<(String, Vec<u8>)>,
+) -> Result<(), ThemePackageError> {
+    let mut entries = fs::read_dir(dir)?.collect::<Result<Vec<_>, _>>()?;
+    entries.sort_by_key(|entry| entry.file_name());
+    for entry in entries {
+        let name = entry.file_name().to_string_lossy().into_owned();
+        let path = format!("{prefix}{name}");
+        let file_type = entry.file_type()?;
+        if file_type.is_symlink() {
+            return Err(ThemePackageError::Symlink { path });
+        }
+        if name.starts_with('.') {
+            return Err(ThemePackageError::HiddenFile { path });
+        }
+        check_entry_path(&path)?;
+        if file_type.is_dir() {
+            collect_files(&entry.path(), &format!("{path}/"), limits, files)?;
+            continue;
+        }
+        if !has_allowed_extension(Path::new(&path)) {
+            return Err(ThemePackageError::ForbiddenFileType { path });
+        }
+        if files.len() >= limits.entries {
+            return Err(ThemePackageError::TooManyEntries {
+                max: limits.entries,
+            });
+        }
+        if entry.metadata()?.len() > limits.file {
+            return Err(ThemePackageError::FileTooLarge {
+                path,
+                max: limits.file,
+            });
+        }
+        let data = fs::read(entry.path())?;
+        let total: u64 = files.iter().map(|(_, d)| d.len() as u64).sum::<u64>() + data.len() as u64;
+        if total > limits.package {
+            return Err(ThemePackageError::TooLarge {
+                max: limits.package,
+            });
+        }
+        files.push((path, data));
+    }
+    Ok(())
 }
 
 /// Liest und prüft alle Einträge eines Pakets; Ergebnis sind relative Pfade mit Inhalt
@@ -592,6 +715,150 @@ mod tests {
         assert!(dir.join("main.js").is_file());
         assert_eq!(list_themes(&home).unwrap()[0].manifest.version, "1.0.0");
         assert_eq!(inhalt(&home), vec!["nacht".to_string()]);
+    }
+
+    /// Legt einen Theme-Ordner mit den angegebenen Dateien an
+    fn ordner(dateien: &[(&str, &[u8])]) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        for (name, inhalt) in dateien {
+            let ziel = dir.path().join(name);
+            fs::create_dir_all(ziel.parent().unwrap()).unwrap();
+            fs::write(ziel, inhalt).unwrap();
+        }
+        dir
+    }
+
+    fn gueltiger_ordner() -> tempfile::TempDir {
+        let manifest = manifest("nacht", "1.2.3");
+        ordner(&[
+            ("manifest.json", &manifest),
+            ("theme.css", CSS),
+            ("main.js", b"export default {};"),
+            ("assets/img/a.png", b"png"),
+        ])
+    }
+
+    #[test]
+    fn gepackter_ordner_wird_installiert() {
+        let dir = gueltiger_ordner();
+        let paket = pack_theme(dir.path()).unwrap();
+        assert_eq!(paket.manifest.id, "nacht");
+        assert_eq!(paket.files, 4);
+        let (_tmp, home) = home();
+        assert_eq!(install_theme(&home, &paket.bytes).unwrap().id, "nacht");
+        let ziel = home.themes_dir().join("nacht");
+        for datei in ["manifest.json", "theme.css", "main.js", "assets/img/a.png"] {
+            assert!(ziel.join(datei).is_file(), "{datei}");
+        }
+    }
+
+    #[test]
+    fn zweimal_packen_ist_byte_gleich() {
+        let dir = gueltiger_ordner();
+        assert_eq!(
+            pack_theme(dir.path()).unwrap().bytes,
+            pack_theme(dir.path()).unwrap().bytes
+        );
+    }
+
+    #[test]
+    fn packen_meldet_datei_und_grund() {
+        let falsch = manifest("Nacht", "1.0.0");
+        let manifest = manifest("nacht", "1.0.0");
+        let faelle: Vec<(Vec<(&str, &[u8])>, &str)> = vec![
+            (
+                vec![("manifest.json", &falsch), ("theme.css", CSS)],
+                "manifest.json ist ungültig: id",
+            ),
+            (
+                vec![
+                    ("manifest.json", &manifest),
+                    ("theme.css", CSS),
+                    ("notes.exe", b"MZ"),
+                ],
+                "Dateityp nicht erlaubt: notes.exe",
+            ),
+            (
+                vec![
+                    ("manifest.json", &manifest),
+                    ("theme.css", CSS),
+                    (".git/config", b"x"),
+                ],
+                "nicht erlaubt: .git",
+            ),
+            (
+                vec![
+                    ("manifest.json", &manifest),
+                    ("theme.css", CSS),
+                    ("assets/.DS_Store", b"x"),
+                ],
+                "nicht erlaubt: assets/.DS_Store",
+            ),
+            (vec![("manifest.json", &manifest)], "fehlt theme.css"),
+            (vec![("theme.css", CSS)], "fehlt manifest.json"),
+            (
+                vec![("manifest.json", &manifest), ("theme.css", b"@import 'x.css';")],
+                "theme.css ist nicht erlaubt: @import",
+            ),
+            (
+                vec![
+                    ("manifest.json", &manifest),
+                    ("theme.css", b"a { background: url(https://x/y.png) }"),
+                ],
+                "theme.css ist nicht erlaubt: externe",
+            ),
+        ];
+        for (dateien, erwartet) in faelle {
+            let dir = ordner(&dateien);
+            let meldung = pack_theme(dir.path()).unwrap_err().to_string();
+            assert!(meldung.contains(erwartet), "{meldung} / {erwartet}");
+        }
+    }
+
+    #[test]
+    fn packen_prueft_limits() {
+        let dir = gueltiger_ordner();
+        let mit = |package, file, entries| {
+            pack_with_limits(
+                dir.path(),
+                Limits {
+                    package,
+                    file,
+                    entries,
+                },
+            )
+            .unwrap_err()
+        };
+        assert!(matches!(
+            mit(10, MAX_FILE_BYTES, MAX_ENTRIES),
+            ThemePackageError::TooLarge { .. }
+        ));
+        match mit(MAX_PACKAGE_BYTES, 20, MAX_ENTRIES) {
+            ThemePackageError::FileTooLarge { path, .. } => assert_eq!(path, "manifest.json"),
+            andere => panic!("unerwartet: {andere:?}"),
+        }
+        assert!(matches!(
+            mit(MAX_PACKAGE_BYTES, MAX_FILE_BYTES, 2),
+            ThemePackageError::TooManyEntries { .. }
+        ));
+    }
+
+    #[test]
+    fn fehlender_ordner_wird_gemeldet() {
+        let dir = tempfile::tempdir().unwrap();
+        let fehler = pack_theme(&dir.path().join("gibts-nicht")).unwrap_err();
+        assert!(matches!(fehler, ThemePackageError::DirNotFound { .. }));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn symlink_wird_abgelehnt() {
+        let dir = gueltiger_ordner();
+        std::os::unix::fs::symlink("/etc/passwd", dir.path().join("link.css")).unwrap();
+        assert!(matches!(
+            pack_theme(dir.path()).unwrap_err(),
+            ThemePackageError::Symlink { .. }
+        ));
     }
 
     #[test]
