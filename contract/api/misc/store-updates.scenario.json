@@ -1,0 +1,22 @@
+{
+  "title": "Theme-Updates aus dem Store: deterministische Fälle",
+  "steps": [
+    {
+      "name": "Updates ohne Repos",
+      "method": "GET",
+      "path": "/api/themes/store/updates"
+    },
+    {
+      "name": "Update für nicht installiertes Theme",
+      "method": "POST",
+      "path": "/api/themes/store/update",
+      "body": { "repoId": "unbekannt", "id": "ozean" }
+    },
+    {
+      "name": "fehlende Felder",
+      "method": "POST",
+      "path": "/api/themes/store/update",
+      "body": { "repoId": "unbekannt" }
+    }
+  ]
+}

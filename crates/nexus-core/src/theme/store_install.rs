@@ -105,7 +105,8 @@ fn check_signature(bytes: &[u8], key: &str, signature: &str) -> Result<(), Harne
         .map_err(|_| invalid("sie passt nicht zum Schlüssel des Repos."))
 }
 
-fn read_manifest(bytes: &[u8]) -> Option<String> {
+/// Liest `manifest.json` aus dem Paket; kein ZIP oder kein Manifest → `None`
+pub(crate) fn read_manifest(bytes: &[u8]) -> Option<String> {
     let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).ok()?;
     let file = archive.by_name("manifest.json").ok()?;
     let mut text = String::new();

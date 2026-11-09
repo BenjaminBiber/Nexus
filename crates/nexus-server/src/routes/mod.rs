@@ -29,6 +29,7 @@ pub mod static_files;
 pub mod store_index;
 pub mod store_install;
 pub mod store_repos;
+pub mod store_updates;
 pub mod telegram;
 pub mod theme_fetch;
 pub mod theme_packages;
@@ -80,6 +81,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(store_index::routes())
         .merge(store_install::routes())
         .merge(store_repos::routes())
+        .merge(store_updates::routes())
         .merge(usage::routes())
         .merge(accounts::routes())
         .merge(notifications::routes())
