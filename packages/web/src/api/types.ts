@@ -292,6 +292,13 @@ export interface SnippetDto {
   updatedAt: string;
 }
 
+/** Vom Nutzer eingetragenes Store-Repo (GET/POST /api/themes/store/repos) */
+export interface StoreRepoDto {
+  id: string;
+  url: string;
+  addedAt: string;
+}
+
 /** Setup-Dialoge, die nicht mehr kommen sollen („Nicht mehr fragen“) */
 export interface SetupPromptsDto {
   pluginDismissed: boolean;
