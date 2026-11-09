@@ -7,7 +7,7 @@ import type {
   BoardConfigDto, BoardConfigInput, BoardConfigTestDto, FavoriteDto, DocFileContentDto, DocsListDto, SessionDto, SettingsDto, UserSettingsDto, TestNotificationDto,
   SearchHitDto, QuestionDraftInputDto, QuestionDraftResultDto, DocQuestionResultDto, TicketDraftDto, TicketDraftInput, TicketDraftResultDto, DocTicketInput, DocTicketRefDto, DocTicketResultDto, DocCommentDto, NewDocCommentInput, DocCommentPatch, DocWriteResultDto, WriteDocSectionInput,
   ReviseDocInput, ReviseDocResultDto, ProjectDto,
-  WorkflowDto, CustomizationsDto, PluginSetupDto, PluginInstallDto, BoardMigrationDto, BoardMigrationResultDto, SnippetDto,
+  WorkflowDto, CustomizationsDto, PluginSetupDto, PluginInstallDto, BoardMigrationDto, BoardMigrationResultDto, SnippetDto, StoreRepoDto,
 } from './types.js';
 import type {
   DbActiveDto, DbBoardDto, DbBoardPatch, DbBoardViewDto, DbBranchListDto, DbCreatedBranchDto, DbDecisionInput, DbGraphDto, DbGraphScope, DbSpecProgressDto, DbImportResult, DbMoveInput, DbNewNoteInput, DbNewQuestionInput,
@@ -311,6 +311,21 @@ export class ApiClient {
   // Ersetzt die eigenen Einstellungen eines Themes
   saveThemeSettings(id: string, values: Record<string, boolean | string>): Promise<Record<string, boolean | string>> {
     return this.request('PUT', `/api/themes/${encodeURIComponent(id)}/settings`, values);
+  }
+
+  // Vom Nutzer eingetragene Store-Repos
+  listStoreRepos(): Promise<StoreRepoDto[]> {
+    return this.request('GET', '/api/themes/store/repos');
+  }
+
+  // Trägt ein Store-Repo ein; der Server prüft die URL (400) und Dubletten (409)
+  addStoreRepo(url: string): Promise<StoreRepoDto> {
+    return this.request('POST', '/api/themes/store/repos', { url });
+  }
+
+  // Entfernt ein Store-Repo
+  async removeStoreRepo(id: string): Promise<void> {
+    await this.request('DELETE', `/api/themes/store/repos/${encodeURIComponent(id)}`, {});
   }
 
   // Einstellung des Telegram-Bots; Geheimnisse kommen nur als Maske zurück

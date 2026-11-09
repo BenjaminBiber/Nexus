@@ -7,6 +7,7 @@ import { ThemeSettingsSection } from '../theme/ThemeSettingsSection.js';
 import { SettingsPanel, useSaveStatus } from './settings/SettingsPanel.js';
 import { SettingRow, SettingsSection } from './settings/SettingRow.js';
 import { SnippetsSection } from './settings/SnippetsSection.js';
+import { StoreRepos } from './settings/StoreRepos.js';
 import { ThemeManager } from './settings/ThemeManager.js';
 
 const THEMES: Array<{ mode: ThemeMode; label: string; hint: string; icon: string }> = [
@@ -81,6 +82,7 @@ export function AppearancePanel() {
       </SettingsSection>
       <ThemeManager installed={installed.state} onChanged={installed.reload} onRemoved={removed} />
       <ThemeSettingsSection run={run} />
+      <StoreRepos />
       <SnippetsSection />
       <SettingsSection title="Board">
         <SettingRow label="Kompakte Ticket-Kacheln" hint="Tags eingeklappt, Agent nur als Claude-Logo.">
