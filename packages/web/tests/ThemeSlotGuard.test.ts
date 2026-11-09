@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const SRC = join(import.meta.dirname, '..', 'src');
 // Hier darf ein Theme sich selbst beim Namen nennen
-const ALLOWED = [join('components', 'win95') + sep, 'themes' + sep, 'theme' + sep];
+const ALLOWED = ['themes' + sep, 'theme' + sep];
 const SWITCH = /theme\s*[!=]==\s*'(?!light'|dark')[a-z0-9-]+'/;
 
 // Alle .ts/.tsx-Dateien unter einem Ordner

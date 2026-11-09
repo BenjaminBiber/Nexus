@@ -1,0 +1,11 @@
+{
+  "id": "win95",
+  "name": "Windows 95",
+  "version": "1.0.0",
+  "author": "Nexus",
+  "sdkVersion": "^1.1",
+  "colorScheme": "light",
+  "startColor": "#c0c0c0",
+  "slots": ["Shell", "NavIcon", "Progress"],
+  "permissions": { "network": [] }
+}

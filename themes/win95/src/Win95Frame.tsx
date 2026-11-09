@@ -33,7 +33,7 @@ function useClock(): Date {
   return now;
 }
 
-// Windows-Flagge aus vier gewellten Feldern (Farben aus win95.css)
+// Windows-Flagge aus vier gewellten Feldern (Farben aus theme.css)
 function WindowsFlag() {
   return (
     <svg className="w95-flag" viewBox="0 0 16 16" aria-hidden="true">

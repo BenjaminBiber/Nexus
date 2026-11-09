@@ -23,6 +23,12 @@
   installiert ist. Die Fehlermeldung zu `theme` nennt `signal` nicht mehr unter den eingebauten.
 - Das Theme „Pastell“ ist ebenfalls ein mitgeliefertes Paket (`themes/pastel/`) statt im Kern;
   eine gespeicherte Auswahl `pastel` bleibt gültig, solange das Paket installiert ist.
+- „Windows 95“ ist ein mitgeliefertes Theme-Paket mit Code (`themes/win95/`: `main.js` aus
+  `src/` per Vite gebaut, dazu `theme.css`); im Kern stecken nur noch Hell und Dunkel. Eine
+  gespeicherte Auswahl `win95` bleibt gültig, solange das Paket installiert ist. Die Fehlermeldung
+  zu `theme` nennt `win95` nicht mehr unter den eingebauten.
+- `npm run build:themes` baut Themes mit `package.json` und Skript `build` zuerst (Vite) und
+  packt dann deren `dist/` statt des Quellordners.
 
 ## 0.0.2 – 2026-11-06
 

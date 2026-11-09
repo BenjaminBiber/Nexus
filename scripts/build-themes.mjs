@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Packt jeden Theme-Ordner `themes/<id>/` mit `nexus theme pack` nach `dist/themes/<id>.nexus`.
+// Code-Themes mit package.json und Skript `build` werden vorher gebaut; gepackt wird dann ihr `dist/`.
 // Die Pakete liefern Server und Desktop-App vorinstalliert mit (siehe themes/README.md).
 //
 // Optionen: --src <ordner> (Standard themes), --out <ordner> (Standard dist/themes),
@@ -28,6 +29,30 @@ function nexusCommand(args) {
   }
   if (process.env.NEXUS_BIN) return { command: process.env.NEXUS_BIN, args: [] };
   return { command: 'cargo', args: ['run', '-q', '-p', 'nexus-cli', '--bin', 'nexus', '--'] };
+}
+
+/**
+ * Code-Themes (package.json mit Skript `build`, z. B. themes/win95) erst bauen; gepackt wird dann `dist/`.
+ * Liefert den zu packenden Ordner oder null, wenn der Build fehlschlägt.
+ */
+function buildCodeTheme(dir) {
+  const pkgPath = join(dir, 'package.json');
+  if (!existsSync(pkgPath)) return dir;
+  let scripts;
+  try {
+    scripts = JSON.parse(readFileSync(pkgPath, 'utf8')).scripts;
+  } catch {
+    return null;
+  }
+  if (!scripts?.build) return dir;
+  // npm findet vite & Co. über die node_modules/.bin der übergeordneten Ordner (Repo-Wurzel)
+  // Fester Befehl ohne Argumente; die Shell braucht es unter Windows für npm.cmd
+  const result = spawnSync('npm run build', { cwd: dir, encoding: 'utf8', shell: true });
+  if (result.status !== 0) {
+    console.error(result.error?.message ?? `${result.stdout ?? ''}${result.stderr ?? ''}`.trim());
+    return null;
+  }
+  return join(dir, 'dist');
 }
 
 function main(args) {
@@ -66,7 +91,12 @@ function main(args) {
       return 1;
     }
     const target = join(out, `${id}.nexus`);
-    const result = spawnSync(nexus.command, [...nexus.args, 'theme', 'pack', dir, '--out', target], {
+    const packDir = buildCodeTheme(dir);
+    if (packDir === null) {
+      console.error(`Theme ${id} konnte nicht gebaut werden (npm run build in ${dir}).`);
+      return 1;
+    }
+    const result = spawnSync(nexus.command, [...nexus.args, 'theme', 'pack', packDir, '--out', target], {
       cwd: root,
       encoding: 'utf8',
     });

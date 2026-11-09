@@ -147,7 +147,7 @@
     "name": "nur ein Feld ändern",
     "request": {
       "body": {
-        "theme": "win95"
+        "theme": "light"
       },
       "method": "PUT",
       "path": "/api/user-settings"
@@ -169,7 +169,7 @@
           "migrationDismissed": [],
           "pluginDismissed": false
         },
-        "theme": "win95"
+        "theme": "light"
       },
       "status": 200
     }
@@ -198,7 +198,7 @@
           "migrationDismissed": [],
           "pluginDismissed": false
         },
-        "theme": "win95"
+        "theme": "light"
       },
       "status": 200
     }
@@ -229,7 +229,7 @@
           "migrationDismissed": [],
           "pluginDismissed": false
         },
-        "theme": "win95"
+        "theme": "light"
       },
       "status": 200
     }
@@ -265,7 +265,7 @@
       "contentType": "application/json",
       "json": {
         "code": "settings-invalid",
-        "message": "theme muss ein eingebautes (system, light, dark, win95) oder installiertes Theme sein."
+        "message": "theme muss ein eingebautes (system, light, dark) oder installiertes Theme sein."
       },
       "status": 422
     }
@@ -455,7 +455,7 @@
           "migrationDismissed": [],
           "pluginDismissed": false
         },
-        "theme": "win95"
+        "theme": "light"
       },
       "status": 200
     }

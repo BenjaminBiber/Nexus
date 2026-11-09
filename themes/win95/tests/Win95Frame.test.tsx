@@ -1,29 +1,40 @@
 // @vitest-environment jsdom
+// Rahmen des Pakets in der ganzen App: installiert (listThemes) und angemeldet wie nach dem Laden der main.js
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { App } from '../src/App.js';
-import { ApiProvider } from '../src/api/ApiContext.js';
-import { WIN95_MAXIMIZED_KEY } from '../src/components/win95/Win95Frame.js';
-import { fakeApi } from './helpers/fakeApi.js';
+import { App } from '../../../packages/web/src/App.js';
+import { ApiProvider } from '../../../packages/web/src/api/ApiContext.js';
+import { registerTheme, unregisterTheme } from '../../../packages/web/src/theme/registry.js';
+import { THEME_LINK_ID } from '../../../packages/web/src/theme/theme.js';
+import { fakeApi } from '../../../packages/web/tests/helpers/fakeApi.js';
+import theme from '../src/main.js';
+import { WIN95_MAXIMIZED_KEY } from '../src/Win95Frame.js';
 
 const SETTINGS = { notifications: 'off', heroImages: false, claudeUsage: false, compactCards: false, hideNotNeeded: false, hideInPlanning: false };
+const manifest = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'manifest.json'), 'utf8'));
 
 beforeEach(() => {
+  registerTheme(theme);
   document.documentElement.dataset.theme = 'win95';
   window.localStorage.removeItem(WIN95_MAXIMIZED_KEY);
 });
 
 afterEach(() => {
   cleanup();
+  unregisterTheme('win95');
   delete document.documentElement.dataset.theme;
+  delete document.documentElement.dataset.themeMode;
+  document.getElementById(THEME_LINK_ID)?.remove();
 });
 
 // Rendert die ganze App im Schema „Windows 95“
 function openApp(path: string) {
   return render(
-    <ApiProvider api={fakeApi({ getUserSettings: async () => ({ ...SETTINGS, theme: 'win95' }) })}>
+    <ApiProvider api={fakeApi({ getUserSettings: async () => ({ ...SETTINGS, theme: 'win95' }), listThemes: async () => [manifest] } as never)}>
       <MemoryRouter initialEntries={[path]}>
         <App />
       </MemoryRouter>

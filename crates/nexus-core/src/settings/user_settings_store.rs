@@ -256,8 +256,8 @@ mod tests {
     }
 
     #[test]
-    fn signal_und_pastel_gelten_nur_als_installiertes_paket() {
-        for id in ["signal", "pastel"] {
+    fn signal_pastel_und_win95_gelten_nur_als_installiertes_paket() {
+        for id in ["signal", "pastel", "win95"] {
             let (dir, store) = store();
             write_raw(&dir, &format!(r#"{{"theme":"{id}"}}"#));
             assert_eq!(store.read().theme, ThemeMode::system(), "{id}");

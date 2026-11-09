@@ -24,7 +24,9 @@ npm run build:themes
 ```
 
 packt jeden Ordner mit `nexus theme pack` nach `dist/themes/<id>.nexus` und bricht bei einem
-ungültigen Theme mit Exit-Code 1 ab. `prepare-binaries` der Desktop-App ruft das Skript auf; die
+ungültigen Theme mit Exit-Code 1 ab. Code-Themes (`package.json` mit Skript `build`, z. B.
+`win95`, `minecraft`) baut das Skript vorher mit `npm run build` und packt dann ihr `dist/`
+(`main.js`, `manifest.json`, `theme.css`) statt des Quellordners. `prepare-binaries` der Desktop-App ruft das Skript auf; die
 App bündelt `dist/themes/` als Ressource `themes/`. `nexus serve` nimmt in der Entwicklung
 `dist/themes/` (oder `--bundled-themes-dir` / `NEXUS_BUNDLED_THEMES_DIR`).
 

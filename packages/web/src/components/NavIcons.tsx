@@ -3,8 +3,6 @@ import { SlotBoundary } from '../theme/SlotBoundary.js';
 import type { NavIconName } from '@nexus/theme-sdk';
 import { useDisplayedTheme } from '../theme/useDisplayedTheme.js';
 import { useSlot } from '../theme/useSlot.js';
-// Eingebaute Themes registrieren, damit ihre Symbole auch ohne App.tsx greifen
-import '../themes/builtin.js';
 
 // Linien-Symbol im 24er-Raster, Farbe aus currentColor
 function LineIcon({ children }: { children: ReactNode }) {

@@ -6,6 +6,7 @@ import { ApiProvider } from '../src/api/ApiContext.js';
 import type { UserSettingsDto } from '../src/api/types.js';
 import { AppearancePanel } from '../src/components/AppearancePanel.js';
 import { MermaidBlock } from '../src/markdown/MermaidBlock.js';
+import { registerTheme, unregisterTheme } from '../src/theme/registry.js';
 import { ThemeSync } from '../src/theme/ThemeSync.js';
 import { THEME_CACHE_KEY, THEME_CSS_CACHE_KEY, THEME_LINK_ID, THEME_START_COLOR_KEY, applyTheme, currentTheme, displayedTheme, normalizeThemeId, resolveTheme } from '../src/theme/theme.js';
 import { fakeApi } from './helpers/fakeApi.js';
@@ -95,14 +96,27 @@ describe('Theme', () => {
     expect(resolveTheme('system', false)).toBe('light');
     expect(resolveTheme('light', true)).toBe('light');
     expect(resolveTheme('dark', false)).toBe('dark');
-    expect(resolveTheme('win95', true)).toBe('win95');
+    expect(resolveTheme('retro', true)).toBe('retro');
   });
 
-  it('zeigt „win95“ als eigenes Schema, für Mermaid aber hell', () => {
-    applyTheme('win95');
-    expect(document.documentElement.dataset.theme).toBe('win95');
-    expect(displayedTheme()).toBe('win95');
+  it('zeigt ein installiertes Code-Theme als eigenes Schema, für Mermaid aber hell', () => {
+    applyTheme('retro', [{ id: 'retro', startColor: '#c0c0c0' }]);
+    expect(document.documentElement.dataset.theme).toBe('retro');
+    expect(displayedTheme()).toBe('retro');
     expect(currentTheme()).toBe('light');
+  });
+
+  it('behält die theme.css eines angemeldeten Code-Themes, wenn die Liste der installierten fehlt', () => {
+    registerTheme({ id: 'retro', slots: {} });
+    try {
+      applyTheme('retro', [{ id: 'retro', startColor: '#c0c0c0' }]);
+      applyTheme('retro');
+      expect(themeLinks()[0]?.getAttribute('href')).toBe('/themes/retro/theme.css');
+      expect(window.localStorage.getItem(THEME_CSS_CACHE_KEY)).toBe('/themes/retro/theme.css');
+      expect(window.localStorage.getItem(THEME_START_COLOR_KEY)).toBe('#c0c0c0');
+    } finally {
+      unregisterTheme('retro');
+    }
   });
 
   it('zeigt ein installiertes helles Theme als eigenes Schema', () => {
@@ -114,8 +128,8 @@ describe('Theme', () => {
   });
 
   it('ersetzt eine unbekannte Theme-ID durch „system“', () => {
-    for (const mode of ['system', 'light', 'dark', 'win95']) expect(normalizeThemeId(mode, [])).toBe(mode);
-    for (const mode of ['signal', 'pastel']) {
+    for (const mode of ['system', 'light', 'dark']) expect(normalizeThemeId(mode, [])).toBe(mode);
+    for (const mode of ['signal', 'pastel', 'win95']) {
       expect(normalizeThemeId(mode, [])).toBe('system');
       expect(normalizeThemeId(mode, [mode])).toBe(mode);
     }
@@ -144,10 +158,23 @@ describe('Theme', () => {
       throw new Error('kaputt');
     };
     render(<ApiProvider api={fakeApi({ listThemes })}><AppearancePanel /></ApiProvider>);
-    await screen.findByRole('radio', { name: 'Windows 95' });
-    expect(screen.getAllByRole('radio')).toHaveLength(4);
+    await screen.findByRole('radio', { name: 'Dunkel' });
+    expect(screen.getAllByRole('radio')).toHaveLength(3);
     expect(screen.queryByRole('radio', { name: 'Signal' })).toBeNull();
     expect(screen.queryByRole('radio', { name: 'Pastell' })).toBeNull();
+    expect(screen.queryByRole('radio', { name: 'Windows 95' })).toBeNull();
+  });
+
+  it('bietet „Windows 95“ als installiertes Paket an und lädt seine theme.css', async () => {
+    const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, ...patch }));
+    const listThemes = async () => [{ id: 'win95', name: 'Windows 95', version: '1.0.0', author: 'Nexus', colorScheme: 'light', startColor: '#c0c0c0', slots: ['Shell', 'NavIcon', 'Progress'] }];
+    render(<ApiProvider api={fakeApi({ saveUserSettings, listThemes } as never)}><AppearancePanel /></ApiProvider>);
+    await userEvent.click(await screen.findByRole('radio', { name: 'Windows 95' }));
+    expect(saveUserSettings).toHaveBeenCalledWith({ theme: 'win95' });
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe('win95'));
+    expect(document.getElementById('nexus-theme-css')?.getAttribute('href')).toBe('/themes/win95/theme.css');
+    expect(window.localStorage.getItem(THEME_START_COLOR_KEY)).toBe('#c0c0c0');
+    expect(currentTheme()).toBe('light');
   });
 
   it('bietet „Pastell“ als installiertes Paket an und lädt seine theme.css', async () => {

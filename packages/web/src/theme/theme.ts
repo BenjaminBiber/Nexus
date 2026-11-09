@@ -19,7 +19,7 @@ export const THEME_START_COLOR_KEY = 'harness-theme-start-color';
 export const THEME_LINK_ID = 'nexus-theme-css';
 
 
-/** Angezeigtes Schema als ID; „win95“ ist ein helles Schema mit eigenem Rahmen (Desktop, Fenster, Taskleiste), sonst ein installiertes Theme */
+/** Angezeigtes Schema als ID: „light“, „dark“ oder ein installiertes Theme */
 export type ResolvedTheme = string;
 
 /** Erlaubte Form einer Theme-ID (wie im Manifest) */
@@ -80,7 +80,8 @@ export function applyTheme(requested: ThemeMode, installed?: readonly InstalledT
   // Abgesicherter Modus: installierte Themes zeigen nur Hell/Dunkel nach System, ohne theme.css; die Einstellung bleibt gespeichert
   const safe = !(BUILTIN_THEME_IDS as readonly string[]).includes(mode) && isSafeTheme();
   const resolved = resolveTheme(safe ? 'system' : mode, systemPrefersDark());
-  const external = !(BUILTIN_THEME_IDS as readonly string[]).includes(mode) && (ids ? ids.includes(mode) : !getTheme(mode));
+  // Ohne Liste gilt jedes nicht eingebaute Theme als Paket mit theme.css (auch eines, dessen main.js schon angemeldet ist)
+  const external = !(BUILTIN_THEME_IDS as readonly string[]).includes(mode) && (ids ? ids.includes(mode) : true);
   document.documentElement.dataset.theme = resolved;
   document.documentElement.dataset.themeMode = mode;
   setThemeLink(external && !safe ? mode : null);
@@ -111,7 +112,7 @@ export function displayedTheme(): string {
   return document.documentElement.dataset.theme || 'light';
 }
 
-// Aktuell angezeigtes Schema, auf hell/dunkel abgebildet (Windows 95 und helle installierte Themes zählen als hell)
+// Aktuell angezeigtes Schema, auf hell/dunkel abgebildet (installierte Themes zählen als hell)
 export function currentTheme(): 'light' | 'dark' {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 }

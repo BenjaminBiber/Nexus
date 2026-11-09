@@ -1,9 +1,15 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest';
+// Slots NavIcon und Progress des Pakets in den Kern-Komponenten: das Paket wird angemeldet wie nach dem Laden der main.js
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
-import { WIN95_ICONS } from '../src/components/win95/Win95Icons.js';
-import { BoardIcon, CogIcon } from '../src/components/NavIcons.js';
-import { ProgressRing } from '../src/components/ProgressRing.js';
+import { BoardIcon, CogIcon } from '../../../packages/web/src/components/NavIcons.js';
+import { ProgressRing } from '../../../packages/web/src/components/ProgressRing.js';
+import { registerTheme, unregisterTheme } from '../../../packages/web/src/theme/registry.js';
+import theme from '../src/main.js';
+import { WIN95_ICONS } from '../src/Win95Icons.js';
+
+beforeAll(() => registerTheme(theme));
+afterAll(() => unregisterTheme('win95'));
 
 afterEach(() => {
   cleanup();
