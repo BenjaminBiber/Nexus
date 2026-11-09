@@ -87,6 +87,16 @@ impl ErrorMapper {
         if code == "speech-failed" {
             return StatusCode::BAD_GATEWAY;
         }
+        // Asset-Proxy der Themes: Host nicht freigegeben, zu groß, Upstream/Prüfsumme falsch
+        if code == "theme_fetch_forbidden" {
+            return StatusCode::FORBIDDEN;
+        }
+        if code == "theme_fetch_too_large" {
+            return StatusCode::PAYLOAD_TOO_LARGE;
+        }
+        if code == "theme_fetch_checksum" || code == "theme_fetch_upstream" {
+            return StatusCode::BAD_GATEWAY;
+        }
         if UNAVAILABLE.contains(&code) {
             return StatusCode::SERVICE_UNAVAILABLE;
         }
