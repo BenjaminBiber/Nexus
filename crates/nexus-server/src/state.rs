@@ -9,6 +9,7 @@ use std::sync::Arc;
 use nexus_core::docs::SuperpowersDocScanner;
 use nexus_core::settings::UserSettingsStore;
 use nexus_core::theme::SnippetStore;
+use nexus_core::themes::ThemeSettingsStore;
 use nexus_core::HarnessHome;
 use nexus_platform::Platform;
 use tokio_util::sync::CancellationToken;
@@ -86,6 +87,8 @@ pub struct AppState {
     pub favorites: FavoriteService,
     /// Die CSS-Schnipsel des Nutzers (`snippets/`)
     pub snippets: SnippetStore,
+    /// Eigene Einstellungen der Themes (`theme-settings.json`)
+    pub theme_settings: ThemeSettingsStore,
     /// Asset-Proxy der Themes (`/api/themes/{id}/fetch`)
     pub theme_proxy: crate::theme_proxy::ThemeProxy,
     /// Titel und Status von Tickets für Sessions, Favoriten und Meldungen (mit Zeitlimit)
@@ -324,6 +327,7 @@ impl AppState {
             transcript_watch: TranscriptWatch::new(events.clone()),
             favorites,
             snippets: SnippetStore::with_clock(config.home.clone(), config.clock.clone()),
+            theme_settings: ThemeSettingsStore::new(config.home.clone()),
             theme_proxy: crate::theme_proxy::ThemeProxy::new(config.theme_fetch_max_bytes)
                 .with_archive_limit(config.theme_fetch_max_archive_bytes),
             ticket_info: TicketInfoLookup::new(ticket_summaries(weak)),

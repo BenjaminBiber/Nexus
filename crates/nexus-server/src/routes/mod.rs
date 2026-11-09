@@ -29,6 +29,7 @@ pub mod static_files;
 pub mod telegram;
 pub mod theme_fetch;
 pub mod theme_packages;
+pub mod theme_settings;
 pub mod themes;
 pub mod usage;
 pub mod workflow;
@@ -72,6 +73,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(session_detail::routes())
         .merge(favorites::routes())
         .merge(snippets::routes())
+        .merge(theme_settings::routes())
         .merge(usage::routes())
         .merge(accounts::routes())
         .merge(notifications::routes())
