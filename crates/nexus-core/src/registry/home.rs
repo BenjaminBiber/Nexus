@@ -162,6 +162,11 @@ impl NexusHome {
         self.dir.join("accounts")
     }
 
+    /// Installierte Theme-Pakete (`<id>/`)
+    pub fn themes_dir(&self) -> PathBuf {
+        self.dir.join("themes")
+    }
+
     /// Sicherungen
     pub fn backups_dir(&self) -> PathBuf {
         self.dir.join("backups")
@@ -316,6 +321,12 @@ mod tests {
         let home = NexusHome::new(&env(&[("NEXUS_HOME", "/x/n"), ("HARNESS_HOME", "/x/h")]));
         assert_eq!(home.dir(), Path::new("/x/n"));
         assert_eq!(home.source(), HomeSource::EnvNexus);
+    }
+
+    #[test]
+    fn themes_dir_liegt_unter_nexus_home() {
+        let home = NexusHome::new(&env(&[("NEXUS_HOME", "/x/n")]));
+        assert_eq!(home.themes_dir(), Path::new("/x/n").join("themes"));
     }
 
     #[test]

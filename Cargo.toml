@@ -52,6 +52,8 @@ bb8 = "0.9"
 bb8-tiberius = "0.16"
 tokio-util = { version = "0.7", features = ["compat"] }
 tempfile = "3"
+# Entpacken der Theme-Pakete (`.nexus` = ZIP); nur Deflate, keine Verschlüsselung
+zip = { version = "9", default-features = false, features = ["deflate"] }
 # Zufall, SHA-1 und Prozessprüfung für Sperren, Token und Projekt-IDs. Der Workspace verbietet
 # `unsafe`, deshalb kommt der Blick auf fremde Prozesse aus Bibliotheken mit sicherer
 # Schnittstelle: unter Unix `nix`, unter Windows `sysinfo`.

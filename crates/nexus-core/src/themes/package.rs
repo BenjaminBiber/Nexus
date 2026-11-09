@@ -1,0 +1,619 @@
+//! Installieren, Auflisten und Entfernen von Theme-Paketen (`.nexus` = ZIP mit `manifest.json`,
+//! `theme.css`, optional `main.js` und `assets/**`).
+//!
+//! Ein Paket wird vollständig im Speicher geprüft, bevor etwas auf die Platte kommt: sichere
+//! Pfade, erlaubte Dateitypen, Größenlimits, gültiges Manifest und ein `theme.css` ohne
+//! `@import` und ohne externe `url()`. Danach wird es in einen temporären Ordner unter
+//! `themes/` entpackt und erst dann an seinen Platz umbenannt; eine vorhandene Installation
+//! bleibt bis dahin unverändert.
+
+use std::fs;
+use std::io::{Cursor, Read};
+use std::path::{Component, Path, PathBuf};
+use std::sync::LazyLock;
+
+use regex::Regex;
+
+use super::manifest::{parse_manifest, ManifestErrors, ThemeManifest, THEME_ID_PATTERN};
+use crate::NexusHome;
+
+/// Höchstgröße eines Pakets und Höchstsumme seiner entpackten Dateien
+pub const MAX_PACKAGE_BYTES: u64 = 20 * 1024 * 1024;
+/// Höchstgröße einer entpackten Einzeldatei
+pub const MAX_FILE_BYTES: u64 = 5 * 1024 * 1024;
+/// Höchstzahl der Einträge eines Pakets
+pub const MAX_ENTRIES: usize = 500;
+
+/// Erlaubte Dateiendungen (klein geschrieben): Code, Stil, Daten, Bilder, Schriften, Klänge
+const ALLOWED_EXTENSIONS: &[&str] = &[
+    "css", "js", "mjs", "json", "png", "jpg", "jpeg", "gif", "webp", "svg", "avif", "ico", "woff",
+    "woff2", "ttf", "otf", "mp3", "ogg", "wav",
+];
+
+/// Pflichtdateien im Wurzelordner eines Pakets
+const MANIFEST_FILE: &str = "manifest.json";
+const THEME_CSS_FILE: &str = "theme.css";
+
+/// CSS-Kommentare
+static CSS_COMMENT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?s)/\*.*?\*/").unwrap());
+/// `@import` in jeder Schreibweise
+static CSS_IMPORT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)@import").unwrap());
+/// `url(...)` mit oder ohne Anführungszeichen
+static CSS_URL: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"(?i)url\(\s*("[^"]*"|'[^']*'|[^)]*?)\s*\)"#).unwrap());
+
+/// Fehler beim Installieren oder Entfernen eines Theme-Pakets
+#[derive(Debug, thiserror::Error)]
+pub enum ThemePackageError {
+    #[error("Das Paket ist zu groß (höchstens {max} Bytes, entpackt wie gepackt).")]
+    TooLarge { max: u64 },
+    #[error("Die Datei {path} ist zu groß (höchstens {max} Bytes).")]
+    FileTooLarge { path: String, max: u64 },
+    #[error("Das Paket hat zu viele Einträge (höchstens {max}).")]
+    TooManyEntries { max: usize },
+    #[error("Unsicherer Pfad im Paket: {path}")]
+    UnsafePath { path: String },
+    #[error("Dateityp nicht erlaubt: {path}")]
+    ForbiddenFileType { path: String },
+    #[error("Im Paket fehlt {name}.")]
+    MissingFile { name: String },
+    #[error("Das Manifest ist ungültig: {0}")]
+    Manifest(#[from] ManifestErrors),
+    #[error("theme.css ist nicht erlaubt: {reason}")]
+    ForbiddenCss { reason: String },
+    #[error("Das Paket ist kein gültiges ZIP-Archiv: {0}")]
+    NotZip(String),
+    #[error("Das Theme {id} ist nicht installiert.")]
+    NotInstalled { id: String },
+    #[error("Ungültige Theme-ID: {id}")]
+    InvalidId { id: String },
+    #[error("Dateifehler: {0}")]
+    Io(#[from] std::io::Error),
+}
+
+/// Ein installiertes Theme mit seinem Ordner
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InstalledTheme {
+    pub manifest: ThemeManifest,
+    /// `<NEXUS_HOME>/themes/<id>/`
+    pub dir: PathBuf,
+}
+
+/// Grenzen eines Pakets; in Tests kleiner, damit keine Megabytes an Testdaten nötig sind
+#[derive(Debug, Clone, Copy)]
+struct Limits {
+    package: u64,
+    file: u64,
+    entries: usize,
+}
+
+const DEFAULT_LIMITS: Limits = Limits {
+    package: MAX_PACKAGE_BYTES,
+    file: MAX_FILE_BYTES,
+    entries: MAX_ENTRIES,
+};
+
+/// Installiert ein Paket aus einer Datei, siehe [`install_theme`]
+pub fn install_theme_file(
+    home: &NexusHome,
+    path: &Path,
+) -> Result<ThemeManifest, ThemePackageError> {
+    let size = fs::metadata(path)?.len();
+    if size > MAX_PACKAGE_BYTES {
+        return Err(ThemePackageError::TooLarge {
+            max: MAX_PACKAGE_BYTES,
+        });
+    }
+    install_theme(home, &fs::read(path)?)
+}
+
+/// Prüft ein `.nexus`-Paket und installiert es nach `<NEXUS_HOME>/themes/<id>/`. Eine
+/// vorhandene Installation derselben id wird vollständig ersetzt; schlägt etwas fehl, bleibt
+/// sie unverändert und unter `themes/` bleibt nichts zurück.
+pub fn install_theme(home: &NexusHome, package: &[u8]) -> Result<ThemeManifest, ThemePackageError> {
+    install_with_limits(home, package, DEFAULT_LIMITS)
+}
+
+fn install_with_limits(
+    home: &NexusHome,
+    package: &[u8],
+    limits: Limits,
+) -> Result<ThemeManifest, ThemePackageError> {
+    let files = read_package(package, limits)?;
+
+    let file = |name: &str| {
+        files
+            .iter()
+            .find(|(path, _)| path == Path::new(name))
+            .map(|(_, data)| data)
+            .ok_or_else(|| ThemePackageError::MissingFile {
+                name: name.to_string(),
+            })
+    };
+    let manifest = parse_manifest(&String::from_utf8_lossy(file(MANIFEST_FILE)?))?;
+    let css = std::str::from_utf8(file(THEME_CSS_FILE)?).map_err(|_| {
+        ThemePackageError::ForbiddenCss {
+            reason: "kein gültiges UTF-8".to_string(),
+        }
+    })?;
+    check_theme_css(css)?;
+
+    let themes_dir = home.themes_dir();
+    fs::create_dir_all(&themes_dir)?;
+    let staging = tempfile::Builder::new()
+        .prefix(&format!(".tmp-{}-", manifest.id))
+        .tempdir_in(&themes_dir)?;
+    for (path, data) in &files {
+        let target = staging.path().join(path);
+        if let Some(parent) = target.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        fs::write(target, data)?;
+    }
+
+    let target = themes_dir.join(&manifest.id);
+    // Die alte Installation wandert in einen eigenen temporären Ordner, der sie beim Drop
+    // löscht; scheitert das Umbenennen des neuen Pakets, kommt sie zurück.
+    let old = if target.exists() {
+        let old = tempfile::Builder::new()
+            .prefix(&format!(".old-{}-", manifest.id))
+            .tempdir_in(&themes_dir)?;
+        fs::rename(&target, old.path().join("theme"))?;
+        Some(old)
+    } else {
+        None
+    };
+    if let Err(error) = fs::rename(staging.path(), &target) {
+        if let Some(old) = &old {
+            fs::rename(old.path().join("theme"), &target)?;
+        }
+        return Err(error.into());
+    }
+    drop(old);
+    Ok(manifest)
+}
+
+/// Liest und prüft alle Einträge eines Pakets; Ergebnis sind relative Pfade mit Inhalt
+fn read_package(
+    package: &[u8],
+    limits: Limits,
+) -> Result<Vec<(PathBuf, Vec<u8>)>, ThemePackageError> {
+    if package.len() as u64 > limits.package {
+        return Err(ThemePackageError::TooLarge {
+            max: limits.package,
+        });
+    }
+    let not_zip = |error: zip::result::ZipError| ThemePackageError::NotZip(error.to_string());
+    let mut archive = zip::ZipArchive::new(Cursor::new(package)).map_err(not_zip)?;
+    if archive.len() > limits.entries {
+        return Err(ThemePackageError::TooManyEntries {
+            max: limits.entries,
+        });
+    }
+
+    let mut files = Vec::new();
+    let mut total: u64 = 0;
+    for index in 0..archive.len() {
+        let mut entry = archive.by_index(index).map_err(not_zip)?;
+        let name = entry.name().map_err(not_zip)?.to_string();
+        let unsafe_path = || ThemePackageError::UnsafePath { path: name.clone() };
+        if entry.is_symlink() || entry.enclosed_name().is_none() {
+            return Err(unsafe_path());
+        }
+        let path = check_entry_path(&name)?;
+        if entry.is_dir() {
+            continue;
+        }
+        if !has_allowed_extension(&path) {
+            return Err(ThemePackageError::ForbiddenFileType { path: name });
+        }
+        let too_large = || ThemePackageError::FileTooLarge {
+            path: name.clone(),
+            max: limits.file,
+        };
+        if entry.size() > limits.file {
+            return Err(too_large());
+        }
+        // Die angegebene Größe kann lügen (Zip-Bombe): tatsächlich höchstens limit+1 lesen.
+        let mut data = Vec::new();
+        (&mut entry)
+            .take(limits.file + 1)
+            .read_to_end(&mut data)
+            .map_err(|error| ThemePackageError::NotZip(error.to_string()))?;
+        if data.len() as u64 > limits.file {
+            return Err(too_large());
+        }
+        total += data.len() as u64;
+        if total > limits.package {
+            return Err(ThemePackageError::TooLarge {
+                max: limits.package,
+            });
+        }
+        if files.iter().any(|(known, _)| known == &path) {
+            return Err(unsafe_path());
+        }
+        files.push((path, data));
+    }
+    Ok(files)
+}
+
+/// Prüft den Pfad eines Eintrags: nur relative, normale Bestandteile, keine Laufwerksbuchstaben,
+/// Backslashes oder Steuerzeichen
+fn check_entry_path(name: &str) -> Result<PathBuf, ThemePackageError> {
+    let unsafe_path = || ThemePackageError::UnsafePath {
+        path: name.to_string(),
+    };
+    let trimmed = name.strip_suffix('/').unwrap_or(name);
+    if trimmed.is_empty()
+        || trimmed.starts_with('/')
+        || trimmed.contains(['\\', ':'])
+        || trimmed.chars().any(char::is_control)
+    {
+        return Err(unsafe_path());
+    }
+    let path = Path::new(trimmed);
+    let mut safe = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::Normal(part) => safe.push(part),
+            _ => return Err(unsafe_path()),
+        }
+    }
+    Ok(safe)
+}
+
+fn has_allowed_extension(path: &Path) -> bool {
+    path.extension()
+        .and_then(|extension| extension.to_str())
+        .map(|extension| ALLOWED_EXTENSIONS.contains(&extension.to_ascii_lowercase().as_str()))
+        .unwrap_or(false)
+}
+
+/// Lehnt `@import` und jede `url()` ab, die nicht relativ ist oder eine `data:`-URL
+fn check_theme_css(css: &str) -> Result<(), ThemePackageError> {
+    let css = CSS_COMMENT.replace_all(css, "");
+    if CSS_IMPORT.is_match(&css) {
+        return Err(ThemePackageError::ForbiddenCss {
+            reason: "@import ist nicht erlaubt".to_string(),
+        });
+    }
+    for capture in CSS_URL.captures_iter(&css) {
+        let raw = capture[1].trim();
+        let value = raw.trim_matches(|c| c == '"' || c == '\'').trim();
+        let lower = value.to_ascii_lowercase();
+        if lower.starts_with("data:") {
+            continue;
+        }
+        let before_slash = lower.split('/').next().unwrap_or_default();
+        if lower.starts_with('/') || before_slash.contains(':') || lower.contains('\\') {
+            return Err(ThemePackageError::ForbiddenCss {
+                reason: format!("externe oder absolute url() nicht erlaubt: {value}"),
+            });
+        }
+    }
+    Ok(())
+}
+
+/// Installierte Themes, sortiert nach id. Ordner mit führendem Punkt (temporär) und Ordner
+/// ohne lesbares, gültiges Manifest werden übersprungen; fehlt `themes/`, ist die Liste leer.
+pub fn list_themes(home: &NexusHome) -> Result<Vec<InstalledTheme>, ThemePackageError> {
+    let themes_dir = home.themes_dir();
+    let entries = match fs::read_dir(&themes_dir) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => return Err(error.into()),
+    };
+    let mut themes = Vec::new();
+    for entry in entries {
+        let entry = entry?;
+        if entry.file_name().to_string_lossy().starts_with('.') || !entry.path().is_dir() {
+            continue;
+        }
+        let Ok(json) = fs::read_to_string(entry.path().join(MANIFEST_FILE)) else {
+            continue;
+        };
+        if let Ok(manifest) = parse_manifest(&json) {
+            themes.push(InstalledTheme {
+                manifest,
+                dir: entry.path(),
+            });
+        }
+    }
+    themes.sort_by(|a, b| a.manifest.id.cmp(&b.manifest.id));
+    Ok(themes)
+}
+
+/// Entfernt ein installiertes Theme. Die id muss eine gültige Theme-ID sein, damit kein Pfad
+/// außerhalb von `themes/` getroffen werden kann.
+pub fn remove_theme(home: &NexusHome, id: &str) -> Result<(), ThemePackageError> {
+    if !THEME_ID_PATTERN.is_match(id) {
+        return Err(ThemePackageError::InvalidId { id: id.to_string() });
+    }
+    let dir = home.themes_dir().join(id);
+    if !dir.is_dir() {
+        return Err(ThemePackageError::NotInstalled { id: id.to_string() });
+    }
+    fs::remove_dir_all(dir)?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Write;
+
+    use zip::write::SimpleFileOptions;
+
+    use super::*;
+
+    const CSS: &[u8] = b":root { --bg: url(assets/bg.png); }";
+
+    fn manifest(id: &str, version: &str) -> Vec<u8> {
+        format!(
+            r#"{{"id":"{id}","name":"Nacht","version":"{version}","author":"Ada","sdkVersion":"^1.0","colorScheme":"dark"}}"#
+        )
+        .into_bytes()
+    }
+
+    /// Baut ein ZIP im Speicher
+    fn paket(dateien: &[(&str, &[u8])]) -> Vec<u8> {
+        let mut writer = zip::ZipWriter::new(Cursor::new(Vec::new()));
+        for (name, inhalt) in dateien {
+            writer
+                .start_file(*name, SimpleFileOptions::default())
+                .unwrap();
+            writer.write_all(inhalt).unwrap();
+        }
+        writer.finish().unwrap().into_inner()
+    }
+
+    fn gueltig(id: &str, version: &str) -> Vec<u8> {
+        let manifest = manifest(id, version);
+        paket(&[
+            ("manifest.json", &manifest),
+            ("theme.css", CSS),
+            ("main.js", b"export default {};"),
+            ("assets/bg.png", b"png"),
+        ])
+    }
+
+    fn home() -> (tempfile::TempDir, NexusHome) {
+        let dir = tempfile::tempdir().unwrap();
+        let home = NexusHome::at(dir.path());
+        (dir, home)
+    }
+
+    /// Namen unter `themes/` (leer, wenn der Ordner fehlt)
+    fn inhalt(home: &NexusHome) -> Vec<String> {
+        match fs::read_dir(home.themes_dir()) {
+            Ok(entries) => entries
+                .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+                .collect(),
+            Err(_) => Vec::new(),
+        }
+    }
+
+    fn abgelehnt(home: &NexusHome, paket: &[u8]) -> ThemePackageError {
+        let fehler = install_theme(home, paket).unwrap_err();
+        assert!(inhalt(home).is_empty(), "Reste: {:?}", inhalt(home));
+        fehler
+    }
+
+    #[test]
+    fn gueltiges_paket_wird_installiert_und_aufgelistet() {
+        let (_tmp, home) = home();
+        let manifest = install_theme(&home, &gueltig("nacht", "1.0.0")).unwrap();
+        assert_eq!(manifest.id, "nacht");
+        let dir = home.themes_dir().join("nacht");
+        assert!(dir.join("theme.css").is_file());
+        assert!(dir.join("main.js").is_file());
+        assert!(dir.join("assets/bg.png").is_file());
+        assert_eq!(inhalt(&home), vec!["nacht".to_string()]);
+        let themes = list_themes(&home).unwrap();
+        assert_eq!(themes.len(), 1);
+        assert_eq!(themes[0].manifest.id, "nacht");
+        assert_eq!(themes[0].dir, dir);
+    }
+
+    #[test]
+    fn list_themes_ohne_ordner_ist_leer() {
+        let (_tmp, home) = home();
+        assert!(list_themes(&home).unwrap().is_empty());
+    }
+
+    #[test]
+    fn zip_slip_wird_abgelehnt() {
+        for name in [
+            "../evil.css",
+            "/x.css",
+            "C:/x.css",
+            "a/../../x.css",
+            "a\\x.css",
+        ] {
+            let (_tmp, home) = home();
+            let manifest = manifest("nacht", "1.0.0");
+            let p = paket(&[
+                ("manifest.json", &manifest),
+                ("theme.css", CSS),
+                (name, b"x"),
+            ]);
+            assert!(
+                matches!(abgelehnt(&home, &p), ThemePackageError::UnsafePath { .. }),
+                "{name}"
+            );
+        }
+    }
+
+    #[test]
+    fn unerlaubter_dateityp_wird_abgelehnt() {
+        let (_tmp, home) = home();
+        let manifest = manifest("nacht", "1.0.0");
+        let p = paket(&[
+            ("manifest.json", &manifest),
+            ("theme.css", CSS),
+            ("payload.exe", b"MZ"),
+        ]);
+        assert!(matches!(
+            abgelehnt(&home, &p),
+            ThemePackageError::ForbiddenFileType { .. }
+        ));
+    }
+
+    #[test]
+    fn zu_grosses_paket_und_zu_grosse_datei_werden_abgelehnt() {
+        let (_tmp, home) = home();
+        let p = gueltig("nacht", "1.0.0");
+        let limits = Limits {
+            package: 10,
+            file: MAX_FILE_BYTES,
+            entries: MAX_ENTRIES,
+        };
+        assert!(matches!(
+            install_with_limits(&home, &p, limits).unwrap_err(),
+            ThemePackageError::TooLarge { .. }
+        ));
+        assert!(inhalt(&home).is_empty());
+
+        let limits = Limits {
+            package: MAX_PACKAGE_BYTES,
+            file: 20,
+            entries: MAX_ENTRIES,
+        };
+        assert!(matches!(
+            install_with_limits(&home, &p, limits).unwrap_err(),
+            ThemePackageError::FileTooLarge { .. }
+        ));
+        assert!(inhalt(&home).is_empty());
+
+        let limits = Limits {
+            package: MAX_PACKAGE_BYTES,
+            file: MAX_FILE_BYTES,
+            entries: 2,
+        };
+        assert!(matches!(
+            install_with_limits(&home, &p, limits).unwrap_err(),
+            ThemePackageError::TooManyEntries { .. }
+        ));
+        assert!(inhalt(&home).is_empty());
+    }
+
+    #[test]
+    fn verbotenes_css_wird_abgelehnt() {
+        for css in [
+            "@import url(x.css);",
+            "@IMPORT 'x.css';",
+            "a { background: url(https://evil/x.png) }",
+            "a { background: url('http://evil/x.png') }",
+            "a { background: url(\"//evil/x\") }",
+            "a { background: url(/abs.png) }",
+            "a { background: url(javascript:alert(1)) }",
+        ] {
+            let (_tmp, home) = home();
+            let manifest = manifest("nacht", "1.0.0");
+            let p = paket(&[("manifest.json", &manifest), ("theme.css", css.as_bytes())]);
+            assert!(
+                matches!(abgelehnt(&home, &p), ThemePackageError::ForbiddenCss { .. }),
+                "{css}"
+            );
+        }
+    }
+
+    #[test]
+    fn relative_und_data_urls_sind_erlaubt() {
+        check_theme_css(
+            "/* @import url(https://x) */ a { background: url(assets/a.png); } \
+             b { background: url( 'data:image/png;base64,AAAA' ); } c { src: url(\"./f.woff2\") }",
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn fehlendes_oder_ungueltiges_manifest_wird_abgelehnt() {
+        let (_tmp, home) = home();
+        let p = paket(&[("theme.css", CSS)]);
+        assert!(matches!(
+            abgelehnt(&home, &p),
+            ThemePackageError::MissingFile { .. }
+        ));
+
+        let p = paket(&[
+            ("manifest.json", br#"{"id":"..","version":"x"}"#),
+            ("theme.css", CSS),
+        ]);
+        match abgelehnt(&home, &p) {
+            ThemePackageError::Manifest(fehler) => {
+                assert!(fehler.for_field("id").is_some());
+                assert!(fehler.for_field("version").is_some());
+            }
+            andere => panic!("unerwartet: {andere:?}"),
+        }
+
+        let manifest = manifest("nacht", "1.0.0");
+        let p = paket(&[("manifest.json", &manifest)]);
+        assert!(matches!(
+            abgelehnt(&home, &p),
+            ThemePackageError::MissingFile { .. }
+        ));
+    }
+
+    #[test]
+    fn kein_zip_wird_abgelehnt() {
+        let (_tmp, home) = home();
+        assert!(matches!(
+            abgelehnt(&home, b"kein zip"),
+            ThemePackageError::NotZip(_)
+        ));
+    }
+
+    #[test]
+    fn neuinstallation_ersetzt_vollstaendig() {
+        let (_tmp, home) = home();
+        install_theme(&home, &gueltig("nacht", "1.0.0")).unwrap();
+        let manifest = manifest("nacht", "2.0.0");
+        let neu = paket(&[("manifest.json", &manifest), ("theme.css", CSS)]);
+        install_theme(&home, &neu).unwrap();
+        let dir = home.themes_dir().join("nacht");
+        assert!(!dir.join("main.js").exists());
+        assert!(!dir.join("assets").exists());
+        assert_eq!(list_themes(&home).unwrap()[0].manifest.version, "2.0.0");
+        assert_eq!(inhalt(&home), vec!["nacht".to_string()]);
+    }
+
+    #[test]
+    fn fehlgeschlagene_neuinstallation_laesst_alte_unveraendert() {
+        let (_tmp, home) = home();
+        install_theme(&home, &gueltig("nacht", "1.0.0")).unwrap();
+        let manifest = manifest("nacht", "2.0.0");
+        let kaputt = paket(&[
+            ("manifest.json", &manifest),
+            ("theme.css", b"@import 'x.css';"),
+        ]);
+        install_theme(&home, &kaputt).unwrap_err();
+        let dir = home.themes_dir().join("nacht");
+        assert!(dir.join("main.js").is_file());
+        assert_eq!(list_themes(&home).unwrap()[0].manifest.version, "1.0.0");
+        assert_eq!(inhalt(&home), vec!["nacht".to_string()]);
+    }
+
+    #[test]
+    fn remove_theme_loescht_und_prueft_id() {
+        let (_tmp, home) = home();
+        install_theme(&home, &gueltig("nacht", "1.0.0")).unwrap();
+        fs::create_dir_all(home.dir().join("keep")).unwrap();
+
+        assert!(matches!(
+            remove_theme(&home, "..").unwrap_err(),
+            ThemePackageError::InvalidId { .. }
+        ));
+        assert!(home.themes_dir().join("nacht").is_dir());
+        assert!(home.dir().join("keep").is_dir());
+
+        assert!(matches!(
+            remove_theme(&home, "gibts-nicht").unwrap_err(),
+            ThemePackageError::NotInstalled { .. }
+        ));
+
+        remove_theme(&home, "nacht").unwrap();
+        assert!(!home.themes_dir().join("nacht").exists());
+        assert!(list_themes(&home).unwrap().is_empty());
+    }
+}

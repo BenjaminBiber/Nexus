@@ -23,6 +23,8 @@ sha2 = { workspace = true }
 # Temporäre Ordner für den Vergleich der Basis und für die Typprüfung eines eigenen Workflows
 tempfile = { workspace = true }
 thiserror = { workspace = true }
+# Entpacken der Theme-Pakete (`.nexus`)
+zip = { workspace = true }
 tokio = { workspace = true }
 ts-rs = { workspace = true }
 
