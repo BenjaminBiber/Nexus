@@ -15,9 +15,11 @@ import { InboxNavLink } from './inbox/InboxNavLink.js';
 import { GlobalSearchButton, OpenSearchContext } from './GlobalSearchButton.js';
 import { SearchDialog } from './SearchDialog.js';
 import { ClaudeUsageMeter } from './ClaudeUsageMeter.js';
-import { GooNav } from './goo/GooNav.js';
 import { useDisplayedTheme } from '../theme/useDisplayedTheme.js';
-import { Win95Frame } from './win95/Win95Frame.js';
+import { DefaultShell } from './DefaultShell.js';
+import { SlotBoundary } from '../theme/SlotBoundary.js';
+import { useSlot } from '../theme/useSlot.js';
+import type { ShellParts } from '../theme/slots.js';
 
 const LINKS: Array<[string, string, () => ReactNode]> = [
   ['board', 'Board', BoardIcon],
@@ -26,9 +28,8 @@ const LINKS: Array<[string, string, () => ReactNode]> = [
   ['guide', 'Anleitung', GuideIcon],
 ];
 
-// Rahmen aller Seiten: Seitenleiste mit globaler Suche (auch Strg+K) ganz oben, darunter Board-Auswahl (mit der Verbindung
-// als Punkt), dann die Navigation (zuletzt die Einstellungen) und ganz unten die Claude-Nutzung; Live-Verbindung des Projekts.
-// Im Schema „Windows 95“ dieselben Teile als Desktop mit Fenster, Startmenü und Taskleiste (Win95Frame).
+// Rahmen aller Seiten: Live-Verbindung des Projekts, Suche (auch Strg+K) und das Layout. Das Layout liefert der Slot
+// „Shell“ des angezeigten Themes (z. B. Windows 95 als Desktop), sonst DefaultShell mit Seitenleiste.
 export function AppShell() {
   const { pid = '' } = useParams();
   const [searching, setSearching] = useState(false);
@@ -44,8 +45,8 @@ export function AppShell() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
   const openSearch = useCallback(() => setSearching(true), []);
-  // Im Schema „Windows 95“ ordnet sich der Rahmen wie der Desktop an (Symbole, Fenster, Taskleiste)
   const theme = useDisplayedTheme();
+  const Shell = useSlot('Shell');
   const link = ([path, label, Icon]: (typeof LINKS)[number]) => (
     <NavLink key={path} to={`/p/${pid}/${path}`}>
       <Icon />
@@ -76,6 +77,12 @@ export function AppShell() {
       </main>
     </div>
   );
+  const parts: ShellParts = {
+    search: <GlobalSearchButton />,
+    boardSwitcher: <BoardProjectSwitcher pid={pid} status={<ConnectionBadge />} />,
+    usage: <ClaudeUsageMeter />,
+  };
+  const standard = <DefaultShell pid={pid} nav={navLinks} content={content} parts={parts} />;
 
   return (
     <LiveProvider pid={pid} key={pid}>
@@ -83,26 +90,12 @@ export function AppShell() {
         <OpenSearchContext.Provider value={openSearch}>
         <SessionNotifier pid={pid} />
         <SetupPrompts />
-        {theme === 'win95' ? (
-          <Win95Frame pid={pid} nav={navLinks} content={content} />
+        {Shell ? (
+          <SlotBoundary fallback={standard} resetKey={theme}>
+            <Shell pid={pid} nav={navLinks} content={content} parts={parts} />
+          </SlotBoundary>
         ) : (
-          <>
-            <aside className="shell-sidebar">
-              <div className="shell-dock">
-                <GlobalSearchButton />
-                <div className="dock-row">
-                  <BoardProjectSwitcher pid={pid} status={<ConnectionBadge />} />
-                </div>
-              </div>
-              <GooNav className="nav" aria-label="Hauptnavigation">
-                {navLinks}
-              </GooNav>
-              <div className="usage-dock">
-                <ClaudeUsageMeter />
-              </div>
-            </aside>
-            {content}
-          </>
+          standard
         )}
         <DocTicketJobsIndicator />
         {searching && <SearchDialog pid={pid} onClose={() => setSearching(false)} />}

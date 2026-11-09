@@ -1,3 +1,4 @@
+import './themes/builtin.js';
 import { useEffect } from 'react';
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { AppShell } from './components/AppShell.js';
