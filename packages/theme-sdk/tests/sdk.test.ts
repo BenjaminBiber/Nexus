@@ -5,12 +5,12 @@ import { SDK_VERSION } from '../src/index.js';
 import type { ButtonProps, PageName, PageProps, PageSlots, CardProps, DialogProps, InputProps, PanelProps, ProgressProps, StartAnimationProps, ThemeDefinition, ThemeSlots } from '../src/index.js';
 
 describe('SDK_VERSION', () => {
-  it('ist eine semver-Version der Reihe 0.x', () => {
-    expect(SDK_VERSION).toMatch(/^0\.\d+\.\d+$/);
+  it('ist eine semver-Version', () => {
+    expect(SDK_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
-  it('ist 0.8.0 (Theme-Einstellungen)', () => {
-    expect(SDK_VERSION).toBe('0.8.0');
+  it('ist 1.0.0 (stabile API)', () => {
+    expect(SDK_VERSION).toBe('1.0.0');
   });
 
   it('stimmt mit der Version in package.json überein', () => {
