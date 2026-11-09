@@ -578,6 +578,13 @@ details p { margin: 0 0 12px; max-width: 70ch; color: var(--text-soft); }
 .btn.danger { color: var(--blocked-fg); }
 
 /* Benachrichtigungen: Auswahlkarten und Optionen */
+.theme-upload { margin-bottom: 12px; }
+.theme-upload .btn { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.theme-tiles { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.theme-tile { display: flex; flex-direction: column; gap: 6px; padding: 12px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius-card); }
+.theme-tile-preview { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; }
+.theme-tile .btn { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; }
+.theme-tile-confirm { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .choice-group { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
 .choice { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 16px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius-card); cursor: pointer; transition: border-color 0.12s, box-shadow 0.12s; }
 .choice:hover { border-color: var(--line-dashed); }
