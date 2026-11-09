@@ -1,4 +1,4 @@
-import type { ShellProps } from '../theme/slots.js';
+import type { ShellProps } from '@nexus/theme-sdk';
 import { GooNav } from './goo/GooNav.js';
 
 // Standard-Layout: Seitenleiste mit Suche ganz oben, darunter Board-Auswahl, dann die Navigation und ganz unten die

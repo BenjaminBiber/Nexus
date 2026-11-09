@@ -19,7 +19,7 @@ import { useDisplayedTheme } from '../theme/useDisplayedTheme.js';
 import { DefaultShell } from './DefaultShell.js';
 import { SlotBoundary } from '../theme/SlotBoundary.js';
 import { useSlot } from '../theme/useSlot.js';
-import type { ShellParts } from '../theme/slots.js';
+import type { ShellParts } from '@nexus/theme-sdk';
 
 const LINKS: Array<[string, string, () => ReactNode]> = [
   ['board', 'Board', BoardIcon],

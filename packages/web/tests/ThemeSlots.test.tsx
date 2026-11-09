@@ -10,7 +10,7 @@ import { App } from '../src/App.js';
 import { ApiProvider } from '../src/api/ApiContext.js';
 import { BoardIcon, CogIcon, SettingsIcon } from '../src/components/NavIcons.js';
 import { ProgressRing } from '../src/components/ProgressRing.js';
-import type { ShellProps } from '../src/theme/slots.js';
+import type { ShellProps } from '@nexus/theme-sdk';
 import { fakeApi } from './helpers/fakeApi.js';
 
 afterEach(() => {

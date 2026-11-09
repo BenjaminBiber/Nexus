@@ -9,6 +9,7 @@ export default defineConfig({
     globalSetup: ['./vitest.globalSetup.ts'],
     include: [
       'packages/web/tests/**/*.test.{ts,tsx}',
+      'packages/theme-sdk/tests/**/*.test.{ts,tsx}',
       'packages/plugin/tests/**/*.test.ts',
       // Dazu die Einheitentests des Vertragstests (plain Node, deshalb .mjs)
       'contract/tests/**/*.test.mjs',

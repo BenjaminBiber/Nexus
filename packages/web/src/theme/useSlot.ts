@@ -1,5 +1,5 @@
 import { getTheme } from './registry.js';
-import type { ThemeSlots } from './slots.js';
+import type { ThemeSlots } from '@nexus/theme-sdk';
 import { useDisplayedTheme } from './useDisplayedTheme.js';
 
 // Komponente des angezeigten Themes für einen Slot; undefined heißt: Standard-Komponente nehmen

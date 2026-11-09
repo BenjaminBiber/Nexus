@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { SlotBoundary } from '../theme/SlotBoundary.js';
-import type { NavIconName } from '../theme/slots.js';
+import type { NavIconName } from '@nexus/theme-sdk';
 import { useDisplayedTheme } from '../theme/useDisplayedTheme.js';
 import { useSlot } from '../theme/useSlot.js';
 // Eingebaute Themes registrieren, damit ihre Symbole auch ohne App.tsx greifen
