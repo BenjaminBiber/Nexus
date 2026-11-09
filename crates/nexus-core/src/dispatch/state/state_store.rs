@@ -43,6 +43,11 @@ pub struct MergeEntry {
     pub wait_noted: bool,
     /// Ziel-Branch der Merge-Session
     pub target: Option<String>,
+    /// Commit des Ziel-Branches beim Start der Merge-Session; gegen ihn wird die Session
+    /// ausgewertet, denn das Ziel darf währenddessen weiterlaufen (andere Tickets werden gemergt)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub target_head: Option<String>,
     /// Der letzte Merge-Versuch hatte einen Konflikt, die Merge-Session durfte aber nicht starten
     /// (aus, Pause, außerhalb); bis sie starten darf, wird nicht erneut gemergt. „Erneut mergen“
     /// setzt den Merker zurück.

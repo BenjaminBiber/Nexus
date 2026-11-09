@@ -282,6 +282,10 @@ aufräumen (git merge --abort).",
         self.real.contains(root, ancestor, branch)
     }
 
+    fn head(&self, root: &Path, reference: &str) -> Result<String> {
+        self.real.head(root, reference)
+    }
+
     fn merged_earlier(&self, root: &Path, branch: &str, target: &str) -> Option<String> {
         self.real.merged_earlier(root, branch, target)
     }
