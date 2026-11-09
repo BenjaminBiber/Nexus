@@ -7,6 +7,7 @@ import { ThemeSettingsSection } from '../theme/ThemeSettingsSection.js';
 import { SettingsPanel, useSaveStatus } from './settings/SettingsPanel.js';
 import { SettingRow, SettingsSection } from './settings/SettingRow.js';
 import { SnippetsSection } from './settings/SnippetsSection.js';
+import { ThemeManager } from './settings/ThemeManager.js';
 
 const THEMES: Array<{ mode: ThemeMode; label: string; hint: string; icon: string }> = [
   { mode: 'system', label: 'System', hint: 'Folgt der Einstellung von Windows.', icon: 'M3 4h18v12H3zM8 20h8M12 16v4' },
@@ -25,7 +26,7 @@ export function AppearancePanel() {
   const api = useApi();
   const loaded = useAsync(() => api.getUserSettings(), [api]);
   // Installierte Themes; schlägt das Laden fehl, bleiben nur die eingebauten
-  const installed = useAsync(() => api.listThemes().catch(() => []), [api]);
+  const installed = useAsync(() => api.listThemes(), [api]);
   const builtin = new Set(THEMES.map((theme) => theme.mode));
   const themes = [
     ...THEMES,
@@ -47,6 +48,13 @@ export function AppearancePanel() {
   const choose = async (mode: ThemeMode) => {
     const saved = await save({ theme: mode });
     if (saved) applyTheme(saved.theme, installed.state.status === 'ready' ? installed.state.data : undefined);
+  };
+
+  // War das entfernte Theme aktiv, gilt danach „System“
+  const removed = async (id: string) => {
+    if (settings?.theme !== id) return;
+    const saved = await save({ theme: 'system' });
+    if (saved) applyTheme(saved.theme);
   };
 
   // Speichert die kompakte Ansicht und lässt ein offenes Board sofort nachziehen
@@ -71,6 +79,7 @@ export function AppearancePanel() {
           ))}
         </fieldset>
       </SettingsSection>
+      <ThemeManager installed={installed.state} onChanged={installed.reload} onRemoved={removed} />
       <ThemeSettingsSection run={run} />
       <SnippetsSection />
       <SettingsSection title="Board">
