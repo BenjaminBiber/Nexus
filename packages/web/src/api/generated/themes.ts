@@ -16,6 +16,11 @@ export type ManifestError = {
 field: string, message: string, };
 
 /**
+ * Eine Option einer Auswahl-Einstellung
+ */
+export type SelectOption = { value: string, label: string, };
+
+/**
  * Inhalt der `manifest.json` eines Theme-Pakets
  */
 export type ThemeManifest = { 
@@ -38,7 +43,11 @@ preview: string | null,
 /**
  * Namen der Slots, die das Theme ersetzt
  */
-slots: Array<string>, permissions: ThemePermissions, };
+slots: Array<string>, permissions: ThemePermissions, 
+/**
+ * Eigene Einstellungen des Themes, je Schlüssel (`^[a-zA-Z][a-zA-Z0-9_-]{0,39}$`)
+ */
+settingsSchema?: { [key in string]: ThemeSettingSpec }, };
 
 /**
  * Rechte, die ein Theme anfordert
@@ -49,3 +58,8 @@ export type ThemePermissions = {
  * Schema, Port und Pfad; `*.example.com` gibt Subdomains frei)
  */
 network: Array<string>, };
+
+/**
+ * Eine Einstellung eines Themes: Schalter (`boolean`) oder Auswahl (`select`)
+ */
+export type ThemeSettingSpec = { "type": "boolean", label: string, hint?: string, default: boolean, } | { "type": "select", label: string, hint?: string, options: Array<SelectOption>, default: string, };

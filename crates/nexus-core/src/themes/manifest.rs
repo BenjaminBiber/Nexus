@@ -2,7 +2,7 @@
 //! gesammelt (JSON-Feldname, bei Listen mit Index), damit die Oberfläche sie neben dem Feld
 //! zeigen kann.
 
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::fmt;
 use std::sync::LazyLock;
 
@@ -10,6 +10,8 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use ts_rs::TS;
+
+use crate::themes::settings_store::{is_valid_setting_key, MAX_THEME_SETTINGS};
 
 /// Erlaubte Zeichen einer Theme-ID
 pub(crate) static THEME_ID_PATTERN: LazyLock<Regex> =
@@ -70,6 +72,40 @@ pub struct ThemeManifest {
     pub slots: Vec<String>,
     #[serde(default)]
     pub permissions: ThemePermissions,
+    /// Eigene Einstellungen des Themes, je Schlüssel (`^[a-zA-Z][a-zA-Z0-9_-]{0,39}$`)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub settings_schema: Option<BTreeMap<String, ThemeSettingSpec>>,
+}
+
+/// Eine Einstellung eines Themes: Schalter (`boolean`) oder Auswahl (`select`)
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(tag = "type", rename_all = "lowercase")]
+#[ts(export, export_to = "themes.ts")]
+pub enum ThemeSettingSpec {
+    Boolean {
+        label: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        hint: Option<String>,
+        default: bool,
+    },
+    Select {
+        label: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        hint: Option<String>,
+        options: Vec<SelectOption>,
+        default: String,
+    },
+}
+
+/// Eine Option einer Auswahl-Einstellung
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "themes.ts")]
+pub struct SelectOption {
+    pub value: String,
+    pub label: String,
 }
 
 /// Ein Fehler des Manifests an einem Feld
@@ -138,6 +174,7 @@ struct Fields<'a> {
     slots: Vec<(usize, &'a str)>,
     /// Domains mit ihrem Index in der Liste
     network: Vec<(usize, &'a str)>,
+    settings_schema: Option<&'a BTreeMap<String, ThemeSettingSpec>>,
 }
 
 fn check_fields(fields: &Fields<'_>, errors: &mut Vec<ManifestError>) {
@@ -175,6 +212,70 @@ fn check_fields(fields: &Fields<'_>, errors: &mut Vec<ManifestError>) {
     for &(index, domain) in &fields.network {
         if let Some(message) = domain_problem(domain) {
             errors.push(error(format!("permissions.network[{index}]"), message));
+        }
+    }
+    if let Some(schema) = fields.settings_schema {
+        check_settings_schema(schema, errors);
+    }
+}
+
+/// Prüft die eigenen Einstellungen: Schlüssel, Anzahl, Label, Optionen und Default
+fn check_settings_schema(
+    schema: &BTreeMap<String, ThemeSettingSpec>,
+    errors: &mut Vec<ManifestError>,
+) {
+    if schema.len() > MAX_THEME_SETTINGS {
+        errors.push(error(
+            "settingsSchema",
+            format!("Ein Theme hat höchstens {MAX_THEME_SETTINGS} Einstellungen."),
+        ));
+    }
+    for (key, spec) in schema {
+        let field = format!("settingsSchema.{key}");
+        if !is_valid_setting_key(key) {
+            errors.push(error(
+                &field,
+                format!("Der Schlüssel „{key}“ muss mit a–z beginnen und darf nur a–z, 0–9, _ und - enthalten (höchstens 40 Zeichen)."),
+            ));
+        }
+        let label = match spec {
+            ThemeSettingSpec::Boolean { label, .. } | ThemeSettingSpec::Select { label, .. } => {
+                label
+            }
+        };
+        if label.trim().is_empty() {
+            errors.push(error(
+                format!("{field}.label"),
+                "Das Label darf nicht leer sein.",
+            ));
+        }
+        let ThemeSettingSpec::Select {
+            options, default, ..
+        } = spec
+        else {
+            continue;
+        };
+        if options.is_empty() {
+            errors.push(error(
+                format!("{field}.options"),
+                "Eine Auswahl braucht mindestens eine Option.",
+            ));
+            continue;
+        }
+        let mut seen = HashSet::new();
+        for (index, option) in options.iter().enumerate() {
+            if !seen.insert(option.value.as_str()) {
+                errors.push(error(
+                    format!("{field}.options[{index}]"),
+                    format!("Die Option „{}“ kommt mehrfach vor.", option.value),
+                ));
+            }
+        }
+        if !seen.contains(default.as_str()) {
+            errors.push(error(
+                format!("{field}.default"),
+                format!("Der Default „{default}“ ist keine der Optionen."),
+            ));
         }
     }
 }
@@ -260,6 +361,7 @@ pub fn validate_manifest(manifest: &ThemeManifest) -> Result<(), ManifestErrors>
             .enumerate()
             .map(|(index, domain)| (index, domain.as_str()))
             .collect(),
+        settings_schema: manifest.settings_schema.as_ref(),
     };
     let mut errors = Vec::new();
     check_fields(&fields, &mut errors);
@@ -324,6 +426,7 @@ pub fn parse_manifest(json: &str) -> Result<ThemeManifest, ManifestErrors> {
         }
         Some(_) => errors.push(error("permissions", "permissions muss ein Objekt sein.")),
     }
+    let settings_schema = settings_schema(object.get("settingsSchema"), &mut errors);
 
     check_fields(
         &Fields {
@@ -334,6 +437,7 @@ pub fn parse_manifest(json: &str) -> Result<ThemeManifest, ManifestErrors> {
             sdk_version,
             slots: slots.iter().map(|(i, s)| (*i, s.as_str())).collect(),
             network: network.iter().map(|(i, s)| (*i, s.as_str())).collect(),
+            settings_schema: settings_schema.as_ref(),
         },
         &mut errors,
     );
@@ -358,6 +462,7 @@ pub fn parse_manifest(json: &str) -> Result<ThemeManifest, ManifestErrors> {
                 permissions: ThemePermissions {
                     network: network.into_iter().map(|(_, s)| s).collect(),
                 },
+                settings_schema,
             })
         }
         // Fehlt ein Pflichtfeld, steht dazu schon ein Fehler in `errors`
@@ -367,7 +472,7 @@ pub fn parse_manifest(json: &str) -> Result<ThemeManifest, ManifestErrors> {
 
 /// Stellung eines Feldes in der Fehlerliste: wie im Manifest, stabil innerhalb eines Feldes
 fn field_rank(field: &str) -> usize {
-    const ORDER: [&str; 10] = [
+    const ORDER: [&str; 11] = [
         "id",
         "name",
         "version",
@@ -378,6 +483,7 @@ fn field_rank(field: &str) -> usize {
         "preview",
         "slots",
         "permissions",
+        "settingsSchema",
     ];
     let base = field.split(['[', '.']).next().unwrap_or(field);
     ORDER.iter().position(|f| *f == base).unwrap_or(0)
@@ -399,6 +505,37 @@ fn required_text<'a>(
             None
         }
     }
+}
+
+/// `settingsSchema` aus rohem JSON; ein Eintrag falscher Form wird je Schlüssel gemeldet und fällt weg
+fn settings_schema(
+    value: Option<&Value>,
+    errors: &mut Vec<ManifestError>,
+) -> Option<BTreeMap<String, ThemeSettingSpec>> {
+    let entries = match value {
+        None | Some(Value::Null) => return None,
+        Some(Value::Object(entries)) => entries,
+        Some(_) => {
+            errors.push(error(
+                "settingsSchema",
+                "settingsSchema muss ein Objekt sein.",
+            ));
+            return None;
+        }
+    };
+    let mut schema = BTreeMap::new();
+    for (key, entry) in entries {
+        match serde_json::from_value::<ThemeSettingSpec>(entry.clone()) {
+            Ok(spec) => {
+                schema.insert(key.clone(), spec);
+            }
+            Err(e) => errors.push(error(
+                format!("settingsSchema.{key}"),
+                format!("Die Einstellung muss type boolean oder select mit label und default haben: {e}"),
+            )),
+        }
+    }
+    Some(schema)
 }
 
 fn optional_text<'a>(
@@ -632,6 +769,72 @@ mod tests {
         assert_eq!(felder, vec!["slots[1]", "slots[2]", "slots[3]"]);
         assert!(fehler.errors()[0].message.contains("nicht leer"));
         assert!(fehler.errors()[1].message.contains("mehrfach"));
+    }
+
+    #[test]
+    fn eigene_einstellungen_schalter_und_auswahl() {
+        let schema = json!({
+            "sounds": { "type": "boolean", "label": "Sounds", "default": true },
+            "style": {
+                "type": "select", "label": "Stil", "hint": "Optik",
+                "options": [{ "value": "pixel", "label": "Pixel" }, { "value": "smooth", "label": "Weich" }],
+                "default": "pixel"
+            }
+        });
+        let manifest = parse_manifest(&mit(voll(), "settingsSchema", schema.clone())).unwrap();
+        let parsed = manifest.settings_schema.clone().unwrap();
+        assert_eq!(
+            parsed["sounds"],
+            ThemeSettingSpec::Boolean {
+                label: "Sounds".into(),
+                hint: None,
+                default: true
+            }
+        );
+        assert!(validate_manifest(&manifest).is_ok());
+        assert_eq!(
+            serde_json::to_value(&manifest).unwrap()["settingsSchema"],
+            schema
+        );
+        let ohne = parse_manifest(&voll().to_string()).unwrap();
+        assert!(ohne.settings_schema.is_none());
+        assert!(serde_json::to_value(&ohne)
+            .unwrap()
+            .get("settingsSchema")
+            .is_none());
+    }
+
+    #[test]
+    fn eigene_einstellungen_fehler_je_feld() {
+        let schema = json!({
+            "leer": { "type": "boolean", "label": " ", "default": true },
+            "ohne": { "type": "select", "label": "Ohne", "options": [], "default": "a" },
+            "doppelt": {
+                "type": "select", "label": "D",
+                "options": [{ "value": "a", "label": "A" }, { "value": "a", "label": "A2" }],
+                "default": "b"
+            },
+            "1falsch": { "type": "boolean", "label": "F", "default": false },
+            "art": { "type": "number", "label": "N", "default": 1 }
+        });
+        let json = mit(voll(), "settingsSchema", schema);
+        let mut fehler = felder(&json);
+        fehler.sort();
+        assert_eq!(
+            fehler,
+            vec![
+                "settingsSchema.1falsch",
+                "settingsSchema.art",
+                "settingsSchema.doppelt.default",
+                "settingsSchema.doppelt.options[1]",
+                "settingsSchema.leer.label",
+                "settingsSchema.ohne.options",
+            ]
+        );
+        assert_eq!(
+            felder(&mit(voll(), "settingsSchema", json!([]))),
+            vec!["settingsSchema"]
+        );
     }
 
     #[test]

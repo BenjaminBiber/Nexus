@@ -227,6 +227,11 @@ impl NexusHome {
         self.dir.join("snippets")
     }
 
+    /// Einstellungen der Themes je Theme-ID (`theme-settings.json`)
+    pub fn theme_settings_file(&self) -> PathBuf {
+        self.dir.join("theme-settings.json")
+    }
+
     /// Theme-Store des Nutzers (`repos.json`)
     pub fn store_dir(&self) -> PathBuf {
         self.dir.join("store")
@@ -440,6 +445,10 @@ mod tests {
         assert_eq!(home.sessions_file(), Path::new("h").join("sessions.json"));
         assert_eq!(home.favorites_file(), Path::new("h").join("favorites.json"));
         assert_eq!(home.settings_file(), Path::new("h").join("settings.json"));
+        assert_eq!(
+            home.theme_settings_file(),
+            Path::new("h").join("theme-settings.json")
+        );
         assert_eq!(home.accounts_file(), Path::new("h").join("accounts.json"));
         assert_eq!(home.accounts_dir(), Path::new("h").join("accounts"));
         assert_eq!(home.backups_dir(), Path::new("h").join("backups"));
