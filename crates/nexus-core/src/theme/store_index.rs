@@ -29,6 +29,9 @@ pub const MAX_INDEX_ENTRIES: usize = 500;
 /// Höchstlänge einer Beschreibung in Zeichen
 pub const MAX_DESCRIPTION_CHARS: usize = 2000;
 
+/// Höchstlänge einer Signatur (Inhalt der `.minisig`-Datei) in Bytes
+pub const MAX_SIGNATURE_BYTES: usize = 4096;
+
 /// Fehlercode: Zeitlimit überschritten
 pub const STORE_INDEX_TIMEOUT: &str = "store-index-timeout";
 /// Fehlercode: keine Verbindung (Verbindung, DNS)
@@ -54,6 +57,9 @@ pub struct StoreIndexEntry {
     pub preview: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+    /// Inhalt der `.minisig`-Datei des Pakets (optional)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signature: Option<String>,
     /// Ob `sdkVersion` zur aktuellen SDK-Version passt
     pub compatible: bool,
 }
@@ -153,6 +159,10 @@ fn check_entry(item: &Value, sdk: &semver::Version) -> Result<StoreIndexEntry, S
     if description.is_some_and(|text| text.chars().count() > MAX_DESCRIPTION_CHARS) {
         return Err("description ist länger als 2000 Zeichen.".into());
     }
+    let signature = optional(fields, "signature")?;
+    if signature.is_some_and(|text| text.len() > MAX_SIGNATURE_BYTES) {
+        return Err("signature ist länger als 4 KiB.".into());
+    }
     Ok(StoreIndexEntry {
         id: id.into(),
         name: name.into(),
@@ -162,6 +172,7 @@ fn check_entry(item: &Value, sdk: &semver::Version) -> Result<StoreIndexEntry, S
         sha256: sha256.to_ascii_lowercase(),
         preview: preview.map(str::to_string),
         description: description.map(str::to_string),
+        signature: signature.map(str::to_string),
         compatible: range.matches(sdk),
     })
 }
@@ -183,7 +194,7 @@ fn optional<'a>(fields: &'a Map<String, Value>, key: &str) -> Result<Option<&'a 
 }
 
 /// `https`, `http` nur für `localhost`/`127.0.0.1`, ohne Zugangsdaten
-fn check_url(raw: &str) -> Result<(), &'static str> {
+pub fn check_url(raw: &str) -> Result<(), &'static str> {
     let url = Url::parse(raw).map_err(|_| "ist keine gültige Adresse.")?;
     let host = url.host_str().unwrap_or_default();
     if host.is_empty() {
@@ -279,6 +290,20 @@ mod tests {
         assert!(parsed.skipped[0].message.contains("name"));
         assert_eq!(parsed.skipped[1].id.as_deref(), Some("Gross"));
         assert!(parsed.skipped[3].message.contains("https://"));
+    }
+
+    #[test]
+    fn signatur_ist_optional_und_begrenzt() {
+        let mut signiert = eintrag("ozean");
+        signiert["signature"] = json!("untrusted comment: x\nRUQ=\n");
+        let mut zu_lang = eintrag("wald");
+        zu_lang["signature"] = json!("a".repeat(MAX_SIGNATURE_BYTES + 1));
+        let parsed = parse(json!([signiert, zu_lang, eintrag("berg")]));
+        assert_eq!(parsed.entries.len(), 2);
+        assert!(parsed.entries[0].signature.is_some());
+        assert_eq!(parsed.entries[1].signature, None);
+        assert_eq!(parsed.skipped.len(), 1);
+        assert!(parsed.skipped[0].message.contains("signature"));
     }
 
     #[test]

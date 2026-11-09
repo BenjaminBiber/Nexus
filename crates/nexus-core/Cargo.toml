@@ -29,10 +29,16 @@ tokio = { workspace = true }
 # Adressen der Store-Repos prüfen
 url = { workspace = true }
 ts-rs = { workspace = true }
+# Optionale Signatur der Theme-Pakete aus dem Store prüfen
+minisign-verify = { workspace = true }
+# Nur mit `testing`: Testsignaturen für Store-Pakete erzeugen
+ed25519-dalek = { workspace = true, optional = true }
+blake2 = { workspace = true, optional = true }
+base64 = { workspace = true, optional = true }
 
 # Die Vertrags-Makros und die Fixtures für andere Crates; nur für Tests gedacht.
 [features]
-testing = []
+testing = ["dep:ed25519-dalek", "dep:blake2", "dep:base64"]
 
 # Prüft, ob ein fremder Prozess noch läuft (verwaiste Sperrdatei), ohne eigenes `unsafe`
 [target.'cfg(unix)'.dependencies]
@@ -46,6 +52,9 @@ win32job = { workspace = true }
 [dev-dependencies]
 tempfile = { workspace = true }
 tokio = { workspace = true }
+ed25519-dalek = { workspace = true }
+blake2 = { workspace = true }
+base64 = { workspace = true }
 
 # Die Verträge laufen gegen die Speicher-Datenbank; sie brauchen das Merkmal `testing`.
 [[test]]

@@ -8,7 +8,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get};
 use axum::Router;
-use nexus_core::theme::store_repos::STORE_REPO_INVALID;
+use nexus_core::theme::store_repos::{STORE_REPO_INVALID, STORE_REPO_KEY_INVALID};
 use nexus_core::HarnessError;
 use serde_json::Value;
 
@@ -35,12 +35,21 @@ async fn list(State(state): State<Arc<AppState>>) -> ApiResult<Response> {
     Ok(json(&state.store_repos.list()))
 }
 
-/// Trägt ein Repo ein (201); Körper `{url}`
+/// Trägt ein Repo ein (201); Körper `{url, publicKey?}`
 async fn add(State(state): State<Arc<AppState>>, JsonBody(body): JsonBody) -> ApiResult<Response> {
     let Some(url) = body.get("url").and_then(Value::as_str) else {
         return Err(HarnessError::new(STORE_REPO_INVALID, "url muss ein Text sein.").into());
     };
-    let repo = state.store_repos.add(url)?;
+    let public_key = match body.get("publicKey") {
+        None | Some(Value::Null) => None,
+        Some(Value::String(key)) => Some(key.as_str()),
+        Some(_) => {
+            return Err(
+                HarnessError::new(STORE_REPO_KEY_INVALID, "publicKey muss ein Text sein.").into(),
+            )
+        }
+    };
+    let repo = state.store_repos.add(url, public_key)?;
     Ok((StatusCode::CREATED, json(&repo)).into_response())
 }
 

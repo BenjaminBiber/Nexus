@@ -1,0 +1,23 @@
+{
+  "title": "Theme aus dem Store installieren: deterministische Fehlerfälle",
+  "steps": [
+    {
+      "name": "unbekanntes Repo",
+      "method": "POST",
+      "path": "/api/themes/store/install",
+      "body": { "repoId": "unbekannt", "id": "ozean" }
+    },
+    {
+      "name": "fehlende Felder",
+      "method": "POST",
+      "path": "/api/themes/store/install",
+      "body": { "repoId": "unbekannt" }
+    },
+    {
+      "name": "ungültiger Repo-Schlüssel",
+      "method": "POST",
+      "path": "/api/themes/store/repos",
+      "body": { "url": "https://example.com/nexus-themes.json", "publicKey": "RWkaputt" }
+    }
+  ]
+}

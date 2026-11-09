@@ -303,6 +303,16 @@ export class ApiClient {
     await this.request('DELETE', `/api/snippets/${encodeURIComponent(id)}`, {});
   }
 
+  // Gespeicherte eigene Einstellungen eines Themes; {} ohne Eintrag
+  getThemeSettings(id: string): Promise<Record<string, boolean | string>> {
+    return this.request('GET', `/api/themes/${encodeURIComponent(id)}/settings`);
+  }
+
+  // Ersetzt die eigenen Einstellungen eines Themes
+  saveThemeSettings(id: string, values: Record<string, boolean | string>): Promise<Record<string, boolean | string>> {
+    return this.request('PUT', `/api/themes/${encodeURIComponent(id)}/settings`, values);
+  }
+
   // Einstellung des Telegram-Bots; Geheimnisse kommen nur als Maske zurück
   getTelegramConfig(): Promise<TelegramConfig> {
     return this.request('GET', '/api/telegram/config');

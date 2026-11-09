@@ -24,6 +24,7 @@ function fakeHost(): ThemeHost {
     },
     usage: { enabled: true, available: true, reason: null, fiveHour: { percent: 42, resetsAt: null }, sevenDay: null },
     settings: { values: { theme: 'dark', claudeUsage: true, compactCards: false, heroImages: true }, loading: false, update: vi.fn(async () => {}) },
+    themeSettings: { values: {}, loading: false, set: vi.fn(async () => {}) },
     colorScheme: { scheme: 'dark', themeId: 'dark', mode: 'dark' },
     navigate: vi.fn(),
     openSearch: vi.fn(),
