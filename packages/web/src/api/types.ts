@@ -277,7 +277,7 @@ export interface SettingsDto { project: { id: string; name: string; path: string
 export type NotificationMode = 'off' | 'browser' | 'windows';
 
 /** Eingebaute Themes in fester Reihenfolge (wie `BUILTIN_THEME_IDS` in Rust) */
-export const BUILTIN_THEME_IDS = ['system', 'light', 'dark', 'signal', 'pastel', 'win95'] as const;
+export const BUILTIN_THEME_IDS = ['system', 'light', 'dark', 'pastel', 'win95'] as const;
 export type BuiltinThemeId = (typeof BUILTIN_THEME_IDS)[number];
 
 /** Gewähltes Theme als ID: eingebaut oder installiert (`~/.nexus/themes/<id>/`); eine unbekannte ID gilt als „system“ */

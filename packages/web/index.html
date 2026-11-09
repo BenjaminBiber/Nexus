@@ -9,7 +9,7 @@
       // Farbschema vor dem ersten Zeichnen setzen (Wert aus theme.ts/applyTheme), damit kein heller Blitz entsteht
       (function () {
         // Installierte Themes: theme.css-URL und Startfarbe aus dem Cache (theme.ts: THEME_CSS_CACHE_KEY, THEME_START_COLOR_KEY)
-        var builtin = ["system", "light", "dark", "signal", "pastel", "win95"];
+        var builtin = ["system", "light", "dark", "pastel", "win95"];
         var mode = "system";
         var css = null;
         var color = null;
@@ -41,7 +41,6 @@
       /* Startanimation: liegt über der Oberfläche, bis das Video einmal durchgelaufen ist. Hintergründe = --bg je Schema (variables.css) */
       #start-anim { position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center; justify-content: center; background: var(--start-color, #f7f7f8); transition: opacity 0.3s ease; }
       [data-theme="dark"] #start-anim { background: #0c0c0e; }
-      [data-theme="signal"] #start-anim { background: #f4f6f8; }
       [data-theme="pastel"] #start-anim { background: #f3eadf; }
       [data-theme="win95"] #start-anim { background: #c0c0c0; }
       #start-anim video { width: min(480px, 60vw); height: auto; }

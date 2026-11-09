@@ -35,16 +35,13 @@ describe('Farbschema', () => {
     expect([...win95.keys()].filter((name) => !light.has(name) && !name.startsWith('--w95-'))).toEqual([]);
   });
 
-  it('ändert in den Schemata „Signal“ und „Pastell“ nur Variablen, die das helle Schema kennt', () => {
+  it('ändert im Schema „Pastell“ nur Variablen, die das helle Schema kennt', () => {
     const css = styles('variables.css');
     const light = variables(css, ':root {');
-    for (const theme of ['signal', 'pastel']) {
-      const own = variables(css, `:root[data-theme='${theme}'] {`);
-      expect(own.size, theme).toBeGreaterThan(20);
-      // --side-* gibt es nur in der dunklen Seitenleiste von „Signal“, --paper-* nur im Notizbuch-Stil von „Pastell“ (themes.css)
-      const ownPrefix = theme === 'signal' ? '--side-' : '--paper-';
-      expect([...own.keys()].filter((name) => !light.has(name) && !name.startsWith(ownPrefix)), theme).toEqual([]);
-    }
+    const own = variables(css, ":root[data-theme='pastel'] {");
+    expect(own.size).toBeGreaterThan(20);
+    // --paper-* gibt es nur im Notizbuch-Stil von „Pastell“ (themes.css)
+    expect([...own.keys()].filter((name) => !light.has(name) && !name.startsWith('--paper-'))).toEqual([]);
   });
 
   it('verwendet außerhalb von variables.css keine fest codierten Farben', () => {

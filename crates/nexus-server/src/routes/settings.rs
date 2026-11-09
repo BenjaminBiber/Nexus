@@ -160,7 +160,7 @@ fn merge_user_settings(
             .map(ThemeMode::from)
             .ok_or_else(|| {
                 settings_invalid(
-                    "theme muss ein eingebautes (system, light, dark, signal, pastel, win95) oder installiertes Theme sein.",
+                    "theme muss ein eingebautes (system, light, dark, pastel, win95) oder installiertes Theme sein.",
                 )
             })?;
     }
