@@ -135,6 +135,8 @@ pub struct TestServerOptions {
     pub theme_fetch_max_bytes: Option<u64>,
     /// Größenlimit eines Archivs beim Abruf einer Einzeldatei; ohne Angabe der Standard
     pub theme_fetch_max_archive_bytes: Option<u64>,
+    /// Zeitlimit je Store-Repo; ohne Angabe der Standard
+    pub store_index_timeout: Option<std::time::Duration>,
 }
 
 /// Startet nichts und liefert keine Prozessnummer; so startet in Tests nie ein echter Worker
@@ -197,6 +199,9 @@ impl TestServer {
         config.idea_interpreter = options.idea_interpreter;
         if let Some(max) = options.theme_fetch_max_archive_bytes {
             config.theme_fetch_max_archive_bytes = max;
+        }
+        if let Some(timeout) = options.store_index_timeout {
+            config.store_index_timeout = timeout;
         }
         if let Some(max) = options.theme_fetch_max_bytes {
             config.theme_fetch_max_bytes = max;

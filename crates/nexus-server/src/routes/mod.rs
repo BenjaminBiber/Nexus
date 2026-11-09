@@ -26,6 +26,7 @@ pub mod snippets;
 pub mod spec;
 pub mod speech;
 pub mod static_files;
+pub mod store_index;
 pub mod store_repos;
 pub mod telegram;
 pub mod theme_fetch;
@@ -73,6 +74,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(session_detail::routes())
         .merge(favorites::routes())
         .merge(snippets::routes())
+        .merge(store_index::routes())
         .merge(store_repos::routes())
         .merge(usage::routes())
         .merge(accounts::routes())

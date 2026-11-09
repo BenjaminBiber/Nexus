@@ -85,6 +85,8 @@ pub struct ServerConfig {
     pub theme_fetch_max_bytes: u64,
     /// Größenlimit eines Archivs, aus dem der Asset-Proxy eine Einzeldatei liefert
     pub theme_fetch_max_archive_bytes: u64,
+    /// Zeitlimit je Store-Repo beim Laden der Index-Dateien
+    pub store_index_timeout: std::time::Duration,
 }
 
 /// Woher der Dispatcher seine Claude-Accounts nimmt
@@ -162,6 +164,7 @@ impl ServerConfig {
             idea_interpreter: None,
             theme_fetch_max_bytes: crate::theme_proxy::DEFAULT_MAX_BYTES,
             theme_fetch_max_archive_bytes: crate::theme_proxy::DEFAULT_MAX_ARCHIVE_BYTES,
+            store_index_timeout: crate::store_index::DEFAULT_TIMEOUT,
         }
     }
 }
