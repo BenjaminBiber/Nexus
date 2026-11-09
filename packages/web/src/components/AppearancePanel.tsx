@@ -5,6 +5,7 @@ import { useAsync } from '../hooks/useAsync.js';
 import { applyTheme } from '../theme/theme.js';
 import { SettingsPanel, useSaveStatus } from './settings/SettingsPanel.js';
 import { SettingRow, SettingsSection } from './settings/SettingRow.js';
+import { SnippetsSection } from './settings/SnippetsSection.js';
 
 const THEMES: Array<{ mode: ThemeMode; label: string; hint: string; icon: string }> = [
   { mode: 'system', label: 'System', hint: 'Folgt der Einstellung von Windows.', icon: 'M3 4h18v12H3zM8 20h8M12 16v4' },
@@ -69,6 +70,7 @@ export function AppearancePanel() {
           ))}
         </fieldset>
       </SettingsSection>
+      <SnippetsSection />
       <SettingsSection title="Board">
         <SettingRow label="Kompakte Ticket-Kacheln" hint="Tags eingeklappt, Agent nur als Claude-Logo.">
           <input
