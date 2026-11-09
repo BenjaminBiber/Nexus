@@ -56,6 +56,16 @@ describe('main.js des aktiven Themes', () => {
     expect(screen.getByText('Ozean-Fortschritt')).toBeTruthy();
   });
 
+  it('importiert in der App über die Server-Adresse, im Browser relativ', async () => {
+    const app = deps();
+    await loadActiveThemeModule({ ...app, base: 'http://127.0.0.1:4710' });
+    expect(app.importModule).toHaveBeenCalledWith('http://127.0.0.1:4710/themes/ocean/main.js');
+    unregisterTheme('ocean');
+    const browser = deps();
+    await loadActiveThemeModule(browser);
+    expect(browser.importModule).toHaveBeenCalledWith('/themes/ocean/main.js');
+  });
+
   it('lädt bei unpassender sdkVersion nichts und nennt verlangte und vorhandene Version', async () => {
     const d = deps({ fetchManifest: vi.fn(async () => ({ ...manifest, sdkVersion: '^9' })) });
     const result = await loadActiveThemeModule(d);

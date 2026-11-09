@@ -1068,6 +1068,30 @@ mod tests {
         assert!(!csp.contains("unsafe-eval"), "{csp}");
     }
 
+    // Theme-Module (`main.js`) dürfen nur vom Pfad /themes/ des lokalen Servers kommen
+    #[test]
+    fn die_csp_laesst_theme_module_nur_vom_lokalen_server_zu() {
+        let datei: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let csp = datei["app"]["security"]["csp"].as_str().unwrap();
+        let script_src: Vec<&str> = csp
+            .split(';')
+            .map(str::trim)
+            .filter(|d| d.split_whitespace().next() == Some("script-src"))
+            .collect();
+        assert_eq!(
+            script_src,
+            ["script-src 'self' http://127.0.0.1:*/themes/"],
+            "{csp}"
+        );
+        assert!(!script_src[0].contains("unsafe-"), "{csp}");
+        // connect-src bleibt wie zuvor
+        assert!(
+            csp.contains("connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost;"),
+            "{csp}"
+        );
+    }
+
     // Der Web-Server liefert die Oberfläche mit derselben CSP aus; die Konfig bleibt die Quelle
     #[test]
     fn die_csp_des_web_servers_gleicht_der_der_app() {
