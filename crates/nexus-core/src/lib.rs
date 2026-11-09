@@ -29,6 +29,7 @@ pub mod telegram;
 #[cfg(any(test, feature = "testing"))]
 pub mod testing;
 pub mod text;
+pub mod theme;
 pub mod workflow;
 pub mod worktrees;
 

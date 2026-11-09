@@ -217,6 +217,11 @@ impl NexusHome {
         self.dir.join("inbox-order.json")
     }
 
+    /// CSS-Schnipsel des Nutzers (`<id>.css` und `snippets.json`)
+    pub fn snippets_dir(&self) -> PathBuf {
+        self.dir.join("snippets")
+    }
+
     /// Ordner des Dispatchers
     pub fn dispatch_dir(&self) -> PathBuf {
         self.dir.join("dispatch")
