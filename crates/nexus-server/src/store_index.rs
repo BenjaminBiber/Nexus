@@ -5,7 +5,7 @@
 use std::time::Duration;
 
 use nexus_core::theme::store_index::{
-    parse_index, theme_sdk_version, SkippedEntry, StoreIndexEntry, MAX_INDEX_BYTES,
+    parse_index, theme_sdk_version, ParsedIndex, SkippedEntry, StoreIndexEntry, MAX_INDEX_BYTES,
     STORE_INDEX_HTTP, STORE_INDEX_TIMEOUT, STORE_INDEX_TOO_LARGE, STORE_INDEX_UNREACHABLE,
 };
 use nexus_core::theme::StoreRepo;
@@ -108,6 +108,17 @@ impl StoreIndexLoader {
             entries,
             repos: statuses,
         }
+    }
+
+    /// Lädt und prüft die Index-Datei eines einzelnen Repos
+    pub async fn load_repo(&self, repo: &StoreRepo) -> Result<ParsedIndex, HarnessError> {
+        let bytes = self.load(&repo.url).await?;
+        parse_index(&bytes, &theme_sdk_version())
+    }
+
+    /// Der gemeinsame HTTP-Client (Weiterleitungen begrenzt)
+    pub fn client(&self) -> &reqwest::Client {
+        &self.client
     }
 
     /// Lädt eine Index-Datei; Fehler mit Code

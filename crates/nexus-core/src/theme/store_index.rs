@@ -194,7 +194,7 @@ fn optional<'a>(fields: &'a Map<String, Value>, key: &str) -> Result<Option<&'a 
 }
 
 /// `https`, `http` nur für `localhost`/`127.0.0.1`, ohne Zugangsdaten
-fn check_url(raw: &str) -> Result<(), &'static str> {
+pub fn check_url(raw: &str) -> Result<(), &'static str> {
     let url = Url::parse(raw).map_err(|_| "ist keine gültige Adresse.")?;
     let host = url.host_str().unwrap_or_default();
     if host.is_empty() {

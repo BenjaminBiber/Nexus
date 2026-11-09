@@ -260,7 +260,9 @@ mod tests {
     fn erkennt_dubletten_nach_normalisierung() {
         let (store, _dir) = store();
         store.add("https://Example.COM/i.json", None).unwrap();
-        let error = store.add("  HTTPS://example.com/i.json ", None).unwrap_err();
+        let error = store
+            .add("  HTTPS://example.com/i.json ", None)
+            .unwrap_err();
         assert_eq!(error.code(), Some(STORE_REPO_EXISTS));
         assert_eq!(store.list().len(), 1);
         assert_eq!(store.list()[0].url, "https://example.com/i.json");

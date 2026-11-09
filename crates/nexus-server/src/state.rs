@@ -90,6 +90,8 @@ pub struct AppState {
     pub store_repos: StoreRepoStore,
     /// Lädt die Index-Dateien der Store-Repos (`/api/themes/store/index`)
     pub store_index: crate::store_index::StoreIndexLoader,
+    /// Lädt Theme-Pakete aus dem Store (`/api/themes/store/install`)
+    pub store_download: crate::store_install::StoreDownloader,
     /// Asset-Proxy der Themes (`/api/themes/{id}/fetch`)
     pub theme_proxy: crate::theme_proxy::ThemeProxy,
     /// Titel und Status von Tickets für Sessions, Favoriten und Meldungen (mit Zeitlimit)
@@ -307,6 +309,11 @@ impl AppState {
             config.home.clone(),
             config.clock.clone(),
         ));
+        let store_index = crate::store_index::StoreIndexLoader::new(config.store_index_timeout);
+        let store_download = crate::store_install::StoreDownloader::new(
+            store_index.client().clone(),
+            config.store_download_timeout,
+        );
         Ok(Arc::new_cyclic(|weak: &std::sync::Weak<AppState>| Self {
             home: config.home.clone(),
             guard: RequestGuard::new(config.port),
@@ -329,7 +336,8 @@ impl AppState {
             favorites,
             snippets: SnippetStore::with_clock(config.home.clone(), config.clock.clone()),
             store_repos: StoreRepoStore::with_clock(config.home.clone(), config.clock.clone()),
-            store_index: crate::store_index::StoreIndexLoader::new(config.store_index_timeout),
+            store_index,
+            store_download,
             theme_proxy: crate::theme_proxy::ThemeProxy::new(config.theme_fetch_max_bytes)
                 .with_archive_limit(config.theme_fetch_max_archive_bytes),
             ticket_info: TicketInfoLookup::new(ticket_summaries(weak)),
