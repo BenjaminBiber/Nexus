@@ -15,6 +15,11 @@ use ts_rs::TS;
 pub(crate) static THEME_ID_PATTERN: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-z0-9-]{2,40}$").unwrap());
 
+/// Ob `id` eine gültige Theme-ID ist (`^[a-z0-9-]{2,40}$`)
+pub fn is_valid_theme_id(id: &str) -> bool {
+    THEME_ID_PATTERN.is_match(id)
+}
+
 /// Erlaubte Form eines Slot-Namens
 static SLOT_NAME_PATTERN: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-z0-9][a-z0-9.-]*$").unwrap());
@@ -692,5 +697,13 @@ mod tests {
             fehler.errors()[0].message,
             "Das Manifest muss ein JSON-Objekt sein."
         );
+    }
+
+    #[test]
+    fn prueft_theme_ids() {
+        assert!(is_valid_theme_id("nacht-blau"));
+        assert!(!is_valid_theme_id("a"));
+        assert!(!is_valid_theme_id("Nacht"));
+        assert!(!is_valid_theme_id(".."));
     }
 }
