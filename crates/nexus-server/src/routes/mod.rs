@@ -28,6 +28,7 @@ pub mod speech;
 pub mod static_files;
 pub mod telegram;
 pub mod theme_fetch;
+pub mod theme_packages;
 pub mod themes;
 pub mod usage;
 pub mod workflow;
@@ -80,6 +81,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(speech::routes())
         .merge(telegram::routes())
         .merge(themes::routes())
+        .merge(theme_packages::routes())
         .merge(theme_fetch::routes())
         .fallback(static_or_not_found)
         .layer(middleware::from_fn_with_state(
