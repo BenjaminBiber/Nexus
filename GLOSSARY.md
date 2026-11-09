@@ -99,3 +99,7 @@ _Avoid_: Skin, Design (für das Paket)
 **Slot**:
 Eine Stelle der Oberfläche, die ein Theme durch eine eigene Komponente ersetzen darf (z. B. `Shell`, `NavIcon`, `Progress`); ohne Ersatz gilt die Standard-Komponente.
 _Avoid_: Hook, Erweiterungspunkt
+
+**Theme-SDK**:
+Das Workspace-Paket `@nexus/theme-sdk` (`packages/theme-sdk`); einzige Quelle der Slot-Typen (`ThemeDefinition`, `ThemeSlots`, `ShellProps` u. a.) und der Konstante `SDK_VERSION`, auf die sich `sdkVersion` im Manifest eines Themes bezieht.
+_Avoid_: Theme-API

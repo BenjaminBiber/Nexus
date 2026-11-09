@@ -1,4 +1,4 @@
-import type { ThemeDefinition } from './slots.js';
+import type { ThemeDefinition } from '@nexus/theme-sdk';
 
 const themes = new Map<string, ThemeDefinition>();
 
