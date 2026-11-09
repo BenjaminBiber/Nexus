@@ -108,7 +108,7 @@ export function AppShell() {
   return (
     <LiveProvider pid={pid} key={pid}>
       <BoardProjectProvider>
-        <NexusThemeHost pid={pid} parts={parts}>
+        <NexusThemeHost pid={pid} parts={parts} openSearch={openSearch}>
         <OpenSearchContext.Provider value={openSearch}>
         <SessionNotifier pid={pid} />
         <SetupPrompts />

@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { ThemeHostProvider, useBoards, useColorScheme, useNav, useNavigate, useSettings, useUsage } from '@nexus/theme-sdk';
+import { ThemeHostProvider, useBoards, useColorScheme, useNav, useNavigate, useOpenSearch, useSettings, useUsage } from '@nexus/theme-sdk';
 import type { ThemeHost } from '@nexus/theme-sdk';
 
 afterEach(cleanup);
@@ -26,6 +26,7 @@ function fakeHost(): ThemeHost {
     settings: { values: { theme: 'dark', claudeUsage: true, compactCards: false, heroImages: true }, loading: false, update: vi.fn(async () => {}) },
     colorScheme: { scheme: 'dark', themeId: 'dark', mode: 'dark' },
     navigate: vi.fn(),
+    openSearch: vi.fn(),
     parts: { search: null, boardSwitcher: null, usage: null, navItems: {}, outlet: null, connection: null, status: null },
   };
 }
@@ -95,6 +96,17 @@ describe('Hooks des SDK', () => {
     expect(host.navigate).toHaveBeenCalledWith('/p/p1/docs');
   });
 
+  it('useOpenSearch öffnet über den Host die Suche', () => {
+    const host = fakeHost();
+    function Find() {
+      const openSearch = useOpenSearch();
+      return <button onClick={openSearch}>suchen</button>;
+    }
+    render_(host, <Find />);
+    fireEvent.click(screen.getByRole('button', { name: 'suchen' }));
+    expect(host.openSearch).toHaveBeenCalled();
+  });
+
   it.each([
     ['useNav', useNav],
     ['useBoards', useBoards],
@@ -102,6 +114,7 @@ describe('Hooks des SDK', () => {
     ['useSettings', useSettings],
     ['useColorScheme', useColorScheme],
     ['useNavigate', useNavigate],
+    ['useOpenSearch', useOpenSearch],
   ] as const)('%s wirft ohne Host-Provider einen klaren Fehler', (name, hook) => {
     function Probe() {
       hook();

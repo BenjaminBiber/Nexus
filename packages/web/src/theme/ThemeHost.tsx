@@ -67,9 +67,9 @@ function useHostSettings(): SettingsState {
   return useMemo(() => ({ values, loading: values === null, update }), [values, update]);
 }
 
-// Stellt den Themes über die Hooks des SDK Navigation, Boards, Verbrauch, Einstellungen, Farbschema, Routenwechsel
+// Stellt den Themes über die Hooks des SDK Navigation, Boards, Verbrauch, Einstellungen, Farbschema, Routenwechsel, Suche
 // und die fertigen Bausteine des Rahmens bereit; braucht BoardProjectProvider, Router und ApiProvider darüber
-export function NexusThemeHost({ pid, parts, children }: { pid: string; parts: ShellParts; children: ReactNode }) {
+export function NexusThemeHost({ pid, parts, openSearch, children }: { pid: string; parts: ShellParts; openSearch: () => void; children: ReactNode }) {
   const routerNavigate = useNavigate();
   const { pathname } = useLocation();
   const context = useBoardProject();
@@ -106,8 +106,8 @@ export function NexusThemeHost({ pid, parts, children }: { pid: string; parts: S
   );
   const navigate = useCallback((to: string) => routerNavigate(to), [routerNavigate]);
   const host = useMemo<ThemeHost>(
-    () => ({ nav, boards, usage, settings, colorScheme, navigate, parts }),
-    [nav, boards, usage, settings, colorScheme, navigate, parts],
+    () => ({ nav, boards, usage, settings, colorScheme, navigate, openSearch, parts }),
+    [nav, boards, usage, settings, colorScheme, navigate, openSearch, parts],
   );
   return <ThemeHostProvider value={host}>{children}</ThemeHostProvider>;
 }

@@ -18,6 +18,7 @@ function fakeHost(): ThemeHost {
     settings: { values: null, loading: true, update: vi.fn(async () => {}) },
     colorScheme: { scheme: 'dark', themeId: 'dark', mode: 'dark' },
     navigate: vi.fn(),
+    openSearch: vi.fn(),
     parts: {
       search: <span>teil-suche</span>,
       boardSwitcher: <span>teil-board</span>,
@@ -62,6 +63,15 @@ describe('NavLink', () => {
   it('rendert mit children als Funktion ein eigenes Aussehen', () => {
     render_(fakeHost(), <NavLink id="board">{(item) => <b>{`eigen:${item.label}`}</b>}</NavLink>);
     expect(screen.getByRole('link', { name: 'eigen:Board' })).toBeTruthy();
+  });
+
+  it('reicht role durch und ruft onClick vor dem Routenwechsel', () => {
+    const host = fakeHost();
+    const onClick = vi.fn();
+    render_(host, <NavLink id="inbox" role="menuitem" onClick={onClick} />);
+    fireEvent.click(screen.getByRole('menuitem', { name: /Meine Aufgaben/ }));
+    expect(onClick).toHaveBeenCalled();
+    expect(host.navigate).toHaveBeenCalledWith('/p/p1/inbox');
   });
 
   it('rendert bei unbekannter ID nichts', () => {

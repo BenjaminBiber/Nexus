@@ -1,21 +1,17 @@
-import { useContext, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { BoardProjectSwitcher } from '../BoardProjectSwitcher.js';
-import { ClaudeUsageMeter } from '../ClaudeUsageMeter.js';
-import { ConnectionBadge } from '../ConnectionBadge.js';
-import { OpenSearchContext } from '../GlobalSearchButton.js';
-import { BoardIcon, CogIcon, DashboardIcon, GuideIcon, SearchIcon, SessionsIcon } from '../NavIcons.js';
-import { sectionTitle } from '../sectionTitle.js';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { BoardSwitcher, NavLink, UsageMeter, useNav, useOpenSearch, type NavIconName, type ShellProps } from '@nexus/theme-sdk';
+import { WIN95_NAV_ICONS, Win95Icon } from './Win95Icons.js';
+import { windowTitle } from './sectionTitles.js';
 
 /** Schlüssel im localStorage: Fenster maximiert (Standard) oder als Fenster auf dem Desktop */
 export const WIN95_MAXIMIZED_KEY = 'harness-w95-maximized';
 
-const START_LINKS: Array<[string, string, () => ReactNode]> = [
-  ['board', 'Board', BoardIcon],
-  ['dashboard', 'Dashboard', DashboardIcon],
-  ['sessions', 'Sessions', SessionsIcon],
-  ['guide', 'Anleitung', GuideIcon],
-  ['settings', 'Einstellungen', CogIcon],
+const START_LINKS: Array<[NavIconName, string]> = [
+  ['board', 'Board'],
+  ['dashboard', 'Dashboard'],
+  ['sessions', 'Sessions'],
+  ['guide', 'Anleitung'],
+  ['settings', 'Einstellungen'],
 ];
 
 // Maximiert-Merker lesen (ohne localStorage: maximiert)
@@ -61,9 +57,9 @@ function AppIcon() {
 }
 
 // Startmenü über dem Start-Knopf: blaue Seitenleiste, Bereiche der Harness und „Suchen“. Pfeiltasten wandern, Esc schließt.
-function StartMenu({ pid, onClose }: { pid: string; onClose: (focusStart: boolean) => void }) {
+function StartMenu({ active, onClose }: { active?: NavIconName; onClose: (focusStart: boolean) => void }) {
   const menu = useRef<HTMLDivElement>(null);
-  const openSearch = useContext(OpenSearchContext);
+  const openSearch = useOpenSearch();
 
   useEffect(() => {
     menu.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
@@ -88,10 +84,14 @@ function StartMenu({ pid, onClose }: { pid: string; onClose: (focusStart: boolea
         <b>AI Harness</b>95
       </div>
       <div className="w95-start-items">
-        {START_LINKS.map(([path, label, Icon]) => (
-          <NavLink key={path} to={`/p/${pid}/${path}`} role="menuitem" className="w95-start-item" onClick={() => onClose(false)}>
-            <Icon />
-            <span>{label}</span>
+        {START_LINKS.map(([id, label]) => (
+          <NavLink key={id} id={id} role="menuitem" className={`w95-start-item${active === id ? ' active' : ''}`} onClick={() => onClose(false)}>
+            {() => (
+              <>
+                <Win95Icon name={WIN95_NAV_ICONS[id]} />
+                <span>{label}</span>
+              </>
+            )}
           </NavLink>
         ))}
         <hr className="w95-start-sep" />
@@ -104,7 +104,7 @@ function StartMenu({ pid, onClose }: { pid: string; onClose: (focusStart: boolea
             openSearch();
           }}
         >
-          <SearchIcon />
+          <Win95Icon name={WIN95_NAV_ICONS.search} />
           <span>Suchen …</span>
         </button>
       </div>
@@ -115,8 +115,9 @@ function StartMenu({ pid, onClose }: { pid: string; onClose: (focusStart: boolea
 // Rahmen im Schema „Windows 95“: Desktop mit Symbolen (Navigation), die Seite als Fenster mit Titelleiste (Minimieren,
 // Maximieren/Wiederherstellen, Schließen = minimieren), Adressleiste mit Board-Auswahl und Statusleiste mit der Claude-Nutzung;
 // unten die Taskleiste mit Start-Knopf, Task-Knopf des Fensters und Uhr.
-export function Win95Frame({ pid, nav, content }: { pid: string; nav: ReactNode; content: ReactNode }) {
-  const title = sectionTitle(useLocation().pathname);
+export function Win95Frame({ nav, content }: ShellProps) {
+  const active = useNav().find((item) => item.active)?.id;
+  const title = windowTitle(active);
   const [maximized, setMaximized] = useState(readMaximized);
   const [minimized, setMinimized] = useState(false);
   const [startOpen, setStartOpen] = useState(false);
@@ -125,8 +126,7 @@ export function Win95Frame({ pid, nav, content }: { pid: string; nav: ReactNode;
   const now = useClock();
 
   // Wechsel des Bereichs holt das Fenster zurück
-  const { pathname } = useLocation();
-  useEffect(() => setMinimized(false), [pathname]);
+  useEffect(() => setMinimized(false), [active]);
 
   // Klick außerhalb schließt das Startmenü
   useEffect(() => {
@@ -185,13 +185,13 @@ export function Win95Frame({ pid, nav, content }: { pid: string; nav: ReactNode;
           </div>
           <div className="w95-addressbar">
             <span className="w95-address-label">Adresse</span>
-            <BoardProjectSwitcher pid={pid} status={<ConnectionBadge />} />
+            <BoardSwitcher />
           </div>
           {content}
           <footer className="w95-statusbar">
             <span className="w95-status-field">{title}</span>
             <span className="w95-status-field w95-status-usage">
-              <ClaudeUsageMeter />
+              <UsageMeter />
             </span>
           </footer>
         </section>
@@ -209,7 +209,7 @@ export function Win95Frame({ pid, nav, content }: { pid: string; nav: ReactNode;
             <WindowsFlag />
             Start
           </button>
-          {startOpen && <StartMenu pid={pid} onClose={closeStart} />}
+          {startOpen && <StartMenu active={active} onClose={closeStart} />}
         </div>
         <button
           type="button"

@@ -9,6 +9,10 @@ describe('SDK_VERSION', () => {
     expect(SDK_VERSION).toMatch(/^0\.\d+\.\d+$/);
   });
 
+  it('ist 0.4.0 (useOpenSearch)', () => {
+    expect(SDK_VERSION).toBe('0.4.0');
+  });
+
   it('stimmt mit der Version in package.json überein', () => {
     const pkg = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'package.json'), 'utf8')) as { name: string; version: string };
     expect(pkg.name).toBe('@nexus/theme-sdk');
