@@ -205,6 +205,13 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
 .search-hit-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .search-hit-meta { font-size: 12px; }
 .search-hit-snippet { font-size: 13px; color: var(--text-soft); margin-top: 2px; }
+/* Eigene CSS-Schnipsel (Einstellungen → Darstellung) */
+.snippet-list { list-style: none; margin: 0 0 8px; padding: 0; }
+.snippet-row { display: flex; align-items: center; gap: 4px; padding: 4px 0; }
+.snippet-row label { flex: 1; display: flex; align-items: center; gap: 8px; }
+.snippet-editor { display: flex; flex-direction: column; gap: 8px; }
+.snippet-editor textarea { font-family: ui-monospace, Consolas, monospace; font-size: 13px; min-height: 10lh; background: var(--bg); color: var(--text); }
+.snippet-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .search-hit mark { background: var(--mark); color: inherit; border-radius: 2px; }
 .nav-icon { flex: none; }
 .nav-badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--danger); color: var(--on-accent); font-size: 11px; font-weight: 600; display: inline-grid; place-items: center; }
