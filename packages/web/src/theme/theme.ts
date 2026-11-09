@@ -9,8 +9,6 @@ export const THEME_CACHE_KEY = 'harness-theme-mode';
 /** Angezeigtes Schema; „signal“ und „pastel“ sind helle Schemata mit eigener Palette, „win95“ zusätzlich mit eigenem Rahmen (Desktop, Fenster, Taskleiste) */
 export type ResolvedTheme = 'light' | 'dark' | 'signal' | 'pastel' | 'win95';
 
-const OWN_PALETTES: ResolvedTheme[] = ['dark', 'signal', 'pastel', 'win95'];
-
 // Angezeigtes Schema für eine Einstellung; „system“ folgt dem Betriebssystem
 export function resolveTheme(mode: ThemeMode, prefersDark: boolean): ResolvedTheme {
   return mode === 'system' ? (prefersDark ? 'dark' : 'light') : mode;
@@ -34,9 +32,9 @@ export function applyTheme(mode: ThemeMode): void {
   window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: resolved }));
 }
 
-// Aktuell angezeigtes Schema mit eigener Palette
-export function displayedTheme(): ResolvedTheme {
-  return OWN_PALETTES.find((t) => t === document.documentElement.dataset.theme) ?? 'light';
+// Aktuell angezeigtes Schema (jede ID, auch von Themes außerhalb der eingebauten Liste); ohne Angabe hell
+export function displayedTheme(): string {
+  return document.documentElement.dataset.theme || 'light';
 }
 
 // Aktuell angezeigtes Schema, auf hell/dunkel abgebildet (Signal, Pastell und Windows 95 zählen als hell)
