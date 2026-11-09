@@ -3,6 +3,7 @@ import type { ThemeMode, UserSettingsDto } from '../api/types.js';
 import { COMPACT_CARDS_EVENT } from '../dbboard/compactCards.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { applyTheme } from '../theme/theme.js';
+import { ThemeSettingsSection } from '../theme/ThemeSettingsSection.js';
 import { SettingsPanel, useSaveStatus } from './settings/SettingsPanel.js';
 import { SettingRow, SettingsSection } from './settings/SettingRow.js';
 
@@ -44,7 +45,7 @@ export function AppearancePanel() {
   // Speichert das Schema und setzt es sofort
   const choose = async (mode: ThemeMode) => {
     const saved = await save({ theme: mode });
-    if (saved) applyTheme(saved.theme);
+    if (saved) applyTheme(saved.theme, installed.state.status === 'ready' ? installed.state.data : undefined);
   };
 
   // Speichert die kompakte Ansicht und lässt ein offenes Board sofort nachziehen
@@ -69,6 +70,7 @@ export function AppearancePanel() {
           ))}
         </fieldset>
       </SettingsSection>
+      <ThemeSettingsSection run={run} />
       <SettingsSection title="Board">
         <SettingRow label="Kompakte Ticket-Kacheln" hint="Tags eingeklappt, Agent nur als Claude-Logo.">
           <input

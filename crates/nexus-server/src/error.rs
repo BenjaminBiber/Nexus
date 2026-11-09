@@ -78,10 +78,12 @@ impl ErrorMapper {
         // Zeilenbereich passt nicht zum Dokument: die Anfrage selbst ist falsch gebaut
         // Eine ungültige Theme-ID kann nie ein Theme treffen: die Adresse ist falsch gebaut
         // Schnipsel: ungültige ID, CSS-Verstoß oder zu groß
+        // Theme-Einstellungen: ungültige ID, Schlüssel oder Werte
         if code == "doc-range-invalid"
             || code == "bad-request"
             || code == "theme-id-invalid"
             || code == "snippet-invalid"
+            || code == "theme-settings-invalid"
             // Store-Repo: Adresse ungültig oder zu viele Repos, Schlüssel ungültig
             || code == "store-repo-invalid"
             || code == "store-repo-key-invalid"

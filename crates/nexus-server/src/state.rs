@@ -9,6 +9,7 @@ use std::sync::Arc;
 use nexus_core::docs::SuperpowersDocScanner;
 use nexus_core::settings::UserSettingsStore;
 use nexus_core::theme::{SnippetStore, StoreRepoStore};
+use nexus_core::themes::ThemeSettingsStore;
 use nexus_core::HarnessHome;
 use nexus_platform::Platform;
 use tokio_util::sync::CancellationToken;
@@ -86,6 +87,8 @@ pub struct AppState {
     pub favorites: FavoriteService,
     /// Die CSS-Schnipsel des Nutzers (`snippets/`)
     pub snippets: SnippetStore,
+    /// Eigene Einstellungen der Themes (`theme-settings.json`)
+    pub theme_settings: ThemeSettingsStore,
     /// Die Store-Repos des Nutzers (`store/repos.json`)
     pub store_repos: StoreRepoStore,
     /// Lädt die Index-Dateien der Store-Repos (`/api/themes/store/index`)
@@ -335,6 +338,7 @@ impl AppState {
             transcript_watch: TranscriptWatch::new(events.clone()),
             favorites,
             snippets: SnippetStore::with_clock(config.home.clone(), config.clock.clone()),
+            theme_settings: ThemeSettingsStore::new(config.home.clone()),
             store_repos: StoreRepoStore::with_clock(config.home.clone(), config.clock.clone()),
             store_index,
             store_download,

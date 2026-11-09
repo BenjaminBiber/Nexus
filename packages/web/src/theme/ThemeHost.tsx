@@ -11,6 +11,7 @@ import { currentBoard, useBoardChoices } from '../dbboard/useBoardChoices.js';
 import { NAV_ITEMS } from './navItems.js';
 import { applyTheme, currentTheme } from './theme.js';
 import { useDisplayedTheme } from './useDisplayedTheme.js';
+import { useThemeSettingsState } from './useThemeSettingsState.js';
 
 const NO_USAGE: UsageState = { enabled: false, available: false, reason: null, fiveHour: null, sevenDay: null };
 
@@ -77,6 +78,7 @@ export function NexusThemeHost({ pid, parts, openSearch, children }: { pid: stri
   const usage = useHostUsage();
   const settings = useHostSettings();
   const themeId = useDisplayedTheme();
+  const themeSettings = useThemeSettingsState(themeId);
 
   const nav = useMemo(
     () =>
@@ -106,8 +108,8 @@ export function NexusThemeHost({ pid, parts, openSearch, children }: { pid: stri
   );
   const navigate = useCallback((to: string) => routerNavigate(to), [routerNavigate]);
   const host = useMemo<ThemeHost>(
-    () => ({ nav, boards, usage, settings, colorScheme, navigate, openSearch, parts }),
-    [nav, boards, usage, settings, colorScheme, navigate, openSearch, parts],
+    () => ({ nav, boards, usage, settings, themeSettings, colorScheme, navigate, openSearch, parts }),
+    [nav, boards, usage, settings, themeSettings, colorScheme, navigate, openSearch, parts],
   );
   return <ThemeHostProvider value={host}>{children}</ThemeHostProvider>;
 }

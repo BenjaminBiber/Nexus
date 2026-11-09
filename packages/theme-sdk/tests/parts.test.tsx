@@ -16,6 +16,7 @@ function fakeHost(): ThemeHost {
     boards: { current: null, projects: [], boards: [], loading: false, choose: vi.fn() },
     usage: { enabled: false, available: false, reason: null, fiveHour: null, sevenDay: null },
     settings: { values: null, loading: true, update: vi.fn(async () => {}) },
+    themeSettings: { values: {}, loading: false, set: vi.fn(async () => {}) },
     colorScheme: { scheme: 'dark', themeId: 'dark', mode: 'dark' },
     navigate: vi.fn(),
     openSearch: vi.fn(),

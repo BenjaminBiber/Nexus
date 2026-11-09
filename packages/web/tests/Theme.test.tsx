@@ -7,7 +7,7 @@ import type { UserSettingsDto } from '../src/api/types.js';
 import { AppearancePanel } from '../src/components/AppearancePanel.js';
 import { MermaidBlock } from '../src/markdown/MermaidBlock.js';
 import { ThemeSync } from '../src/theme/ThemeSync.js';
-import { THEME_CACHE_KEY, applyTheme, currentTheme, displayedTheme, normalizeThemeId, resolveTheme } from '../src/theme/theme.js';
+import { THEME_CACHE_KEY, THEME_CSS_CACHE_KEY, THEME_LINK_ID, THEME_START_COLOR_KEY, applyTheme, currentTheme, displayedTheme, normalizeThemeId, resolveTheme } from '../src/theme/theme.js';
 import { fakeApi } from './helpers/fakeApi.js';
 
 vi.mock('mermaid', () => ({ default: { initialize: vi.fn(), render: vi.fn(async () => ({ svg: '<svg viewBox="0 0 10 10"></svg>' })) } }));
@@ -16,6 +16,77 @@ afterEach(() => {
   cleanup();
   delete document.documentElement.dataset.theme;
   delete document.documentElement.dataset.themeMode;
+  document.getElementById(THEME_LINK_ID)?.remove();
+  window.localStorage.clear();
+});
+
+const ocean = { id: 'ocean', startColor: '#123456' };
+const themeLinks = () => document.head.querySelectorAll(`link#${THEME_LINK_ID}`);
+
+describe('theme.css installierter Themes', () => {
+  it('bindet die theme.css genau einmal ein und merkt sich URL und Startfarbe', () => {
+    applyTheme('ocean', [ocean]);
+    applyTheme('ocean', [ocean]);
+    expect(themeLinks()).toHaveLength(1);
+    expect(themeLinks()[0].getAttribute('href')).toBe('/themes/ocean/theme.css');
+    expect((themeLinks()[0] as HTMLLinkElement).rel).toBe('stylesheet');
+    expect(document.documentElement.dataset.theme).toBe('ocean');
+    expect(document.documentElement.dataset.themeMode).toBe('ocean');
+    expect(window.localStorage.getItem(THEME_CSS_CACHE_KEY)).toBe('/themes/ocean/theme.css');
+    expect(window.localStorage.getItem(THEME_START_COLOR_KEY)).toBe('#123456');
+  });
+
+  it('ersetzt den Link beim Wechsel zwischen installierten Themes', () => {
+    applyTheme('ocean', [ocean, 'wald']);
+    applyTheme('wald', [ocean, 'wald']);
+    expect(themeLinks()).toHaveLength(1);
+    expect(themeLinks()[0].getAttribute('href')).toBe('/themes/wald/theme.css');
+    expect(window.localStorage.getItem(THEME_START_COLOR_KEY)).toBeNull();
+  });
+
+  it('entfernt Link und Cache beim Wechsel auf ein eingebautes Theme', () => {
+    for (const mode of ['dark', 'system']) {
+      applyTheme('ocean', [ocean]);
+      applyTheme(mode);
+      expect(themeLinks()).toHaveLength(0);
+      expect(window.localStorage.getItem(THEME_CSS_CACHE_KEY)).toBeNull();
+      expect(window.localStorage.getItem(THEME_START_COLOR_KEY)).toBeNull();
+    }
+  });
+
+  it('legt den Link vor die CSS-Schnipsel des Nutzers', () => {
+    const snippets = document.createElement('style');
+    snippets.id = 'nexus-user-css';
+    document.head.appendChild(snippets);
+    applyTheme('ocean', [ocean]);
+    expect(themeLinks()[0].nextElementSibling).toBe(snippets);
+    snippets.remove();
+  });
+
+  it('fällt beim Start auf „system“ zurück, wenn das gewählte Theme nicht mehr installiert ist', async () => {
+    applyTheme('ocean', [ocean]);
+    render(<ApiProvider api={fakeApi({ getUserSettings: async () => ({ notifications: 'off', heroImages: false, theme: 'ocean', claudeUsage: false, compactCards: false, hideNotNeeded: false }), listThemes: async () => [] } as never)}><ThemeSync /></ApiProvider>);
+    await waitFor(() => expect(document.documentElement.dataset.themeMode).toBe('system'));
+    expect(themeLinks()).toHaveLength(0);
+    expect(window.localStorage.getItem(THEME_CSS_CACHE_KEY)).toBeNull();
+  });
+
+  it('übernimmt beim Start ein installiertes Theme mit Link', async () => {
+    render(<ApiProvider api={fakeApi({ getUserSettings: async () => ({ notifications: 'off', heroImages: false, theme: 'ocean', claudeUsage: false, compactCards: false, hideNotNeeded: false }), listThemes: async () => [ocean] } as never)}><ThemeSync /></ApiProvider>);
+    await waitFor(() => expect(themeLinks()).toHaveLength(1));
+    expect(document.documentElement.dataset.theme).toBe('ocean');
+  });
+
+  it('behält den Link aus dem Cache, wenn die Liste der Themes nicht lädt', async () => {
+    applyTheme('ocean', [ocean]);
+    const listThemes = async () => {
+      throw new Error('kaputt');
+    };
+    render(<ApiProvider api={fakeApi({ getUserSettings: async () => ({ notifications: 'off', heroImages: false, theme: 'ocean', claudeUsage: false, compactCards: false, hideNotNeeded: false }), listThemes } as never)}><ThemeSync /></ApiProvider>);
+    await waitFor(() => expect(document.documentElement.dataset.themeMode).toBe('ocean'));
+    expect(themeLinks()).toHaveLength(1);
+    expect(window.localStorage.getItem(THEME_START_COLOR_KEY)).toBe('#123456');
+  });
 });
 
 describe('Theme', () => {
