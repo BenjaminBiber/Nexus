@@ -2,6 +2,7 @@
 // Mojang-Dateien liegen nie im Paket; der Proxy cacht sie unter ~/.nexus/themes/minecraft/cache/.
 import { themeAssetUrl } from '@nexus/theme-sdk';
 import { useCallback, useEffect, useState } from 'react';
+import { resolveIndexUrls } from './assetIndex.js';
 import { NAV_ITEM_TEXTURE } from './navIcons.js';
 import { resolveSoundUrls, type SoundUrls } from './sounds.js';
 
@@ -17,17 +18,22 @@ export const MANIFEST_URL = 'https://piston-meta.mojang.com/mc/game/version_mani
 export const FONT_ATLAS = 'assets/minecraft/textures/font/ascii.png';
 export const BUTTON = 'assets/minecraft/textures/gui/sprites/widget/button.png';
 export const BUTTON_HIGHLIGHTED = 'assets/minecraft/textures/gui/sprites/widget/button_highlighted.png';
-export const panorama = (i: number) => `assets/minecraft/textures/gui/title/background/panorama_${i}.png`;
 export const HOTBAR = 'assets/minecraft/textures/gui/sprites/hud/hotbar.png';
 export const HOTBAR_SELECTION = 'assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png';
 export const LOGO = 'assets/minecraft/textures/gui/title/minecraft.png';
 
-/** Einträge im Client-JAR, die das Theme braucht */
+/** Panorama und Overlay liegen im Asset-Index, nicht im JAR (dort nur 1×1-Platzhalter) */
+export const panorama = (i: number) => `minecraft/textures/gui/title/background/panorama_${i}.png`;
+export const PANORAMA_OVERLAY = 'minecraft/textures/gui/title/background/panorama_overlay.png';
+
+/** Einträge des Asset-Index, die das Theme braucht: Schlüssel = Pfad im Index */
+export const INDEX_ENTRIES: readonly string[] = [...[0, 1, 2, 3, 4, 5].map(panorama), PANORAMA_OVERLAY];
+
+/** Einträge im Client-JAR, die das Theme braucht; nur sie zählen zum Fortschritt */
 export const MINECRAFT_ENTRIES: readonly string[] = [
   FONT_ATLAS,
   BUTTON,
   BUTTON_HIGHLIGHTED,
-  ...[0, 1, 2, 3, 4, 5].map(panorama),
   HOTBAR,
   HOTBAR_SELECTION,
   LOGO,
@@ -46,7 +52,7 @@ export interface MinecraftResources {
   phase: 'manifest' | 'jar' | 'entries' | 'ready' | 'error';
   done: number;
   total: number;
-  /** Proxy-URL je Eintrag aus MINECRAFT_ENTRIES, vollständig erst bei `ready` */
+  /** Proxy-URL je Eintrag aus MINECRAFT_ENTRIES, vollständig erst bei `ready`; die Einträge aus INDEX_ENTRIES kommen nebenher dazu */
   urls: Record<string, string>;
   /** Proxy-URL je Ton; leer, solange der Asset-Index fehlt (dann bleibt das Theme still) */
   soundUrls: SoundUrls;
@@ -144,6 +150,11 @@ export function useMinecraftResources(): MinecraftResources {
       void resolveSoundUrls(THEME_ID, meta, signal).then((soundUrls) => update({ soundUrls }));
       update({ phase: 'entries' });
       const urls: Record<string, string> = {};
+      // Panorama und Overlay nebenher aus dem Asset-Index; sie landen in demselben `urls`, damit die JAR-Einträge sie nicht überschreiben
+      void resolveIndexUrls(THEME_ID, meta, Object.fromEntries(INDEX_ENTRIES.map((e) => [e, e])), signal).then((index) => {
+        Object.assign(urls, index);
+        update({ urls: { ...urls } });
+      });
       // Nacheinander: der erste Eintrag lädt das JAR in den Proxy-Cache, die weiteren treffen ihn
       for (const [i, entry] of MINECRAFT_ENTRIES.entries()) {
         const url = themeAssetUrl(THEME_ID, jar, { entry });
