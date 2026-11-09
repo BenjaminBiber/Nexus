@@ -1,6 +1,15 @@
 // Rahmen der Minecraft-Shell: Fortschritt bzw. Hinweis oben, die Seite darunter bleibt immer bedienbar
 import type { CSSProperties, ReactNode } from 'react';
-import { BUTTON, BUTTON_HIGHLIGHTED, FONT_ATLAS, HOTBAR, HOTBAR_SELECTION, panorama, type MinecraftResources } from './resources.js';
+import {
+  BUTTON,
+  BUTTON_HIGHLIGHTED,
+  FONT_ATLAS,
+  HOTBAR,
+  HOTBAR_SELECTION,
+  PANORAMA_OVERLAY,
+  panorama,
+  type MinecraftResources,
+} from './resources.js';
 
 const OFFLINE_HINT =
   'Keine Verbindung zu Mojang. Die Ressourcen werden beim ersten Start einmal geladen. Bitte Internetverbindung prüfen und erneut versuchen.';
@@ -15,6 +24,7 @@ function cssVariables(urls: Record<string, string>): CSSProperties {
   set('--mc-button', BUTTON);
   set('--mc-button-highlighted', BUTTON_HIGHLIGHTED);
   for (let i = 0; i < 6; i++) set(`--mc-panorama-${i}`, panorama(i));
+  set('--mc-panorama-overlay', PANORAMA_OVERLAY);
   set('--mc-hotbar', HOTBAR);
   set('--mc-hotbar-selection', HOTBAR_SELECTION);
   return vars as CSSProperties;

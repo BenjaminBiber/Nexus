@@ -50,7 +50,8 @@ export function MinecraftShell({ parts }: ShellProps) {
   return (
     <ResourcesProvider urls={resources.urls} soundUrls={resources.soundUrls}>
       <LoadingGate resources={resources}>
-        <Panorama />
+        {/* Titelmenü offen = Titelbildschirm: scharf; eine Seite offen = Untermenü: unscharf */}
+        <Panorama blur={!menuOpen} />
         <header className="mc-header">
           <McButton
             ref={menuButton}

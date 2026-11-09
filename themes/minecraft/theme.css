@@ -17,14 +17,15 @@
   --accent-hover: #95d54d;
 }
 
-/* Kopfzeile oben, Seite im Panel, Hotbar unten; dahinter das Panorama, ohne Ressourcen ein ruhiger Erdbraun-Verlauf */
+/* Kopfzeile oben, Seite im Panel, Hotbar unten; dahinter das Panorama, bis es geladen ist ein Verlauf
+   in seinen Farben (Himmelblau nach Erdbraun) */
 [data-theme='minecraft'] .mc-shell {
   position: relative;
   isolation: isolate;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: linear-gradient(180deg, #5a3d24 0%, var(--bg) 55%, #2e2014 100%);
+  background: linear-gradient(180deg, #7fb2ff 0%, #3b2a1a 100%);
   color: var(--text);
 }
 
@@ -53,16 +54,39 @@
   cursor: pointer;
 }
 
-/* ---------- Panorama: Würfel aus 6 Bildern um den Betrachter (Kamera im Würfelmittelpunkt, 90° Sichtfeld) ---------- */
+/* ---------- Panorama: Würfel aus 6 Bildern um den Betrachter (Kamera im Würfelmittelpunkt) ---------- */
 [data-theme='minecraft'] .mc-panorama {
   position: fixed;
   inset: 0;
   z-index: -1;
   overflow: hidden;
-  perspective: 50vmax;
-  /* Im Spiel ist das Panorama leicht unscharf */
-  filter: blur(2px);
+  /* Blickwinkel 85° wie im Spiel: 50vmax / tan(42,5°) */
+  perspective: 54.6vmax;
   pointer-events: none;
+}
+
+/* Hinter Untermenüs unscharf (Menü-Hintergrund-Unschärfe 5 = 10 px) mit gekacheltem menu_background darüber;
+   die Kachel kommt als --mc-menu-bg aus einem späteren Ticket, bis dahin bleibt es nur die Unschärfe. */
+[data-theme='minecraft'] .mc-panorama--blur {
+  filter: blur(10px);
+}
+
+[data-theme='minecraft'] .mc-panorama--blur::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--mc-menu-bg, none) 0 0 / 32px 32px repeat;
+}
+
+/* Dunkler Verlauf oben und unten, nur auf dem scharfen Titelbildschirm */
+[data-theme='minecraft'] .mc-panorama-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--mc-panorama-overlay, none) 0 0 / 100% 100% no-repeat;
+}
+
+[data-theme='minecraft'] .mc-panorama--blur .mc-panorama-overlay {
+  display: none;
 }
 
 [data-theme='minecraft'] .mc-panorama-cube {
@@ -86,6 +110,13 @@
   background-size: 100% 100%;
   backface-visibility: hidden;
   image-rendering: pixelated;
+  /* Erst wenn alle sechs Bilder da sind, blenden die Flächen über dem Verlauf ein */
+  opacity: 0;
+  transition: opacity 400ms;
+}
+
+[data-theme='minecraft'] .mc-panorama--ready .mc-panorama-face {
+  opacity: 1;
 }
 
 [data-theme='minecraft'] .mc-panorama-face--front {
