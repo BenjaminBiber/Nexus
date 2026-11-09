@@ -3,7 +3,10 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LoadingGate } from '../src/LoadingGate.js';
-import { MINECRAFT_ENTRIES, type MinecraftResources } from '../src/resources.js';
+import { INDEX_ENTRIES, MINECRAFT_ENTRIES, type MinecraftResources } from '../src/resources.js';
+
+// Alle Einträge, die im Theme eine URL haben: die aus dem JAR und die aus dem Asset-Index
+const ALL_ENTRIES = [...MINECRAFT_ENTRIES, ...INDEX_ENTRIES];
 
 afterEach(cleanup);
 
@@ -22,17 +25,18 @@ describe('LoadingGate', () => {
   });
 
   it('setzt bei ready die CSS-Variablen auf die Proxy-URLs', () => {
-    const urls = Object.fromEntries(MINECRAFT_ENTRIES.map((e, i) => [e, `/api/themes/minecraft/fetch?i=${i}`]));
+    const urls = Object.fromEntries(ALL_ENTRIES.map((e, i) => [e, `/api/themes/minecraft/fetch?i=${i}`]));
+    const at = (entry: string) => `url("/api/themes/minecraft/fetch?i=${ALL_ENTRIES.indexOf(entry)}")`;
     render(<LoadingGate resources={{ ...base, phase: 'ready', done: 9, urls }}>{page}</LoadingGate>);
     expect(screen.queryByTestId('mc-loading')).toBeNull();
     const shell = screen.getByTestId('mc-shell');
-    expect(shell.style.getPropertyValue('--mc-font-atlas')).toBe('url("/api/themes/minecraft/fetch?i=0")');
-    expect(shell.style.getPropertyValue('--mc-button')).toBe('url("/api/themes/minecraft/fetch?i=1")');
-    expect(shell.style.getPropertyValue('--mc-button-highlighted')).toBe('url("/api/themes/minecraft/fetch?i=2")');
-    expect(shell.style.getPropertyValue('--mc-panorama-0')).toBe('url("/api/themes/minecraft/fetch?i=3")');
-    expect(shell.style.getPropertyValue('--mc-panorama-5')).toBe('url("/api/themes/minecraft/fetch?i=8")');
-    expect(shell.style.getPropertyValue('--mc-hotbar')).toBe('url("/api/themes/minecraft/fetch?i=9")');
-    expect(shell.style.getPropertyValue('--mc-hotbar-selection')).toBe('url("/api/themes/minecraft/fetch?i=10")');
+    expect(shell.style.getPropertyValue('--mc-font-atlas')).toBe(at('assets/minecraft/textures/font/ascii.png'));
+    expect(shell.style.getPropertyValue('--mc-button')).toBe(at('assets/minecraft/textures/gui/sprites/widget/button.png'));
+    expect(shell.style.getPropertyValue('--mc-button-highlighted')).toBe(at('assets/minecraft/textures/gui/sprites/widget/button_highlighted.png'));
+    expect(shell.style.getPropertyValue('--mc-panorama-0')).toBe(at('minecraft/textures/gui/title/background/panorama_0.png'));
+    expect(shell.style.getPropertyValue('--mc-panorama-5')).toBe(at('minecraft/textures/gui/title/background/panorama_5.png'));
+    expect(shell.style.getPropertyValue('--mc-hotbar')).toBe(at('assets/minecraft/textures/gui/sprites/hud/hotbar.png'));
+    expect(shell.style.getPropertyValue('--mc-hotbar-selection')).toBe(at('assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png'));
   });
 
   it('ohne Netz: Hinweis mit „Erneut versuchen“, Seite bleibt bedienbar', () => {
