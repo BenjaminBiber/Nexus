@@ -91,6 +91,8 @@ pub struct AppState {
     pub theme_settings: ThemeSettingsStore,
     /// Die Store-Repos des Nutzers (`store/repos.json`)
     pub store_repos: StoreRepoStore,
+    /// Lädt die Index-Dateien der Store-Repos (`/api/themes/store/index`)
+    pub store_index: crate::store_index::StoreIndexLoader,
     /// Asset-Proxy der Themes (`/api/themes/{id}/fetch`)
     pub theme_proxy: crate::theme_proxy::ThemeProxy,
     /// Titel und Status von Tickets für Sessions, Favoriten und Meldungen (mit Zeitlimit)
@@ -331,6 +333,7 @@ impl AppState {
             snippets: SnippetStore::with_clock(config.home.clone(), config.clock.clone()),
             theme_settings: ThemeSettingsStore::new(config.home.clone()),
             store_repos: StoreRepoStore::with_clock(config.home.clone(), config.clock.clone()),
+            store_index: crate::store_index::StoreIndexLoader::new(config.store_index_timeout),
             theme_proxy: crate::theme_proxy::ThemeProxy::new(config.theme_fetch_max_bytes)
                 .with_archive_limit(config.theme_fetch_max_archive_bytes),
             ticket_info: TicketInfoLookup::new(ticket_summaries(weak)),

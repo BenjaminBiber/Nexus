@@ -705,6 +705,11 @@
     "pattern": "/snippets/active.css"
   },
   {
+    "file": "crates/nexus-server/src/routes/store_index.rs",
+    "method": "GET",
+    "pattern": "/api/themes/store/index"
+  },
+  {
     "file": "crates/nexus-server/src/routes/store_repos.rs",
     "method": "GET",
     "pattern": "/api/themes/store/repos"

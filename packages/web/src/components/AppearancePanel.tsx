@@ -45,7 +45,7 @@ export function AppearancePanel() {
   // Speichert das Schema und setzt es sofort
   const choose = async (mode: ThemeMode) => {
     const saved = await save({ theme: mode });
-    if (saved) applyTheme(saved.theme);
+    if (saved) applyTheme(saved.theme, installed.state.status === 'ready' ? installed.state.data : undefined);
   };
 
   // Speichert die kompakte Ansicht und lässt ein offenes Board sofort nachziehen
