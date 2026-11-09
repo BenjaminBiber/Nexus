@@ -92,7 +92,7 @@ fn decode_package(body: &[u8]) -> ApiResult<Vec<u8>> {
 }
 
 /// Führt Dateiarbeit der Paketverwaltung außerhalb des Laufzeit-Threads aus
-async fn blocking<T: Send + 'static>(
+pub(crate) async fn blocking<T: Send + 'static>(
     work: impl FnOnce() -> Result<T, ThemePackageError> + Send + 'static,
 ) -> ApiResult<T> {
     tokio::task::spawn_blocking(work)

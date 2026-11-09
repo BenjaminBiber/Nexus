@@ -1,0 +1,58 @@
+[
+  {
+    "name": "unbekanntes Repo",
+    "request": {
+      "body": {
+        "id": "ozean",
+        "repoId": "unbekannt"
+      },
+      "method": "POST",
+      "path": "/api/themes/store/install"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "store-repo-not-found",
+        "message": "Dieses Repo gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "fehlende Felder",
+    "request": {
+      "body": {
+        "repoId": "unbekannt"
+      },
+      "method": "POST",
+      "path": "/api/themes/store/install"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "bad-request",
+        "message": "id muss ein Text sein."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "ungültiger Repo-Schlüssel",
+    "request": {
+      "body": {
+        "publicKey": "RWkaputt",
+        "url": "https://example.com/nexus-themes.json"
+      },
+      "method": "POST",
+      "path": "/api/themes/store/repos"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "store-repo-key-invalid",
+        "message": "Der öffentliche Schlüssel ist kein gültiger minisign-Schlüssel (Base64-Zeile RW…)."
+      },
+      "status": 400
+    }
+  }
+]

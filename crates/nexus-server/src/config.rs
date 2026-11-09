@@ -87,6 +87,8 @@ pub struct ServerConfig {
     pub theme_fetch_max_archive_bytes: u64,
     /// Zeitlimit je Store-Repo beim Laden der Index-Dateien
     pub store_index_timeout: std::time::Duration,
+    /// Zeitlimit beim Download eines Theme-Pakets aus dem Store
+    pub store_download_timeout: std::time::Duration,
 }
 
 /// Woher der Dispatcher seine Claude-Accounts nimmt
@@ -165,6 +167,7 @@ impl ServerConfig {
             theme_fetch_max_bytes: crate::theme_proxy::DEFAULT_MAX_BYTES,
             theme_fetch_max_archive_bytes: crate::theme_proxy::DEFAULT_MAX_ARCHIVE_BYTES,
             store_index_timeout: crate::store_index::DEFAULT_TIMEOUT,
+            store_download_timeout: crate::store_install::DEFAULT_TIMEOUT,
         }
     }
 }

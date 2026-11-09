@@ -84,10 +84,29 @@ impl ErrorMapper {
             || code == "theme-id-invalid"
             || code == "snippet-invalid"
             || code == "theme-settings-invalid"
-            // Store-Repo: Adresse ungültig oder zu viele Repos
+            // Store-Repo: Adresse ungültig oder zu viele Repos, Schlüssel ungültig
             || code == "store-repo-invalid"
+            || code == "store-repo-key-invalid"
         {
             return StatusCode::BAD_REQUEST;
+        }
+        // Store-Installation: Eintrag passt nicht zur SDK-Version
+        if code == "store-entry-incompatible" {
+            return StatusCode::CONFLICT;
+        }
+        // Store-Installation: Index oder Paket nicht ladbar, zu langsam, zu groß
+        if code == "store-download-timeout" || code == "store-index-timeout" {
+            return StatusCode::GATEWAY_TIMEOUT;
+        }
+        if code == "store-download-too-large" {
+            return StatusCode::PAYLOAD_TOO_LARGE;
+        }
+        if code.starts_with("store-index-")
+            || code == "store-download-unreachable"
+            || code == "store-download-http"
+            || code == "store-download-url-invalid"
+        {
+            return StatusCode::BAD_GATEWAY;
         }
         // Spracherkennung ist nicht eingerichtet: nicht die Schuld der Anfrage, aber auch
         // nichts, was der Server reparieren kann
