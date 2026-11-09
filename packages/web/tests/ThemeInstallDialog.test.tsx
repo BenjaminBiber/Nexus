@@ -40,6 +40,19 @@ describe('ThemeInstallDialog', () => {
     expect(within(list).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['fonts.example.com', '*.cdn.example']);
     expect(screen.queryByText('Keine fremden Domains')).toBeNull();
   });
+
+  it('weist bei unbekanntem Code (Store) allgemein auf Code hin und prüft Domains später', () => {
+    render(<ThemeInstallDialog manifest={{ name: 'Ocean', version: '1.0.0' }} hasCode="unknown" domains={null} busy={false} onConfirm={() => {}} onCancel={() => {}} />);
+    expect(screen.getByText('Themes aus dem Store können Code ausführen. Installiere nur aus Repos, denen du vertraust.')).toBeTruthy();
+    expect(screen.getByText('Domains werden nach dem Download geprüft')).toBeTruthy();
+    expect(screen.queryByText('Dieses Theme führt Code aus')).toBeNull();
+  });
+
+  it('dient mit eigenem Titel und Domains als Update-Rückfrage', () => {
+    render(<ThemeInstallDialog title="Update installieren?" manifest={{ name: 'Ocean' }} hasCode domains={['new.example']} busy={false} onConfirm={() => {}} onCancel={() => {}} />);
+    const dialog = screen.getByRole('alertdialog', { name: 'Update installieren?' });
+    expect(within(dialog).getByText('new.example')).toBeTruthy();
+  });
 });
 
 describe('Installieren mit Rückfrage', () => {

@@ -33,3 +33,39 @@ describe('ApiClient: Store-Repos', () => {
     expect(calls[0]).toMatchObject({ method: 'DELETE', url: '/api/themes/store/repos/a%2Fb' });
   });
 });
+
+describe('ApiClient: Store durchsuchen, installieren, aktualisieren', () => {
+  it('lädt den Index', async () => {
+    const calls = stubFetch({ entries: [], repos: [] });
+    const index = await new ApiClient().getStoreIndex();
+    expect(calls[0]).toMatchObject({ method: 'GET', url: '/api/themes/store/index' });
+    expect(index.entries).toEqual([]);
+  });
+
+  it('installiert einen Eintrag mit Repo und ID', async () => {
+    const calls = stubFetch({ manifest: {}, verified: false, repoId: 'r', sha256: 'x' });
+    await new ApiClient().installFromStore('r', 'ocean');
+    expect(calls[0]).toEqual({ method: 'POST', url: '/api/themes/store/install', body: { repoId: 'r', id: 'ocean' } });
+  });
+
+  it('lädt die Updates', async () => {
+    const calls = stubFetch({ updates: [], errors: [] });
+    await new ApiClient().getStoreUpdates();
+    expect(calls[0]).toMatchObject({ method: 'GET', url: '/api/themes/store/updates' });
+  });
+
+  it('aktualisiert ohne confirm, mit confirm nur bei Bestätigung', async () => {
+    const calls = stubFetch({ manifest: {}, verified: false, repoId: 'r', sha256: 'x', previousVersion: '1.0.0' });
+    await new ApiClient().updateFromStore('r', 'ocean');
+    await new ApiClient().updateFromStore('r', 'ocean', true);
+    expect(calls[0]).toEqual({ method: 'POST', url: '/api/themes/store/update', body: { repoId: 'r', id: 'ocean' } });
+    expect(calls[1].body).toEqual({ repoId: 'r', id: 'ocean', confirm: true });
+  });
+
+  it('liefert bei fehlender Bestätigung hasCode und newDomains in details', async () => {
+    stubFetch({ code: 'store-update-confirmation-required', message: 'Bitte bestätigen', details: { hasCode: true, newDomains: ['a.example'] } }, 409);
+    const err = await new ApiClient().updateFromStore('r', 'ocean').catch((e) => e);
+    expect(err.code).toBe('store-update-confirmation-required');
+    expect(err.details).toEqual({ hasCode: true, newDomains: ['a.example'] });
+  });
+});

@@ -5,7 +5,7 @@ import { useAsync } from '../../hooks/useAsync.js';
 import { SettingsSection } from './SettingRow.js';
 
 // Store-Repos des Nutzers: Liste, Hinzufügen per URL (Prüfung durch den Server) und Entfernen nach Rückfrage.
-export function StoreRepos() {
+export function StoreRepos({ onChanged }: { onChanged?: () => void } = {}) {
   const api = useApi();
   const list = useAsync(() => api.listStoreRepos(), [api]);
   const [url, setUrl] = useState('');
@@ -20,6 +20,7 @@ export function StoreRepos() {
       const added = await api.addStoreRepo(url.trim());
       list.set([...repos, added]);
       setUrl('');
+      onChanged?.();
     } catch (err) {
       setError((err as Error).message);
     }
@@ -32,6 +33,7 @@ export function StoreRepos() {
     try {
       await api.removeStoreRepo(repo.id);
       list.set(repos.filter((x) => x.id !== repo.id));
+      onChanged?.();
     } catch (err) {
       setError((err as Error).message);
     }
