@@ -1,20 +1,21 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { Panel } from '../ui/Panel.js';
 
 export type SaveState = { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved' } | { kind: 'error'; message: string };
 
 // Platz im Seitenkopf der Einstellungen für den Speicherstand; ohne Seite (Tests, eingebettet) steht er im Panel
 export const SaveStatusSlot = createContext<HTMLElement | null>(null);
 
-// Ein Bereich der Einstellungen. status: Bereich speichert jede Änderung sofort und meldet den Stand im Seitenkopf.
+// Ein Bereich der Einstellungen (Baustein „Panel“, Theme darf das Innere gestalten). status: Bereich speichert jede Änderung sofort und meldet den Stand im Seitenkopf.
 export function SettingsPanel({ label, status, className, children }: { label: string; status?: SaveState; className?: string; children: ReactNode }) {
   const slot = useContext(SaveStatusSlot);
   const line = status && <SaveStatus state={status} />;
   return (
-    <section className={className ? `settings-panel ${className}` : 'settings-panel'} aria-label={label}>
+    <Panel as="section" className={className ? `settings-panel ${className}` : 'settings-panel'} aria-label={label}>
       {line && (slot ? createPortal(line, slot) : line)}
       {children}
-    </section>
+    </Panel>
   );
 }
 

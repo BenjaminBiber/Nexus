@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { DB_COLUMN_LABELS, DB_PRIORITY_LABELS, DB_STATUSES, type DbCardDto, type DbStatus } from '../../api/dbTypes.js';
 import { MERGE_PHASE_LABELS, type DispatchMergeDto } from '../../api/dispatchTypes.js';
 import { initials } from '../ClaudeUsageMeter.js';
+import { Card } from '../ui/Card.js';
 import { ClaudeIcon, GitMergeIcon } from '../NavIcons.js';
 
 // Ein Blockiert-Grund „Rückfrage“ wartet auf eine Antwort des Nutzers
@@ -22,7 +23,8 @@ export function DbCard({ card, onOpen, onMove, agentPrefix, compact, merge, acti
   // Der Umschalter des Tag-Drawers darf nicht im Öffnen-Knopf liegen, deshalb steht er unterhalb davon; eingeklappt startet er
   const [tagsOpen, setTagsOpen] = useState(false);
   return (
-    <article
+    <Card
+      as="article"
       className={`card db-card${compact ? ' compact' : ''}${card.waiting ? ' is-waiting' : ''}`}
       draggable={!card.waiting}
       data-id={card.id}
@@ -142,6 +144,6 @@ export function DbCard({ card, onOpen, onMove, agentPrefix, compact, merge, acti
           </option>
         ))}
       </select>
-    </article>
+    </Card>
   );
 }

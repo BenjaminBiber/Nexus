@@ -5,6 +5,8 @@ import type {
 } from '../api/telegramTypes.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { CardSection, PowerToggle, SaveBar, StatusBadge, type Tone } from './settings/CardSettings.js';
+import { Button } from './ui/Button.js';
+import { Input } from './ui/Input.js';
 import { Notice } from './settings/Notice.js';
 import { TelegramPairDialog } from './TelegramPairDialog.js';
 import { SettingsPanel } from './settings/SettingsPanel.js';
@@ -202,7 +204,7 @@ export function TelegramPanel() {
           <span className="tg-hero-summary">{summary}</span>
         </div>
         <div className="tg-hero-actions">
-          <button type="button" className="btn" onClick={() => void sendTest()} disabled={chats.length === 0}>Testnachricht senden</button>
+          <Button onClick={() => void sendTest()} disabled={chats.length === 0}>Testnachricht senden</Button>
           <PowerToggle label="Bot aktiv" on={form.enabled} onChange={(enabled) => change({ enabled })} />
         </div>
       </section>
@@ -256,7 +258,7 @@ export function TelegramPanel() {
                     <span className="tg-row-label">Chat</span>
                     <span className="tg-row-hint mono">{chatId}</span>
                   </span>
-                  <button type="button" className="btn" aria-label={`Chat ${chatId} entkoppeln`} onClick={() => void unpair(chatId)}>Entkoppeln</button>
+                  <Button aria-label={`Chat ${chatId} entkoppeln`} onClick={() => void unpair(chatId)}>Entkoppeln</Button>
                 </li>
               ))}
             </ul>
@@ -303,12 +305,12 @@ export function TelegramPanel() {
             {token !== null ? (
               <>
                 <input className="mono tg-token-input" type="password" autoComplete="off" aria-label="Neues Bot-Token" value={token} placeholder="123456:ABC…" onChange={(e) => setToken(e.target.value)} />
-                <button type="button" className="btn" onClick={() => setToken(null)}>Abbrechen</button>
+                <Button onClick={() => setToken(null)}>Abbrechen</Button>
               </>
             ) : (
               <>
                 <span className="mono tg-token" aria-label="Gespeichertes Bot-Token">{form.botToken || '(keins)'}</span>
-                <button type="button" className="btn" onClick={() => setToken('')}>{form.botToken ? 'Ändern' : 'Eintragen'}</button>
+                <Button onClick={() => setToken('')}>{form.botToken ? 'Ändern' : 'Eintragen'}</Button>
               </>
             )}
           </div>
@@ -319,7 +321,7 @@ export function TelegramPanel() {
             </summary>
             <div className="tg-advanced-body">
               <label htmlFor="tg-api-base">Adresse der Bot-API</label>
-              <input id="tg-api-base" type="url" className="mono" value={form.apiBase} onChange={(e) => change({ apiBase: e.target.value })} />
+              <Input id="tg-api-base" type="url" className="mono" value={form.apiBase} onChange={(apiBase) => change({ apiBase })} />
               <span className="tg-row-hint">Nur ändern, wenn ein eigener Bot-API-Server läuft.</span>
             </div>
           </details>

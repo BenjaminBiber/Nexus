@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApi } from '../api/ApiContext.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { USAGE_SETTING_EVENT } from './ClaudeUsageMeter.js';
+import { Button } from './ui/Button.js';
 import { Notice } from './settings/Notice.js';
 import { SettingsPanel, useSaveStatus } from './settings/SettingsPanel.js';
 import { SettingRow, SettingsSection } from './settings/SettingRow.js';
@@ -35,9 +36,9 @@ export function UsagePanel() {
           group
         >
           {on && (
-            <button type="button" className="btn small" onClick={() => void save(false)}>
+            <Button className="small" onClick={() => void save(false)}>
               Ausschalten
-            </button>
+            </Button>
           )}
         </SettingRow>
         {/* Vor dem Einschalten steht die Warnung offen da, damit niemand ungelesen zustimmt; Einzelheiten stehen im (i) */}
@@ -51,9 +52,9 @@ export function UsagePanel() {
                 <input type="checkbox" checked={understood} disabled={!settings} onChange={(e) => setUnderstood(e.target.checked)} />
                 <span>Verstanden, ich möchte die Nutzungslimits auslesen.</span>
               </label>
-              <button type="button" className="btn small primary" disabled={!settings || !understood} onClick={() => void save(true)}>
+              <Button variant="primary" className="small" disabled={!settings || !understood} onClick={() => void save(true)}>
                 Einschalten
-              </button>
+              </Button>
             </div>
           </div>
         )}

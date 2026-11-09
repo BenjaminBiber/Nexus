@@ -1,6 +1,4 @@
-import { SlotBoundary } from '../theme/SlotBoundary.js';
-import { useDisplayedTheme } from '../theme/useDisplayedTheme.js';
-import { useSlot } from '../theme/useSlot.js';
+import { useSlotted } from '../theme/useSlotted.js';
 
 // Fortschritt als Ring mit Prozentzahl und „x / y Schritte erledigt“ daneben (Seitenleiste des Ticket-Panels).
 // `caption` ersetzt „Schritte erledigt“, etwa für die Tickets eines Dokuments. Der Slot „Progress“ des Themes darf ihn ersetzen.
@@ -10,15 +8,8 @@ export function ProgressRing({ done, total, label = 'Fortschritt der Schritte', 
   label?: string;
   caption?: string;
 }) {
-  const theme = useDisplayedTheme();
-  const Custom = useSlot('Progress');
   const standard = <StandardRing done={done} total={total} label={label} caption={caption} />;
-  if (!Custom) return standard;
-  return (
-    <SlotBoundary fallback={standard} resetKey={theme}>
-      <Custom done={done} total={total} label={label} caption={caption} />
-    </SlotBoundary>
-  );
+  return useSlotted('Progress', { done, total, label, caption }, standard).node;
 }
 
 // Ring mit Prozentzahl und Zähler

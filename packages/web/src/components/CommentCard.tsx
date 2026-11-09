@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { DocCommentDto } from '../api/types.js';
 import { CommentIcon } from './CommentIcon.js';
+import { Button } from './ui/Button.js';
+import { Card } from './ui/Card.js';
+import { Input } from './ui/Input.js';
 
 interface Props {
   comment: DocCommentDto;
@@ -54,7 +57,7 @@ export function CommentCard({ comment, top, left, editing, onEdit, onSave, onClo
   };
 
   return (
-    <div
+    <Card
       ref={ref}
       className={`comment-hover${editing ? ' editing' : ''}`}
       role="dialog"
@@ -66,11 +69,11 @@ export function CommentCard({ comment, top, left, editing, onEdit, onSave, onClo
     >
       {editing ? (
         <>
-          <textarea aria-label="Kommentar bearbeiten" autoFocus value={text} onChange={(e) => setText(e.target.value)} />
+          <Input multiline aria-label="Kommentar bearbeiten" autoFocus value={text} onChange={setText} />
           <div className="doc-comment-actions">
             <span className="selection-popover-hint">Strg+Enter speichert</span>
-            <button type="button" className="btn small" onClick={onClose}>Abbrechen</button>
-            <button type="button" className="btn small primary" disabled={saving || text.trim() === ''} onClick={save}>Speichern</button>
+            <Button className="small" onClick={onClose}>Abbrechen</Button>
+            <Button variant="primary" className="small" disabled={saving || text.trim() === ''} onClick={save}>Speichern</Button>
           </div>
         </>
       ) : (
@@ -85,6 +88,6 @@ export function CommentCard({ comment, top, left, editing, onEdit, onSave, onClo
           </button>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SettingsPanel } from './settings/SettingsPanel.js';
+import { Button } from './ui/Button.js';
 import { SettingsSection } from './settings/SettingRow.js';
 
 // Zugriffs-Token des Projekts: erst auf Wunsch sichtbar, mit Kopieren-Knopf.
@@ -15,13 +16,13 @@ export function TokenPanel({ token }: { token: string }) {
         <div className="token-row">
           <span className="mono token-value">{shown ? token : '••••••••••••••••••••'}</span>
           {shown && (
-            <button type="button" className="btn" aria-label="Token kopieren" onClick={copy}>
+            <Button aria-label="Token kopieren" onClick={copy}>
               Kopieren
-            </button>
+            </Button>
           )}
-          <button type="button" className="btn" aria-label={shown ? 'Token verbergen' : 'Token anzeigen'} onClick={() => setShown(!shown)}>
+          <Button aria-label={shown ? 'Token verbergen' : 'Token anzeigen'} onClick={() => setShown(!shown)}>
             {shown ? 'Verbergen' : 'Anzeigen'}
-          </button>
+          </Button>
         </div>
       </SettingsSection>
     </SettingsPanel>
