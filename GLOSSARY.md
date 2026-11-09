@@ -97,7 +97,7 @@ Ein Erscheinungsbild der Oberfläche mit ID (Wert von `data-theme`), eigenen CSS
 _Avoid_: Skin, Design (für das Paket)
 
 **Slot**:
-Eine Stelle der Oberfläche, die ein Theme durch eine eigene Komponente ersetzen darf (z. B. `Shell`, `NavIcon`, `Progress`); ohne Ersatz gilt die Standard-Komponente.
+Eine Stelle der Oberfläche, die ein Theme durch eine eigene Komponente ersetzen darf (z. B. `Shell`, `NavIcon`, `Progress`); ohne Ersatz gilt die Standard-Komponente. **Seiten-Slots** `page:<name>` ersetzen eine ganze Seite (heute nur `page:dashboard`); die Theme-Seite erhält `pid` und fällt bei einem Fehler auf die Standard-Seite zurück.
 _Avoid_: Hook, Erweiterungspunkt
 
 **Theme-SDK**:

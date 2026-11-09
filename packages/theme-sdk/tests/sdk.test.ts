@@ -2,15 +2,15 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { SDK_VERSION } from '../src/index.js';
-import type { ButtonProps, CardProps, DialogProps, InputProps, PanelProps, ProgressProps, StartAnimationProps, ThemeDefinition, ThemeSlots } from '../src/index.js';
+import type { ButtonProps, PageName, PageProps, PageSlots, CardProps, DialogProps, InputProps, PanelProps, ProgressProps, StartAnimationProps, ThemeDefinition, ThemeSlots } from '../src/index.js';
 
 describe('SDK_VERSION', () => {
   it('ist eine semver-Version der Reihe 0.x', () => {
     expect(SDK_VERSION).toMatch(/^0\.\d+\.\d+$/);
   });
 
-  it('ist 0.6.0 (Slot StartAnimation)', () => {
-    expect(SDK_VERSION).toBe('0.6.0');
+  it('ist 0.7.0 (Seiten-Slots)', () => {
+    expect(SDK_VERSION).toBe('0.7.0');
   });
 
   it('stimmt mit der Version in package.json überein', () => {
@@ -46,5 +46,18 @@ describe('Slot-Typen', () => {
     const theme = { id: 'start', slots: { StartAnimation } } satisfies ThemeDefinition;
     const key: keyof ThemeSlots = 'StartAnimation';
     expect(Object.keys(theme.slots)).toEqual([key]);
+  });
+});
+
+describe('Seiten-Slots', () => {
+  it('kennt page:dashboard mit pid, unbekannte Seiten sind ein Typfehler', () => {
+    const Dashboard = (props: PageProps) => props.pid;
+    const name: PageName = 'dashboard';
+    const pages: PageSlots = { [`page:${name}`]: Dashboard as never };
+    const theme = { id: 'seiten', slots: { 'page:dashboard': Dashboard as never } } satisfies ThemeDefinition;
+    // @ts-expect-error nur page:dashboard ist ein Seiten-Slot
+    const unbekannt: keyof ThemeSlots = 'page:inbox';
+    expect(Object.keys(theme.slots)).toEqual(Object.keys(pages));
+    expect(unbekannt).toBe('page:inbox');
   });
 });
