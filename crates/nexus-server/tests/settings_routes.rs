@@ -202,7 +202,7 @@ async fn lehnt_ein_unbekanntes_theme_ab() {
     assert_eq!(reply.status, 422);
     assert_eq!(
         reply.json().expect("JSON")["message"],
-        "theme muss system, light, dark, signal, pastel oder win95 sein."
+        "theme muss ein eingebautes (system, light, dark, signal, pastel, win95) oder installiertes Theme sein."
     );
 }
 
