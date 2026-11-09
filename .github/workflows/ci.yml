@@ -80,6 +80,12 @@ jobs:
       - run: npm run build
       - run: npm run typecheck
       - run: cargo build -p nexus-cli --bin nexus
+      # Trockenlauf der Theme-Pakete fürs Release: kaputte Manifeste fallen schon hier auf
+      - name: Theme-Pakete und Store-Index (Trockenlauf)
+        shell: bash
+        run: |
+          NEXUS_BIN="$PWD/target/debug/nexus" npm run build:themes
+          node scripts/release/theme-index.mjs dist/themes "https://github.com/${{ github.repository }}/releases/download/v0.0.0" dist/release-themes
       # Der Plugin-Build (build-plugin.mjs) braucht das Release-Binary; vorab gebaut, damit die
       # Plugin-Tests nicht selbst minutenlang kompilieren und dabei in ihr Zeitlimit laufen
       - run: cargo build --release -p nexus-cli --bin nexus

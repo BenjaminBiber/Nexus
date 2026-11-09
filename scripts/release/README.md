@@ -225,6 +225,9 @@ Der lokale Build ist unsigniert; Gatekeeper-Warnungen sind dabei erwartet.
 | `draft-release.sh` | Entwurfs-Release anlegen und seine Id ausgeben |
 | `cli-archive.mjs` | CLI und Plugin zu `nexus-cli-<version>-<ziel>.tar.gz` bzw. `.zip` packen |
 | `lib/CliArchive.mjs` | Namen des Archivs, des Ordners darin und des Programms (reine Funktionen) |
+| `theme-index.mjs` | Theme-Pakete aus `dist/themes` als `<id>-<version>.nexus` plus Store-Index `nexus-themes.json` ausgeben (Job „Veröffentlichen“ hängt sie ans Release; Store-URL `https://github.com/BenjaminBiber/Nexus/releases/latest/download/nexus-themes.json`) |
+| `lib/ThemeIndex.mjs` | Manifest aus dem Paket lesen, Index-Einträge mit sha256 und `downloadUrl` am Tag bauen (reine Funktionen) |
+| `tests/fixtures/nexus-themes.reference.json` | echte Ausgabe für die mitgelieferten Themes; der Rust-Test `reference_theme_index` prüft sie mit `parse_index` |
 | `tests/*.test.mjs` | Unit-Tests (`npx vitest run scripts/release`) |
 | `tests/RepoCopy.mjs` | kopiert das Fixture-Repo in einen Temp-Ordner |
 | `tests/fixtures/repo/` | Mini-Abbild eines Repos mit allen Versionsstellen |

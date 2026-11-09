@@ -36,9 +36,16 @@ export function updaterEnabled(...tauriConfs) {
   return tauriConfs.some((conf) => conf?.bundle?.createUpdaterArtifacts === true);
 }
 
-// Alle erwarteten Dateinamen: Grundliste, bei aktiviertem Updater zusätzlich dessen Dateien
-export function assetNames(version, { updater = false } = {}) {
-  return updater ? [...baseAssetNames(version), ...updaterAssetNames(version)] : baseAssetNames(version);
+// Dateien des Theme-Stores (theme-index.mjs): `nexus-themes.json` und je mitgeliefertem Theme `<id>-<version>.nexus`.
+// `themes` sind die Manifeste aus themes/*/manifest.json
+export function themeAssetNames(themes) {
+  return themes.length === 0 ? [] : ['nexus-themes.json', ...themes.map((t) => `${t.id}-${t.version}.nexus`)];
+}
+
+// Alle erwarteten Dateinamen: Grundliste, bei aktiviertem Updater zusätzlich dessen Dateien, dazu die Theme-Pakete
+export function assetNames(version, { updater = false, themes = [] } = {}) {
+  const names = updater ? [...baseAssetNames(version), ...updaterAssetNames(version)] : baseAssetNames(version);
+  return [...names, ...themeAssetNames(themes)];
 }
 
 // Namen aus `expected`, die nicht in `actual` stehen (Reihenfolge wie `expected`)
