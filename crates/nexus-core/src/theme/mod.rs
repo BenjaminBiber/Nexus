@@ -3,6 +3,7 @@
 pub mod css_check;
 pub mod snippet_store;
 pub mod store_index;
+pub mod store_install;
 pub mod store_repos;
 
 pub use css_check::{check_css, check_snippet_css, CssViolation};

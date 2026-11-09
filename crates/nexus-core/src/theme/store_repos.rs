@@ -26,6 +26,9 @@ pub const STORE_REPO_INVALID: &str = "store-repo-invalid";
 /// Fehlercode für eine schon eingetragene Adresse (HTTP 409)
 pub const STORE_REPO_EXISTS: &str = "store-repo-exists";
 
+/// Fehlercode für einen ungültigen öffentlichen Schlüssel (HTTP 400)
+pub const STORE_REPO_KEY_INVALID: &str = "store-repo-key-invalid";
+
 /// Ein eingetragenes Repo
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -33,6 +36,10 @@ pub struct StoreRepo {
     pub id: String,
     pub url: String,
     pub added_at: String,
+    /// Öffentlicher minisign-Schlüssel (Base64-Zeile `RW…`), vom Nutzer beim Eintragen
+    /// festgelegt; ohne Schlüssel werden Signaturen der Pakete nicht geprüft
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub public_key: Option<String>,
 }
 
 /// Liest und schreibt die Store-Repos
@@ -66,9 +73,15 @@ impl StoreRepoStore {
         self.read()
     }
 
-    /// Trägt die Adresse ein; ungültig → `store-repo-invalid`, schon da → `store-repo-exists`
-    pub fn add(&self, url: &str) -> Result<StoreRepo> {
+    /// Trägt die Adresse ein; ungültig → `store-repo-invalid`, schon da → `store-repo-exists`,
+    /// ungültiger Schlüssel → `store-repo-key-invalid`
+    pub fn add(&self, url: &str, public_key: Option<&str>) -> Result<StoreRepo> {
         let url = normalize_url(url)?;
+        let public_key = public_key
+            .map(str::trim)
+            .filter(|key| !key.is_empty())
+            .map(normalize_public_key)
+            .transpose()?;
         let _guard = self.lock.lock().unwrap_or_else(|e| e.into_inner());
         let mut repos = self.read();
         if repos.iter().any(|repo| repo.url == url) {
@@ -83,10 +96,21 @@ impl StoreRepoStore {
             id: repo_id(&url),
             url,
             added_at: self.clock.iso(),
+            public_key,
         };
         repos.push(repo.clone());
         self.write(&repos)?;
         Ok(repo)
+    }
+
+    /// Das Repo mit dieser ID; unbekannt → `store-repo-not-found`
+    pub fn get(&self, id: &str) -> Result<StoreRepo> {
+        self.read()
+            .into_iter()
+            .find(|repo| repo.id == id)
+            .ok_or_else(|| {
+                HarnessError::new("store-repo-not-found", "Dieses Repo gibt es nicht.").into()
+            })
     }
 
     /// Entfernt das Repo; unbekannt → `store-repo-not-found`
@@ -154,6 +178,20 @@ pub fn normalize_url(raw: &str) -> Result<String> {
     Ok(url.to_string())
 }
 
+/// Prüft einen öffentlichen minisign-Schlüssel: die Base64-Zeile allein oder der ganze
+/// Inhalt einer `.pub`-Datei (dann zählt die letzte Zeile). Ergebnis: die Base64-Zeile
+pub fn normalize_public_key(raw: &str) -> Result<String> {
+    let line = raw.trim().lines().last().unwrap_or_default().trim();
+    if minisign_verify::PublicKey::from_base64(line).is_err() {
+        return Err(HarnessError::new(
+            STORE_REPO_KEY_INVALID,
+            "Der öffentliche Schlüssel ist kein gültiger minisign-Schlüssel (Base64-Zeile RW…).",
+        )
+        .into());
+    }
+    Ok(line.to_string())
+}
+
 /// Erste 12 Hex-Zeichen von sha256 der normalisierten Adresse
 fn repo_id(url: &str) -> String {
     Sha256::digest(url.as_bytes())
@@ -182,7 +220,7 @@ mod tests {
     fn traegt_ein_und_listet() {
         let (store, dir) = store();
         assert!(store.list().is_empty());
-        let repo = store.add(INDEX).unwrap();
+        let repo = store.add(INDEX, None).unwrap();
         assert_eq!(repo.url, INDEX);
         assert_eq!(repo.id.len(), 12);
         assert!(repo.id.chars().all(|c| c.is_ascii_hexdigit()));
@@ -205,7 +243,7 @@ mod tests {
             "https://x.de/a b",
             long.as_str(),
         ] {
-            let error = store.add(url).unwrap_err();
+            let error = store.add(url, None).unwrap_err();
             assert_eq!(error.code(), Some(STORE_REPO_INVALID), "{url}");
         }
         assert!(!dir.path().join("store").exists());
@@ -214,15 +252,15 @@ mod tests {
     #[test]
     fn erlaubt_http_nur_lokal() {
         let (store, _dir) = store();
-        store.add("http://localhost:8080/i.json").unwrap();
-        store.add("http://127.0.0.1/i.json").unwrap();
+        store.add("http://localhost:8080/i.json", None).unwrap();
+        store.add("http://127.0.0.1/i.json", None).unwrap();
     }
 
     #[test]
     fn erkennt_dubletten_nach_normalisierung() {
         let (store, _dir) = store();
-        store.add("https://Example.COM/i.json").unwrap();
-        let error = store.add("  HTTPS://example.com/i.json ").unwrap_err();
+        store.add("https://Example.COM/i.json", None).unwrap();
+        let error = store.add("  HTTPS://example.com/i.json ", None).unwrap_err();
         assert_eq!(error.code(), Some(STORE_REPO_EXISTS));
         assert_eq!(store.list().len(), 1);
         assert_eq!(store.list()[0].url, "https://example.com/i.json");
@@ -232,16 +270,16 @@ mod tests {
     fn begrenzt_die_anzahl() {
         let (store, _dir) = store();
         for i in 0..MAX_STORE_REPOS {
-            store.add(&format!("https://x.de/{i}.json")).unwrap();
+            store.add(&format!("https://x.de/{i}.json"), None).unwrap();
         }
-        let error = store.add("https://x.de/zu-viel.json").unwrap_err();
+        let error = store.add("https://x.de/zu-viel.json", None).unwrap_err();
         assert_eq!(error.code(), Some(STORE_REPO_INVALID));
     }
 
     #[test]
     fn entfernt_und_meldet_unbekannte() {
         let (store, _dir) = store();
-        let repo = store.add(INDEX).unwrap();
+        let repo = store.add(INDEX, None).unwrap();
         store.remove(&repo.id).unwrap();
         assert!(store.list().is_empty());
         assert_eq!(
@@ -250,10 +288,53 @@ mod tests {
         );
     }
 
+    /// Gültiger minisign-Schlüssel (Testschlüssel aus `store_install::test_signing`)
+    fn test_key() -> String {
+        crate::theme::store_install::test_signing::TestSigner::new(7).public_key()
+    }
+
+    #[test]
+    fn traegt_mit_schluessel_ein() {
+        let (store, _dir) = store();
+        let key = test_key();
+        let datei = format!("untrusted comment: minisign public key\n{key}\n");
+        let repo = store.add(INDEX, Some(&datei)).unwrap();
+        assert_eq!(repo.public_key.as_deref(), Some(key.as_str()));
+        assert_eq!(store.get(&repo.id).unwrap(), repo);
+        let leer = store.add("https://x.de/i.json", Some("  ")).unwrap();
+        assert_eq!(leer.public_key, None);
+    }
+
+    #[test]
+    fn lehnt_ungueltigen_schluessel_ab() {
+        let (store, _dir) = store();
+        let error = store.add(INDEX, Some("RWkaputt")).unwrap_err();
+        assert_eq!(error.code(), Some(STORE_REPO_KEY_INVALID));
+        assert!(store.list().is_empty());
+    }
+
+    #[test]
+    fn alte_datei_ohne_schluessel_laedt() {
+        let (store, dir) = store();
+        fs::create_dir_all(dir.path().join("store")).unwrap();
+        fs::write(
+            dir.path().join("store").join("repos.json"),
+            r#"[{"id":"abc","url":"https://x.de/i.json","addedAt":"2026-01-01T00:00:00Z"}]"#,
+        )
+        .unwrap();
+        let repos = store.list();
+        assert_eq!(repos.len(), 1);
+        assert_eq!(repos[0].public_key, None);
+        assert_eq!(
+            store.get("fehlt").unwrap_err().code(),
+            Some("store-repo-not-found")
+        );
+    }
+
     #[test]
     fn neue_instanz_liest_die_gespeicherte_liste() {
         let (store, dir) = store();
-        let repo = store.add(INDEX).unwrap();
+        let repo = store.add(INDEX, None).unwrap();
         let again = StoreRepoStore::new(HarnessHome::at(dir.path()));
         assert_eq!(again.list(), vec![repo]);
     }

@@ -63,6 +63,11 @@ sha1_smol = "1"
 sha2 = "0.10"
 # Base64 der sha256-Hashes, mit denen die CSP die Inline-Skripte der Oberfläche erlaubt
 base64 = "0.22"
+# Prüft die optionale minisign-Signatur (Ed25519) der Theme-Pakete aus dem Store
+minisign-verify = "0.3"
+# Nur für Tests: minisign-Signaturen erzeugen (Ed25519 über den BLAKE2b-Hash des Pakets)
+ed25519-dalek = { version = "2", default-features = false, features = ["std"] }
+blake2 = "0.10"
 # Karte mit erhaltener Reihenfolge: die Profile der Dispatcher-Einstellung stehen in der
 # Reihenfolge der Datei (defaultProfile und die Eskalationsleiter hängen daran)
 indexmap = { version = "2", features = ["serde"] }
