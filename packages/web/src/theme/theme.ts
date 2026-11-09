@@ -1,5 +1,6 @@
 import { BUILTIN_THEME_IDS, type ThemeMode } from '../api/types.js';
 import { getTheme } from './registry.js';
+import { isSafeTheme } from './safeTheme.js';
 import { SNIPPETS_LINK_ID } from './snippets.js';
 
 /** Ereignis nach jedem Wechsel des Farbschemas (Mermaid zeichnet daraufhin neu) */
@@ -76,11 +77,17 @@ export function applyTheme(requested: ThemeMode, installed?: readonly InstalledT
   const ids = installed?.map((theme) => (typeof theme === 'string' ? theme : theme.id));
   // Im Code angemeldete Themes gelten auch ohne Paket als bekannt, bringen aber keine theme.css mit
   const mode = ids ? normalizeThemeId(requested, getTheme(requested) ? [...ids, requested] : ids) : THEME_ID_PATTERN.test(requested) ? requested : 'system';
-  const resolved = resolveTheme(mode, systemPrefersDark());
+  // Abgesicherter Modus: installierte Themes zeigen nur Hell/Dunkel nach System, ohne theme.css; die Einstellung bleibt gespeichert
+  const safe = !(BUILTIN_THEME_IDS as readonly string[]).includes(mode) && isSafeTheme();
+  const resolved = resolveTheme(safe ? 'system' : mode, systemPrefersDark());
   const external = !(BUILTIN_THEME_IDS as readonly string[]).includes(mode) && (ids ? ids.includes(mode) : !getTheme(mode));
   document.documentElement.dataset.theme = resolved;
   document.documentElement.dataset.themeMode = mode;
-  setThemeLink(external ? mode : null);
+  setThemeLink(external && !safe ? mode : null);
+  if (safe) {
+    window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: resolved }));
+    return;
+  }
   const manifest = installed?.find((theme): theme is Exclude<InstalledTheme, string> => typeof theme !== 'string' && theme.id === mode);
   try {
     window.localStorage.setItem(THEME_CACHE_KEY, mode);
