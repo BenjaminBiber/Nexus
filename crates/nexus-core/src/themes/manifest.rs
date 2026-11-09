@@ -12,7 +12,7 @@ use serde_json::{Map, Value};
 use ts_rs::TS;
 
 /// Erlaubte Zeichen einer Theme-ID
-static THEME_ID_PATTERN: LazyLock<Regex> =
+pub(crate) static THEME_ID_PATTERN: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-z0-9-]{2,40}$").unwrap());
 
 /// Erlaubte Form eines Slot-Namens
