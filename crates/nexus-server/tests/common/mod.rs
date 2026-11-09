@@ -139,6 +139,8 @@ pub struct TestServerOptions {
     pub store_index_timeout: Option<std::time::Duration>,
     /// Zeitlimit beim Download eines Store-Pakets; ohne Angabe der Standard
     pub store_download_timeout: Option<std::time::Duration>,
+    /// Ordner der mitgelieferten Theme-Pakete; ohne Angabe keiner
+    pub bundled_themes_dir: Option<PathBuf>,
 }
 
 /// Startet nichts und liefert keine Prozessnummer; so startet in Tests nie ein echter Worker
@@ -179,6 +181,7 @@ impl TestServer {
         config.version = "test".into();
         config.web_dir = options.web_dir;
         config.plugin_bundle = options.plugin_bundle;
+        config.bundled_themes_dir = options.bundled_themes_dir;
         // Nie den echten Claude-Ordner des Rechners anfassen
         config.setup = options.setup.unwrap_or_else(|| {
             nexus_server::setup::SetupContext::new(
