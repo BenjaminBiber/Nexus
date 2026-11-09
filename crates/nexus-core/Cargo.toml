@@ -11,7 +11,8 @@ chrono = { workspace = true }
 getrandom = { workspace = true }
 indexmap = { workspace = true }
 regex = { workspace = true }
-serde = { workspace = true }
+semver = { workspace = true }
+serde ={ workspace = true }
 # „preserve_order“ für die rohe Übersicht von `OverviewFile::read_value`: `GET
 # /api/customizations` gibt unbekannte Felder und ihre Reihenfolge aus der Datei unverändert
 # weiter, nur ohne `diff`.

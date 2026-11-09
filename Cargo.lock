@@ -2683,6 +2683,7 @@ dependencies = [
  "indexmap 2.14.2",
  "nix",
  "regex",
+ "semver",
  "serde",
  "serde_json",
  "serde_yaml_ng",
