@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useParams } from 'react-router-dom';
 import { BoardProjectProvider } from '../dbboard/boardProject.js';
 import { LiveProvider } from '../live/LiveProvider.js';
@@ -49,47 +49,66 @@ export function AppShell() {
   const openSearch = useCallback(() => setSearching(true), []);
   const theme = useDisplayedTheme();
   const Shell = useSlot('Shell');
-  const link = ([path, label, Icon]: (typeof LINKS)[number]) => (
-    <NavLink key={path} to={`/p/${pid}/${path}`}>
-      <Icon />
-      <span className="nav-label">{label}</span>
-    </NavLink>
-  );
+  // Bausteine des Rahmens; einzeln für Themes und gemeinsam für den Host der SDK-Bausteine
+  const parts = useMemo<ShellParts>(() => {
+    const link = ([path, label, Icon]: (typeof LINKS)[number]) => (
+      <NavLink key={path} to={`/p/${pid}/${path}`}>
+        <Icon />
+        <span className="nav-label">{label}</span>
+      </NavLink>
+    );
+    const [board, dashboard, sessions, guide] = LINKS.map(link);
+    return {
+      search: <GlobalSearchButton />,
+      boardSwitcher: <BoardProjectSwitcher pid={pid} status={<ConnectionBadge />} />,
+      usage: <ClaudeUsageMeter />,
+      navItems: {
+        board,
+        inbox: <InboxNavLink key="inbox" pid={pid} />,
+        dashboard,
+        sessions,
+        questions: <DbQuestionsNavLink key="questions" pid={pid} />,
+        docs: <DocsNavLink key="docs" pid={pid} />,
+        guide,
+        settings: (
+          <NavLink key="settings" to={`/p/${pid}/settings`}>
+            <CogIcon />
+            <span className="nav-label">{navLabel('settings')}</span>
+          </NavLink>
+        ),
+      },
+      outlet: <Outlet />,
+      connection: <ConnectionBanner />,
+      status: <ConnectionBadge />,
+    };
+  }, [pid]);
+  const { navItems } = parts;
   const navLinks = (
     <>
-      {LINKS.slice(0, 1).map(link)}
-      <InboxNavLink pid={pid} />
-      {LINKS.slice(1, 3).map(link)}
-      <DbQuestionsNavLink pid={pid} />
-      <DocsNavLink pid={pid} />
-      {LINKS.slice(3).map(link)}
-      <NavLink to={`/p/${pid}/settings`}>
-        <CogIcon />
-        <span className="nav-label">{navLabel('settings')}</span>
-      </NavLink>
+      {navItems.board}
+      {navItems.inbox}
+      {navItems.dashboard}
+      {navItems.sessions}
+      {navItems.questions}
+      {navItems.docs}
+      {navItems.guide}
+      {navItems.settings}
     </>
   );
   const content = (
     <div className="shell-content">
       <main className="shell-main">
-        <div className="page connection-slot">
-          <ConnectionBanner />
-        </div>
-        <Outlet />
+        <div className="page connection-slot">{parts.connection}</div>
+        {parts.outlet}
       </main>
     </div>
   );
-  const parts: ShellParts = {
-    search: <GlobalSearchButton />,
-    boardSwitcher: <BoardProjectSwitcher pid={pid} status={<ConnectionBadge />} />,
-    usage: <ClaudeUsageMeter />,
-  };
   const standard = <DefaultShell pid={pid} nav={navLinks} content={content} parts={parts} />;
 
   return (
     <LiveProvider pid={pid} key={pid}>
       <BoardProjectProvider>
-        <NexusThemeHost pid={pid}>
+        <NexusThemeHost pid={pid} parts={parts}>
         <OpenSearchContext.Provider value={openSearch}>
         <SessionNotifier pid={pid} />
         <SetupPrompts />
