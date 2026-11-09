@@ -17,6 +17,11 @@ export function useHost(name: string): ThemeHost {
   return host;
 }
 
+// Host aus dem Context oder null außerhalb des Providers (intern, nicht im Index)
+export function useOptionalHost(): ThemeHost | null {
+  return useContext(ThemeHostContext);
+}
+
 /** Einträge der Hauptnavigation */
 export const useNav = () => useHost('useNav').nav;
 /** Projekte, Boards und Board-Wahl */

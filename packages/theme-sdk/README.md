@@ -4,7 +4,7 @@ Das Theme-SDK beschreibt den Vertrag zwischen der Nexus-Oberfläche (Host) und e
 Stellen ein Theme ersetzen darf (Slots), welche Daten und Bausteine es vom Host bekommt (Hooks und
 Bausteine), welche CSS-Variablen es setzen kann und wie das Manifest aussieht.
 
-Aktuelle Version: `SDK_VERSION` = **1.0.0** (gleich der Paketversion in `package.json`).
+Aktuelle Version: `SDK_VERSION` = **1.1.0** (gleich der Paketversion in `package.json`).
 
 > Dieses README ist die maßgebliche Doku des SDK. `tests/readme.test.ts` prüft, dass jeder Slot,
 > jeder Export und jede CSS-Variable aus `:root` hier genannt ist.
@@ -184,6 +184,7 @@ werfen sie einen Fehler, der Hook und Provider nennt. `ThemeHostProvider` render
 | `useNavigate()` | `(to: string) => void` | Route wechseln |
 | `useOpenSearch()` | `() => void` | globale Suche öffnen |
 | `useShellParts()` | `ShellParts` | fertige Bausteine des Rahmens |
+| `useThemeAsset(url, opts?)` | `ThemeAssetState` | fremde Ressource über den Server-Proxy (siehe [Fremde Ressourcen](#fremde-ressourcen-usethemeasset)) |
 
 Typen:
 
@@ -203,6 +204,84 @@ function Boards() {
   const { boards } = useBoards();
   const navigate = useNavigate();
   return boards.map((b) => <button key={b.id} onClick={() => navigate(`/p/${b.project}/board`)}>{b.name}</button>);
+}
+```
+
+## Fremde Ressourcen: `useThemeAsset`
+
+Ein Theme lädt Bilder, Schriften oder Dateien aus einem JAR/ZIP nie direkt vom fremden Server
+(CORS, Datenschutz), sondern über den Server-Proxy von Nexus. `useThemeAsset(url, opts?)` baut die
+lokale Proxy-URL `/api/themes/<id>/fetch?url=<kodiert>` (plus `sha256` und `entry`, wenn gesetzt),
+prüft sie per `fetch` und meldet Lade- und Fehlerzustand. Ein Theme darf nur Domains laden, die in
+`permissions.network` des Manifests stehen; sonst antwortet der Proxy mit 403. Die Ressourcen liegen
+im Cache je Theme.
+
+```ts
+function useThemeAsset(url: string | null | undefined, opts?: ThemeAssetOptions): ThemeAssetState;
+function themeAssetUrl(themeId: string, url: string, opts?: Omit<ThemeAssetOptions, 'themeId'>): string;
+```
+
+`ThemeAssetOptions`:
+
+| Feld | Bedeutung |
+|---|---|
+| `themeId?` | Theme, dessen Freigabe und Cache gelten; Standard ist das aktive Theme des Hosts (`useColorScheme().themeId`) |
+| `sha256?` | erwartete Prüfsumme (hex); weicht sie ab, antwortet der Proxy mit 502 `theme_fetch_checksum` |
+| `entry?` | Pfad eines Eintrags, wenn `url` ein ZIP oder JAR ist, z. B. `assets/minecraft/textures/block/dirt.png` |
+
+`ThemeAssetState`:
+
+| `status` | `url` | `error` | Bedeutung |
+|---|---|---|---|
+| `idle` | `null` | `null` | keine URL angegeben (`null`, `undefined`, leer), es wird nichts geladen |
+| `loading` | `null` | `null` | Anfrage läuft |
+| `ready` | Proxy-URL | `null` | Ressource erreichbar; die URL z. B. in `<img src>` oder `url(...)` verwenden |
+| `error` | `null` | `ThemeAssetError` | Laden fehlgeschlagen |
+
+Ändert sich `url` oder eine Option, lädt der Hook neu und bricht die alte Anfrage ab; beim Entfernen
+der Komponente ebenfalls. Der Hook hält keine Bytes, das Bild lädt der Browser aus seinem HTTP-Cache.
+
+`ThemeAssetError`: `status: number | null` (HTTP-Status, bei Netzfehler `null`), `code: string`,
+`message: string`. Der `code` stammt aus der JSON-Antwort des Proxys:
+
+| `code` | Status | Ursache |
+|---|---|---|
+| `theme_fetch_forbidden` | 403 | Domain steht nicht in `permissions.network` des Themes |
+| `theme_fetch_too_large` | 413 | Ressource ist zu groß |
+| `theme_fetch_checksum` | 502 | `sha256` passt nicht zum Inhalt |
+| `theme_fetch_upstream` | 502 | fremder Server nicht erreichbar oder antwortet mit Fehler |
+| `theme_fetch_entry_not_found` | 404 | `entry` fehlt im Archiv |
+| `theme_fetch_not_archive` | 502 | `entry` gesetzt, aber der fremde Server liefert kein ZIP |
+| `bad-request` | 400 | ungültige URL oder Parameter |
+| `network` | – | Netzwerkfehler beim Aufruf des Proxys |
+| `http_<status>` | je Antwort | Antwort ohne JSON-Fehler, z. B. `http_404` |
+
+Ohne `ThemeHostProvider` und ohne `opts.themeId` wirft der Hook einen Fehler.
+
+```tsx
+import { useThemeAsset } from '@nexus/theme-sdk';
+
+// Textur aus einem Client-JAR; Domain muss in permissions.network stehen
+function Dirt() {
+  const asset = useThemeAsset('https://piston-data.mojang.com/v1/objects/abc/client.jar', {
+    sha256: '3f2a…',
+    entry: 'assets/minecraft/textures/block/dirt.png',
+  });
+  if (asset.status === 'loading') return <span>lädt …</span>;
+  if (asset.status === 'error') return <span title={asset.error?.message}>Bild nicht verfügbar ({asset.error?.code})</span>;
+  return asset.url ? <img src={asset.url} alt="Erde" /> : null;
+}
+```
+
+Für CSS ohne Zustand liefert `themeAssetUrl` nur die Proxy-URL, ohne etwas zu prüfen:
+
+```tsx
+import { themeAssetUrl, useColorScheme } from '@nexus/theme-sdk';
+
+function Hintergrund() {
+  const { themeId } = useColorScheme();
+  const bild = themeAssetUrl(themeId, 'https://fonts.example.com/muster.png');
+  return <div style={{ backgroundImage: `url(${bild})` }} />;
 }
 ```
 
@@ -319,6 +398,13 @@ Das SDK folgt ab 1.0.0 semver. `SDK_VERSION` ist immer gleich der Version in `pa
   verengt, Slot entfernt) oder an CSS-Variablen.
 - **Minor:** Neue Slots, Hooks, Bausteine, optionale Felder oder CSS-Variablen.
 - **Patch:** Doku und Fehlerbehebungen ohne Änderung der Typen.
+
+Änderungen:
+
+| Version | Änderung |
+|---|---|
+| 1.1.0 | neu: `useThemeAsset`, `themeAssetUrl` und die Typen `ThemeAssetOptions`, `ThemeAssetState`, `ThemeAssetError` |
+| 1.0.0 | erste stabile API |
 
 Der Host lädt nur Themes, deren `sdkVersion`-Bereich die aktuelle `SDK_VERSION` enthält; andere
 werden nicht geladen und im Store als unpassend ausgelassen. Empfehlung: `"sdkVersion": "^1.0.0"`.
