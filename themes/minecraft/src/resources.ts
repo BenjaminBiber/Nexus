@@ -2,6 +2,7 @@
 // Mojang-Dateien liegen nie im Paket; der Proxy cacht sie unter ~/.nexus/themes/minecraft/cache/.
 import { themeAssetUrl } from '@nexus/theme-sdk';
 import { useCallback, useEffect, useState } from 'react';
+import { NAV_ITEM_TEXTURE } from './navIcons.js';
 
 /** id aus manifest.json; Domain-Freigabe und Cache des Proxys gelten je Theme */
 export const THEME_ID = 'minecraft';
@@ -12,13 +13,25 @@ export const MINECRAFT_VERSION = '1.21.4';
 /** Versionsliste von Mojang */
 export const MANIFEST_URL = 'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json';
 
+export const FONT_ATLAS = 'assets/minecraft/textures/font/ascii.png';
+export const BUTTON = 'assets/minecraft/textures/gui/sprites/widget/button.png';
+export const BUTTON_HIGHLIGHTED = 'assets/minecraft/textures/gui/sprites/widget/button_highlighted.png';
+export const panorama = (i: number) => `assets/minecraft/textures/gui/title/background/panorama_${i}.png`;
+export const HOTBAR = 'assets/minecraft/textures/gui/sprites/hud/hotbar.png';
+export const HOTBAR_SELECTION = 'assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png';
+export const LOGO = 'assets/minecraft/textures/gui/title/minecraft.png';
+
 /** Einträge im Client-JAR, die das Theme braucht */
-export const MINECRAFT_ENTRIES = [
-  'assets/minecraft/textures/font/ascii.png',
-  'assets/minecraft/textures/gui/sprites/widget/button.png',
-  'assets/minecraft/textures/gui/sprites/widget/button_highlighted.png',
-  ...[0, 1, 2, 3, 4, 5].map((i) => `assets/minecraft/textures/gui/title/background/panorama_${i}.png`),
-] as const;
+export const MINECRAFT_ENTRIES: readonly string[] = [
+  FONT_ATLAS,
+  BUTTON,
+  BUTTON_HIGHLIGHTED,
+  ...[0, 1, 2, 3, 4, 5].map(panorama),
+  HOTBAR,
+  HOTBAR_SELECTION,
+  LOGO,
+  ...Object.values(NAV_ITEM_TEXTURE),
+];
 
 /** Fehler beim Laden; `offline` heißt: Mojang nicht erreichbar, erneut versuchen hilft */
 export interface MinecraftResourceError {
