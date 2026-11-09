@@ -61,6 +61,8 @@ getrandom = "0.3"
 sha1_smol = "1"
 # SHA-256 für den Fingerabdruck der Dispatcher-Einstellung (16 Hex-Zeichen wie in TypeScript)
 sha2 = "0.10"
+# Base64 der sha256-Hashes, mit denen die CSP die Inline-Skripte der Oberfläche erlaubt
+base64 = "0.22"
 # Karte mit erhaltener Reihenfolge: die Profile der Dispatcher-Einstellung stehen in der
 # Reihenfolge der Datei (defaultProfile und die Eskalationsleiter hängen daran)
 indexmap = { version = "2", features = ["serde"] }

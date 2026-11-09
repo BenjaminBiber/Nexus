@@ -1067,4 +1067,15 @@ mod tests {
         assert!(!csp.contains("http://192.168"), "{csp}");
         assert!(!csp.contains("unsafe-eval"), "{csp}");
     }
+
+    // Der Web-Server liefert die Oberfläche mit derselben CSP aus; die Konfig bleibt die Quelle
+    #[test]
+    fn die_csp_des_web_servers_gleicht_der_der_app() {
+        let datei: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        assert_eq!(
+            datei["app"]["security"]["csp"].as_str().unwrap(),
+            nexus_server::routes::static_files::CONTENT_SECURITY_POLICY
+        );
+    }
 }
