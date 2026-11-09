@@ -104,6 +104,12 @@ export interface InputProps {
   className?: string;
 }
 
+/** Eingaben des Slots „StartAnimation“: Ladebildschirm beim Start der Oberfläche */
+export interface StartAnimationProps {
+  /** Startanimation beendet, App wird gezeigt */
+  onDone(): void;
+}
+
 /** Stellen der Oberfläche, die ein Theme durch eigene Komponenten ersetzen kann; fehlt ein Slot, gilt die Standard-Komponente */
 export interface ThemeSlots {
   Shell?: ComponentType<ShellProps>;
@@ -114,6 +120,8 @@ export interface ThemeSlots {
   Panel?: ComponentType<PanelProps>;
   Dialog?: ComponentType<DialogProps>;
   Input?: ComponentType<InputProps>;
+  /** Liegt beim Start als Vollbild über der App; muss `onDone` rufen und wird spätestens nach 8 s beendet */
+  StartAnimation?: ComponentType<StartAnimationProps>;
 }
 
 /** Ein Theme mit ID (Wert von data-theme) und seinen Slots */
