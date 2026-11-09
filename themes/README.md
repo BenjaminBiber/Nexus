@@ -14,7 +14,8 @@ themes/<id>/
 ```
 
 Versteckte Dateien und Ordner (führender Punkt) und symbolische Links sind nicht erlaubt;
-Ordner mit führendem Punkt unter `themes/` werden übersprungen.
+Ordner mit führendem Punkt oder Unterstrich unter `themes/` (z. B. die Vorlage `_template`) werden
+übersprungen.
 
 ## Bauen
 

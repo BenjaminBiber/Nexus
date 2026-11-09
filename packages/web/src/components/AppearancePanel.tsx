@@ -17,7 +17,6 @@ const THEMES: Array<{ mode: ThemeMode; label: string; hint: string; icon: string
   { mode: 'system', label: 'System', hint: 'Folgt der Einstellung von Windows.', icon: 'M3 4h18v12H3zM8 20h8M12 16v4' },
   { mode: 'light', label: 'Hell', hint: 'Immer hell.', icon: 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' },
   { mode: 'dark', label: 'Dunkel', hint: 'Immer dunkel.', icon: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z' },
-  { mode: 'signal', label: 'Signal', hint: 'Dunkle Seitenleiste, Spalten und Karten im Ton ihres Status.', icon: 'M4 4h4v16H4zM10 4h4v10h-4zM16 4h4v13h-4z' },
   { mode: 'pastel', label: 'Pastell', hint: 'Wie aus Papier gebastelt: Tonpapier und abgerissene Zettel.', icon: 'M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.6 0-1.1-.9-1.4-.9-2.4 0-.9.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4c0-4.7-4-8.5-9-8.5zM7.5 12.5h.01M9.5 8h.01M14.5 8h.01' },
   { mode: 'win95', label: 'Windows 95', hint: 'Desktop, Fenster mit Titelleiste, Startmenü und Taskleiste.', icon: 'M3 5.5l7-1v7H3zM12 4.2l9-1.2v8.5h-9zM3 13h7v7l-7-1zM12 13h9v8.5l-9-1.2z' },
 ];

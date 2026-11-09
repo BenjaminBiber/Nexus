@@ -45,13 +45,14 @@ function run(src, out) {
 }
 
 describe('build-themes', () => {
-  it('packt jeden Theme-Ordner und überspringt Punkt-Ordner', () => {
+  it('packt jeden Theme-Ordner und überspringt Punkt- und Unterstrich-Ordner', () => {
     temp = mkdtempSync(join(tmpdir(), 'nexus-build-themes-'));
     const src = join(temp, 'themes');
     const out = join(temp, 'out');
     theme(src, 'alpha');
     theme(src, 'beta');
     theme(src, '.versteckt');
+    theme(src, '_template');
     const result = run(src, out);
     expect(result.status, result.stderr).toBe(0);
     expect(readdirSync(out).sort()).toEqual(['alpha.nexus', 'beta.nexus']);

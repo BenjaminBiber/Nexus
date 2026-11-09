@@ -41,7 +41,8 @@ function main(args) {
 
   const dirs = existsSync(src)
     ? readdirSync(src, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
+        // Punkt-Ordner sind versteckt, Unterstrich-Ordner Vorlagen (themes/_template)
+        .filter((entry) => entry.isDirectory() && !/^[._]/.test(entry.name))
         .map((entry) => entry.name)
         .filter((name) => existsSync(join(src, name, 'manifest.json')))
         .sort()

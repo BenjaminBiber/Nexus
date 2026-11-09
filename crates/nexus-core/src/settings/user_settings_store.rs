@@ -256,6 +256,18 @@ mod tests {
     }
 
     #[test]
+    fn signal_gilt_nur_als_installiertes_paket() {
+        let (dir, store) = store();
+        write_raw(&dir, r#"{"theme":"signal"}"#);
+        assert_eq!(store.read().theme, ThemeMode::system());
+
+        let theme_dir = dir.path().join("themes").join("signal");
+        fs::create_dir_all(&theme_dir).unwrap();
+        fs::write(theme_dir.join("manifest.json"), r#"{"id":"signal"}"#).unwrap();
+        assert_eq!(store.read().theme, ThemeMode::from("signal"));
+    }
+
+    #[test]
     fn ersetzt_ein_ungultiges_theme_trotz_ordner_durch_system() {
         let (dir, store) = store();
         fs::create_dir_all(dir.path().join("themes").join("X")).unwrap();

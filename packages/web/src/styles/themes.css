@@ -1,36 +1,3 @@
-/* Schema „Signal“: Farbe zeigt Information. Farben nur über Variablen (variables.css).
-   Seitenleiste dunkel: Die Bedienelemente darin bekommen die --side-*-Werte als ihre üblichen Variablen. Board-Auswahl
-   und Dialoge, die im DOM in der Seitenleiste liegen, bleiben hell – deshalb nur die Elemente selbst, nicht die ganze Leiste. */
-[data-theme='signal'] :is(.shell-sidebar, .settings-nav) { border-right-color: var(--sidebar-bg); }
-[data-theme='signal'] :is(.shell-sidebar .global-search, .shell-sidebar .bp-field, .shell-sidebar .nav, .shell-sidebar .usage-dock, .settings-nav) {
-  color-scheme: dark;
-  --surface: var(--side-surface);
-  --nav-active-bg: var(--side-active);
-  --line: var(--side-line);
-  --line-soft: var(--side-hover);
-  --text: var(--side-text);
-  --text-soft: var(--side-text-soft);
-  --muted: var(--side-muted);
-  --idle-bg: var(--side-active);
-  --accent-soft: var(--side-accent-soft);
-  --accent: var(--side-usage-ok);
-  --primary: var(--side-text-soft);
-  --usage-ok: var(--side-usage-ok);
-  --usage-warn: var(--side-usage-warn);
-  --usage-crit: var(--side-usage-crit);
-  --shadow-soft: var(--side-shadow);
-  color: var(--text);
-}
-[data-theme='signal'] .settings-nav-title { color: var(--side-text); }
-
-/* Board: jede Spalte im Ton ihres Status (Farbe aus data-status, dbboard.css), der Kopf als kräftiger getöntes Band;
-   die Karten nehmen den Ton nur in ihrem Rahmen auf. Gesperrte Spalten behalten ihr Streifenmuster. */
-[data-theme='signal'] .db-column[data-status]:not(.locked) { background: color-mix(in srgb, var(--node-status) 7%, var(--bg)); }
-[data-theme='signal'] .db-column[data-status] .column-head { margin-bottom: 4px; background: color-mix(in srgb, var(--node-status) 18%, var(--bg)); }
-[data-theme='signal'] .db-column[data-status] .column-head h2 { color: color-mix(in srgb, var(--node-status) 45%, var(--text)); }
-[data-theme='signal'] .db-column[data-status] .db-card { border-color: color-mix(in srgb, var(--node-status) 28%, var(--line)); }
-[data-theme='signal'] .db-column[data-status] .db-card:hover { border-color: color-mix(in srgb, var(--node-status) 55%, var(--line)); }
-
 /* Schema „Pastell“ als Bastelpapier: Alles sieht aus wie aus Papier geschnitten und gerissen. Grund und Flächen tragen
    ein Papierkorn (SVG-Rauschen ohne eigene Farbe, nur Deckkraft), die Seitenleiste ist ein Bogen Tonpapier mit gerissener
    rechter Kante, die Spalten Tonpapier im Ton ihres Status, die Karten abgerissene Zettel mit Schatten.
