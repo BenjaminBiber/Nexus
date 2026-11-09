@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../src/api/ApiContext.js';
 import type { UserSettingsDto } from '../src/api/types.js';
-import { AppearancePanel } from '../src/components/AppearancePanel.js';
+import { InterfacePanel } from '../src/components/settings/InterfacePanel.js';
+import { ThemesPanel } from '../src/components/settings/ThemesPanel.js';
 import { MermaidBlock } from '../src/markdown/MermaidBlock.js';
 import { registerTheme, unregisterTheme } from '../src/theme/registry.js';
 import { ThemeSync } from '../src/theme/ThemeSync.js';
@@ -142,12 +143,12 @@ describe('Theme', () => {
     expect(['light', 'dark']).toContain(document.documentElement.dataset.theme);
   });
 
-  it('zeigt installierte Themes im Panel „Darstellung“ und speichert ihre ID', async () => {
+  it('zeigt installierte Themes im Panel „Themes“ und speichert ihre ID', async () => {
     const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, ...patch }));
     const listThemes = async () => [{ id: 'ocean', name: 'Ozean', version: '1.0.0', author: 'Ada' }, { id: 'dark', name: 'Doppelt', version: '1.0.0', author: 'Ada' }];
-    render(<ApiProvider api={fakeApi({ saveUserSettings, listThemes } as never)}><AppearancePanel /></ApiProvider>);
-    const ocean = await screen.findByRole('radio', { name: 'Ozean' });
-    expect(screen.queryByRole('radio', { name: 'Doppelt' })).toBeNull();
+    render(<ApiProvider api={fakeApi({ saveUserSettings, listThemes } as never)}><ThemesPanel /></ApiProvider>);
+    const ocean = await screen.findByRole('button', { name: 'Ozean anwenden' });
+    expect(screen.queryByRole('button', { name: 'Doppelt anwenden' })).toBeNull();
     await userEvent.click(ocean);
     expect(saveUserSettings).toHaveBeenCalledWith({ theme: 'ocean' });
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe('ocean'));
@@ -157,19 +158,19 @@ describe('Theme', () => {
     const listThemes = async () => {
       throw new Error('kaputt');
     };
-    render(<ApiProvider api={fakeApi({ listThemes })}><AppearancePanel /></ApiProvider>);
-    await screen.findByRole('radio', { name: 'Dunkel' });
-    expect(screen.getAllByRole('radio')).toHaveLength(3);
-    expect(screen.queryByRole('radio', { name: 'Signal' })).toBeNull();
-    expect(screen.queryByRole('radio', { name: 'Pastell' })).toBeNull();
-    expect(screen.queryByRole('radio', { name: 'Windows 95' })).toBeNull();
+    render(<ApiProvider api={fakeApi({ listThemes })}><ThemesPanel /></ApiProvider>);
+    await screen.findByRole('button', { name: 'Dunkel anwenden' });
+    expect(within(screen.getByRole('list', { name: 'Themes' })).getAllByRole('listitem')).toHaveLength(3);
+    expect(screen.queryByRole('button', { name: 'Signal anwenden' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Pastell anwenden' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Windows 95 anwenden' })).toBeNull();
   });
 
   it('bietet „Windows 95“ als installiertes Paket an und lädt seine theme.css', async () => {
     const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, ...patch }));
     const listThemes = async () => [{ id: 'win95', name: 'Windows 95', version: '1.0.0', author: 'Nexus', colorScheme: 'light', startColor: '#c0c0c0', slots: ['Shell', 'NavIcon', 'Progress'] }];
-    render(<ApiProvider api={fakeApi({ saveUserSettings, listThemes } as never)}><AppearancePanel /></ApiProvider>);
-    await userEvent.click(await screen.findByRole('radio', { name: 'Windows 95' }));
+    render(<ApiProvider api={fakeApi({ saveUserSettings, listThemes } as never)}><ThemesPanel /></ApiProvider>);
+    await userEvent.click(await screen.findByRole('button', { name: 'Windows 95 anwenden' }));
     expect(saveUserSettings).toHaveBeenCalledWith({ theme: 'win95' });
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe('win95'));
     expect(document.getElementById('nexus-theme-css')?.getAttribute('href')).toBe('/themes/win95/theme.css');
@@ -180,8 +181,8 @@ describe('Theme', () => {
   it('bietet „Pastell“ als installiertes Paket an und lädt seine theme.css', async () => {
     const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, ...patch }));
     const listThemes = async () => [{ id: 'pastel', name: 'Pastell', version: '1.0.0', author: 'Nexus', colorScheme: 'light', startColor: '#f3eadf' }];
-    render(<ApiProvider api={fakeApi({ saveUserSettings, listThemes } as never)}><AppearancePanel /></ApiProvider>);
-    await userEvent.click(await screen.findByRole('radio', { name: 'Pastell' }));
+    render(<ApiProvider api={fakeApi({ saveUserSettings, listThemes } as never)}><ThemesPanel /></ApiProvider>);
+    await userEvent.click(await screen.findByRole('button', { name: 'Pastell anwenden' }));
     expect(saveUserSettings).toHaveBeenCalledWith({ theme: 'pastel' });
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe('pastel'));
     expect(document.getElementById('nexus-theme-css')?.getAttribute('href')).toBe('/themes/pastel/theme.css');
@@ -191,28 +192,29 @@ describe('Theme', () => {
   it('bietet „Signal“ als installiertes Paket an und lädt seine theme.css', async () => {
     const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, ...patch }));
     const listThemes = async () => [{ id: 'signal', name: 'Signal', version: '1.0.0', author: 'Nexus', colorScheme: 'light', startColor: '#f4f6f8' }];
-    render(<ApiProvider api={fakeApi({ saveUserSettings, listThemes } as never)}><AppearancePanel /></ApiProvider>);
-    await userEvent.click(await screen.findByRole('radio', { name: 'Signal' }));
+    render(<ApiProvider api={fakeApi({ saveUserSettings, listThemes } as never)}><ThemesPanel /></ApiProvider>);
+    await userEvent.click(await screen.findByRole('button', { name: 'Signal anwenden' }));
     expect(saveUserSettings).toHaveBeenCalledWith({ theme: 'signal' });
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe('signal'));
     expect(document.getElementById('nexus-theme-css')?.getAttribute('href')).toBe('/themes/signal/theme.css');
     expect(currentTheme()).toBe('light');
   });
 
-  it('speichert das Farbschema im Panel „Darstellung“ und setzt es sofort', async () => {
+  it('speichert das Farbschema im Panel „Themes“ und setzt es sofort', async () => {
     const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, ...patch }));
-    render(<ApiProvider api={fakeApi({ saveUserSettings })}><AppearancePanel /></ApiProvider>);
-    const dark = await screen.findByRole('radio', { name: 'Dunkel' });
-    expect((screen.getByRole('radio', { name: 'System' }) as HTMLInputElement).checked).toBe(true);
+    render(<ApiProvider api={fakeApi({ saveUserSettings })}><ThemesPanel /></ApiProvider>);
+    const dark = await screen.findByRole('button', { name: 'Dunkel anwenden' });
+    expect(screen.getByRole('listitem', { name: 'System' }).getAttribute('aria-current')).toBe('true');
     await userEvent.click(dark);
     expect(saveUserSettings).toHaveBeenCalledWith({ theme: 'dark' });
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'));
-    expect((screen.getByRole('radio', { name: 'Dunkel' }) as HTMLInputElement).checked).toBe(true);
+    await waitFor(() => expect(screen.getByRole('listitem', { name: 'Dunkel' }).getAttribute('aria-current')).toBe('true'));
+    expect(screen.getByRole('button', { name: 'Dunkel in Verwendung' })).toBeTruthy();
   });
 
-  it('schaltet die kompakten Ticket-Kacheln im Panel „Darstellung“ ein', async () => {
+  it('schaltet die kompakten Ticket-Kacheln im Panel „Oberfläche“ ein', async () => {
     const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, ...patch }) as UserSettingsDto);
-    render(<ApiProvider api={fakeApi({ saveUserSettings })}><AppearancePanel /></ApiProvider>);
+    render(<ApiProvider api={fakeApi({ saveUserSettings })}><InterfacePanel /></ApiProvider>);
     const box = (await screen.findByRole('checkbox', { name: 'Kompakte Ticket-Kacheln' })) as HTMLInputElement;
     expect(box.checked).toBe(false);
     await userEvent.click(box);
@@ -220,9 +222,9 @@ describe('Theme', () => {
     await waitFor(() => expect((screen.getByRole('checkbox', { name: 'Kompakte Ticket-Kacheln' }) as HTMLInputElement).checked).toBe(true));
   });
 
-  it('speichert im Panel „Darstellung“, ob die Spalte „Nicht mehr nötig“ ausgeblendet wird', async () => {
+  it('speichert im Panel „Oberfläche“, ob die Spalte „Nicht mehr nötig“ ausgeblendet wird', async () => {
     const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, ...patch }));
-    render(<ApiProvider api={fakeApi({ saveUserSettings })}><AppearancePanel /></ApiProvider>);
+    render(<ApiProvider api={fakeApi({ saveUserSettings })}><InterfacePanel /></ApiProvider>);
     const box = await screen.findByRole('checkbox', { name: /Nicht mehr nötig/ });
     await waitFor(() => expect((box as HTMLInputElement).disabled).toBe(false));
     await userEvent.click(box);
@@ -230,9 +232,9 @@ describe('Theme', () => {
     await waitFor(() => expect((box as HTMLInputElement).checked).toBe(true));
   });
 
-  it('speichert im Panel „Darstellung“, ob die Spalte „In Planung“ ausgeblendet wird', async () => {
+  it('speichert im Panel „Oberfläche“, ob die Spalte „In Planung“ ausgeblendet wird', async () => {
     const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, hideInPlanning: false, ...patch }));
-    render(<ApiProvider api={fakeApi({ saveUserSettings })}><AppearancePanel /></ApiProvider>);
+    render(<ApiProvider api={fakeApi({ saveUserSettings })}><InterfacePanel /></ApiProvider>);
     const box = await screen.findByRole('checkbox', { name: /In Planung/ });
     await waitFor(() => expect((box as HTMLInputElement).disabled).toBe(false));
     await userEvent.click(box);

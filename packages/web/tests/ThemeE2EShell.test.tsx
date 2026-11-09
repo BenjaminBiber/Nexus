@@ -93,14 +93,15 @@ describe('Test-Theme e2e-shell', () => {
   it('installieren, auswählen, eigene Shell nach Neustart, entfernen → Standard', async () => {
     const server = themeServer();
 
-    // Installieren über die Einstellungen: Dialog mit Code-Hinweis, danach als Farbschema wählbar
+    // Installieren über die Einstellungen: Dialog mit Code-Hinweis, danach als Kachel anwendbar
     openApp(server.api, '/p/p1/settings#appearance');
-    fireEvent.change(await screen.findByLabelText('Theme hochladen'), { target: { files: [packageFile()] } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Theme installieren' }));
+    fireEvent.change(await screen.findByLabelText('Aus Datei installieren'), { target: { files: [packageFile()] } });
     const dialog = await screen.findByRole('alertdialog', { name: 'Theme installieren?' });
     expect(within(dialog).getByText('E2E Shell')).toBeTruthy();
     expect(within(dialog).getByText('Dieses Theme führt Code aus')).toBeTruthy();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Installieren' }));
-    fireEvent.click(await screen.findByRole('radio', { name: 'E2E Shell' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'E2E Shell anwenden' }));
     expect(server.calls.installTheme).toHaveBeenCalledTimes(1);
     expect(server.installed().map((t) => t.id)).toEqual(['e2e-shell']);
     await waitFor(() => expect(server.calls.saveUserSettings).toHaveBeenCalledWith({ theme: 'e2e-shell' }));
@@ -123,7 +124,7 @@ describe('Test-Theme e2e-shell', () => {
     fireEvent.click(within(screen.getByRole('navigation', { name: 'E2E-Navigation' })).getByRole('link', { name: 'Einstellungen' }));
     fireEvent.click(await screen.findByRole('link', { name: /Darstellung/ }));
     fireEvent.click(await screen.findByRole('button', { name: 'E2E Shell entfernen' }));
-    fireEvent.click(within(screen.getByRole('alertdialog', { name: 'Theme E2E Shell entfernen' })).getByRole('button', { name: 'Endgültig entfernen' }));
+    fireEvent.click(within(screen.getByRole('alertdialog', { name: 'Theme „E2E Shell“ entfernen?' })).getByRole('button', { name: 'Endgültig entfernen' }));
     await waitFor(() => expect(server.calls.removeTheme).toHaveBeenCalledWith('e2e-shell'));
     await waitFor(() => expect(screen.queryByTestId('e2e-shell')).toBeNull());
     expect(document.querySelector('.shell-sidebar')).toBeTruthy();

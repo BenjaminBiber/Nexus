@@ -5,10 +5,15 @@ import type { ThemeManifest } from '../../api/generated/themes.js';
 import type { StoreIndexEntryDto, StoreUpdateDto } from '../../api/types.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { Notice } from './Notice.js';
-import { SettingsSection } from './SettingRow.js';
 import { ThemeInstallDialog } from './ThemeInstallDialog.js';
 
-type Props = { installed: ThemeManifest[]; onInstalled: () => void; reloadKey?: number };
+type Props = {
+  installed: ThemeManifest[];
+  onInstalled: () => void;
+  reloadKey?: number;
+  /** Öffnet die Verwaltung der Theme-Stores (Knopf, solange keiner eingetragen ist) */
+  onManageRepos?: () => void;
+};
 
 // Offene Rückfrage: Installation eines Store-Eintrags oder Update mit Code/neuen Domains
 type Pending =
@@ -16,7 +21,7 @@ type Pending =
   | { kind: 'update'; update: StoreUpdateDto; hasCode: boolean; domains: string[] };
 
 // Store-Liste aller eingetragenen Repos mit Suche, Installieren (mit Rückfrage) und Updates (Bestätigung bei Code oder neuen Domains, D2)
-export function ThemeStore({ installed, onInstalled, reloadKey = 0 }: Props) {
+export function ThemeStore({ installed, onInstalled, reloadKey = 0, onManageRepos }: Props) {
   const api = useApi();
   const index = useAsync(() => api.getStoreIndex(), [api, reloadKey]);
   const updates = useAsync(() => api.getStoreUpdates(), [api, reloadKey]);
@@ -76,10 +81,10 @@ export function ThemeStore({ installed, onInstalled, reloadKey = 0 }: Props) {
   });
 
   return (
-    <SettingsSection title="Themes im Store">
+    <div className="theme-store">
       {updateList.length > 0 && (
         <>
-          <span id="store-updates">Updates</span>
+          <span id="store-updates" className="theme-store-label">Updates</span>
           <ul className="snippet-list" aria-labelledby="store-updates">
             {updateList.map((u) => (
               <li key={`${u.repoId}/${u.id}`} className="snippet-row">
@@ -94,12 +99,22 @@ export function ThemeStore({ installed, onInstalled, reloadKey = 0 }: Props) {
       {updates.state.status === 'ready' && updates.state.data.errors.map((e) => (
         <Notice key={`${e.repoId}/${e.code}`} tone="info">Update-Prüfung: {e.message}</Notice>
       ))}
-      <input type="search" aria-label="Store durchsuchen" placeholder="Themes suchen …" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <input type="search" className="theme-store-search" aria-label="Store durchsuchen" placeholder="Themes suchen …" value={query} onChange={(e) => setQuery(e.target.value)} />
       {index.state.status === 'error' && <Notice tone="error">Store konnte nicht geladen werden: {index.state.message}</Notice>}
       {data?.repos.filter((r) => !r.ok).map((r) => (
         <Notice key={r.id} tone="warn">{r.url}: {r.error?.message ?? 'Repo nicht ladbar'}</Notice>
       ))}
-      {data && data.repos.length === 0 && <p className="muted">Trage oben ein Repo ein, um Themes zu finden.</p>}
+      {data && data.repos.length === 0 && (
+        <div className="theme-store-empty">
+          <p className="muted">Noch kein Theme-Store eingetragen. Füge einen Store hinzu, um Themes zu finden.</p>
+          {onManageRepos && (
+            <button type="button" className="btn" onClick={onManageRepos}>
+              <span className="material-icons" aria-hidden="true">add</span>
+              <span>Store hinzufügen</span>
+            </button>
+          )}
+        </div>
+      )}
       {data && data.repos.length > 0 && entries.length === 0 && <p className="muted">Keine Themes gefunden</p>}
       <ul className="store-grid">
         {entries.map((e) => (
@@ -141,6 +156,6 @@ export function ThemeStore({ installed, onInstalled, reloadKey = 0 }: Props) {
           onCancel={() => setPending(null)}
         />
       )}
-    </SettingsSection>
+    </div>
   );
 }

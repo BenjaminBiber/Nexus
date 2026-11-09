@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { ApiProvider } from '../src/api/ApiContext.js';
-import { AppearancePanel } from '../src/components/AppearancePanel.js';
+import { ThemesPanel } from '../src/components/settings/ThemesPanel.js';
 import { ThemeInstallDialog } from '../src/components/settings/ThemeInstallDialog.js';
 import { fakeApi } from './helpers/fakeApi.js';
 import { testManifest, themeFile } from './helpers/zip.js';
@@ -10,12 +10,13 @@ afterEach(cleanup);
 
 const settings = { notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, hideInPlanning: false };
 function open(installTheme = vi.fn(async () => testManifest())) {
-  render(<ApiProvider api={fakeApi({ getUserSettings: async () => settings, saveUserSettings: async () => settings, listThemes: async () => [], installTheme } as never)}><AppearancePanel /></ApiProvider>);
+  render(<ApiProvider api={fakeApi({ getUserSettings: async () => settings, saveUserSettings: async () => settings, listThemes: async () => [], installTheme } as never)}><ThemesPanel /></ApiProvider>);
   return installTheme;
 }
 async function choose(file: File) {
-  await screen.findByRole('list', { name: 'Installierte Themes' }).catch(() => undefined);
-  fireEvent.change(await screen.findByLabelText('Theme hochladen'), { target: { files: [file] } });
+  await screen.findByRole('list', { name: 'Themes' }).catch(() => undefined);
+  if (!screen.queryByLabelText('Aus Datei installieren')) fireEvent.click(await screen.findByRole('button', { name: 'Theme installieren' }));
+  fireEvent.change(await screen.findByLabelText('Aus Datei installieren'), { target: { files: [file] } });
 }
 
 describe('ThemeInstallDialog', () => {

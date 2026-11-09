@@ -585,22 +585,15 @@ details p { margin: 0 0 12px; max-width: 70ch; color: var(--text-soft); }
 .btn.danger { color: var(--blocked-fg); }
 
 /* Benachrichtigungen: Auswahlkarten und Optionen */
-.theme-upload { margin-bottom: 12px; }
-.theme-upload .btn { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
-.theme-tiles { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-.theme-tile { display: flex; flex-direction: column; gap: 6px; padding: 12px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius-card); }
-.theme-tile-preview { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; }
-.theme-tile .btn { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; }
-.theme-tile-confirm { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .theme-install { display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius-card); margin-bottom: 12px; }
 .theme-install-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
 .theme-install-name { font-weight: 600; }
 .theme-install-code p { margin: 4px 0 0; }
 .theme-install ul { margin: 4px 0 0; padding-left: 20px; }
 .theme-install p { margin: 4px 0 0; }
-.store-grid { list-style: none; margin: 8px 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-.store-card { display: flex; flex-direction: column; gap: 4px; padding: 12px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius-card); }
-.store-card img { width: 100%; height: 120px; object-fit: cover; border-radius: var(--radius-card); }
+.store-grid { list-style: none; margin: 8px 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.store-card { display: flex; flex-direction: column; gap: 6px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.store-card img { width: 100%; height: 128px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); box-sizing: border-box; margin-bottom: 6px; }
 .store-card p { margin: 0; }
 .store-card .btn { align-self: flex-start; margin-top: auto; }
 .store-repo { font-size: 12px; overflow-wrap: anywhere; }

@@ -59,7 +59,7 @@ describe('Store: Durchsuchen', () => {
 
   it('weist ohne Repos auf die Repo-Verwaltung hin', async () => {
     setup({ index: { entries: [], repos: [] } });
-    expect(await screen.findByText('Trage oben ein Repo ein, um Themes zu finden.')).toBeTruthy();
+    expect(await screen.findByText(/Noch kein Theme-Store eingetragen/)).toBeTruthy();
   });
 
   it('markiert nicht kompatible Einträge und zeigt Installiertes', async () => {

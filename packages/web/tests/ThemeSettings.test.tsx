@@ -7,7 +7,7 @@ import { useThemeSettings } from '@nexus/theme-sdk';
 import type { ThemeSettingsSchema } from '@nexus/theme-sdk';
 import { App } from '../src/App.js';
 import { ApiProvider } from '../src/api/ApiContext.js';
-import { AppearancePanel } from '../src/components/AppearancePanel.js';
+import { ThemesPanel } from '../src/components/settings/ThemesPanel.js';
 import { registerTheme, unregisterTheme } from '../src/theme/registry.js';
 import { THEME_SETTINGS_EVENT, resolveThemeSettings } from '../src/theme/themeSettings.js';
 import { fakeApi } from './helpers/fakeApi.js';
@@ -45,11 +45,11 @@ describe('resolveThemeSettings', () => {
   });
 });
 
-describe('Einstellungen des Themes unter Darstellung', () => {
+describe('Einstellungen des Themes unter Darstellung › Themes', () => {
   it('zeigt Schalter und Auswahl mit Defaults und speichert Änderungen', async () => {
     showTheme();
     const { api, saveThemeSettings } = serverApi();
-    render(<ApiProvider api={api}><AppearancePanel /></ApiProvider>);
+    render(<ApiProvider api={api}><ThemesPanel /></ApiProvider>);
     expect(await screen.findByText('Einstellungen des Themes')).toBeTruthy();
     const sounds = screen.getByRole('checkbox', { name: 'Sounds' }) as HTMLInputElement;
     await waitFor(() => expect(sounds.disabled).toBe(false));
@@ -67,14 +67,14 @@ describe('Einstellungen des Themes unter Darstellung', () => {
   it('zeigt gespeicherte Werte vom Server nach dem Laden', async () => {
     showTheme();
     const { api } = serverApi({ sounds: false });
-    render(<ApiProvider api={api}><AppearancePanel /></ApiProvider>);
+    render(<ApiProvider api={api}><ThemesPanel /></ApiProvider>);
     await waitFor(() => expect((screen.getByRole('checkbox', { name: 'Sounds' }) as HTMLInputElement).checked).toBe(false));
   });
 
   it('zeigt die Sektion für ein Theme ohne Schema nicht', async () => {
     document.documentElement.dataset.theme = 'light';
-    render(<ApiProvider api={fakeApi()}><AppearancePanel /></ApiProvider>);
-    await screen.findByRole('radio', { name: 'Dunkel' });
+    render(<ApiProvider api={fakeApi()}><ThemesPanel /></ApiProvider>);
+    await screen.findByRole('button', { name: 'Dunkel anwenden' });
     expect(screen.queryByText('Einstellungen des Themes')).toBeNull();
   });
 });

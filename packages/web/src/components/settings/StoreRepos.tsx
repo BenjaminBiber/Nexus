@@ -2,9 +2,9 @@ import { useState, type FormEvent } from 'react';
 import { useApi } from '../../api/ApiContext.js';
 import type { StoreRepoDto } from '../../api/types.js';
 import { useAsync } from '../../hooks/useAsync.js';
-import { SettingsSection } from './SettingRow.js';
 
 // Store-Repos des Nutzers: Liste, Hinzufügen per URL (Prüfung durch den Server) und Entfernen nach Rückfrage.
+// Ohne eigene Hülle: steht im Dialog „Theme-Stores“ der Themes-Seite.
 export function StoreRepos({ onChanged }: { onChanged?: () => void } = {}) {
   const api = useApi();
   const list = useAsync(() => api.listStoreRepos(), [api]);
@@ -40,24 +40,25 @@ export function StoreRepos({ onChanged }: { onChanged?: () => void } = {}) {
   };
 
   return (
-    <SettingsSection title="Store" description="Nexus sucht Themes nur in Repos, die du hier selbst einträgst.">
+    <div className="store-repos">
       {list.state.status === 'error' && <p className="muted">Repos konnten nicht geladen werden.</p>}
       {list.state.status === 'ready' && repos.length === 0 && <p className="muted">Noch keine Repos eingetragen.</p>}
-      <ul className="snippet-list">
+      <ul className="store-repo-list">
         {repos.map((repo) => (
-          <li key={repo.id} className="snippet-row">
-            <span>{repo.url}</span>
+          <li key={repo.id} className="store-repo-row">
+            <span className="material-icons" aria-hidden="true">storefront</span>
+            <span className="store-repo-url">{repo.url}</span>
             <button type="button" className="icon-btn" aria-label={`Repo entfernen: ${repo.url}`} onClick={() => void remove(repo)}>
               <span className="material-icons" aria-hidden="true">delete</span>
             </button>
           </li>
         ))}
       </ul>
-      <form className="snippet-actions" onSubmit={(e) => void add(e)}>
+      <form className="store-repo-add" onSubmit={(e) => void add(e)}>
         <input type="url" aria-label="Repo-URL" placeholder="https://…/nexus-themes.json" value={url} onChange={(e) => setUrl(e.target.value)} />
         <button type="submit" className="btn primary" disabled={!url.trim()}>Hinzufügen</button>
       </form>
       {error && <p className="save-status error" role="alert">{error}</p>}
-    </SettingsSection>
+    </div>
   );
 }

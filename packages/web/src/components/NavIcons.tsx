@@ -66,6 +66,8 @@ const SETTINGS_ICONS: Record<string, string> = {
   notifications: 'M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 21h4',
   donut_large: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   tune: 'M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4',
+  brush: 'M19.5 3.5a2.1 2.1 0 0 1 3 3L13 16l-3-3zM10 13.5c-2.2 0-4 1.6-4 3.8 0 1.4-1 2.4-3 2.7 1.2.7 2.6 1 4 1a5 5 0 0 0 5-5',
+  view_quilt: 'M4 4h16v16H4zM10 4v16M10 12h10',
   storage: 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
   send: 'M4 12l16-8-6 16-3-7zM11 13l9-9',
   power_settings_new: 'M12 3v8M7.1 6.3a7 7 0 1 0 9.8 0',
