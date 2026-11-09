@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import type { DocTicketResultDto, TicketDraftDto, TicketDraftResultDto } from '../api/types.js';
 import { CYCLE_REASON } from '../dbboard/dependencyPicker.js';
 import { DbModal } from './db/DbModal.js';
+import { Button } from './ui/Button.js';
+import { Input } from './ui/Input.js';
 
 interface Props {
   pid: string;
@@ -155,7 +157,7 @@ export function DraftDialog({ pid, path, result, created, creating, error, onCre
         {error && <p role="alert" className="error">{error}</p>}
         {!created && (
           <>
-            <button type="button" className="btn small draft-discard" disabled={creating} onClick={onDiscard}>Entwürfe verwerfen</button>
+            <Button className="small draft-discard" disabled={creating} onClick={onDiscard}>Entwürfe verwerfen</Button>
             {creating ? (
               <span role="status" className="muted">Lege {cards.length === 1 ? 'ein Ticket' : `${cards.length} Tickets`} im Backlog an …</span>
             ) : (
@@ -193,22 +195,22 @@ function DraftDetail({ index, card, cards, onPatch }: { index: number; card: Car
       </p>
       <label className="draft-field">
         <span>Titel</span>
-        <input aria-label={`Titel (Entwurf ${n})`} value={card.title} onChange={(e) => onPatch({ title: e.target.value })} />
+        <Input aria-label={`Titel (Entwurf ${n})`} value={card.title} onChange={(title) => onPatch({ title })} />
       </label>
       <label className="draft-field">
         <span>Beschreibung</span>
-        <textarea aria-label={`Beschreibung (Entwurf ${n})`} rows={5} value={card.description} onChange={(e) => onPatch({ description: e.target.value })} />
+        <Input multiline aria-label={`Beschreibung (Entwurf ${n})`} rows={5} value={card.description} onChange={(description) => onPatch({ description })} />
       </label>
       <label className="draft-field">
         <span>Abnahme</span>
-        <textarea aria-label={`Abnahme (Entwurf ${n})`} rows={3} value={card.acceptance} onChange={(e) => onPatch({ acceptance: e.target.value })} />
+        <Input multiline aria-label={`Abnahme (Entwurf ${n})`} rows={3} value={card.acceptance} onChange={(acceptance) => onPatch({ acceptance })} />
       </label>
       <div className="draft-field">
         <span>Schritte</span>
         <ol className="draft-steps">
           {card.steps.map((step, s) => (
             <li key={s} className="draft-step">
-              <input aria-label={`Schritt ${s + 1} (Entwurf ${n})`} value={step} onChange={(e) => setStep(s, e.target.value)} />
+              <Input aria-label={`Schritt ${s + 1} (Entwurf ${n})`} value={step} onChange={(text) => setStep(s, text)} />
               <button
                 type="button"
                 className="dd-tool plain"
@@ -221,13 +223,13 @@ function DraftDetail({ index, card, cards, onPatch }: { index: number; card: Car
             </li>
           ))}
         </ol>
-        <button type="button" className="btn small draft-add-step" aria-label={`Schritt hinzufügen (Entwurf ${n})`} onClick={() => onPatch({ steps: [...card.steps, ''] })}>
+        <Button className="small draft-add-step" aria-label={`Schritt hinzufügen (Entwurf ${n})`} onClick={() => onPatch({ steps: [...card.steps, ''] })}>
           + Schritt
-        </button>
+        </Button>
       </div>
       <label className="draft-field">
         <span>Labels (mit Komma getrennt)</span>
-        <input aria-label={`Labels (Entwurf ${n})`} value={card.labelsText} onChange={(e) => onPatch({ labelsText: e.target.value })} />
+        <Input aria-label={`Labels (Entwurf ${n})`} value={card.labelsText} onChange={(labelsText) => onPatch({ labelsText })} />
       </label>
       {cards.length > 1 && (
         <fieldset className="draft-field draft-deps" aria-label={`Abhängigkeiten (Entwurf ${n})`}>

@@ -100,6 +100,7 @@ export interface InputProps {
   /** Zeilen eines mehrzeiligen Felds */
   rows?: number;
   'aria-label'?: string;
+  'aria-describedby'?: string;
   className?: string;
 }
 

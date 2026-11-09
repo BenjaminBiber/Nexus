@@ -2,6 +2,8 @@ import { useEffect, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { DocQuestionResultDto, QuestionDraftDto, QuestionDraftInputDto, QuestionDraftResultDto } from '../api/types.js';
 import { DbModal } from './db/DbModal.js';
+import { Button } from './ui/Button.js';
+import { Input } from './ui/Input.js';
 import { LoadingState } from './LoadingState.js';
 
 interface Props {
@@ -128,20 +130,21 @@ export function QuestionDraftDialog({ pid, path, result, created, creating, erro
               </p>
               <label className="draft-field">
                 <span>Frage</span>
-                <input aria-label={`Titel (Frage ${selected + 1})`} value={card.title} onChange={(e) => patch(selected, { title: e.target.value })} />
+                <Input aria-label={`Titel (Frage ${selected + 1})`} value={card.title} onChange={(title) => patch(selected, { title })} />
               </label>
               <label className="draft-field">
                 <span>Kontext</span>
-                <textarea aria-label={`Beschreibung (Frage ${selected + 1})`} rows={6} value={card.description} onChange={(e) => patch(selected, { description: e.target.value })} />
+                <Input multiline aria-label={`Beschreibung (Frage ${selected + 1})`} rows={6} value={card.description} onChange={(description) => patch(selected, { description })} />
               </label>
               <label className="draft-field">
                 <span>Antwort (optional)</span>
-                <textarea
+                <Input
+                  multiline
                   aria-label={`Antwort (Frage ${selected + 1})`}
                   rows={4}
                   placeholder="Weißt du die Antwort schon? Dann wird die Frage gleich als entschieden angelegt."
                   value={card.answer}
-                  onChange={(e) => patch(selected, { answer: e.target.value })}
+                  onChange={(answer) => patch(selected, { answer })}
                 />
               </label>
             </section>
@@ -156,18 +159,18 @@ export function QuestionDraftDialog({ pid, path, result, created, creating, erro
             <strong id="question-drafts-close">Entwürfe verwerfen?</strong>
             <p>Die gefundenen Fragen werden nicht gespeichert und gehen samt deinen Änderungen verloren.</p>
             <div className="actions">
-              <button type="button" className="btn small" onClick={() => setConfirmClose(false)}>Weiter bearbeiten</button>
-              <button type="button" className="btn small danger" onClick={onClose}>Verwerfen</button>
+              <Button className="small" onClick={() => setConfirmClose(false)}>Weiter bearbeiten</Button>
+              <Button variant="danger" className="small" onClick={onClose}>Verwerfen</Button>
             </div>
           </div>
         ) : !created && cards.length === 0 ? (
-          <button type="button" className="btn" onClick={onClose}>Schließen</button>
+          <Button onClick={onClose}>Schließen</Button>
         ) : !created && (
           <>
             <span className="muted">
               Legt die gewählten im Projekt des Boards an, mit Quelle und den Tickets desselben Abschnitts. Mit Antwort gleich entschieden, sonst offen für die Recherche.
             </span>
-            <button type="button" className="btn primary" disabled={creating || !ready} onClick={create}>{createLabel}</button>
+            <Button variant="primary" disabled={creating || !ready} onClick={create}>{createLabel}</Button>
           </>
         )}
       </footer>

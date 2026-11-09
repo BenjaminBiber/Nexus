@@ -4,6 +4,8 @@ import { useApi } from '../api/ApiContext.js';
 import type { AccountDto, AccountListDto } from '../api/usageTypes.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { Badge } from './Badge.js';
+import { Button } from './ui/Button.js';
+import { Input } from './ui/Input.js';
 import { AccountRing, AccountUsageLines, REFRESH_MS, RETRY_MS, transient, USAGE_REASONS } from './ClaudeUsageMeter.js';
 import { CopyCommand } from './CopyCommand.js';
 import { DbModal } from './db/DbModal.js';
@@ -172,7 +174,7 @@ function AccountTile({ account, defaultLimit, pluginCommands, accountsDir, chang
       {account.login && <LoginBox account={account} busy={busy} act={act} />}
       {!account.loggedIn && !running && account.login?.state !== 'failed' && (
         <div className="account-actions">
-          <button type="button" className="btn small primary" disabled={busy} onClick={() => void act(() => api.loginAccount(account.id))}>Mit Claude anmelden</button>
+          <Button variant="primary" className="small" disabled={busy} onClick={() => void act(() => api.loginAccount(account.id))}>Mit Claude anmelden</Button>
         </div>
       )}
       <div className="account-tile-tools" role="toolbar" aria-label={`${account.name}: Aktionen`}>
@@ -181,10 +183,10 @@ function AccountTile({ account, defaultLimit, pluginCommands, accountsDir, chang
           <IconToggle icon="power_settings_new" label="Aktiv" className="account-power" pressed disabled={busy}
             onChange={(enabled) => void act(() => api.updateAccount(account.id, { enabled }))} />
         ) : (
-          <button type="button" className="btn primary account-power-on" disabled={busy} onClick={() => void act(() => api.updateAccount(account.id, { enabled: true }))}>
+          <Button variant="primary" className="account-power-on" disabled={busy} onClick={() => void act(() => api.updateAccount(account.id, { enabled: true }))}>
             <Icon name="power_settings_new" />
             Einschalten
-          </button>
+          </Button>
         )}
         <IconToggle icon="support" label="Nur als Fallback" pressed={account.fallback} disabled={busy || !account.enabled}
           onChange={(fallback) => void act(() => api.updateAccount(account.id, { fallback }))} />
@@ -244,7 +246,7 @@ function AccountSettingsDialog({ account, busy, act, paused, pluginCommands, acc
       {paused && (
         <Notice tone="warn" role="note" label="Pausiert">
           <span>Pausiert bis {hhmm(paused)} – das Limit war erreicht.</span>
-          <button type="button" className="btn small" disabled={busy} onClick={() => void act(() => api.resumeAccount(account.id))}>Pause aufheben</button>
+          <Button className="small" disabled={busy} onClick={() => void act(() => api.resumeAccount(account.id))}>Pause aufheben</Button>
         </Notice>
       )}
       <SettingsSection title="Dispatcher">
@@ -259,9 +261,9 @@ function AccountSettingsDialog({ account, busy, act, paused, pluginCommands, acc
         </SettingRow>
         {account.loggedIn && !account.plugin && !running && (
           <SettingRow label="Nexus-Plugin" hint="Fehlt – ohne Plugin wählt der Dispatcher den Account nicht." group>
-            <button type="button" className="btn small" disabled={busy || !pluginCommands.length} onClick={() => void act(() => api.installAccountPlugin(account.id))}>
+            <Button className="small" disabled={busy || !pluginCommands.length} onClick={() => void act(() => api.installAccountPlugin(account.id))}>
               Einrichten
-            </button>
+            </Button>
           </SettingRow>
         )}
         <RunTokenSetting account={account} busy={busy} act={act} />
@@ -297,16 +299,16 @@ function AccountSettingsDialog({ account, busy, act, paused, pluginCommands, acc
             <span>Auch den Ordner samt Anmeldung löschen (nur unter <span className="mono">{accountsDir}</span>)</span>
           </label>
           <div className="actions">
-            <button type="button" className="btn small" onClick={() => { setRemoving(false); setDeleteDir(false); }}>Abbrechen</button>
-            <button type="button" className="btn small danger" disabled={busy} onClick={() => void act(() => api.deleteAccount(account.id, deleteDir))}>Entfernen</button>
+            <Button className="small" onClick={() => { setRemoving(false); setDeleteDir(false); }}>Abbrechen</Button>
+            <Button variant="danger" className="small" disabled={busy} onClick={() => void act(() => api.deleteAccount(account.id, deleteDir))}>Entfernen</Button>
           </div>
         </div>
       ) : (
         <div className="account-add-actions">
           {!standard && (
-            <button type="button" className="btn small danger account-remove-start" disabled={busy} onClick={() => setRemoving(true)}>Entfernen …</button>
+            <Button variant="danger" className="small account-remove-start" disabled={busy} onClick={() => setRemoving(true)}>Entfernen …</Button>
           )}
-          <button type="button" className="btn small primary" onClick={onClose}>Fertig</button>
+          <Button variant="primary" className="small" onClick={onClose}>Fertig</Button>
         </div>
       )}
     </DbModal>
@@ -325,7 +327,7 @@ function RunTokenSetting({ account, busy, act }: { account: AccountDto; busy: bo
     return (
       <SettingRow label="Token für Läufe" info={RUN_TOKEN_INFO} group>
         <Badge kind="running">gesetzt</Badge>
-        <button type="button" className="btn small" disabled={busy} onClick={() => void act(() => api.removeAccountRunToken(account.id))}>Entfernen</button>
+        <Button className="small" disabled={busy} onClick={() => void act(() => api.removeAccountRunToken(account.id))}>Entfernen</Button>
       </SettingRow>
     );
   }
@@ -335,7 +337,7 @@ function RunTokenSetting({ account, busy, act }: { account: AccountDto; busy: bo
         <CopyCommand command="claude setup-token" compact />
         <input type="password" autoComplete="off" value={token} placeholder="sk-ant-oat01-…" aria-label="Langzeit-Token" disabled={busy}
           onChange={(e) => setToken(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} />
-        <button type="button" className="btn small" disabled={busy || !token.trim()} onClick={save}>Speichern</button>
+        <Button className="small" disabled={busy || !token.trim()} onClick={save}>Speichern</Button>
       </div>
     </SettingRow>
   );
@@ -366,7 +368,7 @@ function LoginBox({ account, busy, act }: { account: AccountDto; busy: boolean; 
           Die Anmeldung ist nicht gelungen.{login.output.trim() && <pre className="account-login-output">{tail(login.output)}</pre>}
         </Notice>
         <div className="actions">
-          <button type="button" className="btn small primary" disabled={busy} onClick={() => void act(() => api.loginAccount(account.id))}>Erneut anmelden</button>
+          <Button variant="primary" className="small" disabled={busy} onClick={() => void act(() => api.loginAccount(account.id))}>Erneut anmelden</Button>
         </div>
       </div>
     );
@@ -385,8 +387,8 @@ function LoginBox({ account, busy, act }: { account: AccountDto; busy: boolean; 
       )}
       <div className="account-login-code">
         <input value={code} placeholder="Code von der Claude-Seite" aria-label="Code aus dem Browser" onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} />
-        <button type="button" className="btn small" disabled={busy || !code.trim()} onClick={send}>Code senden</button>
-        <button type="button" className="btn small" disabled={busy} onClick={() => void act(() => api.cancelLogin(account.id))}>Abbrechen</button>
+        <Button className="small" disabled={busy || !code.trim()} onClick={send}>Code senden</Button>
+        <Button className="small" disabled={busy} onClick={() => void act(() => api.cancelLogin(account.id))}>Abbrechen</Button>
       </div>
     </div>
   );
@@ -444,7 +446,7 @@ function AddAccountDialog({ data, change, onClose }: { data: AccountListDto; cha
         <input value={name} maxLength={60} placeholder="Max privat" autoFocus onChange={(e) => setName(e.target.value)} />
       </SettingRow>
       <SettingRow label="E-Mail (optional)" hint="Wird auf der Anmeldeseite vorausgefüllt.">
-        <input type="email" value={email} placeholder="ich@example.com" onChange={(e) => setEmail(e.target.value)} />
+        <Input type="email" value={email} placeholder="ich@example.com" onChange={setEmail} />
       </SettingRow>
       <details className="account-more">
         <summary>Erweitert: vorhandenen Ordner übernehmen</summary>
@@ -460,13 +462,13 @@ function AddAccountDialog({ data, change, onClose }: { data: AccountListDto; cha
             {data.suggestions.map((s) => <option key={s} value={s} />)}
           </datalist>
           <div className="actions">
-            <button type="button" className="btn small" disabled={busy || !dirName.trim() || !dir.trim()} onClick={() => void submit(() => api.createAccount(dirName.trim(), dir.trim()))}>Übernehmen</button>
+            <Button className="small" disabled={busy || !dirName.trim() || !dir.trim()} onClick={() => void submit(() => api.createAccount(dirName.trim(), dir.trim()))}>Übernehmen</Button>
           </div>
         </div>
       </details>
       <div className="account-add-actions">
-        <button type="button" className="btn small" onClick={onClose}>Abbrechen</button>
-        <button type="button" className="btn small primary" disabled={busy} onClick={() => void submit(() => api.loginNewAccount(name.trim(), email.trim()))}>Mit Claude anmelden</button>
+        <Button className="small" onClick={onClose}>Abbrechen</Button>
+        <Button variant="primary" className="small" disabled={busy} onClick={() => void submit(() => api.loginNewAccount(name.trim(), email.trim()))}>Mit Claude anmelden</Button>
       </div>
     </DbModal>
   );
