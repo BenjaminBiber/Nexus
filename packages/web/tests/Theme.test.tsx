@@ -55,8 +55,8 @@ describe('theme.css installierter Themes', () => {
   });
 
   it('legt den Link vor die CSS-Schnipsel des Nutzers', () => {
-    const snippets = document.createElement('style');
-    snippets.id = 'nexus-user-css';
+    const snippets = document.createElement('link');
+    snippets.id = 'nexus-snippets-css';
     document.head.appendChild(snippets);
     applyTheme('ocean', [ocean]);
     expect(themeLinks()[0].nextElementSibling).toBe(snippets);

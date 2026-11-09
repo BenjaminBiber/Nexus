@@ -139,6 +139,7 @@ export function fakeApi(overrides: Partial<Record<keyof ApiClient, unknown>> = {
     getThemeSettings: async () => ({}),
     saveThemeSettings: async (_id: string, values: Record<string, boolean | string>) => values,
     listThemes: async () => [],
+    listSnippets: async () => [],
     getPluginSetup: async () => ({ bundled: false, claude: false, state: 'missing', installedVersion: null, bundledVersion: null }),
     getBoardMigration: async () => ({ needed: false, repoPath: null, reasons: [] }),
     getDbQuestions: async () => dbQuestionList([]),
