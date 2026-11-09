@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { THEME_EVENT, displayedTheme, type ResolvedTheme } from './theme.js';
+import { THEME_EVENT, displayedTheme } from './theme.js';
 
 // Angezeigtes Schema; zieht bei jedem Wechsel (applyTheme) nach
-export function useDisplayedTheme(): ResolvedTheme {
+export function useDisplayedTheme(): string {
   const [theme, setTheme] = useState(displayedTheme);
   useEffect(() => {
     const update = () => setTheme(displayedTheme());
