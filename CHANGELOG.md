@@ -14,6 +14,11 @@
 
 ### Sonstiges
 
+- Entwicklungsserver (`npm run dev:web`): Die Import-Map für Code-Themes gibt es jetzt auch dort –
+  `react`, `react-dom`, `react-dom/client`, `react/jsx-runtime` und `@nexus/theme-sdk` zeigen auf
+  virtuelle Module von Vite (dieselbe React-Kopie wie die App). Zusätzlich leitet Vite `/themes` an
+  den Server auf Port 4710 weiter, damit Manifest und `main.js` installierter Themes ankommen.
+  Code-Themes lassen sich damit ohne vorherigen Build ausprobieren.
 - Jedes Release enthält die mitgelieferten Themes als `<id>-<version>.nexus` und den Store-Index
   `nexus-themes.json`; im Theme-Store als Repo eintragbar unter
   `https://github.com/BenjaminBiber/Nexus/releases/latest/download/nexus-themes.json`. Die
