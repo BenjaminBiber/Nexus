@@ -133,6 +133,8 @@ pub struct TestServerOptions {
     pub idea_interpreter: Option<Arc<nexus_server::telegram::IdeaInterpreter>>,
     /// Größenlimit des Asset-Proxys für Themes; ohne Angabe der Standard
     pub theme_fetch_max_bytes: Option<u64>,
+    /// Größenlimit eines Archivs beim Abruf einer Einzeldatei; ohne Angabe der Standard
+    pub theme_fetch_max_archive_bytes: Option<u64>,
 }
 
 /// Startet nichts und liefert keine Prozessnummer; so startet in Tests nie ein echter Worker
@@ -193,6 +195,9 @@ impl TestServer {
         }
         config.telegram_api = options.telegram_api;
         config.idea_interpreter = options.idea_interpreter;
+        if let Some(max) = options.theme_fetch_max_archive_bytes {
+            config.theme_fetch_max_archive_bytes = max;
+        }
         if let Some(max) = options.theme_fetch_max_bytes {
             config.theme_fetch_max_bytes = max;
         }

@@ -324,7 +324,8 @@ impl AppState {
             transcript_watch: TranscriptWatch::new(events.clone()),
             favorites,
             snippets: SnippetStore::with_clock(config.home.clone(), config.clock.clone()),
-            theme_proxy: crate::theme_proxy::ThemeProxy::new(config.theme_fetch_max_bytes),
+            theme_proxy: crate::theme_proxy::ThemeProxy::new(config.theme_fetch_max_bytes)
+                .with_archive_limit(config.theme_fetch_max_archive_bytes),
             ticket_info: TicketInfoLookup::new(ticket_summaries(weak)),
             accounts: AccountServices {
                 usage: account_usage.clone(),
