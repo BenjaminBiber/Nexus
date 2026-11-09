@@ -1,0 +1,48 @@
+/* Farben des Themes: Selektor mit der id aus manifest.json; Variablen wie in den eingebauten Themes */
+:root[data-theme='my-theme'] {
+  color-scheme: dark;
+  --bg: #101418;
+  --surface: #171d23;
+  --surface-alt: #13181d;
+  --sidebar-bg: #0d1115;
+  --nav-active-bg: #1e262e;
+  --line: #26303a;
+  --line-input: #2f3a45;
+  --line-soft: #1e262e;
+  --line-strong: #566573;
+  --text: #e8eef3;
+  --text-soft: #b7c3cd;
+  --muted: #7d8b97;
+  --accent: #4fb3d9;
+  --accent-hover: #74c6e4;
+}
+
+/* Beispiel-Shell aus src/main.tsx: Kopfzeile oben, Navigation links, Inhalt rechts */
+[data-theme='my-theme'] .template-shell {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+
+[data-theme='my-theme'] .template-shell-header {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+[data-theme='my-theme'] .template-shell-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: var(--sidebar-bg);
+}
+
+[data-theme='my-theme'] .template-shell-main {
+  min-width: 0;
+  overflow: auto;
+}

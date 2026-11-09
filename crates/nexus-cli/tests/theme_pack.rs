@@ -126,3 +126,24 @@ fn fehlender_ordner_wird_verstaendlich_gemeldet() {
     );
     assert!(!lauf.stderr.contains("panicked"), "{}", lauf.stderr);
 }
+
+/// Ordner der Vorlage `themes/_template` im Repo
+fn vorlage() -> std::path::PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../themes/_template")
+}
+
+#[test]
+fn manifest_und_css_der_vorlage_sind_pack_und_installierbar() {
+    let tmp = TempDir::new().unwrap();
+    let dir = tmp.path().join("vorlage");
+    for name in ["manifest.json", "theme.css"] {
+        datei(&dir.join(name), &std::fs::read_to_string(vorlage().join(name)).unwrap());
+    }
+    let paket = nexus_core::themes::pack_theme(&dir).unwrap();
+    assert_eq!(paket.manifest.id, "my-theme");
+
+    let home = NexusHome::at(tmp.path().join("home"));
+    let manifest = nexus_core::themes::install_theme(&home, &paket.bytes).unwrap();
+    assert_eq!(manifest.slots, vec!["Shell".to_string()]);
+    assert!(home.themes_dir().join("my-theme/theme.css").is_file());
+}
