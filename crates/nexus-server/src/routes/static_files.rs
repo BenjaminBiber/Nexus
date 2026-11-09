@@ -29,6 +29,11 @@ const REVALIDATE: &str = "no-cache";
 /// Inhaltstyp der Oberfläche
 const HTML: &str = "text/html; charset=utf-8";
 
+/// Content-Security-Policy der Oberfläche, wortgleich mit `app.security.csp` in
+/// `apps/desktop/src-tauri/tauri.conf.json` (Quelle der Wahrheit; ein Test im Desktop-Crate
+/// sichert die Gleichheit)
+pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost; img-src 'self' data: blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; font-src 'self' data:";
+
 /// Liefert eine Datei, eine Seite oder den 404 als JSON
 pub async fn serve(state: Arc<AppState>, request: Request) -> Response {
     let Some(web) = state.config.web_dir.clone() else {
@@ -52,7 +57,7 @@ pub async fn serve(state: Arc<AppState>, request: Request) -> Response {
         _ => None,
     };
     match found {
-        Some(response) => with_cache_control(response, &path),
+        Some(response) => with_headers(response, &path, &index).await,
         // Rückfall wie `setNotFoundHandler`: Seitenadressen beantwortet die Oberfläche
         None if method == Method::GET && is_page_request(&path) => page(&index).await,
         None => crate::error::not_found_response(),
@@ -65,36 +70,110 @@ fn without_web(request: &Request) -> Response {
     if !root {
         return crate::error::not_found_response();
     }
-    ([(header::CONTENT_TYPE, HTML)], HINT).into_response()
+    (
+        [
+            (header::CONTENT_TYPE, HTML),
+            (header::CONTENT_SECURITY_POLICY, CONTENT_SECURITY_POLICY),
+        ],
+        HINT,
+    )
+        .into_response()
 }
 
-/// Setzt den Cache-Kopf nach der Herkunft der Datei
-fn with_cache_control(mut response: Response, path: &str) -> Response {
+/// Setzt Cache-Kopf nach der Herkunft der Datei und die CSP
+///
+/// HTML-Antworten (die `index.html`, auch vorkomprimiert) bekommen die Hashes der
+/// Inline-Skripte; gebildet aus der Datei auf der Platte, nicht aus dem Antwortkörper.
+async fn with_headers(mut response: Response, path: &str, index: &Path) -> Response {
     let value = if path.starts_with("/assets/") {
         IMMUTABLE
     } else {
         REVALIDATE
     };
-    response
-        .headers_mut()
-        .insert(header::CACHE_CONTROL, HeaderValue::from_static(value));
+    let is_html = response
+        .headers()
+        .get(header::CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|value| value.starts_with("text/html"));
+    let policy = if is_html {
+        match tokio::fs::read_to_string(index).await {
+            Ok(html) => page_policy(&html),
+            Err(_) => CONTENT_SECURITY_POLICY.to_string(),
+        }
+    } else {
+        CONTENT_SECURITY_POLICY.to_string()
+    };
+    let headers = response.headers_mut();
+    headers.insert(header::CACHE_CONTROL, HeaderValue::from_static(value));
+    if let Ok(policy) = HeaderValue::from_str(&policy) {
+        headers.insert(header::CONTENT_SECURITY_POLICY, policy);
+    }
     response
 }
 
 /// Die Oberfläche selbst (`index.html`), immer neu geprüft
 async fn page(index: &Path) -> Response {
     match tokio::fs::read(index).await {
-        Ok(bytes) => (
-            [
-                (header::CONTENT_TYPE, HTML),
-                (header::CACHE_CONTROL, REVALIDATE),
-            ],
-            bytes,
-        )
-            .into_response(),
+        Ok(bytes) => {
+            let policy = page_policy(&String::from_utf8_lossy(&bytes));
+            (
+                [
+                    (header::CONTENT_TYPE, HTML.to_string()),
+                    (header::CACHE_CONTROL, REVALIDATE.to_string()),
+                    (header::CONTENT_SECURITY_POLICY, policy),
+                ],
+                bytes,
+            )
+                .into_response()
+        }
         // Zwischen Prüfung und Lesen verschwunden: dann gibt es die Adresse nicht
         Err(_) => crate::error::not_found_response(),
     }
+}
+
+/// CSP einer HTML-Seite: die Basis plus `script-src` mit den Hashes ihrer Inline-Skripte
+/// (wie Tauri sie für eingebettete Seiten ergänzt)
+fn page_policy(html: &str) -> String {
+    let hashes = inline_script_hashes(html);
+    if hashes.is_empty() {
+        return CONTENT_SECURITY_POLICY.to_string();
+    }
+    format!(
+        "{CONTENT_SECURITY_POLICY}; script-src 'self' {}",
+        hashes.join(" ")
+    )
+}
+
+/// `'sha256-…'` je `<script>` ohne `src` in der Reihenfolge des Dokuments
+fn inline_script_hashes(html: &str) -> Vec<String> {
+    use base64::Engine as _;
+    use sha2::Digest as _;
+
+    let mut hashes = Vec::new();
+    let mut rest = html;
+    while let Some(start) = rest.find("<script") {
+        rest = &rest[start + "<script".len()..];
+        let Some(tag_end) = rest.find('>') else {
+            break;
+        };
+        let attributes = &rest[..tag_end];
+        rest = &rest[tag_end + 1..];
+        let Some(close) = rest.find("</script") else {
+            break;
+        };
+        let content = &rest[..close];
+        rest = &rest[close..];
+        let external = attributes
+            .split_whitespace()
+            .any(|attribute| attribute.starts_with("src="));
+        if external {
+            continue;
+        }
+        let digest = sha2::Sha256::digest(content.as_bytes());
+        let encoded = base64::engine::general_purpose::STANDARD.encode(digest);
+        hashes.push(format!("'sha256-{encoded}'"));
+    }
+    hashes
 }
 
 /// Ist die Adresse eine Seite der Oberfläche (und keine Datei)?
@@ -164,5 +243,26 @@ mod tests {
         // `\.[a-z0-9]+$` trifft nicht: der Punkt steht nicht vor einer reinen Endung
         assert!(is_page_request("/p/abc/ticket.T-1"));
         assert!(is_page_request("/stand."));
+    }
+
+    #[test]
+    fn hasht_nur_inline_skripte() {
+        let html = concat!(
+            "<script>window.x=1</script>",
+            "<script type=\"module\" src=\"/src/main.tsx\"></script>",
+            "<script type=\"module\" crossorigin src=\"/assets/a.js\"></script>",
+        );
+        assert_eq!(
+            inline_script_hashes(html),
+            ["'sha256-hUmDl3yY/7GaaX+Zuy8aEy8IzxgpBs7xccqYHs2/7kQ='"]
+        );
+    }
+
+    #[test]
+    fn ohne_inline_skripte_bleibt_die_basis_csp() {
+        assert_eq!(
+            page_policy("<script src=\"/a.js\"></script>"),
+            CONTENT_SECURITY_POLICY
+        );
     }
 }
