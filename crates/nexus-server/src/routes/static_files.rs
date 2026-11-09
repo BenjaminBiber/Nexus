@@ -32,7 +32,13 @@ const HTML: &str = "text/html; charset=utf-8";
 /// Content-Security-Policy der Oberfläche, wortgleich mit `app.security.csp` in
 /// `apps/desktop/src-tauri/tauri.conf.json` (Quelle der Wahrheit; ein Test im Desktop-Crate
 /// sichert die Gleichheit)
-pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost; img-src 'self' data: blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; font-src 'self' data:";
+///
+/// `script-src` lässt Theme-Module (`main.js`, D1) nur vom Pfad `/themes/` des lokalen Servers
+/// zu (der Port ist dynamisch); kein `unsafe-eval`, kein fremder Host.
+pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost; img-src 'self' data: blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self' http://127.0.0.1:*/themes/";
+
+/// Die `script-src`-Direktive der Basis; Hashes von Inline-Skripten kommen hinter sie
+const SCRIPT_SRC: &str = "script-src 'self' http://127.0.0.1:*/themes/";
 
 /// Liefert eine Datei, eine Seite oder den 404 als JSON
 pub async fn serve(state: Arc<AppState>, request: Request) -> Response {
@@ -131,17 +137,14 @@ async fn page(index: &Path) -> Response {
     }
 }
 
-/// CSP einer HTML-Seite: die Basis plus `script-src` mit den Hashes ihrer Inline-Skripte
-/// (wie Tauri sie für eingebettete Seiten ergänzt)
+/// CSP einer HTML-Seite: die Basis, deren `script-src` um die Hashes der Inline-Skripte
+/// wächst (wie Tauri sie für eingebettete Seiten ergänzt; eine Direktive nie doppelt)
 fn page_policy(html: &str) -> String {
     let hashes = inline_script_hashes(html);
     if hashes.is_empty() {
         return CONTENT_SECURITY_POLICY.to_string();
     }
-    format!(
-        "{CONTENT_SECURITY_POLICY}; script-src 'self' {}",
-        hashes.join(" ")
-    )
+    CONTENT_SECURITY_POLICY.replacen(SCRIPT_SRC, &format!("{SCRIPT_SRC} {}", hashes.join(" ")), 1)
 }
 
 /// `'sha256-…'` je `<script>` ohne `src` in der Reihenfolge des Dokuments
@@ -263,7 +266,10 @@ mod tests {
         let map = r#"{"imports":{"react":"/assets/host-react-a.js"}}"#;
         let hashes = inline_script_hashes(&format!("<script type=\"importmap\">{map}</script>"));
         assert_eq!(hashes.len(), 1);
-        assert_eq!(hashes, inline_script_hashes(&format!("<script>{map}</script>")));
+        assert_eq!(
+            hashes,
+            inline_script_hashes(&format!("<script>{map}</script>"))
+        );
     }
 
     #[test]
@@ -272,5 +278,49 @@ mod tests {
             page_policy("<script src=\"/a.js\"></script>"),
             CONTENT_SECURITY_POLICY
         );
+    }
+
+    /// Wert der Direktive `name` oder `None`; zählt zugleich, wie oft sie vorkommt
+    fn directives<'a>(policy: &'a str, name: &str) -> Vec<&'a str> {
+        policy
+            .split(';')
+            .map(str::trim)
+            .filter(|d| d.split_whitespace().next() == Some(name))
+            .collect()
+    }
+
+    #[test]
+    fn die_basis_csp_enthaelt_script_src_wortgleich() {
+        assert!(CONTENT_SECURITY_POLICY.ends_with(SCRIPT_SRC));
+    }
+
+    #[test]
+    fn die_basis_csp_laesst_theme_module_nur_vom_lokalen_server_zu() {
+        assert_eq!(
+            directives(CONTENT_SECURITY_POLICY, "script-src"),
+            ["script-src 'self' http://127.0.0.1:*/themes/"]
+        );
+        assert!(!CONTENT_SECURITY_POLICY.contains("unsafe-eval"));
+    }
+
+    #[test]
+    fn hashes_landen_in_der_einen_script_src_und_keine_direktive_doppelt() {
+        let policy = page_policy("<script>window.x=1</script><script>window.y=2</script>");
+        let script_src = directives(&policy, "script-src");
+        assert_eq!(script_src.len(), 1, "{policy}");
+        let value = script_src[0];
+        assert!(
+            value.starts_with("script-src 'self' http://127.0.0.1:*/themes/ 'sha256-"),
+            "{value}"
+        );
+        assert_eq!(value.matches("'sha256-").count(), 2, "{value}");
+        let mut names: Vec<&str> = policy
+            .split(';')
+            .filter_map(|d| d.split_whitespace().next())
+            .collect();
+        let total = names.len();
+        names.sort_unstable();
+        names.dedup();
+        assert_eq!(names.len(), total, "Direktive doppelt: {policy}");
     }
 }

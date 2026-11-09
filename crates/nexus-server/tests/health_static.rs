@@ -117,14 +117,17 @@ async fn lasst_dateien_unter_assets_dauerhaft_zwischenspeichern_index_nie_ungepr
 }
 
 /// CSP der Tauri-App (`apps/desktop/src-tauri/tauri.conf.json`)
-const CSP: &str = "default-src 'self'; connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost; img-src 'self' data: blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; font-src 'self' data:";
+const CSP: &str = "default-src 'self'; connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost; img-src 'self' data: blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self' http://127.0.0.1:*/themes/";
 
 #[tokio::test]
 async fn liefert_die_oberflache_mit_der_csp_der_app_aus() {
     let (server, _web) = server_with_web();
     // sha256 von `window.x=1`, dem Inline-Skript der index.html
     let page =
-        format!("{CSP}; script-src 'self' 'sha256-hUmDl3yY/7GaaX+Zuy8aEy8IzxgpBs7xccqYHs2/7kQ='");
+        CSP.replace(
+            "script-src 'self' http://127.0.0.1:*/themes/",
+            "script-src 'self' http://127.0.0.1:*/themes/ 'sha256-hUmDl3yY/7GaaX+Zuy8aEy8IzxgpBs7xccqYHs2/7kQ='",
+        );
     for url in ["/", "/index.html", "/p/abc/board"] {
         let reply = server.get(url).await;
         assert_eq!(
