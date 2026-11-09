@@ -15,6 +15,7 @@
     "desktop": "npm run tauri -w apps/desktop --",
     "dev:web": "npm run dev -w packages/web",
     "build:plugin": "node packages/plugin/scripts/build-plugin.mjs",
+    "build:themes": "node scripts/build-themes.mjs",
     "contract": "node contract/run.mjs",
     "test:unit": "vitest run"
   },

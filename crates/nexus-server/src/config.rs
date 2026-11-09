@@ -35,6 +35,9 @@ pub struct ServerConfig {
     pub web_dir: Option<PathBuf>,
     /// Ordner mit den Bildern der Systemmeldung (`logo-app.png` …)
     pub toast_dir: PathBuf,
+    /// Ordner mit mitgelieferten Theme-Paketen (`*.nexus`), die beim Start installiert
+    /// werden, wenn sie fehlen oder älter sind; `None` = keine
+    pub bundled_themes_dir: Option<PathBuf>,
     /// Version in `GET /api/health`
     pub version: String,
     /// Abstand der Herzschlag-Meldungen in Millisekunden
@@ -145,6 +148,7 @@ impl ServerConfig {
             home,
             web_dir: None,
             toast_dir: default_toast_dir(),
+            bundled_themes_dir: None,
             version: default_version(),
             heartbeat_ms: DEFAULT_HEARTBEAT_MS,
             db_poll_ms: DEFAULT_DB_POLL_MS,
@@ -192,6 +196,19 @@ fn default_toast_dir() -> PathBuf {
         .unwrap_or(in_crate)
 }
 
+/// Mitgelieferte Themes: `themes/` neben dem Programm, sonst `dist/themes` im Repo (nur
+/// Entwicklung, nach `npm run build:themes`); jeweils nur, wenn der Ordner existiert.
+fn default_bundled_themes_dir() -> Option<PathBuf> {
+    let next_to_exe = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(|dir| dir.join("themes")));
+    let in_repo = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../dist/themes");
+    next_to_exe
+        .into_iter()
+        .chain(std::iter::once(in_repo))
+        .find(|dir| dir.is_dir())
+}
+
 /// Liest die Einstellungen aus Argumenten und Umgebung.
 ///
 /// Jeder Wert kommt zuerst aus dem Argument, dann aus der Nexus-Variable und zuletzt aus der
@@ -218,9 +235,15 @@ impl ServerConfigLoader {
         let toast_dir = value(env, &["NEXUS_TOAST_DIR", "HARNESS_TOAST_DIR"])
             .filter(|dir| !dir.is_empty())
             .map(PathBuf::from);
+        let bundled_themes_dir = argument(args, "--bundled-themes-dir")
+            .or_else(|| value(env, &["NEXUS_BUNDLED_THEMES_DIR"]))
+            .filter(|dir| !dir.is_empty())
+            .map(PathBuf::from)
+            .or_else(default_bundled_themes_dir);
         let mut config = ServerConfig {
             port: port(args, env)?,
             web_dir,
+            bundled_themes_dir,
             version: value(env, &["NEXUS_SERVER_VERSION", "HARNESS_BUNDLED_VERSION"])
                 .filter(|version| !version.is_empty())
                 .unwrap_or_else(default_version),
@@ -479,6 +502,27 @@ mod tests {
             "{}",
             ohne.toast_dir.display()
         );
+    }
+
+    #[test]
+    fn nimmt_den_ordner_der_mitgelieferten_themes_aus_argument_vor_umgebung() {
+        let args = ["--bundled-themes-dir", "/a/themes"];
+        assert_eq!(
+            load(&args, &[("NEXUS_BUNDLED_THEMES_DIR", "/e/themes")])
+                .unwrap()
+                .bundled_themes_dir,
+            Some(PathBuf::from("/a/themes"))
+        );
+        assert_eq!(
+            load(&[], &[("NEXUS_BUNDLED_THEMES_DIR", "/e/themes")])
+                .unwrap()
+                .bundled_themes_dir,
+            Some(PathBuf::from("/e/themes"))
+        );
+        // Ohne Angabe nur ein Ordner, den es gibt
+        if let Some(dir) = load(&[], &[]).unwrap().bundled_themes_dir {
+            assert!(dir.is_dir(), "{}", dir.display());
+        }
     }
 
     #[test]

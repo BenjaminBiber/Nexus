@@ -14,7 +14,7 @@ pub use manifest::{
     ManifestErrors, SelectOption, ThemeManifest, ThemePermissions, ThemeSettingSpec,
 };
 pub use package::{
-    install_theme, install_theme_file, list_themes, pack_theme, remove_theme, InstalledTheme,
-    PackedTheme, ThemePackageError,
+    install_bundled_themes, install_theme, install_theme_file, list_themes, pack_theme,
+    remove_theme, BundledOutcome, BundledResult, InstalledTheme, PackedTheme, ThemePackageError,
 };
 pub use settings_store::{ThemeSettingsStore, THEME_SETTINGS_INVALID};

@@ -47,7 +47,8 @@
     "resources": {
       "../../../packages/web/dist/": "web/",
       "../../../crates/nexus-server/assets/toast/": "toast/",
-      "../../../packages/plugin/dist/nexus/": "plugin/nexus/"
+      "../../../packages/plugin/dist/nexus/": "plugin/nexus/",
+      "../../../dist/themes/": "themes/"
     },
     "macOS": {
       "minimumSystemVersion": "11.0",

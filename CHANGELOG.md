@@ -14,6 +14,10 @@
 
 ### Sonstiges
 
+- Mitgelieferte Themes: `npm run build:themes` packt `themes/<id>/` nach `dist/themes/<id>.nexus`;
+  die Desktop-App bündelt sie, und `nexus serve` sowie die App installieren beim Start jedes
+  Paket, dessen Theme fehlt oder älter ist (`--bundled-themes-dir`, `NEXUS_BUNDLED_THEMES_DIR`).
+
 ## 0.0.2 – 2026-11-06
 
 ### Vertrag
