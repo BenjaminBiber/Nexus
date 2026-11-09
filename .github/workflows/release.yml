@@ -198,6 +198,22 @@ jobs:
       - name: trusted-signing-cli installieren
         if: runner.os == 'Windows' && steps.tsc-cache.outputs.cache-hit != 'true'
         run: cargo install trusted-signing-cli --version 0.11.0 --locked
+      # Tauri lädt das NSIS-Werkzeug sonst erst beim Bündeln, nach dem ganzen Build, anonym und ohne
+      # zweiten Versuch: ein HTTP 504 von GitHub kostet dann den ganzen Lauf. Deshalb liegt es vorher in
+      # %LOCALAPPDATA%\tauri\NSIS, aus dem Cache oder angemeldet und mit Wiederholungen geladen. Der
+      # Schlüssel hängt am Skript, das die Versionen aus tauri-bundler festhält
+      - name: NSIS-Werkzeug aus dem Cache
+        id: nsis-cache
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: ~/AppData/Local/tauri/NSIS
+          key: tauri-nsis-${{ runner.os }}-${{ hashFiles('scripts/ci/prefetch-nsis.mjs') }}
+      - name: NSIS-Werkzeug laden
+        if: runner.os == 'Windows' && steps.nsis-cache.outputs.cache-hit != 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci/prefetch-nsis.mjs
       # Baut die App und lädt dmg, NSIS-Installer, AppImage, deb und rpm an den Entwurf des Releases.
       # Die Apple-Zertifikatsvariablen setzt der Schritt oben nur, wenn es ein Zertifikat gibt; die übrigen
       # Signatur-Variablen dürfen leer sein (Fork, Probelauf), dann überspringt sign-windows.mjs die Signatur.

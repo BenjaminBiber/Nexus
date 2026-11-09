@@ -162,6 +162,10 @@ Im Probelauf ist das Tag nie bei GitHub angekommen: dann baut `build` den gestar
 
 Jeder Eintrag checkt das Tag aus, richtet Rust (Version wie in `rust-toolchain.toml`) und Node 26 ein, installiert
 unter Linux die Systempakete von Tauri samt `rpm` und ruft `tauri-apps/tauri-action` mit `releaseId` auf.
+Unter Windows legt `scripts/ci/prefetch-nsis.mjs` vorher das NSIS-Werkzeug nach `%LOCALAPPDATA%\tauri\NSIS`, aus dem
+Cache oder mit `GITHUB_TOKEN` über die Release-API und mit Wiederholungen geladen: Tauri lädt es sonst erst nach dem
+ganzen Build, anonym und ohne zweiten Versuch, und ein HTTP 504 von GitHub kostet dann den Lauf. Adressen und
+Prüfsummen im Skript stammen aus `tauri-bundler`; beim Anheben von `@tauri-apps/cli` dort abgleichen.
 Oberfläche und Binary baut der Tauri-Build selbst über `beforeBuildCommand` (`prepare-binaries`), je genau
 einmal: `NEXUS_RELEASE_TARGET=<ziel>` lässt `copy-server.mjs` mit `--target` bauen, sodass das Binary unter
 `target/<ziel>/release` neben der App liegt und das CLI-Archiv es dort findet. Die Action lädt
