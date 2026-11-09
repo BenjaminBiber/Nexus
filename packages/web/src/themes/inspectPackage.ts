@@ -49,7 +49,8 @@ async function readEntry(bytes: Uint8Array, entry: Entry): Promise<Uint8Array> {
   if (entry.method === 0) return data;
   if (entry.method !== 8) throw new ThemePackageReadError('Die manifest.json ist mit einem nicht unterstützten Verfahren gepackt.');
   try {
-    const stream = new Blob([data.slice()]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    // Stream über Response statt Blob.stream(): ältere Umgebungen (z. B. jsdom) kennen Blob.stream nicht
+    const stream = new Response(data.slice()).body!.pipeThrough(new DecompressionStream('deflate-raw'));
     return new Uint8Array(await new Response(stream).arrayBuffer());
   } catch {
     throw new ThemePackageReadError('Die manifest.json konnte nicht entpackt werden.');
