@@ -118,7 +118,11 @@ fn unescape(text: &str) -> String {
             chars.next();
         }
         let code = u32::from_str_radix(&hex, 16).unwrap_or(0xFFFD);
-        out.push(char::from_u32(code).filter(|c| *c != '\0').unwrap_or('\u{FFFD}'));
+        out.push(
+            char::from_u32(code)
+                .filter(|c| *c != '\0')
+                .unwrap_or('\u{FFFD}'),
+        );
     }
     out
 }
@@ -223,7 +227,10 @@ mod tests {
 
     #[test]
     fn import_im_kommentar_ist_harmlos() {
-        assert_eq!(check_snippet_css("/* @import 'x'; */ a { color: red }"), Ok(()));
+        assert_eq!(
+            check_snippet_css("/* @import 'x'; */ a { color: red }"),
+            Ok(())
+        );
     }
 
     #[test]
@@ -265,6 +272,9 @@ mod tests {
 
     #[test]
     fn verstoss_hat_eine_meldung() {
-        assert_eq!(CssViolation::Import.to_string(), "@import ist nicht erlaubt.");
+        assert_eq!(
+            CssViolation::Import.to_string(),
+            "@import ist nicht erlaubt."
+        );
     }
 }

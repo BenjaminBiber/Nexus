@@ -22,6 +22,7 @@ pub mod session_detail;
 pub mod sessions;
 pub mod settings;
 pub mod setup;
+pub mod snippets;
 pub mod spec;
 pub mod speech;
 pub mod static_files;
@@ -67,6 +68,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(sessions::routes())
         .merge(session_detail::routes())
         .merge(favorites::routes())
+        .merge(snippets::routes())
         .merge(usage::routes())
         .merge(accounts::routes())
         .merge(notifications::routes())
