@@ -282,6 +282,16 @@ export type BuiltinThemeId = (typeof BUILTIN_THEME_IDS)[number];
 /** Gewähltes Theme als ID: eingebaut oder installiert (`~/.nexus/themes/<id>/`); eine unbekannte ID gilt als „system“ */
 export type ThemeMode = string;
 
+/** CSS-Schnipsel des Nutzers (GET/PUT /api/snippets) */
+export interface SnippetDto {
+  id: string;
+  name: string;
+  css: string;
+  enabled: boolean;
+  order: number;
+  updatedAt: string;
+}
+
 /** Setup-Dialoge, die nicht mehr kommen sollen („Nicht mehr fragen“) */
 export interface SetupPromptsDto {
   pluginDismissed: boolean;

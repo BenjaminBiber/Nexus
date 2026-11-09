@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useApi } from '../api/ApiContext.js';
+import { applySnippets } from './snippets.js';
 import { applyTheme } from './theme.js';
 
 // Übernimmt beim Start das gespeicherte Farbschema und folgt bei „system“ dem Wechsel im Betriebssystem.
@@ -7,6 +8,8 @@ export function ThemeSync() {
   const api = useApi();
   useEffect(() => {
     let cancelled = false;
+    // CSS-Schnipsel gleich laden, unabhängig von den Einstellungen
+    applySnippets();
     // Installierte Themes parallel laden; schlägt das fehl, bleibt der Link aus dem Cache (kein Flackern)
     const manifests = Promise.resolve()
       .then(() => api.listThemes())

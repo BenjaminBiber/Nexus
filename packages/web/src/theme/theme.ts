@@ -1,6 +1,7 @@
 import { BUILTIN_THEME_IDS, type ThemeMode } from '../api/types.js';
 import { getTheme } from './registry.js';
 import { isSafeTheme } from './safeTheme.js';
+import { SNIPPETS_LINK_ID } from './snippets.js';
 
 /** Ereignis nach jedem Wechsel des Farbschemas (Mermaid zeichnet daraufhin neu) */
 export const THEME_EVENT = 'harness-theme';
@@ -17,8 +18,6 @@ export const THEME_START_COLOR_KEY = 'harness-theme-start-color';
 /** ID des Links auf die theme.css des aktiven installierten Themes */
 export const THEME_LINK_ID = 'nexus-theme-css';
 
-/** ID des Style-Elements mit den CSS-Schnipseln des Nutzers (liegt über dem Theme) */
-const USER_CSS_ID = 'nexus-user-css';
 
 /** Angezeigtes Schema als ID; „signal“ und „pastel“ sind helle Schemata mit eigener Palette, „win95“ zusätzlich mit eigenem Rahmen (Desktop, Fenster, Taskleiste), sonst ein installiertes Theme */
 export type ResolvedTheme = string;
@@ -65,7 +64,7 @@ function setThemeLink(id: string | null): void {
   if (existing) existing.replaceWith(link);
   else {
     // CSS-Schnipsel des Nutzers liegen über dem aktiven Theme (D8)
-    const snippets = document.getElementById(USER_CSS_ID);
+    const snippets = document.getElementById(SNIPPETS_LINK_ID);
     if (snippets?.parentNode === document.head) document.head.insertBefore(link, snippets);
     else document.head.appendChild(link);
   }

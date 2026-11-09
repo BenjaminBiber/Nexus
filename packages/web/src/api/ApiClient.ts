@@ -7,7 +7,7 @@ import type {
   BoardConfigDto, BoardConfigInput, BoardConfigTestDto, FavoriteDto, DocFileContentDto, DocsListDto, SessionDto, SettingsDto, UserSettingsDto, TestNotificationDto,
   SearchHitDto, QuestionDraftInputDto, QuestionDraftResultDto, DocQuestionResultDto, TicketDraftDto, TicketDraftInput, TicketDraftResultDto, DocTicketInput, DocTicketRefDto, DocTicketResultDto, DocCommentDto, NewDocCommentInput, DocCommentPatch, DocWriteResultDto, WriteDocSectionInput,
   ReviseDocInput, ReviseDocResultDto, ProjectDto,
-  WorkflowDto, CustomizationsDto, PluginSetupDto, PluginInstallDto, BoardMigrationDto, BoardMigrationResultDto,
+  WorkflowDto, CustomizationsDto, PluginSetupDto, PluginInstallDto, BoardMigrationDto, BoardMigrationResultDto, SnippetDto,
 } from './types.js';
 import type {
   DbActiveDto, DbBoardDto, DbBoardPatch, DbBoardViewDto, DbBranchListDto, DbCreatedBranchDto, DbDecisionInput, DbGraphDto, DbGraphScope, DbSpecProgressDto, DbImportResult, DbMoveInput, DbNewNoteInput, DbNewQuestionInput,
@@ -281,6 +281,26 @@ export class ApiClient {
   // Speichert die benutzerweiten Einstellungen
   saveUserSettings(settings: Partial<UserSettingsDto>): Promise<UserSettingsDto> {
     return this.request('PUT', '/api/user-settings', settings);
+  }
+
+  // CSS-Schnipsel des Nutzers in ihrer Reihenfolge
+  listSnippets(): Promise<SnippetDto[]> {
+    return this.request('GET', '/api/snippets');
+  }
+
+  // Legt einen Schnipsel an oder ändert ihn
+  saveSnippet(id: string, snippet: { name: string; css: string; enabled?: boolean }): Promise<SnippetDto> {
+    return this.request('PUT', `/api/snippets/${encodeURIComponent(id)}`, snippet);
+  }
+
+  // Schaltet einen Schnipsel an oder aus
+  toggleSnippet(id: string, enabled: boolean): Promise<SnippetDto> {
+    return this.request('PATCH', `/api/snippets/${encodeURIComponent(id)}`, { enabled });
+  }
+
+  // Löscht einen Schnipsel
+  async deleteSnippet(id: string): Promise<void> {
+    await this.request('DELETE', `/api/snippets/${encodeURIComponent(id)}`, {});
   }
 
   // Gespeicherte eigene Einstellungen eines Themes; {} ohne Eintrag
