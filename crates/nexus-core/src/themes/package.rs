@@ -485,9 +485,7 @@ pub fn install_bundled_themes(home: &NexusHome, dir: &Path) -> Vec<BundledResult
     };
     let mut files: Vec<PathBuf> = entries
         .filter_map(|entry| entry.ok().map(|entry| entry.path()))
-        .filter(|path| {
-            path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("nexus")
-        })
+        .filter(|path| path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("nexus"))
         .collect();
     files.sort();
     files
@@ -519,7 +517,9 @@ fn install_bundled(home: &NexusHome, file: &Path) -> Result<BundledOutcome, Them
         .ok()
         .and_then(|json| parse_manifest(&json).ok())
         .map(|manifest| manifest.version);
-    let older = installed.as_deref().and_then(|v| semver::Version::parse(v).ok());
+    let older = installed
+        .as_deref()
+        .and_then(|v| semver::Version::parse(v).ok());
     match (older, semver::Version::parse(&bundled.version)) {
         (Some(old), Ok(new)) if old < new => {
             let manifest = install_theme(home, &bytes)?;

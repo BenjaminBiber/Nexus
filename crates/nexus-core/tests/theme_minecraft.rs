@@ -16,7 +16,10 @@ fn manifest_erlaubt_nur_mojang_domains() {
     let json = std::fs::read_to_string(theme_dir().join("manifest.json")).unwrap();
     let manifest = parse_manifest(&json).expect("Manifest gültig");
     assert_eq!(manifest.id, "minecraft");
-    assert_eq!(manifest.slots, vec!["Shell".to_string(), "NavIcon".to_string()]);
+    assert_eq!(
+        manifest.slots,
+        vec!["Shell".to_string(), "NavIcon".to_string()]
+    );
     assert!(!manifest.permissions.network.is_empty());
     for domain in &manifest.permissions.network {
         assert!(
@@ -25,7 +28,11 @@ fn manifest_erlaubt_nur_mojang_domains() {
         );
     }
     // Sounds liegen im Asset-Index, nicht im Client-JAR
-    assert!(manifest.permissions.network.iter().any(|d| d == "resources.download.minecraft.net"));
+    assert!(manifest
+        .permissions
+        .network
+        .iter()
+        .any(|d| d == "resources.download.minecraft.net"));
 }
 
 #[test]
@@ -45,7 +52,11 @@ fn gepacktes_paket_wird_installiert() {
     for name in ["manifest.json", "theme.css"] {
         std::fs::copy(theme_dir().join(name), dist.join(name)).unwrap();
     }
-    std::fs::write(dist.join("main.js"), "export default { id: 'minecraft', slots: {} };").unwrap();
+    std::fs::write(
+        dist.join("main.js"),
+        "export default { id: 'minecraft', slots: {} };",
+    )
+    .unwrap();
 
     let packed = pack_theme(&dist).expect("packen");
     let home = NexusHome::at(tmp.path().join("home"));
