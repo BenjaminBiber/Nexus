@@ -16,6 +16,7 @@ import { RootPage } from './pages/RootPage.js';
 import { DocQuestionJobsProvider } from './hooks/docQuestionJobs.js';
 import { DocTicketJobsProvider } from './hooks/docTicketJobs.js';
 import { ThemePage } from './theme/ThemePage.js';
+import { ThemeNotice } from './theme/ThemeNotice.js';
 import { ThemeSync } from './theme/ThemeSync.js';
 import { StartAnimation } from './components/StartAnimation.js';
 import { usePlatform } from './platform/PlatformContext.js';
@@ -30,6 +31,7 @@ export function App() {
     <DocTicketJobsProvider>
       <DocQuestionJobsProvider>
         <ThemeSync />
+        <ThemeNotice />
         <StartAnimation />
         <ExternalLinks />
         <Routes>

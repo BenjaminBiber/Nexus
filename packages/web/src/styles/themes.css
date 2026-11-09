@@ -95,3 +95,7 @@
 
 /* Startanimation eines Themes (Slot „StartAnimation“): Vollbild über der App; den Hintergrund bestimmt das Theme */
 .theme-start-anim { position: fixed; inset: 0; z-index: 2147483647; }
+
+/* Hinweis zum Laden des Themes (Rückfall auf den Standard, abgesicherter Modus): schließbarer Balken unten */
+.theme-notice { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 1000; display: flex; align-items: center; gap: 12px; max-width: min(640px, calc(100vw - 32px)); padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: inherit; box-shadow: 0 4px 16px var(--shadow-mid); font-size: 13px; }
+.theme-notice button { border: 0; background: none; color: inherit; font-size: 16px; cursor: pointer; }
