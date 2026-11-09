@@ -4,15 +4,19 @@ import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { McText } from './BitmapText.js';
 import { useResourceUrl } from './context.js';
 import { LOGO } from './resources.js';
+import { useSound } from './useSound.js';
 
-export function TitleMenu({ onClose }: { onClose: (focusMenuButton: boolean) => void }) {
+export function TitleMenu({ onClose, sound = false }: { onClose: (focusMenuButton: boolean) => void; sound?: boolean }) {
   const menu = useRef<HTMLDivElement>(null);
   const nav = useNav();
   const openSearch = useOpenSearch();
   const logo = useResourceUrl(LOGO);
+  const play = useSound();
 
+  // Beim Öffnen Fokus auf den ersten Eintrag und, wenn vom Nutzer geöffnet, der Menü-Ton
   useEffect(() => {
     menu.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    if (sound) play('menuOpen');
   }, []);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {

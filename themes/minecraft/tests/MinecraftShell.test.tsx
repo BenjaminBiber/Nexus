@@ -23,7 +23,8 @@ const { NavIcon } = await import('../src/NavIcon.js');
 const { ResourcesProvider } = await import('../src/context.js');
 
 const urls = Object.fromEntries(MINECRAFT_ENTRIES.map((e, i) => [e, `/api/themes/minecraft/fetch?i=${i}`]));
-const ready: MinecraftResources = { phase: 'ready', done: 21, total: 21, urls, error: null, retry: () => {} };
+const soundUrls = { click: '/snd/click', menuOpen: '/snd/menu', hotbar: '/snd/pop' };
+const ready: MinecraftResources = { phase: 'ready', done: 21, total: 21, urls, soundUrls, error: null, retry: () => {} };
 
 const NAV: Array<[NavItem['id'], string]> = [
   ['board', 'Board'],
@@ -69,11 +70,28 @@ function renderShell(host: ThemeHost) {
   );
 }
 
+// Abgespielte Töne als Liste der URLs; Audio gemockt, nie echter Ton
+let played: string[];
+
 beforeEach(() => {
   resources.current = ready;
+  played = [];
+  vi.stubGlobal(
+    'Audio',
+    vi.fn(function (this: { src: string; play: () => Promise<void> }, src: string) {
+      this.src = src;
+      this.play = () => {
+        played.push(src);
+        return Promise.resolve();
+      };
+    }),
+  );
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe('Theme-Definition', () => {
   it('ersetzt die Slots Shell und NavIcon', () => {
@@ -257,6 +275,53 @@ describe('Seite und Kopfzeile', () => {
     expect(host.navigate).toHaveBeenCalledWith('/p/p1/dashboard');
     fireEvent.keyDown(document.body, { key: '5' });
     expect(host.navigate).toHaveBeenLastCalledWith('/p/p1/questions');
+  });
+});
+
+describe('Sounds', () => {
+  it('Knopf „Menü“ klickt und öffnet das Menü mit Ton, Esc öffnet mit Ton', async () => {
+    const user = userEvent.setup();
+    renderShell(fakeHost());
+    expect(played).toEqual([]);
+    await user.click(screen.getByRole('button', { name: 'Menü' }));
+    expect(played).toEqual(['/snd/click', '/snd/menu']);
+    await user.keyboard('{Escape}');
+    played = [];
+    act(() => {
+      fireEvent.keyDown(document.body, { key: 'Escape' });
+    });
+    expect(played).toEqual(['/snd/menu']);
+  });
+
+  it('Titelbildschirm ohne Seite bleibt beim ersten Rendern still', () => {
+    renderShell(fakeHost(null));
+    expect(played).toEqual([]);
+  });
+
+  it('Feldwechsel der Hotbar per Klick, Taste und Mausrad spielt den Ton, das aktive Feld nicht', () => {
+    renderShell(fakeHost('board'));
+    const hotbar = screen.getByRole('navigation', { name: 'Hauptnavigation' });
+    fireEvent.click(within(hotbar).getByRole('link', { name: /Sessions/ }));
+    fireEvent.keyDown(document.body, { key: '3' });
+    fireEvent.wheel(hotbar, { deltaY: 100 });
+    expect(played).toEqual(['/snd/pop', '/snd/pop', '/snd/pop']);
+    fireEvent.click(within(hotbar).getByRole('link', { name: /Board/ }));
+    fireEvent.keyDown(document.body, { key: '1' });
+    expect(played).toHaveLength(3);
+  });
+
+  it('mit sounds: false bleibt alles still', async () => {
+    const user = userEvent.setup();
+    const host = fakeHost('board');
+    host.themeSettings = { values: { sounds: false }, loading: false, set: vi.fn(async () => {}) };
+    renderShell(host);
+    const hotbar = screen.getByRole('navigation', { name: 'Hauptnavigation' });
+    fireEvent.click(within(hotbar).getByRole('link', { name: /Sessions/ }));
+    fireEvent.keyDown(document.body, { key: '3' });
+    fireEvent.wheel(hotbar, { deltaY: 100 });
+    await user.click(screen.getByRole('button', { name: 'Menü' }));
+    expect(played).toEqual([]);
+    expect(host.navigate).toHaveBeenCalled();
   });
 });
 
