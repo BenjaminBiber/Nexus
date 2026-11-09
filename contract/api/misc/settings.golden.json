@@ -265,7 +265,7 @@
       "contentType": "application/json",
       "json": {
         "code": "settings-invalid",
-        "message": "theme muss ein eingebautes (system, light, dark, pastel, win95) oder installiertes Theme sein."
+        "message": "theme muss ein eingebautes (system, light, dark, win95) oder installiertes Theme sein."
       },
       "status": 422
     }

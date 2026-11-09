@@ -35,17 +35,8 @@ describe('Farbschema', () => {
     expect([...win95.keys()].filter((name) => !light.has(name) && !name.startsWith('--w95-'))).toEqual([]);
   });
 
-  it('ändert im Schema „Pastell“ nur Variablen, die das helle Schema kennt', () => {
-    const css = styles('variables.css');
-    const light = variables(css, ':root {');
-    const own = variables(css, ":root[data-theme='pastel'] {");
-    expect(own.size).toBeGreaterThan(20);
-    // --paper-* gibt es nur im Notizbuch-Stil von „Pastell“ (themes.css)
-    expect([...own.keys()].filter((name) => !light.has(name) && !name.startsWith('--paper-'))).toEqual([]);
-  });
-
   it('verwendet außerhalb von variables.css keine fest codierten Farben', () => {
-    for (const name of ['base.css', 'questions.css', 'dbboard.css', 'dashboard.css', 'inbox.css', 'sessions.css', 'themes.css', 'win95.css']) {
+    for (const name of ['base.css', 'questions.css', 'dbboard.css', 'dashboard.css', 'inbox.css', 'sessions.css','win95.css']) {
       expect(styles(name).split('\n').filter((line) => COLOR.test(line)), name).toEqual([]);
     }
   });

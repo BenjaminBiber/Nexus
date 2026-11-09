@@ -21,6 +21,8 @@
 - Das Theme „Signal“ ist kein eingebautes Theme mehr, sondern ein mitgeliefertes Paket
   (`themes/signal/`); eine gespeicherte Auswahl `signal` bleibt gültig, solange das Paket
   installiert ist. Die Fehlermeldung zu `theme` nennt `signal` nicht mehr unter den eingebauten.
+- Das Theme „Pastell“ ist ebenfalls ein mitgeliefertes Paket (`themes/pastel/`) statt im Kern;
+  eine gespeicherte Auswahl `pastel` bleibt gültig, solange das Paket installiert ist.
 
 ## 0.0.2 – 2026-11-06
 

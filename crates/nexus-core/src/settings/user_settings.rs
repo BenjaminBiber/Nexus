@@ -39,9 +39,8 @@ impl NotificationMode {
 pub const NOTIFICATION_MODES: [NotificationMode; 3] = NotificationMode::ALL;
 
 /// Eingebaute Themes in der Reihenfolge von TypeScript (`BUILTIN_THEME_IDS`); „system“ folgt
-/// dem Betriebssystem, „pastel“ ist ein farbigeres helles Schema, „win95“ ist
-/// Windows 95 samt Desktop, Fenster und Taskleiste
-pub const BUILTIN_THEME_IDS: [&str; 5] = ["system", "light", "dark", "pastel", "win95"];
+/// dem Betriebssystem, „win95“ ist Windows 95 samt Desktop, Fenster und Taskleiste
+pub const BUILTIN_THEME_IDS: [&str; 4] = ["system", "light", "dark", "win95"];
 
 /// Gewähltes Theme als ID: eingebaut (`BUILTIN_THEME_IDS`) oder ein installiertes Theme
 /// unter `~/.nexus/themes/<id>/`
@@ -183,10 +182,7 @@ mod tests {
             NOTIFICATION_MODES.map(|mode| mode.as_str()),
             ["off", "browser", "windows"]
         );
-        assert_eq!(
-            BUILTIN_THEME_IDS,
-            ["system", "light", "dark", "pastel", "win95"]
-        );
+        assert_eq!(BUILTIN_THEME_IDS, ["system", "light", "dark", "win95"]);
     }
 
     #[test]
