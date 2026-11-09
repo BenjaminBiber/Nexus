@@ -1,0 +1,11 @@
+{
+  "id": "pastel",
+  "name": "Pastell",
+  "version": "1.0.0",
+  "author": "Nexus",
+  "sdkVersion": "^1.1",
+  "colorScheme": "light",
+  "startColor": "#f3eadf",
+  "slots": [],
+  "permissions": { "network": [] }
+}

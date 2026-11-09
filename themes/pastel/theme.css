@@ -1,7 +1,126 @@
+/* „Pastell“: warme Pastellpalette nach Rosé Pine Dawn als Bastelpapier – Papierkorn, Tonpapier in Seitenleiste und
+   Spalten, abgerissene Zettel als Karten, Flieder als Akzent, gedämpfte Statusfarben (Papier-Regeln weiter unten).
+   Übernimmt die hellen Werte und ändert nur Abweichungen; --paper-* gilt nur für den Bastelpapier-Stil. */
+:root[data-theme='pastel'] {
+  --bg: #f3eadf;
+  --surface: #fffaf3;
+  --surface-alt: #fdf7f0;
+  --sidebar-bg: #e2d4ee;
+  --nav-active-bg: #fffaf3;
+  --line: #ebe0d6;
+  --line-input: #e3d8ce;
+  --line-soft: #f2e9e1;
+  --line-strong: #9893a5;
+  --line-dashed: #dfd4c9;
+  --column-bg: #f2e9e1;
+  --column-locked-a: #f4ede8;
+  --column-locked-b: #ece3da;
+  --text: #464261;
+  --text-soft: #575279;
+  --muted: #6e6a86;
+  --accent: #7b5ea7;
+  --accent-hover: #6a4f93;
+  --accent-soft: #efe7f6;
+  --accent-soft-hover: #e5d9f1;
+  --primary: #575279;
+  --primary-hover: #464261;
+  --on-primary: #fffaf3;
+  --chip-on-bg: #575279;
+  --chip-on-fg: #fffaf3;
+  --code-bg: #232136;
+  --code-fg: #e0def4;
+  --code-muted: #908caa;
+  --code-btn-bg: #2a273f;
+  --code-btn-line: #393552;
+  --status-bg: #efe7f6;
+  --status-fg: #5d4787;
+  --running-fg: #3f7a4a;
+  --running-bg: #e8f2e4;
+  --waiting-fg: #8a5710;
+  --waiting-bg: #fbf0dc;
+  --waiting-line: #f0d6a8;
+  --idle-fg: #575279;
+  --idle-bg: #f2e9e1;
+  --blocked-fg: #9c3f58;
+  --blocked-bg: #f8e6e8;
+  --orphan-fg: #6a4f93;
+  --orphan-bg: #f1eaf7;
+  --unread-fg: #5d4787;
+  --unread-bg: #efe7f6;
+  --unread-row-bg: #f8f2fa;
+  --note-bg: #fbf0dc;
+  --note-line: #f0d6a8;
+  --note-fg: #7a4d10;
+  --ok: #6d9f71;
+  --ok-fg: #3f7a4a;
+  --ok-ring: #dcebd8;
+  --danger: #b4637a;
+  --warn: #ea9d34;
+  --usage-ok: #5b8fb9;
+  --usage-warn: #ea9d34;
+  --usage-crit: #b4637a;
+  --row-waiting-bg: #fcf5e8;
+  --quote-line: #c4a7e7;
+  --mark: #f6e3b4;
+  --mark-comment: #ece2f5;
+  --mark-comment-hover: #dfcfee;
+  --tag-add-line: #c4a7e7;
+  --connection-line: #f0c9cf;
+  --connection-fg: #8c3d52;
+  --error-bg: #fdf3f1;
+  --answered-bg: #e8f2e4;
+  --answered-line: #bcd9b5;
+  --research-bg: #e6f0f2;
+  --research-fg: #286983;
+  --test-ok: #6d9f71;
+  --test-fail: #b4637a;
+  --status-backlog: #9893a5;
+  --status-waiting: #ea9d34;
+  --status-in-planning: #907aa9;
+  --status-planned: #6c8ebf;
+  --status-in-progress: #56949f;
+  --status-blocked: #b4637a;
+  --status-done: #6d9f71;
+  --status-not-needed: #cecacd;
+  --graph-edge: #9893a5;
+  --graph-critical: #b4637a;
+  --graph-upstream: #6c8ebf;
+  --graph-downstream: #907aa9;
+  --chart-done: #6d9f71;
+  --chart-fail: #b4637a;
+  --chart-bar: #7b5ea7;
+  --chart-track: #f2e9e1;
+  --chart-grid: #ebe0d6;
+  --chart-axis: #6e6a86;
+  --chart-other: #cecacd;
+  --chart-escalated: #d7827e;
+  --reason-max-turns: #b4637a;
+  --reason-timeout: #d7827e;
+  --reason-context: #c26d9a;
+  --reason-exit-code: #907aa9;
+  --reason-claude-error: #6c8ebf;
+  --reason-no-outcome: #56949f;
+  --reason-rest: #b5aeb8;
+  --urgent-row-bg: #fbeceb;
+  --shadow-faint: rgba(87, 82, 121, 0.05);
+  --shadow-mid: rgba(87, 82, 121, 0.1);
+  --shadow-soft: rgba(87, 82, 121, 0.08);
+  --shadow-tab: rgba(87, 82, 121, 0.12);
+  --shadow-strong: rgba(87, 82, 121, 0.14);
+  --backdrop: rgba(87, 82, 121, 0.3);
+  --sheet-shadow: rgba(87, 82, 121, 0.18);
+  --picker-shadow: rgba(87, 82, 121, 0.14);
+  --radius-control: 6px;
+  --radius-card: 4px;
+  --radius-panel: 8px;
+  /* Nur im Bastelpapier-Stil: Schrift der Überschriften; Korn und Risskanten stehen als Bilder im nächsten Block */
+  --paper-font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+}
+
 /* Schema „Pastell“ als Bastelpapier: Alles sieht aus wie aus Papier geschnitten und gerissen. Grund und Flächen tragen
    ein Papierkorn (SVG-Rauschen ohne eigene Farbe, nur Deckkraft), die Seitenleiste ist ein Bogen Tonpapier mit gerissener
    rechter Kante, die Spalten Tonpapier im Ton ihres Status, die Karten abgerissene Zettel mit Schatten.
-   Die Risskanten sind Masken (Streifen mit unregelmäßiger Kante, gekachelt); Farben nur über variables.css. */
+   Die Risskanten sind Masken (Streifen mit unregelmäßiger Kante, gekachelt); Farben nur über den Variablenblock oben. */
 :root[data-theme='pastel'] {
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.33 0 0 0 0 0.25 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --paper-fibers: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.06' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.38 0 0 0 0 0.3 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
@@ -59,11 +178,3 @@
 [data-theme='pastel'] .card:nth-child(3n)::before { mask-position: -113px 0, center, -38px 100%; }
 [data-theme='pastel'] .card:hover { filter: drop-shadow(2px 4px 0 var(--shadow-mid)) drop-shadow(0 8px 10px var(--shadow-soft)); }
 [data-theme='pastel'] .card.live { filter: drop-shadow(0 0 1px var(--accent)) drop-shadow(0 0 1px var(--accent)) drop-shadow(1px 2px 0 var(--shadow-mid)); }
-
-/* Startanimation eines Themes (Slot „StartAnimation“): Vollbild über der App; den Hintergrund bestimmt das Theme */
-.theme-start-anim { position: fixed; inset: 0; z-index: 2147483647; }
-
-/* Hinweis zum Laden des Themes (Rückfall auf den Standard, abgesicherter Modus): schließbarer Balken unten */
-.theme-notice { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 1000; display: flex; align-items: center; gap: 12px; max-width: min(640px, calc(100vw - 32px)); padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: inherit; box-shadow: 0 4px 16px var(--shadow-mid); font-size: 13px; }
-.theme-notice button { border: 0; background: none; color: inherit; font-size: 16px; cursor: pointer; }
-.theme-notice .theme-notice-action { padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; white-space: nowrap; }

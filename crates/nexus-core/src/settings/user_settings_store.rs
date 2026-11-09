@@ -256,15 +256,21 @@ mod tests {
     }
 
     #[test]
-    fn signal_gilt_nur_als_installiertes_paket() {
-        let (dir, store) = store();
-        write_raw(&dir, r#"{"theme":"signal"}"#);
-        assert_eq!(store.read().theme, ThemeMode::system());
+    fn signal_und_pastel_gelten_nur_als_installiertes_paket() {
+        for id in ["signal", "pastel"] {
+            let (dir, store) = store();
+            write_raw(&dir, &format!(r#"{{"theme":"{id}"}}"#));
+            assert_eq!(store.read().theme, ThemeMode::system(), "{id}");
 
-        let theme_dir = dir.path().join("themes").join("signal");
-        fs::create_dir_all(&theme_dir).unwrap();
-        fs::write(theme_dir.join("manifest.json"), r#"{"id":"signal"}"#).unwrap();
-        assert_eq!(store.read().theme, ThemeMode::from("signal"));
+            let theme_dir = dir.path().join("themes").join(id);
+            fs::create_dir_all(&theme_dir).unwrap();
+            fs::write(
+                theme_dir.join("manifest.json"),
+                format!(r#"{{"id":"{id}"}}"#),
+            )
+            .unwrap();
+            assert_eq!(store.read().theme, ThemeMode::from(id), "{id}");
+        }
     }
 
     #[test]

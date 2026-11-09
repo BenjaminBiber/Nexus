@@ -19,7 +19,7 @@ export const THEME_START_COLOR_KEY = 'harness-theme-start-color';
 export const THEME_LINK_ID = 'nexus-theme-css';
 
 
-/** Angezeigtes Schema als ID; „pastel“ ist ein helles Schema mit eigener Palette, „win95“ zusätzlich mit eigenem Rahmen (Desktop, Fenster, Taskleiste), sonst ein installiertes Theme */
+/** Angezeigtes Schema als ID; „win95“ ist ein helles Schema mit eigenem Rahmen (Desktop, Fenster, Taskleiste), sonst ein installiertes Theme */
 export type ResolvedTheme = string;
 
 /** Erlaubte Form einer Theme-ID (wie im Manifest) */
@@ -111,7 +111,7 @@ export function displayedTheme(): string {
   return document.documentElement.dataset.theme || 'light';
 }
 
-// Aktuell angezeigtes Schema, auf hell/dunkel abgebildet (Pastell, Windows 95 und helle installierte Themes zählen als hell)
+// Aktuell angezeigtes Schema, auf hell/dunkel abgebildet (Windows 95 und helle installierte Themes zählen als hell)
 export function currentTheme(): 'light' | 'dark' {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 }

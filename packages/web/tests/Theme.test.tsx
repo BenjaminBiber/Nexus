@@ -105,18 +105,20 @@ describe('Theme', () => {
     expect(currentTheme()).toBe('light');
   });
 
-  it('zeigt „pastel“ als eigenes helles Schema', () => {
+  it('zeigt ein installiertes helles Theme als eigenes Schema', () => {
     expect(resolveTheme('pastel', true)).toBe('pastel');
-    applyTheme('pastel');
+    applyTheme('pastel', [{ id: 'pastel', name: 'Pastell', version: '1.0.0', author: 'Nexus', colorScheme: 'light' }] as never);
     expect(document.documentElement.dataset.theme).toBe('pastel');
     expect(displayedTheme()).toBe('pastel');
     expect(currentTheme()).toBe('light');
   });
 
   it('ersetzt eine unbekannte Theme-ID durch „system“', () => {
-    for (const mode of ['system', 'light', 'dark', 'pastel', 'win95']) expect(normalizeThemeId(mode, [])).toBe(mode);
-    expect(normalizeThemeId('signal', [])).toBe('system');
-    expect(normalizeThemeId('signal', ['signal'])).toBe('signal');
+    for (const mode of ['system', 'light', 'dark', 'win95']) expect(normalizeThemeId(mode, [])).toBe(mode);
+    for (const mode of ['signal', 'pastel']) {
+      expect(normalizeThemeId(mode, [])).toBe('system');
+      expect(normalizeThemeId(mode, [mode])).toBe(mode);
+    }
     expect(normalizeThemeId('lila', [])).toBe('system');
     expect(normalizeThemeId('ocean', ['ocean'])).toBe('ocean');
     applyTheme('lila', []);
@@ -143,8 +145,20 @@ describe('Theme', () => {
     };
     render(<ApiProvider api={fakeApi({ listThemes })}><AppearancePanel /></ApiProvider>);
     await screen.findByRole('radio', { name: 'Windows 95' });
-    expect(screen.getAllByRole('radio')).toHaveLength(5);
+    expect(screen.getAllByRole('radio')).toHaveLength(4);
     expect(screen.queryByRole('radio', { name: 'Signal' })).toBeNull();
+    expect(screen.queryByRole('radio', { name: 'Pastell' })).toBeNull();
+  });
+
+  it('bietet „Pastell“ als installiertes Paket an und lädt seine theme.css', async () => {
+    const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, ...patch }));
+    const listThemes = async () => [{ id: 'pastel', name: 'Pastell', version: '1.0.0', author: 'Nexus', colorScheme: 'light', startColor: '#f3eadf' }];
+    render(<ApiProvider api={fakeApi({ saveUserSettings, listThemes } as never)}><AppearancePanel /></ApiProvider>);
+    await userEvent.click(await screen.findByRole('radio', { name: 'Pastell' }));
+    expect(saveUserSettings).toHaveBeenCalledWith({ theme: 'pastel' });
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe('pastel'));
+    expect(document.getElementById('nexus-theme-css')?.getAttribute('href')).toBe('/themes/pastel/theme.css');
+    expect(currentTheme()).toBe('light');
   });
 
   it('bietet „Signal“ als installiertes Paket an und lädt seine theme.css', async () => {

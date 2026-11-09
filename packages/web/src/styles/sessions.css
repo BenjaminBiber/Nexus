@@ -1,5 +1,5 @@
 /* Session-Details: Slide-Over über der Session-Liste mit den Tabs Verlauf, Änderungen und Lauf.
-   Nur Variablen aus variables.css (hell, dunkel, Pastell); Windows 95 passt win95.css an. */
+   Nur Variablen aus variables.css (hell, dunkel) oder aus dem Theme-Paket; Windows 95 passt win95.css an. */
 
 /* Zeile der Liste: Titel öffnet die Details, die ganze Zeile ist klickbar */
 .session-row.openable { cursor: pointer; }
