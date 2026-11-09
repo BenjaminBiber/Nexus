@@ -29,12 +29,16 @@ function precompress(): Plugin {
   };
 }
 
-// Entwicklung: /api geht an den laufenden Harness-Server (Standardport 4710, starten mit npm run dev:server)
+// Entwicklung: /api und /themes gehen an den laufenden Harness-Server (Standardport 4710, starten mit npm run dev:server)
+const DEV_SERVER = 'http://127.0.0.1:4710';
+// Host und Herkunft werden auf die Serveradresse gesetzt, sonst lehnt der Schutz des Servers die Anfragen ab
+const proxied = { target: DEV_SERVER, changeOrigin: true, headers: { origin: DEV_SERVER } };
+
 export default defineConfig({
   plugins: [react(), hostModules(), precompress()],
   server: {
-    // Host und Herkunft werden auf die Serveradresse gesetzt, sonst lehnt der Schutz des Servers die Anfragen ab
-    proxy: { '/api': { target: 'http://127.0.0.1:4710', changeOrigin: true, headers: { origin: 'http://127.0.0.1:4710' } } },
+    // /themes liefert Manifest, main.js und Dateien installierter Themes; ohne Weiterleitung fängt die SPA-Rückfallseite sie ab
+    proxy: { '/api': proxied, '/themes': proxied },
   },
   build: { outDir: 'dist', chunkSizeWarningLimit: 1500 },
 });

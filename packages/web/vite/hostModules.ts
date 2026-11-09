@@ -14,6 +14,11 @@ export const HOST_MODULES: Record<string, string> = {
 const ESM_MODULES = new Set(['@nexus/theme-sdk']);
 
 const PREFIX = '\0nexus-host:';
+// Dev-Server: eigene Modul-Kennung ohne \0, damit sie als /@id/<id> in die Import-Map passt
+// (Vite kodiert \0 in /@id/ als __x00__, das wäre in der Import-Map unnötig umständlich)
+const DEV_PREFIX = 'virtual:nexus-host/';
+// Kurzname → nackter Modulname, Umkehrung von HOST_MODULES
+const DEV_SPECS: Record<string, string> = Object.fromEntries(Object.entries(HOST_MODULES).map(([spec, name]) => [name, spec]));
 const require = createRequire(import.meta.url);
 
 // Quelltext des Re-Export-Moduls: für CommonJS die Exportnamen zur Bauzeit ermitteln, export * verlöre sie
@@ -28,32 +33,45 @@ function reExport(spec: string): string {
   ].join('\n');
 }
 
-// Erzeugt je Host-Modul ein eigenes Re-Export-Chunk (teilt React mit der App) und setzt die Import-Map in die gebaute index.html.
-// Nur im Build: der Dev-Server bekommt keine Import-Map, Theme-Code wird gegen den Build geprüft.
+// Erzeugt je Host-Modul ein eigenes Re-Export-Chunk (teilt React mit der App) und setzt die Import-Map in die index.html.
+// Im Build zeigt die Map auf diese Chunks, im Dev-Server auf virtuelle Module, die das Plugin selbst als Re-Export liefert –
+// so läuft die main.js installierter Code-Themes auch unter npm run dev:web.
 export function hostModules(): Plugin {
+  let command: 'build' | 'serve' = 'build';
   return {
     name: 'nexus-host-modules',
-    apply: 'build',
+    configResolved(config) {
+      command = config.command;
+    },
     buildStart() {
+      // Nur der Build braucht eigene Chunks; im Dev-Server lädt Vite die virtuellen Module auf Anfrage
+      if (command !== 'build') return;
       for (const [spec, name] of Object.entries(HOST_MODULES)) {
         this.emitFile({ type: 'chunk', id: PREFIX + spec, name: `host-${name}`, preserveSignature: 'strict' });
       }
     },
     resolveId(id) {
-      return id.startsWith(PREFIX) ? id : null;
+      if (id.startsWith(PREFIX)) return id;
+      return id.startsWith(DEV_PREFIX) && DEV_SPECS[id.slice(DEV_PREFIX.length)] ? id : null;
     },
     load(id) {
-      return id.startsWith(PREFIX) ? reExport(id.slice(PREFIX.length)) : null;
+      if (id.startsWith(PREFIX)) return reExport(id.slice(PREFIX.length));
+      const spec = id.startsWith(DEV_PREFIX) ? DEV_SPECS[id.slice(DEV_PREFIX.length)] : undefined;
+      return spec ? reExport(spec) : null;
     },
     transformIndexHtml: {
       order: 'post',
       handler(_html, ctx) {
-        if (!ctx.bundle) return;
         const imports: Record<string, string> = {};
-        for (const file of Object.values(ctx.bundle)) {
-          if (file.type === 'chunk' && file.facadeModuleId?.startsWith(PREFIX)) {
-            imports[file.facadeModuleId.slice(PREFIX.length)] = `/${file.fileName}`;
+        if (ctx.bundle) {
+          for (const file of Object.values(ctx.bundle)) {
+            if (file.type === 'chunk' && file.facadeModuleId?.startsWith(PREFIX)) {
+              imports[file.facadeModuleId.slice(PREFIX.length)] = `/${file.fileName}`;
+            }
           }
+        } else {
+          // Dev-Server: Vite löst /@id/<id> auf die virtuellen Module oben auf
+          for (const [spec, name] of Object.entries(HOST_MODULES)) imports[spec] = `/@id/${DEV_PREFIX}${name}`;
         }
         return [{ tag: 'script', attrs: { type: 'importmap' }, children: JSON.stringify({ imports }), injectTo: 'head-prepend' }];
       },

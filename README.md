@@ -362,7 +362,7 @@ nexus stop                                    # laufenden installierten Server b
 npm run dev                                   # Rust-Server (4710) und Vite mit Hot Reload (http://localhost:5173)
 ```
 
-Vite leitet `/api` fest an Port 4710 weiter; ein installierter Server muss für `npm run dev` deshalb aus sein. Der Server liest dieselbe Umgebung, also auch `NEXUS_HOME`.
+Vite leitet `/api` und `/themes` fest an Port 4710 weiter; ein installierter Server muss für `npm run dev` deshalb aus sein. Der Server liest dieselbe Umgebung, also auch `NEXUS_HOME`. Die Import-Map für Code-Themes (React und `@nexus/theme-sdk` unter nackten Namen) gibt der Entwicklungsserver genauso aus wie der Build, installierte Themes laufen dort also auch.
 
 Die CLI aus dem Quellstand (gleiche Umgebung, zweites Terminal):
 
