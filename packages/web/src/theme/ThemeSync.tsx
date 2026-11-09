@@ -7,11 +7,16 @@ export function ThemeSync() {
   const api = useApi();
   useEffect(() => {
     let cancelled = false;
+    // Installierte Themes parallel laden; schlägt das fehl, bleibt der Link aus dem Cache (kein Flackern)
+    const manifests = Promise.resolve()
+      .then(() => api.listThemes())
+      .catch(() => undefined);
     Promise.resolve()
       .then(() => api.getUserSettings())
       .then(
-        (settings) => {
-          if (!cancelled) applyTheme(settings.theme ?? 'system');
+        async (settings) => {
+          const installed = await manifests;
+          if (!cancelled) applyTheme(settings.theme ?? 'system', installed);
         },
         () => undefined,
       );
