@@ -2793,6 +2793,7 @@ dependencies = [
  "tower",
  "tower-http",
  "uuid",
+ "zip",
 ]
 
 [[package]]

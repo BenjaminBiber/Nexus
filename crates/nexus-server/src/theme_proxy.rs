@@ -7,11 +7,16 @@
 //! - Optionale sha256-Prüfung; bei Abweichung wird nichts gecacht.
 //! - Cache nur je Theme unter `<theme>/cache/`, atomar geschrieben (erst `.tmp`, dann
 //!   `rename`). Vom Browser wird nichts (Cookies, Köpfe) an den Upstream weitergereicht.
+//! - Mit `entry` ([`ThemeProxy::fetch_entry`]) liefert er eine Einzeldatei aus einem ZIP/JAR
+//!   (z. B. einem Client-JAR): Pfad vor jeder Netzanfrage geprüft, Archiv nach denselben
+//!   Regeln geladen und gecacht, nur die Einzeldatei unter Hash-Namen im Cache abgelegt.
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use nexus_core::themes::host_allowed;
+use nexus_core::themes::{
+    check_archive_entry_path, content_type_for, extract_entry, host_allowed, ArchiveEntryError,
+};
 use reqwest::{header, Url};
 use sha2::{Digest, Sha256};
 
@@ -19,6 +24,8 @@ use crate::error::ApiError;
 
 /// Standardlimit einer Antwort: 10 MiB
 pub const DEFAULT_MAX_BYTES: u64 = 10 * 1024 * 1024;
+/// Standardlimit eines Archivs, aus dem eine Einzeldatei kommt: 64 MiB (Client-JARs)
+pub const DEFAULT_MAX_ARCHIVE_BYTES: u64 = 64 * 1024 * 1024;
 /// Höchstzahl an Weiterleitungen
 pub const MAX_REDIRECTS: usize = 5;
 /// Inhaltstyp, wenn der Upstream keinen nennt
@@ -40,11 +47,32 @@ pub enum ProxyError {
     TooLarge,
     ChecksumMismatch,
     Upstream(String),
+    EntryNotFound(String),
+    NotArchive,
+}
+
+impl From<ArchiveEntryError> for ProxyError {
+    fn from(error: ArchiveEntryError) -> Self {
+        match error {
+            ArchiveEntryError::UnsafePath { .. } => ProxyError::BadUrl(error.to_string()),
+            ArchiveEntryError::NotArchive => ProxyError::NotArchive,
+            ArchiveEntryError::NotFound { path } => ProxyError::EntryNotFound(path),
+            ArchiveEntryError::TooLarge { .. } => ProxyError::TooLarge,
+        }
+    }
 }
 
 impl From<ProxyError> for ApiError {
     fn from(error: ProxyError) -> Self {
         match error {
+            ProxyError::EntryNotFound(path) => ApiError::new(
+                "theme_fetch_entry_not_found",
+                format!("Eintrag „{path}“ fehlt im Archiv."),
+            ),
+            ProxyError::NotArchive => ApiError::new(
+                "theme_fetch_not_archive",
+                "Der Upstream liefert kein ZIP-Archiv.",
+            ),
             ProxyError::BadUrl(message) => ApiError::new("bad-request", message),
             ProxyError::Forbidden(host) => ApiError::new(
                 "theme_fetch_forbidden",
@@ -68,6 +96,7 @@ impl From<ProxyError> for ApiError {
 pub struct ThemeProxy {
     client: reqwest::Client,
     max_bytes: u64,
+    max_archive_bytes: u64,
 }
 
 impl ThemeProxy {
@@ -78,7 +107,17 @@ impl ThemeProxy {
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .unwrap_or_default();
-        Self { client, max_bytes }
+        Self {
+            client,
+            max_bytes,
+            max_archive_bytes: DEFAULT_MAX_ARCHIVE_BYTES,
+        }
+    }
+
+    /// Setzt das Limit für Archive, aus denen eine Einzeldatei kommt
+    pub fn with_archive_limit(mut self, max_archive_bytes: u64) -> Self {
+        self.max_archive_bytes = max_archive_bytes;
+        self
     }
 
     /// Liefert die Ressource aus dem Cache des Themes oder lädt sie vom Upstream
@@ -88,6 +127,66 @@ impl ThemeProxy {
         network: &[String],
         url: &str,
         sha256: Option<&str>,
+    ) -> Result<Fetched, ProxyError> {
+        self.fetch_limited(theme_dir, network, url, sha256, self.max_bytes)
+            .await
+    }
+
+    /// Liefert eine Einzeldatei `entry` aus dem ZIP/JAR unter `url`. Der Pfad wird geprüft,
+    /// bevor Netz oder Cache angefasst werden; das Archiv lädt [`Self::fetch`] mit dem
+    /// Archiv-Limit (Freigabe, Weiterleitungen, sha256 des Archivs, Cache). Die Einzeldatei ist
+    /// auf das normale Limit begrenzt und liegt unter `cache/<sha256(url + "\n" + entry)>`.
+    pub async fn fetch_entry(
+        &self,
+        theme_dir: &Path,
+        network: &[String],
+        url: &str,
+        sha256: Option<&str>,
+        entry: &str,
+    ) -> Result<Fetched, ProxyError> {
+        check_archive_entry_path(entry)?;
+        let checked = check_url(network, url)?;
+        let cache = theme_dir.join("cache");
+        let key = hex(&Sha256::digest(
+            format!("{}\n{entry}\n{}", checked.as_str(), sha256.unwrap_or("")).as_bytes(),
+        ));
+        let bin = cache.join(format!("{key}.bin"));
+        let typ = cache.join(format!("{key}.type"));
+        let content_type = content_type_for(entry).to_string();
+        if let Ok(bytes) = tokio::fs::read(&bin).await {
+            return Ok(Fetched {
+                bytes,
+                content_type,
+                from_cache: true,
+            });
+        }
+
+        let archive = self
+            .fetch_limited(theme_dir, network, url, sha256, self.max_archive_bytes)
+            .await?;
+        let entry_name = entry.to_string();
+        let max = self.max_bytes;
+        let bytes =
+            tokio::task::spawn_blocking(move || extract_entry(&archive.bytes, &entry_name, max))
+                .await
+                .map_err(|e| ProxyError::Upstream(format!("Entpacken abgebrochen: {e}")))??;
+        store(&cache, &key, &bin, &typ, &bytes, &content_type)
+            .await
+            .map_err(|e| ProxyError::Upstream(format!("Cache nicht beschreibbar: {e}")))?;
+        Ok(Fetched {
+            bytes,
+            content_type,
+            from_cache: false,
+        })
+    }
+
+    async fn fetch_limited(
+        &self,
+        theme_dir: &Path,
+        network: &[String],
+        url: &str,
+        sha256: Option<&str>,
+        max_bytes: u64,
     ) -> Result<Fetched, ProxyError> {
         let url = check_url(network, url)?;
         let expected = match sha256 {
@@ -122,7 +221,7 @@ impl ThemeProxy {
             let _ = tokio::fs::remove_file(&typ).await;
         }
 
-        let (bytes, content_type) = self.download(network, url).await?;
+        let (bytes, content_type) = self.download(network, url, max_bytes).await?;
         if expected.is_some_and(|sum| sum != sha_hex(&bytes)) {
             return Err(ProxyError::ChecksumMismatch);
         }
@@ -141,6 +240,7 @@ impl ThemeProxy {
         &self,
         network: &[String],
         mut url: Url,
+        max_bytes: u64,
     ) -> Result<(Vec<u8>, String), ProxyError> {
         let mut redirects = 0;
         let mut response =
@@ -172,10 +272,7 @@ impl ThemeProxy {
                 response.status()
             )));
         }
-        if response
-            .content_length()
-            .is_some_and(|len| len > self.max_bytes)
-        {
+        if response.content_length().is_some_and(|len| len > max_bytes) {
             return Err(ProxyError::TooLarge);
         }
         let content_type = response
@@ -190,7 +287,7 @@ impl ThemeProxy {
             .await
             .map_err(|e| ProxyError::Upstream(format!("Upstream bricht ab: {e}")))?
         {
-            if (bytes.len() + chunk.len()) as u64 > self.max_bytes {
+            if (bytes.len() + chunk.len()) as u64 > max_bytes {
                 return Err(ProxyError::TooLarge);
             }
             bytes.extend_from_slice(&chunk);
