@@ -433,6 +433,56 @@ async fn startet_bei_konflikt_eine_merge_session_und_mergt_danach() {
 }
 
 #[tokio::test]
+async fn mergt_auch_wenn_das_ziel_waehrend_der_merge_session_weiterlaeuft() {
+    let f = DispatchFixture::create(json!({})).await;
+    let id = in_merge_session(&f, "Nachgerückt").await;
+    resolve_in_worktree(&f, &id, &main_branch(&f)).await;
+    // Während die Session lief, kam ein anderes Ticket ins Ziel (ohne Konflikt)
+    commit_on_main(&f, "anderes.txt", "fremd");
+    f.end(&id, OK_OUTPUT, Some(0));
+
+    let report = f.tick().await;
+    assert!(report.errors.is_empty(), "{report:?}");
+    assert_eq!(report.merged, vec![id.clone()]);
+    assert_eq!(read(&f.repo.path().join("feature.txt")), "ticket");
+    assert_eq!(read(&f.repo.path().join("anderes.txt")), "fremd");
+}
+
+#[tokio::test]
+async fn startet_eine_neue_merge_session_wenn_das_nachgerueckte_ziel_erneut_kollidiert() {
+    let f = DispatchFixture::create(json!({})).await;
+    let id = in_merge_session(&f, "Wieder Konflikt").await;
+    resolve_in_worktree(&f, &id, &main_branch(&f)).await;
+    // Während die Session lief, änderte ein anderes Ticket dieselbe Datei im Ziel
+    commit_on_main(&f, "feature.txt", "haupt zwei");
+    f.end(&id, OK_OUTPUT, Some(0));
+
+    let report = f.tick().await;
+    assert!(report.errors.is_empty(), "{report:?}");
+    let ticket = f.ticket(&id).await;
+    assert_eq!(
+        ticket.status,
+        TicketStatus::Done,
+        "{:?}",
+        ticket.blocked_reason
+    );
+    let entry = merge_entry(&f, &id);
+    assert_eq!(entry.phase, MergePhase::Session);
+    assert_eq!(f.run(&id).kind, RunKind::Merge);
+    assert_eq!(
+        comments_starting(&f, &id, markers::MERGE_CONFLICT)
+            .await
+            .len(),
+        2
+    );
+
+    resolve_in_worktree(&f, &id, &main_branch(&f)).await;
+    f.end(&id, OK_OUTPUT, Some(0));
+    assert_eq!(f.tick().await.merged, vec![id]);
+    assert_eq!(read(&f.repo.path().join("feature.txt")), "ticket");
+}
+
+#[tokio::test]
 async fn blockiert_wenn_die_merge_session_den_konflikt_nicht_lost() {
     let f = DispatchFixture::create(json!({})).await;
     let id = in_merge_session(&f, "Ungelöst").await;
@@ -1308,6 +1358,7 @@ async fn ohne_zielbranch_am_ticket_steht_im_dispatch_status_kein_ziel() {
         session_used: true,
         wait_noted: true,
         target: Some(main_branch(&f)),
+        target_head: None,
         conflict_seen: Some(false),
         held_by: None,
         since: "2026-10-22T08:00:00.000Z".into(),

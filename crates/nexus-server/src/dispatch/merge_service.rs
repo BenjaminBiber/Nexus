@@ -272,6 +272,7 @@ Grund „Merge: …“).",
             session_used: false,
             wait_noted: false,
             target: None,
+            target_head: None,
             conflict_seen: Some(false),
             held_by: None,
             since,
@@ -286,6 +287,7 @@ Grund „Merge: …“).",
                     entry.phase = MergePhase::Pending;
                     entry.session_used = false;
                     entry.target = None;
+                    entry.target_head = None;
                     entry.conflict_seen = Some(false);
                     entry.held_by = Some(None);
                 }
@@ -415,8 +417,12 @@ dort („Mergen“ bzw. harness board merge)"
             .target
             .clone()
             .or_else(|| job.entries.iter().find_map(|entry| entry.target.clone()));
+        let head = job
+            .entries
+            .iter()
+            .find_map(|entry| entry.target_head.clone());
         let resolved = match (&work, &target) {
-            (Some(work), Some(target)) => self.resolved(work, target, record)?,
+            (Some(work), Some(target)) => self.resolved(work, target, head.as_deref(), record)?,
             _ => false,
         };
         if !resolved {
@@ -443,17 +449,59 @@ dort („Mergen“ bzw. harness board merge)"
             .await?;
             return Ok(());
         }
-        self.set_phase(ctx, &record.branch, MergePhase::Pending)
-            .await
+        // Ist das Ziel während der Session weitergelaufen, darf ein neuer Konflikt mit dem
+        // nachgerückten Stand wieder eine Merge-Session bekommen – die bisherige hat ihren
+        // Stand gelöst
+        let moved = match (&work, &target, &head) {
+            (Some(work), Some(target), Some(head)) => self
+                .git
+                .head(Path::new(&work.root), &format!("refs/heads/{target}"))
+                .map(|now| now != *head)
+                .unwrap_or(false),
+            _ => false,
+        };
+        let branch = record.branch.clone();
+        ctx.stores
+            .state
+            .update(move |state| {
+                for entry in state.merges.values_mut() {
+                    if entry.branch != branch {
+                        continue;
+                    }
+                    entry.phase = MergePhase::Pending;
+                    if moved {
+                        entry.session_used = false;
+                        entry.target_head = None;
+                    }
+                }
+            })
+            .await?;
+        if moved {
+            ctx.log(&format!(
+                "Merge-Session {} gelöst, das Ziel ist inzwischen weitergelaufen – neuer Merge-Versuch",
+                job.ids().join(", ")
+            ));
+        }
+        Ok(())
     }
 
     /// Hat die Merge-Session das Ziel in den Branch geholt und einen sauberen Worktree ohne
-    /// laufende Git-Aktion hinterlassen? Beide als volle Branch-Referenz, damit ein
-    /// gleichnamiges Tag nicht gewinnt
-    fn resolved(&self, work: &RepoWork, target: &str, record: &RunRecord) -> Result<bool> {
+    /// laufende Git-Aktion hinterlassen? Maßstab ist der Stand des Ziels beim Start der Session
+    /// (`head`; ohne ihn die heutige Spitze), denn das Ziel darf währenddessen weiterlaufen.
+    /// Branches als volle Referenz, damit ein gleichnamiges Tag nicht gewinnt
+    fn resolved(
+        &self,
+        work: &RepoWork,
+        target: &str,
+        head: Option<&str>,
+        record: &RunRecord,
+    ) -> Result<bool> {
+        let ancestor = head
+            .map(str::to_string)
+            .unwrap_or_else(|| format!("refs/heads/{target}"));
         if !self.git.contains(
             Path::new(&work.root),
-            &format!("refs/heads/{target}"),
+            &ancestor,
             &format!("refs/heads/{}", record.branch),
         )? {
             return Ok(false);
@@ -493,6 +541,12 @@ dort („Mergen“ bzw. harness board merge)"
         };
         let prompt = ctx.prompts.merge(&values.input(&ctx.cfg));
         let profile = run.profile.clone();
+        // Stand des Ziels, den die Session hereinholen soll; ohne ihn gilt bei der Auswertung
+        // die dann aktuelle Spitze
+        let head = self
+            .git
+            .head(Path::new(&work.root), &format!("refs/heads/{target}"))
+            .ok();
         ctx.launch(LaunchInput {
             target: Some(target.to_string()),
             extra_tools: MERGE_SESSION_TOOLS.iter().map(|s| s.to_string()).collect(),
@@ -521,6 +575,7 @@ dort („Mergen“ bzw. harness board merge)"
                     entry.phase = MergePhase::Session;
                     entry.session_used = true;
                     entry.target = Some(target_value.clone());
+                    entry.target_head = head.clone();
                 }
             })
             .await?;

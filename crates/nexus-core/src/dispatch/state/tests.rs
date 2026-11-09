@@ -183,6 +183,7 @@ async fn dispatch_state_store_schreibt_anderungen_nacheinander() {
                     session_used: false,
                     wait_noted: false,
                     target: None,
+                    target_head: None,
                     conflict_seen: None,
                     held_by: None,
                     since: "x".to_string(),

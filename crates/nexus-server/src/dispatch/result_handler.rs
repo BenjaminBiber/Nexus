@@ -198,6 +198,7 @@ impl<'a> ResultHandler<'a> {
                             session_used: false,
                             wait_noted: false,
                             target: None,
+                            target_head: None,
                             conflict_seen: None,
                             held_by: None,
                             since,
