@@ -5,6 +5,7 @@ pub mod snippet_store;
 pub mod store_index;
 pub mod store_install;
 pub mod store_repos;
+pub mod store_updates;
 
 pub use css_check::{check_css, check_snippet_css, CssViolation};
 pub use snippet_store::{Snippet, SnippetStore, MAX_SNIPPET_BYTES};

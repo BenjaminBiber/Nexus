@@ -94,6 +94,13 @@ impl ErrorMapper {
         if code == "store-entry-incompatible" {
             return StatusCode::CONFLICT;
         }
+        // Store-Update: Theme nicht installiert, nicht neuer oder Bestätigung fehlt
+        if code == "store-update-not-installed" {
+            return StatusCode::NOT_FOUND;
+        }
+        if code == "store-update-not-newer" || code == "store-update-confirmation-required" {
+            return StatusCode::CONFLICT;
+        }
         // Store-Installation: Index oder Paket nicht ladbar, zu langsam, zu groß
         if code == "store-download-timeout" || code == "store-index-timeout" {
             return StatusCode::GATEWAY_TIMEOUT;
