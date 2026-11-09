@@ -448,6 +448,108 @@ pub fn list_themes(home: &NexusHome) -> Result<Vec<InstalledTheme>, ThemePackage
     Ok(themes)
 }
 
+/// Ergebnis eines mitgelieferten Pakets beim Start
+#[derive(Debug)]
+pub struct BundledResult {
+    /// Die `.nexus`-Datei im Ordner der mitgelieferten Themes
+    pub file: PathBuf,
+    pub outcome: Result<BundledOutcome, ThemePackageError>,
+}
+
+/// Was mit einem mitgelieferten Paket geschehen ist
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BundledOutcome {
+    /// Theme fehlte und wurde installiert
+    Installed { id: String, version: String },
+    /// Ältere Version wurde ersetzt
+    Updated {
+        id: String,
+        from: String,
+        to: String,
+    },
+    /// Gleiche oder neuere Version (oder unlesbare Installation) bleibt unverändert
+    Kept {
+        id: String,
+        installed: String,
+        bundled: String,
+    },
+}
+
+/// Installiert jedes `*.nexus` aus `dir`, dessen Theme fehlt oder in älterer Version
+/// installiert ist. Gleiche oder neuere Versionen und Themes mit anderen IDs bleiben
+/// unangetastet; ein fehlerhaftes Paket hält die übrigen nicht auf. Fehlt `dir`, ist das
+/// Ergebnis leer.
+pub fn install_bundled_themes(home: &NexusHome, dir: &Path) -> Vec<BundledResult> {
+    let Ok(entries) = fs::read_dir(dir) else {
+        return Vec::new();
+    };
+    let mut files: Vec<PathBuf> = entries
+        .filter_map(|entry| entry.ok().map(|entry| entry.path()))
+        .filter(|path| {
+            path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("nexus")
+        })
+        .collect();
+    files.sort();
+    files
+        .into_iter()
+        .map(|file| {
+            let outcome = install_bundled(home, &file);
+            BundledResult { file, outcome }
+        })
+        .collect()
+}
+
+fn install_bundled(home: &NexusHome, file: &Path) -> Result<BundledOutcome, ThemePackageError> {
+    if fs::metadata(file)?.len() > MAX_PACKAGE_BYTES {
+        return Err(ThemePackageError::TooLarge {
+            max: MAX_PACKAGE_BYTES,
+        });
+    }
+    let bytes = fs::read(file)?;
+    let bundled = read_manifest(&bytes)?;
+    let installed_dir = home.themes_dir().join(&bundled.id);
+    if !installed_dir.exists() {
+        let manifest = install_theme(home, &bytes)?;
+        return Ok(BundledOutcome::Installed {
+            id: manifest.id,
+            version: manifest.version,
+        });
+    }
+    let installed = fs::read_to_string(installed_dir.join(MANIFEST_FILE))
+        .ok()
+        .and_then(|json| parse_manifest(&json).ok())
+        .map(|manifest| manifest.version);
+    let older = installed.as_deref().and_then(|v| semver::Version::parse(v).ok());
+    match (older, semver::Version::parse(&bundled.version)) {
+        (Some(old), Ok(new)) if old < new => {
+            let manifest = install_theme(home, &bytes)?;
+            Ok(BundledOutcome::Updated {
+                id: manifest.id,
+                from: old.to_string(),
+                to: manifest.version,
+            })
+        }
+        _ => Ok(BundledOutcome::Kept {
+            id: bundled.id,
+            installed: installed.unwrap_or_else(|| "?".to_string()),
+            bundled: bundled.version,
+        }),
+    }
+}
+
+/// Liest das Manifest eines Pakets mit den Prüfungen der Installation
+fn read_manifest(package: &[u8]) -> Result<ThemeManifest, ThemePackageError> {
+    let files = read_package(package, DEFAULT_LIMITS)?;
+    let json = files
+        .iter()
+        .find(|(path, _)| path == Path::new(MANIFEST_FILE))
+        .map(|(_, data)| data)
+        .ok_or_else(|| ThemePackageError::MissingFile {
+            name: MANIFEST_FILE.to_string(),
+        })?;
+    Ok(parse_manifest(&String::from_utf8_lossy(json))?)
+}
+
 /// Entfernt ein installiertes Theme. Die id muss eine gültige Theme-ID sein, damit kein Pfad
 /// außerhalb von `themes/` getroffen werden kann.
 pub fn remove_theme(home: &NexusHome, id: &str) -> Result<(), ThemePackageError> {
@@ -889,5 +991,97 @@ mod tests {
         remove_theme(&home, "nacht").unwrap();
         assert!(!home.themes_dir().join("nacht").exists());
         assert!(list_themes(&home).unwrap().is_empty());
+    }
+
+    /// Ordner mit mitgelieferten Paketen
+    fn mitgeliefert(pakete: &[(&str, Vec<u8>)]) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        for (name, bytes) in pakete {
+            fs::write(dir.path().join(name), bytes).unwrap();
+        }
+        dir
+    }
+
+    fn version(home: &NexusHome, id: &str) -> String {
+        let json = fs::read_to_string(home.themes_dir().join(id).join("manifest.json")).unwrap();
+        parse_manifest(&json).unwrap().version
+    }
+
+    #[test]
+    fn mitgeliefert_fehlt_wird_installiert() {
+        let (_tmp, home) = home();
+        let dir = mitgeliefert(&[("nacht.nexus", gueltig("nacht", "1.0.0"))]);
+        let results = install_bundled_themes(&home, dir.path());
+        assert_eq!(results.len(), 1);
+        assert_eq!(
+            results[0].outcome.as_ref().unwrap(),
+            &BundledOutcome::Installed {
+                id: "nacht".into(),
+                version: "1.0.0".into()
+            }
+        );
+        assert_eq!(version(&home, "nacht"), "1.0.0");
+    }
+
+    #[test]
+    fn mitgeliefert_aelter_installiert_wird_ersetzt() {
+        let (_tmp, home) = home();
+        install_theme(&home, &gueltig("nacht", "1.0.0")).unwrap();
+        let dir = mitgeliefert(&[("nacht.nexus", gueltig("nacht", "1.1.0"))]);
+        let results = install_bundled_themes(&home, dir.path());
+        assert_eq!(
+            results[0].outcome.as_ref().unwrap(),
+            &BundledOutcome::Updated {
+                id: "nacht".into(),
+                from: "1.0.0".into(),
+                to: "1.1.0".into()
+            }
+        );
+        assert_eq!(version(&home, "nacht"), "1.1.0");
+    }
+
+    #[test]
+    fn mitgeliefert_gleich_oder_aelter_bleibt_unveraendert() {
+        for (installiert, geliefert) in [("1.0.0", "1.0.0"), ("2.0.0", "1.0.0")] {
+            let (_tmp, home) = home();
+            install_theme(&home, &gueltig("nacht", installiert)).unwrap();
+            let marker = home.themes_dir().join("nacht").join("marker.css");
+            fs::write(&marker, "x").unwrap();
+            let dir = mitgeliefert(&[("nacht.nexus", gueltig("nacht", geliefert))]);
+            let results = install_bundled_themes(&home, dir.path());
+            assert!(matches!(
+                results[0].outcome.as_ref().unwrap(),
+                BundledOutcome::Kept { .. }
+            ));
+            assert!(marker.is_file(), "{installiert} / {geliefert}");
+            assert_eq!(version(&home, "nacht"), installiert);
+        }
+    }
+
+    #[test]
+    fn mitgeliefert_kaputt_blockiert_andere_nicht_und_fremdes_bleibt() {
+        let (_tmp, home) = home();
+        install_theme(&home, &gueltig("eigen", "1.0.0")).unwrap();
+        let dir = mitgeliefert(&[
+            ("a-kaputt.nexus", b"kein zip".to_vec()),
+            ("nacht.nexus", gueltig("nacht", "1.0.0")),
+            ("liesmich.txt", b"x".to_vec()),
+        ]);
+        let results = install_bundled_themes(&home, dir.path());
+        assert_eq!(results.len(), 2);
+        assert!(results[0].outcome.is_err());
+        assert!(results[1].outcome.is_ok());
+        let ids: Vec<_> = list_themes(&home)
+            .unwrap()
+            .into_iter()
+            .map(|t| t.manifest.id)
+            .collect();
+        assert_eq!(ids, vec!["eigen", "nacht"]);
+    }
+
+    #[test]
+    fn mitgeliefert_ordner_fehlt_ist_leer() {
+        let (tmp, home) = home();
+        assert!(install_bundled_themes(&home, &tmp.path().join("fehlt")).is_empty());
     }
 }
