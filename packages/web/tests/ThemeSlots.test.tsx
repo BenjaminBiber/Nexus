@@ -9,6 +9,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { App } from '../src/App.js';
 import { ApiProvider } from '../src/api/ApiContext.js';
 import { BoardIcon, CogIcon, SettingsIcon } from '../src/components/NavIcons.js';
+import { ProgressRing } from '../src/components/ProgressRing.js';
 import type { ShellProps } from '../src/theme/slots.js';
 import { fakeApi } from './helpers/fakeApi.js';
 
@@ -136,5 +137,22 @@ describe('Slot „NavIcon“', () => {
     const { container } = render(<SettingsIcon name="folder" />);
     expect(screen.queryByTestId('ersetzt')).toBeNull();
     expect(container.querySelector('svg.nav-icon')).not.toBeNull();
+  });
+});
+
+describe('Slot „Progress“', () => {
+  it('reicht Fortschritt, Bezeichnung und Beschriftung an das Theme weiter', () => {
+    registerTheme({
+      id: 'test-slots',
+      slots: { Progress: ({ done, total, label, caption }) => <output>{`${done}/${total} ${label} ${caption}`}</output> },
+    });
+    document.documentElement.dataset.theme = 'test-slots';
+    render(<ProgressRing done={2} total={5} />);
+    expect(screen.getByText('2/5 Fortschritt der Schritte Schritte erledigt')).toBeTruthy();
+  });
+
+  it('zeigt ohne Theme-Slot den Ring', () => {
+    const { container } = render(<ProgressRing done={1} total={4} />);
+    expect(container.querySelector('.progress-ring')).not.toBeNull();
   });
 });
