@@ -592,6 +592,12 @@ details p { margin: 0 0 12px; max-width: 70ch; color: var(--text-soft); }
 .theme-tile-preview { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; }
 .theme-tile .btn { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; }
 .theme-tile-confirm { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.theme-install { display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius-card); margin-bottom: 12px; }
+.theme-install-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.theme-install-name { font-weight: 600; }
+.theme-install-code p { margin: 4px 0 0; }
+.theme-install ul { margin: 4px 0 0; padding-left: 20px; }
+.theme-install p { margin: 4px 0 0; }
 .choice-group { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
 .choice { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 16px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius-card); cursor: pointer; transition: border-color 0.12s, box-shadow 0.12s; }
 .choice:hover { border-color: var(--line-dashed); }
