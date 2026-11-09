@@ -100,11 +100,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { runner: macos-14, target: aarch64-apple-darwin, bundles: 'app,dmg' }
+          - { runner: macos-26, target: aarch64-apple-darwin, bundles: 'app,dmg' }
           - { runner: windows-latest, target: x86_64-pc-windows-msvc, bundles: 'nsis' }
           - { runner: ubuntu-22.04, target: x86_64-unknown-linux-gnu, bundles: 'appimage,deb,rpm' }
     # macOS und Windows nach der Wahl von „runners“; matrix.runner bleibt der gehostete Name
-    runs-on: ${{ fromJSON(matrix.runner == 'windows-latest' && needs.runners.outputs.windows || matrix.runner == 'macos-14' && needs.runners.outputs.macos || format('"{0}"', matrix.runner)) }}
+    runs-on: ${{ fromJSON(matrix.runner == 'windows-latest' && needs.runners.outputs.windows || matrix.runner == 'macos-26' && needs.runners.outputs.macos || format('"{0}"', matrix.runner)) }}
     timeout-minutes: 60
     # copy-server.mjs baut den Server damit wie die App mit --target: beide teilen sich
     # target/<ziel>/release, und das CLI-Archiv findet den Server dort

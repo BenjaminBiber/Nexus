@@ -15,7 +15,7 @@ import { pathToFileURL } from 'node:url';
 // Die Architektur steht mit drin: der Release baut für aarch64-apple-darwin und x86_64-pc-windows-msvc
 export const PLATFORMS = {
   windows: { labels: ['self-hosted', 'Windows', 'X64'], hosted: 'windows-latest' },
-  macos: { labels: ['self-hosted', 'macOS', 'ARM64'], hosted: 'macos-14' },
+  macos: { labels: ['self-hosted', 'macOS', 'ARM64'], hosted: 'macos-26' },
 };
 
 // Labels vergleicht GitHub ohne Rücksicht auf Groß- und Kleinschreibung

@@ -156,7 +156,7 @@ Im Probelauf ist das Tag nie bei GitHub angekommen: dann baut `build` den gestar
 
 | Runner | Ziel | Pakete |
 | --- | --- | --- |
-| `macos-14` | `aarch64-apple-darwin` | `app`, `dmg` |
+| `macos-26` | `aarch64-apple-darwin` | `app`, `dmg` |
 | `windows-latest` | `x86_64-pc-windows-msvc` | `nsis` |
 | `ubuntu-22.04` | `x86_64-unknown-linux-gnu` | `appimage`, `deb`, `rpm` |
 

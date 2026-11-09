@@ -12,7 +12,7 @@ describe('pick-runners', () => {
 
   it('fällt ohne passenden Runner auf den gehosteten zurück', () => {
     const result = pick([runner('WS-023', 'online', 'self-hosted', 'Windows', 'X64')]);
-    expect(JSON.parse(result.macos.runsOn)).toBe('macos-14');
+    expect(JSON.parse(result.macos.runsOn)).toBe('macos-26');
   });
 
   it('übergeht Runner, die offline sind', () => {
@@ -31,6 +31,6 @@ describe('pick-runners', () => {
   it('nimmt ohne Runner-Liste überall die gehosteten', () => {
     const result = pick([]);
     expect(JSON.parse(result.windows.runsOn)).toBe('windows-latest');
-    expect(JSON.parse(result.macos.runsOn)).toBe('macos-14');
+    expect(JSON.parse(result.macos.runsOn)).toBe('macos-26');
   });
 });
