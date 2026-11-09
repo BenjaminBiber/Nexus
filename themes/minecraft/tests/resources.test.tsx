@@ -11,6 +11,7 @@ import {
   resolveClientJar,
   useMinecraftResources,
 } from '../src/resources.js';
+import { NAV_ITEM_TEXTURE } from '../src/navIcons.js';
 
 const VERSION_JSON = 'https://piston-meta.mojang.com/v1/packages/abc/1.21.4.json';
 const JAR = 'https://piston-data.mojang.com/v1/objects/def/client.jar';
@@ -58,13 +59,27 @@ describe('resolveClientJar', () => {
 });
 
 describe('MINECRAFT_ENTRIES', () => {
-  it('enthält Schrift-Atlas, Button-Texturen und Panorama 0–5', () => {
+  it('enthält Schrift-Atlas, Button-Texturen, Panorama 0–5, Hotbar, Logo und die Item-Symbole der Navigation', () => {
     expect([...MINECRAFT_ENTRIES]).toEqual([
       'assets/minecraft/textures/font/ascii.png',
       'assets/minecraft/textures/gui/sprites/widget/button.png',
       'assets/minecraft/textures/gui/sprites/widget/button_highlighted.png',
       ...[0, 1, 2, 3, 4, 5].map((i) => `assets/minecraft/textures/gui/title/background/panorama_${i}.png`),
+      'assets/minecraft/textures/gui/sprites/hud/hotbar.png',
+      'assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png',
+      'assets/minecraft/textures/gui/title/minecraft.png',
+      ...['map', 'clock_00', 'bundle', 'writable_book', 'book', 'written_book', 'spyglass', 'compass_00', 'redstone'].map(
+        (item) => `assets/minecraft/textures/item/${item}.png`,
+      ),
     ]);
+    expect(MINECRAFT_ENTRIES.length).toBe(21);
+  });
+
+  it('jedes Navigationsziel hat ein Item-Symbol aus MINECRAFT_ENTRIES', () => {
+    expect(Object.keys(NAV_ITEM_TEXTURE).sort()).toEqual(
+      ['board', 'dashboard', 'docs', 'guide', 'inbox', 'questions', 'search', 'sessions', 'settings'],
+    );
+    for (const entry of Object.values(NAV_ITEM_TEXTURE)) expect(MINECRAFT_ENTRIES).toContain(entry);
   });
 });
 

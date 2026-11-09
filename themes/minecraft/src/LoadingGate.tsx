@@ -1,11 +1,6 @@
 // Rahmen der Minecraft-Shell: Fortschritt bzw. Hinweis oben, die Seite darunter bleibt immer bedienbar
 import type { CSSProperties, ReactNode } from 'react';
-import type { MinecraftResources } from './resources.js';
-
-const FONT = 'assets/minecraft/textures/font/ascii.png';
-const BUTTON = 'assets/minecraft/textures/gui/sprites/widget/button.png';
-const BUTTON_HIGHLIGHTED = 'assets/minecraft/textures/gui/sprites/widget/button_highlighted.png';
-const panorama = (i: number) => `assets/minecraft/textures/gui/title/background/panorama_${i}.png`;
+import { BUTTON, BUTTON_HIGHLIGHTED, FONT_ATLAS, HOTBAR, HOTBAR_SELECTION, panorama, type MinecraftResources } from './resources.js';
 
 const OFFLINE_HINT =
   'Keine Verbindung zu Mojang. Die Ressourcen werden beim ersten Start einmal geladen. Bitte Internetverbindung prüfen und erneut versuchen.';
@@ -16,10 +11,12 @@ function cssVariables(urls: Record<string, string>): CSSProperties {
   const set = (name: string, entry: string) => {
     if (urls[entry]) vars[name] = `url("${urls[entry]}")`;
   };
-  set('--mc-font-atlas', FONT);
+  set('--mc-font-atlas', FONT_ATLAS);
   set('--mc-button', BUTTON);
   set('--mc-button-highlighted', BUTTON_HIGHLIGHTED);
   for (let i = 0; i < 6; i++) set(`--mc-panorama-${i}`, panorama(i));
+  set('--mc-hotbar', HOTBAR);
+  set('--mc-hotbar-selection', HOTBAR_SELECTION);
   return vars as CSSProperties;
 }
 

@@ -17,21 +17,20 @@
   --accent-hover: #95d54d;
 }
 
-/* Kopfzeile oben, Navigation links, Inhalt rechts; Panorama als Hintergrund, ohne Ressourcen die Erdfarbe */
+/* Kopfzeile oben, Seite im Panel, Hotbar unten; dahinter das Panorama, ohne Ressourcen ein ruhiger Erdbraun-Verlauf */
 [data-theme='minecraft'] .mc-shell {
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  grid-template-rows: auto auto 1fr;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  background-color: var(--bg);
-  background-image: var(--mc-panorama-0, none);
-  background-size: cover;
-  background-position: center;
-  image-rendering: pixelated;
+  background: linear-gradient(180deg, #5a3d24 0%, var(--bg) 55%, #2e2014 100%);
+  color: var(--text);
 }
 
 [data-theme='minecraft'] .mc-status {
-  grid-column: 1 / -1;
+  position: relative;
+  z-index: 3;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -54,24 +53,344 @@
   cursor: pointer;
 }
 
-[data-theme='minecraft'] .mc-shell-header {
-  grid-column: 1 / -1;
+/* ---------- Panorama: Würfel aus 6 Bildern um den Betrachter (Kamera im Würfelmittelpunkt, 90° Sichtfeld) ---------- */
+[data-theme='minecraft'] .mc-panorama {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  perspective: 50vmax;
+  /* Im Spiel ist das Panorama leicht unscharf */
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+[data-theme='minecraft'] .mc-panorama-cube {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  transform: translateZ(50vmax) rotateX(8deg) rotateY(0deg);
+  animation: mc-panorama-spin 240s linear infinite;
+}
+
+[data-theme='minecraft'] .mc-panorama-face {
+  position: absolute;
+  /* 2px Überstand gegen Spalten an den Kanten */
+  top: calc(-50vmax - 1px);
+  left: calc(-50vmax - 1px);
+  width: calc(100vmax + 2px);
+  height: calc(100vmax + 2px);
+  background-size: 100% 100%;
+  backface-visibility: hidden;
+  image-rendering: pixelated;
+}
+
+[data-theme='minecraft'] .mc-panorama-face--front {
+  background-image: var(--mc-panorama-0, none);
+  transform: translateZ(-50vmax);
+}
+[data-theme='minecraft'] .mc-panorama-face--right {
+  background-image: var(--mc-panorama-1, none);
+  transform: rotateY(-90deg) translateZ(-50vmax);
+}
+[data-theme='minecraft'] .mc-panorama-face--back {
+  background-image: var(--mc-panorama-2, none);
+  transform: rotateY(180deg) translateZ(-50vmax);
+}
+[data-theme='minecraft'] .mc-panorama-face--left {
+  background-image: var(--mc-panorama-3, none);
+  transform: rotateY(90deg) translateZ(-50vmax);
+}
+[data-theme='minecraft'] .mc-panorama-face--top {
+  background-image: var(--mc-panorama-4, none);
+  transform: rotateX(-90deg) translateZ(-50vmax);
+}
+[data-theme='minecraft'] .mc-panorama-face--bottom {
+  background-image: var(--mc-panorama-5, none);
+  transform: rotateX(90deg) translateZ(-50vmax);
+}
+
+@keyframes mc-panorama-spin {
+  to {
+    transform: translateZ(50vmax) rotateX(8deg) rotateY(360deg);
+  }
+}
+
+/* Reduzierte Bewegung: das Panorama steht still */
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='minecraft'] .mc-panorama-cube {
+    animation: none;
+  }
+}
+
+/* ---------- Bitmap-Schrift (src/BitmapText.tsx): Glyphen aus ascii.png, 2× vergrößert, mit Schatten wie im Spiel ---------- */
+[data-theme='minecraft'] .mc-text {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+[data-theme='minecraft'] .mc-text--fallback,
+[data-theme='minecraft'] .mc-glyph-fallback::before {
+  font-family: 'Courier New', ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+  text-shadow: 2px 2px 0 #3f3f3f;
+}
+
+[data-theme='minecraft'] .mc-glyphs {
+  display: inline-flex;
+  align-items: flex-start;
+  height: 16px;
+  filter: drop-shadow(2px 2px 0 #3f3f3f);
+}
+
+[data-theme='minecraft'] .mc-glyph {
+  display: inline-block;
+  height: 16px;
+  margin-right: 2px;
+  background-image: var(--mc-font-atlas);
+  background-size: 256px 256px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+[data-theme='minecraft'] .mc-glyph-fallback {
+  margin-right: 2px;
+}
+
+[data-theme='minecraft'] .mc-glyph-fallback::before {
+  content: attr(data-char);
+  line-height: 16px;
+}
+
+/* Der echte Text liegt unsichtbar über den Glyphen: lesbar für Screenreader, markier- und kopierbar */
+[data-theme='minecraft'] .mc-text-src {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: transparent;
+  font-size: 14px;
+  line-height: 16px;
+}
+
+/* ---------- Knöpfe: Button-Textur als 9-Slice, hervorgehoben bei Hover und Fokus ---------- */
+[data-theme='minecraft'] .mc-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 2px solid #000;
+  background: #6f6f6f;
+  box-shadow: inset 2px 2px 0 #aaa, inset -2px -4px 0 #555;
+  border-image-source: var(--mc-button, none);
+  border-image-slice: 3 fill;
+  border-image-width: 6px;
+  border-image-repeat: stretch;
+  color: #fff;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  image-rendering: pixelated;
+}
+
+[data-theme='minecraft'] .mc-ready .mc-button {
+  box-shadow: none;
+}
+
+[data-theme='minecraft'] .mc-button:hover,
+[data-theme='minecraft'] .mc-button:focus-visible {
+  background-color: #8a8a9c;
+  border-image-source: var(--mc-button-highlighted, var(--mc-button, none));
+}
+
+/* Sichtbarer Fokus: gelber Rahmen wie die Auswahl im Spiel */
+[data-theme='minecraft'] .mc-button:focus-visible,
+[data-theme='minecraft'] .mc-hotbar-slot:focus-visible {
+  outline: 2px solid #ffff55;
+  outline-offset: 2px;
+}
+
+[data-theme='minecraft'] .mc-button--wide {
+  width: 400px;
+  max-width: 100%;
+}
+
+/* ---------- Kopfzeile ---------- */
+[data-theme='minecraft'] .mc-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.55);
+  border-bottom: 2px solid #000;
+}
+
+[data-theme='minecraft'] .mc-header-parts {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.5);
-  border-bottom: 2px solid var(--line);
-}
-
-[data-theme='minecraft'] .mc-shell-nav {
-  background: rgba(46, 32, 20, 0.85);
-  border-right: 2px solid var(--line);
-  padding: 8px;
-}
-
-[data-theme='minecraft'] .mc-shell-main {
-  background: rgba(0, 0, 0, 0.35);
-  padding: 16px;
   min-width: 0;
+}
+
+/* ---------- Seite im Panel: dunkler, halbtransparenter Grund, Fließtext in normaler Schrift ---------- */
+[data-theme='minecraft'] .mc-panel {
+  flex: 1;
+  width: min(1280px, calc(100% - 32px));
+  margin: 16px auto 96px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.78);
+  border: 2px solid #000;
+  box-shadow: inset 2px 2px 0 #555, inset -2px -2px 0 #1e1e1e;
+  min-width: 0;
+}
+
+[data-theme='minecraft'] .mc-panel[hidden] {
+  display: none;
+}
+
+[data-theme='minecraft'] .mc-panel-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+/* ---------- Titelbildschirm ---------- */
+[data-theme='minecraft'] .mc-title-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 16px 120px;
+}
+
+[data-theme='minecraft'] .mc-title-logo {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+[data-theme='minecraft'] .mc-title-logo-image {
+  width: min(512px, 90vw);
+  image-rendering: pixelated;
+}
+
+[data-theme='minecraft'] .mc-title-edition.mc-text--fallback {
+  color: #ffff55;
+}
+
+[data-theme='minecraft'] .mc-title-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* ---------- Hotbar: 9 Felder à 20×20 (2× = 40px), Auswahl-Rahmen 24×23 ---------- */
+[data-theme='minecraft'] .mc-hotbar {
+  position: fixed;
+  bottom: 8px;
+  left: 50%;
+  z-index: 3;
+  transform: translateX(-50%);
+  display: flex;
+  box-sizing: border-box;
+  width: 364px;
+  height: 44px;
+  padding: 2px;
+  background: var(--mc-hotbar, none) 0 0 / 364px 44px no-repeat, rgba(0, 0, 0, 0.45);
+  image-rendering: pixelated;
+}
+
+[data-theme='minecraft'] .mc-hotbar-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: #fff;
+  text-decoration: none;
+  box-shadow: inset 0 0 0 2px rgba(139, 139, 139, 0.7);
+}
+
+[data-theme='minecraft'] .mc-ready .mc-hotbar-slot {
+  box-shadow: none;
+}
+
+[data-theme='minecraft'] .mc-hotbar-slot--selected::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 48px;
+  height: 46px;
+  box-sizing: border-box;
+  border: 4px solid #fff;
+  pointer-events: none;
+}
+
+[data-theme='minecraft'] .mc-ready .mc-hotbar-slot--selected::after {
+  border: 0;
+  background: var(--mc-hotbar-selection) 0 0 / 100% 100% no-repeat;
+}
+
+[data-theme='minecraft'] .mc-nav-icon {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+[data-theme='minecraft'] .mc-nav-icon--fallback {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  background: #6b6b6b;
+  box-shadow: inset 2px 2px 0 #9a9a9a, inset -2px -2px 0 #3f3f3f;
+  font: 700 16px/1 'Courier New', ui-monospace, monospace;
+  color: #fff;
+}
+
+/* Zähler unten rechts wie die Stapelgröße eines Items */
+[data-theme='minecraft'] .mc-hotbar-count {
+  position: absolute;
+  right: 1px;
+  bottom: -1px;
+  font: 700 14px/1 'Courier New', ui-monospace, monospace;
+  color: #fff;
+  text-shadow: 2px 2px 0 #3f3f3f;
+}
+
+/* Name des Felds über der Hotbar: beim aktiven Feld, bei Hover und Fokus (bleibt im Barrierefreiheitsbaum) */
+[data-theme='minecraft'] .mc-hotbar-label {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+[data-theme='minecraft'] .mc-hotbar-slot--selected .mc-hotbar-label,
+[data-theme='minecraft'] .mc-hotbar-slot:hover .mc-hotbar-label,
+[data-theme='minecraft'] .mc-hotbar-slot:focus-visible .mc-hotbar-label {
+  opacity: 1;
+}
+
+[data-theme='minecraft'] .mc-hotbar:hover .mc-hotbar-slot--selected:not(:hover) .mc-hotbar-label,
+[data-theme='minecraft'] .mc-hotbar:focus-within .mc-hotbar-slot--selected:not(:focus-visible) .mc-hotbar-label {
+  opacity: 0;
 }
