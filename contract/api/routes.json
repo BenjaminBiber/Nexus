@@ -705,6 +705,21 @@
     "pattern": "/snippets/active.css"
   },
   {
+    "file": "crates/nexus-server/src/routes/store_repos.rs",
+    "method": "GET",
+    "pattern": "/api/themes/store/repos"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/store_repos.rs",
+    "method": "POST",
+    "pattern": "/api/themes/store/repos"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/store_repos.rs",
+    "method": "DELETE",
+    "pattern": "/api/themes/store/repos/:id"
+  },
+  {
     "file": "crates/nexus-server/src/routes/spec.rs",
     "method": "GET",
     "pattern": "/api/projects/:pid/spec-progress"

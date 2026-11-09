@@ -1,0 +1,38 @@
+{
+  "title": "Store-Repos auflisten, eintragen, ablehnen und entfernen",
+  "steps": [
+    { "name": "ohne Repos", "method": "GET", "path": "/api/themes/store/repos" },
+    {
+      "name": "Repo eintragen",
+      "method": "POST",
+      "path": "/api/themes/store/repos",
+      "body": { "url": "https://raw.githubusercontent.com/a/b/main/nexus-themes.json" }
+    },
+    { "name": "Repos auflisten", "method": "GET", "path": "/api/themes/store/repos" },
+    {
+      "name": "ungültige Adresse abgelehnt",
+      "method": "POST",
+      "path": "/api/themes/store/repos",
+      "body": { "url": "http://example.com/nexus-themes.json" }
+    },
+    {
+      "name": "Dublette abgelehnt",
+      "method": "POST",
+      "path": "/api/themes/store/repos",
+      "body": { "url": " HTTPS://RAW.githubusercontent.com/a/b/main/nexus-themes.json" }
+    },
+    {
+      "name": "Repo entfernen",
+      "method": "DELETE",
+      "path": "/api/themes/store/repos/1c4a533c2203",
+      "body": {}
+    },
+    {
+      "name": "unbekanntes Repo entfernen",
+      "method": "DELETE",
+      "path": "/api/themes/store/repos/1c4a533c2203",
+      "body": {}
+    },
+    { "name": "nach dem Entfernen", "method": "GET", "path": "/api/themes/store/repos" }
+  ]
+}
