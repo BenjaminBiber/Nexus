@@ -7,6 +7,7 @@ import type { ThemeManifest } from '../src/api/generated/themes.js';
 import { AppearancePanel } from '../src/components/AppearancePanel.js';
 import { describeThemeError } from '../src/components/settings/themeErrors.js';
 import { fakeApi } from './helpers/fakeApi.js';
+import { themeFile } from './helpers/zip.js';
 afterEach(cleanup);
 
 const manifest = (id: string, extra: Partial<ThemeManifest> = {}): ThemeManifest => ({
@@ -52,8 +53,10 @@ describe('Installierte Themes', () => {
     await tiles();
     const input = screen.getByLabelText('Theme hochladen') as HTMLInputElement;
     expect(input.accept).toBe('.nexus');
-    const file = new File(['zip'], 'neu.nexus');
+    const file = await themeFile(manifest('neu'));
     fireEvent.change(input, { target: { files: [file] } });
+    expect(installTheme).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole('button', { name: 'Installieren' }));
     await waitFor(() => expect(installTheme).toHaveBeenCalledWith(file));
     expect(await screen.findByRole('listitem', { name: 'Theme neu' })).toBeTruthy();
   });
@@ -65,11 +68,13 @@ describe('Installierte Themes', () => {
     open({ listThemes: async () => [], installTheme });
     await tiles();
     const input = screen.getByLabelText('Theme hochladen');
-    fireEvent.change(input, { target: { files: [new File(['a'], 'a.nexus')] } });
+    fireEvent.change(input, { target: { files: [await themeFile(manifest('a'))] } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Installieren' }));
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Die manifest.json des Themes ist fehlerhaft.');
     expect(within(alert).getByText('version: ist kein semver')).toBeTruthy();
-    fireEvent.change(input, { target: { files: [new File(['b'], 'b.nexus')] } });
+    fireEvent.change(input, { target: { files: [await themeFile(manifest('b'))] } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Installieren' }));
     expect(await screen.findByText('Die Datei ist kein gültiges Theme-Paket: keine ZIP-Datei')).toBeTruthy();
   });
 
