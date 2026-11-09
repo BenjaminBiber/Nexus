@@ -55,6 +55,25 @@ describe('Rahmen „Windows 95“', () => {
     expect(document.activeElement).toBe(start);
   });
 
+  it('hebt den aktiven Eintrag hervor, wechselt über das Startmenü den Bereich und passt den Titel an', async () => {
+    openApp('/p/p1/sessions');
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    const menu = screen.getByRole('menu', { name: 'Start' });
+    expect(within(menu).getByRole('menuitem', { name: 'Sessions' }).className).toContain('active');
+    await userEvent.click(within(menu).getByRole('menuitem', { name: 'Anleitung' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(await screen.findByRole('region', { name: 'AI Harness – Anleitung' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /AI Harness - Anleitung/ })).toBeTruthy();
+  });
+
+  it('öffnet über „Suchen …“ im Startmenü die Suche', async () => {
+    openApp('/p/p1/sessions');
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Suchen …' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(await screen.findByRole('dialog')).toBeTruthy();
+  });
+
   it('minimiert das Fenster in die Taskleiste und holt es über den Task-Knopf zurück', async () => {
     openApp('/p/p1/sessions');
     await userEvent.click(await screen.findByRole('button', { name: 'Minimieren' }));

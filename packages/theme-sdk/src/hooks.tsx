@@ -28,3 +28,6 @@ export const useSettings = () => useHost('useSettings').settings;
 export const useColorScheme = () => useHost('useColorScheme').colorScheme;
 /** Route wechseln */
 export const useNavigate = () => useHost('useNavigate').navigate;
+
+/** Globale Suche des Hosts öffnen */
+export const useOpenSearch = () => useHost('useOpenSearch').openSearch;

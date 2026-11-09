@@ -1,3 +1,5 @@
+import type { NavIconName } from '@nexus/theme-sdk';
+
 // Pixel-Symbole im Stil von Windows 95: 16×16 Raster, je Zeichen ein Pixel aus den 16 Systemfarben (Füllung in win95.css).
 // k schwarz, w weiß, s silber, g grau, y gelb, o oliv, b blau, n marine, r rot, m kastanie, t petrol, c türkis, G grün, p violett
 export const WIN95_ICONS = {
@@ -150,6 +152,19 @@ export const WIN95_ICONS = {
 } satisfies Record<string, string[]>;
 
 export type Win95IconName = keyof typeof WIN95_ICONS;
+
+// Pixel-Symbol je Navigationssymbol
+export const WIN95_NAV_ICONS: Record<NavIconName, Win95IconName> = {
+  board: 'folder',
+  dashboard: 'chart',
+  inbox: 'inbox',
+  sessions: 'prompt',
+  questions: 'question',
+  docs: 'document',
+  search: 'magnifier',
+  guide: 'help',
+  settings: 'computer',
+};
 
 // Waagrechte Läufe gleicher Farbe einer Zeile als Rechtecke (weniger Elemente als ein Rechteck je Pixel)
 function runs(rows: string[]): Array<{ x: number; y: number; w: number; c: string }> {
