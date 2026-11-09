@@ -91,3 +91,11 @@ _Avoid_: Pairing, Verknüpfung, Verbindung
 **Ideen-Entwurf**:
 Der von Claude aus einer Sprachnachricht oder einem Text im Telegram-Bot erstellte Vorschlag (Zusammenfassung, Ziel, Titel, Details, Bezüge, mögliche Dubletten); entsteht als Notiz, Ticket oder Kommentar im Board erst, nachdem man ihn über den Knopf „Anlegen“ bestätigt hat.
 _Avoid_: Entwurf, Draft, Vorschlag
+
+**Theme**:
+Ein Erscheinungsbild der Oberfläche mit ID (Wert von `data-theme`), eigenen CSS-Variablen und optional eigenen Komponenten für Slots.
+_Avoid_: Skin, Design (für das Paket)
+
+**Slot**:
+Eine Stelle der Oberfläche, die ein Theme durch eine eigene Komponente ersetzen darf (z. B. `Shell`, `NavIcon`, `Progress`); ohne Ersatz gilt die Standard-Komponente.
+_Avoid_: Hook, Erweiterungspunkt
