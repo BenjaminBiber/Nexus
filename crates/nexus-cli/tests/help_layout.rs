@@ -232,7 +232,13 @@ fn hilfe_von_nexus_und_theme_wie_aufgezeichnet() {
     let mut root = nexus_cli::cli::help_tree();
     root.build();
     assert_eq!(gerendert("nexus", root), golden("nexus"));
-    for pfad in [vec!["theme"], vec!["theme", "pack"]] {
+    for pfad in [
+        vec!["theme"],
+        vec!["theme", "pack"],
+        vec!["theme", "install"],
+        vec!["theme", "list"],
+        vec!["theme", "remove"],
+    ] {
         wie_aufgezeichnet(&pfad);
     }
 }
