@@ -8,6 +8,7 @@ import { THEME_EVENT } from '../src/theme/theme.js';
 import { MemoryRouter } from 'react-router-dom';
 import { App } from '../src/App.js';
 import { ApiProvider } from '../src/api/ApiContext.js';
+import { BoardIcon, CogIcon, SettingsIcon } from '../src/components/NavIcons.js';
 import type { ShellProps } from '../src/theme/slots.js';
 import { fakeApi } from './helpers/fakeApi.js';
 
@@ -117,5 +118,23 @@ describe('Slot „Shell“', () => {
     await screen.findByRole('link', { name: 'Board' });
     expect(container.querySelector('.shell-sidebar')).not.toBeNull();
     spy.mockRestore();
+  });
+});
+
+describe('Slot „NavIcon“', () => {
+  it('ersetzt die Navigationssymbole nach Namen', () => {
+    registerTheme({ id: 'test-slots', slots: { NavIcon: ({ name }) => <i data-testid={`icon-${name}`} /> } });
+    document.documentElement.dataset.theme = 'test-slots';
+    render(<><BoardIcon /><CogIcon /></>);
+    expect(screen.getByTestId('icon-board')).toBeTruthy();
+    expect(screen.getByTestId('icon-settings')).toBeTruthy();
+  });
+
+  it('lässt die Symbole der Einstellungs-Navigation unverändert', () => {
+    registerTheme({ id: 'test-slots', slots: { NavIcon: () => <i data-testid="ersetzt" /> } });
+    document.documentElement.dataset.theme = 'test-slots';
+    const { container } = render(<SettingsIcon name="folder" />);
+    expect(screen.queryByTestId('ersetzt')).toBeNull();
+    expect(container.querySelector('svg.nav-icon')).not.toBeNull();
   });
 });
