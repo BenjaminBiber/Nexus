@@ -21,6 +21,17 @@ import type { AccountListDto, ClaudeUsageDto, UsageOverviewDto } from './usageTy
 import type {
   SpeechStatusDto, SpeechTestDto, TelegramConfig, TelegramConfigInput, TelegramPairingDto, TelegramProfileDto, TelegramStatusDto, TelegramTestDto,
 } from './telegramTypes.js';
+import type { ThemeManifest } from './generated/themes.js';
+
+// Base64 in Stücken: String.fromCharCode mit Millionen Argumenten sprengt den Stapel
+function toBase64(bytes: Uint8Array): string {
+  const CHUNK = 0x8000;
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
 
 // Wie lange ein laufendes GET für dieselbe Adresse mitbenutzt wird: deckt gleichzeitiges Laden beim Seitenaufbau ab,
 // aber nicht ein Nachladen nach einem Ereignis des Servers
@@ -315,6 +326,22 @@ export class ApiClient {
   // Wann die Spracherkennung zuletzt geklappt hat und woran sie zuletzt gescheitert ist
   getSpeechStatus(): Promise<SpeechStatusDto> {
     return this.request('GET', '/api/speech/status');
+  }
+
+  // Die Manifeste der installierten Themes, nach id sortiert
+  listThemes(): Promise<ThemeManifest[]> {
+    return this.request('GET', '/api/themes');
+  }
+
+  // Installiert ein .nexus-Paket; der Schutz des Servers nimmt nur JSON an, deshalb als Base64
+  async installTheme(file: Blob | ArrayBuffer): Promise<ThemeManifest> {
+    const bytes = new Uint8Array(file instanceof Blob ? await file.arrayBuffer() : file);
+    return this.request('POST', '/api/themes/install', { data: toBase64(bytes) });
+  }
+
+  // Entfernt ein installiertes Theme
+  async removeTheme(id: string): Promise<void> {
+    await this.request('DELETE', `/api/themes/${encodeURIComponent(id)}`);
   }
 
   getPluginSetup(): Promise<PluginSetupDto> {

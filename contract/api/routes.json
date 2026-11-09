@@ -730,6 +730,21 @@
     "pattern": "/api/telegram/test"
   },
   {
+    "file": "crates/nexus-server/src/routes/themes.rs",
+    "method": "GET",
+    "pattern": "/api/themes"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/themes.rs",
+    "method": "DELETE",
+    "pattern": "/api/themes/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/themes.rs",
+    "method": "POST",
+    "pattern": "/api/themes/install"
+  },
+  {
     "file": "crates/nexus-server/src/routes/usage.rs",
     "method": "GET",
     "pattern": "/api/claude-usage"
