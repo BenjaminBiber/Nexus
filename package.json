@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "build": "npm run typecheck && npm run build -w packages/web",
-    "typecheck": "tsc --noEmit -p packages/web && tsc --noEmit -p packages/theme-sdk && tsc --noEmit -p themes/_template",
+    "typecheck": "tsc --noEmit -p packages/web && tsc --noEmit -p packages/theme-sdk && tsc --noEmit -p themes/_template && tsc --noEmit -p themes/minecraft",
     "lint": "npm run typecheck",
     "test": "vitest run",
     "dev": "node scripts/dev.mjs",

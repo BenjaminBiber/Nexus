@@ -1,0 +1,13 @@
+{
+  "id": "minecraft",
+  "name": "Minecraft",
+  "version": "0.1.0",
+  "author": "Nexus",
+  "sdkVersion": "^1.1",
+  "colorScheme": "dark",
+  "startColor": "#3b2a1a",
+  "slots": ["Shell"],
+  "permissions": {
+    "network": ["piston-meta.mojang.com", "piston-data.mojang.com", "launchermeta.mojang.com", "launcher.mojang.com"]
+  }
+}
