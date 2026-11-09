@@ -19,8 +19,21 @@ fn manifest_erlaubt_nur_mojang_domains() {
     assert_eq!(manifest.slots, vec!["Shell".to_string(), "NavIcon".to_string()]);
     assert!(!manifest.permissions.network.is_empty());
     for domain in &manifest.permissions.network {
-        assert!(domain.ends_with(".mojang.com"), "fremde Domain: {domain}");
+        assert!(
+            domain.ends_with(".mojang.com") || domain == "resources.download.minecraft.net",
+            "fremde Domain: {domain}"
+        );
     }
+    // Sounds liegen im Asset-Index, nicht im Client-JAR
+    assert!(manifest.permissions.network.iter().any(|d| d == "resources.download.minecraft.net"));
+}
+
+#[test]
+fn manifest_deklariert_den_schalter_sounds() {
+    let json = std::fs::read_to_string(theme_dir().join("manifest.json")).unwrap();
+    let manifest = parse_manifest(&json).expect("Manifest gültig");
+    let schema = manifest.settings_schema.expect("settingsSchema");
+    assert!(schema.contains_key("sounds"));
 }
 
 #[test]

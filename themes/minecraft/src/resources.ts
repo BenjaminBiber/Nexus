@@ -3,6 +3,7 @@
 import { themeAssetUrl } from '@nexus/theme-sdk';
 import { useCallback, useEffect, useState } from 'react';
 import { NAV_ITEM_TEXTURE } from './navIcons.js';
+import { resolveSoundUrls, type SoundUrls } from './sounds.js';
 
 /** id aus manifest.json; Domain-Freigabe und Cache des Proxys gelten je Theme */
 export const THEME_ID = 'minecraft';
@@ -47,7 +48,9 @@ export interface MinecraftResources {
   total: number;
   /** Proxy-URL je Eintrag aus MINECRAFT_ENTRIES, vollständig erst bei `ready` */
   urls: Record<string, string>;
-  error: MinecraftResourceError | null;
+  /** Proxy-URL je Ton; leer, solange der Asset-Index fehlt (dann bleibt das Theme still) */
+  soundUrls: SoundUrls;
+  error:MinecraftResourceError | null;
   retry: () => void;
 }
 
@@ -94,24 +97,33 @@ async function proxied(proxyUrl: string, label: string, signal?: AbortSignal): P
   return res;
 }
 
+/** Versions-JSON, soweit das Theme sie liest */
+export interface VersionJson {
+  downloads?: { client?: { url?: string } };
+  assetIndex?: { url?: string };
+}
+
 /** URL des Client-JARs einer Version: Versionsliste → Versions-JSON → `downloads.client.url` */
 export async function resolveClientJar(themeId: string, version: string, signal?: AbortSignal): Promise<string> {
+  return (await resolveVersion(themeId, version, signal)).jar;
+}
+
+// Versions-JSON und JAR-URL; die Versions-JSON dient danach auch der Sound-Auflösung
+async function resolveVersion(themeId: string, version: string, signal?: AbortSignal): Promise<{ jar: string; meta: VersionJson }> {
   const manifest = (await (await proxied(themeAssetUrl(themeId, MANIFEST_URL), 'Versionsliste', signal)).json()) as {
     versions?: { id: string; url: string }[];
   };
   const entry = manifest.versions?.find((v) => v.id === version);
   if (!entry) throw new ResourceError(null, 'version_not_found', `Minecraft ${version} steht nicht in der Versionsliste von Mojang.`, false);
-  const meta = (await (await proxied(themeAssetUrl(themeId, entry.url), `Versions-JSON ${version}`, signal)).json()) as {
-    downloads?: { client?: { url?: string } };
-  };
+  const meta = (await (await proxied(themeAssetUrl(themeId, entry.url), `Versions-JSON ${version}`, signal)).json()) as VersionJson;
   const jar = meta.downloads?.client?.url;
   if (!jar) throw new ResourceError(null, 'client_jar_missing', `Versions-JSON ${version} nennt kein Client-JAR.`, false);
-  return jar;
+  return { jar, meta };
 }
 
 type State = Omit<MinecraftResources, 'retry'>;
 
-const initial = (): State => ({ phase: 'manifest', done: 0, total: MINECRAFT_ENTRIES.length, urls: {}, error: null });
+const initial = (): State => ({ phase: 'manifest', done: 0, total: MINECRAFT_ENTRIES.length, urls: {}, soundUrls: {}, error: null });
 
 /** Lädt alle Einträge; `retry` startet nach einem Fehler neu */
 export function useMinecraftResources(): MinecraftResources {
@@ -127,7 +139,9 @@ export function useMinecraftResources(): MinecraftResources {
     setState(initial());
 
     (async () => {
-      const jar = await resolveClientJar(THEME_ID, MINECRAFT_VERSION, signal);
+      const { jar, meta } = await resolveVersion(THEME_ID, MINECRAFT_VERSION, signal);
+      // Töne nebenher: zählen nicht zum Fortschritt und halten das Gate nicht auf
+      void resolveSoundUrls(THEME_ID, meta, signal).then((soundUrls) => update({ soundUrls }));
       update({ phase: 'entries' });
       const urls: Record<string, string> = {};
       // Nacheinander: der erste Eintrag lädt das JAR in den Proxy-Cache, die weiteren treffen ihn

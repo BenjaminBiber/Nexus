@@ -61,10 +61,22 @@ Ohne Netz (oder wenn Mojang nicht antwortet, Proxy-Status 502) zeigt die Shell d
 nur die Texturen fehlen; dann gelten die Rückfall-Farben aus `theme.css`. Antwortet der Proxy
 mit 403, fehlt die Domain-Freigabe im Manifest – der Hinweis nennt das.
 
+## Sounds
+
+Knöpfe klicken, ein Feldwechsel der Hotbar (Klick, Tasten 1–9, Mausrad) macht „pop“, das
+Öffnen des Titelmenüs spielt einen eigenen Ton. Die Töne liegen nicht im Client-JAR, sondern
+im Asset-Index der Version: Versions-JSON → `assetIndex.url` → Hash → 
+`resources.download.minecraft.net/<ab>/<hash>`, alles über den Asset-Proxy. Fehlt der Index
+oder ein Eintrag, bleibt das Theme still und voll bedienbar.
+
+Der Schalter „Sounds“ unter Einstellungen → Darstellung (Theme-Einstellung `sounds`,
+standardmäßig an) schaltet die Töne ab; der Wert wird je Theme gespeichert.
+
 ## Freigegebene Domains
 
 `permissions.network`: `piston-meta.mojang.com`, `piston-data.mojang.com`,
-`launchermeta.mojang.com`, `launcher.mojang.com`. Andere Domains lehnt der Proxy ab.
+`launchermeta.mojang.com`, `launcher.mojang.com`, `resources.download.minecraft.net` (Sounds).
+Andere Domains lehnt der Proxy ab.
 
 ## Bauen
 

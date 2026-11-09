@@ -1,9 +1,10 @@
 // Hotbar mit 9 Feldern als Hauptnavigation: Klick, Tasten 1–9 und Mausrad wechseln die Seite wie im Spiel das Item
-import { NavLink, useNav, useNavigate } from '@nexus/theme-sdk';
+import { NavLink, useNav, useNavigate, type NavItem } from '@nexus/theme-sdk';
 import { useEffect, useRef } from 'react';
 import { McText } from './BitmapText.js';
 import { NavIcon } from './NavIcon.js';
 import { isShortcut } from './keys.js';
+import { useSound } from './useSound.js';
 
 /** Mindestabstand zwischen zwei Wechseln per Mausrad (Touchpads feuern viele kleine Ereignisse) */
 const WHEEL_PAUSE_MS = 150;
@@ -12,6 +13,13 @@ export function Hotbar() {
   const nav = useNav();
   const navigate = useNavigate();
   const bar = useRef<HTMLElement>(null);
+  const play = useSound();
+
+  // Feldwechsel mit Ton wie im Spiel; das schon aktive Feld bleibt still
+  const select = (item: NavItem) => {
+    if (!item.active) play('hotbar');
+    navigate(item.href);
+  };
 
   // Tasten 1–9 wählen das Feld, außer beim Tippen, mit Strg/Alt oder über einem Dialog
   useEffect(() => {
@@ -20,11 +28,11 @@ export function Hotbar() {
       const item = nav[Number(event.key) - 1];
       if (!item) return;
       event.preventDefault();
-      navigate(item.href);
+      select(item);
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [nav, navigate]);
+  }, [nav, navigate, play]);
 
   // Mausrad über der Hotbar: nach unten das nächste, nach oben das vorige Feld, am Rand rundherum; die Seite scrollt dabei nicht
   useEffect(() => {
@@ -40,16 +48,20 @@ export function Hotbar() {
       const step = event.deltaY > 0 ? 1 : -1;
       const index = nav.findIndex((item) => item.active);
       const from = index === -1 ? (step > 0 ? -1 : nav.length) : index;
-      navigate(nav[(from + step + nav.length) % nav.length].href);
+      select(nav[(from + step + nav.length) % nav.length]);
     };
     element.addEventListener('wheel', onWheel, { passive: false });
     return () => element.removeEventListener('wheel', onWheel);
-  }, [nav, navigate]);
+  }, [nav, navigate, play]);
 
   return (
     <nav ref={bar} className="mc-hotbar" aria-label="Hauptnavigation">
       {nav.map((item) => (
-        <NavLink key={item.id} id={item.id} className={`mc-hotbar-slot${item.active ? ' mc-hotbar-slot--selected' : ''}`}>
+        <NavLink key={item.id} id={item.id} className={`mc-hotbar-slot${item.active ? ' mc-hotbar-slot--selected' : ''}`}
+          onClick={() => {
+            if (!item.active) play('hotbar');
+          }}
+        >
           {() => (
             <>
               <NavIcon name={item.id} />

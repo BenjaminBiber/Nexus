@@ -17,6 +17,8 @@ export function MinecraftShell({ parts }: ShellProps) {
   const active = useNav().find((item) => item.active);
   // Ohne offene Seite zeigt die Shell den Titelbildschirm
   const [menuOpen, setMenuOpen] = useState(!active);
+  // Ton beim Öffnen nur, wenn der Nutzer das Menü öffnet, nicht beim Titelbildschirm ohne Seite
+  const [menuSound, setMenuSound] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const title = active?.label ?? 'Nexus';
 
@@ -29,19 +31,24 @@ export function MinecraftShell({ parts }: ShellProps) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || !isShortcut(event)) return;
       event.preventDefault();
-      setMenuOpen(true);
+      openMenu();
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [menuOpen]);
 
-  const closeMenu = (focusMenuButton: boolean) => {
+  const openMenu = () => {
+    setMenuSound(true);
+    setMenuOpen(true);
+  };
+
+  const closeMenu =(focusMenuButton: boolean) => {
     setMenuOpen(false);
     if (focusMenuButton) menuButton.current?.focus();
   };
 
   return (
-    <ResourcesProvider urls={resources.urls}>
+    <ResourcesProvider urls={resources.urls} soundUrls={resources.soundUrls}>
       <LoadingGate resources={resources}>
         <Panorama />
         <header className="mc-header">
@@ -50,7 +57,7 @@ export function MinecraftShell({ parts }: ShellProps) {
             className="mc-menu-button"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            onClick={() => (menuOpen ? closeMenu(false) : setMenuOpen(true))}
+            onClick={() => (menuOpen ? closeMenu(false) : openMenu())}
           >
             Menü
           </McButton>
@@ -62,7 +69,7 @@ export function MinecraftShell({ parts }: ShellProps) {
             <ConnectionStatus />
           </div>
         </header>
-        {menuOpen && <TitleMenu onClose={closeMenu} />}
+        {menuOpen && <TitleMenu onClose={closeMenu} sound={menuSound} />}
         {/* Bleibt beim offenen Menü eingehängt, damit die Seite ihren Zustand behält */}
         <section className="mc-panel" aria-label={title} hidden={menuOpen}>
           <h2 className="mc-panel-title">
