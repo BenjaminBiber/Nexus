@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import type { ReviseDocResultDto } from '../api/types.js';
 import { LineDiffView } from './LineDiffView.js';
 import { LoadingState } from './LoadingState.js';
+import { Button } from './ui/Button.js';
+import { Dialog } from './ui/Dialog.js';
+import { Input } from './ui/Input.js';
 
 interface Props {
   quote: string;
@@ -18,6 +21,7 @@ interface Props {
 export function ReviseDialog({ quote, running, result, error, saving, onRequest, onApply, onClose }: Props) {
   const [instruction, setInstruction] = useState('');
   const [proposal, setProposal] = useState('');
+  const titleId = useId();
 
   // Ein neuer Vorschlag füllt das Textfeld; danach bleibt der eigene Text erhalten
   useEffect(() => {
@@ -30,33 +34,34 @@ export function ReviseDialog({ quote, running, result, error, saving, onRequest,
   };
 
   return (
-    <div className="revise-dialog section-editor" role="dialog" aria-label="Mit Claude ändern" onKeyDown={onKeyDown}>
+    <Dialog role="dialog" labelledBy={titleId} className="revise-dialog section-editor" onKeyDown={onKeyDown}>
       <div className="section-editor-head">
-        <strong>Mit Claude ändern</strong>
+        <strong id={titleId}>Mit Claude ändern</strong>
       </div>
       <blockquote className="doc-comment-draft-quote">{quote}</blockquote>
       {running && <LoadingState text="Claude arbeitet – das kann bis zu 5 Minuten dauern" />}
       {!running && result && (
         <>
           <LineDiffView original={result.original} proposal={proposal} />
-          <textarea aria-label="Vorschlag" value={proposal} onChange={(e) => setProposal(e.target.value)} />
+          <Input multiline aria-label="Vorschlag" value={proposal} onChange={setProposal} />
         </>
       )}
       {!running && !result && (
-        <textarea
+        <Input
+          multiline
           aria-label="Änderungsanweisung"
           autoFocus
           value={instruction}
-          onChange={(e) => setInstruction(e.target.value)}
+          onChange={setInstruction}
         />
       )}
       {error && <p role="alert" className="error">{error}</p>}
       <div className="doc-comment-actions">
-        <button type="button" className="btn small" onClick={onClose}>{result ? 'Verwerfen' : 'Abbrechen'}</button>
+        <Button className="small" onClick={onClose}>{result ? 'Verwerfen' : 'Abbrechen'}</Button>
         {result && !running
-          ? <button type="button" className="btn small primary" disabled={saving} onClick={() => onApply(proposal)}>Übernehmen</button>
-          : <button type="button" className="btn small primary" disabled={running || instruction.trim() === ''} onClick={() => onRequest(instruction.trim())}>Änderung vorschlagen</button>}
+          ? <Button variant="primary" className="small" disabled={saving} onClick={() => onApply(proposal)}>Übernehmen</Button>
+          : <Button variant="primary" className="small" disabled={running || instruction.trim() === ''} onClick={() => onRequest(instruction.trim())}>Änderung vorschlagen</Button>}
       </div>
-    </div>
+    </Dialog>
   );
 }
