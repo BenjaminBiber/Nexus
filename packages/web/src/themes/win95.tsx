@@ -1,7 +1,7 @@
 import { DiskPie } from '../components/win95/DiskPie.js';
 import { Win95Frame } from '../components/win95/Win95Frame.js';
 import { Win95Icon, type Win95IconName } from '../components/win95/Win95Icons.js';
-import type { NavIconName, ThemeDefinition } from '../theme/slots.js';
+import type { NavIconName, ThemeDefinition } from '@nexus/theme-sdk';
 
 // Pixel-Symbol je Navigationssymbol
 const ICONS: Record<NavIconName, Win95IconName> = {

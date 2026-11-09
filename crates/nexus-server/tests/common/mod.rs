@@ -131,6 +131,8 @@ pub struct TestServerOptions {
     /// Der Dienst, der die Ideen des Bots versteht; ohne Angabe einer mit der Umgebung des
     /// Testprozesses (den Tests nie auslösen, weil der freie Text einen Chat braucht)
     pub idea_interpreter: Option<Arc<nexus_server::telegram::IdeaInterpreter>>,
+    /// Größenlimit des Asset-Proxys für Themes; ohne Angabe der Standard
+    pub theme_fetch_max_bytes: Option<u64>,
 }
 
 /// Startet nichts und liefert keine Prozessnummer; so startet in Tests nie ein echter Worker
@@ -191,6 +193,9 @@ impl TestServer {
         }
         config.telegram_api = options.telegram_api;
         config.idea_interpreter = options.idea_interpreter;
+        if let Some(max) = options.theme_fetch_max_bytes {
+            config.theme_fetch_max_bytes = max;
+        }
         config.account_usage = options.account_usage;
         config.account_login_spawner = options.account_login_spawner;
         config.account_plugins = options.account_plugins;

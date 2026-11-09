@@ -81,6 +81,8 @@ pub struct ServerConfig {
     /// Der Dienst, der die Ideen des Bots versteht; ohne Angabe einer mit der Umgebung des
     /// Servers (Tests geben ihm die Umgebung ihres Claude-Ersatzes mit)
     pub idea_interpreter: Option<std::sync::Arc<crate::telegram::IdeaInterpreter>>,
+    /// Größenlimit je Antwort des Asset-Proxys für Themes
+    pub theme_fetch_max_bytes: u64,
 }
 
 /// Woher der Dispatcher seine Claude-Accounts nimmt
@@ -156,6 +158,7 @@ impl ServerConfig {
             mcacc_dir: None,
             telegram_api: None,
             idea_interpreter: None,
+            theme_fetch_max_bytes: crate::theme_proxy::DEFAULT_MAX_BYTES,
         }
     }
 }

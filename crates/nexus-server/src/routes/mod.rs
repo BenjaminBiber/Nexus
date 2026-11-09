@@ -22,10 +22,13 @@ pub mod session_detail;
 pub mod sessions;
 pub mod settings;
 pub mod setup;
+pub mod snippets;
 pub mod spec;
 pub mod speech;
 pub mod static_files;
 pub mod telegram;
+pub mod theme_fetch;
+pub mod theme_packages;
 pub mod themes;
 pub mod usage;
 pub mod workflow;
@@ -68,6 +71,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(sessions::routes())
         .merge(session_detail::routes())
         .merge(favorites::routes())
+        .merge(snippets::routes())
         .merge(usage::routes())
         .merge(accounts::routes())
         .merge(notifications::routes())
@@ -77,6 +81,8 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(speech::routes())
         .merge(telegram::routes())
         .merge(themes::routes())
+        .merge(theme_packages::routes())
+        .merge(theme_fetch::routes())
         .fallback(static_or_not_found)
         .layer(middleware::from_fn_with_state(
             state.clone(),

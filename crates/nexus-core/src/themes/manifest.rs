@@ -15,6 +15,11 @@ use ts_rs::TS;
 pub(crate) static THEME_ID_PATTERN: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-z0-9-]{2,40}$").unwrap());
 
+/// Ob `id` eine gültige Theme-ID ist (`^[a-z0-9-]{2,40}$`)
+pub fn is_valid_theme_id(id: &str) -> bool {
+    THEME_ID_PATTERN.is_match(id)
+}
+
 /// Erlaubte Form eines Slot-Namens
 static SLOT_NAME_PATTERN: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-z0-9][a-z0-9.-]*$").unwrap());
@@ -194,6 +199,25 @@ fn check_slots(slots: &[(usize, &str)], errors: &mut Vec<ManifestError>) {
             ));
         }
     }
+}
+
+/// Ob `host` laut `permissions.network` freigegeben ist. Groß-/Kleinschreibung und ein
+/// abschließender Punkt zählen nicht; `example.com` passt nur exakt, `*.example.com` auf jede
+/// Subdomain, aber weder auf `example.com` selbst noch auf `evilexample.com`.
+pub fn host_allowed(network: &[String], host: &str) -> bool {
+    let host = host.trim_end_matches('.').to_ascii_lowercase();
+    if host.is_empty() {
+        return false;
+    }
+    network.iter().any(|domain| {
+        let domain = domain.trim_end_matches('.').to_ascii_lowercase();
+        match domain.strip_prefix("*.") {
+            Some(base) => host
+                .strip_suffix(base)
+                .is_some_and(|sub| sub.len() > 1 && sub.ends_with('.')),
+            None => host == domain,
+        }
+    })
 }
 
 /// Warum die Domain nicht erlaubt ist; `None`, wenn sie passt
@@ -692,5 +716,28 @@ mod tests {
             fehler.errors()[0].message,
             "Das Manifest muss ein JSON-Objekt sein."
         );
+    }
+
+    #[test]
+    fn prueft_theme_ids() {
+        assert!(is_valid_theme_id("nacht-blau"));
+        assert!(!is_valid_theme_id("a"));
+        assert!(!is_valid_theme_id("Nacht"));
+        assert!(!is_valid_theme_id(".."));
+    }
+
+    #[test]
+    fn host_freigabe_exakt_und_per_subdomain() {
+        let network = vec!["example.com".to_string(), "*.cdn.net".to_string()];
+        assert!(host_allowed(&network, "example.com"));
+        assert!(host_allowed(&network, "EXAMPLE.com."));
+        assert!(!host_allowed(&network, "www.example.com"));
+        assert!(!host_allowed(&network, "evilexample.com"));
+        assert!(host_allowed(&network, "a.cdn.net"));
+        assert!(host_allowed(&network, "x.y.CDN.net"));
+        assert!(!host_allowed(&network, "cdn.net"));
+        assert!(!host_allowed(&network, "evilcdn.net"));
+        assert!(!host_allowed(&[], "example.com"));
+        assert!(!host_allowed(&network, ""));
     }
 }

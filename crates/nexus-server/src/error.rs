@@ -75,7 +75,12 @@ impl ErrorMapper {
         }
         // Zeilenbereich passt nicht zum Dokument: die Anfrage selbst ist falsch gebaut
         // Eine ungültige Theme-ID kann nie ein Theme treffen: die Adresse ist falsch gebaut
-        if code == "doc-range-invalid" || code == "bad-request" || code == "theme-id-invalid" {
+        // Schnipsel: ungültige ID, CSS-Verstoß oder zu groß
+        if code == "doc-range-invalid"
+            || code == "bad-request"
+            || code == "theme-id-invalid"
+            || code == "snippet-invalid"
+        {
             return StatusCode::BAD_REQUEST;
         }
         // Spracherkennung ist nicht eingerichtet: nicht die Schuld der Anfrage, aber auch
@@ -85,6 +90,16 @@ impl ErrorMapper {
         }
         // Der fremde Erkennungsdienst hat nicht oder falsch geantwortet
         if code == "speech-failed" {
+            return StatusCode::BAD_GATEWAY;
+        }
+        // Asset-Proxy der Themes: Host nicht freigegeben, zu groß, Upstream/Prüfsumme falsch
+        if code == "theme_fetch_forbidden" {
+            return StatusCode::FORBIDDEN;
+        }
+        if code == "theme_fetch_too_large" {
+            return StatusCode::PAYLOAD_TOO_LARGE;
+        }
+        if code == "theme_fetch_checksum" || code == "theme_fetch_upstream" {
             return StatusCode::BAD_GATEWAY;
         }
         if UNAVAILABLE.contains(&code) {

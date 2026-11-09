@@ -1,125 +1,114 @@
-//! Routengruppe `themes`: installierte Theme-Pakete auflisten, hochladen und entfernen.
+//! Dateien installierter Themes unter `GET /themes/{id}/{*path}` (`theme.css`, `main.js`,
+//! `assets/**`).
 //!
-//! * `GET /api/themes` – Manifeste der installierten Themes, nach id sortiert
-//! * `POST /api/themes/install` – Körper `{ "data": "<Base64 des .nexus-Pakets>" }`, Antwort:
-//!   das Manifest. Der Schutz lässt schreibende Anfragen nur als JSON durch, deshalb Base64.
-//! * `DELETE /api/themes/{id}` – entfernt ein Theme, Antwort 204
-//!
-//! Die Prüfung und das Entpacken stecken in `nexus_core::themes`; hier werden nur deren Fehler
-//! in Antworten übersetzt.
+//! Themes genießen volles Vertrauen (D2), ausgeliefert wird aber nur, was unter
+//! `<NEXUS_HOME>/themes/<id>/` liegt: ungültige ID, leere Segmente, `.`/`..`, Backslashes,
+//! Laufwerksangaben und Symlinks aus dem Theme-Ordner heraus ergeben 404, ebenso fehlende
+//! Dateien und Ordner (kein Listing, keine Oberfläche). Jede Datei trägt ihren Inhaltstyp und
+//! `X-Content-Type-Options: nosniff`.
 
+use std::path::{Path as FsPath, PathBuf};
 use std::sync::Arc;
 
-use axum::body::Bytes;
-use axum::extract::{DefaultBodyLimit, Path as UrlPath, State};
-use axum::http::StatusCode;
+use axum::extract::{Path, State};
+use axum::http::header;
 use axum::response::{IntoResponse, Response};
-use axum::routing::{delete, get, post};
+use axum::routing::get;
 use axum::Router;
-use base64::Engine;
-use nexus_core::themes::{
-    install_theme, list_themes, remove_theme, ThemeManifest, ThemePackageError,
-};
-use nexus_core::{Error, HarnessError};
+use nexus_core::themes::is_valid_theme_id;
 
-use crate::error::{json, ApiError, ApiResult};
-use crate::routes::static_or_not_found;
+use crate::error::not_found_response;
+use crate::routes::static_files::CONTENT_SECURITY_POLICY;
 use crate::state::AppState;
 
-/// Größte Anfrage beim Hochladen: das größte Paket als Base64 plus Luft für das JSON
-const MAX_INSTALL_BODY: usize =
-    nexus_core::themes::package::MAX_PACKAGE_BYTES as usize * 4 / 3 + 64 * 1024;
+/// Themes werden aktualisiert und tragen keine Hash-Namen
+const REVALIDATE: &str = "no-cache";
 
-/// Meldet die drei Routen an; andere Methoden fallen in den Rückfall (kein 405)
 pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
-        .route("/api/themes", get(list).fallback(static_or_not_found))
-        .route(
-            "/api/themes/install",
-            post(install)
-                .layer(DefaultBodyLimit::max(MAX_INSTALL_BODY))
-                .fallback(static_or_not_found),
-        )
-        .route(
-            "/api/themes/{id}",
-            delete(remove).fallback(static_or_not_found),
-        )
+        .route("/themes/{id}/{*path}", get(serve_theme_file))
+        // Ohne Dateipfad nie die Oberfläche, sondern 404
+        .route("/themes/{id}", get(not_found))
+        .route("/themes/{id}/", get(not_found))
 }
 
-/// Die Manifeste der installierten Themes
-async fn list(State(state): State<Arc<AppState>>) -> ApiResult<Response> {
-    let home = state.home.clone();
-    let themes = blocking(move || list_themes(&home)).await?;
-    let manifests: Vec<ThemeManifest> = themes.into_iter().map(|t| t.manifest).collect();
-    Ok(json(&manifests))
+async fn not_found() -> Response {
+    not_found_response()
 }
 
-/// Installiert das hochgeladene Paket; dieselbe id ersetzt die alte Installation
-async fn install(State(state): State<Arc<AppState>>, body: Bytes) -> ApiResult<Response> {
-    let package = decode_package(&body)?;
-    let home = state.home.clone();
-    let manifest = blocking(move || install_theme(&home, &package)).await?;
-    Ok(json(&manifest))
-}
-
-/// Entfernt ein installiertes Theme
-async fn remove(
+/// Liefert eine Datei eines installierten Themes aus
+async fn serve_theme_file(
     State(state): State<Arc<AppState>>,
-    UrlPath(id): UrlPath<String>,
-) -> ApiResult<Response> {
-    let home = state.home.clone();
-    blocking(move || remove_theme(&home, &id)).await?;
-    Ok(StatusCode::NO_CONTENT.into_response())
+    Path((id, path)): Path<(String, String)>,
+) -> Response {
+    let Some(file) = resolve(&state.home.themes_dir(), &id, &path).await else {
+        return not_found_response();
+    };
+    let Ok(bytes) = tokio::fs::read(&file).await else {
+        return not_found_response();
+    };
+    (
+        [
+            (header::CONTENT_TYPE, content_type(&file)),
+            (header::X_CONTENT_TYPE_OPTIONS, "nosniff"),
+            (header::CACHE_CONTROL, REVALIDATE),
+            (header::CONTENT_SECURITY_POLICY, CONTENT_SECURITY_POLICY),
+        ],
+        bytes,
+    )
+        .into_response()
 }
 
-/// Liest `data` aus dem JSON-Körper und dekodiert das Base64. Der Körper wird selbst gelesen,
-/// weil `JsonBody` bei 1 MiB endet und Pakete größer sein dürfen.
-fn decode_package(body: &[u8]) -> ApiResult<Vec<u8>> {
-    let value: serde_json::Value =
-        serde_json::from_slice(body).map_err(|_| ApiError::bad_request())?;
-    let data = value
-        .get("data")
-        .and_then(|data| data.as_str())
-        .ok_or_else(|| {
-            ApiError::new(
-                "bad-request",
-                "Das Feld data mit dem Paket als Base64 fehlt.",
-            )
-        })?;
-    base64::engine::general_purpose::STANDARD
-        .decode(data)
-        .map_err(|_| ApiError::new("bad-request", "Das Feld data ist kein gültiges Base64."))
+/// Pfad der angefragten Datei, nur wenn sie eine reguläre Datei innerhalb des Theme-Ordners ist
+async fn resolve(themes_dir: &FsPath, id: &str, path: &str) -> Option<PathBuf> {
+    if !is_valid_theme_id(id) {
+        return None;
+    }
+    let theme_dir = themes_dir.join(id);
+    let mut file = theme_dir.clone();
+    for segment in path.split(['/', '\\']) {
+        if !is_plain_segment(segment) {
+            return None;
+        }
+        file.push(segment);
+    }
+    // Symlinks und Junctions dürfen nicht aus dem Theme-Ordner herausführen
+    let root = tokio::fs::canonicalize(&theme_dir).await.ok()?;
+    let target = tokio::fs::canonicalize(&file).await.ok()?;
+    if !target.starts_with(&root) {
+        return None;
+    }
+    let meta = tokio::fs::metadata(&target).await.ok()?;
+    meta.is_file().then_some(target)
 }
 
-/// Führt Dateiarbeit der Paketverwaltung außerhalb des Laufzeit-Threads aus
-async fn blocking<T: Send + 'static>(
-    work: impl FnOnce() -> Result<T, ThemePackageError> + Send + 'static,
-) -> ApiResult<T> {
-    tokio::task::spawn_blocking(work)
-        .await
-        .map_err(|error| ApiError(Error::unexpected(error)))?
-        .map_err(api_error)
+/// Ein Pfadsegment ohne Sonderbedeutung: nicht leer, kein `.`/`..`, kein `:` (Laufwerk,
+/// alternative Datenströme) und kein Nullzeichen
+fn is_plain_segment(segment: &str) -> bool {
+    !segment.is_empty() && segment != "." && segment != ".." && !segment.contains([':', '\0'])
 }
 
-/// Übersetzt Fehler der Paketverwaltung: unbekannte id → 404, ungültige id → 400, Manifest
-/// mit Feldfehlern → 422, jeder andere Prüffehler → 422 `theme-package-invalid`, Dateifehler
-/// → 500 ohne Interna
-fn api_error(error: ThemePackageError) -> ApiError {
-    let message = error.to_string();
-    match error {
-        ThemePackageError::NotInstalled { .. } => ApiError::new("theme-not-found", message),
-        ThemePackageError::InvalidId { .. } => ApiError::new("theme-id-invalid", message),
-        ThemePackageError::Manifest(errors) => HarnessError::new("theme-manifest-invalid", message)
-            .with_details(serde_json::json!({ "errors": errors.errors() }))
-            .into(),
-        ThemePackageError::Io(error) => ApiError(Error::unexpected(error)),
-        ThemePackageError::TooLarge { .. }
-        | ThemePackageError::FileTooLarge { .. }
-        | ThemePackageError::TooManyEntries { .. }
-        | ThemePackageError::UnsafePath { .. }
-        | ThemePackageError::ForbiddenFileType { .. }
-        | ThemePackageError::MissingFile { .. }
-        | ThemePackageError::ForbiddenCss { .. }
-        | ThemePackageError::NotZip(_) => ApiError::new("theme-package-invalid", message),
+/// Inhaltstyp nach Endung; JS und CSS fest, damit der ESM-Import im Browser sicher klappt
+fn content_type(file: &FsPath) -> &'static str {
+    let extension = file
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(str::to_ascii_lowercase);
+    match extension.as_deref() {
+        Some("css") => "text/css; charset=utf-8",
+        Some("js" | "mjs") => "text/javascript; charset=utf-8",
+        Some("json") => "application/json; charset=utf-8",
+        Some("png") => "image/png",
+        Some("jpg" | "jpeg") => "image/jpeg",
+        Some("gif") => "image/gif",
+        Some("webp") => "image/webp",
+        Some("avif") => "image/avif",
+        Some("svg") => "image/svg+xml",
+        Some("ico") => "image/x-icon",
+        Some("woff") => "font/woff",
+        Some("woff2") => "font/woff2",
+        Some("ttf") => "font/ttf",
+        Some("otf") => "font/otf",
+        _ => "application/octet-stream",
     }
 }
