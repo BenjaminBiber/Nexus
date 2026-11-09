@@ -1,5 +1,6 @@
-//! Routengruppe `theme_fetch`: `GET /api/themes/{id}/fetch?url=…[&sha256=…]` lädt eine
-//! fremde Ressource für ein installiertes Theme über [`crate::theme_proxy`] (D7).
+//! Routengruppe `theme_fetch`: `GET /api/themes/{id}/fetch?url=…[&sha256=…][&entry=…]` lädt eine
+//! fremde Ressource für ein installiertes Theme über [`crate::theme_proxy`] (D7); mit `entry`
+//! eine Einzeldatei aus dem ZIP/JAR unter `url`.
 
 use std::sync::Arc;
 
@@ -29,6 +30,7 @@ pub fn routes() -> Router<Arc<AppState>> {
 struct FetchQuery {
     url: Option<String>,
     sha256: Option<String>,
+    entry: Option<String>,
 }
 
 /// Lädt die Ressource; ohne gültiges, installiertes Theme 404
@@ -50,16 +52,18 @@ async fn fetch(
     let Some(url) = query.url.filter(|url| !url.is_empty()) else {
         return ApiError::new("bad-request", "url fehlt.").into_response();
     };
-    match state
-        .theme_proxy
-        .fetch(
-            &theme_dir,
-            &manifest.permissions.network,
-            &url,
-            query.sha256.as_deref(),
-        )
-        .await
-    {
+    let proxy = &state.theme_proxy;
+    let network = &manifest.permissions.network;
+    let sha256 = query.sha256.as_deref();
+    let result = match query.entry.as_deref() {
+        Some(entry) => {
+            proxy
+                .fetch_entry(&theme_dir, network, &url, sha256, entry)
+                .await
+        }
+        None => proxy.fetch(&theme_dir, network, &url, sha256).await,
+    };
+    match result {
         Ok(fetched) => (
             [
                 (header::CONTENT_TYPE.as_str(), fetched.content_type.as_str()),

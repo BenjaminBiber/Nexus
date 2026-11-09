@@ -96,6 +96,12 @@ impl ErrorMapper {
         if code == "theme_fetch_forbidden" {
             return StatusCode::FORBIDDEN;
         }
+        if code == "theme_fetch_entry_not_found" {
+            return StatusCode::NOT_FOUND;
+        }
+        if code == "theme_fetch_not_archive" {
+            return StatusCode::BAD_GATEWAY;
+        }
         if code == "theme_fetch_too_large" {
             return StatusCode::PAYLOAD_TOO_LARGE;
         }

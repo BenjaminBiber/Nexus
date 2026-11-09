@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeHostProvider } from '@nexus/theme-sdk';
-import type { BoardsState, ColorSchemeState, SettingsState, ThemeHost, ThemeSettings, UsageState } from '@nexus/theme-sdk';
+import type { BoardsState, ColorSchemeState, SettingsState, ShellParts, ThemeHost, ThemeSettings, UsageState } from '@nexus/theme-sdk';
 import { useApi } from '../api/ApiContext.js';
 import type { ThemeMode, UserSettingsDto } from '../api/types.js';
 import type { UsageOverviewDto } from '../api/usageTypes.js';
@@ -67,9 +67,9 @@ function useHostSettings(): SettingsState {
   return useMemo(() => ({ values, loading: values === null, update }), [values, update]);
 }
 
-// Stellt den Themes über die Hooks des SDK Navigation, Boards, Verbrauch, Einstellungen, Farbschema und Routenwechsel bereit;
-// braucht BoardProjectProvider, Router und ApiProvider darüber
-export function NexusThemeHost({ pid, children }: { pid: string; children: ReactNode }) {
+// Stellt den Themes über die Hooks des SDK Navigation, Boards, Verbrauch, Einstellungen, Farbschema, Routenwechsel, Suche
+// und die fertigen Bausteine des Rahmens bereit; braucht BoardProjectProvider, Router und ApiProvider darüber
+export function NexusThemeHost({ pid, parts, openSearch, children }: { pid: string; parts: ShellParts; openSearch: () => void; children: ReactNode }) {
   const routerNavigate = useNavigate();
   const { pathname } = useLocation();
   const context = useBoardProject();
@@ -106,8 +106,8 @@ export function NexusThemeHost({ pid, children }: { pid: string; children: React
   );
   const navigate = useCallback((to: string) => routerNavigate(to), [routerNavigate]);
   const host = useMemo<ThemeHost>(
-    () => ({ nav, boards, usage, settings, colorScheme, navigate }),
-    [nav, boards, usage, settings, colorScheme, navigate],
+    () => ({ nav, boards, usage, settings, colorScheme, navigate, openSearch, parts }),
+    [nav, boards, usage, settings, colorScheme, navigate, openSearch, parts],
   );
   return <ThemeHostProvider value={host}>{children}</ThemeHostProvider>;
 }

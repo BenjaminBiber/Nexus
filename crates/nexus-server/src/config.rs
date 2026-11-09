@@ -83,6 +83,8 @@ pub struct ServerConfig {
     pub idea_interpreter: Option<std::sync::Arc<crate::telegram::IdeaInterpreter>>,
     /// Größenlimit je Antwort des Asset-Proxys für Themes
     pub theme_fetch_max_bytes: u64,
+    /// Größenlimit eines Archivs, aus dem der Asset-Proxy eine Einzeldatei liefert
+    pub theme_fetch_max_archive_bytes: u64,
 }
 
 /// Woher der Dispatcher seine Claude-Accounts nimmt
@@ -159,6 +161,7 @@ impl ServerConfig {
             telegram_api: None,
             idea_interpreter: None,
             theme_fetch_max_bytes: crate::theme_proxy::DEFAULT_MAX_BYTES,
+            theme_fetch_max_archive_bytes: crate::theme_proxy::DEFAULT_MAX_ARCHIVE_BYTES,
         }
     }
 }

@@ -9,8 +9,8 @@ export function ThemeHostProvider({ value, children }: { value: ThemeHost; child
   return <ThemeHostContext.Provider value={value}>{children}</ThemeHostContext.Provider>;
 }
 
-// Host aus dem Context; ohne Provider ein Fehler, der Hook und Provider nennt
-function useHost(name: string): ThemeHost {
+// Host aus dem Context; ohne Provider ein Fehler, der Hook und Provider nennt (intern, nicht im Index)
+export function useHost(name: string): ThemeHost {
   const host = useContext(ThemeHostContext);
   if (!host) throw new Error(`${name} braucht den ThemeHostProvider des Nexus-Hosts – die Komponente läuft außerhalb der Nexus-Oberfläche.`);
   return host;
@@ -28,3 +28,6 @@ export const useSettings = () => useHost('useSettings').settings;
 export const useColorScheme = () => useHost('useColorScheme').colorScheme;
 /** Route wechseln */
 export const useNavigate = () => useHost('useNavigate').navigate;
+
+/** Globale Suche des Hosts öffnen */
+export const useOpenSearch = () => useHost('useOpenSearch').openSearch;

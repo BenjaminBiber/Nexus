@@ -1,4 +1,4 @@
-import type { NavIconName } from './slots.js';
+import type { NavIconName, ShellParts } from './slots.js';
 
 /** Eintrag der Hauptnavigation */
 export interface NavItem {
@@ -73,4 +73,8 @@ export interface ThemeHost {
   settings: SettingsState;
   colorScheme: ColorSchemeState;
   navigate(to: string): void;
+  /** Öffnet die globale Suche des Hosts */
+  openSearch(): void;
+  /** Fertige Bausteine des Rahmens (wie `ShellProps.parts`) */
+  parts: ShellParts;
 }

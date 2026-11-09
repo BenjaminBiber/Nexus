@@ -101,7 +101,7 @@ Eine Stelle der Oberfläche, die ein Theme durch eine eigene Komponente ersetzen
 _Avoid_: Hook, Erweiterungspunkt
 
 **Theme-SDK**:
-Das Workspace-Paket `@nexus/theme-sdk` (`packages/theme-sdk`); einzige Quelle der Slot-Typen (`ThemeDefinition`, `ThemeSlots`, `ShellProps` u. a.) und der Konstante `SDK_VERSION`, auf die sich `sdkVersion` im Manifest eines Themes bezieht.
+Das Workspace-Paket `@nexus/theme-sdk` (`packages/theme-sdk`); einzige Quelle der Slot-Typen (`ThemeDefinition`, `ThemeSlots`, `ShellProps` u. a.) und der Konstante `SDK_VERSION`, auf die sich `sdkVersion` im Manifest eines Themes bezieht. Hooks: `useNav`, `useBoards`, `useUsage`, `useSettings`, `useColorScheme`, `useNavigate`, `useOpenSearch`. Das Win95-Theme ist die Referenz für ein Theme, das nur mit dem SDK auskommt (Wächter `Win95Imports.test.ts`).
 _Avoid_: Theme-API
 
 **Theme-Host**:
