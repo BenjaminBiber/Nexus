@@ -26,6 +26,7 @@ pub mod sessions;
 pub mod setup;
 pub mod speech;
 pub mod state;
+pub mod store_index;
 pub mod telegram;
 pub mod theme_proxy;
 pub mod timeline;

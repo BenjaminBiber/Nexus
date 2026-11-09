@@ -15,6 +15,11 @@ use crate::themes::is_valid_theme_id;
 /// Aktuelle Version des Theme-SDK; muss zu `SDK_VERSION` in packages/theme-sdk passen
 pub const THEME_SDK_VERSION: &str = "1.0.0";
 
+/// [`THEME_SDK_VERSION`] als semver-Version
+pub fn theme_sdk_version() -> semver::Version {
+    semver::Version::parse(THEME_SDK_VERSION).expect("SDK-Version ist semver")
+}
+
 /// Höchstgröße einer Index-Datei: 1 MiB
 pub const MAX_INDEX_BYTES: usize = 1 << 20;
 
@@ -206,7 +211,7 @@ mod tests {
     use serde_json::json;
 
     fn sdk() -> semver::Version {
-        semver::Version::parse(THEME_SDK_VERSION).unwrap()
+        theme_sdk_version()
     }
 
     fn eintrag(id: &str) -> Value {
