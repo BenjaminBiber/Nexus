@@ -9,8 +9,9 @@ import { ThemesPanel } from '../src/components/settings/ThemesPanel.js';
 import { MermaidBlock } from '../src/markdown/MermaidBlock.js';
 import { registerTheme, unregisterTheme } from '../src/theme/registry.js';
 import { ThemeSync } from '../src/theme/ThemeSync.js';
-import { THEME_CACHE_KEY, THEME_CSS_CACHE_KEY, THEME_LINK_ID, THEME_START_COLOR_KEY, applyTheme, currentTheme, displayedTheme, normalizeThemeId, resolveTheme } from '../src/theme/theme.js';
+import { THEME_CACHE_KEY, THEME_CSS_CACHE_KEY, THEME_LINK_ID, THEME_START_COLOR_KEY, applyTheme, currentTheme, displayedTheme, needsReload, normalizeThemeId, resolveTheme } from '../src/theme/theme.js';
 import { fakeApi } from './helpers/fakeApi.js';
+import { stubReload } from './helpers/reload.js';
 
 vi.mock('mermaid', () => ({ default: { initialize: vi.fn(), render: vi.fn(async () => ({ svg: '<svg viewBox="0 0 10 10"></svg>' })) } }));
 
@@ -21,6 +22,8 @@ afterEach(() => {
   document.getElementById(THEME_LINK_ID)?.remove();
   window.localStorage.clear();
 });
+
+stubReload();
 
 const ocean = { id: 'ocean', startColor: '#123456' };
 const themeLinks = () => document.head.querySelectorAll(`link#${THEME_LINK_ID}`);
@@ -284,5 +287,25 @@ describe('Theme', () => {
     render(<MermaidBlock source="graph TD; A-->B" />);
     const mermaid = (await import('mermaid')).default;
     await waitFor(() => expect(mermaid.initialize).toHaveBeenCalledWith(expect.objectContaining({ theme: 'dark' })));
+  });
+});
+
+describe('needsReload', () => {
+  const manifests = [{ id: 'minecraft', slots: ['Shell'] }, { id: 'pastel', slots: [] }, { id: 'win95', slots: ['Shell', 'NavIcon'] }];
+
+  it('lädt neu, wenn ein Code-Theme kommt oder geht', () => {
+    expect(needsReload('dark', 'minecraft', manifests)).toBe(true);
+    expect(needsReload('minecraft', 'dark', manifests)).toBe(true);
+    expect(needsReload('win95', 'minecraft', manifests)).toBe(true);
+  });
+
+  it('lädt nicht neu zwischen reinen CSS- und eingebauten Themes', () => {
+    expect(needsReload('dark', 'pastel', manifests)).toBe(false);
+    expect(needsReload('pastel', 'light', manifests)).toBe(false);
+    expect(needsReload('minecraft', 'minecraft', manifests)).toBe(false);
+  });
+
+  it('lädt ohne Manifeste nie neu', () => {
+    expect(needsReload('dark', 'minecraft', [])).toBe(false);
   });
 });

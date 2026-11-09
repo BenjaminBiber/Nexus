@@ -112,6 +112,20 @@ export function displayedTheme(): string {
   return document.documentElement.dataset.theme || 'light';
 }
 
+/** Theme mit Code, wie needsReload es braucht (Auszug aus dem Manifest) */
+export type ThemeWithSlots = { id: string; slots?: string[] };
+
+// Hat ein Theme Code (Slots)? Eingebaute Themes (light/dark/system) stehen in keinem Manifest und haben darum nie Code
+function hasCode(id: string, manifests: ReadonlyArray<ThemeWithSlots>): boolean {
+  return (manifests.find((m) => m.id === id)?.slots?.length ?? 0) > 0;
+}
+
+// Ein Wechsel zu oder von einem Theme mit Code braucht ein Neuladen: dessen main.js lädt nur beim Start der Oberfläche
+export function needsReload(fromId: string, toId: string, manifests: ReadonlyArray<ThemeWithSlots>): boolean {
+  if (fromId === toId) return false;
+  return hasCode(fromId, manifests) || hasCode(toId, manifests);
+}
+
 // Aktuell angezeigtes Schema, auf hell/dunkel abgebildet (installierte Themes zählen als hell)
 export function currentTheme(): 'light' | 'dark' {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';

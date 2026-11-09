@@ -4,7 +4,8 @@ import { useApi } from '../../api/ApiContext.js';
 import type { ThemeManifest } from '../../api/generated/themes.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { unregisterTheme } from '../../theme/registry.js';
-import { applyTheme } from '../../theme/theme.js';
+import { applyTheme, displayedTheme, needsReload } from '../../theme/theme.js';
+import { setThemeNotice } from '../../theme/themeNoticeStore.js';
 import { ThemeSettingsSection } from '../../theme/ThemeSettingsSection.js';
 import { inspectThemePackage, ThemePackageReadError } from '../../themes/inspectPackage.js';
 import { DbModal } from '../db/DbModal.js';
@@ -69,10 +70,16 @@ export function ThemesPanel() {
   const shown = all.filter(matchFilter).filter((t) => !q || `${t.name} ${t.meta}`.toLowerCase().includes(q));
   const activeId = settings?.theme;
 
-  // Speichert das Theme und setzt es sofort
+  // Speichert das Theme und setzt es sofort; kommt oder geht dabei ein Theme mit Code, lädt die Oberfläche neu (main.js lädt nur beim Start)
   const choose = async (id: string) => {
+    const before = displayedTheme();
     const saved = await save({ theme: id });
-    if (saved) applyTheme(saved.theme, manifests);
+    if (!saved) return;
+    applyTheme(saved.theme, manifests);
+    if (needsReload(before, saved.theme, manifests)) {
+      setThemeNotice({ kind: 'info', message: 'Theme wird geladen …' });
+      window.location.reload();
+    }
   };
 
   // Das entfernte Theme wird abgemeldet (seine Slots greifen nicht mehr); war es aktiv, gilt danach der Standard

@@ -6,9 +6,17 @@ import { ApiError } from '../src/api/ApiError.js';
 import type { ThemeManifest } from '../src/api/generated/themes.js';
 import { ThemesPanel } from '../src/components/settings/ThemesPanel.js';
 import { describeThemeError } from '../src/components/settings/themeErrors.js';
+import { getThemeNoticeEntry, setThemeNotice } from '../src/theme/themeNoticeStore.js';
 import { fakeApi } from './helpers/fakeApi.js';
+import { stubReload } from './helpers/reload.js';
 import { themeFile } from './helpers/zip.js';
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  setThemeNotice(undefined);
+  delete document.documentElement.dataset.theme;
+  delete document.documentElement.dataset.themeMode;
+});
+const location = stubReload();
 
 const manifest = (id: string, extra: Partial<ThemeManifest> = {}): ThemeManifest => ({
   id, name: `Theme ${id}`, version: '1.2.0', author: 'Ada', sdkVersion: '^1.0', colorScheme: 'dark', startColor: '#123456', preview: null, slots: [], permissions: { network: [] }, ...extra,
@@ -171,6 +179,27 @@ describe('Darstellung › Themes', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Endgültig entfernen' }));
     await waitFor(() => expect(saveUserSettings).toHaveBeenCalledWith({ theme: 'system' }));
     await waitFor(() => expect(screen.getByRole('listitem', { name: 'System' }).getAttribute('aria-current')).toBe('true'));
+  });
+
+  it('lädt beim Wechsel auf ein Code-Theme neu und zeigt den Hinweis', async () => {
+    document.documentElement.dataset.theme = 'dark';
+    const { saveUserSettings } = open({ listThemes: async () => [manifest('minecraft', { slots: ['Shell'] }), manifest('pastel')] }, 'dark');
+    const list = await tiles();
+    fireEvent.click(within(list).getByRole('button', { name: 'Theme minecraft anwenden' }));
+    await waitFor(() => expect(saveUserSettings).toHaveBeenCalledWith({ theme: 'minecraft' }));
+    await waitFor(() => expect(location.reload).toHaveBeenCalledTimes(1));
+    expect(getThemeNoticeEntry()).toEqual({ kind: 'info', message: 'Theme wird geladen …' });
+
+    // Zurück auf ein eingebautes Theme: ebenfalls neu laden, denn das Code-Theme geht
+    location.reload.mockClear();
+    fireEvent.click(within(list).getByRole('button', { name: 'Dunkel anwenden' }));
+    await waitFor(() => expect(location.reload).toHaveBeenCalledTimes(1));
+
+    // Reines CSS-Theme: kein Neuladen
+    location.reload.mockClear();
+    fireEvent.click(within(list).getByRole('button', { name: 'Theme pastel anwenden' }));
+    await waitFor(() => expect(saveUserSettings).toHaveBeenCalledWith({ theme: 'pastel' }));
+    expect(location.reload).not.toHaveBeenCalled();
   });
 
   it('meldet einen Ladefehler, eingebaute Modi bleiben wählbar', async () => {
