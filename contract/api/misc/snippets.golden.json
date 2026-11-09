@@ -1,0 +1,283 @@
+[
+  {
+    "name": "ohne Schnipsel",
+    "request": {
+      "method": "GET",
+      "path": "/api/snippets"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "ohne aktive Schnipsel",
+    "request": {
+      "method": "GET",
+      "path": "/snippets/active.css"
+    },
+    "response": {
+      "contentType": "text/css",
+      "status": 200,
+      "text": ""
+    }
+  },
+  {
+    "name": "Schnipsel anlegen",
+    "request": {
+      "body": {
+        "css": "a { color: red }",
+        "name": "Rot"
+      },
+      "method": "PUT",
+      "path": "/api/snippets/rot"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "css": "a { color: red }",
+        "enabled": true,
+        "id": "rot",
+        "name": "Rot",
+        "order": 1,
+        "updatedAt": "<TIME>"
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "zweiten Schnipsel anlegen",
+    "request": {
+      "body": {
+        "css": "b { color: blue }",
+        "name": "Blau"
+      },
+      "method": "PUT",
+      "path": "/api/snippets/blau"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "css": "b { color: blue }",
+        "enabled": true,
+        "id": "blau",
+        "name": "Blau",
+        "order": 2,
+        "updatedAt": "<TIME>"
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Schnipsel ändern",
+    "request": {
+      "body": {
+        "css": "a { color: darkred }",
+        "name": "Rot"
+      },
+      "method": "PUT",
+      "path": "/api/snippets/rot"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "css": "a { color: darkred }",
+        "enabled": true,
+        "id": "rot",
+        "name": "Rot",
+        "order": 1,
+        "updatedAt": "<TIME>"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Schnipsel auflisten",
+    "request": {
+      "method": "GET",
+      "path": "/api/snippets"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "css": "a { color: darkred }",
+          "enabled": true,
+          "id": "rot",
+          "name": "Rot",
+          "order": 1,
+          "updatedAt": "<TIME>"
+        },
+        {
+          "css": "b { color: blue }",
+          "enabled": true,
+          "id": "blau",
+          "name": "Blau",
+          "order": 2,
+          "updatedAt": "<TIME>"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Schnipsel ausschalten",
+    "request": {
+      "body": {
+        "enabled": false
+      },
+      "method": "PATCH",
+      "path": "/api/snippets/blau"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "css": "b { color: blue }",
+        "enabled": false,
+        "id": "blau",
+        "name": "Blau",
+        "order": 2,
+        "updatedAt": "<TIME>"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "nur aktive ausgeliefert",
+    "request": {
+      "method": "GET",
+      "path": "/snippets/active.css"
+    },
+    "response": {
+      "contentType": "text/css",
+      "status": 200,
+      "text": "/* snippet: rot */\na { color: darkred }\n"
+    }
+  },
+  {
+    "name": "@import abgelehnt",
+    "request": {
+      "body": {
+        "css": "@import 'x.css';",
+        "name": "Import"
+      },
+      "method": "PUT",
+      "path": "/api/snippets/imp"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "snippet-invalid",
+        "message": "@import ist nicht erlaubt."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "externe url abgelehnt",
+    "request": {
+      "body": {
+        "css": "a { background: url(https://x.de/a.png) }",
+        "name": "Extern"
+      },
+      "method": "PUT",
+      "path": "/api/snippets/ext"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "snippet-invalid",
+        "message": "Externe Adressen sind nicht erlaubt: https://x.de/a.png"
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "ungültige ID abgelehnt",
+    "request": {
+      "body": {
+        "css": "a{}",
+        "name": "x"
+      },
+      "method": "PUT",
+      "path": "/api/snippets/Ungueltig"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "snippet-invalid",
+        "message": "Die ID muss aus 2 bis 40 Zeichen a-z, 0-9 oder - bestehen."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "unbekannten Schnipsel schalten",
+    "request": {
+      "body": {
+        "enabled": true
+      },
+      "method": "PATCH",
+      "path": "/api/snippets/fehlt"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "snippet-not-found",
+        "message": "Diesen Schnipsel gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Schnipsel löschen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/snippets/rot"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "unbekannten Schnipsel löschen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/snippets/rot"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "snippet-not-found",
+        "message": "Diesen Schnipsel gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "nach dem Löschen",
+    "request": {
+      "method": "GET",
+      "path": "/api/snippets"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "css": "b { color: blue }",
+          "enabled": false,
+          "id": "blau",
+          "name": "Blau",
+          "order": 2,
+          "updatedAt": "<TIME>"
+        }
+      ],
+      "status": 200
+    }
+  }
+]
