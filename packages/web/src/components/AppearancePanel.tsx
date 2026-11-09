@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useApi } from '../api/ApiContext.js';
 import type { ThemeMode, UserSettingsDto } from '../api/types.js';
 import { COMPACT_CARDS_EVENT } from '../dbboard/compactCards.js';
@@ -8,6 +9,7 @@ import { SettingsPanel, useSaveStatus } from './settings/SettingsPanel.js';
 import { SettingRow, SettingsSection } from './settings/SettingRow.js';
 import { SnippetsSection } from './settings/SnippetsSection.js';
 import { StoreRepos } from './settings/StoreRepos.js';
+import { ThemeStore } from './settings/ThemeStore.js';
 import { ThemeManager } from './settings/ThemeManager.js';
 
 const THEMES: Array<{ mode: ThemeMode; label: string; hint: string; icon: string }> = [
@@ -28,6 +30,7 @@ export function AppearancePanel() {
   const loaded = useAsync(() => api.getUserSettings(), [api]);
   // Installierte Themes; schlägt das Laden fehl, bleiben nur die eingebauten
   const installed = useAsync(() => api.listThemes(), [api]);
+  const [storeKey, setStoreKey] = useState(0);
   const builtin = new Set(THEMES.map((theme) => theme.mode));
   const themes = [
     ...THEMES,
@@ -82,7 +85,8 @@ export function AppearancePanel() {
       </SettingsSection>
       <ThemeManager installed={installed.state} onChanged={installed.reload} onRemoved={removed} />
       <ThemeSettingsSection run={run} />
-      <StoreRepos />
+      <StoreRepos onChanged={() => setStoreKey((k) => k + 1)} />
+      <ThemeStore installed={installed.state.status === 'ready' ? installed.state.data : []} onInstalled={installed.reload} reloadKey={storeKey} />
       <SnippetsSection />
       <SettingsSection title="Board">
         <SettingRow label="Kompakte Ticket-Kacheln" hint="Tags eingeklappt, Agent nur als Claude-Logo.">

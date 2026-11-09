@@ -8,6 +8,7 @@ import type {
   SearchHitDto, QuestionDraftInputDto, QuestionDraftResultDto, DocQuestionResultDto, TicketDraftDto, TicketDraftInput, TicketDraftResultDto, DocTicketInput, DocTicketRefDto, DocTicketResultDto, DocCommentDto, NewDocCommentInput, DocCommentPatch, DocWriteResultDto, WriteDocSectionInput,
   ReviseDocInput, ReviseDocResultDto, ProjectDto,
   WorkflowDto, CustomizationsDto, PluginSetupDto, PluginInstallDto, BoardMigrationDto, BoardMigrationResultDto, SnippetDto, StoreRepoDto,
+  StoreIndexDto, StoreInstallResultDto, StoreUpdatesDto,
 } from './types.js';
 import type {
   DbActiveDto, DbBoardDto, DbBoardPatch, DbBoardViewDto, DbBranchListDto, DbCreatedBranchDto, DbDecisionInput, DbGraphDto, DbGraphScope, DbSpecProgressDto, DbImportResult, DbMoveInput, DbNewNoteInput, DbNewQuestionInput,
@@ -326,6 +327,26 @@ export class ApiClient {
   // Entfernt ein Store-Repo
   async removeStoreRepo(id: string): Promise<void> {
     await this.request('DELETE', `/api/themes/store/repos/${encodeURIComponent(id)}`, {});
+  }
+
+  // Zusammengeführter Index aller Store-Repos mit Status je Repo
+  getStoreIndex(): Promise<StoreIndexDto> {
+    return this.request('GET', '/api/themes/store/index');
+  }
+
+  // Lädt, prüft und installiert einen Eintrag aus dem Store
+  installFromStore(repoId: string, id: string): Promise<StoreInstallResultDto> {
+    return this.request('POST', '/api/themes/store/install', { repoId, id });
+  }
+
+  // Neuere Versionen installierter Themes im Store
+  getStoreUpdates(): Promise<StoreUpdatesDto> {
+    return this.request('GET', '/api/themes/store/updates');
+  }
+
+  // Installiert ein Update; mit Code oder neuen Domains → 409 mit details.hasCode/newDomains, bis confirm gesetzt ist
+  updateFromStore(repoId: string, id: string, confirm?: boolean): Promise<StoreInstallResultDto> {
+    return this.request('POST', '/api/themes/store/update', confirm ? { repoId, id, confirm: true } : { repoId, id });
   }
 
   // Einstellung des Telegram-Bots; Geheimnisse kommen nur als Maske zurück

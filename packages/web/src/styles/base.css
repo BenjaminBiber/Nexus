@@ -598,6 +598,12 @@ details p { margin: 0 0 12px; max-width: 70ch; color: var(--text-soft); }
 .theme-install-code p { margin: 4px 0 0; }
 .theme-install ul { margin: 4px 0 0; padding-left: 20px; }
 .theme-install p { margin: 4px 0 0; }
+.store-grid { list-style: none; margin: 8px 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.store-card { display: flex; flex-direction: column; gap: 4px; padding: 12px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius-card); }
+.store-card img { width: 100%; height: 120px; object-fit: cover; border-radius: var(--radius-card); }
+.store-card p { margin: 0; }
+.store-card .btn { align-self: flex-start; margin-top: auto; }
+.store-repo { font-size: 12px; overflow-wrap: anywhere; }
 .choice-group { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
 .choice { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 16px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius-card); cursor: pointer; transition: border-color 0.12s, box-shadow 0.12s; }
 .choice:hover { border-color: var(--line-dashed); }
