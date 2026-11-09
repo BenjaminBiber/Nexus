@@ -1,12 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useApi } from '../api/ApiContext.js';
 import { useOpenBoardAdmin } from '../dbboard/boardAdmin.js';
 import { useBoardProject, type BoardChoice } from '../dbboard/boardProject.js';
-import { notifyDbActiveChanged, notifyDbBoardsChanged, useDbActiveChanged } from '../dbquestion/activeBoard.js';
+import { currentBoard, useBoardChoices } from '../dbboard/useBoardChoices.js';
+import { notifyDbBoardsChanged } from '../dbquestion/activeBoard.js';
 import { DbAdminDialog } from './db/DbAdminDialog.js';
-import { useAsync } from '../hooks/useAsync.js';
-import { useLiveHandler } from '../live/useLive.js';
 import { prefersReducedMotion } from './goo/goo.js';
 import { GooMorph } from './goo/GooMorph.js';
 
@@ -25,13 +22,9 @@ const BOARD_LIST_MAX = 360;
 // sich das erste anlegen lässt). Links steht als Punkt `status` (die Verbindungsanzeige, deren Text beim Überfahren
 // erscheint). Ohne Board-Datenbank erscheint nur `status`.
 export function BoardProjectSwitcher({ pid, status }: { pid: string; status?: ReactNode }) {
-  const api = useApi();
-  const navigate = useNavigate();
   const context = useBoardProject();
-  const meta = useAsync(async () => ({ projects: await api.getDbProjects(), boards: await api.getDbBoards(), active: await api.getDbActive() }), [api]);
-  const { reload, refresh } = meta;
-  useDbActiveChanged(() => void reload());
-  useLiveHandler({ onReset: () => void reload() });
+  const meta = useBoardChoices(pid);
+  const { reload, refresh, choose } = meta;
   const [open, setOpen] = useState(false);
   // Das Popover bleibt beim Schließen stehen, bis sein Goo-Abgang gelaufen ist
   const [leaving, setLeaving] = useState(false);
@@ -68,20 +61,9 @@ export function BoardProjectSwitcher({ pid, status }: { pid: string; status?: Re
   }
   // Ohne Board-Datenbank bleibt nur die Verbindungsanzeige stehen
   if (meta.state.status !== 'ready') return status ? <div className="bp-status-only">{status}</div> : null;
-  const { projects, boards, active } = meta.state.data;
+  const { projects, boards } = meta.state.data;
 
-  const projectKey = context?.shown?.project ?? active.board?.projectKey ?? projects[0]?.key;
-  const project = projects.find((p) => p.key === projectKey) ?? projects[0] ?? null;
-  const shownBoard = context?.shown && context.shown.board !== undefined ? context.shown.board : active.board?.projectKey === project?.key ? active.boardId : null;
-  const board = boards.find((b) => b.id === shownBoard && b.projectKey === project?.key) ?? null;
-
-  const choose = async (choice: BoardChoice) => {
-    if (context?.chooser.current) return context.chooser.current(choice);
-    const id = choice.board ?? boards.find((b) => b.projectKey === choice.project)?.id;
-    if (id === undefined) return navigate(`/p/${pid}/board`, { state: { project: choice.project } });
-    await api.activateDbBoard(id);
-    notifyDbActiveChanged();
-  };
+  const { project, board } = currentBoard(meta.state.data, context?.shown ?? null);
 
   const closed = () => {
     clearTimeout(leaveTimer.current);
