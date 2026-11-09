@@ -50,7 +50,7 @@ nexus-core = { workspace = true, features = ["testing"] }
 # `tests/` sind eigene Crates und brauchen es ausdrücklich
 nexus-server = { workspace = true, features = ["testing"] }
 tempfile = { workspace = true }
-# Die Tests des Asset-Proxys bauen ZIP-Archive als Upstream
+# Die Tests des Asset-Proxys und der Theme-Routen bauen ZIP-Archive (Upstream bzw. Pakete)
 zip = { workspace = true }
 # Die Watcher-Tests lassen die Uhr springen (`#[tokio::test(start_paused = true)]`)
 tokio = { workspace = true, features = ["test-util"] }
@@ -64,8 +64,6 @@ tiberius = { workspace = true }
 futures = { workspace = true }
 http-body-util = { workspace = true }
 tower = { workspace = true }
-# Die Tests der Theme-Routen bauen ihre Pakete als ZIP im Speicher
-zip = { workspace = true }
 
 # Ersatz für Claude Code in Tests; wird nicht ausgeliefert (P5-4 prüft das).
 [[bin]]
