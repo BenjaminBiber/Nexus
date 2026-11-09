@@ -136,6 +136,7 @@ export function fakeApi(overrides: Partial<Record<keyof ApiClient, unknown>> = {
     getSessionTranscript: async () => transcriptPage([]),
     getSessionChanges: async () => sessionChanges(),
     getUserSettings: async () => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, hideInPlanning: false, setupPrompts: { pluginDismissed: false, migrationDismissed: [] } }),
+    listThemes: async () => [],
     getPluginSetup: async () => ({ bundled: false, claude: false, state: 'missing', installedVersion: null, bundledVersion: null }),
     getBoardMigration: async () => ({ needed: false, repoPath: null, reasons: [] }),
     getDbQuestions: async () => dbQuestionList([]),

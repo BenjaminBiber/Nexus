@@ -7,7 +7,7 @@ import type { UserSettingsDto } from '../src/api/types.js';
 import { AppearancePanel } from '../src/components/AppearancePanel.js';
 import { MermaidBlock } from '../src/markdown/MermaidBlock.js';
 import { ThemeSync } from '../src/theme/ThemeSync.js';
-import { THEME_CACHE_KEY, applyTheme, currentTheme, displayedTheme, resolveTheme } from '../src/theme/theme.js';
+import { THEME_CACHE_KEY, applyTheme, currentTheme, displayedTheme, normalizeThemeId, resolveTheme } from '../src/theme/theme.js';
 import { fakeApi } from './helpers/fakeApi.js';
 
 vi.mock('mermaid', () => ({ default: { initialize: vi.fn(), render: vi.fn(async () => ({ svg: '<svg viewBox="0 0 10 10"></svg>' })) } }));
@@ -42,6 +42,37 @@ describe('Theme', () => {
       expect(displayedTheme()).toBe(mode);
       expect(currentTheme()).toBe('light');
     }
+  });
+
+  it('ersetzt eine unbekannte Theme-ID durch „system“', () => {
+    for (const mode of ['system', 'light', 'dark', 'signal', 'pastel', 'win95']) expect(normalizeThemeId(mode, [])).toBe(mode);
+    expect(normalizeThemeId('lila', [])).toBe('system');
+    expect(normalizeThemeId('ocean', ['ocean'])).toBe('ocean');
+    applyTheme('lila', []);
+    expect(document.documentElement.dataset.themeMode).toBe('system');
+    applyTheme('../x');
+    expect(document.documentElement.dataset.themeMode).toBe('system');
+    expect(['light', 'dark']).toContain(document.documentElement.dataset.theme);
+  });
+
+  it('zeigt installierte Themes im Panel „Darstellung“ und speichert ihre ID', async () => {
+    const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, ...patch }));
+    const listThemes = async () => [{ id: 'ocean', name: 'Ozean', version: '1.0.0', author: 'Ada' }, { id: 'dark', name: 'Doppelt', version: '1.0.0', author: 'Ada' }];
+    render(<ApiProvider api={fakeApi({ saveUserSettings, listThemes } as never)}><AppearancePanel /></ApiProvider>);
+    const ocean = await screen.findByRole('radio', { name: 'Ozean' });
+    expect(screen.queryByRole('radio', { name: 'Doppelt' })).toBeNull();
+    await userEvent.click(ocean);
+    expect(saveUserSettings).toHaveBeenCalledWith({ theme: 'ocean' });
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe('ocean'));
+  });
+
+  it('zeigt die eingebauten Themes, wenn die Liste der installierten nicht lädt', async () => {
+    const listThemes = async () => {
+      throw new Error('kaputt');
+    };
+    render(<ApiProvider api={fakeApi({ listThemes })}><AppearancePanel /></ApiProvider>);
+    await screen.findByRole('radio', { name: 'Windows 95' });
+    expect(screen.getAllByRole('radio')).toHaveLength(6);
   });
 
   it('speichert das Farbschema im Panel „Darstellung“ und setzt es sofort', async () => {
