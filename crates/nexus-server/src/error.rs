@@ -74,7 +74,8 @@ impl ErrorMapper {
             return StatusCode::BAD_REQUEST;
         }
         // Zeilenbereich passt nicht zum Dokument: die Anfrage selbst ist falsch gebaut
-        if code == "doc-range-invalid" || code == "bad-request" {
+        // Eine ungültige Theme-ID kann nie ein Theme treffen: die Adresse ist falsch gebaut
+        if code == "doc-range-invalid" || code == "bad-request" || code == "theme-id-invalid" {
             return StatusCode::BAD_REQUEST;
         }
         // Spracherkennung ist nicht eingerichtet: nicht die Schuld der Anfrage, aber auch

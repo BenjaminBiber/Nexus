@@ -62,6 +62,8 @@ tiberius = { workspace = true }
 futures = { workspace = true }
 http-body-util = { workspace = true }
 tower = { workspace = true }
+# Die Tests der Theme-Routen bauen ihre Pakete als ZIP im Speicher
+zip = { workspace = true }
 
 # Ersatz für Claude Code in Tests; wird nicht ausgeliefert (P5-4 prüft das).
 [[bin]]
