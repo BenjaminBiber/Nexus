@@ -19,13 +19,15 @@ import { useDisplayedTheme } from '../theme/useDisplayedTheme.js';
 import { DefaultShell } from './DefaultShell.js';
 import { SlotBoundary } from '../theme/SlotBoundary.js';
 import { useSlot } from '../theme/useSlot.js';
+import { NexusThemeHost } from '../theme/ThemeHost.js';
+import { navLabel } from '../theme/navItems.js';
 import type { ShellParts } from '@nexus/theme-sdk';
 
 const LINKS: Array<[string, string, () => ReactNode]> = [
-  ['board', 'Board', BoardIcon],
-  ['dashboard', 'Dashboard', DashboardIcon],
-  ['sessions', 'Sessions', SessionsIcon],
-  ['guide', 'Anleitung', GuideIcon],
+  ['board', navLabel('board'), BoardIcon],
+  ['dashboard', navLabel('dashboard'), DashboardIcon],
+  ['sessions', navLabel('sessions'), SessionsIcon],
+  ['guide', navLabel('guide'), GuideIcon],
 ];
 
 // Rahmen aller Seiten: Live-Verbindung des Projekts, Suche (auch Strg+K) und das Layout. Das Layout liefert der Slot
@@ -63,7 +65,7 @@ export function AppShell() {
       {LINKS.slice(3).map(link)}
       <NavLink to={`/p/${pid}/settings`}>
         <CogIcon />
-        <span className="nav-label">Einstellungen</span>
+        <span className="nav-label">{navLabel('settings')}</span>
       </NavLink>
     </>
   );
@@ -87,6 +89,7 @@ export function AppShell() {
   return (
     <LiveProvider pid={pid} key={pid}>
       <BoardProjectProvider>
+        <NexusThemeHost pid={pid}>
         <OpenSearchContext.Provider value={openSearch}>
         <SessionNotifier pid={pid} />
         <SetupPrompts />
@@ -100,6 +103,7 @@ export function AppShell() {
         <DocTicketJobsIndicator />
         {searching && <SearchDialog pid={pid} onClose={() => setSearching(false)} />}
         </OpenSearchContext.Provider>
+        </NexusThemeHost>
       </BoardProjectProvider>
     </LiveProvider>
   );

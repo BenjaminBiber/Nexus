@@ -103,3 +103,6 @@ _Avoid_: Hook, Erweiterungspunkt
 **Theme-SDK**:
 Das Workspace-Paket `@nexus/theme-sdk` (`packages/theme-sdk`); einzige Quelle der Slot-Typen (`ThemeDefinition`, `ThemeSlots`, `ShellProps` u. a.) und der Konstante `SDK_VERSION`, auf die sich `sdkVersion` im Manifest eines Themes bezieht.
 _Avoid_: Theme-API
+
+**Theme-Host**:
+Die Umsetzung des Host-Vertrags (`ThemeHost`), die `packages/web` in `AppShell` über `ThemeHostProvider` bereitstellt. Die Hooks des SDK (`useNav`, `useBoards`, `useUsage`, `useSettings`, `useColorScheme`, `useNavigate`) lesen nur daraus; ein Theme importiert nie aus `packages/web`, ohne Provider werfen die Hooks einen Fehler.
