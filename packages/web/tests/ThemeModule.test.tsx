@@ -110,12 +110,27 @@ describe('main.js des aktiven Themes', () => {
     expect(getThemeNotice()).toContain('keine gültige Theme-Definition');
   });
 
-  it.each(['system', 'light', 'dark', 'win95'])('lädt beim eingebauten Theme %s keinen Code', async (mode) => {
+  it.each(['system', 'light', 'dark'])('lädt beim eingebauten Theme %s keinen Code', async (mode) => {
     localStorage.setItem(THEME_CACHE_KEY, mode);
     const d = deps();
     expect((await loadActiveThemeModule(d)).status).toBe('skipped');
     expect(d.fetchManifest).not.toHaveBeenCalled();
     expect(getThemeNotice()).toBeUndefined();
+  });
+
+  it('lädt main.js des Pakets „Windows 95“ wie bei jedem installierten Code-Theme', async () => {
+    localStorage.setItem(THEME_CACHE_KEY, 'win95');
+    const d = deps({
+      fetchManifest: vi.fn(async () => ({ id: 'win95', sdkVersion: '^1.1', slots: ['Shell', 'NavIcon', 'Progress'] })),
+      importModule: vi.fn(async () => ({ default: { id: 'win95', slots: { Progress } } })),
+    });
+    try {
+      expect((await loadActiveThemeModule(d)).status).toBe('loaded');
+      expect(d.importModule).toHaveBeenCalledWith('/themes/win95/main.js');
+      expect(getTheme('win95')?.slots.Progress).toBe(Progress);
+    } finally {
+      unregisterTheme('win95');
+    }
   });
 
   it('lädt bei einem Theme ohne Slots keinen Code', async () => {

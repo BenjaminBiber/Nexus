@@ -31,7 +31,7 @@ const LINKS: Array<[string, string, () => ReactNode]> = [
 ];
 
 // Rahmen aller Seiten: Live-Verbindung des Projekts, Suche (auch Strg+K) und das Layout. Das Layout liefert der Slot
-// „Shell“ des angezeigten Themes (z. B. Windows 95 als Desktop), sonst DefaultShell mit Seitenleiste.
+// „Shell“ des angezeigten Themes (z. B. ein Desktop mit Fenstern), sonst DefaultShell mit Seitenleiste.
 export function AppShell() {
   const { pid = '' } = useParams();
   const [searching, setSearching] = useState(false);

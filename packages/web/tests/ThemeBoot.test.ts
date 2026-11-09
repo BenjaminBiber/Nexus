@@ -62,8 +62,15 @@ describe('index.html – früher Start', () => {
   });
 
   it('setzt für eingebaute Themes keinen Link', () => {
-    boot({ 'harness-theme-mode': 'win95', 'harness-theme-css': '/themes/win95/theme.css' });
+    boot({ 'harness-theme-mode': 'dark', 'harness-theme-css': '/themes/dark/theme.css' });
     expect(link()).toBeNull();
+    expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('startet „Windows 95“ als installiertes Theme mit theme.css und grauer Startfarbe', () => {
+    boot({ 'harness-theme-mode': 'win95', 'harness-theme-css': '/themes/win95/theme.css', 'harness-theme-start-color': '#c0c0c0' });
+    expect(link()?.getAttribute('href')).toBe('/themes/win95/theme.css');
     expect(document.documentElement.dataset.theme).toBe('win95');
+    expect(document.documentElement.style.getPropertyValue('--start-color')).toBe('#c0c0c0');
   });
 });

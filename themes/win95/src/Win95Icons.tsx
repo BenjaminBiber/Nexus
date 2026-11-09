@@ -1,6 +1,6 @@
 import type { NavIconName } from '@nexus/theme-sdk';
 
-// Pixel-Symbole im Stil von Windows 95: 16×16 Raster, je Zeichen ein Pixel aus den 16 Systemfarben (Füllung in win95.css).
+// Pixel-Symbole im Stil von Windows 95: 16×16 Raster, je Zeichen ein Pixel aus den 16 Systemfarben (Füllung in theme.css).
 // k schwarz, w weiß, s silber, g grau, y gelb, o oliv, b blau, n marine, r rot, m kastanie, t petrol, c türkis, G grün, p violett
 export const WIN95_ICONS = {
   folder: [

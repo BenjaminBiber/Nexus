@@ -48,7 +48,7 @@
       "name": "nur ein Feld ändern",
       "method": "PUT",
       "path": "/api/user-settings",
-      "body": { "theme": "win95" }
+      "body": { "theme": "light" }
     },
     { "name": "leerer Körper ändert nichts", "method": "PUT", "path": "/api/user-settings", "body": {} },
     {
