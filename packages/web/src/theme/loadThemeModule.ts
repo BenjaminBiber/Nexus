@@ -1,6 +1,7 @@
 import { SDK_VERSION, type ThemeDefinition } from '@nexus/theme-sdk';
 import { BUILTIN_THEME_IDS } from '../api/types.js';
 import { registerTheme } from './registry.js';
+import { isSafeTheme } from './safeTheme.js';
 import { satisfiesSdkRange } from './sdkRange.js';
 import { THEME_CACHE_KEY } from './theme.js';
 import { setThemeNotice } from './themeNoticeStore.js';
@@ -74,8 +75,8 @@ export async function loadActiveThemeModule(deps: ThemeModuleDeps = {}): Promise
   if (!id || (BUILTIN_THEME_IDS as readonly string[]).includes(id) || !THEME_ID_PATTERN.test(id)) {
     return { status: 'skipped' };
   }
-  if (new URLSearchParams(search).has('safe-theme')) {
-    setThemeNotice(`Abgesicherter Modus: Code des Themes „${id}“ wird nicht geladen.`);
+  if (isSafeTheme(search)) {
+    setThemeNotice({ kind: 'info', message: `Abgesicherter Modus: Code und CSS des Themes „${id}“ sind ausgeschaltet.` });
     return { status: 'skipped', themeId: id };
   }
 

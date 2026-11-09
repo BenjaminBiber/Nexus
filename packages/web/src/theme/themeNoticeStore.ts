@@ -3,16 +3,24 @@ import { useSyncExternalStore } from 'react';
 /** Ereignis nach jeder Änderung des Theme-Hinweises */
 export const THEME_NOTICE_EVENT = 'nexus-theme-notice';
 
-let notice: string | undefined;
+/** Hinweis zum Theme: Fehler eines kaputten Themes oder Info (z. B. abgesicherter Modus) */
+export type ThemeNoticeEntry = { message: string; kind: 'error' | 'info' };
 
-// Setzt den Hinweis zum Laden des Themes (undefined entfernt ihn)
-export function setThemeNotice(message: string | undefined): void {
-  notice = message;
+let notice: ThemeNoticeEntry | undefined;
+
+// Setzt den Hinweis zum Laden des Themes (Text = Fehler, undefined entfernt ihn)
+export function setThemeNotice(value: string | ThemeNoticeEntry | undefined): void {
+  notice = typeof value === 'string' ? { message: value, kind: 'error' } : value;
   window.dispatchEvent(new Event(THEME_NOTICE_EVENT));
 }
 
-// Aktueller Hinweis oder undefined
+// Text des aktuellen Hinweises oder undefined
 export function getThemeNotice(): string | undefined {
+  return notice?.message;
+}
+
+// Aktueller Hinweis mit Art oder undefined
+export function getThemeNoticeEntry(): ThemeNoticeEntry | undefined {
   return notice;
 }
 
@@ -23,6 +31,6 @@ function subscribe(listener: () => void): () => void {
 }
 
 // Hinweis zum Laden des Themes; rendert bei jeder Änderung neu
-export function useThemeNotice(): string | undefined {
-  return useSyncExternalStore(subscribe, getThemeNotice);
+export function useThemeNotice(): ThemeNoticeEntry | undefined {
+  return useSyncExternalStore(subscribe, getThemeNoticeEntry);
 }
