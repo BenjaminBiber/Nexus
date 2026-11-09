@@ -110,8 +110,20 @@ export interface StartAnimationProps {
   onDone(): void;
 }
 
+/** Seiten, die ein Theme als Ganzes ersetzen kann */
+export type PageName = 'dashboard';
+
+/** Eingaben eines Seiten-Slots „page:<name>“; Daten lädt die Theme-Seite selbst */
+export interface PageProps {
+  /** Projekt-ID aus der Adresse */
+  pid: string;
+}
+
+/** Seiten-Slots: Schlüssel „page:<name>“ ersetzen eine ganze Seite */
+export type PageSlots = { [N in PageName as `page:${N}`]?: ComponentType<PageProps> };
+
 /** Stellen der Oberfläche, die ein Theme durch eigene Komponenten ersetzen kann; fehlt ein Slot, gilt die Standard-Komponente */
-export interface ThemeSlots {
+export interface ThemeSlots extends PageSlots {
   Shell?: ComponentType<ShellProps>;
   NavIcon?: ComponentType<{ name: NavIconName }>;
   Progress?: ComponentType<ProgressProps>;

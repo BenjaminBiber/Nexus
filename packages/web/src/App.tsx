@@ -15,6 +15,7 @@ import { OpenLinkPage } from './pages/OpenLinkPage.js';
 import { RootPage } from './pages/RootPage.js';
 import { DocQuestionJobsProvider } from './hooks/docQuestionJobs.js';
 import { DocTicketJobsProvider } from './hooks/docTicketJobs.js';
+import { ThemePage } from './theme/ThemePage.js';
 import { ThemeSync } from './theme/ThemeSync.js';
 import { StartAnimation } from './components/StartAnimation.js';
 import { usePlatform } from './platform/PlatformContext.js';
@@ -36,7 +37,7 @@ export function App() {
           <Route path="/open/:kind/:id" element={<OpenLinkPage />} />
           <Route path="/p/:pid" element={<AppShell />}>
             <Route path="board/*" element={<DbBoardPage />} />
-            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="dashboard" element={<ThemePage name="dashboard" standard={<DashboardPage />} />} />
             <Route path="inbox" element={<InboxPage />} />
             <Route path="sessions/*" element={<SessionsPage />} />
             <Route path="questions" element={<DbQuestionsPage />} />
