@@ -14,6 +14,10 @@
 
 ### Sonstiges
 
+- Jedes Release enthält die mitgelieferten Themes als `<id>-<version>.nexus` und den Store-Index
+  `nexus-themes.json`; im Theme-Store als Repo eintragbar unter
+  `https://github.com/BenjaminBiber/Nexus/releases/latest/download/nexus-themes.json`. Die
+  SDK-Version, gegen die der Store `sdkVersion` prüft, ist jetzt 1.1.0 (wie im Theme-SDK).
 - Mitgelieferte Themes: `npm run build:themes` packt `themes/<id>/` nach `dist/themes/<id>.nexus`;
   die Desktop-App bündelt sie, und `nexus serve` sowie die App installieren beim Start jedes
   Paket, dessen Theme fehlt oder älter ist (`--bundled-themes-dir`, `NEXUS_BUNDLED_THEMES_DIR`).

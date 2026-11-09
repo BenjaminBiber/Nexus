@@ -30,6 +30,26 @@ ungültigen Theme mit Exit-Code 1 ab. Code-Themes (`package.json` mit Skript `bu
 App bündelt `dist/themes/` als Ressource `themes/`. `nexus serve` nimmt in der Entwicklung
 `dist/themes/` (oder `--bundled-themes-dir` / `NEXUS_BUNDLED_THEMES_DIR`).
 
+## Theme-Store
+
+Jedes Release hängt die Themes als `<id>-<version>.nexus` und einen Store-Index
+`nexus-themes.json` an (Workflow `release.yml`, Skript `scripts/release/theme-index.mjs`).
+Im Store als Repo eintragen:
+
+```
+https://github.com/BenjaminBiber/Nexus/releases/latest/download/nexus-themes.json
+```
+
+`downloadUrl` jedes Eintrags zeigt auf das Tag des Releases, `sha256` auf die Bytes genau
+dieses Pakets. Die Pakete sind nicht signiert (im Store `verified: false`). Ablauf für eine
+neue Theme-Version: `version` im Manifest erhöhen, dann Release. Lokal probieren:
+
+```
+npm run build:themes
+node scripts/release/theme-index.mjs dist/themes http://127.0.0.1:8080 dist/release-themes
+npx serve -l 8080 dist/release-themes   # dann http://127.0.0.1:8080/nexus-themes.json eintragen
+```
+
 ## Versionsregel
 
 Beim Start installieren Server und App ein mitgeliefertes Paket nur, wenn das Theme beim Nutzer

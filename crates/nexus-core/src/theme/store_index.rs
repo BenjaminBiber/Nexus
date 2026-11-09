@@ -13,7 +13,7 @@ use crate::error::HarnessError;
 use crate::themes::is_valid_theme_id;
 
 /// Aktuelle Version des Theme-SDK; muss zu `SDK_VERSION` in packages/theme-sdk passen
-pub const THEME_SDK_VERSION: &str = "1.0.0";
+pub const THEME_SDK_VERSION: &str = "1.1.0";
 
 /// [`THEME_SDK_VERSION`] als semver-Version
 pub fn theme_sdk_version() -> semver::Version {

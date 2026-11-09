@@ -1,0 +1,34 @@
+[
+  {
+    "id": "minecraft",
+    "name": "Minecraft",
+    "version": "0.2.0",
+    "sdkVersion": "^1.1",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/minecraft-0.2.0.nexus",
+    "sha256": "8aa83e8a63b7c2a8b95074d94354d30df4f6cb32a55e4912643fc4e2d0f19ae1"
+  },
+  {
+    "id": "pastel",
+    "name": "Pastell",
+    "version": "1.0.0",
+    "sdkVersion": "^1.1",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/pastel-1.0.0.nexus",
+    "sha256": "9ffeac87e50736a3ea4b149e3f1eaa2e177f2a51973aa81de131439ddc9dbee6"
+  },
+  {
+    "id": "signal",
+    "name": "Signal",
+    "version": "1.0.0",
+    "sdkVersion": "^1.1",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/signal-1.0.0.nexus",
+    "sha256": "90544e636ca51fd4139378af329252e25fe8ad15d9905ddcc5e61f6f9eaec954"
+  },
+  {
+    "id": "win95",
+    "name": "Windows 95",
+    "version": "1.0.0",
+    "sdkVersion": "^1.1",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/win95-1.0.0.nexus",
+    "sha256": "1c090846a1ee4421dedfba2d3344bd7e04df614db4425fd00310c640598d6069"
+  }
+]
