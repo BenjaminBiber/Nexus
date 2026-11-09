@@ -664,6 +664,50 @@
       ]
     },
     {
+      "name": "nexus theme",
+      "kind": "cli",
+      "args": [
+        "theme",
+        "--help"
+      ]
+    },
+    {
+      "name": "nexus theme install",
+      "kind": "cli",
+      "args": [
+        "theme",
+        "install",
+        "--help"
+      ]
+    },
+    {
+      "name": "nexus theme list",
+      "kind": "cli",
+      "args": [
+        "theme",
+        "list",
+        "--help"
+      ]
+    },
+    {
+      "name": "nexus theme remove",
+      "kind": "cli",
+      "args": [
+        "theme",
+        "remove",
+        "--help"
+      ]
+    },
+    {
+      "name": "nexus theme pack",
+      "kind": "cli",
+      "args": [
+        "theme",
+        "pack",
+        "--help"
+      ]
+    },
+    {
       "name": "nexus stop",
       "kind": "cli",
       "args": [
