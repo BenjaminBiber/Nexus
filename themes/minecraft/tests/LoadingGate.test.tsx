@@ -37,6 +37,10 @@ describe('LoadingGate', () => {
     expect(shell.style.getPropertyValue('--mc-panorama-5')).toBe(at('minecraft/textures/gui/title/background/panorama_5.png'));
     expect(shell.style.getPropertyValue('--mc-hotbar')).toBe(at('assets/minecraft/textures/gui/sprites/hud/hotbar.png'));
     expect(shell.style.getPropertyValue('--mc-hotbar-selection')).toBe(at('assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png'));
+    expect(shell.style.getPropertyValue('--mc-menu-bg')).toBe(at('assets/minecraft/textures/gui/menu_background.png'));
+    expect(shell.style.getPropertyValue('--mc-list-bg')).toBe(at('assets/minecraft/textures/gui/menu_list_background.png'));
+    expect(shell.style.getPropertyValue('--mc-sep-top')).toBe(at('assets/minecraft/textures/gui/header_separator.png'));
+    expect(shell.style.getPropertyValue('--mc-sep-bottom')).toBe(at('assets/minecraft/textures/gui/footer_separator.png'));
   });
 
   it('ohne Netz: Hinweis mit „Erneut versuchen“, Seite bleibt bedienbar', () => {

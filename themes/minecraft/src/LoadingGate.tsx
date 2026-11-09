@@ -4,8 +4,12 @@ import {
   BUTTON,
   BUTTON_HIGHLIGHTED,
   FONT_ATLAS,
+  FOOTER_SEPARATOR,
+  HEADER_SEPARATOR,
   HOTBAR,
   HOTBAR_SELECTION,
+  MENU_BACKGROUND,
+  MENU_LIST_BACKGROUND,
   PANORAMA_OVERLAY,
   panorama,
   type MinecraftResources,
@@ -27,6 +31,10 @@ function cssVariables(urls: Record<string, string>): CSSProperties {
   set('--mc-panorama-overlay', PANORAMA_OVERLAY);
   set('--mc-hotbar', HOTBAR);
   set('--mc-hotbar-selection', HOTBAR_SELECTION);
+  set('--mc-menu-bg', MENU_BACKGROUND);
+  set('--mc-list-bg', MENU_LIST_BACKGROUND);
+  set('--mc-sep-top', HEADER_SEPARATOR);
+  set('--mc-sep-bottom', FOOTER_SEPARATOR);
   return vars as CSSProperties;
 }
 

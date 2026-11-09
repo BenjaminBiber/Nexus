@@ -1,5 +1,6 @@
-// Slot „Shell“ im Stil des Minecraft-Titelbildschirms: Panorama im Hintergrund, Kopfzeile mit den Bausteinen des Hosts,
-// die Seite in einem Panel, unten die Hotbar als Hauptnavigation; „Menü“ bzw. Esc öffnet das Titelmenü.
+// Slot „Shell“ wie ein Untermenü der Java Edition: Panorama im Hintergrund, Kopfzeile mit Knopf „Menü“, Seitentitel und
+// den Bausteinen des Hosts, darunter die Seite auf der Erde-Fläche zwischen zwei Trennlinien, im Fuß die Hotbar als
+// Hauptnavigation; „Menü“ bzw. Esc öffnet das Titelmenü.
 import { BoardSwitcher, ConnectionStatus, Outlet, SearchButton, UsageMeter, useNav, type ShellProps } from '@nexus/theme-sdk';
 import { useEffect, useRef, useState } from 'react';
 import { McText } from './BitmapText.js';
@@ -52,36 +53,39 @@ export function MinecraftShell({ parts }: ShellProps) {
       <LoadingGate resources={resources}>
         {/* Titelmenü offen = Titelbildschirm: scharf; eine Seite offen = Untermenü: unscharf */}
         <Panorama blur={!menuOpen} />
-        <header className="mc-header">
-          <McButton
-            ref={menuButton}
-            className="mc-menu-button"
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            onClick={() => (menuOpen ? closeMenu(false) : openMenu())}
-          >
-            Menü
-          </McButton>
-          <McText className="mc-header-title">Nexus</McText>
-          <div className="mc-header-parts">
-            <SearchButton />
-            <BoardSwitcher />
-            <UsageMeter />
-            <ConnectionStatus />
-          </div>
-        </header>
         {menuOpen && <TitleMenu onClose={closeMenu} sound={menuSound} />}
         {/* Bleibt beim offenen Menü eingehängt, damit die Seite ihren Zustand behält */}
-        <section className="mc-panel" aria-label={title} hidden={menuOpen}>
-          <h2 className="mc-panel-title">
-            <McText>{title}</McText>
-          </h2>
-          {parts.connection}
-          <div className="mc-panel-body">
+        <div className="mc-screen" hidden={menuOpen}>
+          <header className="mc-screen-header">
+            <McButton
+              ref={menuButton}
+              className="mc-menu-button mc-button--half"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              onClick={openMenu}
+            >
+              Menü
+            </McButton>
+            <h1 className="mc-screen-title">
+              <McText>{title}</McText>
+            </h1>
+            <div className="mc-header-parts">
+              <SearchButton />
+              <BoardSwitcher />
+              <UsageMeter />
+              <ConnectionStatus />
+            </div>
+          </header>
+          <div className="mc-separator mc-separator--top" aria-hidden="true" />
+          <main className="mc-list">
+            {parts.connection}
             <Outlet />
-          </div>
-        </section>
-        <Hotbar />
+          </main>
+          <div className="mc-separator mc-separator--bottom" aria-hidden="true" />
+        </div>
+        <footer className="mc-footer">
+          <Hotbar />
+        </footer>
       </LoadingGate>
     </ResourcesProvider>
   );

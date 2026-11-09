@@ -55,24 +55,28 @@ export function Hotbar() {
   }, [nav, navigate, play]);
 
   return (
-    <nav ref={bar} className="mc-hotbar" aria-label="Hauptnavigation">
-      {nav.map((item) => (
-        <NavLink key={item.id} id={item.id} className={`mc-hotbar-slot${item.active ? ' mc-hotbar-slot--selected' : ''}`}
-          onClick={() => {
-            if (!item.active) play('hotbar');
-          }}
-        >
-          {() => (
-            <>
-              <NavIcon name={item.id} />
-              {item.badge ? <span className="mc-hotbar-count">{item.badge}</span> : null}
-              <span className="mc-hotbar-label">
-                <McText>{item.label}</McText>
-              </span>
-            </>
-          )}
-        </NavLink>
-      ))}
-    </nav>
+    <>
+      {/* Platz für die XP-Leiste über der Hotbar; Phase 4 füllt ihn mit der Claude-Nutzung */}
+      <div className="mc-xp-slot" aria-hidden="true" />
+      <nav ref={bar} className="mc-hotbar" aria-label="Hauptnavigation">
+        {nav.map((item) => (
+          <NavLink key={item.id} id={item.id} className={`mc-hotbar-slot${item.active ? ' mc-hotbar-slot--selected' : ''}`}
+            onClick={() => {
+              if (!item.active) play('hotbar');
+            }}
+          >
+            {() => (
+              <>
+                <NavIcon name={item.id} />
+                {item.badge ? <span className="mc-hotbar-count">{item.badge}</span> : null}
+                <span className="mc-hotbar-label">
+                  <McText>{item.label}</McText>
+                </span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+    </>
   );
 }
