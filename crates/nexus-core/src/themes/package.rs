@@ -233,7 +233,9 @@ fn pack_with_limits(dir: &Path, limits: Limits) -> Result<PackedTheme, ThemePack
         .unix_permissions(0o644);
     let zip_error = |error: zip::result::ZipError| ThemePackageError::NotZip(error.to_string());
     for (path, data) in &files {
-        writer.start_file(path.as_str(), options).map_err(zip_error)?;
+        writer
+            .start_file(path.as_str(), options)
+            .map_err(zip_error)?;
         std::io::Write::write_all(&mut writer, data)?;
     }
     let bytes = writer.finish().map_err(zip_error)?.into_inner();
@@ -765,7 +767,9 @@ mod tests {
     fn packen_meldet_datei_und_grund() {
         let falsch = manifest("Nacht", "1.0.0");
         let manifest = manifest("nacht", "1.0.0");
-        let faelle: Vec<(Vec<(&str, &[u8])>, &str)> = vec![
+        /// Dateien des Ordners und erwarteter Teil der Meldung
+        type Fall<'a> = (Vec<(&'a str, &'a [u8])>, &'a str);
+        let faelle: Vec<Fall> = vec![
             (
                 vec![("manifest.json", &falsch), ("theme.css", CSS)],
                 "manifest.json ist ungültig: id",
@@ -797,7 +801,10 @@ mod tests {
             (vec![("manifest.json", &manifest)], "fehlt theme.css"),
             (vec![("theme.css", CSS)], "fehlt manifest.json"),
             (
-                vec![("manifest.json", &manifest), ("theme.css", b"@import 'x.css';")],
+                vec![
+                    ("manifest.json", &manifest),
+                    ("theme.css", b"@import 'x.css';"),
+                ],
                 "theme.css ist nicht erlaubt: @import",
             ),
             (

@@ -225,6 +225,18 @@ pub enum Commands {
     )]
     Customize(commands::customize::CustomizeCli),
 
+    /// Theme-Pakete bauen
+    #[command(
+        name = "theme",
+        about = commands::theme::THEME_ABOUT,
+        disable_help_flag = true,
+        disable_help_subcommand = true
+    )]
+    Theme {
+        #[command(subcommand)]
+        sub: commands::theme::ThemeCommands,
+    },
+
     /// Losgelöster Worker eines Laufs des Dispatchers; den startet nur der Server selbst,
     /// deshalb steht der Befehl nicht in der Hilfe.
     #[command(
@@ -356,6 +368,7 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
         }
         Some(Commands::Hook { ereignis }) => commands::hook::run(&ereignis),
         Some(Commands::Customize(args)) => commands::customize::run(&context, args),
+        Some(Commands::Theme { sub }) => commands::theme::run(&sub),
         Some(Commands::DispatchWorker { lauf }) => commands::dispatch_worker::run(&context, &lauf),
         Some(Commands::Help { befehl }) => help_command(root, befehl.as_deref()),
         #[cfg(debug_assertions)]
