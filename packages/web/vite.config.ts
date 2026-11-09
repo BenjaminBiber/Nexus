@@ -4,6 +4,7 @@ import { promisify } from 'node:util';
 import { brotliCompress, constants, gzip } from 'node:zlib';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { hostModules } from './vite/hostModules.js';
 
 const brotli = promisify(brotliCompress);
 const gzipAsync = promisify(gzip);
@@ -30,7 +31,7 @@ function precompress(): Plugin {
 
 // Entwicklung: /api geht an den laufenden Harness-Server (Standardport 4710, starten mit npm run dev:server)
 export default defineConfig({
-  plugins: [react(), precompress()],
+  plugins: [react(), hostModules(), precompress()],
   server: {
     // Host und Herkunft werden auf die Serveradresse gesetzt, sonst lehnt der Schutz des Servers die Anfragen ab
     proxy: { '/api': { target: 'http://127.0.0.1:4710', changeOrigin: true, headers: { origin: 'http://127.0.0.1:4710' } } },
