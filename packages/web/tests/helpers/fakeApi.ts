@@ -138,6 +138,7 @@ export function fakeApi(overrides: Partial<Record<keyof ApiClient, unknown>> = {
     getUserSettings: async () => ({ notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, hideInPlanning: false, setupPrompts: { pluginDismissed: false, migrationDismissed: [] } }),
     getThemeSettings: async () => ({}),
     saveThemeSettings: async (_id: string, values: Record<string, boolean | string>) => values,
+    listThemes: async () => [],
     getPluginSetup: async () => ({ bundled: false, claude: false, state: 'missing', installedVersion: null, bundledVersion: null }),
     getBoardMigration: async () => ({ needed: false, repoPath: null, reasons: [] }),
     getDbQuestions: async () => dbQuestionList([]),

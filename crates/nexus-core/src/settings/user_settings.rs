@@ -5,6 +5,9 @@ use std::sync::LazyLock;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
+use crate::registry::NexusHome;
+use crate::themes::is_valid_theme_id;
+
 /// Art der Meldung, wenn eine Session bereit ist oder auf Eingabe wartet
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -35,45 +38,46 @@ impl NotificationMode {
 /// Alle Arten der Meldung in der Reihenfolge von TypeScript
 pub const NOTIFICATION_MODES: [NotificationMode; 3] = NotificationMode::ALL;
 
-/// Farbschema der Oberfläche; „system“ folgt dem Betriebssystem, „signal“ und „pastel“ sind
-/// farbigere helle Schemata, „win95“ ist Windows 95 samt Desktop, Fenster und Taskleiste
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum ThemeMode {
-    System,
-    Light,
-    Dark,
-    Signal,
-    Pastel,
-    Win95,
-}
+/// Eingebaute Themes in der Reihenfolge von TypeScript (`BUILTIN_THEME_IDS`); „system“ folgt
+/// dem Betriebssystem, „signal“ und „pastel“ sind farbigere helle Schemata, „win95“ ist
+/// Windows 95 samt Desktop, Fenster und Taskleiste
+pub const BUILTIN_THEME_IDS: [&str; 6] = ["system", "light", "dark", "signal", "pastel", "win95"];
+
+/// Gewähltes Theme als ID: eingebaut (`BUILTIN_THEME_IDS`) oder ein installiertes Theme
+/// unter `~/.nexus/themes/<id>/`
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct ThemeMode(String);
 
 impl ThemeMode {
-    /// Alle Farbschemata in der Reihenfolge von TypeScript (`THEME_MODES`)
-    pub const ALL: [ThemeMode; 6] = [
-        ThemeMode::System,
-        ThemeMode::Light,
-        ThemeMode::Dark,
-        ThemeMode::Signal,
-        ThemeMode::Pastel,
-        ThemeMode::Win95,
-    ];
+    /// Theme mit der angegebenen ID (ohne Prüfung)
+    pub fn new(id: impl Into<String>) -> Self {
+        Self(id.into())
+    }
+
+    /// Folgt dem Betriebssystem; Rückfall für unbekannte IDs
+    pub fn system() -> Self {
+        Self::new("system")
+    }
 
     /// Schreibweise in `settings.json`
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            ThemeMode::System => "system",
-            ThemeMode::Light => "light",
-            ThemeMode::Dark => "dark",
-            ThemeMode::Signal => "signal",
-            ThemeMode::Pastel => "pastel",
-            ThemeMode::Win95 => "win95",
-        }
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
-/// Alle Farbschemata in der Reihenfolge von TypeScript
-pub const THEME_MODES: [ThemeMode; 6] = ThemeMode::ALL;
+impl From<&str> for ThemeMode {
+    fn from(id: &str) -> Self {
+        Self::new(id)
+    }
+}
+
+/// Ob `id` ein eingebautes oder installiertes Theme ist; installiert heißt: gültige ID und
+/// `<home>/themes/<id>/manifest.json` existiert (ohne volle Manifestprüfung, billig bei jedem Lesen)
+pub fn known_theme(home: &NexusHome, id: &str) -> bool {
+    BUILTIN_THEME_IDS.contains(&id)
+        || (is_valid_theme_id(id) && home.themes_dir().join(id).join("manifest.json").is_file())
+}
 
 /// Standardadresse des ntfy-Servers
 pub const DEFAULT_NTFY_SERVER: &str = "https://ntfy.sh";
@@ -133,7 +137,7 @@ impl Default for UserSettings {
         Self {
             notifications: NotificationMode::Off,
             hero_images: false,
-            theme: ThemeMode::System,
+            theme: ThemeMode::system(),
             claude_usage: false,
             compact_cards: false,
             hide_not_needed: false,
@@ -180,7 +184,7 @@ mod tests {
             ["off", "browser", "windows"]
         );
         assert_eq!(
-            THEME_MODES.map(|theme| theme.as_str()),
+            BUILTIN_THEME_IDS,
             ["system", "light", "dark", "signal", "pastel", "win95"]
         );
     }

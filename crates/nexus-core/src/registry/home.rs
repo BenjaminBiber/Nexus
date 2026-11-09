@@ -232,6 +232,11 @@ impl NexusHome {
         self.dir.join("theme-settings.json")
     }
 
+    /// Theme-Store des Nutzers (`repos.json`)
+    pub fn store_dir(&self) -> PathBuf {
+        self.dir.join("store")
+    }
+
     /// Ordner des Dispatchers
     pub fn dispatch_dir(&self) -> PathBuf {
         self.dir.join("dispatch")

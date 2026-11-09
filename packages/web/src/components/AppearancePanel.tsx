@@ -16,10 +16,22 @@ const THEMES: Array<{ mode: ThemeMode; label: string; hint: string; icon: string
   { mode: 'win95', label: 'Windows 95', hint: 'Desktop, Fenster mit Titelleiste, Startmenü und Taskleiste.', icon: 'M3 5.5l7-1v7H3zM12 4.2l9-1.2v8.5h-9zM3 13h7v7l-7-1zM12 13h9v8.5l-9-1.2z' },
 ];
 
+/** Symbol für installierte Themes (Palette) */
+const INSTALLED_ICON = 'M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.6 0-1.1-.9-1.4-.9-2.4 0-.9.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4c0-4.7-4-8.5-9-8.5z';
+
 // Farbschema der ganzen Harness-Oberfläche und Aussehen des Boards (gespeichert in ~/.harness/settings.json).
 export function AppearancePanel() {
   const api = useApi();
   const loaded = useAsync(() => api.getUserSettings(), [api]);
+  // Installierte Themes; schlägt das Laden fehl, bleiben nur die eingebauten
+  const installed = useAsync(() => api.listThemes().catch(() => []), [api]);
+  const builtin = new Set(THEMES.map((theme) => theme.mode));
+  const themes = [
+    ...THEMES,
+    ...(installed.state.status === 'ready' ? installed.state.data : [])
+      .filter((manifest) => !builtin.has(manifest.id))
+      .map((manifest) => ({ mode: manifest.id, label: manifest.name, hint: `${manifest.author} · Version ${manifest.version}`, icon: INSTALLED_ICON })),
+  ];
   const { state, run } = useSaveStatus();
   const settings = loaded.state.status === 'ready' ? loaded.state.data : null;
 
@@ -46,7 +58,7 @@ export function AppearancePanel() {
       <SettingsSection title="Farbschema" bare>
         <fieldset className="choice-group" disabled={!settings}>
           <legend className="sr-only">Farbschema</legend>
-          {THEMES.map(({ mode, label, hint, icon }) => (
+          {themes.map(({ mode, label, hint, icon }) => (
             <label key={mode} className={`choice${settings?.theme === mode ? ' selected' : ''}`}>
               <input type="radio" name="theme" value={mode} aria-label={label} className="sr-only" checked={settings?.theme === mode} onChange={() => void choose(mode)} />
               <svg className="choice-icon" viewBox="0 0 24 24" aria-hidden="true">
