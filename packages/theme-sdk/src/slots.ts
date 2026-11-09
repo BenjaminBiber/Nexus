@@ -11,6 +11,14 @@ export interface ShellParts {
   boardSwitcher: ReactNode;
   /** Claude-Nutzung (Ring/Balken) */
   usage: ReactNode;
+  /** Einzelne Links der Hauptnavigation im Standard-Aussehen, frei anordenbar */
+  navItems: Partial<Record<NavIconName, ReactNode>>;
+  /** Nur die aktuelle Seite, ohne Standard-Wrapper und Verbindungshinweis */
+  outlet: ReactNode;
+  /** Verbindungshinweis (Banner bei getrennter Live-Verbindung) */
+  connection: ReactNode;
+  /** Verbindungspunkt der Live-Verbindung */
+  status: ReactNode;
 }
 
 /** Eingaben des Slots „Shell“: das ganze Layout um die Seiten */
