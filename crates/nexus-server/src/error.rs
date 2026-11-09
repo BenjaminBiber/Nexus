@@ -64,6 +64,8 @@ impl ErrorMapper {
             || code == "doc-changed"
             || code == "setup-busy"
             || code == "plugin-not-bundled"
+            // Ein Store-Repo mit derselben Adresse ist schon eingetragen
+            || code == "store-repo-exists"
             // Code und Testnachricht brauchen einen laufenden Bot
             || code == "telegram-not-running"
         {
@@ -80,6 +82,8 @@ impl ErrorMapper {
             || code == "bad-request"
             || code == "theme-id-invalid"
             || code == "snippet-invalid"
+            // Store-Repo: Adresse ungültig oder zu viele Repos
+            || code == "store-repo-invalid"
         {
             return StatusCode::BAD_REQUEST;
         }

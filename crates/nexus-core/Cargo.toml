@@ -26,6 +26,8 @@ thiserror = { workspace = true }
 # Entpacken der Theme-Pakete (`.nexus`)
 zip = { workspace = true }
 tokio = { workspace = true }
+# Adressen der Store-Repos prüfen
+url = { workspace = true }
 ts-rs = { workspace = true }
 
 # Die Vertrags-Makros und die Fixtures für andere Crates; nur für Tests gedacht.
