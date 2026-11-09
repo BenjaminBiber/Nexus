@@ -2,6 +2,7 @@ import { useApi } from '../api/ApiContext.js';
 import type { ThemeMode, UserSettingsDto } from '../api/types.js';
 import { COMPACT_CARDS_EVENT } from '../dbboard/compactCards.js';
 import { useAsync } from '../hooks/useAsync.js';
+import { unregisterTheme } from '../theme/registry.js';
 import { applyTheme } from '../theme/theme.js';
 import { ThemeSettingsSection } from '../theme/ThemeSettingsSection.js';
 import { SettingsPanel, useSaveStatus } from './settings/SettingsPanel.js';
@@ -51,8 +52,9 @@ export function AppearancePanel() {
     if (saved) applyTheme(saved.theme, installed.state.status === 'ready' ? installed.state.data : undefined);
   };
 
-  // War das entfernte Theme aktiv, gilt danach „System“
+  // Das entfernte Theme wird abgemeldet (seine Slots greifen nicht mehr); war es aktiv, gilt danach „System“
   const removed = async (id: string) => {
+    unregisterTheme(id);
     if (settings?.theme !== id) return;
     const saved = await save({ theme: 'system' });
     if (saved) applyTheme(saved.theme);

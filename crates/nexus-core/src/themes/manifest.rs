@@ -22,9 +22,9 @@ pub fn is_valid_theme_id(id: &str) -> bool {
     THEME_ID_PATTERN.is_match(id)
 }
 
-/// Erlaubte Form eines Slot-Namens
+/// Erlaubte Form eines Slot-Namens; deckt die Namen des SDK ab (`Shell`, `page:dashboard`)
 static SLOT_NAME_PATTERN: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^[a-z0-9][a-z0-9.-]*$").unwrap());
+    LazyLock::new(|| Regex::new(r"^[A-Za-z0-9][A-Za-z0-9.:-]*$").unwrap());
 
 /// Erlaubte Form einer Domain; `*.` vorweg gibt alle Subdomains frei
 static DOMAIN_PATTERN: LazyLock<Regex> =
@@ -290,7 +290,7 @@ fn check_slots(slots: &[(usize, &str)], errors: &mut Vec<ManifestError>) {
             errors.push(error(
                 field,
                 format!(
-                    "Der Slot-Name „{name}“ darf nur a–z, 0–9, . und - enthalten und muss mit a–z oder 0–9 beginnen."
+                    "Der Slot-Name „{name}“ darf nur Buchstaben a–z bzw. A–Z, 0–9, ., : und - enthalten und muss mit einem Buchstaben oder einer Ziffer beginnen."
                 ),
             ));
         } else if !seen.insert(name) {
@@ -839,8 +839,25 @@ mod tests {
 
     #[test]
     fn slot_mit_ungueltigem_muster() {
-        let json = mit(voll(), "slots", json!(["Sidebar", ".punkt", "ok"]));
-        assert_eq!(felder(&json), vec!["slots[0]", "slots[1]"]);
+        let json = mit(
+            voll(),
+            "slots",
+            json!(["Side bar", ".punkt", "ok", "_x", ":page"]),
+        );
+        assert_eq!(
+            felder(&json),
+            vec!["slots[0]", "slots[1]", "slots[3]", "slots[4]"]
+        );
+    }
+
+    #[test]
+    fn slot_namen_des_sdk_sind_gueltig() {
+        let json = mit(
+            voll(),
+            "slots",
+            json!(["Shell", "Progress", "page:dashboard"]),
+        );
+        assert!(parse_manifest(&json).is_ok());
     }
 
     #[test]

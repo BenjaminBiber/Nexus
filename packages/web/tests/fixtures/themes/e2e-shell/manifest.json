@@ -1,0 +1,11 @@
+{
+  "id": "e2e-shell",
+  "name": "E2E Shell",
+  "version": "1.0.0",
+  "author": "Nexus Tests",
+  "sdkVersion": "^1.1",
+  "colorScheme": "dark",
+  "startColor": "#14232e",
+  "slots": ["Shell"],
+  "permissions": { "network": [] }
+}
