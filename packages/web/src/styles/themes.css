@@ -92,3 +92,6 @@
 [data-theme='pastel'] .card:nth-child(3n)::before { mask-position: -113px 0, center, -38px 100%; }
 [data-theme='pastel'] .card:hover { filter: drop-shadow(2px 4px 0 var(--shadow-mid)) drop-shadow(0 8px 10px var(--shadow-soft)); }
 [data-theme='pastel'] .card.live { filter: drop-shadow(0 0 1px var(--accent)) drop-shadow(0 0 1px var(--accent)) drop-shadow(1px 2px 0 var(--shadow-mid)); }
+
+/* Startanimation eines Themes (Slot „StartAnimation“): Vollbild über der App; den Hintergrund bestimmt das Theme */
+.theme-start-anim { position: fixed; inset: 0; z-index: 2147483647; }

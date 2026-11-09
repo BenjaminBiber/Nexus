@@ -2,15 +2,15 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { SDK_VERSION } from '../src/index.js';
-import type { ButtonProps, CardProps, DialogProps, InputProps, PanelProps, ProgressProps, ThemeDefinition, ThemeSlots } from '../src/index.js';
+import type { ButtonProps, CardProps, DialogProps, InputProps, PanelProps, ProgressProps, StartAnimationProps, ThemeDefinition, ThemeSlots } from '../src/index.js';
 
 describe('SDK_VERSION', () => {
   it('ist eine semver-Version der Reihe 0.x', () => {
     expect(SDK_VERSION).toMatch(/^0\.\d+\.\d+$/);
   });
 
-  it('ist 0.5.0 (Baustein-Slots)', () => {
-    expect(SDK_VERSION).toBe('0.5.0');
+  it('ist 0.6.0 (Slot StartAnimation)', () => {
+    expect(SDK_VERSION).toBe('0.6.0');
   });
 
   it('stimmt mit der Version in package.json überein', () => {
@@ -39,5 +39,12 @@ describe('Slot-Typen', () => {
     } satisfies ThemeDefinition;
     const keys: Array<keyof ThemeSlots> = ['Button', 'Card', 'Panel', 'Dialog', 'Input'];
     expect(Object.keys(theme.slots)).toEqual(keys);
+  });
+
+  it('kennt den Slot StartAnimation mit onDone', () => {
+    const StartAnimation = (props: StartAnimationProps) => (props.onDone(), null);
+    const theme = { id: 'start', slots: { StartAnimation } } satisfies ThemeDefinition;
+    const key: keyof ThemeSlots = 'StartAnimation';
+    expect(Object.keys(theme.slots)).toEqual([key]);
   });
 });

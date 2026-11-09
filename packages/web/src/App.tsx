@@ -16,9 +16,10 @@ import { RootPage } from './pages/RootPage.js';
 import { DocQuestionJobsProvider } from './hooks/docQuestionJobs.js';
 import { DocTicketJobsProvider } from './hooks/docTicketJobs.js';
 import { ThemeSync } from './theme/ThemeSync.js';
+import { StartAnimation } from './components/StartAnimation.js';
 import { usePlatform } from './platform/PlatformContext.js';
 
-// Alle Adressen der Oberfläche; Seiten unter /p/:pid teilen sich den Rahmen. ThemeSync setzt das Farbschema.
+// Alle Adressen der Oberfläche; Seiten unter /p/:pid teilen sich den Rahmen. ThemeSync setzt das Farbschema, StartAnimation zeigt die Startanimation des Themes.
 // Board und Fragen kommen aus der Board-Datenbank; das Ticket-Panel liegt unter board/t/:id, die Details einer Session unter sessions/:sid.
 // Ticket- und Fragen-Erzeugungen aus Dokumenten (DocTicketJobsProvider, DocQuestionJobsProvider) laufen über Seiten- und Projektwechsel weiter.
 // /open/:kind/:id ist die Weiterleitung für nexus://-Links; sie ergänzt die fehlende Projekt-ID.
@@ -28,6 +29,7 @@ export function App() {
     <DocTicketJobsProvider>
       <DocQuestionJobsProvider>
         <ThemeSync />
+        <StartAnimation />
         <ExternalLinks />
         <Routes>
           <Route path="/" element={<RootPage />} />
