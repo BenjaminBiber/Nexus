@@ -1,4 +1,5 @@
 import type { ComponentType, MouseEvent, ReactNode } from 'react';
+import type { ThemeSettingsSchema } from './settings.js';
 
 /** Namen der Navigationssymbole, die ein Theme ersetzen kann */
 export type NavIconName = 'board' | 'dashboard' | 'inbox' | 'sessions' | 'questions' | 'docs' | 'search' | 'guide' | 'settings';
@@ -136,8 +137,10 @@ export interface ThemeSlots extends PageSlots {
   StartAnimation?: ComponentType<StartAnimationProps>;
 }
 
-/** Ein Theme mit ID (Wert von data-theme) und seinen Slots */
+/** Ein Theme mit ID (Wert von data-theme), seinen Slots und optional eigenen Einstellungen */
 export interface ThemeDefinition {
   id: string;
   slots: ThemeSlots;
+  /** Eigene Einstellungen; erscheinen unter Einstellungen → Darstellung, Werte über `useThemeSettings()` */
+  settingsSchema?: ThemeSettingsSchema;
 }

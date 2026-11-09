@@ -1,3 +1,4 @@
+import type { ThemeSettingsState } from './settings.js';
 import type { NavIconName, ShellParts } from './slots.js';
 
 /** Eintrag der Hauptnavigation */
@@ -71,6 +72,8 @@ export interface ThemeHost {
   boards: BoardsState;
   usage: UsageState;
   settings: SettingsState;
+  /** Eigene Einstellungen des angezeigten Themes (`settingsSchema`) */
+  themeSettings: ThemeSettingsState;
   colorScheme: ColorSchemeState;
   navigate(to: string): void;
   /** Öffnet die globale Suche des Hosts */

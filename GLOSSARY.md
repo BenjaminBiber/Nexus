@@ -101,8 +101,12 @@ Eine Stelle der Oberfläche, die ein Theme durch eine eigene Komponente ersetzen
 _Avoid_: Hook, Erweiterungspunkt
 
 **Theme-SDK**:
-Das Workspace-Paket `@nexus/theme-sdk` (`packages/theme-sdk`); einzige Quelle der Slot-Typen (`ThemeDefinition`, `ThemeSlots`, `ShellProps` u. a.) und der Konstante `SDK_VERSION`, auf die sich `sdkVersion` im Manifest eines Themes bezieht. Hooks: `useNav`, `useBoards`, `useUsage`, `useSettings`, `useColorScheme`, `useNavigate`, `useOpenSearch`. Das Win95-Theme ist die Referenz für ein Theme, das nur mit dem SDK auskommt (Wächter `Win95Imports.test.ts`).
+Das Workspace-Paket `@nexus/theme-sdk` (`packages/theme-sdk`); einzige Quelle der Slot-Typen (`ThemeDefinition`, `ThemeSlots`, `ShellProps` u. a.) und der Konstante `SDK_VERSION`, auf die sich `sdkVersion` im Manifest eines Themes bezieht. Hooks: `useNav`, `useBoards`, `useUsage`, `useSettings`, `useThemeSettings`, `useColorScheme`, `useNavigate`, `useOpenSearch`. Das Win95-Theme ist die Referenz für ein Theme, das nur mit dem SDK auskommt (Wächter `Win95Imports.test.ts`).
 _Avoid_: Theme-API
 
 **Theme-Host**:
 Die Umsetzung des Host-Vertrags (`ThemeHost`), die `packages/web` in `AppShell` über `ThemeHostProvider` bereitstellt. Die Hooks des SDK (`useNav`, `useBoards`, `useUsage`, `useSettings`, `useColorScheme`, `useNavigate`) lesen nur daraus; ein Theme importiert nie aus `packages/web`, ohne Provider werfen die Hooks einen Fehler.
+
+**Theme-Einstellung**:
+Eine eigene Einstellung, die ein Theme über `settingsSchema` (in der `ThemeDefinition`, optional im `manifest.json`) mitbringt; Arten `boolean` (Schalter) und `select` (Auswahl) mit `label`, optional `hint` und `default`. Erscheint unter Einstellungen → Darstellung in der Sektion „Einstellungen des Themes“, wird je Theme in `<NEXUS_HOME>/theme-settings.json` gespeichert (`/api/themes/<id>/settings`) und vom Theme über `useThemeSettings()` gelesen; fehlende oder ungültige Werte ergeben den Default.
+_Avoid_: Theme-Option

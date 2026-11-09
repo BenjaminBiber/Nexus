@@ -1,5 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { ThemeHost } from './host.js';
+import type { ThemeSettingValues, ThemeSettingsSchema, ThemeSettingsState } from './settings.js';
 
 /** Context mit der Umsetzung des Hosts; null außerhalb des Providers */
 const ThemeHostContext = createContext<ThemeHost | null>(null);
@@ -24,6 +25,10 @@ export const useBoards = () => useHost('useBoards').boards;
 export const useUsage = () => useHost('useUsage').usage;
 /** Nutzereinstellungen lesen und ändern */
 export const useSettings = () => useHost('useSettings').settings;
+/** Eigene Einstellungen des Themes lesen und ändern; `S` ist das `settingsSchema` des Themes */
+export function useThemeSettings<S extends ThemeSettingsSchema = ThemeSettingsSchema>(): ThemeSettingsState & { values: ThemeSettingValues<S> } {
+  return useHost('useThemeSettings').themeSettings as ThemeSettingsState & { values: ThemeSettingValues<S> };
+}
 /** Angezeigtes Farbschema */
 export const useColorScheme = () => useHost('useColorScheme').colorScheme;
 /** Route wechseln */

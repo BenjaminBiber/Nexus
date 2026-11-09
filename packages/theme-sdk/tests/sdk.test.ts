@@ -9,8 +9,8 @@ describe('SDK_VERSION', () => {
     expect(SDK_VERSION).toMatch(/^0\.\d+\.\d+$/);
   });
 
-  it('ist 0.7.0 (Seiten-Slots)', () => {
-    expect(SDK_VERSION).toBe('0.7.0');
+  it('ist 0.8.0 (Theme-Einstellungen)', () => {
+    expect(SDK_VERSION).toBe('0.8.0');
   });
 
   it('stimmt mit der Version in package.json überein', () => {
