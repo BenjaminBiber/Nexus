@@ -2658,7 +2658,7 @@ checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
 name = "nexus-cli"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "assert_cmd",
  "clap",
@@ -2675,7 +2675,7 @@ dependencies = [
 
 [[package]]
 name = "nexus-core"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "async-trait",
  "chrono",
@@ -2698,7 +2698,7 @@ dependencies = [
 
 [[package]]
 name = "nexus-db"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "async-trait",
  "bb8",
@@ -2718,7 +2718,7 @@ dependencies = [
 
 [[package]]
 name = "nexus-desktop"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "dirs 6.0.0",
  "libc",
@@ -2747,7 +2747,7 @@ dependencies = [
 
 [[package]]
 name = "nexus-platform"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "async-trait",
  "nexus-core",
@@ -2761,7 +2761,7 @@ dependencies = [
 
 [[package]]
 name = "nexus-server"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "async-trait",
  "axum",
