@@ -86,6 +86,8 @@ pub struct AppState {
     pub favorites: FavoriteService,
     /// Die CSS-Schnipsel des Nutzers (`snippets/`)
     pub snippets: SnippetStore,
+    /// Asset-Proxy der Themes (`/api/themes/{id}/fetch`)
+    pub theme_proxy: crate::theme_proxy::ThemeProxy,
     /// Titel und Status von Tickets für Sessions, Favoriten und Meldungen (mit Zeitlimit)
     pub ticket_info: TicketInfoLookup,
     /// Die Claude-Accounts: Limits, Anmeldung, Plugin und die Wahl des Dispatchers
@@ -322,6 +324,7 @@ impl AppState {
             transcript_watch: TranscriptWatch::new(events.clone()),
             favorites,
             snippets: SnippetStore::with_clock(config.home.clone(), config.clock.clone()),
+            theme_proxy: crate::theme_proxy::ThemeProxy::new(config.theme_fetch_max_bytes),
             ticket_info: TicketInfoLookup::new(ticket_summaries(weak)),
             accounts: AccountServices {
                 usage: account_usage.clone(),

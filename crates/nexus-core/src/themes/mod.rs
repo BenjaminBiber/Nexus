@@ -5,7 +5,7 @@ pub mod manifest;
 pub mod package;
 
 pub use manifest::{
-    is_valid_theme_id, parse_manifest, validate_manifest, ColorScheme, ManifestError,
+    host_allowed, is_valid_theme_id, parse_manifest, validate_manifest, ColorScheme, ManifestError,
     ManifestErrors, ThemeManifest, ThemePermissions,
 };
 pub use package::{
