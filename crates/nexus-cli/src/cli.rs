@@ -225,7 +225,7 @@ pub enum Commands {
     )]
     Customize(commands::customize::CustomizeCli),
 
-    /// Theme-Pakete bauen
+    /// Theme-Pakete bauen und verwalten
     #[command(
         name = "theme",
         about = commands::theme::THEME_ABOUT,
@@ -368,7 +368,7 @@ fn dispatch(cli: Cli, root: &Command) -> Result<u8> {
         }
         Some(Commands::Hook { ereignis }) => commands::hook::run(&ereignis),
         Some(Commands::Customize(args)) => commands::customize::run(&context, args),
-        Some(Commands::Theme { sub }) => commands::theme::run(&sub),
+        Some(Commands::Theme { sub }) => commands::theme::run(&context, &sub),
         Some(Commands::DispatchWorker { lauf }) => commands::dispatch_worker::run(&context, &lauf),
         Some(Commands::Help { befehl }) => help_command(root, befehl.as_deref()),
         #[cfg(debug_assertions)]
