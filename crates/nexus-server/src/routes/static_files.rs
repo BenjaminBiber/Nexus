@@ -259,6 +259,14 @@ mod tests {
     }
 
     #[test]
+    fn hasht_die_import_map_wie_ein_inline_skript() {
+        let map = r#"{"imports":{"react":"/assets/host-react-a.js"}}"#;
+        let hashes = inline_script_hashes(&format!("<script type=\"importmap\">{map}</script>"));
+        assert_eq!(hashes.len(), 1);
+        assert_eq!(hashes, inline_script_hashes(&format!("<script>{map}</script>")));
+    }
+
+    #[test]
     fn ohne_inline_skripte_bleibt_die_basis_csp() {
         assert_eq!(
             page_policy("<script src=\"/a.js\"></script>"),
