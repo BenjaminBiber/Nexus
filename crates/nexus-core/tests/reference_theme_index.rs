@@ -16,10 +16,13 @@ fn referenz_index_der_mitgelieferten_themes_ist_gueltig_und_kompatibel() {
     assert_eq!(
         ids,
         [
+            "alucard",
             "catppuccin",
+            "dracula",
             "minecraft",
             "pastel",
             "signal",
+            "synthwave",
             "terminal",
             "win95"
         ]
