@@ -96,9 +96,9 @@ describe('Terminal-Theme-Paket', () => {
     }
   });
 
-  it('hat die Version 2.0.0 und die Slots des SDK 1.2', () => {
+  it('hat die Version 2.1.0 und die Slots des SDK 1.2', () => {
     const manifest = JSON.parse(readFileSync(join(theme, 'manifest.json'), 'utf8'));
-    expect(manifest.version).toBe('2.0.0');
+    expect(manifest.version).toBe('2.1.0');
     expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Icon', 'Progress', 'StartAnimation']);
   });
 });

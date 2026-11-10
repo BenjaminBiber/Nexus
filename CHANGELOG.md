@@ -80,6 +80,10 @@
   wie `tree`, Fortschritt als `[#####·····]`, eckige Mermaid-Diagramme und neue Befehle `man`,
   `top`, `fetch`/`neofetch`, `history` und `cowsay`. Schriften liegen im Paket (OFL 1.1, Nerd-Font-
   Teilmenge MIT).
+- „Terminal“ 2.1.0: Themes-Seite und Theme-Store im Terminal-Stil – eckige Kacheln mit Linie
+  (aktuelles mit `> ` und grüner Fläche), Plaketten als `[Text]`, Filter wie Segmente, Kombi-Knopf
+  als `[ Theme installieren | ⋯ ]`, Dialoge mit `## `-Überschrift und `[x]`, Store-Zustand mit
+  eckigen Punkten und Store-Kacheln mit `[ Installieren ]`.
 
 ## 0.0.2 – 2026-11-06
 

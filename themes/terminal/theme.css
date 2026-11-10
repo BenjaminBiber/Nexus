@@ -506,6 +506,134 @@
 :root[data-theme='terminal'] .settings-nav a.active { background: var(--accent); color: var(--on-accent); }
 :root[data-theme='terminal'] .settings-nav a.active .nav-icon { color: var(--on-accent); }
 
+/* ---------- Einstellungen › Themes und Theme-Store ---------- */
+/* Seitenkopf: Zurücksetzen als Kästchen, Kombi-Knopf als eine Klammer „[ Theme installieren | ⋯ ]“ */
+:root[data-theme='terminal'] .theme-reset { width: 30px; height: 28px; border: 1px solid var(--line); border-radius: 0; background: none; }
+:root[data-theme='terminal'] .theme-reset:hover:not(:disabled) { background: var(--text); border-color: var(--text); color: var(--bg); }
+:root[data-theme='terminal'] .theme-reset svg { width: 15px; height: 15px; }
+:root[data-theme='terminal'] .theme-install-split { border-radius: 0; }
+:root[data-theme='terminal'] .theme-install-split:has(> :focus-visible) { outline: none; }
+:root[data-theme='terminal'] :is(.theme-install-btn, .theme-install-more) { height: 28px; min-height: 28px; border-radius: 0; }
+:root[data-theme='terminal'] .theme-install-btn { gap: 1ch; padding: 0 0 0 4px; }
+:root[data-theme='terminal'] .theme-install-btn svg { width: 14px; height: 14px; }
+:root[data-theme='terminal'] .theme-install-btn::after { content: '|'; margin: 0 0 0 1ch; }
+:root[data-theme='terminal'] .theme-install-more { width: auto; padding: 0 4px 0 0.5ch; }
+:root[data-theme='terminal'] .theme-install-more::before { content: none; }
+:root[data-theme='terminal'] .theme-install-more .material-icons { font-size: 16px; }
+:root[data-theme='terminal'] .theme-install-split > .btn:focus-visible { outline: 1px dashed var(--accent); outline-offset: 2px; background: none; }
+:root[data-theme='terminal'] .theme-install-menu { top: calc(100% + 4px); padding: 4px 0; border: 1px solid var(--line); border-radius: 0; background: var(--bg); box-shadow: 0 12px 24px var(--picker-shadow); }
+:root[data-theme='terminal'] .theme-install-menu [role='menuitem'] { gap: 1ch; padding: 3px 12px; border-radius: 0; }
+:root[data-theme='terminal'] .theme-install-menu [role='menuitem']::before { content: ' '; width: 1ch; white-space: pre; }
+:root[data-theme='terminal'] .theme-install-menu [role='menuitem']:is(:hover, :focus-visible) { background: var(--text); color: var(--bg); }
+:root[data-theme='terminal'] .theme-install-menu [role='menuitem']:is(:hover, :focus-visible)::before { content: '>'; }
+:root[data-theme='terminal'] .theme-install-menu [role='menuitem']:is(:hover, :focus-visible) .material-icons { color: inherit; }
+
+/* Filter wie die Segmente (gewählt = invertiert), Suche als eckiges Feld */
+:root[data-theme='terminal'] .theme-filter { gap: 0; padding: 0; border: 1px solid var(--line); border-radius: 0; background: none; }
+:root[data-theme='terminal'] .theme-filter button { height: 26px; padding: 0 1ch; border-radius: 0; font-size: var(--term-fs); }
+:root[data-theme='terminal'] .theme-filter button[aria-pressed='true'] { background: var(--text); color: var(--bg); box-shadow: none; }
+:root[data-theme='terminal'] .theme-filter button[aria-pressed='true'] .theme-filter-count { color: inherit; }
+:root[data-theme='terminal'] .theme-search { height: 28px; padding: 0 8px; border: 1px solid var(--line); border-radius: 0; background: var(--bg); }
+:root[data-theme='terminal'] .theme-search svg { width: 13px; height: 13px; color: var(--muted); }
+
+/* Theme-Kacheln wie die Auswahlkarten: Linie, beim Überfahren grün, das aktuelle mit „> “ und grüner Fläche */
+:root[data-theme='terminal'] .theme-card { gap: 8px; padding: 8px; border-radius: 0; box-shadow: none; }
+:root[data-theme='terminal'] .theme-card.active { border-color: var(--accent); background: var(--accent-soft); box-shadow: none; }
+:root[data-theme='terminal'] .theme-card.active .theme-card-name strong::before { content: '> '; color: var(--accent); }
+:root[data-theme='terminal'] .theme-select { border-radius: 0; }
+:root[data-theme='terminal'] .theme-select:focus-visible { outline: 1px dashed var(--accent); outline-offset: -4px; }
+:root[data-theme='terminal'] .theme-preview { border-radius: 0; }
+:root[data-theme='terminal'] .theme-card-title { gap: 2px; padding: 0 2px; }
+:root[data-theme='terminal'] .theme-card-name strong { font-size: calc(var(--term-fs) + 1px); }
+:root[data-theme='terminal'] .theme-card-meta { font-size: calc(var(--term-fs) - 1px); }
+:root[data-theme='terminal'] .theme-card-chips { gap: 1ch; padding: 0 2px; }
+/* Plaketten als Text in Klammern; „aktuell“ invertiert grün */
+:root[data-theme='terminal'] :is(.theme-chip, .store-pill, .store-card-version, .store-row-badge) { height: auto; padding: 0; border: 0; border-radius: 0; background: none; font-family: var(--font-mono); font-size: calc(var(--term-fs) - 1px); font-weight: 400; }
+:root[data-theme='terminal'] :is(.theme-chip, .store-pill, .store-row-badge)::before { content: '['; color: var(--muted); }
+:root[data-theme='terminal'] :is(.theme-chip, .store-pill, .store-row-badge)::after { content: ']'; color: var(--muted); }
+:root[data-theme='terminal'] .theme-chip { gap: 0.5ch; color: var(--text-soft); }
+:root[data-theme='terminal'] .theme-chip svg { width: 11px; height: 11px; }
+:root[data-theme='terminal'] .theme-chip.official { color: var(--term-path); }
+:root[data-theme='terminal'] .theme-chip.with-code { color: var(--term-highlight); }
+:root[data-theme='terminal'] .theme-badge.current { padding: 0 1ch; border-radius: 0; background: var(--accent); color: var(--on-accent); font-size: calc(var(--term-fs) - 1px); letter-spacing: 0; text-transform: lowercase; }
+:root[data-theme='terminal'] .theme-remove { border-radius: 0; }
+:root[data-theme='terminal'] .theme-remove:hover:not(:disabled) { background: var(--term-error); color: var(--bg); }
+:root[data-theme='terminal'] :is(.theme-empty, .theme-store-empty) { border-radius: 0; }
+
+/* Dialoge der Themes-Seite: Überschrift mit „## “, Schließen als [x], Datei-Knopf ohne Rahmen */
+:root[data-theme='terminal'] :is(.theme-modal, .theme-confirm) { border-radius: 0; }
+:root[data-theme='terminal'] :is(.theme-modal-title h2, .theme-confirm h2)::before { content: '## '; color: var(--muted); }
+:root[data-theme='terminal'] .theme-modal-title h2, :root[data-theme='terminal'] .theme-confirm h2 { font-size: calc(var(--term-fs) + 3px); letter-spacing: 0; }
+:root[data-theme='terminal'] .theme-modal-title p { font-size: var(--term-fs); color: var(--muted); }
+:root[data-theme='terminal'] .theme-modal-store .theme-modal-head { padding: 20px 24px 16px; border-bottom: 1px solid var(--line); margin-bottom: 16px; align-items: center; }
+:root[data-theme='terminal'] .theme-modal-store .theme-store { padding: 0 24px 24px; }
+:root[data-theme='terminal'] .theme-modal-store > :is(.notice, .save-status) { margin: 0 24px 16px; }
+:root[data-theme='terminal'] .theme-modal-store .theme-file-btn { height: 28px; padding: 0 4px; border: 0; border-radius: 0; }
+:root[data-theme='terminal'] .theme-file-btn .material-icons { font-size: 15px; }
+:root[data-theme='terminal'] .theme-file-btn:has(:focus-visible) { outline: 1px dashed var(--accent); outline-offset: 2px; }
+:root[data-theme='terminal'] .theme-modal-close { width: auto; height: 28px; padding: 0 4px; border-radius: 0; color: var(--muted); }
+:root[data-theme='terminal'] .theme-modal-store .theme-modal-close { width: auto; height: 28px; }
+:root[data-theme='terminal'] .theme-modal-close .material-icons { display: none; }
+:root[data-theme='terminal'] .theme-modal-close::before { content: '[x]'; }
+:root[data-theme='terminal'] .theme-modal-close:hover:not(:disabled) { background: var(--term-error); color: var(--bg); }
+:root[data-theme='terminal'] .theme-confirm-icon { border-radius: 0; background: none; color: var(--term-highlight); }
+:root[data-theme='terminal'] .theme-confirm-icon.is-code { color: var(--term-error); }
+:root[data-theme='terminal'] .theme-install-label { letter-spacing: 0; text-transform: none; }
+:root[data-theme='terminal'] .theme-install-domains ul { padding: 4px 4px 4px 3ch; border: 1px solid var(--line); background: var(--code-bg); }
+:root[data-theme='terminal'] .theme-store-label { letter-spacing: 0; text-transform: none; }
+:root[data-theme='terminal'] .theme-store-label::before { content: '## '; }
+
+/* Theme-Stores verwalten und Updates: Listen mit Linien */
+:root[data-theme='terminal'] :is(.store-repo-row, .store-update-row) { border-radius: 0; background: none; }
+
+/* Zustand der Stores: Kasten mit Linie, Punkte als Quadrate, aufgeklappt als Liste mit gestrichelten Trennlinien */
+:root[data-theme='terminal'] .store-status { border-radius: 0; background: none; }
+:root[data-theme='terminal'] .store-status-head { min-height: 36px; gap: 1ch; padding: 0 12px; }
+:root[data-theme='terminal'] .store-status-head:focus-visible { outline: 1px dashed var(--accent); outline-offset: -3px; }
+:root[data-theme='terminal'] .store-status-head:hover { background: var(--surface-alt); }
+:root[data-theme='terminal'] :is(.store-status-title, .store-status-summary, .store-status-toggle) { font-size: var(--term-fs); }
+:root[data-theme='terminal'] .store-dot { border-radius: 0; }
+:root[data-theme='terminal'] .store-dot.is-checking { animation: term-blink 1.06s steps(1) infinite; }
+:root[data-theme='terminal'] .store-pill.is-ok { color: var(--term-ok); }
+:root[data-theme='terminal'] .store-pill.is-error { color: var(--term-error); }
+:root[data-theme='terminal'] .store-pill.is-warn { color: var(--term-highlight); }
+:root[data-theme='terminal'] .store-row-badge { color: var(--term-error); }
+:root[data-theme='terminal'] .store-row-badge.is-checking { color: var(--muted); }
+:root[data-theme='terminal'] .store-status-list { background: var(--bg); }
+:root[data-theme='terminal'] .store-row { padding: 10px 12px; }
+:root[data-theme='terminal'] .store-row + .store-row { border-top: 1px dashed var(--line); }
+:root[data-theme='terminal'] .store-row-name { font-weight: 600; }
+:root[data-theme='terminal'] .store-row-link { height: 28px; padding: 0 4px; border-radius: 0; color: var(--term-path); }
+:root[data-theme='terminal'] .store-row-link:hover { background: none; text-decoration: underline; }
+:root[data-theme='terminal'] .store-row-retry { height: 28px; }
+
+/* Suche und Anzahl */
+:root[data-theme='terminal'] .store-search svg { left: 10px; width: 13px; height: 13px; }
+:root[data-theme='terminal'] .store-search :is(input:not([type='checkbox']):not([type='radio']):not([type='range'])) { height: 32px; padding-left: 30px; border-radius: 0; }
+:root[data-theme='terminal'] .store-count { font-size: var(--term-fs); color: var(--muted); }
+:root[data-theme='terminal'] .store-count::before { content: '# '; }
+
+/* Store-Kacheln: Linie, beim Überfahren grün; Vorschau eckig; Installieren als [ Installieren ] in Grün, installiert mit Haken */
+:root[data-theme='terminal'] .store-grid { gap: 16px; }
+:root[data-theme='terminal'] .store-card { border-radius: 0; }
+:root[data-theme='terminal'] .store-card:hover { border-color: var(--accent); }
+:root[data-theme='terminal'] .store-card-preview { height: 160px; padding: 8px; background: none; border-bottom: 1px dashed var(--line); }
+:root[data-theme='terminal'] .store-card-preview img { border-radius: 0; box-shadow: none; border: 1px solid var(--line); box-sizing: border-box; }
+:root[data-theme='terminal'] .store-card-nopreview { border-radius: 0; background: none; }
+:root[data-theme='terminal'] .store-card-body { gap: 8px; padding: 10px 12px 12px; }
+:root[data-theme='terminal'] .store-card-title h3 { font-size: calc(var(--term-fs) + 1px); }
+:root[data-theme='terminal'] .store-card-version { color: var(--muted); }
+:root[data-theme='terminal'] .store-card-host { margin-top: -4px; font-size: calc(var(--term-fs) - 1px); }
+:root[data-theme='terminal'] .store-card-desc { margin: 0; font-size: var(--term-fs); }
+:root[data-theme='terminal'] .store-card-btn { height: 28px; margin-top: auto; border: 0; border-radius: 0; background: none; color: var(--accent); font-weight: 600; }
+:root[data-theme='terminal'] .store-card-btn::before { content: '['; margin-right: 0.5ch; color: var(--muted); font-weight: 400; }
+:root[data-theme='terminal'] .store-card-btn::after { content: ']'; margin-left: 0.5ch; color: var(--muted); font-weight: 400; }
+:root[data-theme='terminal'] .store-card-btn:hover:not(:disabled) { opacity: 1; background: var(--accent); color: var(--on-accent); }
+:root[data-theme='terminal'] .store-card-btn:hover:not(:disabled)::before, :root[data-theme='terminal'] .store-card-btn:hover:not(:disabled)::after { color: var(--on-accent); }
+:root[data-theme='terminal'] .store-card-btn:focus-visible { outline: 1px dashed var(--accent); outline-offset: 2px; }
+:root[data-theme='terminal'] .store-card-btn.is-installed { background: none; color: var(--term-ok); font-weight: 400; }
+:root[data-theme='terminal'] .store-card-btn .material-icons { font-size: 15px; }
+
 /* Code */
 :root[data-theme='terminal'] :is(pre, .code, code) { border-radius: 0; }
 
