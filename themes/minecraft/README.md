@@ -1,7 +1,8 @@
 # Minecraft-Theme
 
-Referenz-Theme für Code-Themes mit fremden Ressourcen. Es ersetzt die Slots `Shell` und `NavIcon`
-und lädt Schrift-Atlas, Button-Texturen, Panorama, Hotbar, Logo und Item-Symbole aus dem
+Referenz-Theme für Code-Themes mit fremden Ressourcen. Es ersetzt die Slots `Shell`, `NavIcon`,
+`Button`, `Input`, `Progress`, `Card`, `Panel` und `Dialog` und lädt Schrift-Atlas, Button- und
+Feld-Texturen, Popup-Hintergrund, XP-Leisten, Panorama, Hotbar, Logo und Item-Symbole aus dem
 Minecraft-Client von Mojang.
 
 ## Menü-Layout
