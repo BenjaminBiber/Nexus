@@ -6,7 +6,7 @@
   "sdkVersion": "^1.2",
   "colorScheme": "dark",
   "startColor": "#120a24",
-  "slots": [],
+  "slots": ["Shell"],
   "permissions": { "network": [] },
   "settingsSchema": {
     "palette": {

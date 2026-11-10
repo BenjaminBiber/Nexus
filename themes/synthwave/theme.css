@@ -278,3 +278,266 @@
   outline: 2px solid var(--synth-magenta);
   outline-offset: 2px;
 }
+
+/* ---------- Rahmen: Kassettendeck mit Display, Titelliste und Deck-Leiste ---------- */
+:root[data-theme='synthwave'] #root:has(.synth-screen) {
+  display: block;
+  height: 100vh;
+  height: 100dvh;
+}
+
+:root[data-theme='synthwave'] .synth-screen {
+  --synth-display-h: 56px;
+  --synth-deck-h: 36px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100%;
+  background: var(--bg);
+}
+
+/* Seitenpanels (Ticket, Notiz, Blatt) zwischen Display und Deck-Leiste, damit der Rahmen sichtbar bleibt */
+:root[data-theme='synthwave'] .synth-screen :is(.db-panel, .sheet, .note-slide) {
+  top: var(--synth-display-h);
+  bottom: var(--synth-deck-h);
+}
+
+/* Display oben: dunkles Feld mit dünner Cyan-Linie und Leuchten */
+:root[data-theme='synthwave'] .synth-display {
+  position: relative;
+  z-index: 30;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: var(--synth-display-h);
+  padding: 6px 20px;
+  background: var(--synth-bg-deep);
+  border-bottom: 1px solid var(--synth-cyan);
+  box-shadow: var(--synth-glow-cyan);
+}
+
+:root[data-theme='synthwave'] .synth-logo {
+  flex: none;
+  font-size: 32px;
+  line-height: 1;
+  padding-right: 8px;
+}
+
+:root[data-theme='synthwave'] .synth-board {
+  flex: 0 1 300px;
+  min-width: 0;
+}
+
+:root[data-theme='synthwave'] .synth-board .bp-field {
+  width: 100%;
+}
+
+:root[data-theme='synthwave'] .synth-search {
+  margin-left: auto;
+}
+
+:root[data-theme='synthwave'] .synth-search .global-search {
+  width: auto;
+}
+
+/* Körper: Titelliste links, Seite rechts; nur die Seite scrollt */
+:root[data-theme='synthwave'] .synth-body {
+  display: grid;
+  grid-template-columns: 15rem 1fr;
+  min-height: 0;
+}
+
+:root[data-theme='synthwave'] .synth-body .shell-content {
+  min-width: 0;
+  min-height: 0;
+}
+
+:root[data-theme='synthwave'] .synth-body .connection-slot:empty {
+  display: none;
+}
+
+/* Titelliste der A-Seite */
+:root[data-theme='synthwave'] .synth-tracks.nav {
+  gap: 2px;
+  padding: 16px 10px;
+  border-right: 1px solid var(--synth-line);
+  background: color-mix(in srgb, var(--synth-bg-deep) 70%, var(--synth-bg));
+  overflow-y: auto;
+}
+
+:root[data-theme='synthwave'] .synth-side {
+  padding: 0 10px 10px;
+  font-family: var(--synth-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a {
+  position: relative;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 4px;
+  background: none;
+  box-shadow: none;
+  color: var(--text-soft);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a .nav-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:root[data-theme='synthwave'] .synth-track-no {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 2.6em;
+  font-family: var(--synth-font-display);
+  font-size: 12px;
+  color: var(--synth-muted);
+}
+
+/* Platz für das Wiedergabe-Zeichen, damit die Nummern bündig stehen */
+:root[data-theme='synthwave'] .synth-track-no::before {
+  content: '';
+  display: inline-block;
+  width: 0.8em;
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a:hover {
+  background: color-mix(in srgb, var(--synth-cyan) 8%, transparent);
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a.active {
+  background: color-mix(in srgb, var(--synth-magenta) 12%, transparent);
+  color: var(--synth-magenta);
+  box-shadow: inset 3px 0 0 var(--synth-magenta), -4px 0 calc(10px * var(--synth-glow)) -4px var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a.active .synth-track-no {
+  color: var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a.active .synth-track-no::before {
+  content: '▶';
+  font-size: 0.8em;
+}
+
+/* Zähler als kleine Neon-Pille */
+:root[data-theme='synthwave'] .synth-tracks .nav-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--synth-magenta);
+  background: color-mix(in srgb, var(--synth-magenta) 18%, transparent);
+  color: var(--synth-fg);
+  font-size: 11px;
+  box-shadow: var(--synth-glow-magenta);
+}
+
+/* Equalizer am laufenden Titel: drei Balken, die von unten wachsen */
+:root[data-theme='synthwave'] .synth-eq {
+  flex: none;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+
+:root[data-theme='synthwave'] .synth-eq i {
+  display: block;
+  width: 3px;
+  height: 100%;
+  background: var(--synth-magenta);
+  transform-origin: bottom;
+  animation: synth-eq 0.9s ease-in-out infinite alternate;
+}
+
+:root[data-theme='synthwave'] .synth-eq i:nth-child(2) {
+  animation-duration: 1.2s;
+}
+
+:root[data-theme='synthwave'] .synth-eq i:nth-child(3) {
+  animation-duration: 0.7s;
+}
+
+@keyframes synth-eq {
+  from {
+    transform: scaleY(0.25);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Deck-Leiste unten */
+:root[data-theme='synthwave'] .synth-deck {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: var(--synth-deck-h);
+  padding: 0 20px;
+  background: var(--synth-bg-deep);
+  border-top: 1px solid var(--synth-line);
+}
+
+:root[data-theme='synthwave'] .synth-tape-label {
+  font-family: var(--synth-font-display);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--synth-cyan);
+}
+
+/* Schmale Fenster (Breakpoint der Standard-Shell): Titelliste wird zur Leiste oben, ohne Nummern */
+@media (max-width: 900px) {
+  :root[data-theme='synthwave'] #root:has(.synth-screen) {
+    height: auto;
+  }
+
+  :root[data-theme='synthwave'] .synth-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  :root[data-theme='synthwave'] .synth-display {
+    flex-wrap: wrap;
+  }
+
+  :root[data-theme='synthwave'] .synth-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  :root[data-theme='synthwave'] .synth-tracks.nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 6px 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--synth-line);
+    overflow: visible;
+  }
+
+  :root[data-theme='synthwave'] :is(.synth-side, .synth-track-no) {
+    display: none;
+  }
+
+  :root[data-theme='synthwave'] .synth-body .shell-content {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme='synthwave'] .synth-eq i {
+    animation: none;
+  }
+}
