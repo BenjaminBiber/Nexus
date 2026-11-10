@@ -110,7 +110,7 @@ impl ToastTexts {
     }
 
     /// Meldung des Dispatchers: Titel je Art, `ID Titel`, Text (gemergt, blockiert, Frage,
-    /// Pause, Review)
+    /// Pause, Review, Autopilot steckt fest)
     pub fn dispatch(&self, notice: &DispatchNotice, open_url: &str) -> ToastModel {
         let title = match notice.kind {
             DispatchNoticeKind::Merged => "Dispatcher: gemergt",
@@ -118,6 +118,7 @@ impl ToastTexts {
             DispatchNoticeKind::Question => "Dispatcher: Frage vom Agent",
             DispatchNoticeKind::Paused => "Dispatcher pausiert",
             DispatchNoticeKind::Review => "Dispatcher: wartet auf Review",
+            DispatchNoticeKind::Stuck => "Autopilot steckt fest",
         };
         let kind = match notice.kind {
             DispatchNoticeKind::Merged => ToastKind::Bereit,

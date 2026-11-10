@@ -1537,13 +1537,14 @@ Worktrees fertig sind.",
                 .join(", ")
         ));
         let board = ctx.board(first.board_id).await?;
-        ctx.notify(&DispatchNotice {
-            kind: DispatchNoticeKind::Blocked,
-            ticket_id: Some(first.id.clone()),
-            title: first.title.clone(),
-            text: reason,
-            repo_path: board.and_then(|board| board.repo_path),
-        })
+        // Im Autopilot ist das eine Sackgasse: „Autopilot steckt fest“ statt „blockiert“
+        ctx.notify(&DispatchNotice::blocked(
+            autopilot_for(&ctx.cfg, &first.labels),
+            &first.id,
+            &first.title,
+            &reason,
+            board.and_then(|board| board.repo_path),
+        ))
         .await;
         Ok(Vec::new())
     }

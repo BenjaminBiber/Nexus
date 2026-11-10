@@ -197,17 +197,18 @@ impl<'a> ResultHandler<'a> {
             return self.auto_accept(&detail, record).await;
         }
         if detail.ticket.status == TicketStatus::Blocked {
-            ctx.notify(&DispatchNotice {
-                kind: DispatchNoticeKind::Blocked,
-                ticket_id: Some(detail.ticket.id.clone()),
-                title: detail.ticket.title.clone(),
-                text: detail
+            // Im Autopilot ist das eine Sackgasse: „Autopilot steckt fest“ statt „blockiert“
+            ctx.notify(&DispatchNotice::blocked(
+                autopilot_for(&ctx.cfg, &detail.ticket.labels),
+                &detail.ticket.id,
+                &detail.ticket.title,
+                detail
                     .ticket
                     .blocked_reason
-                    .clone()
-                    .unwrap_or_else(|| "Blockiert".to_string()),
-                repo_path: board.as_ref().and_then(|board| board.repo_path.clone()),
-            })
+                    .as_deref()
+                    .unwrap_or("Blockiert"),
+                board.as_ref().and_then(|board| board.repo_path.clone()),
+            ))
             .await;
             return Ok(HandleResult {
                 outcome: HandleOutcome::Blocked,

@@ -690,6 +690,24 @@ async fn autopilot_blockiert_erst_nach_der_letzten_gescheiterten_merge_session()
     assert!(reason.contains("Protokoll"), "{reason}");
     assert_eq!(session_starts(&f, &id).await.len(), 3);
     assert!(no_merges(&f));
+    // Genau eine Meldung, und die ist „Autopilot steckt fest“
+    let notices = f.notices.all();
+    assert!(
+        !notices
+            .iter()
+            .any(|notice| notice.kind == DispatchNoticeKind::Blocked),
+        "{notices:?}"
+    );
+    let stuck: Vec<_> = notices
+        .iter()
+        .filter(|notice| notice.kind == DispatchNoticeKind::Stuck)
+        .collect();
+    assert_eq!(stuck.len(), 1, "{notices:?}");
+    assert_eq!(stuck[0].ticket_id.as_deref(), Some(id.as_str()));
+    assert_eq!(
+        stuck[0].text,
+        format!("Autopilot steckt fest: {id} – {reason}")
+    );
 }
 
 #[tokio::test]
@@ -707,6 +725,11 @@ async fn ohne_autopilot_blockiert_die_erste_gescheiterte_merge_session_wie_bishe
         "{reason}"
     );
     assert!(no_merges(&f));
+    // Ohne Autopilot bleibt es bei der normalen Blockiert-Meldung
+    let notices = f.notices.all();
+    assert_eq!(notices.len(), 1, "{notices:?}");
+    assert_eq!(notices[0].kind, DispatchNoticeKind::Blocked);
+    assert_eq!(notices[0].text, reason);
     assert_eq!(session_starts(&f, &id).await.len(), 1);
     assert!(
         !session_starts(&f, &id).await[0].contains("Merge-Session 1/"),

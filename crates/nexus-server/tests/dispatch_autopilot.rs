@@ -15,6 +15,9 @@ use dispatch_support::{DispatchFixture, OK_OUTPUT};
 /// Grund, mit dem der Agent das Ticket blockiert
 const HUMAN: &str = "Human Interaction: Oberfläche ansehen";
 
+/// Externer Grund (keine Human Interaction), mit dem der Agent das Ticket blockiert
+const EXTERN: &str = "Zugang zur Testumgebung fehlt";
+
 /// Einstellungen mit Autopilot und Ausnahme-Label „ohne-autopilot“
 fn autopilot(review_before_merge: bool) -> Value {
     json!({
@@ -33,6 +36,16 @@ fn manual() -> TicketPatch {
 
 /// Startet das Ticket, der Agent committet und blockiert es mit `HUMAN`
 async fn block_as_agent(f: &DispatchFixture, title: &str, patch: TicketPatch) -> String {
+    block_as_agent_with(f, title, patch, HUMAN).await
+}
+
+/// Startet das Ticket, der Agent committet und blockiert es mit diesem Grund
+async fn block_as_agent_with(
+    f: &DispatchFixture,
+    title: &str,
+    patch: TicketPatch,
+    reason: &str,
+) -> String {
     let id = f.ready(title, patch).await;
     assert_eq!(f.tick().await.started, vec![id.clone()]);
     let worktree = f.ticket(&id).await.worktree.expect("Worktree des Tickets");
@@ -47,7 +60,7 @@ async fn block_as_agent(f: &DispatchFixture, title: &str, patch: TicketPatch) ->
             &id,
             &TicketPatch {
                 status: Some(TicketStatus::Blocked),
-                blocked_reason: Some(Some(HUMAN.into())),
+                blocked_reason: Some(Some(reason.into())),
                 ..TicketPatch::default()
             },
             &f.agent(&id),
@@ -136,6 +149,38 @@ async fn mit_ausnahme_label_bleibt_human_interaction_blockiert() {
         .all()
         .iter()
         .any(|notice| notice.kind == DispatchNoticeKind::Blocked));
+}
+
+#[tokio::test]
+async fn blockiert_der_agent_mit_externem_grund_meldet_der_autopilot_stuck() {
+    let f = DispatchFixture::create(autopilot(false)).await;
+    let id = block_as_agent_with(&f, "Ohne Zugang", TicketPatch::default(), EXTERN).await;
+
+    let report = f.tick().await;
+
+    assert_eq!(outcomes(&report), vec!["blocked"]);
+    assert_eq!(f.ticket(&id).await.status, TicketStatus::Blocked);
+    let notices = f.notices.all();
+    assert_eq!(notices.len(), 1, "{notices:?}");
+    assert_eq!(notices[0].kind, DispatchNoticeKind::Stuck);
+    assert_eq!(notices[0].ticket_id.as_deref(), Some(id.as_str()));
+    assert_eq!(
+        notices[0].text,
+        format!("Autopilot steckt fest: {id} – {EXTERN}")
+    );
+}
+
+#[tokio::test]
+async fn blockiert_der_agent_mit_ausnahme_label_bleibt_es_bei_blocked() {
+    let f = DispatchFixture::create(autopilot(false)).await;
+    block_as_agent_with(&f, "Manuell ohne Zugang", manual(), EXTERN).await;
+
+    f.tick().await;
+
+    let notices = f.notices.all();
+    assert_eq!(notices.len(), 1, "{notices:?}");
+    assert_eq!(notices[0].kind, DispatchNoticeKind::Blocked);
+    assert_eq!(notices[0].text, EXTERN);
 }
 
 #[tokio::test]
