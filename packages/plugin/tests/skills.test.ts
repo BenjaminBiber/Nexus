@@ -5,7 +5,8 @@ import { join } from 'node:path';
 import { parse } from 'yaml';
 import { buildPlugin, PLUGIN_BIN, ROOT } from './helpers/pluginBuild.js';
 
-const SKILLS_SRC = join(ROOT, 'packages/plugin/manifest/skills');
+const MANIFEST = join(ROOT, 'packages/plugin/manifest');
+const SKILLS_SRC = join(MANIFEST, 'skills');
 const EXPECTED = ['board', 'board-question', 'harness-customize', 'harness-grill', 'harness-implement', 'harness-setup', 'harness-tasks', 'harness-wayfinder'];
 // Skills ohne nexus-Aufrufe (arbeiten mit npm im Clone)
 const NPM_ONLY = ['harness-customize'];
@@ -331,6 +332,28 @@ describe('Skills des Plugins', () => {
     it('beschreibt Worktree je Ticket, Merge der Voraussetzungen, Abnahme und Leeren des Branches', () => {
       const t = skills.find((s) => s.dir === 'board')!.text;
       for (const part of ['--join', 'wartet auf Merge von', 'nexus board accept', 'Abnehmen', '--clear-branch', 'joinWorktrees', 'Keine Links, Junctions oder Symlinks', 'worktreeSetup', 'Einrichtung fehlgeschlagen']) expect(t, part).toContain(part);
+    });
+
+    it('beschreibt den Autopilot: Schalter, Ausnahme-Label, Verhalten je Fall und was den Nutzer noch erreicht', () => {
+      const t = skills.find((s) => s.dir === 'board')!.text;
+      const section = t.split('\n## ').find((s) => s.startsWith('Autopilot'));
+      expect(section, 'Abschnitt „Autopilot“').toBeDefined();
+      for (const part of [
+        'autopilot.enabled', 'autopilot.exceptLabel', 'interaktiv', 'maxMergeSessions', 'reviewBeforeMerge', 'Autopilot:',
+        'Wieder öffnen', 'Autopilot steckt fest', 'Human Interaction', 'keine Empfehlung',
+      ]) expect(section, part).toContain(part);
+    });
+
+    it('nennt im Abschnitt „Vom Dispatcher gestartet“, dass es im Autopilot kein Human Interaction gibt', () => {
+      const t = skills.find((s) => s.dir === 'board')!.text;
+      expect(t).toMatch(/\*\*Human Interaction:\*\*[^]*?gibt es im Autopilot nicht/);
+    });
+  });
+
+  describe('Regel board.md', () => {
+    it('nennt den Autopilot knapp, mit Schalter und Ausnahme-Label', () => {
+      const t = readFileSync(join(MANIFEST, 'rules', 'board.md'), 'utf8');
+      for (const part of ['Autopilot', 'autopilot.enabled', 'interaktiv', 'Human Interaction', 'nexus:board']) expect(t, part).toContain(part);
     });
   });
 });
