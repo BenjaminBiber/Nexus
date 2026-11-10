@@ -10,7 +10,7 @@
     "response": {
       "code": 0,
       "stderr": "",
-      "stdout": "Aufruf: nexus [options] [command]\n\nNexus: Board, Specs, Worktrees und Sessions für parallele Claude-Sessions\n\nOptionen:\n  --json               Ausgabe als JSON\n  --dir <pfad>         Projektordner (Standard: aktuelles Verzeichnis)\n  -h, --help           Hilfe anzeigen\n\nBefehle:\n  init                 Richtet Nexus im aktuellen Git-Projekt ein (einmal pro\n                       Projekt, wiederholbar) und nennt das zugeordnete Board.\n  board [options]      Ohne Unterbefehl: startet bei Bedarf den Server und\n                       öffnet das Board. Mit Unterbefehl: Board-Datenbank\n                       bedienen.\n  serve [options]      Startet den Server im Vordergrund.\n  spec                 Kommentare zu Spec- und Plan-Dokumenten abarbeiten\n  stop [options]       Beendet den laufenden Nexus-Server (nach einem Update,\n                       damit die neue Version startet).\n  install [options]    Macht den Befehl nexus im normalen Terminal verfügbar\n                       (Kopie unter ~/.nexus, Eintrag im PATH des Benutzers).\n  migrate [options]    Holt die Daten aus dem alten Ordner ~/.harness nach\n                       ~/.nexus. Der alte Ordner bleibt unverändert liegen.\n  hook <ereignis>      Wird von Claude Code aufgerufen (session-start,\n                       user-prompt, notification, stop, subagent-start,\n                       subagent-stop, session-end); liest die Hook-Meldung von\n                       der Standardeingabe.\n  customize [options]  Anpassungen des Clones (custom/) prüfen, kopieren,\n                       zurücksetzen und anwenden\n  help [befehl]        Hilfe zu einem Befehl anzeigen"
+      "stdout": "Aufruf: nexus [options] [command]\n\nNexus: Board, Specs, Worktrees und Sessions für parallele Claude-Sessions\n\nOptionen:\n  --json               Ausgabe als JSON\n  --dir <pfad>         Projektordner (Standard: aktuelles Verzeichnis)\n  -h, --help           Hilfe anzeigen\n\nBefehle:\n  init                 Richtet Nexus im aktuellen Git-Projekt ein (einmal pro\n                       Projekt, wiederholbar) und nennt das zugeordnete Board.\n  board [options]      Ohne Unterbefehl: startet bei Bedarf den Server und\n                       öffnet das Board. Mit Unterbefehl: Board-Datenbank\n                       bedienen.\n  serve [options]      Startet den Server im Vordergrund.\n  spec                 Kommentare zu Spec- und Plan-Dokumenten abarbeiten\n  stop [options]       Beendet den laufenden Nexus-Server (nach einem Update,\n                       damit die neue Version startet).\n  install [options]    Macht den Befehl nexus im normalen Terminal verfügbar\n                       (Kopie unter ~/.nexus, Eintrag im PATH des Benutzers).\n  migrate [options]    Holt die Daten aus dem alten Ordner ~/.harness nach\n                       ~/.nexus. Der alte Ordner bleibt unverändert liegen.\n  hook <ereignis>      Wird von Claude Code aufgerufen (session-start,\n                       user-prompt, notification, stop, subagent-start,\n                       subagent-stop, session-end); liest die Hook-Meldung von\n                       der Standardeingabe.\n  customize [options]  Anpassungen des Clones (custom/) prüfen, kopieren,\n                       zurücksetzen und anwenden\n  theme                Theme-Pakete bauen und verwalten\n  help [befehl]        Hilfe zu einem Befehl anzeigen"
     }
   },
   {
@@ -1149,6 +1149,85 @@
       "code": 0,
       "stderr": "",
       "stdout": "Aufruf: nexus spec resolve [options] <kommentar> <antwort>\n\nMarkiert einen Kommentar als erledigt und speichert eine kurze Antwort.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiel:\n  nexus spec resolve K-1a2b3c4d \"Ziel in Abschnitt 2 präzisiert\""
+    }
+  },
+  {
+    "name": "nexus theme",
+    "request": {
+      "args": [
+        "theme",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: nexus theme [options] [command]\n\nTheme-Pakete bauen und verwalten\n\nOptionen:\n  -h, --help               Hilfe anzeigen\n\nBefehle:\n  pack [options] <ordner>  Prüft einen Theme-Ordner und baut daraus ein\n                           .nexus-Paket (ohne --out: <id>-<version>.nexus im\n                           aktuellen Ordner).\n  install <datei>          Installiert eine .nexus-Datei nach\n                           <NEXUS_HOME>/themes/<id>/ (eine vorhandene gleiche\n                           id wird ersetzt).\n  list                     Listet die installierten Themes (id, Version, Name,\n                           Farbschema).\n  remove <id>              Entfernt ein installiertes Theme.\n  help [befehl]            Hilfe zu einem Befehl anzeigen"
+    }
+  },
+  {
+    "name": "nexus theme install",
+    "request": {
+      "args": [
+        "theme",
+        "install",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: nexus theme install [options] <datei>\n\nInstalliert eine .nexus-Datei nach <NEXUS_HOME>/themes/<id>/ (eine vorhandene\ngleiche id wird ersetzt).\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiele:\n  nexus theme install mein-theme-1.0.0.nexus"
+    }
+  },
+  {
+    "name": "nexus theme list",
+    "request": {
+      "args": [
+        "theme",
+        "list",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: nexus theme list [options]\n\nListet die installierten Themes (id, Version, Name, Farbschema).\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiele:\n  nexus theme list"
+    }
+  },
+  {
+    "name": "nexus theme remove",
+    "request": {
+      "args": [
+        "theme",
+        "remove",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: nexus theme remove [options] <id>\n\nEntfernt ein installiertes Theme.\n\nOptionen:\n  -h, --help  Hilfe anzeigen\n\nBeispiele:\n  nexus theme remove mein-theme"
+    }
+  },
+  {
+    "name": "nexus theme pack",
+    "request": {
+      "args": [
+        "theme",
+        "pack",
+        "--help"
+      ],
+      "cwd": "<HOME>"
+    },
+    "response": {
+      "code": 0,
+      "stderr": "",
+      "stdout": "Aufruf: nexus theme pack [options] <ordner>\n\nPrüft einen Theme-Ordner und baut daraus ein .nexus-Paket (ohne --out:\n<id>-<version>.nexus im aktuellen Ordner).\n\nOptionen:\n  --out <datei>  Zieldatei (Standard: <id>-<version>.nexus im aktuellen Ordner)\n  -h, --help     Hilfe anzeigen\n\nBeispiele:\n  nexus theme pack mein-theme\n  nexus theme pack mein-theme --out dist/mein-theme.nexus"
     }
   },
   {

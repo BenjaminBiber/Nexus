@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+    "paths": {
+      "@nexus/theme-sdk": ["../../packages/theme-sdk/src/index.ts"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}

@@ -2,16 +2,17 @@
 // Liest `apps/desktop/src-tauri/tauri.conf.json` und die Release-Konfig daneben
 // (`tauri.release.conf.json`, die der Workflow über `--config` dazugibt), um zu erkennen, ob der
 // Updater aktiv ist (`bundle.createUpdaterArtifacts`) – nur dann gehören `latest.json` und die
-// `.sig`-Dateien dazu.
+// `.sig`-Dateien dazu. Je Ordner unter `themes/` gehören `<id>-<version>.nexus` und `nexus-themes.json` dazu.
 // Aufruf: node scripts/release/expected-assets.mjs <version> [--check <datei mit Namen je Zeile>]
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assetNames, missingAssets, updaterEnabled } from './lib/ExpectedAssets.mjs';
 
 const HIER = dirname(fileURLToPath(import.meta.url));
 const TAURI_CONF = resolve(HIER, '../../apps/desktop/src-tauri/tauri.conf.json');
 const TAURI_RELEASE_CONF = resolve(HIER, '../../apps/desktop/src-tauri/tauri.release.conf.json');
+const THEMES = resolve(HIER, '../../themes');
 
 // Bricht mit Meldung ab
 function fail(message) {
@@ -34,9 +35,19 @@ function konfig(pfad) {
   return existsSync(pfad) ? JSON.parse(readFileSync(pfad, 'utf8')) : {};
 }
 
+// Manifeste der mitgelieferten Themes (themes/<id>/manifest.json, ohne Punkt- und Unterstrich-Ordner wie build-themes.mjs)
+function themeManifeste() {
+  if (!existsSync(THEMES)) return [];
+  return readdirSync(THEMES, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !/^[._]/.test(entry.name))
+    .map((entry) => join(THEMES, entry.name, 'manifest.json'))
+    .filter((pfad) => existsSync(pfad))
+    .map((pfad) => JSON.parse(readFileSync(pfad, 'utf8')));
+}
+
 const { version, check } = options(process.argv.slice(2));
 const updater = updaterEnabled(konfig(TAURI_CONF), konfig(TAURI_RELEASE_CONF));
-const expected = assetNames(version, { updater });
+const expected = assetNames(version, { updater, themes: themeManifeste() });
 
 if (!check) {
   console.log(expected.join('\n'));

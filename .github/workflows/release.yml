@@ -264,7 +264,7 @@ jobs:
         && needs.version.result == 'success' && needs.build.result == 'success'
         && (needs.ci.result == 'success' || (inputs.skip_ci && needs.ci.result == 'skipped')) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
@@ -272,6 +272,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '26'
+      # Mitgelieferte Themes als Pakete plus Store-Index nexus-themes.json; die Store-URL
+      # …/releases/latest/download/nexus-themes.json zeigt danach auf dieses Release
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.99.1'
+      - uses: Swatinem/rust-cache@v2
+      - name: Theme-Pakete und Store-Index
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm ci
+          cargo build -p nexus-cli --bin nexus
+          NEXUS_BIN="$PWD/target/debug/nexus" npm run build:themes
+          tag="${{ needs.version.outputs.tag }}"
+          node scripts/release/theme-index.mjs dist/themes "https://github.com/${{ github.repository }}/releases/download/$tag" dist/release-themes
+          gh release upload "$tag" dist/release-themes/* --clobber
       - name: Dateien prüfen, Prüfsummen, veröffentlichen
         env:
           GH_TOKEN: ${{ github.token }}

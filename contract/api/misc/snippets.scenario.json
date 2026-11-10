@@ -1,0 +1,60 @@
+{
+  "title": "CSS-Schnipsel anlegen, auflisten, ausschalten, ausliefern, ablehnen und löschen",
+  "steps": [
+    { "name": "ohne Schnipsel", "method": "GET", "path": "/api/snippets" },
+    { "name": "ohne aktive Schnipsel", "method": "GET", "path": "/snippets/active.css" },
+    {
+      "name": "Schnipsel anlegen",
+      "method": "PUT",
+      "path": "/api/snippets/rot",
+      "body": { "name": "Rot", "css": "a { color: red }" }
+    },
+    {
+      "name": "zweiten Schnipsel anlegen",
+      "method": "PUT",
+      "path": "/api/snippets/blau",
+      "body": { "name": "Blau", "css": "b { color: blue }" }
+    },
+    {
+      "name": "Schnipsel ändern",
+      "method": "PUT",
+      "path": "/api/snippets/rot",
+      "body": { "name": "Rot", "css": "a { color: darkred }" }
+    },
+    { "name": "Schnipsel auflisten", "method": "GET", "path": "/api/snippets" },
+    {
+      "name": "Schnipsel ausschalten",
+      "method": "PATCH",
+      "path": "/api/snippets/blau",
+      "body": { "enabled": false }
+    },
+    { "name": "nur aktive ausgeliefert", "method": "GET", "path": "/snippets/active.css" },
+    {
+      "name": "@import abgelehnt",
+      "method": "PUT",
+      "path": "/api/snippets/imp",
+      "body": { "name": "Import", "css": "@import 'x.css';" }
+    },
+    {
+      "name": "externe url abgelehnt",
+      "method": "PUT",
+      "path": "/api/snippets/ext",
+      "body": { "name": "Extern", "css": "a { background: url(https://x.de/a.png) }" }
+    },
+    {
+      "name": "ungültige ID abgelehnt",
+      "method": "PUT",
+      "path": "/api/snippets/Ungueltig",
+      "body": { "name": "x", "css": "a{}" }
+    },
+    {
+      "name": "unbekannten Schnipsel schalten",
+      "method": "PATCH",
+      "path": "/api/snippets/fehlt",
+      "body": { "enabled": true }
+    },
+    { "name": "Schnipsel löschen", "method": "DELETE", "path": "/api/snippets/rot", "body": {} },
+    { "name": "unbekannten Schnipsel löschen", "method": "DELETE", "path": "/api/snippets/rot", "body": {} },
+    { "name": "nach dem Löschen", "method": "GET", "path": "/api/snippets" }
+  ]
+}

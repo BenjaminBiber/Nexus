@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useParams } from 'react-router-dom';
 import { BoardProjectProvider } from '../dbboard/boardProject.js';
 import { LiveProvider } from '../live/LiveProvider.js';
@@ -15,20 +15,23 @@ import { InboxNavLink } from './inbox/InboxNavLink.js';
 import { GlobalSearchButton, OpenSearchContext } from './GlobalSearchButton.js';
 import { SearchDialog } from './SearchDialog.js';
 import { ClaudeUsageMeter } from './ClaudeUsageMeter.js';
-import { GooNav } from './goo/GooNav.js';
 import { useDisplayedTheme } from '../theme/useDisplayedTheme.js';
-import { Win95Frame } from './win95/Win95Frame.js';
+import { DefaultShell } from './DefaultShell.js';
+import { SlotBoundary } from '../theme/SlotBoundary.js';
+import { useSlot } from '../theme/useSlot.js';
+import { NexusThemeHost } from '../theme/ThemeHost.js';
+import { navLabel } from '../theme/navItems.js';
+import type { ShellParts } from '@nexus/theme-sdk';
 
 const LINKS: Array<[string, string, () => ReactNode]> = [
-  ['board', 'Board', BoardIcon],
-  ['dashboard', 'Dashboard', DashboardIcon],
-  ['sessions', 'Sessions', SessionsIcon],
-  ['guide', 'Anleitung', GuideIcon],
+  ['board', navLabel('board'), BoardIcon],
+  ['dashboard', navLabel('dashboard'), DashboardIcon],
+  ['sessions', navLabel('sessions'), SessionsIcon],
+  ['guide', navLabel('guide'), GuideIcon],
 ];
 
-// Rahmen aller Seiten: Seitenleiste mit globaler Suche (auch Strg+K) ganz oben, darunter Board-Auswahl (mit der Verbindung
-// als Punkt), dann die Navigation (zuletzt die Einstellungen) und ganz unten die Claude-Nutzung; Live-Verbindung des Projekts.
-// Im Schema „Windows 95“ dieselben Teile als Desktop mit Fenster, Startmenü und Taskleiste (Win95Frame).
+// Rahmen aller Seiten: Live-Verbindung des Projekts, Suche (auch Strg+K) und das Layout. Das Layout liefert der Slot
+// „Shell“ des angezeigten Themes (z. B. ein Desktop mit Fenstern), sonst DefaultShell mit Seitenleiste.
 export function AppShell() {
   const { pid = '' } = useParams();
   const [searching, setSearching] = useState(false);
@@ -44,69 +47,82 @@ export function AppShell() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
   const openSearch = useCallback(() => setSearching(true), []);
-  // Im Schema „Windows 95“ ordnet sich der Rahmen wie der Desktop an (Symbole, Fenster, Taskleiste)
   const theme = useDisplayedTheme();
-  const link = ([path, label, Icon]: (typeof LINKS)[number]) => (
-    <NavLink key={path} to={`/p/${pid}/${path}`}>
-      <Icon />
-      <span className="nav-label">{label}</span>
-    </NavLink>
-  );
+  const Shell = useSlot('Shell');
+  // Bausteine des Rahmens; einzeln für Themes und gemeinsam für den Host der SDK-Bausteine
+  const parts = useMemo<ShellParts>(() => {
+    const link = ([path, label, Icon]: (typeof LINKS)[number]) => (
+      <NavLink key={path} to={`/p/${pid}/${path}`}>
+        <Icon />
+        <span className="nav-label">{label}</span>
+      </NavLink>
+    );
+    const [board, dashboard, sessions, guide] = LINKS.map(link);
+    return {
+      search: <GlobalSearchButton />,
+      boardSwitcher: <BoardProjectSwitcher pid={pid} status={<ConnectionBadge />} />,
+      usage: <ClaudeUsageMeter />,
+      navItems: {
+        board,
+        inbox: <InboxNavLink key="inbox" pid={pid} />,
+        dashboard,
+        sessions,
+        questions: <DbQuestionsNavLink key="questions" pid={pid} />,
+        docs: <DocsNavLink key="docs" pid={pid} />,
+        guide,
+        settings: (
+          <NavLink key="settings" to={`/p/${pid}/settings`}>
+            <CogIcon />
+            <span className="nav-label">{navLabel('settings')}</span>
+          </NavLink>
+        ),
+      },
+      outlet: <Outlet />,
+      connection: <ConnectionBanner />,
+      status: <ConnectionBadge />,
+    };
+  }, [pid]);
+  const { navItems } = parts;
   const navLinks = (
     <>
-      {LINKS.slice(0, 1).map(link)}
-      <InboxNavLink pid={pid} />
-      {LINKS.slice(1, 3).map(link)}
-      <DbQuestionsNavLink pid={pid} />
-      <DocsNavLink pid={pid} />
-      {LINKS.slice(3).map(link)}
-      <NavLink to={`/p/${pid}/settings`}>
-        <CogIcon />
-        <span className="nav-label">Einstellungen</span>
-      </NavLink>
+      {navItems.board}
+      {navItems.inbox}
+      {navItems.dashboard}
+      {navItems.sessions}
+      {navItems.questions}
+      {navItems.docs}
+      {navItems.guide}
+      {navItems.settings}
     </>
   );
   const content = (
     <div className="shell-content">
       <main className="shell-main">
-        <div className="page connection-slot">
-          <ConnectionBanner />
-        </div>
-        <Outlet />
+        <div className="page connection-slot">{parts.connection}</div>
+        {parts.outlet}
       </main>
     </div>
   );
+  const standard = <DefaultShell pid={pid} nav={navLinks} content={content} parts={parts} />;
 
   return (
     <LiveProvider pid={pid} key={pid}>
       <BoardProjectProvider>
+        <NexusThemeHost pid={pid} parts={parts} openSearch={openSearch}>
         <OpenSearchContext.Provider value={openSearch}>
         <SessionNotifier pid={pid} />
         <SetupPrompts />
-        {theme === 'win95' ? (
-          <Win95Frame pid={pid} nav={navLinks} content={content} />
+        {Shell ? (
+          <SlotBoundary fallback={standard} resetKey={theme}>
+            <Shell pid={pid} nav={navLinks} content={content} parts={parts} />
+          </SlotBoundary>
         ) : (
-          <>
-            <aside className="shell-sidebar">
-              <div className="shell-dock">
-                <GlobalSearchButton />
-                <div className="dock-row">
-                  <BoardProjectSwitcher pid={pid} status={<ConnectionBadge />} />
-                </div>
-              </div>
-              <GooNav className="nav" aria-label="Hauptnavigation">
-                {navLinks}
-              </GooNav>
-              <div className="usage-dock">
-                <ClaudeUsageMeter />
-              </div>
-            </aside>
-            {content}
-          </>
+          standard
         )}
         <DocTicketJobsIndicator />
         {searching && <SearchDialog pid={pid} onClose={() => setSearching(false)} />}
         </OpenSearchContext.Provider>
+        </NexusThemeHost>
       </BoardProjectProvider>
     </LiveProvider>
   );

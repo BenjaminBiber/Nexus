@@ -1,0 +1,159 @@
+[
+  {
+    "name": "Anfangs ist kein Theme installiert",
+    "request": {
+      "method": "GET",
+      "path": "/api/themes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "Gültiges Paket installieren (manifest.json und theme.css)",
+    "request": {
+      "body": {
+        "data": "UEsDBBQAAAAIAHRbaV0tyCsfTwAAAGcAAAANAAAAbWFuaWZlc3QuanNvbqtWykxRslLKS0zOKFHSAdK5qUCuH5RbllpUnJmfBxQx1DPQMwCKJJaWZOQXAQUcUxKB3OKU7DC4mjhDsJLk/Jz8ouDkjFSwUSmJRdlKtQBQSwMEFAAAAAgAdFtpXVrQd9YKAAAACAAAAAkAAAB0aGVtZS5jc3OzKsrPL1GorgUAUEsBAhQAFAAAAAgAdFtpXS3IKx9PAAAAZwAAAA0AAAAAAAAAAAAAAAAAAAAAAG1hbmlmZXN0Lmpzb25QSwECFAAUAAAACAB0W2ldWtB31goAAAAIAAAACQAAAAAAAAAAAAAAAAB6AAAAdGhlbWUuY3NzUEsFBgAAAAACAAIAcgAAAKsAAAAAAA=="
+      },
+      "method": "POST",
+      "path": "/api/themes/install"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "author": "Ada",
+        "colorScheme": "dark",
+        "id": "nacht",
+        "name": "Nacht",
+        "permissions": {
+          "network": []
+        },
+        "preview": null,
+        "sdkVersion": "^1.0",
+        "slots": [],
+        "startColor": null,
+        "version": "1.0.0"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Die Liste enthält das installierte Theme",
+    "request": {
+      "method": "GET",
+      "path": "/api/themes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "author": "Ada",
+          "colorScheme": "dark",
+          "id": "nacht",
+          "name": "Nacht",
+          "permissions": {
+            "network": []
+          },
+          "preview": null,
+          "sdkVersion": "^1.0",
+          "slots": [],
+          "startColor": null,
+          "version": "1.0.0"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "Ein Paket, das kein ZIP ist, wird abgelehnt",
+    "request": {
+      "body": {
+        "data": "a2VpbiB6aXA="
+      },
+      "method": "POST",
+      "path": "/api/themes/install"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "theme-package-invalid",
+        "message": "Das Paket ist kein gültiges ZIP-Archiv: invalid Zip archive: Could not find EOCD"
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Kaputtes Base64 ist eine ungültige Anfrage",
+    "request": {
+      "body": {
+        "data": "%%%"
+      },
+      "method": "POST",
+      "path": "/api/themes/install"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "bad-request",
+        "message": "Das Feld data ist kein gültiges Base64."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Theme entfernen",
+    "request": {
+      "method": "DELETE",
+      "path": "/api/themes/nacht"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "Unbekanntes Theme entfernen",
+    "request": {
+      "method": "DELETE",
+      "path": "/api/themes/nacht"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "theme-not-found",
+        "message": "Das Theme nacht ist nicht installiert."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "Ungültige Theme-ID",
+    "request": {
+      "method": "DELETE",
+      "path": "/api/themes/A"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "theme-id-invalid",
+        "message": "Ungültige Theme-ID: A"
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Nach dem Entfernen ist die Liste wieder leer",
+    "request": {
+      "method": "GET",
+      "path": "/api/themes"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  }
+]

@@ -3,6 +3,8 @@ import { useApi } from '../api/ApiContext.js';
 import type { BoardConfigInput } from '../api/types.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { Notice } from './settings/Notice.js';
+import { Button } from './ui/Button.js';
+import { Input } from './ui/Input.js';
 import { SettingsFooter, SettingsPanel } from './settings/SettingsPanel.js';
 import { SettingRow, SettingsSection } from './settings/SettingRow.js';
 
@@ -64,23 +66,23 @@ export function BoardConfigPanel() {
         <SettingsSection title="Verbindung" description={`Gespeichert nur auf diesem Rechner${data ? ` (${data.file})` : ''}.`}>
           <SettingRow label="Anbieter" hint={sqlite ? 'Lokale SQLite-Datei für die Boards dieses Rechners.' : 'Gemeinsamer SQL Server für alle Boards des Teams.'} group>
             <div className="provider-switch" role="group" aria-label="Datenbank-Anbieter">
-              <button type="button" className={`btn small${!sqlite ? ' primary' : ''}`} aria-pressed={!sqlite} onClick={() => change({ provider: 'mssql' })}>SQL Server</button>
-              <button type="button" className={`btn small${sqlite ? ' primary' : ''}`} aria-pressed={sqlite} onClick={() => change({ provider: 'sqlite' })}>SQLite (lokal)</button>
+              <Button variant={!sqlite ? 'primary' : 'secondary'} className="small" aria-pressed={!sqlite} onClick={() => change({ provider: 'mssql' })}>SQL Server</Button>
+              <Button variant={sqlite ? 'primary' : 'secondary'} className="small" aria-pressed={sqlite} onClick={() => change({ provider: 'sqlite' })}>SQLite (lokal)</Button>
             </div>
           </SettingRow>
           {sqlite ? (
             <>
               <Notice tone="warn" role="note">Nur dieser Rechner – nicht für das Team, nicht auf Netzlaufwerk.</Notice>
-              <SettingRow label="SQLite-Datei" wide><input value={form.dbFile} onChange={(e) => change({ dbFile: e.target.value })} /></SettingRow>
+              <SettingRow label="SQLite-Datei" wide><Input value={form.dbFile} onChange={(dbFile) => change({ dbFile })} /></SettingRow>
             </>
           ) : (
             <>
-              <SettingRow label="Server"><input value={form.server} onChange={(e) => change({ server: e.target.value })} /></SettingRow>
-              <SettingRow label="Port"><input className="short" type="number" value={form.port} onChange={(e) => change({ port: Number(e.target.value) })} /></SettingRow>
-              <SettingRow label="Datenbank"><input value={form.database} onChange={(e) => change({ database: e.target.value })} /></SettingRow>
-              <SettingRow label="Benutzer"><input value={form.user} onChange={(e) => change({ user: e.target.value })} /></SettingRow>
+              <SettingRow label="Server"><Input value={form.server} onChange={(server) => change({ server })} /></SettingRow>
+              <SettingRow label="Port"><Input className="short" type="number" value={String(form.port)} onChange={(port) => change({ port: Number(port) })} /></SettingRow>
+              <SettingRow label="Datenbank"><Input value={form.database} onChange={(database) => change({ database })} /></SettingRow>
+              <SettingRow label="Benutzer"><Input value={form.user} onChange={(user) => change({ user })} /></SettingRow>
               <SettingRow label="Passwort" hint={data?.hasPassword ? 'Leer lassen, um das gespeicherte zu behalten.' : undefined}>
-                <input type="password" value={password} placeholder={data?.hasPassword ? '(gespeichert)' : ''} onChange={(e) => setPassword(e.target.value)} />
+                <Input type="password" value={password} placeholder={data?.hasPassword ? '(gespeichert)' : ''} onChange={setPassword} />
               </SettingRow>
               <SettingRow label="Verschlüsselt verbinden" info="Verschlüsselt die Verbindung zum SQL Server (TLS).">
                 <input type="checkbox" checked={form.encrypt} onChange={(e) => change({ encrypt: e.target.checked })} />
@@ -94,15 +96,15 @@ export function BoardConfigPanel() {
       )}
       {form && (
         <SettingsSection title="Du auf dem Board" description="So erscheinst du an Tickets und Kommentaren.">
-          <SettingRow label="Dein Name"><input value={form.userName} onChange={(e) => change({ userName: e.target.value })} /></SettingRow>
+          <SettingRow label="Dein Name"><Input value={form.userName} onChange={(userName) => change({ userName })} /></SettingRow>
           <SettingRow label="Deine Benutzer-ID (GUID)" info="Deine Kennung in der Board-Datenbank; deine Boards gehören dieser ID. Auf jedem Rechner dieselbe ID eintragen.">
-            <input className="mono" value={form.userId} onChange={(e) => change({ userId: e.target.value })} />
+            <Input className="mono" value={form.userId} onChange={(userId) => change({ userId })} />
           </SettingRow>
         </SettingsSection>
       )}
       <SettingsFooter state={info ? <Notice tone="ok">{info}</Notice> : error ? <Notice tone="error">{error}</Notice> : 'Mit „Verbindung testen“ prüfen, dann speichern.'}>
-        <button type="button" className="btn" disabled={!form} onClick={() => void test()}>Verbindung testen</button>
-        <button type="button" className="btn primary" disabled={!form} onClick={() => void save()}>Speichern</button>
+        <Button disabled={!form} onClick={() => void test()}>Verbindung testen</Button>
+        <Button variant="primary" disabled={!form} onClick={() => void save()}>Speichern</Button>
       </SettingsFooter>
     </SettingsPanel>
   );

@@ -1,16 +1,19 @@
-import { useDisplayedTheme } from '../theme/useDisplayedTheme.js';
-import { DiskPie } from './win95/DiskPie.js';
+import { useSlotted } from '../theme/useSlotted.js';
 
 // Fortschritt als Ring mit Prozentzahl und „x / y Schritte erledigt“ daneben (Seitenleiste des Ticket-Panels).
-// `caption` ersetzt „Schritte erledigt“, etwa für die Tickets eines Dokuments. Im Schema „Windows 95“ die Belegungs-Torte.
+// `caption` ersetzt „Schritte erledigt“, etwa für die Tickets eines Dokuments. Der Slot „Progress“ des Themes darf ihn ersetzen.
 export function ProgressRing({ done, total, label = 'Fortschritt der Schritte', caption = 'Schritte erledigt' }: {
   done: number;
   total: number;
   label?: string;
   caption?: string;
 }) {
-  const theme = useDisplayedTheme();
-  if (theme === 'win95') return <DiskPie done={done} total={total} label={label} />;
+  const standard = <StandardRing done={done} total={total} label={label} caption={caption} />;
+  return useSlotted('Progress', { done, total, label, caption }, standard).node;
+}
+
+// Ring mit Prozentzahl und Zähler
+function StandardRing({ done, total, label, caption }: { done: number; total: number; label: string; caption: string }) {
   const percent = total === 0 ? 0 : Math.round((done / total) * 100);
   const radius = 34;
   const circumference = 2 * Math.PI * radius;

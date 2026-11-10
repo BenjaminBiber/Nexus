@@ -26,29 +26,8 @@ describe('Farbschema', () => {
     expect(colors.filter((name) => !dark.has(name))).toEqual([]);
   });
 
-  it('ändert im Schema „Windows 95“ nur Variablen, die das helle Schema kennt', () => {
-    const css = styles('variables.css');
-    const light = variables(css, ':root {');
-    const win95 = variables(css, ":root[data-theme='win95'] {");
-    expect(win95.get('--w95-desktop')).toBe('#008080');
-    // --w95-* gibt es nur im Windows-95-Rahmen
-    expect([...win95.keys()].filter((name) => !light.has(name) && !name.startsWith('--w95-'))).toEqual([]);
-  });
-
-  it('ändert in den Schemata „Signal“ und „Pastell“ nur Variablen, die das helle Schema kennt', () => {
-    const css = styles('variables.css');
-    const light = variables(css, ':root {');
-    for (const theme of ['signal', 'pastel']) {
-      const own = variables(css, `:root[data-theme='${theme}'] {`);
-      expect(own.size, theme).toBeGreaterThan(20);
-      // --side-* gibt es nur in der dunklen Seitenleiste von „Signal“, --paper-* nur im Notizbuch-Stil von „Pastell“ (themes.css)
-      const ownPrefix = theme === 'signal' ? '--side-' : '--paper-';
-      expect([...own.keys()].filter((name) => !light.has(name) && !name.startsWith(ownPrefix)), theme).toEqual([]);
-    }
-  });
-
   it('verwendet außerhalb von variables.css keine fest codierten Farben', () => {
-    for (const name of ['base.css', 'questions.css', 'dbboard.css', 'dashboard.css', 'inbox.css', 'sessions.css', 'themes.css', 'win95.css']) {
+    for (const name of ['base.css', 'questions.css', 'dbboard.css', 'dashboard.css', 'inbox.css', 'sessions.css']) {
       expect(styles(name).split('\n').filter((line) => COLOR.test(line)), name).toEqual([]);
     }
   });

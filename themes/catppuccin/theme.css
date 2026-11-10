@@ -1,0 +1,129 @@
+/* „Catppuccin“: dunkles Schema in der Palette Catppuccin Mocha (Crust, Mantle, Base als Flächen, Mauve als Akzent, Lavender für
+   Hauptknöpfe). Getönte Flächen sind die jeweilige Palettenfarbe, anteilig über Base gemischt. Setzt wie das dunkle Schema jede
+   Farbvariable. Übernommen aus AI Harness. */
+:root[data-theme='catppuccin'] {
+  color-scheme: dark;
+  --bg: #11111b;
+  --surface: #1e1e2e;
+  --surface-alt: #181825;
+  --sidebar-bg: #181825;
+  --nav-active-bg: #313244;
+  --line: #313244;
+  --line-input: #45475a;
+  --line-soft: #282839;
+  --line-strong: #6c7086;
+  --line-dashed: #45475a;
+  --column-bg: #181825;
+  --column-locked-a: #181825;
+  --column-locked-b: #1e1e2e;
+  --text: #cdd6f4;
+  --text-soft: #bac2de;
+  --muted: #9399b2;
+  --accent: #cba6f7;
+  --accent-hover: #dbc0f9;
+  --accent-soft: #3d3652;
+  --accent-soft-hover: #494060;
+  --on-accent: #11111b;
+  --primary: #b4befe;
+  --primary-hover: #cdd6f4;
+  --on-primary: #11111b;
+  --chip-on-bg: #b4befe;
+  --chip-on-fg: #11111b;
+  --code-bg: #11111b;
+  --code-fg: #cdd6f4;
+  --code-muted: #7f849c;
+  --code-btn-bg: #181825;
+  --code-btn-line: #313244;
+  --status-bg: #393b53;
+  --status-fg: #b4befe;
+  --running-fg: #a6e3a1;
+  --running-bg: #2e363c;
+  --waiting-fg: #f9e2af;
+  --waiting-bg: #38363d;
+  --waiting-line: #6b635b;
+  --idle-fg: #bac2de;
+  --idle-bg: #313244;
+  --blocked-fg: #f38ba8;
+  --blocked-bg: #382b3d;
+  --orphan-fg: #cba6f7;
+  --orphan-bg: #332e46;
+  --unread-fg: #b4befe;
+  --unread-bg: #393b53;
+  --unread-row-bg: #2a2b3f;
+  --note-bg: #38363d;
+  --note-line: #6b635b;
+  --note-fg: #f9e2af;
+  --ok: #a6e3a1;
+  --ok-fg: #a6e3a1;
+  --ok-ring: #364143;
+  --danger: #f38ba8;
+  --warn: #fab387;
+  --usage-ok: #89b4fa;
+  --usage-warn: #f9e2af;
+  --usage-crit: #f5c2e7;
+  --row-waiting-bg: #302e38;
+  --quote-line: #cba6f7;
+  --mark: #6b635b;
+  --mark-comment: #444662;
+  --mark-comment-hover: #535677;
+  --tag-add-line: #62668c;
+  --connection-line: #694459;
+  --connection-fg: #f38ba8;
+  --error-bg: #2f2738;
+  --answered-bg: #2e363c;
+  --answered-line: #4e6356;
+  --research-bg: #2b3545;
+  --research-fg: #89dceb;
+  --diff-add-bg: #2e363c;
+  --diff-add-fg: #a6e3a1;
+  --diff-del-bg: #382b3d;
+  --diff-del-fg: #f38ba8;
+  --diff-hunk-fg: #cba6f7;
+  --test-ok: #a6e3a1;
+  --test-fail: #f38ba8;
+  --status-backlog: #7f849c;
+  --status-waiting: #f9e2af;
+  --status-in-planning: #cba6f7;
+  --status-planned: #89b4fa;
+  --status-in-progress: #94e2d5;
+  --status-blocked: #f38ba8;
+  --status-done: #a6e3a1;
+  --status-not-needed: #585b70;
+  --graph-edge: #6c7086;
+  --graph-critical: #f38ba8;
+  --graph-upstream: #89b4fa;
+  --graph-downstream: #cba6f7;
+  --chart-done: #a6e3a1;
+  --chart-fail: #f38ba8;
+  --chart-bar: #cba6f7;
+  --chart-track: #313244;
+  --chart-grid: #313244;
+  --chart-axis: #9399b2;
+  --chart-other: #585b70;
+  --chart-escalated: #fab387;
+  --reason-max-turns: #f38ba8;
+  --reason-timeout: #fab387;
+  --reason-context: #f5c2e7;
+  --reason-exit-code: #cba6f7;
+  --reason-claude-error: #89b4fa;
+  --reason-no-outcome: #94e2d5;
+  --reason-rest: #7f849c;
+  --urgent-row-bg: #2f2738;
+  --shadow-faint: rgba(17, 17, 27, 0.3);
+  --shadow-mid: rgba(17, 17, 27, 0.4);
+  --shadow-soft: rgba(17, 17, 27, 0.35);
+  --shadow-tab: rgba(17, 17, 27, 0.5);
+  --shadow-strong: rgba(17, 17, 27, 0.55);
+  --backdrop: rgba(17, 17, 27, 0.6);
+  --sheet-shadow: rgba(17, 17, 27, 0.5);
+  --picker-shadow: rgba(17, 17, 27, 0.45);
+  --logo-plate: #ffffff;
+  --usage-over: #fab387;
+}
+
+/* Dokumentbaum: Symbole in Blau (Dokument) und Mauve (Glossar) */
+:root[data-theme='catppuccin'] .doc-tree-icon.is-doc { color: #89b4fa; }
+:root[data-theme='catppuccin'] .doc-tree-icon.is-glossary { color: #cba6f7; }
+
+/* Startanimation: dunkles Logo auf dunklem Grund umkehren wie im dunklen Schema */
+:root[data-theme='catppuccin'] .loader-n { filter: invert(1); }

@@ -1,6 +1,7 @@
 import type { DbColumnId, DbStatus } from './dbTypes.js';
 import type { WorkflowPhase } from './generated/workflow.js';
 import type { SessionClient } from './sessionDetailTypes.js';
+import type { ThemeManifest } from './generated/themes.js';
 // Antwortformate des Servers
 
 export interface ProjectDto {
@@ -275,7 +276,83 @@ export interface SettingsDto { project: { id: string; name: string; path: string
 
 export type NotificationMode = 'off' | 'browser' | 'windows';
 
-export type ThemeMode = 'system' | 'light' | 'dark' | 'signal' | 'pastel' | 'win95';
+/** Eingebaute Themes in fester Reihenfolge (wie `BUILTIN_THEME_IDS` in Rust) */
+export const BUILTIN_THEME_IDS = ['system', 'light', 'dark'] as const;
+export type BuiltinThemeId = (typeof BUILTIN_THEME_IDS)[number];
+
+/** Gewähltes Theme als ID: eingebaut oder installiert (`~/.nexus/themes/<id>/`); eine unbekannte ID gilt als „system“ */
+export type ThemeMode = string;
+
+/** CSS-Schnipsel des Nutzers (GET/PUT /api/snippets) */
+export interface SnippetDto {
+  id: string;
+  name: string;
+  css: string;
+  enabled: boolean;
+  order: number;
+  updatedAt: string;
+}
+
+/** Vom Nutzer eingetragenes Store-Repo (GET/POST /api/themes/store/repos) */
+export interface StoreRepoDto {
+  id: string;
+  url: string;
+  addedAt: string;
+}
+
+/** Eintrag im Store-Index mit seinem Repo (GET /api/themes/store/index) */
+export interface StoreIndexEntryDto {
+  repoId: string;
+  repoUrl: string;
+  id: string;
+  name: string;
+  version: string;
+  sdkVersion: string;
+  downloadUrl: string;
+  sha256: string;
+  preview?: string;
+  description?: string;
+  signature?: string;
+  compatible: boolean;
+}
+
+/** Ladeergebnis je Repo; bei Fehler steht die Meldung des Servers in error */
+export interface StoreIndexRepoDto {
+  id: string;
+  url: string;
+  ok: boolean;
+  entryCount: number;
+  skipped: unknown[];
+  error?: { code: string; message: string };
+}
+
+export interface StoreIndexDto {
+  entries: StoreIndexEntryDto[];
+  repos: StoreIndexRepoDto[];
+}
+
+/** Antwort von POST /api/themes/store/install (bei update zusätzlich previousVersion) */
+export interface StoreInstallResultDto {
+  manifest: ThemeManifest;
+  verified: boolean;
+  repoId: string;
+  sha256: string;
+  previousVersion?: string;
+}
+
+export interface StoreUpdateDto {
+  id: string;
+  name: string;
+  repoId: string;
+  installedVersion: string;
+  availableVersion: string;
+}
+
+/** GET /api/themes/store/updates */
+export interface StoreUpdatesDto {
+  updates: StoreUpdateDto[];
+  errors: Array<{ repoId: string; code: string; message: string }>;
+}
 
 /** Setup-Dialoge, die nicht mehr kommen sollen („Nicht mehr fragen“) */
 export interface SetupPromptsDto {

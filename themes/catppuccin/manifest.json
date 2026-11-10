@@ -1,0 +1,12 @@
+{
+  "id": "catppuccin",
+  "name": "Catppuccin",
+  "version": "1.0.0",
+  "author": "Nexus",
+  "sdkVersion": "^1.1",
+  "colorScheme": "dark",
+  "startColor": "#11111b",
+  "preview": "assets/preview.png",
+  "slots": [],
+  "permissions": { "network": [] }
+}

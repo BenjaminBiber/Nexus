@@ -64,6 +64,8 @@ impl ErrorMapper {
             || code == "doc-changed"
             || code == "setup-busy"
             || code == "plugin-not-bundled"
+            // Ein Store-Repo mit derselben Adresse ist schon eingetragen
+            || code == "store-repo-exists"
             // Code und Testnachricht brauchen einen laufenden Bot
             || code == "telegram-not-running"
         {
@@ -74,8 +76,44 @@ impl ErrorMapper {
             return StatusCode::BAD_REQUEST;
         }
         // Zeilenbereich passt nicht zum Dokument: die Anfrage selbst ist falsch gebaut
-        if code == "doc-range-invalid" || code == "bad-request" {
+        // Eine ungültige Theme-ID kann nie ein Theme treffen: die Adresse ist falsch gebaut
+        // Schnipsel: ungültige ID, CSS-Verstoß oder zu groß
+        // Theme-Einstellungen: ungültige ID, Schlüssel oder Werte
+        if code == "doc-range-invalid"
+            || code == "bad-request"
+            || code == "theme-id-invalid"
+            || code == "snippet-invalid"
+            || code == "theme-settings-invalid"
+            // Store-Repo: Adresse ungültig oder zu viele Repos, Schlüssel ungültig
+            || code == "store-repo-invalid"
+            || code == "store-repo-key-invalid"
+        {
             return StatusCode::BAD_REQUEST;
+        }
+        // Store-Installation: Eintrag passt nicht zur SDK-Version
+        if code == "store-entry-incompatible" {
+            return StatusCode::CONFLICT;
+        }
+        // Store-Update: Theme nicht installiert, nicht neuer oder Bestätigung fehlt
+        if code == "store-update-not-installed" {
+            return StatusCode::NOT_FOUND;
+        }
+        if code == "store-update-not-newer" || code == "store-update-confirmation-required" {
+            return StatusCode::CONFLICT;
+        }
+        // Store-Installation: Index oder Paket nicht ladbar, zu langsam, zu groß
+        if code == "store-download-timeout" || code == "store-index-timeout" {
+            return StatusCode::GATEWAY_TIMEOUT;
+        }
+        if code == "store-download-too-large" {
+            return StatusCode::PAYLOAD_TOO_LARGE;
+        }
+        if code.starts_with("store-index-")
+            || code == "store-download-unreachable"
+            || code == "store-download-http"
+            || code == "store-download-url-invalid"
+        {
+            return StatusCode::BAD_GATEWAY;
         }
         // Spracherkennung ist nicht eingerichtet: nicht die Schuld der Anfrage, aber auch
         // nichts, was der Server reparieren kann
@@ -84,6 +122,22 @@ impl ErrorMapper {
         }
         // Der fremde Erkennungsdienst hat nicht oder falsch geantwortet
         if code == "speech-failed" {
+            return StatusCode::BAD_GATEWAY;
+        }
+        // Asset-Proxy der Themes: Host nicht freigegeben, zu groß, Upstream/Prüfsumme falsch
+        if code == "theme_fetch_forbidden" {
+            return StatusCode::FORBIDDEN;
+        }
+        if code == "theme_fetch_entry_not_found" {
+            return StatusCode::NOT_FOUND;
+        }
+        if code == "theme_fetch_not_archive" {
+            return StatusCode::BAD_GATEWAY;
+        }
+        if code == "theme_fetch_too_large" {
+            return StatusCode::PAYLOAD_TOO_LARGE;
+        }
+        if code == "theme_fetch_checksum" || code == "theme_fetch_upstream" {
             return StatusCode::BAD_GATEWAY;
         }
         if UNAVAILABLE.contains(&code) {

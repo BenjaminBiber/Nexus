@@ -11,7 +11,8 @@ chrono = { workspace = true }
 getrandom = { workspace = true }
 indexmap = { workspace = true }
 regex = { workspace = true }
-serde = { workspace = true }
+semver = { workspace = true }
+serde ={ workspace = true }
 # „preserve_order“ für die rohe Übersicht von `OverviewFile::read_value`: `GET
 # /api/customizations` gibt unbekannte Felder und ihre Reihenfolge aus der Datei unverändert
 # weiter, nur ohne `diff`.
@@ -22,12 +23,22 @@ sha2 = { workspace = true }
 # Temporäre Ordner für den Vergleich der Basis und für die Typprüfung eines eigenen Workflows
 tempfile = { workspace = true }
 thiserror = { workspace = true }
+# Entpacken der Theme-Pakete (`.nexus`)
+zip = { workspace = true }
 tokio = { workspace = true }
+# Adressen der Store-Repos prüfen
+url = { workspace = true }
 ts-rs = { workspace = true }
+# Optionale Signatur der Theme-Pakete aus dem Store prüfen
+minisign-verify = { workspace = true }
+# Nur mit `testing`: Testsignaturen für Store-Pakete erzeugen
+ed25519-dalek = { workspace = true, optional = true }
+blake2 = { workspace = true, optional = true }
+base64 = { workspace = true, optional = true }
 
 # Die Vertrags-Makros und die Fixtures für andere Crates; nur für Tests gedacht.
 [features]
-testing = []
+testing = ["dep:ed25519-dalek", "dep:blake2", "dep:base64"]
 
 # Prüft, ob ein fremder Prozess noch läuft (verwaiste Sperrdatei), ohne eigenes `unsafe`
 [target.'cfg(unix)'.dependencies]
@@ -41,6 +52,9 @@ win32job = { workspace = true }
 [dev-dependencies]
 tempfile = { workspace = true }
 tokio = { workspace = true }
+ed25519-dalek = { workspace = true }
+blake2 = { workspace = true }
+base64 = { workspace = true }
 
 # Die Verträge laufen gegen die Speicher-Datenbank; sie brauchen das Merkmal `testing`.
 [[test]]

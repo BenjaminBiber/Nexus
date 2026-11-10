@@ -4,7 +4,7 @@ pub mod user_settings;
 pub mod user_settings_store;
 
 pub use user_settings::{
-    NotificationMode, SetupPrompts, ThemeMode, UserSettings, DEFAULT_NTFY_SERVER,
-    NOTIFICATION_MODES, NTFY_TOPIC_PATTERN, THEME_MODES,
+    known_theme, NotificationMode, SetupPrompts, ThemeMode, UserSettings, BUILTIN_THEME_IDS,
+    DEFAULT_NTFY_SERVER, NOTIFICATION_MODES, NTFY_TOPIC_PATTERN,
 };
 pub use user_settings_store::UserSettingsStore;

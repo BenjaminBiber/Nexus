@@ -19,8 +19,6 @@ import './styles/dashboard.css';
 import './styles/inbox.css';
 import './styles/settings.css';
 import './styles/sessions.css';
-import './styles/themes.css';
-import './styles/win95.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -29,18 +27,25 @@ import { ApiProvider } from './api/ApiContext.js';
 import { nexusBridge } from './api/nexusBridge.js';
 import { App } from './App.js';
 import { PlatformProvider } from './platform/PlatformContext.js';
+import { loadActiveThemeModule } from './theme/loadThemeModule.js';
 
 // In der Desktop-App stehen Serveradresse und Start-Token im Fenster; im Browser nicht
 const bridge = nexusBridge();
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ApiProvider api={new ApiClient(bridge?.base ?? '', bridge?.token)}>
-      <PlatformProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </PlatformProvider>
-    </ApiProvider>
-  </StrictMode>,
-);
+// Vor dem ersten Rendern die main.js des aktiven Themes laden (höchstens 3 s, Fehler → Standard)
+async function start() {
+  await loadActiveThemeModule({ base: bridge?.base ?? '' }).catch(() => undefined);
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <ApiProvider api={new ApiClient(bridge?.base ?? '', bridge?.token)}>
+        <PlatformProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </PlatformProvider>
+      </ApiProvider>
+    </StrictMode>,
+  );
+}
+
+void start();

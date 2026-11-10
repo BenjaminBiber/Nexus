@@ -1,0 +1,17 @@
+[
+  {
+    "name": "ohne Repos",
+    "request": {
+      "method": "GET",
+      "path": "/api/themes/store/index"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "entries": [],
+        "repos": []
+      },
+      "status": 200
+    }
+  }
+]

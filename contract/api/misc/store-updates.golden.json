@@ -1,0 +1,54 @@
+[
+  {
+    "name": "Updates ohne Repos",
+    "request": {
+      "method": "GET",
+      "path": "/api/themes/store/updates"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "errors": [],
+        "updates": []
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Update für nicht installiertes Theme",
+    "request": {
+      "body": {
+        "id": "ozean",
+        "repoId": "unbekannt"
+      },
+      "method": "POST",
+      "path": "/api/themes/store/update"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "store-update-not-installed",
+        "message": "Das Theme ozean ist nicht installiert."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "fehlende Felder",
+    "request": {
+      "body": {
+        "repoId": "unbekannt"
+      },
+      "method": "POST",
+      "path": "/api/themes/store/update"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "bad-request",
+        "message": "id muss ein Text sein."
+      },
+      "status": 400
+    }
+  }
+]

@@ -228,6 +228,22 @@ fn hilfe_von_spec_und_stop_wie_aufgezeichnet() {
 }
 
 #[test]
+fn hilfe_von_nexus_und_theme_wie_aufgezeichnet() {
+    let mut root = nexus_cli::cli::help_tree();
+    root.build();
+    assert_eq!(gerendert("nexus", root), golden("nexus"));
+    for pfad in [
+        vec!["theme"],
+        vec!["theme", "pack"],
+        vec!["theme", "install"],
+        vec!["theme", "list"],
+        vec!["theme", "remove"],
+    ] {
+        wie_aufgezeichnet(&pfad);
+    }
+}
+
+#[test]
 fn hilfe_der_fragenbefehle_wie_aufgezeichnet() {
     // Die Blätter aus `LEAVES` zu `board question`; `research-start` kommt aus diesem Ticket
     for pfad in [

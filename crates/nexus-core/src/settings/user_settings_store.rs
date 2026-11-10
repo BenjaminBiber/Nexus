@@ -8,8 +8,8 @@ use crate::error::{Error, Result};
 use crate::locking::AtomicWriter;
 use crate::registry::HarnessHome;
 use crate::settings::user_settings::{
-    NotificationMode, SetupPrompts, ThemeMode, UserSettings, DEFAULT_NTFY_SERVER,
-    NOTIFICATION_MODES, NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN, THEME_MODES,
+    known_theme, NotificationMode, SetupPrompts, ThemeMode, UserSettings, DEFAULT_NTFY_SERVER,
+    NOTIFICATION_MODES, NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN,
 };
 
 /// Liest und schreibt `settings.json`.
@@ -38,7 +38,7 @@ impl UserSettingsStore {
             .ok()
             .and_then(|text| serde_json::from_str::<Value>(&text).ok())
         {
-            Some(raw) => normalize(&raw),
+            Some(raw) => normalize(&raw, &self.home),
             None => UserSettings::default(),
         }
     }
@@ -53,7 +53,7 @@ impl UserSettingsStore {
 }
 
 /// Übernimmt nur gültige Werte; der frühere Schalter `notifyOnWaiting` wird zu „browser“
-fn normalize(raw: &Value) -> UserSettings {
+fn normalize(raw: &Value, home: &HarnessHome) -> UserSettings {
     let legacy = if is_true(raw, "notifyOnWaiting") {
         NotificationMode::Browser
     } else {
@@ -63,10 +63,12 @@ fn normalize(raw: &Value) -> UserSettings {
         .into_iter()
         .find(|mode| raw.get("notifications").and_then(Value::as_str) == Some(mode.as_str()))
         .unwrap_or(legacy);
-    let theme = THEME_MODES
-        .into_iter()
-        .find(|theme| raw.get("theme").and_then(Value::as_str) == Some(theme.as_str()))
-        .unwrap_or(ThemeMode::System);
+    // Eingebaut oder installiert; unbekannte oder entfernte Themes ergeben „system“
+    let theme = raw
+        .get("theme")
+        .and_then(Value::as_str)
+        .filter(|id| known_theme(home, id))
+        .map_or_else(ThemeMode::system, ThemeMode::from);
     UserSettings {
         notifications,
         hero_images: is_true(raw, "heroImages"),
@@ -127,6 +129,7 @@ fn text(raw: &Value, key: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::settings::BUILTIN_THEME_IDS;
 
     /// Benutzerordner und Einstellungen darin
     fn store() -> (tempfile::TempDir, UserSettingsStore) {
@@ -155,7 +158,7 @@ mod tests {
         let settings = UserSettings {
             notifications: NotificationMode::Windows,
             hero_images: true,
-            theme: ThemeMode::Dark,
+            theme: ThemeMode::from("dark"),
             claude_usage: true,
             compact_cards: true,
             hide_not_needed: true,
@@ -221,7 +224,62 @@ mod tests {
             r#"{"notifications":"off","heroImages":false,"theme":"lila"}"#,
         );
 
-        assert_eq!(store.read().theme, ThemeMode::System);
+        assert_eq!(store.read().theme, ThemeMode::system());
+    }
+
+    #[test]
+    fn liest_die_eingebauten_themes_unverandert() {
+        let (dir, store) = store();
+        for id in BUILTIN_THEME_IDS {
+            write_raw(&dir, &format!(r#"{{"theme":"{id}"}}"#));
+            assert_eq!(store.read().theme.as_str(), id);
+        }
+    }
+
+    #[test]
+    fn ersetzt_ein_theme_ohne_text_durch_system() {
+        let (dir, store) = store();
+        write_raw(&dir, r#"{"theme":5}"#);
+
+        assert_eq!(store.read().theme, ThemeMode::system());
+    }
+
+    #[test]
+    fn behalt_ein_installiertes_theme() {
+        let (dir, store) = store();
+        let theme_dir = dir.path().join("themes").join("ocean");
+        fs::create_dir_all(&theme_dir).unwrap();
+        fs::write(theme_dir.join("manifest.json"), r#"{"id":"ocean"}"#).unwrap();
+        write_raw(&dir, r#"{"theme":"ocean"}"#);
+
+        assert_eq!(store.read().theme, ThemeMode::from("ocean"));
+    }
+
+    #[test]
+    fn signal_pastel_und_win95_gelten_nur_als_installiertes_paket() {
+        for id in ["signal", "pastel", "win95"] {
+            let (dir, store) = store();
+            write_raw(&dir, &format!(r#"{{"theme":"{id}"}}"#));
+            assert_eq!(store.read().theme, ThemeMode::system(), "{id}");
+
+            let theme_dir = dir.path().join("themes").join(id);
+            fs::create_dir_all(&theme_dir).unwrap();
+            fs::write(
+                theme_dir.join("manifest.json"),
+                format!(r#"{{"id":"{id}"}}"#),
+            )
+            .unwrap();
+            assert_eq!(store.read().theme, ThemeMode::from(id), "{id}");
+        }
+    }
+
+    #[test]
+    fn ersetzt_ein_ungultiges_theme_trotz_ordner_durch_system() {
+        let (dir, store) = store();
+        fs::create_dir_all(dir.path().join("themes").join("X")).unwrap();
+        write_raw(&dir, r#"{"theme":"../X"}"#);
+
+        assert_eq!(store.read().theme, ThemeMode::system());
     }
 
     #[test]

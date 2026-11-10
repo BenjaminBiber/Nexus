@@ -1,0 +1,11 @@
+{
+  "id": "my-theme",
+  "name": "Mein Theme",
+  "version": "0.1.0",
+  "author": "Dein Name",
+  "sdkVersion": "^1.1",
+  "colorScheme": "dark",
+  "startColor": "#101418",
+  "slots": ["Shell"],
+  "permissions": { "network": [] }
+}

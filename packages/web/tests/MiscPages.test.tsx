@@ -53,9 +53,9 @@ describe('SettingsPage', () => {
     for (const name of ['Arbeitsverzeichnisse', 'Zugriff', 'Darstellung', 'Benachrichtigungen', 'Anpassungen', 'Board-Datenbank', 'Dispatcher']) {
       expect(within(nav).getByRole('link', { name: new RegExp(name) }), name).toBeTruthy();
     }
-    expect(screen.queryByRole('region', { name: 'Darstellung' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Themes' })).toBeNull();
     await userEvent.click(within(nav).getByRole('link', { name: /Darstellung/ }));
-    expect(screen.getByRole('region', { name: 'Darstellung' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Themes' })).toBeTruthy();
     expect(screen.queryByRole('region', { name: 'Arbeitsverzeichnisse' })).toBeNull();
   });
 

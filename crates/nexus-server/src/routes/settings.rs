@@ -16,9 +16,10 @@ use axum::Router;
 use nexus_core::board::config::BoardConfig;
 use nexus_core::board::config_store::BoardConfigStore;
 use nexus_core::project::TokenStore;
+use nexus_core::registry::NexusHome;
 use nexus_core::settings::{
-    SetupPrompts, UserSettings, UserSettingsStore, NOTIFICATION_MODES, NTFY_TOPIC_PATTERN,
-    THEME_MODES,
+    known_theme, SetupPrompts, ThemeMode, UserSettings, UserSettingsStore, NOTIFICATION_MODES,
+    NTFY_TOPIC_PATTERN,
 };
 use nexus_core::{Error, HarnessError, Result};
 use nexus_db::ConnectOptions;
@@ -115,7 +116,7 @@ async fn write_user_settings(
     JsonBody(body): JsonBody,
 ) -> ApiResult<Response> {
     let store = UserSettingsStore::new(state.home.clone());
-    let merged = merge_user_settings(store.read(), &body)?;
+    let merged = merge_user_settings(store.read(), &body, &state.home)?;
     store.write(&merged)?;
     Ok(json(&merged))
 }
@@ -126,7 +127,11 @@ fn settings_invalid(message: &str) -> Error {
 }
 
 /// Übernimmt die angegebenen Felder; ungültige Werte werden abgelehnt
-fn merge_user_settings(current: UserSettings, body: &Value) -> Result<UserSettings> {
+fn merge_user_settings(
+    current: UserSettings,
+    body: &Value,
+    home: &NexusHome,
+) -> Result<UserSettings> {
     let mut next = current;
     // In JavaScript zählt nur `undefined` als „nicht angegeben“; ein ausdrückliches `null`
     // läuft in die Prüfung und wird dort abgelehnt
@@ -149,11 +154,14 @@ fn merge_user_settings(current: UserSettings, body: &Value) -> Result<UserSettin
         next.hero_images = flag("heroImages", value)?;
     }
     if let Some(value) = field("theme") {
-        next.theme = THEME_MODES
-            .into_iter()
-            .find(|theme| value.as_str() == Some(theme.as_str()))
+        next.theme = value
+            .as_str()
+            .filter(|id| known_theme(home, id))
+            .map(ThemeMode::from)
             .ok_or_else(|| {
-                settings_invalid("theme muss system, light, dark, signal, pastel oder win95 sein.")
+                settings_invalid(
+                    "theme muss ein eingebautes (system, light, dark) oder installiertes Theme sein.",
+                )
             })?;
     }
     if let Some(value) = field("claudeUsage") {
@@ -424,7 +432,7 @@ fn to_yaml(value: &Value) -> Yaml {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use nexus_core::settings::{NotificationMode, ThemeMode};
+    use nexus_core::settings::NotificationMode;
 
     #[test]
     fn erkennt_eine_ntfy_adresse_wie_der_regulare_ausdruck() {
@@ -445,11 +453,20 @@ mod tests {
         assert_eq!(back, value);
     }
 
+    /// Leerer Benutzerordner
+    fn home() -> (tempfile::TempDir, NexusHome) {
+        let dir = tempfile::tempdir().unwrap();
+        let home = NexusHome::at(dir.path());
+        (dir, home)
+    }
+
     #[test]
     fn ubernimmt_die_setup_dialoge_teilweise() {
+        let (_dir, home) = home();
         let merged = merge_user_settings(
             UserSettings::default(),
             &serde_json::json!({ "setupPrompts": { "migrationDismissed": [4, 2, 4] } }),
+            &home,
         )
         .unwrap();
         assert_eq!(merged.setup_prompts.migration_dismissed, vec![2, 4]);
@@ -458,26 +475,53 @@ mod tests {
 
     #[test]
     fn lehnt_ungueltige_setup_dialoge_ab() {
+        let (_dir, home) = home();
         for body in [
             serde_json::json!({ "setupPrompts": true }),
             serde_json::json!({ "setupPrompts": { "pluginDismissed": "ja" } }),
             serde_json::json!({ "setupPrompts": { "migrationDismissed": [0] } }),
         ] {
             assert!(
-                merge_user_settings(UserSettings::default(), &body).is_err(),
+                merge_user_settings(UserSettings::default(), &body, &home).is_err(),
                 "{body}"
             );
         }
     }
 
     #[test]
+    fn ubernimmt_ein_installiertes_theme_und_lehnt_ein_unbekanntes_ab() {
+        let (dir, home) = home();
+        let theme_dir = dir.path().join("themes").join("ocean");
+        std::fs::create_dir_all(&theme_dir).unwrap();
+        std::fs::write(theme_dir.join("manifest.json"), "{}").unwrap();
+
+        let merged = merge_user_settings(
+            UserSettings::default(),
+            &serde_json::json!({ "theme": "ocean" }),
+            &home,
+        )
+        .unwrap();
+        assert_eq!(merged.theme, ThemeMode::from("ocean"));
+        for theme in [serde_json::json!("lila"), serde_json::json!(5)] {
+            assert!(merge_user_settings(
+                UserSettings::default(),
+                &serde_json::json!({ "theme": theme }),
+                &home,
+            )
+            .is_err());
+        }
+    }
+
+    #[test]
     fn ubernimmt_nur_die_angegebenen_felder() {
+        let (_dir, home) = home();
         let merged = merge_user_settings(
             UserSettings::default(),
             &serde_json::json!({ "theme": "dark", "ntfyToken": "  tk  " }),
+            &home,
         )
         .unwrap();
-        assert_eq!(merged.theme, ThemeMode::Dark);
+        assert_eq!(merged.theme, ThemeMode::from("dark"));
         assert_eq!(merged.ntfy_token, "tk");
         assert_eq!(merged.notifications, NotificationMode::Off);
     }

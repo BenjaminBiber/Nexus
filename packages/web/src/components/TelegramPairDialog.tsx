@@ -3,6 +3,7 @@ import { useApi } from '../api/ApiContext.js';
 import type { TelegramConfig, TelegramPairingDto } from '../api/telegramTypes.js';
 import { usePlatform } from '../platform/PlatformContext.js';
 import { DbModal } from './db/DbModal.js';
+import { Button } from './ui/Button.js';
 import { QrCode } from './QrCode.js';
 import { Notice } from './settings/Notice.js';
 
@@ -83,7 +84,7 @@ export function TelegramPairDialog({ knownChats, onPaired, onClose }: {
       {load.kind === 'error' && (
         <>
           <Notice tone="error">{load.message}</Notice>
-          <div><button type="button" className="btn" onClick={() => void generate()}>Erneut versuchen</button></div>
+          <div><Button onClick={() => void generate()}>Erneut versuchen</Button></div>
         </>
       )}
       {load.kind === 'ready' && (
@@ -105,11 +106,11 @@ export function TelegramPairDialog({ knownChats, onPaired, onClose }: {
               </span>
             </div>
             {expired ? (
-              <div><button type="button" className="btn primary" onClick={() => void generate()}>Neuen Code erzeugen</button></div>
+              <div><Button variant="primary" onClick={() => void generate()}>Neuen Code erzeugen</Button></div>
             ) : (
               <>
                 {load.pairing.link && (
-                  <div><button type="button" className="btn" onClick={() => void openLink(load.pairing.link)}>Chat mit dem Bot öffnen</button></div>
+                  <div><Button onClick={() => void openLink(load.pairing.link)}>Chat mit dem Bot öffnen</Button></div>
                 )}
                 <p className="tg-pair-waiting" role="status"><span className="tg-pulse" aria-hidden="true" />Wartet auf die Kopplung …</p>
               </>
@@ -120,7 +121,7 @@ export function TelegramPairDialog({ knownChats, onPaired, onClose }: {
       )}
 
       <div className="tg-pair-modal-actions">
-        <button type="button" className="btn" onClick={onClose}>Abbrechen</button>
+        <Button onClick={onClose}>Abbrechen</Button>
       </div>
     </DbModal>
   );

@@ -393,6 +393,11 @@ waitNoted: boolean,
  */
 target: string | null, 
 /**
+ * Commit des Ziel-Branches beim Start der Merge-Session; gegen ihn wird die Session
+ * ausgewertet, denn das Ziel darf währenddessen weiterlaufen (andere Tickets werden gemergt)
+ */
+targetHead?: string, 
+/**
  * Der letzte Merge-Versuch hatte einen Konflikt, die Merge-Session durfte aber nicht starten
  * (aus, Pause, außerhalb); bis sie starten darf, wird nicht erneut gemergt. „Erneut mergen“
  * setzt den Merker zurück.

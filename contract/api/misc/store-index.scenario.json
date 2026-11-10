@@ -1,0 +1,6 @@
+{
+  "title": "Store-Index ohne eingetragene Repos laden",
+  "steps": [
+    { "name": "ohne Repos", "method": "GET", "path": "/api/themes/store/index" }
+  ]
+}

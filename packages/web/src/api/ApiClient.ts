@@ -7,7 +7,8 @@ import type {
   BoardConfigDto, BoardConfigInput, BoardConfigTestDto, FavoriteDto, DocFileContentDto, DocsListDto, SessionDto, SettingsDto, UserSettingsDto, TestNotificationDto,
   SearchHitDto, QuestionDraftInputDto, QuestionDraftResultDto, DocQuestionResultDto, TicketDraftDto, TicketDraftInput, TicketDraftResultDto, DocTicketInput, DocTicketRefDto, DocTicketResultDto, DocCommentDto, NewDocCommentInput, DocCommentPatch, DocWriteResultDto, WriteDocSectionInput,
   ReviseDocInput, ReviseDocResultDto, ProjectDto,
-  WorkflowDto, CustomizationsDto, PluginSetupDto, PluginInstallDto, BoardMigrationDto, BoardMigrationResultDto,
+  WorkflowDto, CustomizationsDto, PluginSetupDto, PluginInstallDto, BoardMigrationDto, BoardMigrationResultDto, SnippetDto, StoreRepoDto,
+  StoreIndexDto, StoreInstallResultDto, StoreUpdatesDto,
 } from './types.js';
 import type {
   DbActiveDto, DbBoardDto, DbBoardPatch, DbBoardViewDto, DbBranchListDto, DbCreatedBranchDto, DbDecisionInput, DbGraphDto, DbGraphScope, DbSpecProgressDto, DbImportResult, DbMoveInput, DbNewNoteInput, DbNewQuestionInput,
@@ -21,6 +22,17 @@ import type { AccountListDto, ClaudeUsageDto, UsageOverviewDto } from './usageTy
 import type {
   SpeechStatusDto, SpeechTestDto, TelegramConfig, TelegramConfigInput, TelegramPairingDto, TelegramProfileDto, TelegramStatusDto, TelegramTestDto,
 } from './telegramTypes.js';
+import type { ThemeManifest } from './generated/themes.js';
+
+// Base64 in Stücken: String.fromCharCode mit Millionen Argumenten sprengt den Stapel
+function toBase64(bytes: Uint8Array): string {
+  const CHUNK = 0x8000;
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
 
 // Wie lange ein laufendes GET für dieselbe Adresse mitbenutzt wird: deckt gleichzeitiges Laden beim Seitenaufbau ab,
 // aber nicht ein Nachladen nach einem Ereignis des Servers
@@ -272,6 +284,71 @@ export class ApiClient {
     return this.request('PUT', '/api/user-settings', settings);
   }
 
+  // CSS-Schnipsel des Nutzers in ihrer Reihenfolge
+  listSnippets(): Promise<SnippetDto[]> {
+    return this.request('GET', '/api/snippets');
+  }
+
+  // Legt einen Schnipsel an oder ändert ihn
+  saveSnippet(id: string, snippet: { name: string; css: string; enabled?: boolean }): Promise<SnippetDto> {
+    return this.request('PUT', `/api/snippets/${encodeURIComponent(id)}`, snippet);
+  }
+
+  // Schaltet einen Schnipsel an oder aus
+  toggleSnippet(id: string, enabled: boolean): Promise<SnippetDto> {
+    return this.request('PATCH', `/api/snippets/${encodeURIComponent(id)}`, { enabled });
+  }
+
+  // Löscht einen Schnipsel
+  async deleteSnippet(id: string): Promise<void> {
+    await this.request('DELETE', `/api/snippets/${encodeURIComponent(id)}`, {});
+  }
+
+  // Gespeicherte eigene Einstellungen eines Themes; {} ohne Eintrag
+  getThemeSettings(id: string): Promise<Record<string, boolean | string>> {
+    return this.request('GET', `/api/themes/${encodeURIComponent(id)}/settings`);
+  }
+
+  // Ersetzt die eigenen Einstellungen eines Themes
+  saveThemeSettings(id: string, values: Record<string, boolean | string>): Promise<Record<string, boolean | string>> {
+    return this.request('PUT', `/api/themes/${encodeURIComponent(id)}/settings`, values);
+  }
+
+  // Vom Nutzer eingetragene Store-Repos
+  listStoreRepos(): Promise<StoreRepoDto[]> {
+    return this.request('GET', '/api/themes/store/repos');
+  }
+
+  // Trägt ein Store-Repo ein; der Server prüft die URL (400) und Dubletten (409)
+  addStoreRepo(url: string): Promise<StoreRepoDto> {
+    return this.request('POST', '/api/themes/store/repos', { url });
+  }
+
+  // Entfernt ein Store-Repo
+  async removeStoreRepo(id: string): Promise<void> {
+    await this.request('DELETE', `/api/themes/store/repos/${encodeURIComponent(id)}`, {});
+  }
+
+  // Zusammengeführter Index aller Store-Repos mit Status je Repo
+  getStoreIndex(): Promise<StoreIndexDto> {
+    return this.request('GET', '/api/themes/store/index');
+  }
+
+  // Lädt, prüft und installiert einen Eintrag aus dem Store
+  installFromStore(repoId: string, id: string): Promise<StoreInstallResultDto> {
+    return this.request('POST', '/api/themes/store/install', { repoId, id });
+  }
+
+  // Neuere Versionen installierter Themes im Store
+  getStoreUpdates(): Promise<StoreUpdatesDto> {
+    return this.request('GET', '/api/themes/store/updates');
+  }
+
+  // Installiert ein Update; mit Code oder neuen Domains → 409 mit details.hasCode/newDomains, bis confirm gesetzt ist
+  updateFromStore(repoId: string, id: string, confirm?: boolean): Promise<StoreInstallResultDto> {
+    return this.request('POST', '/api/themes/store/update', confirm ? { repoId, id, confirm: true } : { repoId, id });
+  }
+
   // Einstellung des Telegram-Bots; Geheimnisse kommen nur als Maske zurück
   getTelegramConfig(): Promise<TelegramConfig> {
     return this.request('GET', '/api/telegram/config');
@@ -315,6 +392,22 @@ export class ApiClient {
   // Wann die Spracherkennung zuletzt geklappt hat und woran sie zuletzt gescheitert ist
   getSpeechStatus(): Promise<SpeechStatusDto> {
     return this.request('GET', '/api/speech/status');
+  }
+
+  // Die Manifeste der installierten Themes, nach id sortiert
+  listThemes(): Promise<ThemeManifest[]> {
+    return this.request('GET', '/api/themes');
+  }
+
+  // Installiert ein .nexus-Paket; der Schutz des Servers nimmt nur JSON an, deshalb als Base64
+  async installTheme(file: Blob | ArrayBuffer): Promise<ThemeManifest> {
+    const bytes = new Uint8Array(file instanceof Blob ? await file.arrayBuffer() : file);
+    return this.request('POST', '/api/themes/install', { data: toBase64(bytes) });
+  }
+
+  // Entfernt ein installiertes Theme
+  async removeTheme(id: string): Promise<void> {
+    await this.request('DELETE', `/api/themes/${encodeURIComponent(id)}`);
   }
 
   getPluginSetup(): Promise<PluginSetupDto> {

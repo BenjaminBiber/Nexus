@@ -41,6 +41,7 @@ async-trait = "0.1"
 futures = "0.3"
 tokio = { version = "1", default-features = false, features = ["rt-multi-thread", "macros", "sync", "time", "net", "fs", "process", "io-util", "signal"] }
 regex = "1"
+semver = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 uuid = { version = "1", features = ["v4"] }
 ts-rs = "12"
@@ -51,6 +52,8 @@ bb8 = "0.9"
 bb8-tiberius = "0.16"
 tokio-util = { version = "0.7", features = ["compat"] }
 tempfile = "3"
+# Entpacken der Theme-Pakete (`.nexus` = ZIP); nur Deflate, keine Verschlüsselung
+zip = { version = "9", default-features = false, features = ["deflate"] }
 # Zufall, SHA-1 und Prozessprüfung für Sperren, Token und Projekt-IDs. Der Workspace verbietet
 # `unsafe`, deshalb kommt der Blick auf fremde Prozesse aus Bibliotheken mit sicherer
 # Schnittstelle: unter Unix `nix`, unter Windows `sysinfo`.
@@ -58,6 +61,13 @@ getrandom = "0.3"
 sha1_smol = "1"
 # SHA-256 für den Fingerabdruck der Dispatcher-Einstellung (16 Hex-Zeichen wie in TypeScript)
 sha2 = "0.10"
+# Base64 der sha256-Hashes, mit denen die CSP die Inline-Skripte der Oberfläche erlaubt
+base64 = "0.22"
+# Prüft die optionale minisign-Signatur (Ed25519) der Theme-Pakete aus dem Store
+minisign-verify = "0.3"
+# Nur für Tests: minisign-Signaturen erzeugen (Ed25519 über den BLAKE2b-Hash des Pakets)
+ed25519-dalek = { version = "2", default-features = false, features = ["std"] }
+blake2 = "0.10"
 # Karte mit erhaltener Reihenfolge: die Profile der Dispatcher-Einstellung stehen in der
 # Reihenfolge der Datei (defaultProfile und die Eskalationsleiter hängen daran)
 indexmap = { version = "2", features = ["serde"] }
@@ -75,6 +85,8 @@ http-body-util = "0.1"
 # ntfy schickt seine Push-Meldungen über HTTP; rustls statt OpenSSL, damit nichts vom System
 # gebraucht wird.
 reqwest = { version = "0.12", default-features = false, features = ["json", "multipart", "rustls-tls", "charset"] }
+# Adressen der Store-Repos prüfen und normalisieren (reqwest nutzt dieselbe Crate)
+url = "2"
 # Systemmeldungen auf macOS und Linux (unter Windows geht es über WinRT)
 notify-rust = "4"
 # WinRT-Toasts und die AUMID-Registrierung unter Windows

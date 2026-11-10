@@ -1,0 +1,55 @@
+{
+  "title": "Themes: leere Liste, Paket installieren, ungültiges Paket, entfernen",
+  "steps": [
+    {
+      "name": "Anfangs ist kein Theme installiert",
+      "method": "GET",
+      "path": "/api/themes"
+    },
+    {
+      "name": "Gültiges Paket installieren (manifest.json und theme.css)",
+      "method": "POST",
+      "path": "/api/themes/install",
+      "body": {
+        "data": "UEsDBBQAAAAIAHRbaV0tyCsfTwAAAGcAAAANAAAAbWFuaWZlc3QuanNvbqtWykxRslLKS0zOKFHSAdK5qUCuH5RbllpUnJmfBxQx1DPQMwCKJJaWZOQXAQUcUxKB3OKU7DC4mjhDsJLk/Jz8ouDkjFSwUSmJRdlKtQBQSwMEFAAAAAgAdFtpXVrQd9YKAAAACAAAAAkAAAB0aGVtZS5jc3OzKsrPL1GorgUAUEsBAhQAFAAAAAgAdFtpXS3IKx9PAAAAZwAAAA0AAAAAAAAAAAAAAAAAAAAAAG1hbmlmZXN0Lmpzb25QSwECFAAUAAAACAB0W2ldWtB31goAAAAIAAAACQAAAAAAAAAAAAAAAAB6AAAAdGhlbWUuY3NzUEsFBgAAAAACAAIAcgAAAKsAAAAAAA=="
+      }
+    },
+    {
+      "name": "Die Liste enthält das installierte Theme",
+      "method": "GET",
+      "path": "/api/themes"
+    },
+    {
+      "name": "Ein Paket, das kein ZIP ist, wird abgelehnt",
+      "method": "POST",
+      "path": "/api/themes/install",
+      "body": { "data": "a2VpbiB6aXA=" }
+    },
+    {
+      "name": "Kaputtes Base64 ist eine ungültige Anfrage",
+      "method": "POST",
+      "path": "/api/themes/install",
+      "body": { "data": "%%%" }
+    },
+    {
+      "name": "Theme entfernen",
+      "method": "DELETE",
+      "path": "/api/themes/nacht"
+    },
+    {
+      "name": "Unbekanntes Theme entfernen",
+      "method": "DELETE",
+      "path": "/api/themes/nacht"
+    },
+    {
+      "name": "Ungültige Theme-ID",
+      "method": "DELETE",
+      "path": "/api/themes/A"
+    },
+    {
+      "name": "Nach dem Entfernen ist die Liste wieder leer",
+      "method": "GET",
+      "path": "/api/themes"
+    }
+  ]
+}

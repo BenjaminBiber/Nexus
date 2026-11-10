@@ -1,5 +1,6 @@
 import { useEffect, useRef, type FormEvent, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
 import { useRestoreFocus } from '../../hooks/useRestoreFocus.js';
+import { useDialogBody } from '../ui/Dialog.js';
 
 const FOCUSABLE = [
   'a[href]',
@@ -138,6 +139,9 @@ export function DbModal({ labelledBy, onEscape, children, role = 'dialog', class
     }
   };
 
+  // Die sichtbare Hülle darf der Slot „Dialog“ des Themes stellen; Rolle, Fokus und Esc bleiben hier am Element
+  const body = useDialogBody({ labelledBy, role, className, children });
+
   const shared = {
     role,
     'aria-modal': true,
@@ -145,6 +149,7 @@ export function DbModal({ labelledBy, onEscape, children, role = 'dialog', class
     tabIndex: -1,
     className,
     onKeyDown,
+    'data-slot': body.replaced ? 'Dialog' : undefined,
   } as const;
 
   return (
@@ -161,11 +166,11 @@ export function DbModal({ labelledBy, onEscape, children, role = 'dialog', class
     >
       {onSubmit ? (
         <form ref={ref as RefObject<HTMLFormElement | null>} {...shared} onSubmit={onSubmit}>
-          {children}
+          {body.node}
         </form>
       ) : (
         <div ref={ref as RefObject<HTMLDivElement | null>} {...shared}>
-          {children}
+          {body.node}
         </div>
       )}
     </div>

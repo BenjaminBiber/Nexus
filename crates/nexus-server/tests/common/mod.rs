@@ -131,6 +131,16 @@ pub struct TestServerOptions {
     /// Der Dienst, der die Ideen des Bots versteht; ohne Angabe einer mit der Umgebung des
     /// Testprozesses (den Tests nie auslösen, weil der freie Text einen Chat braucht)
     pub idea_interpreter: Option<Arc<nexus_server::telegram::IdeaInterpreter>>,
+    /// Größenlimit des Asset-Proxys für Themes; ohne Angabe der Standard
+    pub theme_fetch_max_bytes: Option<u64>,
+    /// Größenlimit eines Archivs beim Abruf einer Einzeldatei; ohne Angabe der Standard
+    pub theme_fetch_max_archive_bytes: Option<u64>,
+    /// Zeitlimit je Store-Repo; ohne Angabe der Standard
+    pub store_index_timeout: Option<std::time::Duration>,
+    /// Zeitlimit beim Download eines Store-Pakets; ohne Angabe der Standard
+    pub store_download_timeout: Option<std::time::Duration>,
+    /// Ordner der mitgelieferten Theme-Pakete; ohne Angabe keiner
+    pub bundled_themes_dir: Option<PathBuf>,
 }
 
 /// Startet nichts und liefert keine Prozessnummer; so startet in Tests nie ein echter Worker
@@ -171,6 +181,7 @@ impl TestServer {
         config.version = "test".into();
         config.web_dir = options.web_dir;
         config.plugin_bundle = options.plugin_bundle;
+        config.bundled_themes_dir = options.bundled_themes_dir;
         // Nie den echten Claude-Ordner des Rechners anfassen
         config.setup = options.setup.unwrap_or_else(|| {
             nexus_server::setup::SetupContext::new(
@@ -191,6 +202,18 @@ impl TestServer {
         }
         config.telegram_api = options.telegram_api;
         config.idea_interpreter = options.idea_interpreter;
+        if let Some(max) = options.theme_fetch_max_archive_bytes {
+            config.theme_fetch_max_archive_bytes = max;
+        }
+        if let Some(timeout) = options.store_download_timeout {
+            config.store_download_timeout = timeout;
+        }
+        if let Some(timeout) = options.store_index_timeout {
+            config.store_index_timeout = timeout;
+        }
+        if let Some(max) = options.theme_fetch_max_bytes {
+            config.theme_fetch_max_bytes = max;
+        }
         config.account_usage = options.account_usage;
         config.account_login_spawner = options.account_login_spawner;
         config.account_plugins = options.account_plugins;

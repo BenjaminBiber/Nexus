@@ -4,7 +4,7 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../src/api/ApiContext.js';
 import type { UserSettingsDto } from '../src/api/types.js';
-import { AppearancePanel } from '../src/components/AppearancePanel.js';
+import { InterfacePanel } from '../src/components/settings/InterfacePanel.js';
 import { InfoTip } from '../src/components/settings/InfoTip.js';
 import { SettingRow } from '../src/components/settings/SettingRow.js';
 import { SettingsPage } from '../src/pages/SettingsPage.js';
@@ -35,7 +35,7 @@ describe('Bausteine der Einstellungen', () => {
 
   it('meldet den Speicherstand eines sofort speichernden Bereichs', async () => {
     const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ ...SETTINGS, ...patch }));
-    render(<ApiProvider api={fakeApi({ getUserSettings: async () => SETTINGS, saveUserSettings })}><AppearancePanel /></ApiProvider>);
+    render(<ApiProvider api={fakeApi({ getUserSettings: async () => SETTINGS, saveUserSettings })}><InterfacePanel /></ApiProvider>);
     expect(await screen.findByText('Änderungen werden sofort gespeichert')).toBeTruthy();
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Kompakte Ticket-Kacheln' }));
     expect(await screen.findByText('Gespeichert')).toBeTruthy();
@@ -43,7 +43,7 @@ describe('Bausteine der Einstellungen', () => {
 
   it('zeigt einen Speicherfehler als Meldung', async () => {
     const saveUserSettings = vi.fn(async () => { throw new Error('Datei schreibgeschützt'); });
-    render(<ApiProvider api={fakeApi({ getUserSettings: async () => SETTINGS, saveUserSettings })}><AppearancePanel /></ApiProvider>);
+    render(<ApiProvider api={fakeApi({ getUserSettings: async () => SETTINGS, saveUserSettings })}><InterfacePanel /></ApiProvider>);
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Kompakte Ticket-Kacheln' }));
     expect((await screen.findByRole('alert')).textContent).toBe('Datei schreibgeschützt');
   });
