@@ -197,6 +197,15 @@ describe('Synthwave-Theme-Paket', () => {
     expect(css).not.toContain('backdrop-filter');
   });
 
+  it('VHS: die Ebene fängt keine Klicks ab, Bildstörung und Flimmern stehen bei reduzierter Bewegung still', () => {
+    const css = readFileSync(join(theme, 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(css).toMatch(/\[data-synth-vhs='on'\] \.synth-screen::after\s*\{[^}]*pointer-events: none/);
+    expect(css).toMatch(/@keyframes synth-tracking\b/);
+    const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(reduced).toMatch(/synth-tracking[^{]*\{[^}]*animation: none/);
+    expect(reduced).toMatch(/\.synth-screen::after[^{]*\{[^}]*animation: none/);
+  });
+
   it('keine @keyframes-Regel animiert box-shadow, width, height, top oder left', () => {
     const css = readFileSync(join(theme, 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     for (const block of css.match(/@keyframes [\w-]+\s*\{(?:[^{}]*\{[^}]*\})*\s*\}/g) ?? []) {
