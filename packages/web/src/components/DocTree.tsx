@@ -5,6 +5,7 @@ import type { DocFileDto } from '../api/types.js';
 import { ancestorIds, buildDocTree, docHref, docKey, filterDocTree, openByDefault, type DocTreeFilter, type DocTreeNode } from '../board/docsTree.js';
 import { loadDocsTreeOpen, saveDocsTreeOpen } from '../board/docsTreeOpen.js';
 import { useAsync } from '../hooks/useAsync.js';
+import { ThemeIcon } from '../theme/ThemeIcon.js';
 import { ClaudeIcon } from './NavIcons.js';
 import { SpecProgressPie } from './SpecProgressBar.js';
 
@@ -30,9 +31,19 @@ const iconKindOf = (doc: DocFileDto | undefined): FileIconKind => {
   return doc.group === 'spec' ? 'doc' : 'other';
 };
 
-// Symbol einer Datei wie im Explorer von VS Code, je Sorte mit eigener Form und Farbe (Farben in docs.css)
+// Symbol einer Datei wie im Explorer von VS Code, je Sorte mit eigener Form und Farbe (Farben in docs.css);
+// der Slot „Icon“ des Themes darf es ersetzen (sonstige Dateien heißen dort `file`)
 function FileIcon({ doc }: { doc: DocFileDto | undefined }) {
   const kind = iconKindOf(doc);
+  return (
+    <ThemeIcon name={kind === 'other' ? 'file' : kind}>
+      <StandardFileIcon kind={kind} />
+    </ThemeIcon>
+  );
+}
+
+// Linien-Symbol einer Datei je Sorte
+function StandardFileIcon({ kind }: { kind: FileIconKind }) {
   return (
     <svg className={`doc-tree-icon is-${kind}`} width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {kind === 'plan' && (
@@ -224,6 +235,8 @@ export function DocTree({ docs, pid, current, seenMs = 0, filter = NO_FILTER, sh
     <>
       {node.kind === 'group' ? <Chevron open={isOpen(node)} /> : <span className="doc-tree-spacer" aria-hidden="true" />}
       {node.kind === 'file' && fileIcon(node)}
+      {/* Ordner haben im Standard kein Symbol; ein Theme kann über den Slot „Icon“ eines zeigen (z. B. den Explorer-Ordner) */}
+      {node.kind === 'group' && <ThemeIcon name={isOpen(node) ? 'folderOpen' : 'folder'} />}
       <span className="doc-tree-label">
         {node.kind === 'file' ? <Highlight text={node.label} query={filter.query} /> : node.label}
       </span>

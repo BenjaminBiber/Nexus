@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateRawSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
-import { packageName, readZipEntry, themeIndex } from '../lib/ThemeIndex.mjs';
+import { packageName, packagePreview, readZipBytes, readZipEntry, themeIndex } from '../lib/ThemeIndex.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const REFERENCE = resolve(ROOT, 'scripts/release/tests/fixtures/nexus-themes.reference.json');
@@ -96,9 +96,24 @@ describe('ThemeIndex', () => {
     expect(index[0].sha256).toMatch(/^[0-9a-f]{64}$/);
   });
 
-  it('lässt relative Vorschaubilder weg', () => {
-    const [eintrag] = themeIndex([paket({ ...OZEAN, preview: 'assets/preview.png' })], { baseUrl: BASE });
-    expect(eintrag).not.toHaveProperty('preview');
+  it('verlinkt ein Vorschaubild aus dem Paket als Datei neben dem Paket am Release', () => {
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0xff]);
+    const manifest = { ...OZEAN, preview: 'assets/preview.png' };
+    for (const deflate of [false, true]) {
+      const bytes = zip({ 'manifest.json': JSON.stringify(manifest), 'assets/preview.png': png }, { deflate });
+      expect(readZipBytes(bytes, 'assets/preview.png')).toEqual(png);
+      expect(packagePreview(bytes, manifest)).toEqual({ name: 'ozean-1.0.0-preview.png', data: png });
+      const [eintrag] = themeIndex([bytes], { baseUrl: BASE });
+      expect(eintrag.preview).toBe(`${BASE}/ozean-1.0.0-preview.png`);
+    }
+  });
+
+  it('lässt relative Vorschaubilder weg, die fehlen, kein Bild sind oder aus dem Paket zeigen', () => {
+    const mit = (preview, files = {}) => zip({ 'manifest.json': JSON.stringify({ ...OZEAN, preview }), ...files });
+    expect(themeIndex([paket({ ...OZEAN, preview: 'assets/preview.png' })], { baseUrl: BASE })[0]).not.toHaveProperty('preview');
+    expect(themeIndex([mit('theme.css', { 'theme.css': ':root{}' })], { baseUrl: BASE })[0]).not.toHaveProperty('preview');
+    expect(themeIndex([mit('../preview.png', { '../preview.png': 'x' })], { baseUrl: BASE })[0]).not.toHaveProperty('preview');
+    expect(themeIndex([mit('http://example.org/a.png')], { baseUrl: BASE })[0]).not.toHaveProperty('preview');
   });
 
   it('benennt Pakete nach id und Version', () => {
@@ -130,6 +145,15 @@ describe('ThemeIndex', () => {
       const manifest = JSON.parse(readFileSync(join(ROOT, 'themes', eintrag.id, 'manifest.json'), 'utf8'));
       expect(eintrag).toMatchObject({ id: manifest.id, name: manifest.name, version: manifest.version, sdkVersion: manifest.sdkVersion });
       expect(eintrag.downloadUrl).toBe(`https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/${packageName(manifest)}`);
+      // Jedes Theme bringt ein Vorschaubild mit, das der Store neben dem Paket findet – außer Themes mit fremden
+      // Ressourcen (Minecraft): ein Bild mit deren Texturen darf nicht mitverteilt werden, eins ohne zeigt nur die Rückfall-Ansicht
+      if ((manifest.permissions?.network ?? []).length > 0) {
+        expect(manifest.preview, eintrag.id).toBeUndefined();
+        expect(eintrag, eintrag.id).not.toHaveProperty('preview');
+        continue;
+      }
+      expect(manifest.preview, eintrag.id).toBe('assets/preview.png');
+      expect(eintrag.preview).toBe(`https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/${manifest.id}-${manifest.version}-preview.png`);
     }
   });
 });

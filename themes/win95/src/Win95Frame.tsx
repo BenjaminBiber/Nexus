@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { BoardSwitcher, NavLink, UsageMeter, useNav, useOpenSearch, type NavIconName, type ShellProps } from '@nexus/theme-sdk';
 import { WIN95_NAV_ICONS, Win95Icon } from './Win95Icons.js';
 import { windowTitle } from './sectionTitles.js';
+import { useClock } from './useClock.js';
 
 /** Schlüssel im localStorage: Fenster maximiert (Standard) oder als Fenster auf dem Desktop */
 export const WIN95_MAXIMIZED_KEY = 'harness-w95-maximized';
@@ -21,16 +22,6 @@ function readMaximized(): boolean {
   } catch {
     return true;
   }
-}
-
-// Uhrzeit der Taskleiste (hh:mm), springt zur vollen Minute weiter
-function useClock(): Date {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 15_000);
-    return () => window.clearInterval(id);
-  }, []);
-  return now;
 }
 
 // Windows-Flagge aus vier gewellten Feldern (Farben aus theme.css)
@@ -81,7 +72,7 @@ function StartMenu({ active, onClose }: { active?: NavIconName; onClose: (focusS
   return (
     <div ref={menu} className="w95-start-menu" role="menu" aria-label="Start" onKeyDown={onKeyDown}>
       <div className="w95-start-banner" aria-hidden="true">
-        <b>AI Harness</b>95
+        <b>Nexus</b>95
       </div>
       <div className="w95-start-items">
         {START_LINKS.map(([id, label]) => (
@@ -165,12 +156,12 @@ export function Win95Frame({ nav, content }: ShellProps) {
         </nav>
         <section
           className={`w95-window${maximized ? ' maximized' : ''}`}
-          aria-label={`AI Harness – ${title}`}
+          aria-label={`Nexus – ${title}`}
           hidden={minimized}
         >
           <div className="w95-titlebar" onDoubleClick={toggleMaximized}>
             <AppIcon />
-            <span className="w95-title">AI Harness - {title}</span>
+            <span className="w95-title">Nexus - {title}</span>
             <div className="w95-title-buttons">
               <button type="button" className="w95-title-btn w95-min" aria-label="Minimieren" title="Minimieren" onClick={() => setMinimized(true)} />
               <button
@@ -218,7 +209,7 @@ export function Win95Frame({ nav, content }: ShellProps) {
           onClick={() => setMinimized((value) => !value)}
         >
           <AppIcon />
-          <span>AI Harness - {title}</span>
+          <span>Nexus - {title}</span>
         </button>
         <div className="w95-tray">
           <time className="w95-clock" dateTime={now.toISOString()} title={date}>

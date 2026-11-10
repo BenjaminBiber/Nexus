@@ -1,5 +1,5 @@
 // Baut den Store-Index `nexus-themes.json` aus fertigen Theme-Paketen (`.nexus` = ZIP mit manifest.json).
-// Je Paket ein Eintrag `{ id, name, version, sdkVersion, downloadUrl, sha256, preview? }` im Format, das
+// Je Paket ein Eintrag `{ id, name, version, sdkVersion, downloadUrl, sha256, preview?, description? }` im Format, das
 // `parse_index` in crates/nexus-core/src/theme/store_index.rs prüft. Reine Funktionen auf Bytes, damit sich das
 // ohne Build und ohne Netz testen lässt; Lesen und Schreiben der Dateien steckt in theme-index.mjs.
 
@@ -10,8 +10,13 @@ import { tryParse } from './SemVer.mjs';
 // Wie `is_valid_theme_id` im Kern
 const ID_PATTERN = /^[a-z0-9-]{2,40}$/;
 
-// Liest eine Datei aus einem ZIP (gespeichert oder Deflate) über das zentrale Verzeichnis; undefined, wenn sie fehlt
+// Liest eine Textdatei (UTF-8) aus einem ZIP; undefined, wenn sie fehlt
 export function readZipEntry(bytes, wanted) {
+  return readZipBytes(bytes, wanted)?.toString('utf8');
+}
+
+// Liest eine Datei aus einem ZIP (gespeichert oder Deflate) über das zentrale Verzeichnis als Bytes; undefined, wenn sie fehlt
+export function readZipBytes(bytes, wanted) {
   const buf = Buffer.from(bytes);
   let end = -1;
   for (let at = buf.length - 22; at >= Math.max(0, buf.length - 22 - 0xffff); at--) {
@@ -36,8 +41,8 @@ export function readZipEntry(bytes, wanted) {
     if (name !== wanted) continue;
     const start = offset + 30 + buf.readUInt16LE(offset + 26) + buf.readUInt16LE(offset + 28);
     const data = buf.subarray(start, start + size);
-    if (method === 0) return data.toString('utf8');
-    if (method === 8) return inflateRawSync(data).toString('utf8');
+    if (method === 0) return Buffer.from(data);
+    if (method === 8) return inflateRawSync(data);
     throw new Error(`${wanted} ist mit einer unbekannten Methode (${method}) gepackt.`);
   }
   return undefined;
@@ -64,6 +69,22 @@ export function packageManifest(bytes) {
   if (!tryParse(version)) throw new Error(`Theme ${id}: version „${version}“ ist keine semver-Version.`);
   if (typeof sdkVersion !== 'string' || !sdkVersion.trim()) throw new Error(`Theme ${id}: sdkVersion fehlt.`);
   return manifest;
+}
+
+// Bildformate, die als Vorschau neben die Pakete ans Release dürfen
+const PREVIEW_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'];
+
+// Vorschaubild aus dem Paket: `preview` im Manifest ist ein relativer Pfad im Paket (z. B. assets/preview.png).
+// Liefert { name, data } mit dem Dateinamen am Release (`<id>-<version>-preview.<endung>`) oder undefined, wenn das
+// Manifest keines nennt, der Pfad eine Adresse oder unsicher ist, die Endung nicht passt oder die Datei fehlt
+export function packagePreview(bytes, manifest) {
+  const path = manifest.preview;
+  if (typeof path !== 'string' || /^[a-z]+:/i.test(path) || path.startsWith('/') || path.split('/').includes('..')) return undefined;
+  const extension = path.split('.').pop()?.toLowerCase();
+  if (!PREVIEW_EXTENSIONS.includes(extension)) return undefined;
+  const data = readZipBytes(bytes, path);
+  if (!data) return undefined;
+  return { name: `${manifest.id}-${manifest.version}-preview.${extension}`, data };
 }
 
 // https, http nur für localhost/127.0.0.1 (lokale Handprobe) – wie `check_url` im Kern
@@ -98,8 +119,12 @@ export function themeIndex(packages, { baseUrl }) {
       downloadUrl: `${base}/${packageName(manifest)}`,
       sha256: createHash('sha256').update(bytes).digest('hex'),
     };
-    // Relative Vorschaubilder liegen im Paket und sind für den Store nicht erreichbar
+    // Vorschau: eine https-Adresse aus dem Manifest bleibt; ein Bild im Paket liegt am Release neben dem Paket
     if (typeof manifest.preview === 'string' && manifest.preview.startsWith('https://')) entry.preview = manifest.preview;
+    else {
+      const preview = packagePreview(bytes, manifest);
+      if (preview) entry.preview = `${base}/${preview.name}`;
+    }
     if (typeof manifest.description === 'string' && manifest.description.trim()) entry.description = manifest.description;
     return entry;
   });

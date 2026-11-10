@@ -1,0 +1,376 @@
+/* „Terminal“: modernes Terminal, dunkel mit den 16 ANSI-Farben, Grün als Akzent (Prompt), Blau für Pfade und Links, alles in
+   Festbreitenschrift (Geist Mono der App über --font-mono), ohne Rundungen und Schatten. Getönte Flächen sind die jeweilige
+   ANSI-Farbe, anteilig über den Hintergrund gemischt; --term-* gilt nur in diesem Theme. Rahmen (Prompt-Zeile, Navigation als
+   Liste, Statuszeile) und Bedienelemente weiter unten. */
+:root[data-theme='terminal'] {
+  color-scheme: dark;
+  --font-sans: var(--font-mono);
+  --bg: #0d1117;
+  --surface: #0d1117;
+  --surface-alt: #161b22;
+  --sidebar-bg: #0d1117;
+  --nav-active-bg: #161b22;
+  --line: #30363d;
+  --line-input: #30363d;
+  --line-soft: #21262d;
+  --line-strong: #484f58;
+  --line-dashed: #30363d;
+  --column-bg: #0d1117;
+  --column-locked-a: #0d1117;
+  --column-locked-b: #161b22;
+  --text: #c9d1d9;
+  --text-soft: #b1bac4;
+  --muted: #8b949e;
+  --accent: #3fb950;
+  --accent-hover: #56d364;
+  --accent-soft: #142a20;
+  --accent-soft-hover: #1a3b25;
+  --on-accent: #0d1117;
+  --primary: #3fb950;
+  --primary-hover: #56d364;
+  --on-primary: #0d1117;
+  --chip-on-bg: #c9d1d9;
+  --chip-on-fg: #0d1117;
+  --code-bg: #010409;
+  --code-fg: #c9d1d9;
+  --code-muted: #8b949e;
+  --code-btn-bg: #161b22;
+  --code-btn-line: #30363d;
+  --status-bg: #18273a;
+  --status-fg: #79c0ff;
+  --running-fg: #56d364;
+  --running-bg: #142a20;
+  --waiting-fg: #e3b341;
+  --waiting-bg: #2b2519;
+  --waiting-line: #5c471b;
+  --idle-fg: #b1bac4;
+  --idle-bg: #21262d;
+  --blocked-fg: #ffa198;
+  --blocked-bg: #312125;
+  --orphan-fg: #d2a8ff;
+  --orphan-bg: #27233a;
+  --unread-fg: #79c0ff;
+  --unread-bg: #18273a;
+  --unread-row-bg: #131d2a;
+  --note-bg: #2b2519;
+  --note-line: #5c471b;
+  --note-fg: #e3b341;
+  --ok: #3fb950;
+  --ok-fg: #56d364;
+  --ok-ring: #142a20;
+  --danger: #ff7b72;
+  --warn: #d29922;
+  --usage-ok: #3fb950;
+  --usage-warn: #d29922;
+  --usage-crit: #ff7b72;
+  --usage-over: #f0883e;
+  --row-waiting-bg: #1d1c18;
+  --quote-line: #484f58;
+  --mark: #5c471b;
+  --mark-comment: #18273a;
+  --mark-comment-hover: #203651;
+  --tag-add-line: #484f58;
+  --connection-line: #6e3b3b;
+  --connection-fg: #ffa198;
+  --error-bg: #20191e;
+  --answered-bg: #142a20;
+  --answered-line: #21542e;
+  --research-bg: #142c33;
+  --research-fg: #56d4dd;
+  --diff-add-bg: #142a20;
+  --diff-add-fg: #56d364;
+  --diff-del-bg: #312125;
+  --diff-del-fg: #ffa198;
+  --diff-hunk-fg: #d2a8ff;
+  --test-ok: #3fb950;
+  --test-fail: #ff7b72;
+  --status-backlog: #8b949e;
+  --status-waiting: #d29922;
+  --status-in-planning: #bc8cff;
+  --status-planned: #58a6ff;
+  --status-in-progress: #39c5cf;
+  --status-blocked: #ff7b72;
+  --status-done: #3fb950;
+  --status-not-needed: #484f58;
+  --graph-edge: #484f58;
+  --graph-critical: #ff7b72;
+  --graph-upstream: #58a6ff;
+  --graph-downstream: #bc8cff;
+  --chart-done: #3fb950;
+  --chart-fail: #ff7b72;
+  --chart-bar: #3fb950;
+  --chart-track: #21262d;
+  --chart-grid: #21262d;
+  --chart-axis: #8b949e;
+  --chart-other: #484f58;
+  --chart-escalated: #d29922;
+  --reason-max-turns: #ff7b72;
+  --reason-timeout: #d29922;
+  --reason-context: #f778ba;
+  --reason-exit-code: #bc8cff;
+  --reason-claude-error: #58a6ff;
+  --reason-no-outcome: #39c5cf;
+  --reason-rest: #6e7681;
+  --urgent-row-bg: #20191e;
+  --shadow-faint: rgba(1, 4, 9, 0);
+  --shadow-mid: rgba(1, 4, 9, 0);
+  --shadow-soft: rgba(1, 4, 9, 0);
+  --shadow-tab: rgba(1, 4, 9, 0);
+  --shadow-strong: rgba(1, 4, 9, 0);
+  --backdrop: rgba(1, 4, 9, 0.7);
+  --sheet-shadow: rgba(1, 4, 9, 0.6);
+  --picker-shadow: rgba(1, 4, 9, 0.6);
+  --radius-control: 0;
+  --radius-card: 0;
+  --radius-panel: 0;
+  --term-user: #3fb950;
+  --term-path: #58a6ff;
+  --term-cursor: #c9d1d9;
+  --term-hint: #484f58;
+  --term-error: #ff7b72;
+  --term-ok: #3fb950;
+  --term-id: #39c5cf;
+  --term-highlight: #e3b341;
+  --term-select: rgba(56, 139, 253, 0.33);
+}
+
+/* Rahmen (TerminalFrame) und das Gefühl eines modernen Terminals – Festbreitenschrift überall, Linien statt Schatten, eckige
+   Ecken, Knöpfe als [ Text ], Kästchen als [x], Auswahl invertiert, keine Übergänge. Farben nur über Variablen. */
+
+/* Grundgefühl */
+:root[data-theme='terminal'] body { font-size: 13px; line-height: 1.5; font-variant-ligatures: none; }
+:root[data-theme='terminal'] *, :root[data-theme='terminal'] *::before, :root[data-theme='terminal'] *::after { transition: none !important; }
+:root[data-theme='terminal'] ::selection { background: var(--term-select); }
+:root[data-theme='terminal'] h1, :root[data-theme='terminal'] h2, :root[data-theme='terminal'] h3 { letter-spacing: 0; }
+:root[data-theme='terminal'] .page-title, :root[data-theme='terminal'] .page-head h1 { font-size: 20px; font-weight: 600; }
+:root[data-theme='terminal'] :is(.page-title, .page-head h1)::before { content: '# '; color: var(--muted); }
+:root[data-theme='terminal'] a:not(:is(.nav, .settings-nav) a, .btn, .tab) { color: var(--term-path); }
+:root[data-theme='terminal'] :is(button, a, summary, [tabindex]:not([tabindex='-1']), input, select, textarea):focus-visible { outline: 1px dashed var(--accent); outline-offset: 2px; box-shadow: none; }
+:root[data-theme='terminal'] ::-webkit-scrollbar { width: 10px; height: 10px; }
+:root[data-theme='terminal'] ::-webkit-scrollbar-track { background: var(--bg); }
+:root[data-theme='terminal'] ::-webkit-scrollbar-thumb { background: var(--line); }
+:root[data-theme='terminal'] ::-webkit-scrollbar-thumb:hover { background: var(--line-strong); }
+:root[data-theme='terminal'] ::-webkit-scrollbar-corner { background: var(--bg); }
+
+/* ---------- Rahmen: Prompt-Zeile, Navigation, Statuszeile ---------- */
+:root[data-theme='terminal'] #root:has(.term-screen) { display: block; height: 100vh; height: 100dvh; }
+:root[data-theme='terminal'] .term-screen { --term-topbar-h: 41px; --term-status-h: 25px; display: flex; flex-direction: column; height: 100%; background: var(--bg); }
+/* Seitenpanels (Ticket, Notiz, Blatt) zwischen Prompt-Zeile und Statuszeile, damit beide sichtbar bleiben */
+:root[data-theme='terminal'] .term-screen :is(.db-panel, .sheet, .note-slide) { top: var(--term-topbar-h); bottom: var(--term-status-h); }
+
+:root[data-theme='terminal'] .term-topbar { position: relative; z-index: 30; flex: none; box-sizing: border-box; display: flex; align-items: center; gap: 16px; height: var(--term-topbar-h); padding: 0 16px; border-bottom: 1px solid var(--line); }
+:root[data-theme='terminal'] .term-prompt { flex: 1; min-width: 0; display: flex; align-items: center; white-space: nowrap; }
+:root[data-theme='terminal'] .term-prompt-label { flex: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis; cursor: text; font-weight: 600; }
+:root[data-theme='terminal'] .term-user { color: var(--term-user); }
+:root[data-theme='terminal'] .term-path { color: var(--term-path); }
+:root[data-theme='terminal'] .term-sigil { margin: 0 1ch 0 0; color: var(--text); font-weight: 400; }
+:root[data-theme='terminal'] .term-cmd { position: relative; flex: 1; min-width: 0; display: flex; }
+:root[data-theme='terminal'] .term-input.term-input { flex: 1; min-width: 0; min-height: 0; height: auto; padding: 0; border: 0; border-radius: 0; background: none; color: var(--text); font: inherit; caret-color: var(--term-cursor); box-shadow: none; }
+:root[data-theme='terminal'] .term-input.term-input:focus, :root[data-theme='terminal'] .term-input.term-input:focus-visible { outline: none; border: 0; box-shadow: none; }
+:root[data-theme='terminal'] .term-input.caret-at-end { caret-color: transparent; }
+:root[data-theme='terminal'] .term-ghost { position: absolute; inset: 0 auto 0 0; display: flex; align-items: center; pointer-events: none; white-space: pre; overflow: hidden; }
+:root[data-theme='terminal'] .term-typed { color: transparent; }
+:root[data-theme='terminal'] .term-suggestion { color: var(--term-hint); }
+:root[data-theme='terminal'] .term-cursor { display: none; width: 0.6em; height: 1.2em; background: var(--term-cursor); }
+:root[data-theme='terminal'] .term-input.caret-at-end:focus + .term-ghost .term-cursor { display: inline-block; animation: term-blink 1.06s steps(1) infinite; }
+:root[data-theme='terminal'] .term-input.caret-at-end:not(:focus) + .term-ghost .term-cursor { display: inline-block; background: none; outline: 1px solid var(--term-hint); outline-offset: -1px; }
+@keyframes term-blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { :root[data-theme='terminal'] .term-input.caret-at-end:focus + .term-ghost .term-cursor { animation: none; } }
+
+/* Ausgabe der Befehle: klappt unter der Prompt-Zeile über die Seite */
+:root[data-theme='terminal'] .term-output { position: absolute; left: 0; right: 0; top: 100%; max-height: 50vh; overflow: auto; padding: 8px 16px 10px; background: var(--bg); border-bottom: 1px solid var(--accent); box-shadow: 0 12px 24px var(--sheet-shadow); white-space: pre-wrap; }
+:root[data-theme='terminal'] .term-out-line { min-height: 1.5em; }
+:root[data-theme='terminal'] .term-out-table { border-collapse: collapse; }
+:root[data-theme='terminal'] .term-out-table td { padding: 0 3ch 0 0; vertical-align: top; white-space: pre; }
+:root[data-theme='terminal'] .term-out-table td:last-child { white-space: normal; }
+:root[data-theme='terminal'] .term-echo { color: var(--text); }
+:root[data-theme='terminal'] .term-tone-muted { color: var(--muted); }
+:root[data-theme='terminal'] .term-tone-error { color: var(--term-error); }
+:root[data-theme='terminal'] .term-tone-ok { color: var(--term-ok); }
+:root[data-theme='terminal'] .term-tone-id { color: var(--term-id); }
+:root[data-theme='terminal'] .term-tone-dir { color: var(--term-path); font-weight: 600; }
+:root[data-theme='terminal'] .term-tone-highlight { color: var(--term-highlight); }
+:root[data-theme='terminal'] .term-tone-hint { margin-top: 4px; color: var(--term-hint); }
+
+/* Board-Auswahl rechts in der Prompt-Zeile: schlichtes Feld mit Rahmen */
+:root[data-theme='terminal'] .term-board { flex: 0 1 320px; min-width: 0; }
+:root[data-theme='terminal'] .term-board .proj { padding: 0; }
+:root[data-theme='terminal'] .term-board .bp-field { height: 28px; border-color: var(--line); background: var(--bg); }
+:root[data-theme='terminal'] .term-board .board-picker-trigger { font-size: 13px; padding: 0 8px; }
+:root[data-theme='terminal'] .term-board .bp-text { flex-direction: row; align-items: baseline; gap: 1ch; }
+:root[data-theme='terminal'] .term-board .bp-project { font-size: 12px; }
+:root[data-theme='terminal'] .term-board .bp-name { font-size: 13px; font-weight: 400; }
+:root[data-theme='terminal'] .term-board .bp-edit { width: 28px; }
+
+:root[data-theme='terminal'] .term-body { flex: 1; min-height: 0; display: flex; }
+
+/* Navigation als Ausgabe von „ls ~/“: aktiver Eintrag invertiert mit „>“, Zähler in eckigen Klammern */
+:root[data-theme='terminal'] .term-nav.nav { flex: 0 0 220px; gap: 0; padding: 12px 0; border-right: 1px solid var(--line); overflow-y: auto; }
+:root[data-theme='terminal'] .term-nav-hint { padding: 0 16px 8px; color: var(--muted); }
+:root[data-theme='terminal'] .term-nav.nav a { min-height: 0; gap: 1ch; padding: 1px 16px; border-radius: 0; background: none; box-shadow: none; color: var(--text-soft); font-size: 13px; font-weight: 400; text-transform: lowercase; }
+:root[data-theme='terminal'] .term-nav.nav a::before { content: ' '; flex: none; width: 1ch; white-space: pre; }
+:root[data-theme='terminal'] .term-nav.nav a:hover { background: var(--surface-alt); color: var(--text); }
+:root[data-theme='terminal'] .term-nav.nav a.active { background: var(--accent); color: var(--on-accent); font-weight: 600; box-shadow: none; }
+:root[data-theme='terminal'] .term-nav.nav a.active::before { content: '>'; }
+:root[data-theme='terminal'] .term-nav.nav a:last-child { margin-top: 8px; border-top: 1px dashed var(--line); padding-top: 8px; }
+:root[data-theme='terminal'] .term-nav.nav a.active:last-child { border-top-color: var(--line); }
+:root[data-theme='terminal'] .term-nav .nav-icon { display: none; }
+:root[data-theme='terminal'] .term-nav .nav-badge { display: inline-flex; min-width: 0; height: auto; padding: 0; border-radius: 0; background: none; color: var(--danger); font-size: 13px; font-weight: 400; }
+:root[data-theme='terminal'] .term-nav .nav-badge::before { content: '['; }
+:root[data-theme='terminal'] .term-nav .nav-badge::after { content: ']'; }
+:root[data-theme='terminal'] .term-nav.nav a.active .nav-badge { color: var(--on-accent); }
+
+:root[data-theme='terminal'] .term-body .shell-content { flex: 1; min-width: 0; }
+:root[data-theme='terminal'] .term-body .page { max-width: none; }
+:root[data-theme='terminal'] .term-body .connection-slot:empty { display: none; }
+
+/* Statuszeile wie in vim/tmux */
+:root[data-theme='terminal'] .term-statusline { flex: none; box-sizing: border-box; display: flex; align-items: stretch; height: var(--term-status-h); background: var(--surface-alt); border-top: 1px solid var(--line); white-space: nowrap; font-size: 12px; }
+:root[data-theme='terminal'] .term-statusline > * { display: flex; align-items: center; padding: 0 12px; }
+:root[data-theme='terminal'] .term-mode { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+:root[data-theme='terminal'] .term-spacer { flex: 1; padding: 0; }
+:root[data-theme='terminal'] .term-statusline > .term-keys { display: block; align-self: center; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+:root[data-theme='terminal'] .term-keys kbd { color: var(--text); font: inherit; }
+:root[data-theme='terminal'] .term-clock { border-left: 1px solid var(--line); color: var(--text-soft); font-variant-numeric: tabular-nums; }
+/* Claude-Nutzung: kleine Ringe ohne Kürzel in einer Zeile; die genauen Werte klappen beim Darüberfahren nach oben auf */
+:root[data-theme='terminal'] .term-status-usage { border-right: 1px solid var(--line); overflow: visible; }
+:root[data-theme='terminal'] .term-status-usage:empty { display: none; }
+:root[data-theme='terminal'] .term-status-usage .usage-meter { flex-direction: row; align-items: center; gap: 1ch; padding: 0; border: 0; background: none; font-size: 12px; }
+:root[data-theme='terminal'] .term-status-usage .usage-skel { min-height: 0; }
+:root[data-theme='terminal'] .term-status-usage .usage-meter.compact .usage-accounts { flex-wrap: nowrap; gap: 1ch; }
+:root[data-theme='terminal'] .term-status-usage .usage-ring { width: 16px; height: 16px; }
+:root[data-theme='terminal'] .term-status-usage .usage-ring-initials { display: none; }
+:root[data-theme='terminal'] .term-status-usage .usage-pop { right: auto; width: 260px; white-space: normal; }
+:root[data-theme='terminal'] .term-status-usage .usage-dot-link { border-radius: 0; }
+
+/* ---------- Bedienelemente im ganzen Schema ---------- */
+
+/* Knöpfe: [ Text ], beim Überfahren invertiert; Hauptknopf grün */
+:root[data-theme='terminal'] .btn { min-height: 26px; padding: 0 4px; border: 0; border-radius: 0; background: none; color: var(--text); font-weight: 400; box-shadow: none; }
+:root[data-theme='terminal'] .btn::before { content: '['; margin-right: 0.5ch; color: var(--muted); }
+:root[data-theme='terminal'] .btn::after { content: ']'; margin-left: 0.5ch; color: var(--muted); }
+:root[data-theme='terminal'] .btn:hover:not(:disabled) { background: var(--text); color: var(--bg); }
+:root[data-theme='terminal'] .btn:hover:not(:disabled)::before, :root[data-theme='terminal'] .btn:hover:not(:disabled)::after { color: var(--bg); }
+:root[data-theme='terminal'] .btn.primary { background: none; color: var(--accent); font-weight: 600; }
+:root[data-theme='terminal'] .btn.primary:hover:not(:disabled) { background: var(--accent); color: var(--on-accent); }
+:root[data-theme='terminal'] .btn.danger { background: none; color: var(--danger); }
+:root[data-theme='terminal'] .btn.danger:hover:not(:disabled) { background: var(--danger); color: var(--bg); }
+:root[data-theme='terminal'] :is(.btn, button):disabled { opacity: 0.45; }
+:root[data-theme='terminal'] :is(.icon-btn, .fchip, .segmented button, .db-fab-btn, .db-fab-item, .global-search, .search-clear) { border-radius: 0; box-shadow: none; }
+:root[data-theme='terminal'] .icon-btn:hover:not(:disabled) { background: var(--surface-alt); }
+/* Umschalter (Filter-Chips, Segmente): gewählt = invertiert */
+:root[data-theme='terminal'] .fchip { border-color: var(--line); background: none; color: var(--text-soft); }
+:root[data-theme='terminal'] :is(.fchip.on, .fchip[aria-pressed='true'], .segmented button.on) { background: var(--text); border-color: var(--text); color: var(--bg); box-shadow: none; }
+:root[data-theme='terminal'] .segmented { gap: 0; padding: 0; border: 1px solid var(--line); border-radius: 0; background: none; }
+
+/* Eingabefelder: Rahmen, beim Fokus grün, Block-Cursor wo der Browser ihn kann */
+/* Die Prompt-Zeile (.term-input) bleibt ausgenommen: sie zeichnet ihren Cursor selbst */
+:root[data-theme='terminal'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not(.term-input), select, textarea) {
+  border-color: var(--line); border-radius: 0; background-color: var(--bg); color: var(--text); caret-color: var(--accent); caret-shape: block; box-shadow: none;
+}
+:root[data-theme='terminal'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not(.term-input), select, textarea):focus { border-color: var(--accent); box-shadow: none; outline: none; }
+:root[data-theme='terminal'] .db-search, :root[data-theme='terminal'] .search { border-radius: 0; }
+:root[data-theme='terminal'] .db-search:focus-within { border-color: var(--accent); box-shadow: none; }
+
+/* Kontrollkästchen [x] und Optionsfelder (*) */
+:root[data-theme='terminal'] input:is([type='checkbox'], [type='radio']):not(.sr-only) {
+  -webkit-appearance: none; appearance: none; flex: none; width: auto; height: auto; min-height: 0; margin: 0; padding: 0; border: 0; background: none; font: inherit; color: var(--muted); cursor: pointer; box-shadow: none;
+}
+:root[data-theme='terminal'] input:is([type='checkbox'], [type='radio']):not(.sr-only)::before {
+  position: static; display: inline-block; width: auto; height: auto; border-radius: 0; background: none; box-shadow: none; transform: none; white-space: pre;
+}
+:root[data-theme='terminal'] input[type='checkbox']:not(.sr-only)::before { content: '[ ]'; }
+:root[data-theme='terminal'] input[type='checkbox']:not(.sr-only):checked::before { content: '[x]'; color: var(--accent); transform: none; }
+:root[data-theme='terminal'] input[type='radio']:not(.sr-only)::before { content: '( )'; }
+:root[data-theme='terminal'] input[type='radio']:not(.sr-only):checked::before { content: '(*)'; color: var(--accent); transform: none; }
+/* Schalter der Einstellungen: als [x] statt als Schiebeschalter, auch beim Überfahren ohne Fläche */
+:root[data-theme='terminal'] .setting-control > input[type='checkbox']:is(:checked, :hover, :checked:hover):not(:disabled) { background: none; }
+:root[data-theme='terminal'] input:is([type='checkbox'], [type='radio']):disabled { opacity: 0.45; cursor: default; }
+
+/* Flächen und Karten: Linie statt Schatten */
+:root[data-theme='terminal'] :is(.panel, .settings-card, .dash-card, .notice, .card, .db-card, .suggestion-card, .option-card, .inbox-row, .state.empty) { border-radius: 0; box-shadow: none; }
+:root[data-theme='terminal'] :is(.card, .db-card):hover { border-color: var(--accent); box-shadow: none; }
+:root[data-theme='terminal'] .db-card:hover .card-id::before { content: '> '; color: var(--accent); }
+:root[data-theme='terminal'] .state.empty { border-style: dashed; }
+
+/* Board-Spalten: Rahmen, Kopf in der Farbe des Status, Versalien */
+:root[data-theme='terminal'] .column { border: 1px solid var(--line); border-radius: 0; background: var(--column-bg); }
+:root[data-theme='terminal'] .db-column .column-head { border-radius: 0; border-bottom: 1px solid var(--line); background: var(--bg); }
+:root[data-theme='terminal'] .db-column[data-status] .column-head h2 { color: var(--node-status, var(--text)); text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
+:root[data-theme='terminal'] .column-empty { border-radius: 0; }
+
+/* Plaketten und Tags: nur Text in eckigen Kästchen */
+:root[data-theme='terminal'] :is(.badge, .tag, .tab-count, .bp-key, .nav-kbd) { border-radius: 0; }
+:root[data-theme='terminal'] .tag:not(.add) { background: none; border: 0; padding: 0; color: var(--muted); }
+:root[data-theme='terminal'] .tag:not(.add)::before { content: '#'; }
+
+/* Registerkarten: [ aktiv ] invertiert */
+:root[data-theme='terminal'] :is(.tabs, .state-tabs, .db-tablist, .doc-comment-tabs, .doc-ticket-tabs) { gap: 0; }
+:root[data-theme='terminal'] .tab { border-radius: 0; box-shadow: none; }
+:root[data-theme='terminal'] .tab.on { background: var(--text); color: var(--bg); }
+:root[data-theme='terminal'] .tab.on .tab-count { background: var(--bg); color: var(--text); }
+
+/* Dialoge und Panels: grüner Rahmen, Überschrift als invertierte Titelzeile */
+:root[data-theme='terminal'] :is(.db-modal, .db-dialog) { border: 1px solid var(--accent); border-radius: 0; box-shadow: none; }
+:root[data-theme='terminal'] :is(.db-modal, .db-dialog) > :is(h2, h3):first-child,
+:root[data-theme='terminal'] :is(.db-modal, .db-dialog) > :first-child > :is(h2, h3):first-child { margin-top: 0; font-size: 14px; }
+:root[data-theme='terminal'] :is(.db-modal, .db-dialog) > :is(h2, h3):first-child::before,
+:root[data-theme='terminal'] :is(.db-modal, .db-dialog) > :first-child > :is(h2, h3):first-child::before { content: '## '; color: var(--muted); }
+:root[data-theme='terminal'] :is(.sheet, .db-panel) { border-radius: 0; border-color: var(--line); box-shadow: none; }
+:root[data-theme='terminal'] :is(.sheet-head, .db-panel-head) { border-bottom: 1px solid var(--line); }
+
+/* Aufklapp-Menüs, Popover, Tooltips: Rahmen, Auswahl invertiert */
+:root[data-theme='terminal'] :is(.board-picker-pop, .doc-open-menu, .selection-popover, .search-dialog, .dd-modal, .usage-pop) { border-radius: 0; border-color: var(--line); box-shadow: 0 12px 24px var(--picker-shadow); }
+:root[data-theme='terminal'] :is(.bp-item, .branch-combo-option, .search-hit) { border-radius: 0; }
+:root[data-theme='terminal'] :is(.bp-item, .branch-combo-option):is(:hover, :focus-visible) { background: var(--text); color: var(--bg); }
+:root[data-theme='terminal'] :is(.bp-item, .branch-combo-option):is(:hover, :focus-visible) :is(.bp-meta, .bp-count, .bp-project) { color: var(--bg); }
+:root[data-theme='terminal'] :is(.info-pop, .live-text, .runs-tip, .info-tip) { border-radius: 0; border: 1px solid var(--line); background: var(--surface-alt); color: var(--text); }
+:root[data-theme='terminal'] .goo-morph, :root[data-theme='terminal'] .db-fab-goo { display: none; }
+
+/* Fortschritt: Blöcke wie █████░░░ */
+:root[data-theme='terminal'] :is(.progress-bar, .card-steps-bar) { border-radius: 0; background: repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 8px); }
+:root[data-theme='terminal'] :is(.progress-bar > span, .card-steps-fill, .card-steps-fill.complete) { border-radius: 0; background: repeating-linear-gradient(90deg, var(--usage-ok) 0 6px, transparent 6px 8px); }
+/* Ringe der Claude-Nutzung: gerade Enden statt runder Kappen */
+:root[data-theme='terminal'] .usage-ring-arc { stroke-linecap: butt; }
+:root[data-theme='terminal'] :is(.card-steps-fill, .card-steps-fill.complete) { background: repeating-linear-gradient(90deg, var(--status-in-progress) 0 6px, transparent 6px 8px); }
+
+/* Schwebender „+“-Knopf: eckig */
+:root[data-theme='terminal'] .db-fab-btn { transform: none; }
+:root[data-theme='terminal'] .db-fab-label { border-radius: 0; }
+
+/* Auswahlkarten (Farbschema u. a.): gewählt = grüner Rahmen mit „>“ */
+:root[data-theme='terminal'] .choice { border-radius: 0; box-shadow: none; }
+:root[data-theme='terminal'] .choice-hint { overflow-wrap: anywhere; hyphens: auto; }
+:root[data-theme='terminal'] .choice.selected { border-color: var(--accent); background: var(--accent-soft); }
+:root[data-theme='terminal'] .choice.selected .choice-label::before { content: '> '; color: var(--accent); }
+
+/* Seitenleisten in Seiten (Einstellungen, Docs): Liste wie die Navigation */
+:root[data-theme='terminal'] .settings-nav a { border-radius: 0; box-shadow: none; }
+/* Die Navigation der Einstellungen füllt nur den Raum zwischen Prompt- und Statuszeile, sonst scrollt die Seite immer */
+:root[data-theme='terminal'] .term-body .settings-nav { height: calc(100vh - var(--term-topbar-h) - var(--term-status-h)); height: calc(100dvh - var(--term-topbar-h) - var(--term-status-h)); }
+:root[data-theme='terminal'] .settings-nav a.active { background: var(--accent); color: var(--on-accent); }
+:root[data-theme='terminal'] .settings-nav a.active .nav-icon { color: var(--on-accent); }
+
+/* Code */
+:root[data-theme='terminal'] :is(pre, .code, code) { border-radius: 0; }
+
+/* Docs: Symbole im Baum in ANSI-Blau und -Violett */
+:root[data-theme='terminal'] .doc-tree-icon.is-doc { color: #58a6ff; }
+:root[data-theme='terminal'] .doc-tree-icon.is-glossary { color: #bc8cff; }
+
+/* Anleitung: Varianten-Umschalter in einer Zeile unter dem Titel (gewählt = invertiert), schmal genug für die Titelspalte */
+:root[data-theme='terminal'] .step-options { display: flex; width: fit-content; flex-wrap: nowrap; border-radius: 0; background: none; border: 1px solid var(--line); padding: 0; gap: 0; }
+:root[data-theme='terminal'] .step-option { min-height: 24px; padding: 0 6px; border-radius: 0; white-space: nowrap; }
+:root[data-theme='terminal'] .step-option[aria-pressed='true'] { background: var(--text); color: var(--bg); box-shadow: none; }
+
+/* Schmale Fenster: Navigation als Zeile über der Seite, Tastenhinweise ausgeblendet */
+@media (max-width: 900px) {
+  :root[data-theme='terminal'] .term-body { flex-direction: column; }
+  :root[data-theme='terminal'] .term-nav.nav { flex: none; flex-direction: row; flex-wrap: wrap; padding: 4px 8px; border-right: 0; border-bottom: 1px solid var(--line); }
+  :root[data-theme='terminal'] .term-nav-hint { display: none; }
+  :root[data-theme='terminal'] .term-nav.nav a { padding: 1px 8px; }
+  :root[data-theme='terminal'] .term-nav.nav a:last-child { margin-top: 0; border-top: 0; padding-top: 1px; }
+  :root[data-theme='terminal'] .term-statusline > .term-keys { display: none; }
+  :root[data-theme='terminal'] .term-board { flex-basis: 200px; }
+  :root[data-theme='terminal'] .term-body .settings-nav { height: auto; }
+}

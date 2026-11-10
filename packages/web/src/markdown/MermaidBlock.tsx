@@ -1,8 +1,22 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { THEME_EVENT, currentTheme } from '../theme/theme.js';
+import { getTheme } from '../theme/registry.js';
+import { THEME_EVENT, currentTheme, displayedTheme } from '../theme/theme.js';
 import { DiagramViewer } from './DiagramViewer.js';
 
 type Result = { svg: string } | { error: string };
+
+// Aussehen für das angezeigte Schema: vom Theme (ThemeDefinition.mermaid), sonst hell oder dunkel; ein scheiterndes Theme fällt zurück
+function lookFor(themeId: string) {
+  const standard = { theme: currentTheme() === 'dark' ? ('dark' as const) : ('default' as const) };
+  const custom = getTheme(themeId)?.mermaid;
+  if (!custom) return standard;
+  try {
+    return { ...custom() };
+  } catch (error) {
+    console.error('Theme: Mermaid-Aussehen gescheitert, Standard wird gezeigt.', error);
+    return standard;
+  }
+}
 
 // Zeichnet ein Mermaid-Diagramm (Bibliothek wird erst bei Bedarf geladen); Fehler zeigen Meldung und Quelltext.
 // Ein gezeichnetes Diagramm lässt sich im Vollbild mit Zoom und Verschieben öffnen; bei Wechsel des Farbschemas wird neu gezeichnet.
@@ -12,11 +26,11 @@ export function MermaidBlock({ source, title = 'Diagramm' }: { source: string; t
   const renders = useRef(0);
   const [result, setResult] = useState<Result | null>(null);
   const [full, setFull] = useState(false);
-  const [theme, setTheme] = useState(currentTheme);
+  const [theme, setTheme] = useState(displayedTheme);
 
   // Bei Wechsel des Farbschemas neu zeichnen (gleiches Schema löst nichts aus)
   useEffect(() => {
-    const redraw = () => setTheme(currentTheme());
+    const redraw = () => setTheme(displayedTheme());
     window.addEventListener(THEME_EVENT, redraw);
     return () => window.removeEventListener(THEME_EVENT, redraw);
   }, []);
@@ -28,7 +42,7 @@ export function MermaidBlock({ source, title = 'Diagramm' }: { source: string; t
     (async () => {
       try {
         const { default: mermaid } = await import('mermaid');
-        mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: theme === 'dark' ? 'dark' : 'default' });
+        mermaid.initialize({ ...lookFor(theme), startOnLoad: false, securityLevel: 'strict' });
         const { svg } = await mermaid.render(renderId, source);
         if (!cancelled) setResult({ svg });
       } catch (error) {

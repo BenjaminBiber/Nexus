@@ -6,6 +6,7 @@
   "sdkVersion": "^1.1",
   "colorScheme": "light",
   "startColor": "#f4f6f8",
+  "preview": "assets/preview.png",
   "slots": [],
   "permissions": { "network": [] }
 }

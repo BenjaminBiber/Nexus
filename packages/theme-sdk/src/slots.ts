@@ -4,6 +4,24 @@ import type { ThemeSettingsSchema } from './settings.js';
 /** Namen der Navigationssymbole, die ein Theme ersetzen kann */
 export type NavIconName = 'board' | 'dashboard' | 'inbox' | 'sessions' | 'questions' | 'docs' | 'search' | 'guide' | 'settings';
 
+/**
+ * Namen weiterer Symbole im Kern, die ein Theme über den Slot „Icon“ ersetzen kann.
+ * Docs-Baum: `doc` (Spec), `plan`, `glossary`, `adr`, `file` (sonstige Datei), `folder`/`folderOpen` (Ordner, Standard: kein Symbol);
+ * `empty`: Leerzustand; `edit` und `comment`: Knöpfe an der Textauswahl in Docs.
+ */
+export type IconName = 'doc' | 'plan' | 'glossary' | 'adr' | 'file' | 'folder' | 'folderOpen' | 'empty' | 'edit' | 'comment';
+
+/**
+ * Aussehen von Mermaid-Diagrammen (Teil der Mermaid-Konfiguration). `theme` wie bei Mermaid, `themeVariables` z. B.
+ * `primaryColor`, `lineColor`, `fontFamily`; `themeCSS` wird in das SVG des Diagramms gelegt.
+ */
+export interface MermaidLook {
+  theme?: 'base' | 'default' | 'dark' | 'neutral' | 'forest';
+  themeVariables?: Record<string, string | boolean>;
+  themeCSS?: string;
+  fontFamily?: string;
+}
+
 /** Fertige Bausteine des Rahmens, die eine eigene Shell frei anordnet */
 export interface ShellParts {
   /** Knopf der globalen Suche (öffnet auch mit Strg+K) */
@@ -127,6 +145,8 @@ export type PageSlots = { [N in PageName as `page:${N}`]?: ComponentType<PagePro
 export interface ThemeSlots extends PageSlots {
   Shell?: ComponentType<ShellProps>;
   NavIcon?: ComponentType<{ name: NavIconName }>;
+  /** Weitere Symbole im Kern (Docs-Baum, Leerzustand, Textauswahl); seit SDK 1.2.0 */
+  Icon?: ComponentType<{ name: IconName }>;
   Progress?: ComponentType<ProgressProps>;
   Button?: ComponentType<ButtonProps>;
   Card?: ComponentType<CardProps>;
@@ -143,4 +163,6 @@ export interface ThemeDefinition {
   slots: ThemeSlots;
   /** Eigene Einstellungen; erscheinen unter Einstellungen → Darstellung, Werte über `useThemeSettings()` */
   settingsSchema?: ThemeSettingsSchema;
+  /** Aussehen der Mermaid-Diagramme; wird bei jedem Zeichnen aufgerufen (CSS-Variablen sind dann gesetzt); seit SDK 1.2.0 */
+  mermaid?: () => MermaidLook;
 }

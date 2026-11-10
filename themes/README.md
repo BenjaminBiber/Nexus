@@ -26,8 +26,8 @@ npm run build:themes
 
 packt jeden Ordner mit `nexus theme pack` nach `dist/themes/<id>.nexus` und bricht bei einem
 ungültigen Theme mit Exit-Code 1 ab. Code-Themes (`package.json` mit Skript `build`, z. B.
-`win95`, `minecraft`) baut das Skript vorher mit `npm run build` und packt dann ihr `dist/`
-(`main.js`, `manifest.json`, `theme.css`) statt des Quellordners. Die Pakete sind für Release und
+`win95`, `minecraft`, `terminal`) baut das Skript vorher mit `npm run build` und packt dann ihr `dist/`
+(`main.js`, `manifest.json`, `theme.css`, `assets/`) statt des Quellordners. Die Pakete sind für Release und
 Store-Index; die Desktop-App bündelt sie nicht. Wer sie lokal vorinstallieren will, gibt den Ordner
 `nexus serve` ausdrücklich mit (`--bundled-themes-dir dist/themes` / `NEXUS_BUNDLED_THEMES_DIR`).
 
@@ -52,6 +52,22 @@ npm run build:themes
 node scripts/release/theme-index.mjs dist/themes http://127.0.0.1:8080 dist/release-themes
 npx serve -l 8080 dist/release-themes   # dann http://127.0.0.1:8080/nexus-themes.json eintragen
 ```
+
+## Vorschaubild
+
+Jedes Theme bringt `assets/preview.png` mit (im Manifest `"preview": "assets/preview.png"`): das
+Board „Nova Shop“ aus erfundenen Demodaten, 640×320. Die Einstellungen zeigen es auf der Kachel
+installierter Themes; `theme-index.mjs` legt es am Release als `<id>-<version>-preview.png` neben
+das Paket und trägt die URL als `preview` in den Store-Index ein. Neu aufnehmen (Voraussetzungen
+wie bei den Screenshots im Haupt-README, dazu `npm run build:themes`):
+
+```
+node scripts/screenshots/theme-previews.mjs [<id> …]
+```
+
+Themes mit fremden Ressourcen (`permissions.network`, z. B. Minecraft mit Mojang-Texturen)
+bekommen kein Bild: mit den Texturen dürfte es weder ins Repo noch ins Paket, ohne sie zeigt es
+nur die Rückfall-Ansicht. Ein neues Bild ist eine Änderung am Paket, also `version` erhöhen.
 
 ## Versionsregel
 

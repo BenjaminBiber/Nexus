@@ -4,7 +4,7 @@ Das Theme-SDK beschreibt den Vertrag zwischen der Nexus-Oberfläche (Host) und e
 Stellen ein Theme ersetzen darf (Slots), welche Daten und Bausteine es vom Host bekommt (Hooks und
 Bausteine), welche CSS-Variablen es setzen kann und wie das Manifest aussieht.
 
-Aktuelle Version: `SDK_VERSION` = **1.1.0** (gleich der Paketversion in `package.json`).
+Aktuelle Version: `SDK_VERSION` = **1.2.0** (gleich der Paketversion in `package.json`).
 
 > Dieses README ist die maßgebliche Doku des SDK. `tests/readme.test.ts` prüft, dass jeder Slot,
 > jeder Export und jede CSS-Variable aus `:root` hier genannt ist.
@@ -74,6 +74,7 @@ Installierte Themes liegen unter `~/.nexus/themes/<id>/`. Gepackt wird mit `nexu
 | `id` | `string` | ID des Themes, gleich `id` im Manifest |
 | `slots` | `ThemeSlots` | ersetzte Slots |
 | `settingsSchema` | `ThemeSettingsSchema` (optional) | eigene Einstellungen |
+| `mermaid` | `() => MermaidLook` (optional, seit 1.2.0) | Aussehen der Mermaid-Diagramme; wird bei jedem Zeichnen aufgerufen, CSS-Variablen lassen sich darin mit `getComputedStyle(document.documentElement)` lesen |
 
 ```tsx
 import type { ThemeDefinition, ProgressProps } from '@nexus/theme-sdk';
@@ -94,6 +95,7 @@ export default theme;
 |---|---|---|
 | `Shell` | `ShellProps` | das ganze Layout um die Seiten |
 | `NavIcon` | `{ name: NavIconName }` | Symbole der Hauptnavigation |
+| `Icon` | `{ name: IconName }` | weitere Symbole im Kern: Docs-Baum, Leerzustand, Knöpfe an der Textauswahl (seit 1.2.0) |
 | `Progress` | `ProgressProps` | Fortschrittsanzeige (erledigte/alle Schritte) |
 | `Button` | `ButtonProps` | Knöpfe |
 | `Card` | `CardProps` | Inneres einer Karte |
@@ -129,6 +131,13 @@ Adress-Parameter `?safe-theme` startet die Oberfläche ganz ohne Theme-Code.
 | `status` | `ReactNode` | Verbindungspunkt der Live-Verbindung |
 
 `NavIconName`: `board`, `dashboard`, `inbox`, `sessions`, `questions`, `docs`, `search`, `guide`, `settings`.
+
+`IconName`: `doc`, `plan`, `glossary`, `adr`, `file` (Dateien im Docs-Baum), `folder`, `folderOpen` (Ordner im
+Docs-Baum; ohne Slot zeigt der Kern dort kein Symbol), `empty` (Leerzustand), `edit`, `comment` (Knöpfe an der
+Textauswahl in Docs).
+
+`MermaidLook`: `theme` (`base`, `default`, `dark`, `neutral`, `forest`), `themeVariables`, `themeCSS`, `fontFamily` –
+wie in der Mermaid-Konfiguration. Ohne `mermaid` bleibt das Standard-Aussehen des Kerns.
 
 ### `ProgressProps`
 
@@ -403,6 +412,7 @@ Das SDK folgt ab 1.0.0 semver. `SDK_VERSION` ist immer gleich der Version in `pa
 
 | Version | Änderung |
 |---|---|
+| 1.2.0 | neu: Slot `Icon` mit `IconName`, Feld `mermaid` der `ThemeDefinition` mit `MermaidLook` |
 | 1.1.0 | neu: `useThemeAsset`, `themeAssetUrl` und die Typen `ThemeAssetOptions`, `ThemeAssetState`, `ThemeAssetError` |
 | 1.0.0 | erste stabile API |
 

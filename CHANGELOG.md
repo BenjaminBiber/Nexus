@@ -36,6 +36,27 @@
   zu `theme` nennt `win95` nicht mehr unter den eingebauten.
 - `npm run build:themes` baut Themes mit `package.json` und Skript `build` zuerst (Vite) und
   packt dann deren `dist/` statt des Quellordners.
+- Neue Themes aus AI Harness unter `themes/`: „Catppuccin“ (`themes/catppuccin/`, dunkle
+  Mocha-Palette, reines CSS) und „Terminal“ (`themes/terminal/`, Code-Theme mit eigener Shell:
+  Prompt-Zeile mit Befehlen wie `help`, `cd`, `ls`, `open`, `board`, `theme`, Navigation als
+  Liste, Statuszeile, Festbreitenschrift).
+- „Windows 95“ 1.2.0: vollständiger Stand aus AI Harness – Suchfelder, Leerzustand, „Meine
+  Aufgaben“, Leiste an der Textauswahl, Docs im Explorer-/WordPad-Stil, Pixel-Symbole auch im
+  Docs-Baum (Dokument, Notizblock, Buch, Urkunde, Ordner), im Leerzustand (Hinweis) und an der
+  Textauswahl (Bleistift, Sprechblase) sowie Mermaid-Diagramme wie erhabene Knöpfe. Braucht SDK 1.2.
+- Theme-SDK 1.2.0: neuer Slot `Icon` (`IconName`: Symbole im Docs-Baum, im Leerzustand und an der
+  Textauswahl in Docs; Ordner im Docs-Baum zeigen ohne Slot weiterhin kein Symbol) und neues Feld
+  `mermaid` der `ThemeDefinition` für das Aussehen von Mermaid-Diagrammen. Der Store prüft
+  `sdkVersion` jetzt gegen 1.2.0.
+- „Pastell“ wird zu „Paper Notes“ 2.0.0 (Punktpapier, Handschrift, gezeichnete Konturen,
+  Textmarker); die ID bleibt `pastel`, eine gespeicherte Auswahl gilt weiter.
+- Die Themes bringen ein Vorschaubild mit (`assets/preview.png`, Board mit Demodaten), das die
+  Kachel unter Einstellungen → Darstellung und der Theme-Store zeigen. Der Store-Index
+  veröffentlicht Vorschaubilder aus dem Paket am Release als `<id>-<version>-preview.png` und
+  verlinkt sie unter `preview`. Minecraft bleibt ohne Bild (Mojang-Texturen werden nicht
+  mitverteilt). Aufnahme mit `scripts/screenshots/theme-previews.mjs`; die Demodaten der
+  README-Screenshots liegen jetzt gemeinsam in `scripts/screenshots/demo.mjs`.
+- Die Fensterleiste von „Windows 95“ heißt „Nexus“ statt „AI Harness“.
 
 ## 0.0.2 – 2026-11-06
 

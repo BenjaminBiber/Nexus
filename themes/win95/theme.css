@@ -304,15 +304,22 @@
 [data-theme='win95'] .segmented { gap: 0; padding: 0; background: none; border-radius: 0; }
 [data-theme='win95'] .segmented button { padding: 3px 10px; font-size: 12px; }
 
-/* Eingabefelder: weiß und eingelassen */
+/* Suchfelder mit Lupe: Lupe mittig im niedrigeren Feld, Text dahinter; Leeren-Knopf als kleiner eckiger Knopf */
+[data-theme='win95'] .search svg { left: 6px; top: 50%; translate: 0 -50%; color: var(--w95-dark); }
+:root[data-theme='win95'] .search input:is([type='search'], [type='text']):not([type='checkbox']) { padding-left: 26px; }
+[data-theme='win95'] .search-clear { top: 3px; right: 3px; width: 16px; height: 16px; border-radius: 0; background: var(--w95-face); color: var(--w95-dark); box-shadow: var(--w95-raised); }
+[data-theme='win95'] .search-clear:active { box-shadow: var(--w95-pressed); }
+[data-theme='win95'] .search-clear svg { position: static; translate: none; }
+
+/* Eingabefelder: weiß und eingelassen; rechter Innenabstand über --w95-field-pad-end (Klappliste: Platz für den Pfeilknopf) */
 [data-theme='win95'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea) {
-  min-height: 22px; padding: 2px 4px; border: 0; border-radius: 0; background-color: var(--w95-field); color: var(--w95-dark); box-shadow: var(--w95-sunken); font-size: 12px;
+  min-height: 22px; padding: 2px var(--w95-field-pad-end, 4px) 2px 4px; border: 0; border-radius: 0; background-color: var(--w95-field); color: var(--w95-dark); box-shadow: var(--w95-sunken); font-size: 12px;
 }
 [data-theme='win95'] textarea { padding: 4px; }
 [data-theme='win95'] :is(input, select, textarea):disabled { background-color: var(--w95-face); color: var(--w95-shadow); }
 /* Klappliste: Pfeilknopf rechts im Feld */
 [data-theme='win95'] select {
-  padding-right: 22px;
+  --w95-field-pad-end: 22px;
   background-image: conic-gradient(from -45deg at 50% 100%, var(--w95-dark) 90deg, transparent 0), linear-gradient(var(--w95-face), var(--w95-face));
   background-size: 7px 4px, 16px calc(100% - 4px);
   background-position: calc(100% - 6px) 50%, calc(100% - 2px) 2px;
@@ -331,6 +338,22 @@
 /* Flächen: Gruppenrahmen (geätzt) statt Karte mit Schatten */
 [data-theme='win95'] :is(.panel, .settings-card, .dash-card, .notice, .usage-meter) { border: 0; border-radius: 0; background: var(--w95-face); box-shadow: var(--w95-etched); }
 [data-theme='win95'] .panel { padding: 14px; }
+/* Leerzustand wie ein Hinweisfenster: geätzter Rahmen statt Strichellinie, schwarze Systemschrift */
+[data-theme='win95'] .state.empty { gap: 8px; padding: 24px; border: 0; border-radius: 0; background: var(--w95-face); box-shadow: var(--w95-etched); color: var(--w95-dark); }
+[data-theme='win95'] .state.empty h2 { font-size: 12px; font-weight: 700; }
+[data-theme='win95'] .state.empty p { color: var(--w95-dark); font-size: 12px; }
+[data-theme='win95'] .state.empty .link-button { color: var(--w95-blue); }
+[data-theme='win95'] .state.empty .w95-pixel-icon { width: 32px; height: 32px; }
+/* Meine Aufgaben: erhabene Zeile, die Art als eckiges Farbkästchen in der Plakette statt Farbstreifen am Rand */
+[data-theme='win95'] .inbox-list { gap: 4px; }
+[data-theme='win95'] .inbox-row { padding: 6px 8px; border: 0; border-radius: 0; background: var(--w95-face); box-shadow: var(--w95-outer); font-size: 12px; }
+[data-theme='win95'] .inbox-row.drop-target { box-shadow: var(--w95-outer), 0 -3px 0 var(--w95-navy); }
+[data-theme='win95'] .badge.inbox-badge { background: var(--w95-field); color: var(--w95-dark); font-weight: 400; }
+[data-theme='win95'] .badge.inbox-badge::before { width: 8px; height: 8px; border-radius: 0; box-shadow: 0 0 0 1px var(--w95-dark); }
+[data-theme='win95'] .inbox-title { color: var(--w95-blue); font-weight: 400; text-decoration: underline; }
+[data-theme='win95'] .inbox-title:hover { color: var(--w95-navy); }
+[data-theme='win95'] .inbox-id { color: inherit; font-size: 12px; }
+[data-theme='win95'] .inbox-detail { color: var(--w95-dark); font-size: 12px; }
 /* Ticket- und Listenkarten: erhabene Kacheln */
 [data-theme='win95'] :is(.card, .db-card .card, .suggestion-card, .option-card) { border: 0; border-radius: 0; background: var(--w95-face); box-shadow: var(--w95-outer); }
 [data-theme='win95'] .card:hover { border-color: transparent; box-shadow: var(--w95-outer); }
@@ -364,6 +387,14 @@
 [data-theme='win95'] :is(.board-picker-pop, .doc-open-menu, .account-select-menu, .selection-popover, .search-dialog, .dd-modal) { border: 0; border-radius: 0; background: var(--w95-face); box-shadow: var(--w95-outer); animation: none; }
 [data-theme='win95'] .board-picker-pop > * { animation: none; }
 [data-theme='win95'] .goo-morph { display: none; }
+/* Aktionen an der Textauswahl: Symbolleiste mit eckigen, erhabenen Knöpfen */
+[data-theme='win95'] .selection-popover-actions { gap: 0; padding: 2px; }
+[data-theme='win95'] :is(.selection-popover-icon, .selection-popover-trigger) { width: 25px; height: 23px; border: 0; border-radius: 0; background: var(--w95-face); color: var(--w95-dark); box-shadow: var(--w95-raised); }
+[data-theme='win95'] :is(.selection-popover-icon, .selection-popover-trigger):hover { background: var(--w95-face); }
+[data-theme='win95'] :is(.selection-popover-icon, .selection-popover-trigger):active:not(:disabled) { box-shadow: var(--w95-pressed); padding: 1px 0 0 1px; }
+[data-theme='win95'] .selection-popover-actions svg { width: 16px; height: 16px; }
+[data-theme='win95'] .selection-popover-actions .material-icons { font-size: 16px; }
+[data-theme='win95'] .selection-popover-actions .w95-pixel-icon { stroke: none; }
 [data-theme='win95'] :is(.bp-item, .branch-combo-option, .search-hit) { border-radius: 0; }
 [data-theme='win95'] :is(.bp-item, .branch-combo-option):is(:hover, :focus-visible) { background: var(--w95-select-bg); color: var(--w95-select-fg); }
 [data-theme='win95'] :is(.bp-item, .branch-combo-option):is(:hover, :focus-visible) :is(.bp-meta, .bp-count, .bp-project) { color: var(--w95-select-fg); }
@@ -453,6 +484,129 @@
 .w95-pie-swatch.open { background: var(--w95-magenta); }
 .w95-pie-total { padding-top: 5px; box-shadow: inset 0 1px var(--w95-shadow), inset 0 2px var(--w95-light); }
 .w95-pie-total dt { padding-left: 18px; }
+
+/* ---------- Docs: Explorer wie im Windows-Explorer, Dokument als WordPad-Blatt ---------- */
+
+/* Werkbank in Silbergrau; Spalten als eingelassene weiße Felder, dazwischen erhabene Teiler */
+[data-theme='win95'] .docs-workbench { background: var(--w95-face); }
+[data-theme='win95'] .docs-gutter { border-left: 0; background: var(--w95-face); box-shadow: inset 1px 0 var(--w95-light), inset -1px 0 var(--w95-shadow); }
+[data-theme='win95'] .docs-gutter:is(:hover, :focus-visible) { background: var(--w95-face); }
+
+/* Explorer-Kopf: Beschriftung statt Versalien, kleinere Abstände */
+[data-theme='win95'] .docs-explorer-head { gap: 6px; padding: 6px 6px 6px 4px; border-bottom: 0; }
+[data-theme='win95'] .docs-explorer-head h1 { font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none; color: var(--w95-dark); }
+[data-theme='win95'] .docs-explorer-count { color: var(--w95-dark); }
+[data-theme='win95'] .docs-kinds { gap: 2px; }
+[data-theme='win95'] .docs-kinds .fchip { min-height: 22px; padding: 0 8px; }
+[data-theme='win95'] .docs-kinds .fchip .material-icons { font-size: 14px; }
+
+/* Board-Umschalter: Klappliste mit Pfeilknopf, die Liste weiß mit schwarzem Rand */
+[data-theme='win95'] .docs-boards-trigger { min-height: 22px; padding: 2px 2px 2px 4px; border: 0; border-radius: 0; background: var(--w95-field); color: var(--w95-dark); box-shadow: var(--w95-sunken); font-size: 12px; }
+[data-theme='win95'] .docs-boards-trigger:hover { background: var(--w95-field); }
+[data-theme='win95'] .docs-boards-caret {
+  align-self: stretch; width: 16px; height: auto; transform: none; color: transparent; box-shadow: var(--w95-raised);
+  background: conic-gradient(from -45deg at 50% 100%, var(--w95-dark) 90deg, transparent 0) center / 7px 4px no-repeat, var(--w95-face);
+}
+[data-theme='win95'] .docs-boards-caret.open { transform: none; box-shadow: var(--w95-shallow); background-position: calc(50% + 1px) calc(50% + 1px), 0 0; }
+[data-theme='win95'] .docs-boards-pop { top: 100%; padding: 0; border: 1px solid var(--w95-dark); border-radius: 0; background: var(--w95-field); box-shadow: none; }
+[data-theme='win95'] .docs-boards-option { min-height: 20px; padding: 0 4px; border-radius: 0; font-size: 12px; }
+[data-theme='win95'] .docs-boards-option:hover { background: var(--w95-select-bg); color: var(--w95-select-fg); }
+[data-theme='win95'] .docs-boards-option:hover .docs-boards-project { color: var(--w95-select-fg); }
+[data-theme='win95'] .docs-boards-option.is-all { border-bottom: 0; border-radius: 0; box-shadow: inset 0 -1px var(--w95-shadow); }
+[data-theme='win95'] .docs-boards-project { color: var(--w95-shadow); }
+
+/* Baum: weißes, eingelassenes Feld mit gepunkteten Hilfslinien, +/−-Kästchen, gelben Ordnern; gewählt = Name blau hinterlegt */
+[data-theme='win95'] .docs-explorer-tree { margin: 0 6px 6px 4px; padding: 2px 0 8px; background: var(--w95-field); box-shadow: var(--w95-sunken); }
+[data-theme='win95'] .doc-tree-group::before { background: repeating-linear-gradient(var(--w95-shadow) 0 1px, transparent 1px 2px); }
+[data-theme='win95'] .doc-tree-row { gap: 3px; min-height: 18px; margin: 0 2px; padding-right: 4px; border-radius: 0; font-size: 12px; color: var(--w95-dark); }
+[data-theme='win95'] .doc-tree-row:hover { background: none; }
+[data-theme='win95'] .doc-tree-row.on { background: none; box-shadow: none; color: var(--w95-dark); }
+[data-theme='win95'] .doc-tree-row.on .doc-tree-label { flex: 0 1 auto; padding: 0 2px; background: var(--w95-select-bg); color: var(--w95-select-fg); }
+[data-theme='win95'] .doc-tree-item:focus-visible > .doc-tree-row { box-shadow: none; }
+[data-theme='win95'] .doc-tree-item:focus-visible > .doc-tree-row .doc-tree-label { outline: 1px dotted var(--w95-dark); }
+[data-theme='win95'] .doc-tree-row.on .doc-tree-label mark { background: none; color: inherit; }
+[data-theme='win95'] .doc-tree-row .w95-pixel-icon { flex: none; width: 16px; height: 16px; margin-right: 1px; }
+[data-theme='win95'] .doc-tree-label mark { background: var(--w95-yellow); color: var(--w95-dark); }
+[data-theme='win95'] .doc-tree-chevron {
+  position: relative; z-index: 1; box-sizing: border-box; width: 9px; height: 9px; margin: 0 3px 0 4px; transform: none; color: transparent;
+  border: 1px solid var(--w95-shadow);
+  background: linear-gradient(var(--w95-dark), var(--w95-dark)) center / 5px 1px no-repeat, linear-gradient(var(--w95-dark), var(--w95-dark)) center / 1px 5px no-repeat, var(--w95-field);
+}
+[data-theme='win95'] .doc-tree-chevron.open { transform: none; background: linear-gradient(var(--w95-dark), var(--w95-dark)) center / 5px 1px no-repeat, var(--w95-field); }
+[data-theme='win95'] .doc-tree-new { width: 6px; height: 6px; border-radius: 0; background: var(--w95-red); box-shadow: 0 0 0 1px var(--w95-maroon); }
+[data-theme='win95'] .doc-tree-empty { color: var(--w95-shadow); font-size: 12px; }
+
+/* Dokument: weißes Blatt im eingelassenen Feld; Pfad wie eine Adresszeile */
+[data-theme='win95'] .docs-main { gap: 6px; padding: 6px 4px 6px 4px; }
+[data-theme='win95'] .docs-workbench .doc { padding: 4px 28px 40px; background: var(--w95-field); box-shadow: var(--w95-sunken); }
+[data-theme='win95'] .doc-head .doc-path { padding: 8px 0 6px; color: var(--w95-shadow); }
+[data-theme='win95'] .doc-open-btn { width: 23px; height: 22px; border: 0; border-radius: 0; background: var(--w95-face); color: var(--w95-dark); box-shadow: var(--w95-raised); }
+[data-theme='win95'] .doc-open-btn:is(:hover, [aria-expanded='true']) { border: 0; background: var(--w95-face); color: var(--w95-dark); }
+[data-theme='win95'] .doc-open-btn:is(:active, [aria-expanded='true']) { box-shadow: var(--w95-pressed); }
+[data-theme='win95'] .doc-open-btn .material-icons { font-size: 15px; }
+
+/* Text des Dokuments: Festbreitenschrift ohne Kästchen, Codeblöcke wie die MS-DOS-Eingabeaufforderung, Tabellen wie eine Listenansicht */
+[data-theme='win95'] .markdown :not(pre) > code { padding: 0 1px; border-radius: 0; background: none; color: var(--w95-navy); }
+[data-theme='win95'] .markdown pre { border-radius: 0; box-shadow: var(--w95-sunken); padding: 10px 12px; }
+[data-theme='win95'] .markdown hr { border: 0; height: 2px; box-shadow: inset 0 1px var(--w95-shadow), inset 0 -1px var(--w95-light); }
+[data-theme='win95'] .markdown blockquote { border-left: 0; border-radius: 0; background: var(--w95-tooltip); box-shadow: 0 0 0 1px var(--w95-dark); }
+[data-theme='win95'] .markdown table { font-size: 12px; box-shadow: var(--w95-sunken); padding: 2px; }
+[data-theme='win95'] .markdown th { padding: 2px 8px; border: 0; background: var(--w95-face); font-weight: 400; box-shadow: var(--w95-raised); }
+[data-theme='win95'] .markdown td { padding: 3px 8px; border-bottom: 1px dotted var(--w95-face); }
+[data-theme='win95'] .markdown a { color: var(--w95-blue); }
+
+/* Tickets der Werkzeugspalte: Titel wie ein Verweis */
+[data-theme='win95'] .doc-ticket-list { gap: 4px; }
+[data-theme='win95'] button.doc-ticket-title { color: var(--w95-dark); }
+[data-theme='win95'] button.doc-ticket-title:hover { color: var(--w95-blue); }
+
+/* Treffer der Inhaltssuche: weiße Liste wie im Dialog „Suchen“, Zeile beim Überfahren blau */
+[data-theme='win95'] .search-results { gap: 0; padding: 2px; background: var(--w95-field); box-shadow: var(--w95-sunken); }
+[data-theme='win95'] .search-results a { padding: 3px 6px; border: 0; border-radius: 0; background: none; box-shadow: inset 0 -1px var(--w95-face); text-decoration: none; }
+[data-theme='win95'] .search-results a:is(:hover, :focus-visible) { background: var(--w95-select-bg); outline: none; }
+[data-theme='win95'] .search-results a:is(:hover, :focus-visible) * { color: var(--w95-select-fg); }
+
+/* Werkzeugspalte: Abschnitte mit erhabenem Kopf und +/−-Kästchen, Listen als weiße Felder, Registerkarten wie im Eigenschaften-Dialog */
+[data-theme='win95'] .docs-workbench .doc-side { padding-left: 4px; }
+[data-theme='win95'] .doc-side-actions { gap: 4px; padding: 0 0 6px; border-bottom: 0; }
+[data-theme='win95'] .doc-tickets-row { gap: 4px; }
+[data-theme='win95'] .doc-tickets-row .doc-tickets-btn { min-width: 0; }
+[data-theme='win95'] .doc-tool { margin-bottom: 4px; border-bottom: 0; }
+[data-theme='win95'] .doc-tool-title {
+  gap: 6px; min-height: 22px; padding: 0 6px; background: var(--w95-face); color: var(--w95-dark); box-shadow: var(--w95-raised);
+  font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none;
+}
+[data-theme='win95'] .doc-tool-title:hover { color: var(--w95-dark); }
+[data-theme='win95'] .doc-tool-title:active { box-shadow: var(--w95-pressed); }
+[data-theme='win95'] .doc-tool-title svg {
+  box-sizing: border-box; width: 9px; height: 9px; transform: none; color: transparent; border: 1px solid var(--w95-shadow);
+  background: linear-gradient(var(--w95-dark), var(--w95-dark)) center / 5px 1px no-repeat, linear-gradient(var(--w95-dark), var(--w95-dark)) center / 1px 5px no-repeat, var(--w95-field);
+}
+[data-theme='win95'] .doc-tool.open > .doc-tool-title svg { transform: none; background: linear-gradient(var(--w95-dark), var(--w95-dark)) center / 5px 1px no-repeat, var(--w95-field); }
+[data-theme='win95'] .doc-tool-body { padding: 4px 0 2px; }
+[data-theme='win95'] .doc-side .toc { gap: 0; padding: 2px; background: var(--w95-field); box-shadow: var(--w95-sunken); }
+[data-theme='win95'] .toc button { min-height: 0; padding: 1px 4px; border-radius: 0; color: var(--w95-dark); font-size: 12px; }
+[data-theme='win95'] .toc button.toc-sub { padding-left: 18px; font-size: 12px; }
+[data-theme='win95'] .toc button:is(:hover, :focus-visible) { background: var(--w95-select-bg); color: var(--w95-select-fg); outline: none; }
+[data-theme='win95'] .doc-comment-tabs { padding: 0; border-radius: 0; background: none; }
+[data-theme='win95'] .doc-comment-tabs button {
+  flex: 0 1 auto; min-height: 20px; margin-top: 2px; padding: 0 10px; border-radius: 0; background: var(--w95-face); color: var(--w95-dark); font-size: 12px; font-weight: 400;
+  box-shadow: inset 1px 1px var(--w95-light), inset -1px 0 var(--w95-dark), inset -2px 0 var(--w95-shadow), inset 0 -1px var(--w95-light);
+}
+[data-theme='win95'] .doc-comment-tabs button[aria-pressed='true'] {
+  position: relative; z-index: 1; min-height: 22px; margin-top: 0; margin-bottom: -1px; background: var(--w95-face);
+  box-shadow: inset 1px 1px var(--w95-light), inset -1px 0 var(--w95-dark), inset -2px 0 var(--w95-shadow);
+}
+
+/* Schmales Fenster: Explorer und Werkzeuge legen sich als erhabene Fläche über das Dokument */
+@media (max-width: 1100px) {
+  /* Das Fenster gibt die Höhe vor (nicht der Bildschirm), sonst ragt die Werkbank unter die Statusleiste */
+  [data-theme='win95'] .w95-window .shell-content:has(.docs-workbench) { display: flex; flex-direction: column; }
+  [data-theme='win95'] .w95-window .shell-main:has(> .docs-workbench) { display: flex; flex-direction: column; overflow: hidden; }
+  [data-theme='win95'] .w95-window .docs-workbench { flex: 1; height: auto; min-height: 0; }
+  [data-theme='win95'] .docs-workbench > .docs-explorer,
+  [data-theme='win95'] .docs-workbench .doc-side { border: 0; background: var(--w95-face); box-shadow: var(--w95-outer); padding: 3px; }
+}
 
 /* Session-Details: eckig, Felder vertieft, Kopfangaben in Titelleistenfarbe */
 [data-theme='win95'] :is(.tx-tool, .tx-bubble, .tx-code, .tx-diff, .tx-new, .fc-list, .fc-note, .fc-status, .ri-list, .ri-stat, .ri .subagents, .tx-thinking-head) { border-radius: 0; }

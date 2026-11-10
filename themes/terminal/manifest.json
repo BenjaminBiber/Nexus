@@ -1,0 +1,12 @@
+{
+  "id": "terminal",
+  "name": "Terminal",
+  "version": "1.0.0",
+  "author": "Nexus",
+  "sdkVersion": "^1.1",
+  "colorScheme": "dark",
+  "startColor": "#0d1117",
+  "preview": "assets/preview.png",
+  "slots": ["Shell"],
+  "permissions": { "network": [] }
+}

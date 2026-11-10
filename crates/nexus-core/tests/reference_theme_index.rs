@@ -13,7 +13,17 @@ fn referenz_index_der_mitgelieferten_themes_ist_gueltig_und_kompatibel() {
     let index = parse_index(&bytes, &theme_sdk_version()).expect("Index gültig");
     assert!(index.skipped.is_empty(), "{:?}", index.skipped);
     let ids: Vec<_> = index.entries.iter().map(|e| e.id.as_str()).collect();
-    assert_eq!(ids, ["minecraft", "pastel", "signal", "win95"]);
+    assert_eq!(
+        ids,
+        [
+            "catppuccin",
+            "minecraft",
+            "pastel",
+            "signal",
+            "terminal",
+            "win95"
+        ]
+    );
     for eintrag in &index.entries {
         assert!(eintrag.compatible, "{} passt nicht zum SDK", eintrag.id);
     }

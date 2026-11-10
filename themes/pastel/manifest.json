@@ -1,11 +1,12 @@
 {
   "id": "pastel",
-  "name": "Pastell",
-  "version": "1.0.0",
+  "name": "Paper Notes",
+  "version": "2.0.0",
   "author": "Nexus",
   "sdkVersion": "^1.1",
   "colorScheme": "light",
-  "startColor": "#f3eadf",
+  "startColor": "#faf8f0",
+  "preview": "assets/preview.png",
   "slots": [],
   "permissions": { "network": [] }
 }

@@ -384,7 +384,7 @@ npm i --no-save playwright && npx playwright install chromium   # Playwright ste
 node scripts/screenshots/capture.mjs
 ```
 
-Danach jedes Bild ansehen, bevor es committet wird. Ein anderes Binary lässt sich mit `NEXUS_BIN=<pfad>` angeben.
+Danach jedes Bild ansehen, bevor es committet wird. Ein anderes Binary lässt sich mit `NEXUS_BIN=<pfad>` angeben. Die Vorschaubilder der Themes (`themes/<id>/assets/preview.png`) entstehen genauso mit `node scripts/screenshots/theme-previews.mjs` (vorher `npm run build:themes`, siehe [themes/README.md](themes/README.md#vorschaubild)).
 
 **3. Plugin und Hooks in Claude Code testen**, ohne `nexus install`:
 

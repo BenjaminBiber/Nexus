@@ -11,7 +11,7 @@ const SECTION_TITLES: Partial<Record<NavIconName, string>> = {
   settings: 'Einstellungen',
 };
 
-// Fenster- und Tasktitel aus dem aktiven Eintrag der Navigation; ohne Eintrag „AI Harness“
+// Fenster- und Tasktitel aus dem aktiven Eintrag der Navigation; ohne Eintrag „Nexus“
 export function windowTitle(id?: NavIconName): string {
-  return (id && SECTION_TITLES[id]) ?? 'AI Harness';
+  return (id && SECTION_TITLES[id]) ?? 'Nexus';
 }

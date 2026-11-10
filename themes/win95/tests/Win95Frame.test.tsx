@@ -47,8 +47,8 @@ describe('Rahmen „Windows 95“', () => {
     openApp('/p/p1/sessions');
     const nav = await screen.findByRole('navigation', { name: 'Hauptnavigation' });
     expect(within(nav).getByRole('link', { name: 'Board' }).getAttribute('href')).toBe('/p/p1/board');
-    expect(screen.getByRole('region', { name: 'AI Harness – Sessions' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /AI Harness - Sessions/ }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('region', { name: 'Nexus – Sessions' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Nexus - Sessions/ }).getAttribute('aria-pressed')).toBe('true');
   });
 
   it('öffnet das Startmenü, wandert mit den Pfeiltasten und schließt mit Esc', async () => {
@@ -73,8 +73,8 @@ describe('Rahmen „Windows 95“', () => {
     expect(within(menu).getByRole('menuitem', { name: 'Sessions' }).className).toContain('active');
     await userEvent.click(within(menu).getByRole('menuitem', { name: 'Anleitung' }));
     expect(screen.queryByRole('menu')).toBeNull();
-    expect(await screen.findByRole('region', { name: 'AI Harness – Anleitung' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /AI Harness - Anleitung/ })).toBeTruthy();
+    expect(await screen.findByRole('region', { name: 'Nexus – Anleitung' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Nexus - Anleitung/ })).toBeTruthy();
   });
 
   it('öffnet über „Suchen …“ im Startmenü die Suche', async () => {
@@ -88,19 +88,19 @@ describe('Rahmen „Windows 95“', () => {
   it('minimiert das Fenster in die Taskleiste und holt es über den Task-Knopf zurück', async () => {
     openApp('/p/p1/sessions');
     await userEvent.click(await screen.findByRole('button', { name: 'Minimieren' }));
-    expect(screen.queryByRole('region', { name: 'AI Harness – Sessions' })).toBeNull();
-    const task = screen.getByRole('button', { name: /AI Harness - Sessions/ });
+    expect(screen.queryByRole('region', { name: 'Nexus – Sessions' })).toBeNull();
+    const task = screen.getByRole('button', { name: /Nexus - Sessions/ });
     expect(task.getAttribute('aria-pressed')).toBe('false');
     await userEvent.click(task);
-    expect(screen.getByRole('region', { name: 'AI Harness – Sessions' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Nexus – Sessions' })).toBeTruthy();
   });
 
   it('wechselt zwischen maximiert und Fenster und merkt sich die Wahl', async () => {
     openApp('/p/p1/sessions');
     await userEvent.click(await screen.findByRole('button', { name: 'Wiederherstellen' }));
-    expect(screen.getByRole('region', { name: 'AI Harness – Sessions' }).className).not.toContain('maximized');
+    expect(screen.getByRole('region', { name: 'Nexus – Sessions' }).className).not.toContain('maximized');
     expect(window.localStorage.getItem(WIN95_MAXIMIZED_KEY)).toBe('false');
     await userEvent.click(screen.getByRole('button', { name: 'Maximieren' }));
-    expect(screen.getByRole('region', { name: 'AI Harness – Sessions' }).className).toContain('maximized');
+    expect(screen.getByRole('region', { name: 'Nexus – Sessions' }).className).toContain('maximized');
   });
 });

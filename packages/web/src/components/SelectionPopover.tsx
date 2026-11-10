@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ThemeIcon } from '../theme/ThemeIcon.js';
 import { ClaudeIcon } from './NavIcons.js';
 
 interface Props {
@@ -57,7 +58,9 @@ export function SelectionPopover({ quote, top, left, composing, error, editable,
           {/* Symbolknöpfe; der Name steht als Tooltip und für Screenreader am Knopf */}
           {editable && (
             <button type="button" className="selection-popover-icon" aria-label="Bearbeiten" title="Bearbeiten" onClick={onEdit}>
-              <span className="material-icons" aria-hidden="true">edit</span>
+              <ThemeIcon name="edit">
+                <span className="material-icons" aria-hidden="true">edit</span>
+              </ThemeIcon>
             </button>
           )}
           {editable && (
@@ -66,9 +69,11 @@ export function SelectionPopover({ quote, top, left, composing, error, editable,
             </button>
           )}
           <button type="button" className="selection-popover-trigger" aria-label="Kommentieren" title="Kommentieren" onClick={onCompose}>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
+            <ThemeIcon name="comment">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            </ThemeIcon>
           </button>
         </div>
         {/* Lässt sich die Markierung keiner Zeile zuordnen, sagt das der Hinweis statt eines stummen Knopfs */}

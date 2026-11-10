@@ -45,7 +45,7 @@ describe('Kern kennt nur Hell und Dunkel', () => {
     expect(manifest.name).toBe('Windows 95');
     expect(manifest.colorScheme).toBe('light');
     expect(manifest.startColor).toBe('#c0c0c0');
-    expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Progress']);
+    expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Icon', 'Progress']);
     expect(existsSync(repo('themes/win95/theme.css'))).toBe(true);
     expect(existsSync(repo('themes/win95/src/main.tsx'))).toBe(true);
   });

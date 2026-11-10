@@ -1,5 +1,14 @@
 [
   {
+    "id": "catppuccin",
+    "name": "Catppuccin",
+    "version": "1.0.0",
+    "sdkVersion": "^1.1",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/catppuccin-1.0.0.nexus",
+    "sha256": "68264ff01028a053a9d68577595a0187e60bb4524fc7f62e2f6f6e38aa398a5b",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/catppuccin-1.0.0-preview.png"
+  },
+  {
     "id": "minecraft",
     "name": "Minecraft",
     "version": "0.2.0",
@@ -9,11 +18,12 @@
   },
   {
     "id": "pastel",
-    "name": "Pastell",
-    "version": "1.0.0",
+    "name": "Paper Notes",
+    "version": "2.0.0",
     "sdkVersion": "^1.1",
-    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/pastel-1.0.0.nexus",
-    "sha256": "9ffeac87e50736a3ea4b149e3f1eaa2e177f2a51973aa81de131439ddc9dbee6"
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/pastel-2.0.0.nexus",
+    "sha256": "d4552be6ebc50f9aee00e272264e370e62d1cb230e276592f72415ea4dd8049c",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/pastel-2.0.0-preview.png"
   },
   {
     "id": "signal",
@@ -21,14 +31,25 @@
     "version": "1.0.0",
     "sdkVersion": "^1.1",
     "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/signal-1.0.0.nexus",
-    "sha256": "90544e636ca51fd4139378af329252e25fe8ad15d9905ddcc5e61f6f9eaec954"
+    "sha256": "e58ee79a8caf294648dfacb33dbc2b5ee8cf7012d055812773e5ff4dcd34e3ae",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/signal-1.0.0-preview.png"
+  },
+  {
+    "id": "terminal",
+    "name": "Terminal",
+    "version": "1.0.0",
+    "sdkVersion": "^1.1",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/terminal-1.0.0.nexus",
+    "sha256": "8ace8bee9f9db6d41b47c04104d51beda6f462ef34dedf2982f4f78f29df7470",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/terminal-1.0.0-preview.png"
   },
   {
     "id": "win95",
     "name": "Windows 95",
-    "version": "1.0.0",
-    "sdkVersion": "^1.1",
-    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/win95-1.0.0.nexus",
-    "sha256": "1c090846a1ee4421dedfba2d3344bd7e04df614db4425fd00310c640598d6069"
+    "version": "1.2.0",
+    "sdkVersion": "^1.2",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/win95-1.2.0.nexus",
+    "sha256": "7f7b3a7edeb9db7e02c87c65db76f88d1c99dc3f67c1da54b21f31219dec746c",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/win95-1.2.0-preview.png"
   }
 ]

@@ -144,7 +144,7 @@ describe('build-themes', () => {
     });
     expect(result.status, result.stderr).toBe(0);
     expect(readdirSync(out)).toContain('win95.nexus');
-    expect(zipEntries(readFileSync(join(out, 'win95.nexus')))).toEqual(['main.js', 'manifest.json', 'theme.css']);
+    expect(zipEntries(readFileSync(join(out, 'win95.nexus')))).toEqual(['assets/preview.png', 'main.js', 'manifest.json', 'theme.css']);
   });
 
   it('legt ohne Themes einen leeren Ausgabeordner an', () => {
