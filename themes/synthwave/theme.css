@@ -3,6 +3,14 @@
    getönte Flächen als Mischung der Farbe mit dem Hintergrund. --synth-glow ist der Faktor für Leuchteffekte an Überschriften,
    Rahmen und Zustandsanzeigen, nie an Fließtext. --synth-* gilt nur in diesem Theme.
 
+   Attribute, die die Shell auf <html> setzt (aus den Einstellungen):
+   data-synth-palette – Farbschema: outrun (Grundwerte im Hauptblock), miami, nightcall
+   data-synth-glow    – Stärke des Leuchtens: normal, low, high (setzt --synth-glow)
+   data-synth-horizon – Neon-Gitter am unteren Rand: animated, still, off
+   data-synth-sky     – aufgelöste Himmelsphase: dawn, day, dusk, night
+   data-synth-vhs     – on, wenn die VHS-Effekte (Scanlines, Ränder, Bildstörung) an sind
+   data-synth-tracking – kurz gesetzt beim Seitenwechsel mit VHS-Effekten, löst die Bildstörung aus
+
    Schriften (assets/fonts, nur latin-Untermengen):
    Orbitron (600, 800) – Copyright 2018 The Orbitron Project Authors (github.com/theleagueof/orbitron), aus @fontsource/orbitron 5.3.0
    Exo 2 (400, 600) – Copyright 2013 The Exo 2 Project Authors (github.com/googlefonts/Exo-2.0), aus @fontsource/exo-2 5.3.0

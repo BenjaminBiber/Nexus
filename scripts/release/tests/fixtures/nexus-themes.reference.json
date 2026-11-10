@@ -35,6 +35,15 @@
     "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/signal-1.0.0-preview.png"
   },
   {
+    "id": "synthwave",
+    "name": "Synthwave",
+    "version": "1.0.0",
+    "sdkVersion": "^1.2",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/synthwave-1.0.0.nexus",
+    "sha256": "35b8a3c48c2e413ccc1c411d2d6c84100b979ec88e8a25fe19d372a46a0388f1",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/synthwave-1.0.0-preview.png"
+  },
+  {
     "id": "terminal",
     "name": "Terminal",
     "version": "2.1.0",
