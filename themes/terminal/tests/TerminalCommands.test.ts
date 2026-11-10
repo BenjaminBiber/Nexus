@@ -11,7 +11,7 @@ const BOARDS: TerminalBoard[] = [
 ];
 
 // Aktionen mit Aufzeichnung; path ist der Pfad unter /p/:pid
-function fakeActions(path = 'board', theme = 'terminal') {
+function fakeActions(path = 'board', theme = 'terminal', history: string[] = []) {
   const actions = {
     path: () => path,
     sections: () => [
@@ -27,6 +27,8 @@ function fakeActions(path = 'board', theme = 'terminal') {
     switchBoard: vi.fn(),
     theme: () => theme,
     setTheme: vi.fn(async () => undefined),
+    usage: () => ({ fiveHour: 42, sevenDay: 13 }),
+    history: () => history,
   } satisfies TerminalActions;
   return actions;
 }
@@ -121,7 +123,7 @@ describe('Terminal-Befehle', () => {
 
   it('zeigt mit help alle Befehle', async () => {
     const names = plain(await runCommand('help', fakeActions())).map((row) => row.split(/[ |]/)[0]);
-    expect(names).toEqual(['help', 'cd', 'ls', 'open', 'find', 'board', 'theme', 'clear']);
+    expect(names).toEqual(['help', 'man', 'cd', 'ls', 'open', 'find', 'board', 'theme', 'top', 'fetch', 'history', 'cowsay', 'clear']);
   });
 
   it('ergänzt Befehle und Argumente des Befehls', () => {
@@ -138,5 +140,62 @@ describe('Terminal-Befehle', () => {
     expect(pathUnderProject('/p/p1/board/t/ARC-0001', 'p1')).toBe('board/t/ARC-0001');
     expect(pathUnderProject('/p/mein%20projekt/docs/', 'mein projekt')).toBe('docs');
     expect(pathUnderProject('/anderswo', 'p1')).toBe('');
+  });
+
+  it('zeigt mit fetch (auch neofetch) Logo, Board, Zähler, Nutzung und Theme', async () => {
+    for (const name of ['fetch', 'neofetch']) {
+      const out = plain(await runCommand(name, fakeActions())).join('\n');
+      expect(out).toContain('board|sprint · Arches');
+      expect(out).toContain('inbox 3');
+      expect(out).toContain('claude|5h 42 % · 7d 13 %');
+      expect(out).toContain('theme|terminal');
+      expect(out).toMatch(/_ __/);
+    }
+  });
+
+  it('zeigt mit fetch „aus“, wenn die Claude-Nutzung fehlt', async () => {
+    const actions = { ...fakeActions(), usage: () => null };
+    expect(plain(await runCommand('fetch', actions)).join('\n')).toContain('claude|aus');
+  });
+
+  it('erklärt mit man einen Befehl samt Beispielen', async () => {
+    const out = plain(await runCommand('man cd', fakeActions()));
+    expect(out[0]).toBe('CD(1)');
+    expect(out.join('\n')).toContain('cd <bereich> · cd .. · cd ~');
+    expect(out.join('\n')).toContain('cd inbox');
+    expect(plain(await runCommand('man neofetch', fakeActions()))[0]).toBe('FETCH(1)');
+    expect(plain(await runCommand('man', fakeActions()))).toEqual(['man: welcher Befehl? z. B. man cd']);
+    expect(plain(await runCommand('man rm', fakeActions()))).toEqual(['man: kein Eintrag für rm', 'help zeigt alle Befehle']);
+  });
+
+  it('listet mit history die bisherigen Befehle nummeriert', async () => {
+    expect(plain(await runCommand('history', fakeActions('board', 'terminal', ['ls', 'cd inbox'])))).toEqual(['   1|ls', '   2|cd inbox']);
+    expect(plain(await runCommand('history', fakeActions()))).toEqual(['Noch keine Befehle.']);
+  });
+
+  it('springt mit top zu den Sessions', async () => {
+    const actions = fakeActions();
+    expect(await runCommand('top', actions)).toBeNull();
+    expect(actions.go).toHaveBeenLastCalledWith('sessions');
+  });
+
+  it('lehnt sudo freundlich ab', async () => {
+    expect(plain(await runCommand('sudo rm -rf /', fakeActions()))).toEqual(['Nice try.', 'Hier gibt es keine Root-Rechte – nur Tickets.']);
+  });
+
+  it('lässt mit cowsay eine Kuh sprechen', async () => {
+    const out = plain(await runCommand('cowsay hallo welt', fakeActions()));
+    expect(out[0]).toBe(' ____________');
+    expect(out[1]).toBe('< hallo welt >');
+    expect(out[2]).toBe(' ------------');
+    expect(out.join('\n')).toContain('(oo)');
+    expect(plain(await runCommand('cowsay', fakeActions()))[1]).toBe('< Muh. >');
+  });
+
+  it('ergänzt neue Befehle und Namen für man', () => {
+    const data = { boards: [] };
+    expect(completions('neo', data)).toEqual(['neofetch']);
+    expect(completions('man th', data)).toEqual(['man theme']);
+    expect(completions('to', data)).toEqual(['top']);
   });
 });

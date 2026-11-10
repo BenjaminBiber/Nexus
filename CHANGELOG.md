@@ -72,6 +72,14 @@
   (aktuelles eingedrückt), Plaketten als eingelassene Felder, Kombi-Knopf mit Menü, Dialoge mit
   blauer Titelleiste und Kreuzknopf, Store-Zustand als Gruppenrahmen mit Listenansicht,
   Store-Kacheln mit „Installieren“-Knopf und Rückfragen als Meldungsfenster.
+- „Terminal“ 2.0.0 (braucht SDK 1.2): Einstellungen unter Darstellung für Schrift (JetBrains Mono,
+  IBM Plex Mono oder Geist Mono, 12–14 px, Ligaturen), Symbole (Nerd Font, Unicode oder keine),
+  acht Farbschemata (GitHub Dark, Dracula, Gruvbox, Tokyo Night, Solarized, Nord, Phosphor grün
+  und bernstein) und Effekte (Röhrenmonitor, Cursor-Blinken, getippte Ausgabe, Boot-Meldungen).
+  Prompt- und Statuszeile im Powerline-Stil mit Status des letzten Befehls, Docs-Baum mit Linien
+  wie `tree`, Fortschritt als `[#####·····]`, eckige Mermaid-Diagramme und neue Befehle `man`,
+  `top`, `fetch`/`neofetch`, `history` und `cowsay`. Schriften liegen im Paket (OFL 1.1, Nerd-Font-
+  Teilmenge MIT).
 
 ## 0.0.2 – 2026-11-06
 

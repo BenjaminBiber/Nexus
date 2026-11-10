@@ -1,6 +1,9 @@
 import { useMemo, useRef } from 'react';
-import { useBoards, useColorScheme, useNav, useNavigate, useOpenSearch, useSettings } from '@nexus/theme-sdk';
+import { useBoards, useColorScheme, useNav, useNavigate, useOpenSearch, useSettings, useUsage } from '@nexus/theme-sdk';
 import type { TerminalActions, TerminalBoard } from './terminalCommands.js';
+
+/** Aktionen aus dem Host; den Befehlsverlauf ergänzt die Prompt-Zeile */
+export type HostActions = Omit<TerminalActions, 'history'>;
 
 // Pfad unter /p/:pid ohne führenden Schrägstrich, z. B. „board/t/ARC-0001“
 export function pathUnderProject(pathname: string, pid: string): string {
@@ -23,21 +26,22 @@ export function useTerminalPath(pid: string): string {
   return address === section || address.startsWith(`${section}/`) ? address : section;
 }
 
-// Verbindet die Terminal-Befehle mit den Hooks des Theme-SDK: Navigation, Routenwechsel, Suche, Boards und Farbschema
-export function useTerminalActions(pid: string): TerminalActions {
+// Verbindet die Terminal-Befehle mit den Hooks des Theme-SDK: Navigation, Routenwechsel, Suche, Boards, Farbschema und Nutzung
+export function useTerminalActions(pid: string): HostActions {
   const nav = useNav();
   const navigate = useNavigate();
   const openSearch = useOpenSearch();
   const boards = useBoards();
   const settings = useSettings();
   const scheme = useColorScheme();
+  const usage = useUsage();
   const path = useTerminalPath(pid);
 
   // Befehle laufen asynchron; sie lesen immer den neuesten Stand statt des Stands beim Abschicken
-  const latest = useRef({ nav, boards, settings, scheme, path });
-  latest.current = { nav, boards, settings, scheme, path };
+  const latest = useRef({ nav, boards, settings, scheme, usage, path });
+  latest.current = { nav, boards, settings, scheme, usage, path };
 
-  return useMemo<TerminalActions>(() => {
+  return useMemo<HostActions>(() => {
     const base = `/p/${encodeURIComponent(pid)}`;
     return {
       path: () => latest.current.path,
@@ -62,6 +66,10 @@ export function useTerminalActions(pid: string): TerminalActions {
       setTheme: async (mode) => {
         await latest.current.settings.update({ theme: mode });
         if (mode !== 'terminal') window.location.reload();
+      },
+      usage: () => {
+        const { enabled, available, fiveHour, sevenDay } = latest.current.usage;
+        return enabled && available ? { fiveHour: fiveHour?.percent ?? null, sevenDay: sevenDay?.percent ?? null } : null;
       },
     };
   }, [navigate, openSearch, pid]);

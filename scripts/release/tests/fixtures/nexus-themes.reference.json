@@ -37,11 +37,11 @@
   {
     "id": "terminal",
     "name": "Terminal",
-    "version": "1.0.0",
-    "sdkVersion": "^1.1",
-    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/terminal-1.0.0.nexus",
-    "sha256": "8ace8bee9f9db6d41b47c04104d51beda6f462ef34dedf2982f4f78f29df7470",
-    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/terminal-1.0.0-preview.png"
+    "version": "2.0.0",
+    "sdkVersion": "^1.2",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/terminal-2.0.0.nexus",
+    "sha256": "09309a408a73d8e81afa5de28c7c66e1433972c92bdc1dd1fb2f577a34c5e1ae",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/terminal-2.0.0-preview.png"
   },
   {
     "id": "win95",

@@ -31,10 +31,10 @@ afterEach(() => {
 });
 
 // Rendert die ganze App im Schema „Terminal“; gibt die Aufzeichnung der gespeicherten Einstellungen zurück
-function openApp(path: string) {
+function openApp(path: string, themeSettings: Record<string, boolean | string> = {}) {
   const saveUserSettings = vi.fn(async (patch: Record<string, unknown>) => ({ ...SETTINGS, theme: 'terminal', ...patch }));
   render(
-    <ApiProvider api={fakeApi({ getUserSettings: async () => ({ ...SETTINGS, theme: 'terminal' }), listThemes: async () => [manifest], saveUserSettings } as never)}>
+    <ApiProvider api={fakeApi({ getUserSettings: async () => ({ ...SETTINGS, theme: 'terminal' }), listThemes: async () => [manifest], saveUserSettings, getThemeSettings: async () => themeSettings } as never)}>
       <MemoryRouter initialEntries={[path]}>
         <App />
       </MemoryRouter>
@@ -59,7 +59,7 @@ describe('Rahmen „Terminal“', () => {
     expect(screen.getByText('~/sessions')).toBeTruthy();
     const nav = screen.getByRole('navigation', { name: 'Hauptnavigation' });
     expect(within(nav).getByRole('link', { name: 'Board' }).getAttribute('href')).toBe('/p/p1/board');
-    expect(nav.textContent).toContain('$ ls ~/');
+    expect(nav.textContent).toContain('$ ls --icons ~/');
     expect(screen.getByText('SESSIONS')).toBeTruthy();
   });
 
@@ -72,9 +72,9 @@ describe('Rahmen „Terminal“', () => {
 
   it('meldet unbekannte Befehle in der Ausgabe; Esc schließt sie', async () => {
     openApp('/p/p1/sessions');
-    await type('sudo make me a sandwich');
+    await type('make me a sandwich');
     const log = await screen.findByRole('log', { name: 'Ausgabe' });
-    expect(log.textContent).toContain('command not found: sudo');
+    expect(log.textContent).toContain('command not found: make');
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('log')).toBeNull();
   });
@@ -120,5 +120,47 @@ describe('Rahmen „Terminal“', () => {
     await waitFor(() => expect(saveUserSettings).toHaveBeenCalledWith({ theme: 'dark' }));
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'));
     expect(screen.queryByRole('textbox', { name: 'Befehl (help zeigt alle Befehle)' })).toBeNull();
+  });
+
+  it('zeigt im Status-Segment, ob der letzte Befehl geklappt hat', async () => {
+    openApp('/p/p1/sessions');
+    await prompt();
+    expect(document.querySelector('.term-seg-status')).toBeNull();
+    await type('gibtsnicht');
+    await waitFor(() => expect(screen.getByTitle('Letzter Befehl fehlgeschlagen').textContent).toBe('✗'));
+    await type('ls');
+    await waitFor(() => expect(screen.getByTitle('Letzter Befehl erfolgreich').textContent).toBe('✓'));
+  });
+
+  it('legt die Einstellungen des Themes als data-term-* auf <html> und räumt sie beim Wechsel weg', async () => {
+    openApp('/p/p1/sessions', { palette: 'dracula', crt: true, icons: 'unicode' });
+    await prompt();
+    const root = document.documentElement;
+    await waitFor(() => expect(root.getAttribute('data-term-palette')).toBe('dracula'));
+    expect(root.getAttribute('data-term-crt')).toBe('on');
+    expect(root.getAttribute('data-term-font')).toBe('jetbrains');
+    expect(root.getAttribute('data-term-icons')).toBe('unicode');
+    await type('theme dunkel');
+    await waitFor(() => expect(root.getAttribute('data-term-palette')).toBeNull());
+  });
+
+  it('zeigt Symbole vor den Einträgen der Navigation, mit „keine“ gar keine', async () => {
+    openApp('/p/p1/sessions');
+    const nav = await screen.findByRole('navigation', { name: 'Hauptnavigation' });
+    await waitFor(() => expect(nav.querySelector('[data-glyph="sessions"]')?.textContent).toBe(''));
+    expect(nav.textContent).toContain('$ ls --icons ~/');
+    cleanup();
+    openApp('/p/p1/sessions', { icons: 'off' });
+    const bare = await screen.findByRole('navigation', { name: 'Hauptnavigation' });
+    await waitFor(() => expect(bare.textContent).toContain('$ ls ~/'));
+    expect(bare.querySelector('.term-glyph')).toBeNull();
+  });
+
+  it('färbt die Statuszeile nach dem Bereich und schaltet getippte Ausgabe per Einstellung', async () => {
+    openApp('/p/p1/sessions', { typeOutput: true });
+    await prompt();
+    expect(document.querySelector('.term-statusline')?.getAttribute('data-section')).toBe('sessions');
+    await type('help');
+    await waitFor(() => expect(screen.getByRole('log').className).toContain('term-typing'));
   });
 });

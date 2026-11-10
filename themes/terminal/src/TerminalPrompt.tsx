@@ -1,6 +1,7 @@
-import { forwardRef, useEffect, useId, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { forwardRef, useEffect, useId, useImperativeHandle, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { useBoards } from '@nexus/theme-sdk';
 import { boardKey, commonPrefix, completions, runCommand, slug, type CompletionData, type OutputBlock, type OutputCell, type TerminalActions } from './terminalCommands.js';
+import type { HostActions } from './useTerminalActions.js';
 
 /** Steuerung der Prompt-Zeile von außen (Taste „/“ im Rahmen) */
 export interface TerminalPromptHandle {
@@ -11,6 +12,21 @@ interface Output {
   command: string;
   blocks: OutputBlock[];
 }
+
+/** Ergebnis des letzten Befehls für das Status-Segment */
+export type CommandStatus = 'ok' | 'fail';
+
+// Ein Befehl gilt als gescheitert, sobald seine Ausgabe einen Teil im Ton „error“ hat
+export function statusOf(blocks: OutputBlock[] | null): CommandStatus {
+  const cells = (blocks ?? []).flatMap((b) => (b.kind === 'line' ? b.cells : b.rows.flat()));
+  return cells.some((c) => c.tone === 'error') ? 'fail' : 'ok';
+}
+
+// Zeichen einer Zeile bzw. Tabellenzeile; daraus rechnet theme.css die getippte Ausgabe (--term-chars)
+const length = (cells: OutputCell[]) => cells.reduce((sum, c) => sum + c.text.length, 0);
+
+// Variablen für die getippte Ausgabe: Länge und Platz der Zeile
+const typing = (chars: number, index: number) => ({ '--term-chars': Math.max(1, chars), '--term-row': index }) as CSSProperties;
 
 const HISTORY_LIMIT = 100;
 
@@ -36,10 +52,10 @@ function Cell({ cell }: { cell: OutputCell }) {
   return <span className={`term-tone-${cell.tone ?? 'plain'}`}>{cell.text}</span>;
 }
 
-function Block({ block }: { block: OutputBlock }) {
+function Block({ block, index }: { block: OutputBlock; index: number }) {
   if (block.kind === 'line') {
     return (
-      <div className="term-out-line">
+      <div className="term-out-line" style={typing(length(block.cells), index)}>
         {block.cells.map((cell, i) => <Cell key={i} cell={cell} />)}
       </div>
     );
@@ -48,7 +64,7 @@ function Block({ block }: { block: OutputBlock }) {
     <table className="term-out-table">
       <tbody>
         {block.rows.map((row, r) => (
-          <tr key={r}>
+          <tr key={r} style={typing(length(row), index + r)}>
             {row.map((cell, c) => <td key={c}><Cell cell={cell} /></td>)}
           </tr>
         ))}
@@ -59,18 +75,24 @@ function Block({ block }: { block: OutputBlock }) {
 
 // Prompt-Zeile des Schemas „Terminal“: „nexus@board:~/pfad$“ und eine Eingabe für Befehle (help zeigt sie).
 // Tab oder → übernimmt den grauen Vorschlag, ↑/↓ blättert im Verlauf, Esc und Strg+L leeren Zeile und Ausgabe.
-export const TerminalPrompt = forwardRef<TerminalPromptHandle, { actions: TerminalActions; path: string }>(function TerminalPrompt({ actions, path }, ref) {
+export const TerminalPrompt = forwardRef<TerminalPromptHandle, { actions: HostActions; path: string; typeOutput?: boolean }>(function TerminalPrompt(
+  { actions: host, path, typeOutput = false },
+  ref,
+) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
   const area = useRef<HTMLDivElement>(null);
+  const history = useRef<string[]>([]);
+  const historyIndex = useRef(-1);
+  // Befehle sehen den Verlauf der Prompt-Zeile (history) zusätzlich zu den Aktionen des Hosts
+  const actions = useMemo<TerminalActions>(() => ({ ...host, history: () => [...history.current] }), [host]);
   const identity = useIdentity();
   const completionData = useCompletionData(actions);
   const [value, setValue] = useState('');
   const [caretAtEnd, setCaretAtEnd] = useState(true);
   const [output, setOutput] = useState<Output | null>(null);
   const [busy, setBusy] = useState(false);
-  const history = useRef<string[]>([]);
-  const historyIndex = useRef(-1);
+  const [status, setStatus] = useState<CommandStatus | null>(null);
 
   useImperativeHandle(ref, () => ({ focus: () => input.current?.focus() }), []);
 
@@ -107,6 +129,7 @@ export const TerminalPrompt = forwardRef<TerminalPromptHandle, { actions: Termin
     setBusy(true);
     try {
       const blocks = await runCommand(command, actions);
+      setStatus(statusOf(blocks));
       setOutput(blocks ? { command, blocks } : null);
     } finally {
       setBusy(false);
@@ -153,7 +176,17 @@ export const TerminalPrompt = forwardRef<TerminalPromptHandle, { actions: Termin
   return (
     <div ref={area} className="term-prompt">
       <label className="term-prompt-label" htmlFor={id}>
-        <span className="term-user">{identity}</span>:<span className="term-path">~/{path}</span>
+        <span className="term-seg term-seg-user">
+          <span className="term-user">{identity}</span>
+        </span>
+        <span className="term-seg term-seg-path">
+          <span className="term-path">~/{path}</span>
+        </span>
+        {status && (
+          <span className="term-seg term-seg-status" data-status={status} title={status === 'ok' ? 'Letzter Befehl erfolgreich' : 'Letzter Befehl fehlgeschlagen'}>
+            {status === 'ok' ? '✓' : '✗'}
+          </span>
+        )}
         <span className="term-sigil">$</span>
       </label>
       <span className="term-cmd">
@@ -183,12 +216,12 @@ export const TerminalPrompt = forwardRef<TerminalPromptHandle, { actions: Termin
         </span>
       </span>
       {output && (
-        <div className="term-output" role="log" aria-live="polite" aria-label="Ausgabe">
+        <div className={`term-output${typeOutput ? ' term-typing' : ''}`} role="log" aria-live="polite" aria-label="Ausgabe">
           <div className="term-out-line term-echo">
             <span className="term-tone-muted">$ </span>
             <span>{output.command}</span>
           </div>
-          {output.blocks.map((block, i) => <Block key={i} block={block} />)}
+          {output.blocks.map((block, i) => <Block key={i} block={block} index={i + 1} />)}
           <div className="term-out-line term-tone-hint">Esc schließt</div>
         </div>
       )}

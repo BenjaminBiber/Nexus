@@ -57,18 +57,48 @@ describe('Terminal-Theme-Paket', () => {
     const css = readFileSync(join(theme, 'theme.css'), 'utf8');
     const light = variables(readFileSync(join(theme, '..', '..', 'packages', 'web', 'src', 'styles', 'variables.css'), 'utf8'), ':root {');
     const terminal = variables(css, ":root[data-theme='terminal'] {");
-    expect(terminal.get('--bg')).toBe('#0d1117');
+    expect(terminal.get('--term-bg')).toBe('#0d1117');
+    expect(terminal.get('--bg')).toBe('var(--term-bg)');
     expect(terminal.get('--font-sans')).toBe('var(--font-mono)');
     expect([...terminal.keys()].filter((name) => !light.has(name) && !name.startsWith('--term-'))).toEqual([]);
   });
 
-  it('gilt nur im Schema „Terminal“: jede Regel hängt an :root[data-theme=\'terminal\'], keine fremden Schriften', () => {
+  it('jedes Farbschema der Einstellungen setzt alle Grundwerte, und nur diese', () => {
+    const css = readFileSync(join(theme, 'theme.css'), 'utf8');
+    const base = [...variables(css, ":root[data-theme='terminal'] {").keys()].filter((name) => /^--term-(bg|fg|muted|line|ansi-)/.test(name));
+    expect(base.length).toBe(23);
+    const manifest = JSON.parse(readFileSync(join(theme, 'manifest.json'), 'utf8'));
+    const palettes = manifest.settingsSchema.palette.options.map((o: { value: string }) => o.value).filter((v: string) => v !== 'github');
+    expect(palettes).toHaveLength(7);
+    for (const palette of palettes) {
+      const vars = variables(css, `:root[data-theme='terminal'][data-term-palette='${palette}'] {`);
+      expect([...vars.keys()].sort(), palette).toEqual([...base].sort());
+    }
+  });
+
+  it('gilt nur im Schema „Terminal“: jede Regel hängt an :root[data-theme=\'terminal\'], Schriften nur aus dem Paket', () => {
     const css = readFileSync(join(theme, 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     // Selektoren vor „{“, ohne @-Regeln und Schlüsselbilder von @keyframes
-    const selectors = [...css.matchAll(/([^{}]+)\{/g)].map((m) => m[1]!.trim()).filter((s) => !s.startsWith('@') && !/^(from|to|\d+%)$/.test(s));
+    const frame = /^(from|to|\d+%)$/;
+    const selectors = [...css.matchAll(/([^{}]+)\{/g)]
+      .map((m) => m[1]!.trim())
+      .filter((s) => !s.startsWith('@') && !topLevel(s).every((p) => frame.test(p.trim())));
     const parts = selectors.flatMap((s) => topLevel(s).map((p) => p.trim()));
     expect(parts.length).toBeGreaterThan(100);
     expect(parts.filter((p) => !p.startsWith(":root[data-theme='terminal']"))).toEqual([]);
-    expect(css).not.toMatch(/@import|@font-face|url\(/);
+    expect(css).not.toMatch(/@import/);
+    // url() nur relativ und auf Dateien, die im gebauten Paket liegen
+    const urls = [...css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)].map((m) => m[1]!);
+    expect(urls).toHaveLength(5);
+    for (const url of urls) {
+      expect(url).toMatch(/^assets\/fonts\/[\w-]+\.woff2$/);
+      expect(existsSync(join(dist, url)), url).toBe(true);
+    }
+  });
+
+  it('hat die Version 2.0.0 und die Slots des SDK 1.2', () => {
+    const manifest = JSON.parse(readFileSync(join(theme, 'manifest.json'), 'utf8'));
+    expect(manifest.version).toBe('2.0.0');
+    expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Icon', 'Progress', 'StartAnimation']);
   });
 });
