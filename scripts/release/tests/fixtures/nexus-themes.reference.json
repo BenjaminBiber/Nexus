@@ -1,5 +1,14 @@
 [
   {
+    "id": "alucard",
+    "name": "Alucard",
+    "version": "1.0.0",
+    "sdkVersion": "^1.2",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/alucard-1.0.0.nexus",
+    "sha256": "65ee2f88a4a26799256b1c55db704baef8197e5b2199f3b12f3a7a9518a96cce",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/alucard-1.0.0-preview.png"
+  },
+  {
     "id": "catppuccin",
     "name": "Catppuccin",
     "version": "1.0.0",
@@ -7,6 +16,15 @@
     "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/catppuccin-1.0.0.nexus",
     "sha256": "68264ff01028a053a9d68577595a0187e60bb4524fc7f62e2f6f6e38aa398a5b",
     "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/catppuccin-1.0.0-preview.png"
+  },
+  {
+    "id": "dracula",
+    "name": "Dracula",
+    "version": "1.0.0",
+    "sdkVersion": "^1.2",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/dracula-1.0.0.nexus",
+    "sha256": "daeb0ec8d92bf0503e9ced61f092f778790fe31a33f1f8109a82dfc0d0f0d159",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/dracula-1.0.0-preview.png"
   },
   {
     "id": "minecraft",
@@ -33,6 +51,15 @@
     "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/signal-1.0.0.nexus",
     "sha256": "e58ee79a8caf294648dfacb33dbc2b5ee8cf7012d055812773e5ff4dcd34e3ae",
     "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/signal-1.0.0-preview.png"
+  },
+  {
+    "id": "synthwave",
+    "name": "Synthwave",
+    "version": "1.1.0",
+    "sdkVersion": "^1.2",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/synthwave-1.1.0.nexus",
+    "sha256": "35b8a3c48c2e413ccc1c411d2d6c84100b979ec88e8a25fe19d372a46a0388f1",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/synthwave-1.1.0-preview.png"
   },
   {
     "id": "terminal",

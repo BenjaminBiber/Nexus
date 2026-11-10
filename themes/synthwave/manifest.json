@@ -1,0 +1,60 @@
+{
+  "id": "synthwave",
+  "name": "Synthwave",
+  "version": "1.1.0",
+  "author": "Nexus",
+  "sdkVersion": "^1.2",
+  "colorScheme": "dark",
+  "startColor": "#120a24",
+  "preview": "assets/preview.png",
+  "slots": ["Shell", "NavIcon", "Icon", "Progress", "StartAnimation"],
+  "permissions": { "network": [] },
+  "settingsSchema": {
+    "palette": {
+      "type": "select",
+      "label": "Farbschema",
+      "options": [
+        { "value": "outrun", "label": "Outrun" },
+        { "value": "miami", "label": "Miami" },
+        { "value": "nightcall", "label": "Nightcall" }
+      ],
+      "default": "outrun"
+    },
+    "glow": {
+      "type": "select",
+      "label": "Leuchten",
+      "hint": "Stärke des Neon-Leuchtens an Rahmen und Überschriften",
+      "options": [
+        { "value": "normal", "label": "Normal" },
+        { "value": "low", "label": "Dezent" },
+        { "value": "high", "label": "Voll" }
+      ],
+      "default": "normal"
+    },
+    "horizon": {
+      "type": "select",
+      "label": "Horizont",
+      "hint": "Neon-Gitter am unteren Rand",
+      "options": [
+        { "value": "animated", "label": "Bewegt" },
+        { "value": "still", "label": "Still" },
+        { "value": "off", "label": "Aus" }
+      ],
+      "default": "animated"
+    },
+    "sky": {
+      "type": "select",
+      "label": "Himmel",
+      "options": [
+        { "value": "auto", "label": "Nach Tageszeit" },
+        { "value": "dawn", "label": "Morgenrot" },
+        { "value": "day", "label": "Tag" },
+        { "value": "dusk", "label": "Dämmerung" },
+        { "value": "night", "label": "Nacht" }
+      ],
+      "default": "auto"
+    },
+    "vhs": { "type": "boolean", "label": "VHS-Effekte", "hint": "Scanlines, dunkle Ränder und Bildstörung beim Seitenwechsel", "default": false },
+    "boot": { "type": "boolean", "label": "Startanimation", "hint": "Sonnenaufgang über dem Gitter beim Laden der Oberfläche", "default": true }
+  }
+}
