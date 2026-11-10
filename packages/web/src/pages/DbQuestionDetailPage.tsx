@@ -30,6 +30,7 @@ function DbDecisionBox({ question, busy, onReopen }: { question: DbQuestionDetai
       <span className="muted">{d.outcome === 'answered' ? 'Entscheidung' : 'Verworfen'}</span>
       {d.outcome === 'answered' && <strong>{answer}</strong>}
       {d.reason && <span>{d.reason}</span>}
+      {d.reason?.startsWith('Autopilot:') && <span className="badge">vom Autopilot entschieden</span>}
       <span className="muted">
         {d.byName} · {new Date(d.at).toLocaleDateString('de-DE')}
       </span>
