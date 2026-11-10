@@ -140,6 +140,9 @@ pub struct DispatchState {
     #[ts(type = "Record<string, ResearchEntry>")]
     pub research: IndexMap<String, ResearchEntry>,
     pub research_auto: ResearchAutoState,
+    /// Recherchen des Autopilots ohne Empfehlung je Frage (Frage-ID → Zahl der Versuche)
+    #[ts(type = "Record<string, number>")]
+    pub autopilot_research: IndexMap<String, u32>,
     #[ts(type = "Record<string, PlanningEntry>")]
     pub planning: IndexMap<String, PlanningEntry>,
     pub planning_auto: PlanningAutoState,

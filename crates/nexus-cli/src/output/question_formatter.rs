@@ -3,6 +3,7 @@
 
 use nexus_core::board::question_service::BoardQuestionListItem;
 use nexus_core::board::{BoardQuestionDetail, BoardQuestionView};
+use nexus_core::dispatch::autopilot::is_autopilot_decision;
 use nexus_core::AuthorKind;
 
 /// Deutscher Name der Art eines Handelnden (`KIND` in TypeScript)
@@ -200,7 +201,7 @@ impl QuestionFormatter {
         }
         if let Some(decision) = &q.decision {
             lines.push(format!(
-                "{}: {}",
+                "{}: {}{}",
                 match decision.outcome {
                     nexus_core::board::BoardQuestionDecisionOutcome::Answered => "Entscheidung",
                     nexus_core::board::BoardQuestionDecisionOutcome::Discarded => "Verworfen",
@@ -209,7 +210,12 @@ impl QuestionFormatter {
                     .option
                     .as_deref()
                     .or(decision.text.as_deref())
-                    .unwrap_or("–")
+                    .unwrap_or("–"),
+                if is_autopilot_decision(decision) {
+                    " (vom Autopilot entschieden)"
+                } else {
+                    ""
+                }
             ));
             lines.push(format!(
                 "  Begründung: {} ({}, {})",
@@ -450,5 +456,23 @@ mod tests {
             lines.contains(&"  Begründung: Passt zum Betrieb (Florian, 2026-01-02)".to_string())
         );
         assert!(lines.contains(&"  [2026-01-02] claude (Session): Neuer Befund".to_string()));
+    }
+
+    #[test]
+    fn entscheidung_des_autopilots_ist_gekennzeichnet() {
+        let mut d = detail(Vec::new());
+        d.view.question.decision = Some(nexus_core::board::BoardQuestionDecision {
+            outcome: nexus_core::board::BoardQuestionDecisionOutcome::Answered,
+            option: Some("O2".into()),
+            text: None,
+            reason: "Autopilot: Empfehlung der Recherche übernommen".into(),
+            by_id: String::new(),
+            by_name: "dispatcher".into(),
+            at: "2026-01-02".into(),
+        });
+
+        let lines = QuestionFormatter.show_text(&d);
+
+        assert!(lines.contains(&"Entscheidung: O2 (vom Autopilot entschieden)".to_string()));
     }
 }

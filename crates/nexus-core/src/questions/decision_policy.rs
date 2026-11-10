@@ -5,6 +5,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::actors::{Actor, AuthorKind};
+use crate::dispatch::config::AUTOPILOT_PREFIX;
 use crate::error::{HarnessError, Result};
 use crate::questions::question::{Decision, DecisionOutcome, Research};
 use crate::questions::state::QuestionState;
@@ -66,14 +67,28 @@ impl DecisionPolicy {
         Ok(())
     }
 
-    /// Prüft eine Entscheidung und liefert sie; die Frage muss offen sein
+    /// Übernimmt der Autopilot eine Option? Eine Option ohne Freitext mit einer Begründung, die
+    /// mit [`AUTOPILOT_PREFIX`] beginnt – die einzige Entscheidung, die kein Mensch trifft
+    fn autopilot_choice(input: &DecisionInput) -> bool {
+        Self::trimmed(input.option.as_deref()).is_some()
+            && Self::trimmed(input.text.as_deref()).is_none()
+            && input
+                .reason
+                .as_deref()
+                .is_some_and(|reason| reason.trim().starts_with(AUTOPILOT_PREFIX))
+    }
+
+    /// Prüft eine Entscheidung und liefert sie; die Frage muss offen sein. Entscheiden darf nur
+    /// ein Mensch – außer der Autopilot übernimmt eine Option der Recherche
     pub fn answer(
         question: &DecisionSubject,
         input: &DecisionInput,
         actor: &Actor,
         at: &str,
     ) -> Result<Decision> {
-        Self::assert_human(actor)?;
+        if !Self::autopilot_choice(input) {
+            Self::assert_human(actor)?;
+        }
         Self::assert_open(&question.id, question.state)?;
         let option = Self::trimmed(input.option.as_deref());
         let text = Self::trimmed(input.text.as_deref());
@@ -282,5 +297,35 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(error.code(), Some("human-only"));
+    }
+
+    #[test]
+    fn der_autopilot_darf_eine_option_mit_seiner_vorsilbe_uebernehmen() {
+        let dispatcher = Actor {
+            author: "dispatcher".into(),
+            kind: AuthorKind::Session,
+        };
+        let decision = DecisionPolicy::answer(
+            &subject(),
+            &DecisionInput::option("O1", "Autopilot: Empfehlung der Recherche übernommen"),
+            &dispatcher,
+            "jetzt",
+        )
+        .unwrap();
+        assert_eq!(decision.option.as_deref(), Some("O1"));
+        assert_eq!(
+            decision.reason,
+            "Autopilot: Empfehlung der Recherche übernommen"
+        );
+
+        // Freitext oder eine Begründung ohne Vorsilbe bleiben dem Menschen vorbehalten
+        for input in [
+            DecisionInput::text("eigener Text", "Autopilot: geraten"),
+            DecisionInput::option("O1", "passt"),
+        ] {
+            let error =
+                DecisionPolicy::answer(&subject(), &input, &dispatcher, "jetzt").unwrap_err();
+            assert_eq!(error.code(), Some("human-only"));
+        }
     }
 }

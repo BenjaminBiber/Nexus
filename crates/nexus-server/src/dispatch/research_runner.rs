@@ -10,16 +10,25 @@ use std::path::Path;
 
 use chrono::{DateTime, Local, Utc};
 use nexus_core::actors::AuthorKind;
+use nexus_core::board::basics::TicketStatus;
 use nexus_core::board::question_concern::{ConcernSubject, QuestionConcern};
-use nexus_core::board::question_service::BoardQuestionListFilter;
+use nexus_core::board::question_service::{BoardQuestionListFilter, BoardQuestionWriteOptions};
 use nexus_core::board::question_types::{
-    BoardQuestionActor, BoardQuestionDetail, BoardQuestionView,
+    BoardQuestionActor, BoardQuestionDetail, BoardQuestionOption, BoardQuestionView,
 };
-use nexus_core::board::types::Board;
+use nexus_core::board::ticket_service::{TicketPatch, WriteOptions};
+use nexus_core::board::types::{Board, Ticket};
 use nexus_core::clock::{iso, parse_millis};
+use nexus_core::dispatch::autopilot::{
+    asked_by_dispatch_agent, autopilot_for, is_autopilot_question, AUTOPILOT_RESEARCH_ATTEMPTS,
+};
+use nexus_core::dispatch::config::AUTOPILOT_PREFIX;
 use nexus_core::dispatch::git::{ResearchWorktree, ResearchWorktreeOptions, WorktreePurpose};
-use nexus_core::dispatch::{markers, ResearchPromptInput, RunEnd, RunKind, RunRecord};
+use nexus_core::dispatch::{
+    markers, ResearchAutoState, ResearchPromptInput, RunEnd, RunKind, RunRecord, RunSettings,
+};
 use nexus_core::questions::state::QuestionState;
+use nexus_core::questions::DecisionInput;
 use nexus_core::{HarnessError, Result};
 
 use crate::board_runtime::BoardRuntimeHolder;
@@ -121,6 +130,17 @@ impl<'a> ResearchRunner<'a> {
     /// Startet die Recherche einer offenen Frage (von Hand oder automatisch); Fehler als
     /// [`HarnessError`]
     pub async fn start(&self, question_id: &str, mode: StartMode) -> Result<RunRecord> {
+        self.start_with(question_id, mode, self.ctx.chooser().research())
+            .await
+    }
+
+    /// Wie [`ResearchRunner::start`], mit gewählten Einstellungen des Laufs
+    async fn start_with(
+        &self,
+        question_id: &str,
+        mode: StartMode,
+        run: RunSettings,
+    ) -> Result<RunRecord> {
         let ctx = self.ctx;
         let question = ctx.services().questions.get(question_id).await?;
         let id = question.view.question.id.clone();
@@ -140,7 +160,6 @@ impl<'a> ResearchRunner<'a> {
         }
         let board = self.locate(&question.view).await?;
         let work = ctx.repo(&board).await?;
-        let run = ctx.chooser().research();
         let agent = Self::agent_name(&id);
         let worktree = self.worktrees.create(Path::new(&work.root), &id)?;
         if let Some(warning) = &worktree.warning {
@@ -210,7 +229,9 @@ impl<'a> ResearchRunner<'a> {
         Ok(record)
     }
 
-    /// Wertet einen beendeten Recherche-Lauf aus; der Worktree wird in jedem Fall entfernt
+    /// Wertet einen beendeten Recherche-Lauf aus; der Worktree wird in jedem Fall entfernt.
+    /// Bei einer Autopilot-Frage übernimmt der Dispatcher danach die Empfehlung (siehe
+    /// [`ResearchRunner::decide_autopilot`])
     pub async fn evaluate(
         &self,
         record: &RunRecord,
@@ -224,7 +245,75 @@ impl<'a> ResearchRunner<'a> {
                     .log(&format!("FEHLER {}: {left}", record.ticket_id));
             }
         }
-        outcome
+        let outcome = outcome?;
+        if matches!(
+            outcome,
+            ResearchOutcome::Researched | ResearchOutcome::Empty
+        ) {
+            self.decide_autopilot(record, outcome).await?;
+        }
+        Ok(outcome)
+    }
+
+    /// Stößt offene Autopilot-Fragen an (siehe [`is_autopilot_question`]), älteste zuerst –
+    /// auch bei ausgeschalteter Recherche-Automatik und ohne Zählung gegen
+    /// `research.maxPerDay`, aber nur bis `research.wip` gleichzeitige Läufe. Je Frage höchstens
+    /// [`AUTOPILOT_RESEARCH_ATTEMPTS`] Recherchen ohne Empfehlung, jede weitere eine Stufe höher
+    /// auf der Leiter. Umgebungs- und Repo-Fehler setzen wie bei [`ResearchRunner::start_auto`]
+    /// aus
+    pub async fn start_autopilot(&self) -> Result<ResearchAutoReport> {
+        let ctx = self.ctx;
+        let mut report = ResearchAutoReport::default();
+        if !ctx.cfg.autopilot.enabled {
+            return Ok(report);
+        }
+        let now = ctx.now();
+        let state = ctx.stores.state.read()?;
+        let auto = state.research_auto.clone();
+        if auto
+            .retry_at
+            .as_deref()
+            .and_then(parse_millis)
+            .is_some_and(|at| at > now.timestamp_millis())
+        {
+            return Ok(report);
+        }
+        let mut free = ctx.cfg.research.wip - self.running_count()?;
+        if free <= 0 {
+            return Ok(report);
+        }
+        for question in self.autopilot_candidates().await? {
+            if free <= 0 {
+                break;
+            }
+            let id = question.question.id.clone();
+            let tried = state.autopilot_research.get(&id).copied().unwrap_or(0);
+            if tried >= AUTOPILOT_RESEARCH_ATTEMPTS || self.running(&id).await? {
+                continue;
+            }
+            let run = ctx.chooser().research_attempt(tried + 1);
+            match self.start_with(&id, StartMode::Auto, run).await {
+                Ok(_) => {
+                    report.started.push(id);
+                    free -= 1;
+                }
+                Err(error) => {
+                    if BoardRuntimeHolder::is_connection_error(&error) {
+                        return Err(error);
+                    }
+                    if error
+                        .code()
+                        .is_some_and(|code| QUESTION_ERRORS.contains(&code))
+                    {
+                        report.errors.push(format!("{id}: {error}"));
+                        continue;
+                    }
+                    self.suspend(&auto, now, &id, &error, &mut report).await?;
+                    break;
+                }
+            }
+        }
+        Ok(report)
     }
 
     /// Verwaiste Recherche-Worktrees eines Repos entfernen (`active`: Ordner laufender
@@ -262,14 +351,7 @@ impl<'a> ResearchRunner<'a> {
         } else {
             0
         };
-        let mut free = ctx.cfg.research.wip
-            - ctx
-                .stores
-                .runs
-                .list()?
-                .iter()
-                .filter(|run| run.kind == RunKind::Research)
-                .count() as i64;
+        let mut free = ctx.cfg.research.wip - self.running_count()?;
         if free <= 0 || used >= ctx.cfg.research.max_per_day {
             return Ok(report);
         }
@@ -311,27 +393,55 @@ impl<'a> ResearchRunner<'a> {
                         report.errors.push(format!("{id}: {message}"));
                         continue;
                     }
-                    let retry_at = now + chrono::Duration::minutes(RESEARCH_RETRY_MINUTES);
-                    let stored = iso(retry_at);
-                    let noted = message.clone();
-                    ctx.stores
-                        .state
-                        .update(move |state| {
-                            state.research_auto.retry_at = Some(stored);
-                            state.research_auto.last_error = Some(noted);
-                        })
-                        .await?;
-                    if auto.last_error.as_deref() != Some(message.as_str()) {
-                        report.errors.push(format!(
-                            "Recherche-Automatik ausgesetzt bis {} (bei {id}): {message}",
-                            hhmm(retry_at)
-                        ));
-                    }
+                    self.suspend(&auto, now, &id, &error, &mut report).await?;
                     break;
                 }
             }
         }
         Ok(report)
+    }
+
+    /// Setzt die Automatik nach einem Umgebungs- oder Repo-Fehler
+    /// [`RESEARCH_RETRY_MINUTES`] aus; derselbe Fehlertext landet nur einmal im Bericht
+    async fn suspend(
+        &self,
+        auto: &ResearchAutoState,
+        now: DateTime<Utc>,
+        id: &str,
+        error: &nexus_core::Error,
+        report: &mut ResearchAutoReport,
+    ) -> Result<()> {
+        let message = error.to_string();
+        let retry_at = now + chrono::Duration::minutes(RESEARCH_RETRY_MINUTES);
+        let stored = iso(retry_at);
+        let noted = message.clone();
+        self.ctx
+            .stores
+            .state
+            .update(move |state| {
+                state.research_auto.retry_at = Some(stored);
+                state.research_auto.last_error = Some(noted);
+            })
+            .await?;
+        if auto.last_error.as_deref() != Some(message.as_str()) {
+            report.errors.push(format!(
+                "Recherche-Automatik ausgesetzt bis {} (bei {id}): {message}",
+                hhmm(retry_at)
+            ));
+        }
+        Ok(())
+    }
+
+    /// Zahl der laufenden Recherche-Läufe
+    fn running_count(&self) -> Result<i64> {
+        Ok(self
+            .ctx
+            .stores
+            .runs
+            .list()?
+            .iter()
+            .filter(|run| run.kind == RunKind::Research)
+            .count() as i64)
     }
 
     /// Board, in dessen Repo recherchiert wird (siehe `pick`), sonst `HarnessError`
@@ -447,6 +557,213 @@ Repo-Pfad setzen.",
     /// eigenen Benutzer betreffen und für die es ein Board mit Repo gibt (dieselbe Wahl wie
     /// [`ResearchRunner::locate`]), älteste zuerst
     async fn candidates(&self, since: &str) -> Result<Vec<BoardQuestionView>> {
+        let from = parse_millis(since).unwrap_or(i64::MAX);
+        Ok(self
+            .open_own()
+            .await?
+            .into_iter()
+            .filter(|view| {
+                !view.researched
+                    && parse_millis(&view.question.created_at).is_some_and(|at| at >= from)
+            })
+            .collect())
+    }
+
+    /// Kandidaten des Autopilots: offene Fragen wie bei [`ResearchRunner::candidates`] (mit
+    /// oder ohne Recherche, unabhängig vom Einschalten der Automatik), die Autopilot-Fragen sind
+    async fn autopilot_candidates(&self) -> Result<Vec<BoardQuestionView>> {
+        let mut found = Vec::new();
+        for view in self.open_own().await? {
+            if self.autopilot_tickets(&view).await?.is_some() {
+                found.push(view);
+            }
+        }
+        Ok(found)
+    }
+
+    /// Betroffene Tickets einer Autopilot-Frage, für die der Autopilot gilt (nur Tickets
+    /// eigener Boards); `None`, wenn die Frage keine Autopilot-Frage ist
+    async fn autopilot_tickets(&self, view: &BoardQuestionView) -> Result<Option<Vec<Ticket>>> {
+        let ctx = self.ctx;
+        let question = &view.question;
+        if question.state != QuestionState::Open
+            || !asked_by_dispatch_agent(&ctx.cfg, question.origin_kind, &question.origin_name)
+        {
+            return Ok(None);
+        }
+        let own: HashSet<i32> = self
+            .own_boards()
+            .await?
+            .iter()
+            .map(|board| board.id)
+            .collect();
+        let mut tickets = Vec::new();
+        for reference in view
+            .tickets
+            .iter()
+            .filter(|ticket| own.contains(&ticket.board_id))
+        {
+            let ticket = ctx.services().tickets.get(&reference.id).await?.view.ticket;
+            tickets.push(ticket);
+        }
+        let labels: Vec<Vec<String>> = tickets.iter().map(|t| t.labels.clone()).collect();
+        if !is_autopilot_question(&ctx.cfg, question, &labels) {
+            return Ok(None);
+        }
+        Ok(Some(
+            tickets
+                .into_iter()
+                .filter(|ticket| autopilot_for(&ctx.cfg, &ticket.labels))
+                .collect(),
+        ))
+    }
+
+    /// Nach einer ausgewerteten Recherche zu einer Autopilot-Frage: Hat die neueste Recherche
+    /// dieses Laufs genau eine empfohlene Option, beantwortet der Dispatcher die Frage damit und
+    /// kommentiert die Tickets. Sonst zählt der Versuch; nach
+    /// [`AUTOPILOT_RESEARCH_ATTEMPTS`] Versuchen gehen die Autopilot-Tickets auf Blockiert
+    async fn decide_autopilot(&self, record: &RunRecord, outcome: ResearchOutcome) -> Result<()> {
+        let ctx = self.ctx;
+        if !ctx.cfg.autopilot.enabled {
+            return Ok(());
+        }
+        let id = record
+            .question_id
+            .clone()
+            .unwrap_or_else(|| record.ticket_id.clone());
+        let question = match ctx.services().questions.get(&id).await {
+            Ok(question) => question,
+            Err(error) if error.code() == Some("question-not-found") => return Ok(()),
+            Err(error) => return Err(error),
+        };
+        let Some(tickets) = self.autopilot_tickets(&question.view).await? else {
+            return Ok(());
+        };
+        let recommended: Vec<&BoardQuestionOption> = match outcome {
+            ResearchOutcome::Researched => question
+                .research
+                .last()
+                .map(|newest| newest.options.iter().filter(|o| o.recommended).collect())
+                .unwrap_or_default(),
+            _ => Vec::new(),
+        };
+        if let [option] = recommended.as_slice() {
+            return self.answer_autopilot(&id, option, &tickets, record).await;
+        }
+        let entry = id.clone();
+        let state = ctx
+            .stores
+            .state
+            .update(move |state| {
+                *state.autopilot_research.entry(entry).or_insert(0) += 1;
+            })
+            .await?;
+        let tried = state.autopilot_research.get(&id).copied().unwrap_or(0);
+        if tried < AUTOPILOT_RESEARCH_ATTEMPTS {
+            ctx.log(&format!(
+                "Autopilot {id}: keine eindeutige Empfehlung (Versuch {tried}/{AUTOPILOT_RESEARCH_ATTEMPTS}), nächste Recherche mit größerem Profil"
+            ));
+            return Ok(());
+        }
+        let reason = format!("{AUTOPILOT_PREFIX} keine Empfehlung zu {id}");
+        for ticket in tickets
+            .iter()
+            .filter(|ticket| !matches!(ticket.status, TicketStatus::Done | TicketStatus::NotNeeded))
+        {
+            self.block(ticket, &reason).await?;
+        }
+        ctx.log(&format!("Autopilot {id}: {reason} nach {tried} Recherchen"));
+        Ok(())
+    }
+
+    /// Beantwortet eine Autopilot-Frage mit der empfohlenen Option (Akteur: der Dispatcher als
+    /// Session des Laufs) und kommentiert die Autopilot-Tickets
+    async fn answer_autopilot(
+        &self,
+        id: &str,
+        option: &BoardQuestionOption,
+        tickets: &[Ticket],
+        record: &RunRecord,
+    ) -> Result<()> {
+        let ctx = self.ctx;
+        ctx.services()
+            .questions
+            .answer(
+                id,
+                &DecisionInput {
+                    option: Some(option.id.clone()),
+                    text: None,
+                    reason: Some(format!(
+                        "{AUTOPILOT_PREFIX} Empfehlung der Recherche übernommen"
+                    )),
+                },
+                &BoardQuestionActor {
+                    actor: ctx.actor().clone(),
+                    kind: AuthorKind::Session,
+                    session: Some(record.id.clone()),
+                },
+                &BoardQuestionWriteOptions::default(),
+            )
+            .await?;
+        let entry = id.to_string();
+        ctx.stores
+            .state
+            .update(move |state| {
+                state.autopilot_research.shift_remove(&entry);
+            })
+            .await?;
+        for ticket in tickets {
+            ctx.comment(
+                &ticket.id,
+                &format!(
+                    "{AUTOPILOT_PREFIX} Frage {id} mit „{}“ entschieden",
+                    option.title
+                ),
+            )
+            .await?;
+        }
+        ctx.log(&format!(
+            "Autopilot {id}: Option {} „{}“ übernommen",
+            option.id, option.title
+        ));
+        Ok(())
+    }
+
+    /// Blockiert ein Autopilot-Ticket mit Grund und meldet es
+    async fn block(&self, ticket: &Ticket, reason: &str) -> Result<()> {
+        let ctx = self.ctx;
+        ctx.services()
+            .tickets
+            .update(
+                &ticket.id,
+                &TicketPatch {
+                    status: Some(TicketStatus::Blocked),
+                    blocked_reason: Some(Some(reason.to_string())),
+                    assignee: Some(None),
+                    ..TicketPatch::default()
+                },
+                ctx.actor(),
+                &WriteOptions {
+                    force: true,
+                    ..WriteOptions::default()
+                },
+            )
+            .await?;
+        let board = ctx.board(ticket.board_id).await?;
+        ctx.notify(&DispatchNotice {
+            kind: DispatchNoticeKind::Blocked,
+            ticket_id: Some(ticket.id.clone()),
+            title: ticket.title.clone(),
+            text: reason.to_string(),
+            repo_path: board.and_then(|board| board.repo_path),
+        })
+        .await;
+        Ok(())
+    }
+
+    /// Offene Fragen der Projekte mit eigenem Board mit Repo, die den eigenen Benutzer betreffen
+    /// und für die es ein Board mit Repo gibt, älteste zuerst
+    async fn open_own(&self) -> Result<Vec<BoardQuestionView>> {
         let ctx = self.ctx;
         let own = self.own_boards().await?;
         let own_ids: HashSet<i32> = own.iter().map(|board| board.id).collect();
@@ -458,7 +775,6 @@ Repo-Pfad setzen.",
         if project_ids.is_empty() {
             return Ok(Vec::new());
         }
-        let from = parse_millis(since).unwrap_or(i64::MAX);
         let mut found: Vec<BoardQuestionView> = Vec::new();
         for project in ctx.services().projects.list().await? {
             if !project_ids.contains(&project.id) {
@@ -481,10 +797,7 @@ Repo-Pfad setzen.",
                     .into_iter()
                     .map(|item| item.view)
                     .filter(|view| {
-                        !view.researched
-                            && parse_millis(&view.question.created_at).is_some_and(|at| at >= from)
-                            && self.concerns_me(view, &own_ids)
-                            && self.pick(view, &own).is_some()
+                        self.concerns_me(view, &own_ids) && self.pick(view, &own).is_some()
                     }),
             );
         }

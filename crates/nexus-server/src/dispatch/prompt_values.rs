@@ -24,7 +24,10 @@ pub const DEFAULT_TARGET: &str = "main";
 /// Name des Planungs-Agents eines Tickets (`PlanRunner.agentName`; der Planungslauf selbst
 /// kommt in P4-14b)
 pub fn plan_agent_name(ticket_id: &str) -> String {
-    format!("planner-{ticket_id}")
+    format!(
+        "{}{ticket_id}",
+        nexus_core::dispatch::autopilot::PLAN_AGENT_PREFIX
+    )
 }
 
 /// Name des Recherche-Agents einer Frage (`ResearchRunner.agentName`; der Recherche-Lauf
