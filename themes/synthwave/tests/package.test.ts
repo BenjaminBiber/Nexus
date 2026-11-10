@@ -99,6 +99,25 @@ describe('Synthwave-Theme-Paket', () => {
     expect(css).not.toMatch(/url\(/);
   });
 
+  it('jedes Farbschema außer Outrun setzt genau die 14 Grundwerte', () => {
+    const css = readFileSync(join(theme, 'theme.css'), 'utf8');
+    for (const palette of ['miami', 'nightcall']) {
+      const block = variables(css, `:root[data-theme='synthwave'][data-synth-palette='${palette}'] {`);
+      expect([...block.keys()].sort(), palette).toEqual([...BASE].sort());
+      expect([...block.values()].every((value) => /^#[0-9a-f]{6}$/i.test(value)), palette).toBe(true);
+    }
+  });
+
+  it('die Glow-Stufen setzen --synth-glow, der Grundblock bietet Leuchtschatten', () => {
+    const css = readFileSync(join(theme, 'theme.css'), 'utf8');
+    expect(variables(css, ":root[data-theme='synthwave'][data-synth-glow='low'] {").get('--synth-glow')).toBe('0.45');
+    expect(variables(css, ":root[data-theme='synthwave'][data-synth-glow='high'] {").get('--synth-glow')).toBe('1.7');
+    const synth = variables(css, ":root[data-theme='synthwave'] {");
+    expect(synth.get('--synth-glow')).toBe('1');
+    expect(synth.get('--synth-glow-magenta')).toContain('var(--synth-glow)');
+    expect(synth.get('--synth-glow-cyan')).toContain('var(--synth-glow)');
+  });
+
   it('hat die Version 1.0.0 und das SDK 1.2', () => {
     const manifest = JSON.parse(readFileSync(join(theme, 'manifest.json'), 'utf8'));
     expect(manifest.version).toBe('1.0.0');
