@@ -1,9 +1,31 @@
 # Minecraft-Theme
 
 Referenz-Theme für Code-Themes mit fremden Ressourcen. Es ersetzt die Slots `Shell`, `NavIcon`,
-`Button`, `Input`, `Progress`, `Card`, `Panel` und `Dialog` und lädt Schrift-Atlas, Button- und
-Feld-Texturen, Popup-Hintergrund, XP-Leisten, Panorama, Hotbar, Logo und Item-Symbole aus dem
-Minecraft-Client von Mojang.
+`Button`, `Input`, `Progress`, `Card`, `Panel`, `Dialog` und `StartAnimation` und lädt
+Schrift-Atlas, Button- und Feld-Texturen, Scrollbalken, Ankreuzfelder, Popup-Hintergrund,
+XP-Leisten, Panorama, Hotbar, Logo und Item-Symbole aus dem Minecraft-Client von Mojang.
+
+## Farben und Gestaltung
+
+`theme.css` setzt die Variablen des Hosts auf die 16 Chat-Farben des Spiels: Text weiß, gedämpfter
+Text grau `#A0A0A0`, Akzent XP-Grün `#80FF20`, Zustände grün `#55FF55`, rot `#FF5555`, gold
+`#FFAA00`, aqua `#55FFFF`. Hintergründe eines Zustands sind seine Textfarbe mit 20 % Deckkraft,
+Flächen schwarz und halbdurchsichtig, damit das Panorama durchscheint. Ecken sind eckig
+(`--radius-*: 0`), weiche Schatten entfallen (`--shadow-*: none`), der Dialog-Grund verdunkelt die
+Seite um 75 %.
+
+- **Scrollbalken:** 6 Spielpixel breit (12 px) mit dem Griff `widget/scroller` in der Rille
+  `widget/scroller_background`. Browser ohne `::-webkit-scrollbar` bekommen über `scrollbar-color`
+  einen grauen Griff auf schwarzer Rille.
+- **Ankreuzfelder:** `appearance: none` und die vier `widget/checkbox*`-Sprites für leer, leer unter
+  dem Zeiger, angekreuzt und angekreuzt unter dem Zeiger. Solange die Texturen fehlen, bleibt ein
+  grauer Rahmen sichtbar.
+- **Chips und Badges** im Seiteninhalt sind eckig und tragen den Textschatten des Spiels.
+
+## Startanimation
+
+Der Slot `StartAnimation` ist bis Phase 6 ein Platzhalter (`src/slots/McStart.tsx`): er zeigt nichts
+und gibt den Start sofort frei, damit Manifest und Slot-Liste schon jetzt endgültig sind.
 
 ## Menü-Layout
 

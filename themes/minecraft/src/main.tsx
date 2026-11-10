@@ -10,6 +10,7 @@ import { McDialog } from './slots/McDialog.js';
 import { McInput } from './slots/McInput.js';
 import { McPanel } from './slots/McPanel.js';
 import { McProgress } from './slots/McProgress.js';
+import { McStart } from './slots/McStart.js';
 
 const theme: ThemeDefinition = {
   id: THEME_ID,
@@ -22,6 +23,7 @@ const theme: ThemeDefinition = {
     Card: McCard,
     Panel: McPanel,
     Dialog: McDialog,
+    StartAnimation: McStart,
   },
   settingsSchema: MINECRAFT_SETTINGS,
 };

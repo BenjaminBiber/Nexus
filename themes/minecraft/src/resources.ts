@@ -27,7 +27,15 @@ export const BUTTON_HIGHLIGHTED = 'assets/minecraft/textures/gui/sprites/widget/
 export const BUTTON_DISABLED = 'assets/minecraft/textures/gui/sprites/widget/button_disabled.png';
 export const TEXT_FIELD = 'assets/minecraft/textures/gui/sprites/widget/text_field.png';
 export const TEXT_FIELD_HIGHLIGHTED = 'assets/minecraft/textures/gui/sprites/widget/text_field_highlighted.png';
-export const HOTBAR = 'assets/minecraft/textures/gui/sprites/hud/hotbar.png';
+/** Scrollbalken der Listen: Griff (6×27 Spielpixel) und seine Rille dahinter */
+export const SCROLLER = 'assets/minecraft/textures/gui/sprites/widget/scroller.png';
+export const SCROLLER_BACKGROUND = 'assets/minecraft/textures/gui/sprites/widget/scroller_background.png';
+/** Ankreuzfeld in vier Zuständen (20×20 Spielpixel): leer, leer unter dem Zeiger, angekreuzt, angekreuzt unter dem Zeiger */
+export const CHECKBOX = 'assets/minecraft/textures/gui/sprites/widget/checkbox.png';
+export const CHECKBOX_HIGHLIGHTED = 'assets/minecraft/textures/gui/sprites/widget/checkbox_highlighted.png';
+export const CHECKBOX_SELECTED = 'assets/minecraft/textures/gui/sprites/widget/checkbox_selected.png';
+export const CHECKBOX_SELECTED_HIGHLIGHTED = 'assets/minecraft/textures/gui/sprites/widget/checkbox_selected_highlighted.png';
+export const HOTBAR ='assets/minecraft/textures/gui/sprites/hud/hotbar.png';
 export const HOTBAR_SELECTION = 'assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png';
 /** Fenster-Hintergrund für Bereiche und Dialoge (236×34 Spielpixel, 9-Slice Rand 6) */
 export const POPUP_BACKGROUND = 'assets/minecraft/textures/gui/sprites/popup/background.png';
@@ -59,6 +67,12 @@ export const MINECRAFT_ENTRIES: readonly string[] = [
   BUTTON_DISABLED,
   TEXT_FIELD,
   TEXT_FIELD_HIGHLIGHTED,
+  SCROLLER,
+  SCROLLER_BACKGROUND,
+  CHECKBOX,
+  CHECKBOX_HIGHLIGHTED,
+  CHECKBOX_SELECTED,
+  CHECKBOX_SELECTED_HIGHLIGHTED,
   HOTBAR,
   HOTBAR_SELECTION,
   POPUP_BACKGROUND,

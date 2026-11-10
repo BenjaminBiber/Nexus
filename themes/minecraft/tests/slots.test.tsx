@@ -13,6 +13,7 @@ import { McDialog } from '../src/slots/McDialog.js';
 import { McInput } from '../src/slots/McInput.js';
 import { McPanel } from '../src/slots/McPanel.js';
 import { McProgress } from '../src/slots/McProgress.js';
+import { McStart } from '../src/slots/McStart.js';
 
 const soundUrls = { click: '/snd/click', menuOpen: '/snd/menu', hotbar: '/snd/pop' };
 
@@ -208,5 +209,14 @@ describe('Slots Card, Panel und Dialog', () => {
     expect(dialog.classList.contains('mc-dialog')).toBe(true);
     expect(dialog.style.borderImageSource).toBe('var(--mc-popup, none)');
     expect(container.querySelectorAll('.mc-popup')).toHaveLength(2);
+  });
+});
+
+describe('Slot StartAnimation', () => {
+  it('StartAnimation ruft onDone sofort (Platzhalter bis Phase 6)', () => {
+    const onDone = vi.fn();
+    const { container } = render(<McStart onDone={onDone} />, { wrapper });
+    expect(onDone).toHaveBeenCalledOnce();
+    expect(container.innerHTML).toBe('');
   });
 });

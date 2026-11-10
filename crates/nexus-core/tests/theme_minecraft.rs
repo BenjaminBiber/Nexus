@@ -26,7 +26,8 @@ fn manifest_erlaubt_nur_mojang_domains() {
             "Progress".to_string(),
             "Card".to_string(),
             "Panel".to_string(),
-            "Dialog".to_string()
+            "Dialog".to_string(),
+            "StartAnimation".to_string()
         ]
     );
     assert!(!manifest.permissions.network.is_empty());

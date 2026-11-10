@@ -1,22 +1,195 @@
-/* Farben des Minecraft-Themes (Erde, Stein, Gras); Texturen kommen zur Laufzeit als CSS-Variablen aus src/LoadingGate.tsx */
+/* Farben des Minecraft-Themes: die 16 Chat-Farben des Spiels auf schwarzen, halbdurchsichtigen Flächen, damit das
+   Panorama durchscheint. Ecken sind eckig, weiche Schatten gibt es im Spiel nicht. Hintergründe der Zustände und
+   Hinweise sind ihre Textfarbe mit 20 % Deckkraft. Die Namen stammen aus packages/web/src/styles/variables.css,
+   die Werte aus Abschnitt 5.6 der Spec; Texturen kommen zur Laufzeit als --mc-*-Variablen aus src/LoadingGate.tsx. */
 :root[data-theme='minecraft'] {
   color-scheme: dark;
-  --bg: #3b2a1a;
-  --surface: #4a3623;
-  --surface-alt: #42301f;
-  --sidebar-bg: #2e2014;
-  --nav-active-bg: #5b6b2f;
-  --line: #6b6b6b;
-  --line-input: #7a7a7a;
+  --bg: transparent;
+  --surface: rgba(0, 0, 0, 0.5);
+  --surface-alt: rgba(0, 0, 0, 0.65);
+  --sidebar-bg: rgba(0, 0, 0, 0.6);
+  --nav-active-bg: rgba(255, 255, 255, 0.15);
+  --column-bg: rgba(0, 0, 0, 0.35);
+  --column-locked-a: rgba(0, 0, 0, 0.35);
+  --column-locked-b: rgba(0, 0, 0, 0.5);
+  --line: #808080;
+  --line-input: #a0a0a0;
   --line-soft: #555555;
-  --line-strong: #a0a0a0;
+  --line-strong: #ffffff;
+  --line-dashed: #808080;
   --text: #ffffff;
   --text-soft: #e0e0e0;
-  --muted: #a8a8a8;
-  --accent: #7cbd38;
-  --accent-hover: #95d54d;
+  --muted: #a0a0a0;
+  --accent: #80ff20;
+  --accent-hover: #a8ff5c;
+  --accent-soft: rgba(128, 255, 32, 0.2);
+  --accent-soft-hover: rgba(128, 255, 32, 0.3);
+  --on-accent: #000000;
+  --primary: #6f6f6f;
+  --primary-hover: #8a8a9c;
+  --on-primary: #ffffff;
+  --chip-on-bg: #555555;
+  --chip-on-fg: #ffffff;
+  --code-bg: #000000;
+  --code-fg: #ffffff;
+  --code-muted: #a0a0a0;
+  --code-btn-bg: #3f3f3f;
+  --code-btn-line: #808080;
+  /* Zustände: Textfarbe aus dem Chat, Fläche dieselbe Farbe mit 20 % Deckkraft */
+  --status-bg: rgba(85, 255, 255, 0.2);
+  --status-fg: #55ffff;
+  --running-fg: #55ff55;
+  --running-bg: rgba(85, 255, 85, 0.2);
+  --waiting-fg: #ffff55;
+  --waiting-bg: rgba(255, 255, 85, 0.2);
+  --waiting-line: #ffff55;
+  --idle-fg: #a0a0a0;
+  --idle-bg: rgba(160, 160, 160, 0.2);
+  --blocked-fg: #ff5555;
+  --blocked-bg: rgba(255, 85, 85, 0.2);
+  --orphan-fg: #ff55ff;
+  --orphan-bg: rgba(255, 85, 255, 0.2);
+  --unread-fg: #55ffff;
+  --unread-bg: rgba(85, 255, 255, 0.2);
+  --unread-row-bg: rgba(85, 255, 255, 0.1);
+  --note-bg: rgba(255, 255, 85, 0.2);
+  --note-line: #ffff55;
+  --note-fg: #ffff55;
+  --ok: #55ff55;
+  --ok-fg: #55ff55;
+  --ok-ring: rgba(85, 255, 85, 0.2);
+  --danger: #ff5555;
+  --warn: #ffaa00;
+  --usage-ok: #80ff20;
+  --usage-warn: #ffaa00;
+  --usage-crit: #ff5555;
+  --usage-over: #ffaa00;
+  --row-waiting-bg: rgba(255, 255, 85, 0.1);
+  --quote-line: #808080;
+  --mark: rgba(255, 255, 85, 0.3);
+  --mark-comment: rgba(85, 255, 255, 0.3);
+  --mark-comment-hover: rgba(85, 255, 255, 0.45);
+  --tag-add-line: #808080;
+  --connection-line: #ff5555;
+  --connection-fg: #ff5555;
+  --error-bg: rgba(255, 85, 85, 0.2);
+  --answered-bg: rgba(85, 255, 85, 0.2);
+  --answered-line: #55ff55;
+  --research-bg: rgba(85, 255, 255, 0.2);
+  --research-fg: #55ffff;
+  /* Diff und Testläufe im Review: dieselben Chat-Farben auf schwarzem Codegrund */
+  --diff-add-bg: rgba(85, 255, 85, 0.2);
+  --diff-add-fg: #55ff55;
+  --diff-del-bg: rgba(255, 85, 85, 0.2);
+  --diff-del-fg: #ff5555;
+  --diff-hunk-fg: #55ffff;
+  --test-ok: #55ff55;
+  --test-fail: #ff5555;
+  /* Farbpunkt je Board-Spalte: je eine Chat-Farbe */
+  --status-backlog: #aaaaaa;
+  --status-waiting: #ffff55;
+  --status-in-planning: #ff55ff;
+  --status-planned: #5555ff;
+  --status-in-progress: #55ffff;
+  --status-blocked: #ff5555;
+  --status-done: #55ff55;
+  --status-not-needed: #555555;
+  --graph-edge: #a0a0a0;
+  --graph-critical: #ff5555;
+  --graph-upstream: #5555ff;
+  --graph-downstream: #ff55ff;
+  /* Diagramme des Dashboards */
+  --chart-done: #55ff55;
+  --chart-fail: #ff5555;
+  --chart-bar: #80ff20;
+  --chart-track: #3f3f3f;
+  --chart-grid: #555555;
+  --chart-axis: #a0a0a0;
+  --chart-other: #808080;
+  --chart-escalated: #ffaa00;
+  --reason-max-turns: #ff5555;
+  --reason-timeout: #ffaa00;
+  --reason-context: #ff55ff;
+  --reason-exit-code: #5555ff;
+  --reason-claude-error: #55ffff;
+  --reason-rest: #808080;
+  --reason-no-outcome: #aaaaaa;
+  --urgent-row-bg: rgba(255, 85, 85, 0.15);
+  /* Eckig und ohne weiche Schatten; der Dialog-Grund verdunkelt das Panorama wie ein Untermenü */
+  --radius-control: 0;
+  --radius-card: 0;
+  --radius-panel: 0;
+  --shadow-faint: none;
+  --shadow-mid: none;
+  --shadow-soft: none;
+  --shadow-tab: none;
+  --shadow-strong: none;
+  --sheet-shadow: none;
+  --picker-shadow: none;
+  --backdrop: rgba(0, 0, 0, 0.75);
   /* Die Spielschrift wird zur Laufzeit erzeugt und als `Minecraft` registriert; bis dahin eine schmale Rückfallschrift */
   --font-sans: 'Minecraft', 'Courier New', ui-monospace, monospace;
+}
+
+/* ---------- Scrollbalken: der Griff aus widget/scroller in seiner Rille, 6 Spielpixel breit (2× = 12 px) ---------- */
+[data-theme='minecraft'] ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+[data-theme='minecraft'] ::-webkit-scrollbar-track {
+  background: var(--mc-scroller-bg, #000) 0 0 / 12px 12px repeat-y;
+  image-rendering: pixelated;
+}
+
+[data-theme='minecraft'] ::-webkit-scrollbar-thumb {
+  background: var(--mc-scroller, #808080) 0 0 / 12px 54px no-repeat;
+  border: 0;
+  image-rendering: pixelated;
+}
+
+/* Firefox kennt die Sprites nicht, nur Farben: grauer Griff auf schwarzer Rille */
+[data-theme='minecraft'] * {
+  scrollbar-color: #808080 #000000;
+  scrollbar-width: thin;
+}
+
+/* ---------- Ankreuzfelder: die vier checkbox-Sprites statt des Systemfelds (20×20 Spielpixel = 40 px) ---------- */
+[data-theme='minecraft'] input[type='checkbox'] {
+  appearance: none;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  background: var(--mc-checkbox, #000) 0 0 / 100% 100% no-repeat;
+  border: 0;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+
+[data-theme='minecraft'] input[type='checkbox']:hover,
+[data-theme='minecraft'] input[type='checkbox']:focus-visible {
+  background-image: var(--mc-checkbox-highlighted, var(--mc-checkbox));
+  outline: none;
+}
+
+[data-theme='minecraft'] input[type='checkbox']:checked {
+  background-image: var(--mc-checkbox-selected, var(--mc-checkbox));
+}
+
+[data-theme='minecraft'] input[type='checkbox']:checked:hover,
+[data-theme='minecraft'] input[type='checkbox']:checked:focus-visible {
+  background-image: var(--mc-checkbox-selected-highlighted, var(--mc-checkbox-selected));
+}
+
+/* Ohne Texturen (Laden, offline) bleibt ein sichtbarer Rahmen mit Haken-Fläche */
+[data-theme='minecraft'] .mc-shell:not(.mc-ready) input[type='checkbox'] {
+  box-shadow: inset 0 0 0 2px #a0a0a0;
+}
+
+/* Chips, Badges und Marken der Seite: eckig und mit dem Textschatten des Spiels */
+[data-theme='minecraft'] .mc-list :is(.chip, .badge, .tag) {
+  border-radius: 0;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
 }
 
 /* Kopfzeile oben, Seite im Panel, Hotbar unten; dahinter das Panorama, bis es geladen ist ein Verlauf
