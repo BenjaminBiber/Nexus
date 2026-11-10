@@ -11,6 +11,9 @@ import { ThemesPanel } from '../src/components/settings/ThemesPanel.js';
 import { registerTheme, unregisterTheme } from '../src/theme/registry.js';
 import { THEME_SETTINGS_EVENT, resolveThemeSettings } from '../src/theme/themeSettings.js';
 import { fakeApi } from './helpers/fakeApi.js';
+import { stubReload } from './helpers/reload.js';
+
+stubReload();
 
 const schema = {
   sounds: { type: 'boolean', label: 'Sounds', default: true },

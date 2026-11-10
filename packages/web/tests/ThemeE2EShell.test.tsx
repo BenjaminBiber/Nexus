@@ -17,6 +17,9 @@ import { THEME_CACHE_KEY, THEME_LINK_ID } from '../src/theme/theme.js';
 import { setThemeNotice } from '../src/theme/themeNoticeStore.js';
 import { inspectThemePackage } from '../src/themes/inspectPackage.js';
 import { fakeApi } from './helpers/fakeApi.js';
+import { stubReload } from './helpers/reload.js';
+
+stubReload();
 
 const FIXTURES = join(import.meta.dirname, 'fixtures', 'themes');
 const SOURCE = join(FIXTURES, 'e2e-shell');
