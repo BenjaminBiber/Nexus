@@ -222,6 +222,19 @@ pub struct PlanningSettings {
     pub profile: Option<String>,
 }
 
+/// Autopilot des Dispatchers (`autopilot_for` entscheidet je Ticket)
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "dispatch.ts")]
+pub struct AutopilotSettings {
+    /// true = keine Freigaben, Fragen entscheidet die Recherche, Merge-Konflikte löst Claude
+    pub enabled: bool,
+    /// Tickets mit diesem Label laufen ohne Autopilot; null = keine Ausnahme
+    pub except_label: Option<String>,
+    /// Höchstens so viele Merge-Sessions je Konflikt (1–5)
+    pub max_merge_sessions: i64,
+}
+
 /// Erlaubte Werte von mergeStrategy
 pub const MERGE_STRATEGIES: [MergeStrategy; 2] = MergeStrategy::ALL;
 
@@ -358,6 +371,9 @@ pub struct DispatchConfig {
     pub allow_fable: bool,
     pub research: ResearchSettings,
     pub planning: PlanningSettings,
+    /// Autopilot: keine Freigaben, Fragen entscheidet die Recherche, Merge-Konflikte mehrfach
+    /// per Session
+    pub autopilot: AutopilotSettings,
     /// Wahl unter mehreren erlaubten Accounts
     pub account_strategy: AccountStrategy,
     /// Ab dieser Auslastung in Prozent (5 Stunden oder Woche) gilt ein Account als voll (50–100)
@@ -537,6 +553,9 @@ pub const SETUP_REASON_PREFIX: &str = "Einrichtung fehlgeschlagen:";
 /// Vorsilbe des Blockiert-Grunds, wenn der Merge scheiterte („Erneut mergen“ im Panel)
 pub const MERGE_REASON_PREFIX: &str = "Merge:";
 
+/// Vorsilbe von Blockiert-Gründen und Kommentaren des Autopiloten
+pub const AUTOPILOT_PREFIX: &str = "Autopilot:";
+
 /// Anfang des Kommentars bei einer Pause wegen Nutzungslimit
 pub fn limit_pause() -> String {
     format!("{}: Nutzungslimit", markers::PAUSE)
@@ -561,6 +580,7 @@ mod tests {
         assert_eq!(REVIEW_REASON, "Human Interaction: Review vor dem Merge");
         assert_eq!(SETUP_REASON_PREFIX, "Einrichtung fehlgeschlagen:");
         assert_eq!(MERGE_REASON_PREFIX, "Merge:");
+        assert_eq!(AUTOPILOT_PREFIX, "Autopilot:");
         assert_eq!(limit_pause(), "[dispatch] Pause: Nutzungslimit");
     }
 

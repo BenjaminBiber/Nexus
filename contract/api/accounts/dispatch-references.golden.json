@@ -133,6 +133,11 @@
           "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
+          "autopilot": {
+            "enabled": false,
+            "exceptLabel": "interaktiv",
+            "maxMergeSessions": 3
+          },
           "boards": null,
           "claude": {
             "allowedTools": [
@@ -375,6 +380,11 @@
           "accountStrategy": "most-free",
           "agentPrefix": "junior-",
           "allowFable": false,
+          "autopilot": {
+            "enabled": false,
+            "exceptLabel": "interaktiv",
+            "maxMergeSessions": 3
+          },
           "boards": null,
           "claude": {
             "allowedTools": [
