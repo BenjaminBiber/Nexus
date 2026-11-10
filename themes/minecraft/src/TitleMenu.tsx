@@ -1,8 +1,8 @@
 // Titelbildschirm: Logo und das Hauptmenü als große Minecraft-Knöpfe. Pfeiltasten wandern, Enter öffnet, Esc schließt.
 import { NavLink, useNav, useOpenSearch } from '@nexus/theme-sdk';
 import { useEffect, useRef, type KeyboardEvent } from 'react';
-import { McText } from './BitmapText.js';
 import { useResourceUrl } from './context.js';
+import { McText } from './McText.js';
 import { LOGO } from './resources.js';
 import { useSound } from './useSound.js';
 

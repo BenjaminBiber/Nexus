@@ -22,6 +22,8 @@ describe('LoadingGate', () => {
     expect(bar.value).toBe(3);
     expect(bar.max).toBe(9);
     expect(screen.getByRole('button', { name: 'Seite' })).toBeTruthy();
+    // Ohne gemeldeten Zustand gilt die Spielschrift als noch nicht gebaut
+    expect(screen.getByTestId('mc-shell').getAttribute('data-mc-font')).toBe('idle');
   });
 
   it('setzt bei ready die CSS-Variablen auf die Proxy-URLs', () => {
@@ -30,7 +32,6 @@ describe('LoadingGate', () => {
     render(<LoadingGate resources={{ ...base, phase: 'ready', done: 9, urls }}>{page}</LoadingGate>);
     expect(screen.queryByTestId('mc-loading')).toBeNull();
     const shell = screen.getByTestId('mc-shell');
-    expect(shell.style.getPropertyValue('--mc-font-atlas')).toBe(at('assets/minecraft/textures/font/ascii.png'));
     expect(shell.style.getPropertyValue('--mc-button')).toBe(at('assets/minecraft/textures/gui/sprites/widget/button.png'));
     expect(shell.style.getPropertyValue('--mc-button-highlighted')).toBe(at('assets/minecraft/textures/gui/sprites/widget/button_highlighted.png'));
     expect(shell.style.getPropertyValue('--mc-panorama-0')).toBe(at('minecraft/textures/gui/title/background/panorama_0.png'));

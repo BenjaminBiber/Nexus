@@ -1,9 +1,9 @@
 // Rahmen der Minecraft-Shell: Fortschritt bzw. Hinweis oben, die Seite darunter bleibt immer bedienbar
 import type { CSSProperties, ReactNode } from 'react';
+import type { FontState } from './font/useMinecraftFont.js';
 import {
   BUTTON,
   BUTTON_HIGHLIGHTED,
-  FONT_ATLAS,
   FOOTER_SEPARATOR,
   HEADER_SEPARATOR,
   HOTBAR,
@@ -24,7 +24,6 @@ function cssVariables(urls: Record<string, string>): CSSProperties {
   const set = (name: string, entry: string) => {
     if (urls[entry]) vars[name] = `url("${urls[entry]}")`;
   };
-  set('--mc-font-atlas', FONT_ATLAS);
   set('--mc-button', BUTTON);
   set('--mc-button-highlighted', BUTTON_HIGHLIGHTED);
   for (let i = 0; i < 6; i++) set(`--mc-panorama-${i}`, panorama(i));
@@ -38,10 +37,24 @@ function cssVariables(urls: Record<string, string>): CSSProperties {
   return vars as CSSProperties;
 }
 
-export function LoadingGate({ resources, children }: { resources: MinecraftResources; children: ReactNode }) {
+export function LoadingGate({
+  resources,
+  fontState = 'idle',
+  children,
+}: {
+  resources: MinecraftResources;
+  /** Zustand der Spielschrift; erst bei `ready` gelten Schatten und Maße der echten Schrift */
+  fontState?: FontState;
+  children: ReactNode;
+}) {
   const { phase, done, total, urls, error, retry } = resources;
   return (
-    <div data-testid="mc-shell" className={`mc-shell${phase === 'ready' ? ' mc-ready' : ''}`} style={cssVariables(urls)}>
+    <div
+      data-testid="mc-shell"
+      data-mc-font={fontState}
+      className={`mc-shell${phase === 'ready' ? ' mc-ready' : ''}`}
+      style={cssVariables(urls)}
+    >
       {phase !== 'ready' && phase !== 'error' && (
         <div data-testid="mc-loading" className="mc-status" role="status">
           <span>

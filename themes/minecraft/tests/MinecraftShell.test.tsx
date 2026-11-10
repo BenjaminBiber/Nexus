@@ -15,6 +15,11 @@ vi.mock('../src/resources.js', async (importOriginal) => {
   return { ...original, useMinecraftResources: () => resources.current };
 });
 
+// Die Spielschrift baut hier niemand: der Zustand kommt aus dem Stub (Browser-APIs prüft tests/useMinecraftFont.test.tsx)
+const font = vi.hoisted(() => ({ state: 'ready' as 'idle' | 'building' | 'ready' | 'failed' }));
+
+vi.mock('../src/font/useMinecraftFont.js', () => ({ useMinecraftFont: () => font.state }));
+
 const { MINECRAFT_ENTRIES } = await import('../src/resources.js');
 const { NAV_ITEM_TEXTURE } = await import('../src/navIcons.js');
 const { default: theme } = await import('../src/main.js');
@@ -259,6 +264,16 @@ describe('Untermenü', () => {
     const css = readFileSync(join(import.meta.dirname, '..', 'theme.css'), 'utf8');
     expect(css).toMatch(/\.mc-hotbar-label\s*\{[^}]*bottom:\s*calc\(100% \+ 28px\)/);
     expect(css).toMatch(/\.mc-xp-slot\s*\{[^}]*height:\s*10px/);
+  });
+
+  it('trägt den Zustand der Spielschrift an der Shell', () => {
+    const { container } = renderShell(fakeHost('docs'));
+    expect(container.querySelector('.mc-shell')!.getAttribute('data-mc-font')).toBe('ready');
+    cleanup();
+    font.state = 'failed';
+    const second = renderShell(fakeHost('docs'));
+    expect(second.container.querySelector('.mc-shell')!.getAttribute('data-mc-font')).toBe('failed');
+    font.state = 'ready';
   });
 
   it('bei offenem Titelmenü bleibt die Seite eingehängt, aber verborgen', async () => {

@@ -15,6 +15,8 @@
   --muted: #a8a8a8;
   --accent: #7cbd38;
   --accent-hover: #95d54d;
+  /* Die Spielschrift wird zur Laufzeit erzeugt und als `Minecraft` registriert; bis dahin eine schmale Rückfallschrift */
+  --font-sans: 'Minecraft', 'Courier New', ui-monospace, monospace;
 }
 
 /* Kopfzeile oben, Seite im Panel, Hotbar unten; dahinter das Panorama, bis es geladen ist ein Verlauf
@@ -157,58 +159,53 @@
   }
 }
 
-/* ---------- Bitmap-Schrift (src/BitmapText.tsx): Glyphen aus ascii.png, 2× vergrößert, mit Schatten wie im Spiel ---------- */
+/* ---------- Spielschrift: die aus den Atlanten erzeugte Web-Schrift `Minecraft` (src/font/useMinecraftFont.ts) ----------
+   Sie gilt in der ganzen Shell; 8 px Schrifthöhe und 9 px Zeilenhöhe sind bei GUI-Maßstab 2 genau 16/18 CSS-Pixel.
+   Solange sie fehlt (Laden, offline, kein Canvas), greift die Rückfallschrift aus --font-sans. */
+[data-theme='minecraft'] .mc-shell {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 18px;
+}
+
 [data-theme='minecraft'] .mc-text {
-  position: relative;
   display: inline-block;
-  vertical-align: middle;
-  line-height: 16px;
   white-space: nowrap;
 }
 
-[data-theme='minecraft'] .mc-text--fallback,
-[data-theme='minecraft'] .mc-glyph-fallback::before {
-  font-family: 'Courier New', ui-monospace, monospace;
-  font-weight: 700;
-  font-size: 15px;
-  color: #fff;
+/* Textschatten wie im Spiel: 2 px nach rechts unten in einem Viertel der Textfarbe */
+[data-theme='minecraft'] .mc-shadow {
   text-shadow: 2px 2px 0 #3f3f3f;
 }
 
-[data-theme='minecraft'] .mc-glyphs {
-  display: inline-flex;
-  align-items: flex-start;
-  height: 16px;
-  filter: drop-shadow(2px 2px 0 #3f3f3f);
+[data-theme='minecraft'] .mc-shadow--gray {
+  color: #a0a0a0;
+  text-shadow: 2px 2px 0 #282828;
 }
 
-[data-theme='minecraft'] .mc-glyph {
-  display: inline-block;
-  height: 16px;
-  margin-right: 2px;
-  background-image: var(--mc-font-atlas);
-  background-size: 256px 256px;
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
+[data-theme='minecraft'] .mc-shadow--yellow {
+  color: #ffff55;
+  text-shadow: 2px 2px 0 #3f3f15;
 }
 
-[data-theme='minecraft'] .mc-glyph-fallback {
-  margin-right: 2px;
+[data-theme='minecraft'] .mc-shadow--green {
+  color: #80ff20;
+  text-shadow: 2px 2px 0 #203f08;
 }
 
-[data-theme='minecraft'] .mc-glyph-fallback::before {
-  content: attr(data-char);
-  line-height: 16px;
+/* Der Schatten passt nur zur Pixelschrift; in der Rückfallschrift wirkt er schmutzig */
+[data-theme='minecraft'] .mc-shell:not([data-mc-font='ready']) .mc-shadow {
+  text-shadow: none;
 }
 
-/* Der echte Text liegt unsichtbar über den Glyphen: lesbar für Screenreader, markier- und kopierbar */
-[data-theme='minecraft'] .mc-text-src {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  color: transparent;
-  font-size: 14px;
-  line-height: 16px;
+/* Im Seiteninhalt des Hosts: Überschriften und Knöpfe mit Schatten, Code und Diffs in der Mono-Schrift ohne Schatten */
+[data-theme='minecraft'] .mc-list :is(h1, h2, h3, button) {
+  text-shadow: 2px 2px 0 #3f3f3f;
+}
+
+[data-theme='minecraft'] .mc-list :is(pre, code, .diff) {
+  font-family: var(--font-mono);
+  text-shadow: none;
 }
 
 /* ---------- Knöpfe: Button-Textur als 9-Slice, hervorgehoben bei Hover und Fokus ---------- */
@@ -375,8 +372,10 @@
   image-rendering: pixelated;
 }
 
-[data-theme='minecraft'] .mc-title-edition.mc-text--fallback {
+/* Der Zusatz unter dem Logo ist gelb wie die Splash-Zeile im Spiel */
+[data-theme='minecraft'] .mc-title-edition {
   color: #ffff55;
+  text-shadow: 2px 2px 0 #3f3f15;
 }
 
 [data-theme='minecraft'] .mc-title-menu {
@@ -446,7 +445,7 @@
   height: 28px;
   background: #6b6b6b;
   box-shadow: inset 2px 2px 0 #9a9a9a, inset -2px -2px 0 #3f3f3f;
-  font: 700 16px/1 'Courier New', ui-monospace, monospace;
+  font: 16px/1 var(--font-sans);
   color: #fff;
 }
 
@@ -455,7 +454,7 @@
   position: absolute;
   right: 1px;
   bottom: -1px;
-  font: 700 14px/1 'Courier New', ui-monospace, monospace;
+  font: 16px/1 var(--font-sans);
   color: #fff;
   text-shadow: 2px 2px 0 #3f3f3f;
 }
