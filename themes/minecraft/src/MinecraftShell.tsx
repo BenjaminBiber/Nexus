@@ -3,18 +3,21 @@
 // Hauptnavigation; „Menü“ bzw. Esc öffnet das Titelmenü.
 import { BoardSwitcher, ConnectionStatus, Outlet, SearchButton, UsageMeter, useNav, type ShellProps } from '@nexus/theme-sdk';
 import { useEffect, useRef, useState } from 'react';
-import { McText } from './BitmapText.js';
 import { ResourcesProvider } from './context.js';
 import { Hotbar } from './Hotbar.js';
 import { LoadingGate } from './LoadingGate.js';
 import { McButton } from './McButton.js';
+import { McText } from './McText.js';
 import { Panorama } from './Panorama.js';
 import { TitleMenu } from './TitleMenu.js';
+import { useMinecraftFont } from './font/useMinecraftFont.js';
 import { isShortcut } from './keys.js';
 import { useMinecraftResources } from './resources.js';
 
 export function MinecraftShell({ parts }: ShellProps) {
   const resources = useMinecraftResources();
+  // Die Spielschrift wird einmal aus den Atlanten gebaut (oder aus der Cache API geholt) und als Web-Schrift registriert
+  const fontState = useMinecraftFont(resources.urls);
   const active = useNav().find((item) => item.active);
   // Ohne offene Seite zeigt die Shell den Titelbildschirm
   const [menuOpen, setMenuOpen] = useState(!active);
@@ -50,7 +53,7 @@ export function MinecraftShell({ parts }: ShellProps) {
 
   return (
     <ResourcesProvider urls={resources.urls} soundUrls={resources.soundUrls}>
-      <LoadingGate resources={resources}>
+      <LoadingGate resources={resources} fontState={fontState}>
         {/* Titelmenü offen = Titelbildschirm: scharf; eine Seite offen = Untermenü: unscharf */}
         <Panorama blur={!menuOpen} />
         {menuOpen && <TitleMenu onClose={closeMenu} sound={menuSound} />}

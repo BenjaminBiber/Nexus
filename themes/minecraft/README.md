@@ -23,12 +23,30 @@ Die Shell sieht aus wie der Titelbildschirm des Spiels:
   Navigationsziele stehen als große Minecraft-Knöpfe darin, dazu „Suchen …“ für die globale Suche.
   Pfeiltasten wandern, Enter öffnet, Esc schließt und gibt den Fokus an den Knopf „Menü“ zurück.
 - **Kopfzeile:** Suche, Board-Auswahl, Claude-Verbrauch und Verbindungsstatus des Hosts.
-- **Seite:** im Panel mit halbtransparentem dunklem Grund; Fließtext in normaler Schrift.
+- **Seite:** im Panel mit halbtransparentem dunklem Grund; Code und Diffs bleiben in der
+  Mono-Schrift des Hosts.
 
-Knöpfe, Hotbar-Namen und Überschriften nutzen die Bitmap-Schrift aus `ascii.png`
-(`src/BitmapText.tsx`). Der Text bleibt im DOM (unsichtbar über den Glyphen), Screenreader und
-Kopieren funktionieren also. Zeichen außerhalb von ASCII (Umlaute, „…“) und alles vor dem Laden des
-Atlas erscheinen in einer Rückfallschrift.
+## Schrift
+
+Die Shell schreibt alles in der Schrift des Spiels: Seitentitel, Knöpfe, Hotbar-Namen und der
+Seiteninhalt des Hosts. Nur Code und Diffs (`pre`, `code`, `.diff`) behalten die Mono-Schrift.
+Texte in der Spielschrift tragen den Schatten des Spiels (2 px nach rechts unten in einem Viertel
+der Textfarbe), Code nicht.
+
+- **Erzeugung:** `src/font/useMinecraftFont.ts` lädt die Schrift-Definition (`default.json`,
+  `space.json`) und die drei Atlanten (`ascii.png`, `accented.png`, `nonlatin_european.png`) über
+  den Asset-Proxy, legt die Atlanten per `Image` und Canvas als Pixel offen und baut daraus mit
+  `src/font/buildFont.ts` eine TrueType-Schrift. Sie wird als `FontFace('Minecraft')` in
+  `document.fonts` eingetragen; `--font-sans` nennt sie an erster Stelle.
+- **Maße:** 16 px Schriftgröße und 18 px Zeilenhöhe entsprechen den 8 px bzw. 9 px des Spiels bei
+  GUI-Maßstab 2. Je Spielpixel stehen so genau 2×2 gleichfarbige Bildschirmpixel.
+- **Cache:** die gebaute Schrift liegt in der Cache API (`src/font/fontCache.ts`, Cache
+  `nexus-theme-minecraft`) unter `/font/<Spielversion>/<Hash der Quell-URLs>`. Ab dem zweiten Start
+  wird sie nicht neu gebaut. Ändern sich Version oder URLs, entsteht ein neuer Schlüssel.
+- **Rückfall:** bis die Schrift steht und wenn etwas fehlschlägt (offline, kein Canvas, keine Cache
+  API) gilt `'Courier New', ui-monospace, monospace`; der Schatten entfällt dann. Die Shell trägt
+  dazu `data-mc-font="idle" | "building" | "ready" | "failed"`, Fehler stehen als
+  `[minecraft] Schrift` in der Browser-Konsole.
 
 ## Keine Mojang-Dateien im Paket
 

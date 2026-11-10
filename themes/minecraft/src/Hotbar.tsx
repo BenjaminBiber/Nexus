@@ -1,7 +1,7 @@
 // Hotbar mit 9 Feldern als Hauptnavigation: Klick, Tasten 1–9 und Mausrad wechseln die Seite wie im Spiel das Item
 import { NavLink, useNav, useNavigate, type NavItem } from '@nexus/theme-sdk';
 import { useEffect, useRef } from 'react';
-import { McText } from './BitmapText.js';
+import { McText } from './McText.js';
 import { NavIcon } from './NavIcon.js';
 import { isShortcut } from './keys.js';
 import { useSound } from './useSound.js';
