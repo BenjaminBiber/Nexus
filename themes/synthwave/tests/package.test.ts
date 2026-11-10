@@ -145,4 +145,9 @@ describe('Synthwave-Theme-Paket', () => {
     expect(manifest.sdkVersion).toBe('^1.2');
     expect(manifest.colorScheme).toBe('dark');
   });
+
+  it('meldet im Manifest genau die Slots an, die main.tsx liefert', () => {
+    const manifest = JSON.parse(readFileSync(join(theme, 'manifest.json'), 'utf8'));
+    expect(manifest.slots).toEqual(['Shell']);
+  });
 });
