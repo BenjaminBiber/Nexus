@@ -77,7 +77,7 @@ autopilot:
 ## 3. Fragen werden automatisch entschieden
 
 Gilt für offene Fragen, die ein Agent des Dispatchers gestellt hat – `origin_kind != Human` und
-`origin_name` beginnt mit `{agentPrefix}-` (Umsetzung, z. B. `junior-AIH-0001`) oder `planner-`
+`origin_name` beginnt mit `agentPrefix` (Umsetzung, z. B. `junior-AIH-0001`) oder `planner-`
 (Planung) – und die mindestens ein Ticket betreffen, für das `autopilot_for` gilt
 („Autopilot-Frage“). Fragen interaktiver Claude-Sessions bleiben beim Menschen.
 
