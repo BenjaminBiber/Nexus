@@ -4,8 +4,14 @@ import { MinecraftShell } from './MinecraftShell.js';
 import { NavIcon } from './NavIcon.js';
 import { THEME_ID } from './resources.js';
 import { MINECRAFT_SETTINGS } from './settings.js';
+import { McButtonSlot } from './slots/McButtonSlot.js';
+import { McInput } from './slots/McInput.js';
 
-const theme: ThemeDefinition = { id: THEME_ID, slots: { Shell: MinecraftShell, NavIcon }, settingsSchema: MINECRAFT_SETTINGS };
+const theme: ThemeDefinition = {
+  id: THEME_ID,
+  slots: { Shell: MinecraftShell, NavIcon, Button: McButtonSlot, Input: McInput },
+  settingsSchema: MINECRAFT_SETTINGS,
+};
 
 export default theme;
 

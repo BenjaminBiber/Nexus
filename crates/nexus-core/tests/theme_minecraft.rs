@@ -18,7 +18,12 @@ fn manifest_erlaubt_nur_mojang_domains() {
     assert_eq!(manifest.id, "minecraft");
     assert_eq!(
         manifest.slots,
-        vec!["Shell".to_string(), "NavIcon".to_string()]
+        vec![
+            "Shell".to_string(),
+            "NavIcon".to_string(),
+            "Button".to_string(),
+            "Input".to_string()
+        ]
     );
     assert!(!manifest.permissions.network.is_empty());
     for domain in &manifest.permissions.network {

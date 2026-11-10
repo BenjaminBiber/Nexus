@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { FontState } from './font/useMinecraftFont.js';
 import {
   BUTTON,
+  BUTTON_DISABLED,
   BUTTON_HIGHLIGHTED,
   FOOTER_SEPARATOR,
   HEADER_SEPARATOR,
@@ -11,6 +12,8 @@ import {
   MENU_BACKGROUND,
   MENU_LIST_BACKGROUND,
   PANORAMA_OVERLAY,
+  TEXT_FIELD,
+  TEXT_FIELD_HIGHLIGHTED,
   panorama,
   type MinecraftResources,
 } from './resources.js';
@@ -26,6 +29,9 @@ function cssVariables(urls: Record<string, string>): CSSProperties {
   };
   set('--mc-button', BUTTON);
   set('--mc-button-highlighted', BUTTON_HIGHLIGHTED);
+  set('--mc-button-disabled', BUTTON_DISABLED);
+  set('--mc-text-field', TEXT_FIELD);
+  set('--mc-text-field-highlighted', TEXT_FIELD_HIGHLIGHTED);
   for (let i = 0; i < 6; i++) set(`--mc-panorama-${i}`, panorama(i));
   set('--mc-panorama-overlay', PANORAMA_OVERLAY);
   set('--mc-hotbar', HOTBAR);

@@ -34,6 +34,11 @@ describe('LoadingGate', () => {
     const shell = screen.getByTestId('mc-shell');
     expect(shell.style.getPropertyValue('--mc-button')).toBe(at('assets/minecraft/textures/gui/sprites/widget/button.png'));
     expect(shell.style.getPropertyValue('--mc-button-highlighted')).toBe(at('assets/minecraft/textures/gui/sprites/widget/button_highlighted.png'));
+    expect(shell.style.getPropertyValue('--mc-button-disabled')).toBe(at('assets/minecraft/textures/gui/sprites/widget/button_disabled.png'));
+    expect(shell.style.getPropertyValue('--mc-text-field')).toBe(at('assets/minecraft/textures/gui/sprites/widget/text_field.png'));
+    expect(shell.style.getPropertyValue('--mc-text-field-highlighted')).toBe(
+      at('assets/minecraft/textures/gui/sprites/widget/text_field_highlighted.png'),
+    );
     expect(shell.style.getPropertyValue('--mc-panorama-0')).toBe(at('minecraft/textures/gui/title/background/panorama_0.png'));
     expect(shell.style.getPropertyValue('--mc-panorama-5')).toBe(at('minecraft/textures/gui/title/background/panorama_5.png'));
     expect(shell.style.getPropertyValue('--mc-hotbar')).toBe(at('assets/minecraft/textures/gui/sprites/hud/hotbar.png'));
