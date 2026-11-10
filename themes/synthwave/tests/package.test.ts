@@ -171,6 +171,24 @@ describe('Synthwave-Theme-Paket', () => {
     expect(reduced).toMatch(/\[data-status='blocked'\][^{]*\{[^}]*animation: none/);
   });
 
+  it('gestaltet Knöpfe, Felder und Dialoge, der Fokus hat einen Rahmen statt nur Leuchten', () => {
+    const css = readFileSync(join(theme, 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const selectors = [...css.matchAll(/([^{}]+)\{/g)].map((m) => m[1]!.trim());
+    for (const part of ['button', 'input', "[data-slot='Dialog']"]) {
+      expect(selectors.some((s) => s.includes(part)), part).toBe(true);
+    }
+    const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
+    expect(rules.some(([, sel, decl]) => sel!.includes(':focus-visible') && /(^|[\s;])outline\s*:/.test(decl!))).toBe(true);
+  });
+
+  it('Knöpfe haben den Laser-Sweep, der bei reduzierter Bewegung stillsteht; kein backdrop-filter', () => {
+    const css = readFileSync(join(theme, 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(css).toMatch(/@keyframes synth-sweep\b/);
+    const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(reduced).toMatch(/\.btn[^{]*::after[^{]*\{[^}]*animation: none/);
+    expect(css).not.toContain('backdrop-filter');
+  });
+
   it('keine @keyframes-Regel animiert box-shadow, width, height, top oder left', () => {
     const css = readFileSync(join(theme, 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     for (const block of css.match(/@keyframes [\w-]+\s*\{(?:[^{}]*\{[^}]*\})*\s*\}/g) ?? []) {

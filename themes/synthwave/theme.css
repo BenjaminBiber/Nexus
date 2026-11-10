@@ -275,8 +275,9 @@
   font-weight: 600;
 }
 
-/* Fokusring in Magenta */
-:root[data-theme='synthwave'] :focus-visible {
+/* Fokusring in Magenta: immer ein Rahmen, Leuchten kommt höchstens dazu */
+:root[data-theme='synthwave'] :focus-visible,
+:root[data-theme='synthwave'] :is(button, a, summary, [tabindex]:not([tabindex='-1']), input, select, textarea):focus-visible {
   outline: 2px solid var(--synth-magenta);
   outline-offset: 2px;
 }
@@ -1040,6 +1041,258 @@
   }
 }
 
+/* ---------- Bedienelemente im ganzen Schema ---------- */
+
+/* Knöpfe: transparent mit Cyan-Rand, Versalien in Exo 2; der Sweep liegt auf ::after */
+:root[data-theme='synthwave'] .btn {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--synth-cyan);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--synth-cyan);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: none;
+}
+
+:root[data-theme='synthwave'] .btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--synth-fg) 35%, transparent), transparent);
+  transform: translateX(-130%) skewX(-20deg);
+  pointer-events: none;
+}
+
+:root[data-theme='synthwave'] .btn:hover:not(:disabled) {
+  box-shadow: var(--synth-glow-cyan);
+}
+
+:root[data-theme='synthwave'] .btn:hover:not(:disabled)::after {
+  animation: synth-sweep 450ms ease-out 1;
+}
+
+:root[data-theme='synthwave'] .btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 0 calc(4px * var(--synth-glow)) color-mix(in srgb, var(--synth-cyan) 50%, transparent);
+}
+
+:root[data-theme='synthwave'] .btn.primary {
+  border-color: var(--synth-magenta);
+  background: linear-gradient(135deg, var(--synth-magenta), var(--synth-violet));
+  color: var(--synth-bg-deep);
+}
+
+:root[data-theme='synthwave'] .btn.primary:hover:not(:disabled) {
+  box-shadow: var(--synth-glow-magenta);
+}
+
+:root[data-theme='synthwave'] .btn.danger {
+  border-color: var(--synth-danger);
+  color: var(--synth-danger);
+}
+
+:root[data-theme='synthwave'] .btn.danger:hover:not(:disabled) {
+  box-shadow: 0 0 calc(10px * var(--synth-glow)) color-mix(in srgb, var(--synth-danger) 60%, transparent);
+}
+
+:root[data-theme='synthwave'] .btn.ghost {
+  border-color: transparent;
+}
+
+:root[data-theme='synthwave'] .btn.ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--synth-cyan) 12%, transparent);
+  box-shadow: none;
+}
+
+:root[data-theme='synthwave'] :is(.btn, button):disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: default;
+}
+
+:root[data-theme='synthwave'] :is(.btn, button):disabled::after {
+  animation: none;
+}
+
+/* Icon-Knöpfe und kleine Knöpfe behalten ihre Maße, bekommen nur Farbe */
+:root[data-theme='synthwave'] .icon-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--synth-cyan) 12%, transparent);
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] :is(.fchip.on, .fchip[aria-pressed='true'], .segmented button.on, .theme-filter button[aria-pressed='true']) {
+  border-color: var(--synth-magenta);
+  background: color-mix(in srgb, var(--synth-magenta) 18%, transparent);
+  color: var(--synth-fg);
+  box-shadow: inset 0 -2px 0 var(--synth-magenta);
+}
+
+/* Felder: tiefe Fläche, beim Fokus Rand Cyan; der Magenta-Rahmen kommt aus der Fokusregel */
+:root[data-theme='synthwave'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea) {
+  border: 1px solid var(--synth-line);
+  background: var(--synth-bg-deep);
+  color: var(--synth-fg);
+}
+
+:root[data-theme='synthwave'] :is(input, textarea)::placeholder {
+  color: var(--synth-muted);
+}
+
+:root[data-theme='synthwave'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea):focus {
+  border-color: var(--synth-cyan);
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-cyan) 45%, transparent);
+}
+
+:root[data-theme='synthwave'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea):focus-visible {
+  outline: 2px solid var(--synth-magenta);
+  outline-offset: 1px;
+}
+
+:root[data-theme='synthwave'] :is(.db-search, .search, .theme-search):focus-within {
+  border-color: var(--synth-cyan);
+}
+
+/* Kontrollkästchen und Schalter: an = Magenta mit Leuchten */
+:root[data-theme='synthwave'] input:is([type='checkbox'], [type='radio']) {
+  accent-color: var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] input:is([type='checkbox'], [type='radio']):checked:not(:disabled) {
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 60%, transparent);
+}
+
+:root[data-theme='synthwave'] .setting-control > input[type='checkbox']:checked:not(:disabled) {
+  background: var(--synth-magenta);
+}
+
+/* Dialoge: deckende Fläche, Neonrahmen in Cyan; Hintergrund abgedunkelt, ohne Weichzeichner */
+:root[data-theme='synthwave'] :is(.db-modal, .db-dialog, [data-slot='Dialog']) {
+  border: 1px solid var(--synth-cyan);
+  border-radius: 4px;
+  background: var(--synth-surface);
+  box-shadow: var(--synth-glow-cyan);
+}
+
+:root[data-theme='synthwave'] :is(.db-modal, .db-dialog, [data-slot='Dialog']) > :is(h2, h3):first-child,
+:root[data-theme='synthwave'] :is(.db-modal, .db-dialog, [data-slot='Dialog']) > :first-child > :is(h2, h3):first-child {
+  font-family: var(--synth-font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--synth-cyan);
+  filter: drop-shadow(0 0 calc(4px * var(--synth-glow)) var(--synth-magenta));
+}
+
+:root[data-theme='synthwave'] :is(.db-modal-backdrop, .db-dialog-backdrop, .sheet-backdrop) {
+  background: color-mix(in srgb, var(--synth-bg-deep) 70%, transparent);
+}
+
+/* Popover, Menüs, Tooltips, Suche: gleiche Fläche, dünner Rand in Violett; Auswahl mit Magenta-Kante links */
+:root[data-theme='synthwave'] :is(.board-picker-pop, .doc-open-menu, .selection-popover, .search-dialog, .dd-modal, .usage-pop, .theme-install-menu, .info-pop, .runs-tip, .info-tip) {
+  border: 1px solid var(--synth-violet);
+  background: var(--synth-surface);
+  color: var(--synth-fg);
+}
+
+:root[data-theme='synthwave'] :is(.bp-item, .branch-combo-option, .search-hit, .theme-install-menu [role='menuitem']):is(:hover, :focus-visible, .active, [aria-selected='true']) {
+  background: color-mix(in srgb, var(--synth-magenta) 12%, transparent);
+  box-shadow: inset 3px 0 0 var(--synth-magenta);
+}
+
+/* Tabellen: Kopf in Orbitron klein und gedämpft, Zeilen getönt beim Überfahren */
+:root[data-theme='synthwave'] th {
+  font-family: var(--synth-font-display);
+  font-size: 0.72em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--synth-muted);
+}
+
+:root[data-theme='synthwave'] :is(th, td) {
+  border-color: var(--synth-line);
+}
+
+:root[data-theme='synthwave'] tbody tr:hover {
+  background: color-mix(in srgb, var(--synth-cyan) 8%, transparent);
+}
+
+/* Registerkarten: aktiver Reiter mit leuchtender Unterkante in Magenta */
+:root[data-theme='synthwave'] .tab.on {
+  color: var(--synth-fg);
+  box-shadow: inset 0 -2px 0 var(--synth-magenta), 0 4px calc(8px * var(--synth-glow)) -4px var(--synth-magenta);
+}
+
+/* Code, Tasten, Auswahl, Scrollbalken */
+:root[data-theme='synthwave'] :is(code, kbd) {
+  background: var(--synth-bg-deep);
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] ::selection {
+  background: var(--synth-magenta);
+  color: var(--synth-bg-deep);
+}
+
+:root[data-theme='synthwave'] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+:root[data-theme='synthwave'] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:root[data-theme='synthwave'] ::-webkit-scrollbar-thumb {
+  background: var(--synth-line);
+}
+
+:root[data-theme='synthwave'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--synth-violet);
+}
+
+/* Flächen außerhalb des Boards */
+:root[data-theme='synthwave'] :is([data-slot='Panel'], [data-slot='Card'], .settings-card) {
+  border-color: var(--synth-line);
+  background: var(--synth-surface);
+}
+
+/* Einstellungen › Darstellung und Theme-Store: Kacheln mit Neonrand, gewählt in Magenta */
+:root[data-theme='synthwave'] :is(.choice, .theme-card) {
+  border: 1px solid color-mix(in srgb, var(--synth-cyan) 45%, var(--synth-line));
+  background: var(--synth-surface);
+}
+
+:root[data-theme='synthwave'] :is(.choice, .theme-card):hover {
+  border-color: var(--synth-cyan);
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-cyan) 40%, transparent);
+}
+
+:root[data-theme='synthwave'] :is(.choice.selected, .theme-card.active) {
+  border-color: var(--synth-magenta);
+  box-shadow: var(--synth-glow-magenta);
+}
+
+:root[data-theme='synthwave'] .theme-preview {
+  filter: none;
+}
+
+:root[data-theme='synthwave'] .theme-badge.current {
+  background: var(--synth-magenta);
+  color: var(--synth-bg-deep);
+}
+
+@keyframes synth-sweep {
+  from {
+    transform: translateX(-130%) skewX(-20deg);
+  }
+  to {
+    transform: translateX(130%) skewX(-20deg);
+  }
+}
+
 /* Board: Spalten und Karten leuchten in der Farbe ihres Status. Jede Spalte setzt --synth-status und
    --synth-status-glow (Stärke 0–1); Kopf und Karte lesen nur diese beiden. Graph und Fortschrittsbalken
    folgen über die --status-*-Variablen oben. */
@@ -1204,6 +1457,11 @@
   }
 
   :root[data-theme='synthwave'] :is(.synth-sunrise, .synth-sunrise-sun, .synth-sunrise-grid, .synth-sunrise-word, .synth-sunrise-word::after, .synth-sunrise-skip) {
+    animation: none;
+  }
+
+  /* synth-sweep: Knöpfe leuchten beim Überfahren, der Streifen bleibt weg */
+  :root[data-theme='synthwave'] .btn:hover:not(:disabled)::after {
     animation: none;
   }
 
