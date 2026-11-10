@@ -1040,6 +1040,151 @@
   }
 }
 
+/* Board: Spalten und Karten leuchten in der Farbe ihres Status. Jede Spalte setzt --synth-status und
+   --synth-status-glow (Stärke 0–1); Kopf und Karte lesen nur diese beiden. Graph und Fortschrittsbalken
+   folgen über die --status-*-Variablen oben. */
+:root[data-theme='synthwave'] .db-column[data-status='backlog'] {
+  --synth-status: var(--synth-muted);
+  --synth-status-glow: 0;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='waiting'] {
+  --synth-status: var(--synth-warn);
+  --synth-status-glow: 0.35;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='in_planning'] {
+  --synth-status: var(--synth-violet);
+  --synth-status-glow: 0.4;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='planned'] {
+  --synth-status: var(--synth-cyan);
+  --synth-status-glow: 0.8;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='in_progress'] {
+  --synth-status: var(--synth-magenta);
+  --synth-status-glow: 1;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='blocked'] {
+  --synth-status: var(--synth-danger);
+  --synth-status-glow: 1;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='done'] {
+  --synth-status: var(--synth-ok);
+  --synth-status-glow: 0.6;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='not_needed'] {
+  --synth-status: var(--synth-line);
+  --synth-status-glow: 0;
+}
+
+:root[data-theme='synthwave'] .db-column .column-head {
+  position: sticky;
+}
+
+:root[data-theme='synthwave'] .db-column .column-head h2 {
+  font-family: var(--synth-font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--synth-status);
+}
+
+:root[data-theme='synthwave'] .db-column .column-dot {
+  background: var(--synth-status);
+}
+
+:root[data-theme='synthwave'] .db-column .column-head::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  bottom: 2px;
+  left: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--synth-status);
+  box-shadow: 0 0 calc(8px * var(--synth-glow) * var(--synth-status-glow)) var(--synth-status);
+  pointer-events: none;
+}
+
+:root[data-theme='synthwave'] .db-column .db-card {
+  border-color: color-mix(in srgb, var(--synth-status) 55%, var(--synth-line));
+  border-left: 3px solid var(--synth-status);
+  background: var(--synth-surface);
+  box-shadow: 0 0 calc(6px * var(--synth-glow) * var(--synth-status-glow)) color-mix(in srgb, var(--synth-status) 35%, transparent);
+}
+
+:root[data-theme='synthwave'] .db-column .db-card:is(:hover, :focus-within) {
+  border-color: var(--synth-status);
+  box-shadow: 0 0 calc(12px * var(--synth-glow) * max(var(--synth-status-glow), 0.4)) color-mix(in srgb, var(--synth-status) 60%, transparent);
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='not_needed'] .db-card {
+  opacity: 0.65;
+}
+
+/* Puls und Flackern liegen auf einem Pseudo-Element, animiert wird nur dessen opacity */
+:root[data-theme='synthwave'] .db-column:is([data-status='in_progress'], [data-status='blocked']) .db-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 calc(14px * var(--synth-glow)) color-mix(in srgb, var(--synth-status) 70%, transparent);
+  pointer-events: none;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='in_progress'] .db-card::after {
+  animation: synth-pulse 2.6s ease-in-out infinite alternate;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='blocked'] .db-card::after {
+  animation: synth-flicker 4.7s steps(1) infinite;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='blocked'] .db-card:nth-child(odd)::after {
+  animation-delay: -1.3s;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='blocked'] .db-card:nth-child(3n)::after {
+  animation-delay: -2.9s;
+}
+
+@keyframes synth-pulse {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes synth-flicker {
+  0%,
+  40% {
+    opacity: 1;
+  }
+  41% {
+    opacity: 0;
+  }
+  43%,
+  70% {
+    opacity: 1;
+  }
+  71% {
+    opacity: 0.5;
+  }
+  73%,
+  to {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root[data-theme='synthwave'] .synth-icon.synth-empty {
     animation: none;
@@ -1059,6 +1204,15 @@
   }
 
   :root[data-theme='synthwave'] :is(.synth-sunrise, .synth-sunrise-sun, .synth-sunrise-grid, .synth-sunrise-word, .synth-sunrise-word::after, .synth-sunrise-skip) {
+    animation: none;
+  }
+
+  /* synth-pulse und synth-flicker: das Leuchten bleibt, es bewegt sich nur nicht */
+  :root[data-theme='synthwave'] .db-column[data-status='in_progress'] .db-card::after {
+    animation: none;
+  }
+
+  :root[data-theme='synthwave'] .db-column[data-status='blocked'] .db-card::after {
     animation: none;
   }
 }

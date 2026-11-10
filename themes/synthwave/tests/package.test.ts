@@ -150,4 +150,31 @@ describe('Synthwave-Theme-Paket', () => {
     const manifest = JSON.parse(readFileSync(join(theme, 'manifest.json'), 'utf8'));
     expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Icon', 'StartAnimation']);
   });
+
+  it('setzt für jeden Status des Boards eine eigene Neonfarbe über --synth-status', () => {
+    const css = readFileSync(join(theme, 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const status of ['backlog', 'in_planning', 'planned', 'in_progress', 'blocked', 'done', 'not_needed']) {
+      const rule = new RegExp(`\\[data-status='${status}'\\][^{]*\\{[^}]*--synth-status:`);
+      expect(css, status).toMatch(rule);
+    }
+  });
+
+  it('In Arbeit pulsiert, Blockiert flackert, beides steht bei reduzierter Bewegung still', () => {
+    const css = readFileSync(join(theme, 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(css).toMatch(/@keyframes synth-pulse\b/);
+    expect(css).toMatch(/@keyframes synth-flicker\b/);
+    expect(css).toMatch(/\[data-status='in_progress'\][^{]*\{[^}]*animation:[^;]*synth-pulse/);
+    expect(css).toMatch(/\[data-status='blocked'\][^{]*\{[^}]*animation:[^;]*synth-flicker/);
+    const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(reduced).toMatch(/synth-pulse|in_progress/);
+    expect(reduced).toMatch(/\[data-status='in_progress'\][^{]*\{[^}]*animation: none/);
+    expect(reduced).toMatch(/\[data-status='blocked'\][^{]*\{[^}]*animation: none/);
+  });
+
+  it('keine @keyframes-Regel animiert box-shadow, width, height, top oder left', () => {
+    const css = readFileSync(join(theme, 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const block of css.match(/@keyframes [\w-]+\s*\{(?:[^{}]*\{[^}]*\})*\s*\}/g) ?? []) {
+      expect(block).not.toMatch(/(?:^|[\s;{])(?:box-shadow|width|height|top|left)\s*:/);
+    }
+  });
 });
