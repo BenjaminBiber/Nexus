@@ -40,19 +40,21 @@ describe('Einstellungen „Synthwave“', () => {
   });
 
   it('übersetzt die Standardwerte in data-synth-*-Attribute', () => {
-    expect(rootAttributes(resolveSettings({}))).toEqual({
+    expect(rootAttributes(resolveSettings({}), 'dusk')).toEqual({
       'data-synth-palette': 'outrun',
       'data-synth-glow': 'normal',
       'data-synth-horizon': 'animated',
+      'data-synth-sky': 'dusk',
       'data-synth-vhs': 'off',
     });
   });
 
   it('übersetzt abweichende Werte in data-synth-*-Attribute', () => {
-    expect(rootAttributes(resolveSettings({ palette: 'miami', glow: 'high', horizon: 'off', vhs: true }))).toEqual({
+    expect(rootAttributes(resolveSettings({ palette: 'miami', glow: 'high', horizon: 'off', vhs: true }), 'night')).toEqual({
       'data-synth-palette': 'miami',
       'data-synth-glow': 'high',
       'data-synth-horizon': 'off',
+      'data-synth-sky': 'night',
       'data-synth-vhs': 'on',
     });
   });
