@@ -1,10 +1,59 @@
 /* „Synthwave“: Neon der 80er (Outrun) auf dunklem Violett, Akzent in Cyan, Fokus in Magenta, Sonne von Gelb nach Pink.
    Jedes Farbschema setzt nur die 14 Grundwerte (--synth-bg … --synth-danger); alle Variablen des Kerns leiten sich daraus ab,
    getönte Flächen als Mischung der Farbe mit dem Hintergrund. --synth-glow ist der Faktor für Leuchteffekte an Überschriften,
-   Rahmen und Zustandsanzeigen, nie an Fließtext. --synth-* gilt nur in diesem Theme. */
+   Rahmen und Zustandsanzeigen, nie an Fließtext. --synth-* gilt nur in diesem Theme.
+
+   Schriften (assets/fonts, nur latin-Untermengen):
+   Orbitron (600, 800) – Copyright 2018 The Orbitron Project Authors (github.com/theleagueof/orbitron), aus @fontsource/orbitron 5.3.0
+   Exo 2 (400, 600) – Copyright 2013 The Exo 2 Project Authors (github.com/googlefonts/Exo-2.0), aus @fontsource/exo-2 5.3.0
+   Mr Dafoe (400) – Copyright (c) 2004 Alejandro Paul, Reserved Font Name „Mr Dafoe“, aus @fontsource/mr-dafoe 5.3.0
+   Alle drei stehen unter der SIL Open Font License 1.1 (openfontlicense.org). */
+
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('assets/fonts/orbitron-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 800;
+  src: url('assets/fonts/orbitron-latin-800-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Exo 2';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('assets/fonts/exo-2-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Exo 2';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('assets/fonts/exo-2-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Mr Dafoe';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('assets/fonts/mr-dafoe-latin-400-normal.woff2') format('woff2');
+}
 
 :root[data-theme='synthwave'] {
   color-scheme: dark;
+  --font-sans: 'Exo 2', system-ui, sans-serif;
+  --synth-font-display: 'Orbitron', var(--font-sans);
+  --synth-font-script: 'Mr Dafoe', cursive;
   --synth-bg: #120a24;
   --synth-bg-deep: #0a0514;
   --synth-surface: #1c1136;
@@ -183,6 +232,45 @@
 
 :root[data-theme='synthwave'][data-synth-glow='high'] {
   --synth-glow: 1.7;
+}
+
+/* Überschriften: Orbitron in Versalien im Chrom-Verlauf, Leuchten über drop-shadow; ohne background-clip einfarbig Cyan */
+:root[data-theme='synthwave'] :is(.page-title, .page-head h1, .column-head h2, .settings-section-title h3) {
+  font-family: var(--synth-font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--synth-cyan);
+}
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  :root[data-theme='synthwave'] :is(.page-title, .page-head h1, .column-head h2, .settings-section-title h3) {
+    background: linear-gradient(to bottom, #fff 0%, var(--synth-cyan) 45%, var(--synth-violet) 50%, var(--synth-magenta) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(var(--synth-glow-magenta));
+  }
+}
+
+:root[data-theme='synthwave'] :is(.column-head h2, .settings-section-title h3) {
+  font-weight: 600;
+}
+
+/* Neon-Schreibschrift für Schriftzug und Akzente der Shell */
+:root[data-theme='synthwave'] .synth-script {
+  font-family: var(--synth-font-script);
+  font-weight: 400;
+  color: var(--synth-magenta);
+  text-shadow:
+    0 0 calc(4px * var(--synth-glow)) color-mix(in srgb, #fff 60%, var(--synth-magenta)),
+    0 0 calc(14px * var(--synth-glow)) var(--synth-magenta);
+}
+
+/* Karten-Titel bleiben im Fließtext (Exo 2, 600), ohne Verlauf und Glow */
+:root[data-theme='synthwave'] .card-title {
+  font-weight: 600;
 }
 
 /* Fokusring in Magenta */
