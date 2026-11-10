@@ -36,6 +36,8 @@ export function useThemeSettings<S extends ThemeSettingsSchema = ThemeSettingsSc
 }
 /** Angezeigtes Farbschema */
 export const useColorScheme = () => useHost('useColorScheme').colorScheme;
+/** Zustand der Live-Verbindung */
+export const useConnection = () => useHost('useConnection').connection;
 /** Route wechseln */
 export const useNavigate = () => useHost('useNavigate').navigate;
 

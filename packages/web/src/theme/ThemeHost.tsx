@@ -1,21 +1,25 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeHostProvider } from '@nexus/theme-sdk';
-import type { BoardsState, ColorSchemeState, SettingsState, ShellParts, ThemeHost, ThemeSettings, UsageState } from '@nexus/theme-sdk';
+import type { BoardsState, ColorSchemeState, SettingsState, ShellParts, ThemeHost, ThemeSettings, UsageAccount, UsageState } from '@nexus/theme-sdk';
 import { useApi } from '../api/ApiContext.js';
 import type { ThemeMode, UserSettingsDto } from '../api/types.js';
 import type { UsageOverviewDto } from '../api/usageTypes.js';
 import { REFRESH_MS, USAGE_SETTING_EVENT } from '../components/ClaudeUsageMeter.js';
 import { useBoardProject } from '../dbboard/boardProject.js';
+import { useLiveConnection } from '../live/useLive.js';
 import { currentBoard, useBoardChoices } from '../dbboard/useBoardChoices.js';
 import { NAV_ITEMS } from './navItems.js';
 import { applyTheme, currentTheme } from './theme.js';
 import { useDisplayedTheme } from './useDisplayedTheme.js';
 import { useThemeSettingsState } from './useThemeSettingsState.js';
 
-const NO_USAGE: UsageState = { enabled: false, available: false, reason: null, fiveHour: null, sevenDay: null };
+// Vorgabe des Dispatchers, solange kein Überblick geladen ist (sonst gilt `overview.defaultLimit`)
+const DEFAULT_LIMIT = 90;
 
-// Verbrauch des ersten aktiven Accounts; lädt im Takt der Seitenleiste und sofort nach Änderung der Einstellung
+const NO_USAGE: UsageState = { enabled: false, available: false, reason: null, fiveHour: null, sevenDay: null, accounts: [], defaultLimit: DEFAULT_LIMIT };
+
+// Verbrauch des ersten aktiven Accounts samt aller Accounts mit ihren Grenzen; lädt im Takt der Seitenleiste und sofort nach Änderung der Einstellung
 function useHostUsage(): UsageState {
   const api = useApi();
   const [overview, setOverview] = useState<UsageOverviewDto | null>(null);
@@ -34,9 +38,21 @@ function useHostUsage(): UsageState {
     };
   }, [api]);
   return useMemo(() => {
+    const accounts: UsageAccount[] = overview?.enabled
+      ? overview.accounts.map((a) => ({
+          id: a.id,
+          name: a.name,
+          fiveHour: a.usage.fiveHour,
+          sevenDay: a.usage.sevenDay,
+          limitFiveHour: a.limitFiveHour,
+          limitWeek: a.limitWeek,
+          reason: a.usage.reason,
+        }))
+      : [];
+    const defaultLimit = overview?.defaultLimit ?? DEFAULT_LIMIT;
     const usage = overview?.enabled ? overview.accounts[0]?.usage : undefined;
-    if (!overview || !usage) return { ...NO_USAGE, enabled: Boolean(overview?.enabled) };
-    return { enabled: true, available: usage.available, reason: usage.reason, fiveHour: usage.fiveHour, sevenDay: usage.sevenDay };
+    if (!overview || !usage) return { ...NO_USAGE, enabled: Boolean(overview?.enabled), accounts, defaultLimit };
+    return { enabled: true, available: usage.available, reason: usage.reason, fiveHour: usage.fiveHour, sevenDay: usage.sevenDay, accounts, defaultLimit };
   }, [overview]);
 }
 
@@ -79,6 +95,8 @@ export function NexusThemeHost({ pid, parts, openSearch, children }: { pid: stri
   const settings = useHostSettings();
   const themeId = useDisplayedTheme();
   const themeSettings = useThemeSettingsState(themeId);
+  const { state: liveState } = useLiveConnection();
+  const connection = useMemo(() => ({ connected: liveState === 'connected' }), [liveState]);
 
   const nav = useMemo(
     () =>
@@ -108,8 +126,8 @@ export function NexusThemeHost({ pid, parts, openSearch, children }: { pid: stri
   );
   const navigate = useCallback((to: string) => routerNavigate(to), [routerNavigate]);
   const host = useMemo<ThemeHost>(
-    () => ({ nav, boards, usage, settings, themeSettings, colorScheme, navigate, openSearch, parts }),
-    [nav, boards, usage, settings, themeSettings, colorScheme, navigate, openSearch, parts],
+    () => ({ nav, boards, usage, settings, themeSettings, colorScheme, connection, navigate, openSearch, parts }),
+    [nav, boards, usage, settings, themeSettings, colorScheme, connection, navigate, openSearch, parts],
   );
   return <ThemeHostProvider value={host}>{children}</ThemeHostProvider>;
 }

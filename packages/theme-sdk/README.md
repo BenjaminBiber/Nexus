@@ -4,7 +4,7 @@ Das Theme-SDK beschreibt den Vertrag zwischen der Nexus-Oberfläche (Host) und e
 Stellen ein Theme ersetzen darf (Slots), welche Daten und Bausteine es vom Host bekommt (Hooks und
 Bausteine), welche CSS-Variablen es setzen kann und wie das Manifest aussieht.
 
-Aktuelle Version: `SDK_VERSION` = **1.1.0** (gleich der Paketversion in `package.json`).
+Aktuelle Version: `SDK_VERSION` = **1.2.0** (gleich der Paketversion in `package.json`).
 
 > Dieses README ist die maßgebliche Doku des SDK. `tests/readme.test.ts` prüft, dass jeder Slot,
 > jeder Export und jede CSS-Variable aus `:root` hier genannt ist.
@@ -181,6 +181,7 @@ werfen sie einen Fehler, der Hook und Provider nennt. `ThemeHostProvider` render
 | `useSettings()` | `SettingsState` | Nutzereinstellungen lesen und ändern |
 | `useThemeSettings<S>()` | `ThemeSettingsState` mit `values: ThemeSettingValues<S>` | eigene Einstellungen des Themes |
 | `useColorScheme()` | `ColorSchemeState` | angezeigtes Farbschema |
+| `useConnection()` | `ConnectionState` | Zustand der Live-Verbindung |
 | `useNavigate()` | `(to: string) => void` | Route wechseln |
 | `useOpenSearch()` | `() => void` | globale Suche öffnen |
 | `useShellParts()` | `ShellParts` | fertige Bausteine des Rahmens |
@@ -191,11 +192,17 @@ Typen:
 - `NavItem`: `id: NavIconName`, `label`, `href`, `active`, `badge?`.
 - `BoardsState`: `current: BoardRef | null`, `projects`, `boards`, `loading`, `choose(ref: BoardRef)`.
   `BoardRef`: `project: string`, `board: number | null`.
-- `UsageState`: `enabled`, `available`, `reason`, `fiveHour`, `sevenDay` (je `UsageWindow | null`).
+- `UsageState`: `enabled`, `available`, `reason`, `fiveHour`, `sevenDay` (je `UsageWindow | null`),
+  `accounts` (`UsageAccount[]`, alle aktiven Accounts; leer ohne Einstellung oder ohne Werte) und
+  `defaultLimit` (Vorgabe des Dispatchers in Prozent, ab der ein Account als voll gilt).
   `UsageWindow`: `percent`, `resetsAt` (ISO-Zeitpunkt oder null).
+- `UsageAccount`: `id`, `name`, `fiveHour`, `sevenDay` (je `UsageWindow | null`),
+  `limitFiveHour`, `limitWeek` (eigene Obergrenzen in Prozent; null = Vorgabe `defaultLimit`) und
+  `reason` (Grund fehlender Werte, null wenn Werte da sind).
 - `SettingsState`: `values: ThemeSettings | null`, `loading`, `update(patch)`.
   `ThemeSettings`: `theme`, `claudeUsage`, `compactCards`, `heroImages`.
 - `ColorSchemeState`: `scheme: 'light' | 'dark'`, `themeId`, `mode`.
+- `ConnectionState`: `connected` (true, solange der Ereignisstrom des Servers verbunden ist).
 
 ```tsx
 import { useBoards, useNavigate } from '@nexus/theme-sdk';
@@ -403,6 +410,7 @@ Das SDK folgt ab 1.0.0 semver. `SDK_VERSION` ist immer gleich der Version in `pa
 
 | Version | Änderung |
 |---|---|
+| 1.2.0 | neu: `useConnection`, `ConnectionState`, `UsageAccount` sowie `accounts` und `defaultLimit` in `UsageState` |
 | 1.1.0 | neu: `useThemeAsset`, `themeAssetUrl` und die Typen `ThemeAssetOptions`, `ThemeAssetState`, `ThemeAssetError` |
 | 1.0.0 | erste stabile API |
 
