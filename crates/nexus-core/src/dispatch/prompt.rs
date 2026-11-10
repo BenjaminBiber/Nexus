@@ -44,6 +44,9 @@ pub struct MergePromptInput<'a> {
     pub agent: &'a str,
     pub branch: &'a str,
     pub target: &'a str,
+    /// Bericht der gescheiterten früheren Merge-Session(s) (ab der zweiten); `None` lässt den
+    /// Platzhalter leer
+    pub previous_attempts: Option<&'a str>,
     pub cfg: &'a DispatchConfig,
 }
 
@@ -153,6 +156,10 @@ impl DispatchPrompt {
                 ("agent", input.agent.to_string()),
                 ("branch", input.branch.to_string()),
                 ("target", input.target.to_string()),
+                (
+                    "previousAttempts",
+                    previous_attempts_block(input.previous_attempts),
+                ),
                 ("linkRule", LINK_RULE.to_string()),
                 ("toolRule", TOOL_RULE.to_string()),
                 ("promptExtra", prompt_extra(input.cfg)),
@@ -234,6 +241,14 @@ fn feedback_block(feedback: &[String]) -> String {
     lines.join("\n")
 }
 
+/// Der Bericht früherer Merge-Sessions samt trennender Leerzeile; leer ohne frühere Session
+fn previous_attempts_block(previous: Option<&str>) -> String {
+    match previous.map(str::trim) {
+        Some(text) if !text.is_empty() => format!("\n{text}"),
+        _ => String::new(),
+    }
+}
+
 /// Die Zusatz-Anweisung aus der Einstellung samt trennender Leerzeile; leer, wenn keine
 /// eingestellt ist
 fn prompt_extra(cfg: &DispatchConfig) -> String {
@@ -302,6 +317,7 @@ mod tests {
             agent: "junior-ARC-0009",
             branch: "ticket/ARC-0009-rabatte",
             target: "main",
+            previous_attempts: None,
             cfg,
         })
     }
@@ -470,6 +486,35 @@ mod tests {
     }
 
     #[test]
+    fn merge_session_nennt_den_bericht_der_vorigen_session() {
+        let cfg = cfg();
+        let ohne = merge(&cfg);
+        let mit = DispatchPrompt::new().merge(&MergePromptInput {
+            ticket_id: "ARC-0009",
+            title: "Rabatte",
+            agent: "junior-ARC-0009",
+            branch: "ticket/ARC-0009-rabatte",
+            target: "main",
+            previous_attempts: Some(
+                "Frühere Merge-Session(s) sind gescheitert. Letzter Bericht: zu groß",
+            ),
+            cfg: &cfg,
+        });
+        assert!(!ohne.contains("Frühere Merge-Session"));
+        // Nach dem Aufgaben-Block, durch eine Leerzeile getrennt
+        assert!(mit.contains(
+            "4. Alles committen (Merge-Commit).\n\nFrühere Merge-Session(s) sind gescheitert. Letzter Bericht: zu groß\n\nRegeln:"
+        ));
+        assert_eq!(
+            mit.replace(
+                "\nFrühere Merge-Session(s) sind gescheitert. Letzter Bericht: zu groß\n",
+                ""
+            ),
+            ohne
+        );
+    }
+
+    #[test]
     fn beschreibt_die_recherche_einer_frage() {
         let cfg = cfg();
         let text = research(&cfg);
@@ -583,6 +628,7 @@ mod tests {
                 agent: "merger",
                 branch: "ticket/ARC-0009",
                 target: "main",
+                previous_attempts: None,
                 cfg: &merge_cfg,
             }),
             "Merge ticket/ARC-0009 nach main für ARC-0009 als merger; Rückzug mit git merge --abort"

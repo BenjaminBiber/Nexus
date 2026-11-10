@@ -5,6 +5,7 @@ Aufgabe:
 2. Konflikte so lösen, dass beide Seiten erhalten bleiben; im Zweifel gilt das Ticket (harness board show {{ticketId}}: Plan, Handbuch).
 3. Die Tests aus dem Handbuch laufen lassen, bis sie grün sind.
 4. Alles committen (Merge-Commit).
+{{previousAttempts}}
 
 Regeln: Nicht pushen, Branch nicht wechseln, Ticket-Status nicht ändern.
 {{linkRule}}

@@ -129,6 +129,10 @@ pub fn placeholders(kind: PromptKind) -> Vec<PromptPlaceholder> {
             placeholder("ticketId", TICKET_ID_DESC),
             placeholder("title", TITLE_DESC),
             placeholder("target", "Zielbranch des Merges, z. B. main"),
+            placeholder(
+                "previousAttempts",
+                "Bericht der gescheiterten früheren Merge-Session(s); leer bei der ersten",
+            ),
             placeholder("linkRule", LINK_DESC),
             placeholder("toolRule", TOOL_DESC),
             placeholder("promptExtra", EXTRA_DESC),

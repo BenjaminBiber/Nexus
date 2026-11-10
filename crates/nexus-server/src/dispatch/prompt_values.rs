@@ -93,6 +93,8 @@ pub struct MergeValues {
     pub agent: String,
     pub branch: String,
     pub target: String,
+    /// Bericht der gescheiterten früheren Merge-Session(s); `None` bei der ersten
+    pub previous_attempts: Option<String>,
 }
 
 impl MergeValues {
@@ -104,6 +106,7 @@ impl MergeValues {
             agent: &self.agent,
             branch: &self.branch,
             target: &self.target,
+            previous_attempts: self.previous_attempts.as_deref(),
             cfg,
         }
     }
@@ -243,6 +246,7 @@ impl<'a> PromptValues<'a> {
                 .clone()
                 .unwrap_or_else(|| sample_branch(&detail.ticket.id)),
             target: DEFAULT_TARGET.to_string(),
+            previous_attempts: None,
         }
     }
 
@@ -302,6 +306,12 @@ pub fn sample(cfg: &DispatchConfig) -> SampleValues {
             agent,
             branch: branch.into(),
             target: DEFAULT_TARGET.into(),
+            previous_attempts: Some(
+                "Frühere Merge-Session(s) sind gescheitert (Merge-Session 1/3, Protokoll \
+beispiel.log). Letzter Bericht des Merge-Agents: „Beispiel: Konflikt in der Konfiguration nicht \
+auflösbar.“"
+                    .into(),
+            ),
         },
     }
 }

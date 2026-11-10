@@ -181,6 +181,7 @@ async fn dispatch_state_store_schreibt_anderungen_nacheinander() {
                     branch: "b".to_string(),
                     phase: MergePhase::Pending,
                     session_used: false,
+                    sessions: 0,
                     wait_noted: false,
                     target: None,
                     target_head: None,
@@ -223,6 +224,23 @@ fn dispatch_state_store_erganzt_die_automatik_in_alteren_dateien() {
     );
     assert!(state.planning.is_empty());
     assert_eq!(state.planning_auto, PlanningAutoState::default());
+}
+
+#[test]
+fn dispatch_state_store_zaehlt_eine_benutzte_merge_session_alter_dateien_als_eine() {
+    let (dir, home) = temp_home();
+    fs::create_dir_all(dir.path().join("dispatch")).unwrap();
+    fs::write(
+        home.dispatch_state_file(),
+        r#"{"merges":{
+            "ARC-0001":{"ticketId":"ARC-0001","branch":"b","phase":"pending","sessionUsed":true,"waitNoted":false,"target":null,"since":"x"},
+            "ARC-0002":{"ticketId":"ARC-0002","branch":"c","phase":"pending","sessionUsed":false,"waitNoted":false,"target":null,"since":"x"}
+        }}"#,
+    )
+    .unwrap();
+    let state = DispatchStateStore::new(home).read().unwrap();
+    assert_eq!(state.merges["ARC-0001"].sessions, 1);
+    assert_eq!(state.merges["ARC-0002"].sessions, 0);
 }
 
 #[tokio::test]

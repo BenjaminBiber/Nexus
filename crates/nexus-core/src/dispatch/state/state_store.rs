@@ -39,6 +39,10 @@ pub struct MergeEntry {
     pub phase: MergePhase,
     /// true, sobald für diesen Merge-Versuch eine Merge-Session gestartet wurde
     pub session_used: bool,
+    /// Merge-Sessions für den aktuellen Stand des Zielbranches; ältere Dateien kennen nur
+    /// `session_used` und laden mit 1, wenn es gesetzt ist
+    #[serde(default)]
+    pub sessions: u8,
     /// „Merge wartet auf …“ wurde schon kommentiert
     pub wait_noted: bool,
     /// Ziel-Branch der Merge-Session
@@ -190,7 +194,16 @@ impl DispatchStateStore {
         };
         match serde_json::from_str::<Option<DispatchState>>(&text) {
             // `null` in der Datei zählt wie eine leere Datei (wie `raw?.…` in TypeScript)
-            Ok(state) => Ok(state.unwrap_or_default()),
+            Ok(state) => {
+                let mut state = state.unwrap_or_default();
+                // Ältere Dateien ohne Zähler: eine benutzte Merge-Session zählt als eine
+                for entry in state.merges.values_mut() {
+                    if entry.session_used && entry.sessions == 0 {
+                        entry.sessions = 1;
+                    }
+                }
+                Ok(state)
+            }
             Err(_) => {
                 let stamp = self.clock.iso().replace([':', '.'], "-");
                 let mut aside = file.clone().into_os_string();

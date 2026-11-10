@@ -282,6 +282,7 @@ impl<'a> ResultHandler<'a> {
                             branch,
                             phase: MergePhase::Pending,
                             session_used: false,
+                            sessions: 0,
                             wait_noted: false,
                             target: None,
                             target_head: None,

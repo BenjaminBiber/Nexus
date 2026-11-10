@@ -411,6 +411,11 @@ export type MergeEntry = { ticketId: string, branch: string, phase: MergePhase,
  */
 sessionUsed: boolean, 
 /**
+ * Merge-Sessions für den aktuellen Stand des Zielbranches; ältere Dateien kennen nur
+ * `session_used` und laden mit 1, wenn es gesetzt ist
+ */
+sessions: number, 
+/**
  * „Merge wartet auf …“ wurde schon kommentiert
  */
 waitNoted: boolean, 
