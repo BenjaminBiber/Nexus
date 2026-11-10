@@ -399,7 +399,6 @@
 .theme-install-btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: var(--radius-control); cursor: pointer; white-space: nowrap; }
 .theme-install-btn svg { width: 16px; height: 16px; }
 .theme-install-btn.disabled { opacity: 0.5; cursor: not-allowed; }
-.theme-install-btn:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .themes-panel { gap: 28px; }
 .theme-section { display: flex; flex-direction: column; gap: 16px; }
@@ -491,11 +490,13 @@
 .theme-store-empty.is-centered .muted { font-size: 13px; }
 
 /* „Theme installieren“ als Kombi-Knopf: Hauptaktion links, Dreipunkt-Menü rechts */
-.theme-install-split { position: relative; display: inline-flex; }
+.theme-install-split { position: relative; display: inline-flex; border-radius: var(--radius-control); }
 .theme-install-split > .theme-install-btn { border-top-right-radius: 0; border-bottom-right-radius: 0; }
 .theme-install-more { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid color-mix(in srgb, var(--on-primary) 24%, transparent); cursor: pointer; }
 .theme-install-more .material-icons { font-size: 20px; }
-.theme-install-more:focus-visible, .theme-install-split > .theme-install-btn:focus-visible { position: relative; z-index: 1; outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Tastaturfokus: ein Ring um den ganzen Kombi-Knopf, der fokussierte Teil hellt auf */
+.theme-install-split:has(> :focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.theme-install-split > .btn:focus-visible { outline: none; background: color-mix(in srgb, var(--primary) 82%, var(--on-primary)); }
 .theme-install-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; min-width: 240px; display: flex; flex-direction: column; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: 0 12px 32px var(--shadow-strong); }
 .theme-install-menu [role="menuitem"] { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0; border-radius: 8px; background: none; color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
 .theme-install-menu [role="menuitem"]:hover, .theme-install-menu [role="menuitem"]:focus-visible { background: var(--surface-alt); outline: none; }

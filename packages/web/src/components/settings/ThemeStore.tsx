@@ -213,10 +213,10 @@ export function ThemeStore({ installed, onInstalled, reloadKey = 0, onManageRepo
 }
 
 // Zustand der eingetragenen Stores: Kopfzeile mit Punkten und Zusammenfassung, aufgeklappt je Store eine Zeile.
-// Mit Fehler startet sie aufgeklappt.
+// Startet eingeklappt; Fehler zeigt die Kopfzeile (roter Punkt, Hinweis).
 function StoreStatus({ repos, checking, lastChecked, onRecheck }: { repos: StoreIndexRepoDto[]; checking: boolean; lastChecked: string; onRecheck: () => void }) {
   const failed = repos.filter((r) => !r.ok).length;
-  const [open, setOpen] = useState(failed > 0);
+  const [open, setOpen] = useState(false);
   const reachable = repos.length - failed;
   return (
     <section className="store-status">

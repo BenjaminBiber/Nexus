@@ -79,7 +79,8 @@ describe('Store: Durchsuchen', () => {
 
   it('zeigt die Meldung eines fehlerhaften Repos und die übrigen Einträge', async () => {
     setup({ index: { entries: [entry()], repos: [repoOk, { id: 'r2', url: 'https://bad.example/x.json', ok: false, entryCount: 0, skipped: [], error: { code: 'store-index-http', message: 'Repo antwortet mit 404' } }] } });
-    expect(await screen.findByText(/Repo antwortet mit 404/)).toBeTruthy();
+    await userEvent.click(await screen.findByRole('button', { name: /Theme-Stores/ }));
+    expect(screen.getByText(/Repo antwortet mit 404/)).toBeTruthy();
     expect(screen.getByText('HTTP 404')).toBeTruthy();
     expect(screen.getByText('Ocean')).toBeTruthy();
   });
@@ -96,14 +97,15 @@ describe('Store: Durchsuchen', () => {
     expect(within(list).getByText('2 Themes')).toBeTruthy();
   });
 
-  it('klappt bei einem nicht erreichbaren GitHub-Store auf, verlinkt die Releases und prüft erneut', async () => {
+  it('startet auch bei einem nicht erreichbaren GitHub-Store eingeklappt, verlinkt die Releases und prüft erneut', async () => {
     const url = 'https://github.com/acme/themes/releases/latest/download/nexus-themes.json';
     const bad = { id: 'r2', url, ok: false, entryCount: 0, skipped: [], error: { code: 'store-index-http', message: 'Das Repo antwortet mit HTTP 404.' } };
     const getStoreIndex = vi.fn(async () => ({ entries: [entry()], repos: [repoOk, bad] }));
     setup({ extra: { getStoreIndex } });
     const head = await screen.findByRole('button', { name: /Theme-Stores/ });
-    expect(head.getAttribute('aria-expanded')).toBe('true');
+    expect(head.getAttribute('aria-expanded')).toBe('false');
     expect(head.textContent).toContain('1 Store nicht erreichbar');
+    await userEvent.click(head);
     const list = screen.getByRole('list', { name: 'Theme-Stores' });
     expect(within(list).getByText('github.com/acme/themes')).toBeTruthy();
     expect(within(list).getByText(/Meist fehlt im neuesten Release die Datei nexus-themes.json/)).toBeTruthy();

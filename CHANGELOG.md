@@ -64,6 +64,14 @@
   prüfen“), Suche mit Anzahl und Kacheln mit Vorschaubild, Version, Store und Installieren.
 - Die Rückfrage vor dem Installieren oder Aktualisieren ist ein eigener Dialog über dem Store
   statt eines Kastens darin; Esc schließt nur die Rückfrage.
+- Der Zustand der Theme-Stores im Dialog „Theme installieren“ ist anfangs eingeklappt; Fehler
+  zeigt die Kopfzeile auch eingeklappt an.
+- Der Fokusrahmen des Kombi-Knopfs „Theme installieren“ umschließt beide Hälften statt nur der
+  fokussierten.
+- „Windows 95“ 1.3.0: Themes-Seite und Theme-Store im Win95-Stil – Theme-Kacheln als Knöpfe
+  (aktuelles eingedrückt), Plaketten als eingelassene Felder, Kombi-Knopf mit Menü, Dialoge mit
+  blauer Titelleiste und Kreuzknopf, Store-Zustand als Gruppenrahmen mit Listenansicht,
+  Store-Kacheln mit „Installieren“-Knopf und Rückfragen als Meldungsfenster.
 
 ## 0.0.2 – 2026-11-06
 
