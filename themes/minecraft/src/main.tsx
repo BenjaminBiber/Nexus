@@ -8,3 +8,7 @@ import { MINECRAFT_SETTINGS } from './settings.js';
 const theme: ThemeDefinition = { id: THEME_ID, slots: { Shell: MinecraftShell, NavIcon }, settingsSchema: MINECRAFT_SETTINGS };
 
 export default theme;
+
+// Die Schrift-Erzeugung gehört zur Oberfläche des Moduls, damit opentype.js in main.js gebündelt liegt
+// und das Theme zur Laufzeit keine zweite Datei nachladen muss.
+export { buildFont, FONT_FAMILY, UNITS_PER_EM, UNITS_PER_PIXEL, type AtlasImage } from './font/buildFont.js';
