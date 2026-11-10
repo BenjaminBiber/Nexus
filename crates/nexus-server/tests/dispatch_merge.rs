@@ -565,6 +565,206 @@ async fn auftrag_in_phase_session_ohne_merge_lauf_gilt_als_ungelost() {
     assert!(no_merges(&f));
 }
 
+// ----------------------------------------------------------------------------------------
+// Autopilot: mehrere Merge-Sessions entlang der Profilleiter
+// ----------------------------------------------------------------------------------------
+
+/// Einstellungen mit Autopilot (drei Merge-Sessions) und vier Profilen auf der Leiter
+fn autopilot_merge(enabled: bool) -> serde_json::Value {
+    json!({
+        "profiles": {
+            "klein": { "model": "sonnet", "effort": "high", "maxTurns": 40, "timeoutMinutes": 45 },
+            "standard": { "model": "opus", "effort": "high", "maxTurns": 80, "timeoutMinutes": 90 },
+            "schwer": { "model": "opus", "effort": "max", "maxTurns": 150, "timeoutMinutes": 120 },
+            "riesig": { "model": "opus", "effort": "max", "maxTurns": 300, "timeoutMinutes": 240 }
+        },
+        "escalation": ["klein", "standard", "schwer", "riesig"],
+        "defaultProfile": "standard",
+        "autopilot": { "enabled": enabled, "maxMergeSessions": 3 }
+    })
+}
+
+/// Die laufende Merge-Session gibt auf: Bericht als Kommentar des Agenten, Lauf endet ungelöst
+async fn merge_session_gives_up(f: &DispatchFixture, id: &str, report: &str) {
+    f.backend
+        .services
+        .comments
+        .add(id, report, &f.agent(id), false)
+        .await
+        .expect("Kommentar des Merge-Agents");
+    f.end(id, OK_OUTPUT, Some(1));
+}
+
+/// Start-Kommentare der Merge-Sessions
+async fn session_starts(f: &DispatchFixture, id: &str) -> Vec<String> {
+    comments_starting(f, id, markers::MERGE_CONFLICT)
+        .await
+        .into_iter()
+        .filter(|body| body.contains("gestartet"))
+        .collect()
+}
+
+#[tokio::test]
+async fn autopilot_dritte_merge_session_mit_groesserem_profil_loest_den_konflikt() {
+    let f = DispatchFixture::create(autopilot_merge(true)).await;
+    let id = in_merge_session(&f, "Zäher Konflikt").await;
+    assert_eq!(merge_entry(&f, &id).sessions, 1);
+    assert_eq!(f.run(&id).run.profile, "standard");
+
+    merge_session_gives_up(&f, &id, "Konflikt in feature.txt zu groß").await;
+    let report = f.tick().await;
+    assert!(report.errors.is_empty(), "{report:?}");
+    assert_eq!(f.ticket(&id).await.status, TicketStatus::Done);
+    assert!(
+        comments_starting(&f, &id, markers::MERGE_CONFLICT)
+            .await
+            .iter()
+            .any(|body| body.contains("Merge-Session 1/3 ohne Lösung")
+                && body.contains("nächster Versuch")),
+        "{:?}",
+        f.comments(&id).await
+    );
+    // Ein Durchlauf später: neuer Merge-Versuch, Konflikt, zweite Session
+    if merge_entry(&f, &id).phase != MergePhase::Session {
+        f.tick().await;
+    }
+    let entry = merge_entry(&f, &id);
+    assert_eq!(entry.phase, MergePhase::Session);
+    assert_eq!(entry.sessions, 2);
+    let second = f.run(&id);
+    assert_eq!(second.kind, RunKind::Merge);
+    assert_eq!(second.run.profile, "schwer");
+    assert_eq!(second.run.escalated_from.as_deref(), Some("standard"));
+    assert!(
+        second.run.why.contains("Merge-Session 2/3"),
+        "{}",
+        second.run.why
+    );
+
+    merge_session_gives_up(&f, &id, "Wieder nichts").await;
+    f.tick().await;
+    if merge_entry(&f, &id).phase != MergePhase::Session {
+        f.tick().await;
+    }
+    assert_eq!(merge_entry(&f, &id).sessions, 3);
+    assert_eq!(f.run(&id).run.profile, "riesig");
+
+    let starts = session_starts(&f, &id).await;
+    assert_eq!(starts.len(), 3, "{starts:?}");
+    assert!(
+        starts[1].contains("Merge-Session 2/3") && starts[1].contains("Profil schwer"),
+        "{}",
+        starts[1]
+    );
+    assert!(
+        starts[2].contains("Merge-Session 3/3") && starts[2].contains("Profil riesig"),
+        "{}",
+        starts[2]
+    );
+
+    resolve_in_worktree(&f, &id, &main_branch(&f)).await;
+    f.end(&id, OK_OUTPUT, Some(0));
+    assert_eq!(f.tick().await.merged, vec![id]);
+    assert_eq!(read(&f.repo.path().join("feature.txt")), "ticket");
+}
+
+#[tokio::test]
+async fn autopilot_blockiert_erst_nach_der_letzten_gescheiterten_merge_session() {
+    let f = DispatchFixture::create(autopilot_merge(true)).await;
+    let id = in_merge_session(&f, "Unlösbar").await;
+    for round in 1..=3 {
+        assert_eq!(merge_entry(&f, &id).sessions, round);
+        merge_session_gives_up(&f, &id, &format!("Versuch {round} gescheitert")).await;
+        f.tick().await;
+        if round < 3 && merge_entry(&f, &id).phase != MergePhase::Session {
+            f.tick().await;
+        }
+    }
+    let ticket = f.ticket(&id).await;
+    assert_eq!(ticket.status, TicketStatus::Blocked);
+    let reason = ticket.blocked_reason.expect("Grund");
+    assert!(
+        reason.starts_with("Merge: Autopilot – 3 Merge-Sessions ohne Lösung"),
+        "{reason}"
+    );
+    assert!(reason.contains("Protokoll"), "{reason}");
+    assert_eq!(session_starts(&f, &id).await.len(), 3);
+    assert!(no_merges(&f));
+}
+
+#[tokio::test]
+async fn ohne_autopilot_blockiert_die_erste_gescheiterte_merge_session_wie_bisher() {
+    let f = DispatchFixture::create(autopilot_merge(false)).await;
+    let id = in_merge_session(&f, "Ohne Autopilot").await;
+    merge_session_gives_up(&f, &id, "Geht nicht").await;
+    f.tick().await;
+
+    let ticket = f.ticket(&id).await;
+    assert_eq!(ticket.status, TicketStatus::Blocked);
+    let reason = ticket.blocked_reason.expect("Grund");
+    assert!(
+        reason.starts_with("Merge: Die Merge-Session konnte den Konflikt nicht lösen"),
+        "{reason}"
+    );
+    assert!(no_merges(&f));
+    assert_eq!(session_starts(&f, &id).await.len(), 1);
+    assert!(
+        !session_starts(&f, &id).await[0].contains("Merge-Session 1/"),
+        "Start-Kommentar unverändert"
+    );
+}
+
+#[tokio::test]
+async fn autopilot_zweite_merge_session_kennt_den_bericht_der_ersten() {
+    let f = DispatchFixture::create(autopilot_merge(true)).await;
+    let id = in_merge_session(&f, "Mit Bericht").await;
+    assert!(
+        !f.run(&id).prompt.contains("Frühere Merge-Session"),
+        "{}",
+        f.run(&id).prompt
+    );
+    let first_log = f.run(&id).log_file.clone();
+    merge_session_gives_up(&f, &id, "Abbruch: Schema-Migration kollidiert").await;
+    f.tick().await;
+    if merge_entry(&f, &id).phase != MergePhase::Session {
+        f.tick().await;
+    }
+    let prompt = f.run(&id).prompt;
+    assert!(
+        prompt.contains("Frühere Merge-Session(s) sind gescheitert"),
+        "{prompt}"
+    );
+    assert!(
+        prompt.contains("Abbruch: Schema-Migration kollidiert"),
+        "{prompt}"
+    );
+    let name = Path::new(&first_log)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .expect("Protokollname")
+        .to_string();
+    assert!(prompt.contains(&name), "{prompt}");
+}
+
+#[tokio::test]
+async fn erneut_mergen_setzt_den_zaehler_der_merge_sessions_zurueck() {
+    let f = DispatchFixture::create(autopilot_merge(true)).await;
+    let id = in_merge_session(&f, "Zurücksetzen").await;
+    merge_session_gives_up(&f, &id, "Erster Versuch gescheitert").await;
+    f.tick().await;
+    if merge_entry(&f, &id).phase != MergePhase::Session {
+        f.tick().await;
+    }
+    assert_eq!(merge_entry(&f, &id).sessions, 2);
+    // Session hängt (Lauf verschwunden), ein Mensch stößt den Merge neu an
+    f.drop_run(&f.run(&id).id);
+    f.service.retry_merge(&id).await.expect("Erneut mergen");
+    let entry = merge_entry(&f, &id);
+    assert_eq!(entry.phase, MergePhase::Session);
+    assert_eq!(entry.sessions, 1, "neue Zählung ab „Erneut mergen“");
+    assert_eq!(f.run(&id).run.profile, "standard");
+}
+
 #[tokio::test]
 async fn fachlicher_fehler_beim_auswerten_der_merge_session_blockiert() {
     let (f, git) = with_fake_git(json!({})).await;
@@ -1356,6 +1556,7 @@ async fn ohne_zielbranch_am_ticket_steht_im_dispatch_status_kein_ziel() {
         branch: "ticket/x".into(),
         phase: MergePhase::Waiting,
         session_used: true,
+        sessions: 1,
         wait_noted: true,
         target: Some(main_branch(&f)),
         target_head: None,
