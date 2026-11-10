@@ -1,0 +1,11 @@
+{
+  "id": "synthwave",
+  "name": "Synthwave",
+  "version": "1.0.0",
+  "author": "Nexus",
+  "sdkVersion": "^1.2",
+  "colorScheme": "dark",
+  "startColor": "#120a24",
+  "slots": [],
+  "permissions": { "network": [] }
+}
