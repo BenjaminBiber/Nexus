@@ -16,6 +16,12 @@ export const MINECRAFT_VERSION = '1.21.4';
 export const MANIFEST_URL = 'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json';
 
 export const FONT_ATLAS = 'assets/minecraft/textures/font/ascii.png';
+/** Schrift-Definition des Spiels: Zeichen → Zelle im Atlas (`default.json`) und Vorschub des Leerzeichens (`space.json`) */
+export const FONT_DEFAULT_JSON = 'assets/minecraft/font/include/default.json';
+export const FONT_SPACE_JSON = 'assets/minecraft/font/include/space.json';
+/** Weitere Atlanten der Spielschrift: Umlaute 144×900 mit 9×12-Zellen, nichtlateinisch 128×536 */
+export const FONT_ACCENTED = 'assets/minecraft/textures/font/accented.png';
+export const FONT_NONLATIN = 'assets/minecraft/textures/font/nonlatin_european.png';
 export const BUTTON = 'assets/minecraft/textures/gui/sprites/widget/button.png';
 export const BUTTON_HIGHLIGHTED = 'assets/minecraft/textures/gui/sprites/widget/button_highlighted.png';
 export const HOTBAR = 'assets/minecraft/textures/gui/sprites/hud/hotbar.png';
@@ -36,6 +42,10 @@ export const INDEX_ENTRIES: readonly string[] = [...[0, 1, 2, 3, 4, 5].map(panor
 /** Einträge im Client-JAR, die das Theme braucht; nur sie zählen zum Fortschritt */
 export const MINECRAFT_ENTRIES: readonly string[] = [
   FONT_ATLAS,
+  FONT_DEFAULT_JSON,
+  FONT_SPACE_JSON,
+  FONT_ACCENTED,
+  FONT_NONLATIN,
   BUTTON,
   BUTTON_HIGHLIGHTED,
   HOTBAR,
