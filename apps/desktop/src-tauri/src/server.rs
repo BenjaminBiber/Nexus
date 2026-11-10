@@ -615,11 +615,6 @@ fn server_config<R: Runtime>(
         if plugin.join(".claude-plugin").join("plugin.json").is_file() {
             config.plugin_bundle = Some(plugin);
         }
-        // Mitgelieferte Theme-Pakete, beim Start installiert, wenn sie fehlen oder älter sind
-        let themes = base.join("themes");
-        if themes.is_dir() {
-            config.bundled_themes_dir = Some(themes);
-        }
     }
     // Im Entwicklungsmodus (`tauri dev`) kommt die Oberfläche von Vite statt aus den Dateien
     // der App; der Server muss diese Herkunft dann wie die der App zulassen
@@ -1033,22 +1028,23 @@ mod tests {
         );
     }
 
-    // Die gepackten Themes liegen als Ressource unter `<Ressourcen>/themes`; `prepare-binaries`
-    // baut sie vorher
+    // Außer Hell, Dunkel und System liefert die App keine Themes mit; alle anderen kommen aus
+    // dem Theme-Store (vorbelegt: das Nexus-Repo)
     #[test]
-    fn die_mitgelieferten_themes_sind_als_ressource_eingetragen() {
+    fn die_app_buendelt_keine_theme_pakete() {
         let datei: serde_json::Value =
             serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
-        assert_eq!(
-            datei["bundle"]["resources"]["../../../dist/themes/"],
-            "themes/"
-        );
+        assert!(datei["bundle"]["resources"]
+            .as_object()
+            .unwrap()
+            .keys()
+            .all(|quelle| !quelle.contains("themes")));
         let paket: serde_json::Value =
             serde_json::from_str(include_str!("../../package.json")).unwrap();
-        assert!(paket["scripts"]["prepare-binaries"]
+        assert!(!paket["scripts"]["prepare-binaries"]
             .as_str()
             .unwrap()
-            .contains("npm run build:themes --prefix ../.."));
+            .contains("build:themes"));
     }
 
     // Mitgeliefert wird genau ein Programm: die Kommandozeile, die im Terminal auch ohne App

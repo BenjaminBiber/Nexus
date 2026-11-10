@@ -1,5 +1,7 @@
 //! Speichert die vom Nutzer eingetragenen Store-Repos unter `~/.nexus/store/repos.json`: je
-//! Repo die Adresse einer Index-Datei `nexus-themes.json`. Vorbelegte Repos gibt es nicht.
+//! Repo die Adresse einer Index-Datei `nexus-themes.json`. Solange es die Datei nicht gibt, gelten
+//! die vorbelegten Repos (beim Server das Nexus-Repo, [`NEXUS_STORE_REPO`]); die erste Änderung
+//! schreibt sie mit, danach zählt nur noch die Datei – ein entferntes Repo kommt nicht wieder.
 
 use std::fs;
 use std::path::PathBuf;
@@ -13,6 +15,10 @@ use crate::clock::Clock;
 use crate::error::{Error, HarnessError, Result};
 use crate::locking::AtomicWriter;
 use crate::registry::HarnessHome;
+
+/// Store-Index der Themes aus den Releases von Nexus; der Server belegt ihn vor
+pub const NEXUS_STORE_REPO: &str =
+    "https://github.com/BenjaminBiber/Nexus/releases/latest/download/nexus-themes.json";
 
 /// Höchstzahl eingetragener Repos
 pub const MAX_STORE_REPOS: usize = 50;
@@ -48,6 +54,8 @@ pub struct StoreRepoStore {
     home: HarnessHome,
     clock: Clock,
     writer: AtomicWriter,
+    /// Vorbelegte Adressen (normalisiert), solange `repos.json` fehlt
+    defaults: Vec<String>,
     /// Hält Lesen-Ändern-Schreiben von `repos.json` zusammen
     lock: Arc<Mutex<()>>,
 }
@@ -64,8 +72,27 @@ impl StoreRepoStore {
             home,
             clock,
             writer: AtomicWriter::new(),
+            defaults: Vec::new(),
             lock: Arc::new(Mutex::new(())),
         }
+    }
+
+    /// Belegt die Liste mit diesen Adressen vor, solange `repos.json` fehlt; ungültige Adressen
+    /// und Dubletten fallen weg
+    pub fn with_defaults<I, S>(mut self, urls: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        self.defaults = Vec::new();
+        for url in urls {
+            if let Ok(url) = normalize_url(url.as_ref()) {
+                if !self.defaults.contains(&url) {
+                    self.defaults.push(url);
+                }
+            }
+        }
+        self
     }
 
     /// Alle Repos, sortiert nach `addedAt`, dann `id`
@@ -131,14 +158,28 @@ impl StoreRepoStore {
         self.home.store_dir().join("repos.json")
     }
 
-    /// Einträge sortiert; fehlende oder beschädigte Datei ergibt keine Repos
+    /// Einträge sortiert; fehlende Datei ergibt die vorbelegten Repos, beschädigte keine
     fn read(&self) -> Vec<StoreRepo> {
-        let mut repos: Vec<StoreRepo> = fs::read_to_string(self.file())
-            .ok()
-            .and_then(|text| serde_json::from_str(&text).ok())
-            .unwrap_or_default();
+        let mut repos: Vec<StoreRepo> = match fs::read_to_string(self.file()) {
+            Ok(text) => serde_json::from_str(&text).unwrap_or_default(),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => self.default_repos(),
+            Err(_) => Vec::new(),
+        };
         repos.sort_by(|a, b| a.added_at.cmp(&b.added_at).then_with(|| a.id.cmp(&b.id)));
         repos
+    }
+
+    /// Vorbelegte Repos ohne Zeitstempel (sie stehen damit vor allen eingetragenen)
+    fn default_repos(&self) -> Vec<StoreRepo> {
+        self.defaults
+            .iter()
+            .map(|url| StoreRepo {
+                id: repo_id(url),
+                url: url.clone(),
+                added_at: String::new(),
+                public_key: None,
+            })
+            .collect()
     }
 
     fn write(&self, repos: &[StoreRepo]) -> Result<()> {
@@ -331,6 +372,48 @@ mod tests {
             store.get("fehlt").unwrap_err().code(),
             Some("store-repo-not-found")
         );
+    }
+
+    #[test]
+    fn vorbelegte_repos_gelten_bis_zur_ersten_aenderung() {
+        let (store, dir) = store();
+        let store = store.with_defaults([NEXUS_STORE_REPO, "ftp://kaputt", NEXUS_STORE_REPO]);
+        let repos = store.list();
+        assert_eq!(repos.len(), 1);
+        assert_eq!(repos[0].url, NEXUS_STORE_REPO);
+        assert_eq!(repos[0].added_at, "");
+        assert_eq!(store.get(&repos[0].id).unwrap(), repos[0]);
+        // Lesen schreibt nichts
+        assert!(!dir.path().join("store").exists());
+
+        // Eine Änderung schreibt die Vorbelegung mit
+        let eigenes = store.add(INDEX, None).unwrap();
+        assert_eq!(store.list(), vec![repos[0].clone(), eigenes]);
+        assert_eq!(
+            store.add(NEXUS_STORE_REPO, None).unwrap_err().code(),
+            Some(STORE_REPO_EXISTS)
+        );
+    }
+
+    #[test]
+    fn entferntes_vorbelegtes_repo_kommt_nicht_wieder() {
+        let (store, dir) = store();
+        let store = store.with_defaults([NEXUS_STORE_REPO]);
+        let id = store.list()[0].id.clone();
+        store.remove(&id).unwrap();
+        assert!(store.list().is_empty());
+        let again =
+            StoreRepoStore::new(HarnessHome::at(dir.path())).with_defaults([NEXUS_STORE_REPO]);
+        assert!(again.list().is_empty());
+    }
+
+    #[test]
+    fn beschaedigte_datei_ergibt_keine_vorbelegung() {
+        let (store, dir) = store();
+        let store = store.with_defaults([NEXUS_STORE_REPO]);
+        fs::create_dir_all(dir.path().join("store")).unwrap();
+        fs::write(dir.path().join("store").join("repos.json"), "kaputt").unwrap();
+        assert!(store.list().is_empty());
     }
 
     #[test]

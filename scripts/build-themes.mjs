@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Packt jeden Theme-Ordner `themes/<id>/` mit `nexus theme pack` nach `dist/themes/<id>.nexus`.
 // Code-Themes mit package.json und Skript `build` werden vorher gebaut; gepackt wird dann ihr `dist/`.
-// Die Pakete liefern Server und Desktop-App vorinstalliert mit (siehe themes/README.md).
+// Die Pakete sind für Release und Theme-Store; mitgeliefert werden sie nicht (siehe themes/README.md).
 //
 // Optionen: --src <ordner> (Standard themes), --out <ordner> (Standard dist/themes),
 // --nexus "<befehl>" (Standard: NEXUS_BIN, sonst `cargo run -q -p nexus-cli --bin nexus --`).

@@ -14,20 +14,23 @@
 
 ### Sonstiges
 
-- Jedes Release enthält die mitgelieferten Themes als `<id>-<version>.nexus` und den Store-Index
-  `nexus-themes.json`; im Theme-Store als Repo eintragbar unter
-  `https://github.com/BenjaminBiber/Nexus/releases/latest/download/nexus-themes.json`. Die
-  SDK-Version, gegen die der Store `sdkVersion` prüft, ist jetzt 1.1.0 (wie im Theme-SDK).
-- Mitgelieferte Themes: `npm run build:themes` packt `themes/<id>/` nach `dist/themes/<id>.nexus`;
-  die Desktop-App bündelt sie, und `nexus serve` sowie die App installieren beim Start jedes
-  Paket, dessen Theme fehlt oder älter ist (`--bundled-themes-dir`, `NEXUS_BUNDLED_THEMES_DIR`).
-  Ordner mit führendem Unterstrich (Vorlage `_template`) werden nicht gepackt.
-- Das Theme „Signal“ ist kein eingebautes Theme mehr, sondern ein mitgeliefertes Paket
+- Jedes Release enthält die Themes aus `themes/` als `<id>-<version>.nexus` und den Store-Index
+  `nexus-themes.json`. Der Theme-Store hat dieses Repo
+  (`https://github.com/BenjaminBiber/Nexus/releases/latest/download/nexus-themes.json`)
+  vorbelegt, solange der Nutzer seine Repo-Liste nie geändert hat; entfernt er es, bleibt es weg.
+  Die SDK-Version, gegen die der Store `sdkVersion` prüft, ist jetzt 1.1.0 (wie im Theme-SDK).
+- Mitgeliefert werden nur Hell, Dunkel und System. Alle Themes aus `themes/` zeigt der Store an,
+  installiert werden sie erst per Download. `npm run build:themes` packt `themes/<id>/` nach
+  `dist/themes/<id>.nexus` (für Release und Store-Index); die Desktop-App bündelt sie nicht.
+  `nexus serve` kann Pakete aus einem Ordner beim Start installieren, nur wenn er ausdrücklich
+  angegeben ist (`--bundled-themes-dir`, `NEXUS_BUNDLED_THEMES_DIR`). Ordner mit führendem
+  Unterstrich (Vorlage `_template`) werden nicht gepackt.
+- Das Theme „Signal“ ist kein eingebautes Theme mehr, sondern ein Paket im Theme-Store
   (`themes/signal/`); eine gespeicherte Auswahl `signal` bleibt gültig, solange das Paket
   installiert ist. Die Fehlermeldung zu `theme` nennt `signal` nicht mehr unter den eingebauten.
-- Das Theme „Pastell“ ist ebenfalls ein mitgeliefertes Paket (`themes/pastel/`) statt im Kern;
+- Das Theme „Pastell“ ist ebenfalls ein Paket im Theme-Store (`themes/pastel/`) statt im Kern;
   eine gespeicherte Auswahl `pastel` bleibt gültig, solange das Paket installiert ist.
-- „Windows 95“ ist ein mitgeliefertes Theme-Paket mit Code (`themes/win95/`: `main.js` aus
+- „Windows 95“ ist ein Theme-Paket mit Code im Theme-Store (`themes/win95/`: `main.js` aus
   `src/` per Vite gebaut, dazu `theme.css`); im Kern stecken nur noch Hell und Dunkel. Eine
   gespeicherte Auswahl `win95` bleibt gültig, solange das Paket installiert ist. Die Fehlermeldung
   zu `theme` nennt `win95` nicht mehr unter den eingebauten.

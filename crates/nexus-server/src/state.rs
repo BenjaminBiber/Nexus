@@ -339,7 +339,8 @@ impl AppState {
             favorites,
             snippets: SnippetStore::with_clock(config.home.clone(), config.clock.clone()),
             theme_settings: ThemeSettingsStore::new(config.home.clone()),
-            store_repos: StoreRepoStore::with_clock(config.home.clone(), config.clock.clone()),
+            store_repos: StoreRepoStore::with_clock(config.home.clone(), config.clock.clone())
+                .with_defaults(&config.default_store_repos),
             store_index,
             store_download,
             theme_proxy: crate::theme_proxy::ThemeProxy::new(config.theme_fetch_max_bytes)

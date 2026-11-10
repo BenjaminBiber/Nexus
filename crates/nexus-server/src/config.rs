@@ -92,6 +92,9 @@ pub struct ServerConfig {
     pub store_index_timeout: std::time::Duration,
     /// Zeitlimit beim Download eines Theme-Pakets aus dem Store
     pub store_download_timeout: std::time::Duration,
+    /// Vorbelegte Store-Repos, solange der Nutzer seine Liste nie geändert hat; `serve` belegt
+    /// das Nexus-Repo vor, Tests und der Vertragsmodus keines
+    pub default_store_repos: Vec<String>,
 }
 
 /// Woher der Dispatcher seine Claude-Accounts nimmt
@@ -172,6 +175,7 @@ impl ServerConfig {
             theme_fetch_max_archive_bytes: crate::theme_proxy::DEFAULT_MAX_ARCHIVE_BYTES,
             store_index_timeout: crate::store_index::DEFAULT_TIMEOUT,
             store_download_timeout: crate::store_install::DEFAULT_TIMEOUT,
+            default_store_repos: Vec::new(),
         }
     }
 }
@@ -194,19 +198,6 @@ fn default_toast_dir() -> PathBuf {
     next_to_exe
         .filter(|dir| dir.join(TOAST_MARKER).is_file())
         .unwrap_or(in_crate)
-}
-
-/// Mitgelieferte Themes: `themes/` neben dem Programm, sonst `dist/themes` im Repo (nur
-/// Entwicklung, nach `npm run build:themes`); jeweils nur, wenn der Ordner existiert.
-fn default_bundled_themes_dir() -> Option<PathBuf> {
-    let next_to_exe = std::env::current_exe()
-        .ok()
-        .and_then(|exe| exe.parent().map(|dir| dir.join("themes")));
-    let in_repo = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../dist/themes");
-    next_to_exe
-        .into_iter()
-        .chain(std::iter::once(in_repo))
-        .find(|dir| dir.is_dir())
 }
 
 /// Liest die Einstellungen aus Argumenten und Umgebung.
@@ -238,8 +229,7 @@ impl ServerConfigLoader {
         let bundled_themes_dir = argument(args, "--bundled-themes-dir")
             .or_else(|| value(env, &["NEXUS_BUNDLED_THEMES_DIR"]))
             .filter(|dir| !dir.is_empty())
-            .map(PathBuf::from)
-            .or_else(default_bundled_themes_dir);
+            .map(PathBuf::from);
         let mut config = ServerConfig {
             port: port(args, env)?,
             web_dir,
@@ -261,6 +251,7 @@ impl ServerConfigLoader {
                 &["NEXUS_DB_QUESTION_POLL_MS", "HARNESS_DB_QUESTION_POLL_MS"],
                 DEFAULT_DB_QUESTION_POLL_MS,
             ),
+            default_store_repos: vec![nexus_core::theme::NEXUS_STORE_REPO.to_string()],
             ..ServerConfig::new(0, home)
         };
         if let Some(dir) = toast_dir {
@@ -271,6 +262,8 @@ impl ServerConfigLoader {
         if config.is_contract() {
             config.db_question_poll_ms = 0;
             config.dispatch_tick_ms = 0;
+            // Die Szenarien beginnen mit leerer Liste und rufen nie das echte Repo ab
+            config.default_store_repos.clear();
         }
         Ok(config)
     }
@@ -519,10 +512,23 @@ mod tests {
                 .bundled_themes_dir,
             Some(PathBuf::from("/e/themes"))
         );
-        // Ohne Angabe nur ein Ordner, den es gibt
-        if let Some(dir) = load(&[], &[]).unwrap().bundled_themes_dir {
-            assert!(dir.is_dir(), "{}", dir.display());
-        }
+        // Ohne Angabe keiner: Nexus liefert außer Hell, Dunkel und System keine Themes mit
+        assert_eq!(load(&[], &[]).unwrap().bundled_themes_dir, None);
+    }
+
+    #[test]
+    fn belegt_das_nexus_repo_vor_ausser_im_vertragsmodus() {
+        assert_eq!(
+            load(&[], &[]).unwrap().default_store_repos,
+            vec![nexus_core::theme::NEXUS_STORE_REPO.to_string()]
+        );
+        assert!(load(&[], &[("NEXUS_SERVER_VERSION", "contract")])
+            .unwrap()
+            .default_store_repos
+            .is_empty());
+        assert!(ServerConfig::new(0, HarnessHome::at("/x"))
+            .default_store_repos
+            .is_empty());
     }
 
     #[test]

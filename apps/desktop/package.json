@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
-    "prepare-binaries": "npm run build --prefix ../.. && npm run build:plugin --prefix ../.. && npm run build:themes --prefix ../.. && node scripts/copy-server.mjs",
+    "prepare-binaries": "npm run build --prefix ../.. && npm run build:plugin --prefix ../.. && node scripts/copy-server.mjs",
     "dev-frontend": "node scripts/copy-server.mjs && cd ../.. && npm run dev -w packages/web -- --strictPort",
     "smoke": "node scripts/smoke-app.mjs"
   },

@@ -1,7 +1,8 @@
-# Mitgelieferte Themes
+# Themes im Theme-Store
 
-Jeder Unterordner `themes/<id>/` ist die Quelle eines Themes, das Nexus vorinstalliert
-mitliefert. Hell und Dunkel sind fest eingebaut und liegen nicht hier.
+Jeder Unterordner `themes/<id>/` ist die Quelle eines Themes, das Nexus über seinen Theme-Store
+anbietet. Mitgeliefert werden nur Hell, Dunkel und System; sie sind fest eingebaut und liegen
+nicht hier. Alle Themes von hier zeigt der Store an, installiert werden sie erst per Download.
 
 ## Aufbau
 
@@ -26,15 +27,17 @@ npm run build:themes
 packt jeden Ordner mit `nexus theme pack` nach `dist/themes/<id>.nexus` und bricht bei einem
 ungültigen Theme mit Exit-Code 1 ab. Code-Themes (`package.json` mit Skript `build`, z. B.
 `win95`, `minecraft`) baut das Skript vorher mit `npm run build` und packt dann ihr `dist/`
-(`main.js`, `manifest.json`, `theme.css`) statt des Quellordners. `prepare-binaries` der Desktop-App ruft das Skript auf; die
-App bündelt `dist/themes/` als Ressource `themes/`. `nexus serve` nimmt in der Entwicklung
-`dist/themes/` (oder `--bundled-themes-dir` / `NEXUS_BUNDLED_THEMES_DIR`).
+(`main.js`, `manifest.json`, `theme.css`) statt des Quellordners. Die Pakete sind für Release und
+Store-Index; die Desktop-App bündelt sie nicht. Wer sie lokal vorinstallieren will, gibt den Ordner
+`nexus serve` ausdrücklich mit (`--bundled-themes-dir dist/themes` / `NEXUS_BUNDLED_THEMES_DIR`).
 
 ## Theme-Store
 
 Jedes Release hängt die Themes als `<id>-<version>.nexus` und einen Store-Index
 `nexus-themes.json` an (Workflow `release.yml`, Skript `scripts/release/theme-index.mjs`).
-Im Store als Repo eintragen:
+Dieses Repo ist im Store vorbelegt (`NEXUS_STORE_REPO` in
+`crates/nexus-core/src/theme/store_repos.rs`), solange der Nutzer seine Repo-Liste nie geändert
+hat; entfernt er es, bleibt es weg, und er kann es von Hand wieder eintragen:
 
 ```
 https://github.com/BenjaminBiber/Nexus/releases/latest/download/nexus-themes.json
@@ -52,9 +55,6 @@ npx serve -l 8080 dist/release-themes   # dann http://127.0.0.1:8080/nexus-theme
 
 ## Versionsregel
 
-Beim Start installieren Server und App ein mitgeliefertes Paket nur, wenn das Theme beim Nutzer
-fehlt oder in **älterer** Version (semver) installiert ist. Gleiche oder neuere Versionen und
-Themes mit anderen IDs bleiben unverändert.
-
-**Wer ein mitgeliefertes Theme ändert, muss `version` im Manifest erhöhen** – sonst bekommen
+Der Store bietet ein Update an, wenn das Release eine **neuere** Version (semver) hat als die
+installierte. **Wer ein Theme ändert, muss `version` im Manifest erhöhen** – sonst bekommen
 Nutzer, die es schon haben, die Änderung nicht.
