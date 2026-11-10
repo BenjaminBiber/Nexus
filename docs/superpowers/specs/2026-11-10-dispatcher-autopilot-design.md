@@ -76,8 +76,10 @@ autopilot:
 
 ## 3. Fragen werden automatisch entschieden
 
-Gilt für offene Fragen, die **nicht** von einem Menschen gestellt wurden (`origin_kind != Human`)
-und mindestens ein Ticket betreffen, für das `autopilot_for` gilt („Autopilot-Frage“).
+Gilt für offene Fragen, die ein Agent des Dispatchers gestellt hat – `origin_kind != Human` und
+`origin_name` beginnt mit `{agentPrefix}-` (Umsetzung, z. B. `junior-AIH-0001`) oder `planner-`
+(Planung) – und die mindestens ein Ticket betreffen, für das `autopilot_for` gilt
+(„Autopilot-Frage“). Fragen interaktiver Claude-Sessions bleiben beim Menschen.
 
 1. **Recherche-Start**: `ResearchRunner` startet Autopilot-Fragen in jedem Durchlauf, auch wenn
    `research.auto` aus ist und ohne Zählung gegen `research.maxPerDay`. `research.wip` gilt weiter;
@@ -85,7 +87,7 @@ und mindestens ein Ticket betreffen, für das `autopilot_for` gilt („Autopilot
    gelten wie für Recherchen.
 2. **Auto-Antwort**: Nach einer gespeicherten Recherche mit genau einer Option `recommended: true`
    beantwortet der Dispatcher die Frage über `QuestionService::answer` mit dieser Option.
-   Akteur: `BoardQuestionActor { actor: Dispatcher, kind: AuthorKind::Agent, session: Lauf-ID }`,
+   Akteur: `BoardQuestionActor { actor: ctx.actor() (Dispatcher), kind: AuthorKind::Session, session: Lauf-ID }`,
    Begründung `Autopilot: Empfehlung der Recherche übernommen`. Hilfsfunktion
    `is_autopilot_decision(&BoardQuestionDecision) -> bool` prüft die Vorsilbe. „Wieder öffnen“
    funktioniert unverändert.
