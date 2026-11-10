@@ -21,6 +21,10 @@ export const BUTTON_HIGHLIGHTED = 'assets/minecraft/textures/gui/sprites/widget/
 export const HOTBAR = 'assets/minecraft/textures/gui/sprites/hud/hotbar.png';
 export const HOTBAR_SELECTION = 'assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png';
 export const LOGO = 'assets/minecraft/textures/gui/title/minecraft.png';
+export const MENU_BACKGROUND = 'assets/minecraft/textures/gui/menu_background.png';
+export const MENU_LIST_BACKGROUND = 'assets/minecraft/textures/gui/menu_list_background.png';
+export const HEADER_SEPARATOR = 'assets/minecraft/textures/gui/header_separator.png';
+export const FOOTER_SEPARATOR = 'assets/minecraft/textures/gui/footer_separator.png';
 
 /** Panorama und Overlay liegen im Asset-Index, nicht im JAR (dort nur 1×1-Platzhalter) */
 export const panorama = (i: number) => `minecraft/textures/gui/title/background/panorama_${i}.png`;
@@ -37,6 +41,10 @@ export const MINECRAFT_ENTRIES: readonly string[] = [
   HOTBAR,
   HOTBAR_SELECTION,
   LOGO,
+  MENU_BACKGROUND,
+  MENU_LIST_BACKGROUND,
+  HEADER_SEPARATOR,
+  FOOTER_SEPARATOR,
   ...Object.values(NAV_ITEM_TEXTURE),
 ];
 

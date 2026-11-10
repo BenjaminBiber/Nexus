@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Menü-Layout: Hotbar als Hauptnavigation (Klick, Tasten 1–9, Mausrad), Titelmenü mit Fokusführung, Seite im Panel, NavIcon
+// Menü-Layout: Hotbar als Hauptnavigation (Klick, Tasten 1–9, Mausrad), Titelmenü mit Fokusführung, Seite als Untermenü, NavIcon
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
@@ -236,12 +236,48 @@ describe('Titelmenü', () => {
   });
 });
 
-describe('Seite und Kopfzeile', () => {
-  it('die Seite steht im Panel mit dem Seitentitel, die Bausteine des Hosts in der Kopfzeile', () => {
-    renderShell(fakeHost('inbox'));
-    const panel = screen.getByRole('region', { name: 'Meine Aufgaben' });
-    expect(within(panel).getByText('teil-seite')).toBeTruthy();
+describe('Untermenü', () => {
+  it('hat Kopfzeile, Trennlinien, Listenfläche und Fuß', () => {
+    const { container } = renderShell(fakeHost('docs'));
     const header = screen.getByRole('banner');
+    expect(within(header).getByRole('button', { name: 'Menü' })).toBeTruthy();
+    expect(within(header).getByText('Dokumente')).toBeTruthy();
+    const main = screen.getByRole('main');
+    expect(main.classList.contains('mc-list')).toBe(true);
+    expect(within(main).getByText('teil-banner')).toBeTruthy();
+    expect(within(main).getByText('teil-seite')).toBeTruthy();
+    expect(container.querySelector('.mc-separator--top')).not.toBeNull();
+    expect(container.querySelector('.mc-separator--bottom')).not.toBeNull();
+    expect(container.querySelector('.mc-footer .mc-xp-slot')).not.toBeNull();
+    expect(container.querySelector('.mc-panel')).toBeNull();
+  });
+
+  it('der Name des aktiven Felds steht über dem Platz der XP-Leiste', () => {
+    const { container } = renderShell(fakeHost('docs'));
+    const selected = container.querySelector('.mc-hotbar-slot--selected')!;
+    expect(selected.querySelector('.mc-hotbar-label')!.textContent).toContain('Dokumente');
+    const css = readFileSync(join(import.meta.dirname, '..', 'theme.css'), 'utf8');
+    expect(css).toMatch(/\.mc-hotbar-label\s*\{[^}]*bottom:\s*calc\(100% \+ 28px\)/);
+    expect(css).toMatch(/\.mc-xp-slot\s*\{[^}]*height:\s*10px/);
+  });
+
+  it('bei offenem Titelmenü bleibt die Seite eingehängt, aber verborgen', async () => {
+    const user = userEvent.setup();
+    const { container } = renderShell(fakeHost('docs'));
+    await user.click(screen.getByRole('button', { name: 'Menü' }));
+    expect(container.querySelector('.mc-screen')!.hasAttribute('hidden')).toBe(true);
+    expect(screen.queryByRole('main')).toBeNull();
+    expect(screen.getByText('teil-seite')).toBeTruthy();
+  });
+});
+
+describe('Seite und Kopfzeile', () => {
+  it('die Seite steht in der Listenfläche, die Bausteine des Hosts in der Kopfzeile', () => {
+    renderShell(fakeHost('inbox'));
+    const main = screen.getByRole('main');
+    expect(within(main).getByText('teil-seite')).toBeTruthy();
+    const header = screen.getByRole('banner');
+    expect(within(header).getByText('Meine Aufgaben')).toBeTruthy();
     for (const part of ['teil-suche', 'teil-board', 'teil-verbrauch', 'teil-status']) {
       expect(within(header).getByText(part)).toBeTruthy();
     }
