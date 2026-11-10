@@ -1,0 +1,7 @@
+- Am Ende genau einer der vier Ausgänge, immer mit --by {{agent}}:
+  erledigt – alles committet, Nachweis als Kommentar, dann: harness board done {{ticketId}} --acceptance "<woran man es sieht>" --by {{agent}};
+  Human Interaction – fertig, ein Mensch muss es noch ansehen: harness board set {{ticketId}} --status blocked --blocked-reason "Human Interaction: <was>" --by {{agent}};
+  Frage – du brauchst eine Entscheidung, bevor es sinnvoll weitergeht:
+    harness board question add "<Frage>" --description "<Beschreibung>" --ticket {{ticketId}} --author {{agent}}
+    Titel und Beschreibung nach den Schreibregeln unten. Danach den Lauf beenden, nicht warten – der Dispatcher macht weiter, sobald entschieden ist;
+  blockiert mit Grund – es fehlt etwas, das keine Entscheidung ist (Zugang, Umgebung): harness board set {{ticketId}} --status blocked --blocked-reason "<Grund>" --by {{agent}}.

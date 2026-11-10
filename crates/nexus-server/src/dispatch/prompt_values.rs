@@ -8,6 +8,7 @@
 
 use nexus_core::board::question_service::BoardQuestionListFilter;
 use nexus_core::board::ticket_service::TicketDetail;
+use nexus_core::dispatch::autopilot::autopilot_for;
 use nexus_core::dispatch::{
     AnsweredQuestion, DispatchConfig, MergePromptInput, PlanPromptInput, ResearchPromptInput,
     ReviewFeedback, WorkPromptInput,
@@ -41,6 +42,8 @@ pub struct WorkValues {
     pub branch: String,
     pub answers: Vec<AnsweredQuestion>,
     pub feedback: Vec<String>,
+    /// Gilt der Autopilot für das Ticket (`autopilot_for`)?
+    pub autopilot: bool,
 }
 
 impl WorkValues {
@@ -53,6 +56,7 @@ impl WorkValues {
             branch: &self.branch,
             answers: &self.answers,
             feedback: &self.feedback,
+            autopilot: self.autopilot,
             cfg,
         }
     }
@@ -210,6 +214,7 @@ impl<'a> PromptValues<'a> {
                 .unwrap_or_else(|| sample_branch(&detail.ticket.id)),
             answers: self.answers(&detail.ticket.id).await?,
             feedback: self.pending(&detail.comments),
+            autopilot: autopilot_for(&self.ctx.cfg, &detail.ticket.labels),
         })
     }
 
@@ -275,6 +280,8 @@ pub fn sample(cfg: &DispatchConfig) -> SampleValues {
                 "Beispiel-Rückmeldung aus dem Review: Bitte noch einen Test für den Fehlerfall."
                     .into(),
             ],
+            // Beispielticket ohne Labels: es gilt der Schalter selbst
+            autopilot: autopilot_for(cfg, &[]),
         },
         plan: PlanValues {
             ticket_id: ticket_id.into(),
@@ -319,5 +326,18 @@ mod tests {
         assert_eq!(sample.work.agent, format!("{}AIH-0042", cfg.agent_prefix));
         assert_eq!(sample.merge.target, "main");
         assert_eq!(sample.plan.agent, "planner-AIH-0042");
+    }
+
+    #[test]
+    fn beispielwerte_folgen_dem_autopilot_schalter() {
+        let normalizer = DispatchConfigNormalizer::new();
+        let aus = normalizer
+            .normalize(&serde_json::json!({ "autopilot": { "enabled": false } }))
+            .expect("Einstellung ohne Autopilot");
+        let an = normalizer
+            .normalize(&serde_json::json!({ "autopilot": { "enabled": true } }))
+            .expect("Einstellung mit Autopilot");
+        assert!(!sample(&aus).work.autopilot);
+        assert!(sample(&an).work.autopilot);
     }
 }

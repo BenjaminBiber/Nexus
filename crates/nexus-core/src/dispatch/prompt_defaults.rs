@@ -21,6 +21,13 @@ pub const LINK_RULE: &str = include_str!("prompts/link_rule.txt");
 /// im Lauf-Protokoll lesbar
 pub const TOOL_RULE: &str = include_str!("prompts/tool_rule.txt");
 
+/// Ausgänge eines Umsetzungslaufs (`{{outcomes}}`); enthält selbst `{{ticketId}}` und `{{agent}}`
+pub const OUTCOMES: &str = include_str!("prompts/outcomes.txt");
+
+/// Ausgänge im Autopilot: ohne „Human Interaction“, dafür mit dem Hinweis, dass es keine
+/// Abnahme durch einen Menschen gibt
+pub const OUTCOMES_AUTOPILOT: &str = include_str!("prompts/outcomes_autopilot.txt");
+
 /// Abnahme im plan.json (`planning.acceptance`): plan-json schreibt sie ans Ticket
 pub const ACCEPTANCE_RULE: &str = include_str!("prompts/acceptance_rule.txt");
 
@@ -86,6 +93,10 @@ pub fn placeholders(kind: PromptKind) -> Vec<PromptPlaceholder> {
             ),
             placeholder("linkRule", LINK_DESC),
             placeholder("toolRule", TOOL_DESC),
+            placeholder(
+                "outcomes",
+                "Die möglichen Ausgänge des Laufs mit ihren Board-Befehlen; im Autopilot ohne Human Interaction",
+            ),
             placeholder(
                 "answers",
                 "Entschiedene Fragen dieses Tickets; leer, wenn es keine gibt",
