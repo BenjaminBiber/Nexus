@@ -73,6 +73,9 @@ describe('MINECRAFT_ENTRIES', () => {
       'assets/minecraft/textures/font/nonlatin_european.png',
       'assets/minecraft/textures/gui/sprites/widget/button.png',
       'assets/minecraft/textures/gui/sprites/widget/button_highlighted.png',
+      'assets/minecraft/textures/gui/sprites/widget/button_disabled.png',
+      'assets/minecraft/textures/gui/sprites/widget/text_field.png',
+      'assets/minecraft/textures/gui/sprites/widget/text_field_highlighted.png',
       'assets/minecraft/textures/gui/sprites/hud/hotbar.png',
       'assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png',
       'assets/minecraft/textures/gui/title/minecraft.png',
@@ -84,7 +87,7 @@ describe('MINECRAFT_ENTRIES', () => {
         (item) => `assets/minecraft/textures/item/${item}.png`,
       ),
     ]);
-    expect(MINECRAFT_ENTRIES.length).toBe(23);
+    expect(MINECRAFT_ENTRIES.length).toBe(26);
     expect(MINECRAFT_ENTRIES.some((e) => e.includes('panorama'))).toBe(false);
   });
 

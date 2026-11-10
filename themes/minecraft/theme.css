@@ -251,11 +251,77 @@
   max-width: 100%;
 }
 
+/* Deaktiviert: eigene Textur, graue Beschriftung, kein Zeiger */
+[data-theme='minecraft'] .mc-button:disabled {
+  border-image-source: var(--mc-button-disabled, var(--mc-button, none));
+  background-color: #6f6f6f;
+  color: #a0a0a0;
+  cursor: default;
+}
+
+/* Warnender Knopf (z. B. Löschen) trägt die Spielfarbe Rot */
+[data-theme='minecraft'] .mc-button--danger {
+  color: #ff5555;
+}
+
+/* „ghost“ ist im Spiel kein Knopf, sondern nur Text */
+[data-theme='minecraft'] .mc-button--ghost {
+  border: 0;
+  border-image: none;
+  background: none;
+  box-shadow: none;
+  min-height: 0;
+  padding: 0 4px;
+}
+
+[data-theme='minecraft'] .mc-button--ghost:hover {
+  background-color: transparent;
+  text-decoration: underline;
+}
+
 /* Halber Knopf wie im Spiel: 100×20 Spielpixel */
 [data-theme='minecraft'] .mc-button--half {
   width: 200px;
   max-width: 100%;
   justify-self: start;
+}
+
+/* ---------- Eingabefelder: text_field als 9-Slice (Rand 1 Spielpixel = 2 px), bei Fokus die hervorgehobene Textur ---------- */
+[data-theme='minecraft'] .mc-input {
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 0 8px;
+  background: #000;
+  color: #fff;
+  font: inherit;
+  border: 2px solid transparent;
+  border-image: var(--mc-text-field, none) 1 fill / 2px stretch;
+  image-rendering: pixelated;
+}
+
+[data-theme='minecraft'] .mc-input::placeholder {
+  color: #a0a0a0;
+}
+
+[data-theme='minecraft'] .mc-input:focus-visible {
+  outline: none;
+  border-image-source: var(--mc-text-field-highlighted, var(--mc-text-field, none));
+}
+
+[data-theme='minecraft'] .mc-input--multiline {
+  min-height: 0;
+  padding: 8px;
+  line-height: 18px;
+  resize: vertical;
+}
+
+[data-theme='minecraft'] .mc-input:disabled {
+  color: #a0a0a0;
+}
+
+/* Ohne Texturen (Laden, offline) bleibt der Rahmen als graue Linie sichtbar */
+[data-theme='minecraft'] .mc-shell:not(.mc-ready) .mc-input {
+  border-color: #a0a0a0;
 }
 
 /* ---------- Untermenü: Kopfzeile (64px), Trennlinie (4px), Listenfläche, Trennlinie, Fuß (80px) ---------- */

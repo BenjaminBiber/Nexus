@@ -99,13 +99,13 @@ afterEach(() => {
 });
 
 describe('Theme-Definition', () => {
-  it('ersetzt die Slots Shell und NavIcon', () => {
-    expect(Object.keys(theme.slots).sort()).toEqual(['NavIcon', 'Shell']);
+  it('ersetzt die Slots Shell, NavIcon, Button und Input', () => {
+    expect(Object.keys(theme.slots).sort()).toEqual(['Button', 'Input', 'NavIcon', 'Shell']);
   });
 
-  it('manifest.json nennt die Slots Shell und NavIcon', () => {
+  it('manifest.json nennt die Slots Shell, NavIcon, Button und Input', () => {
     const manifest = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'manifest.json'), 'utf8')) as { slots: string[] };
-    expect(manifest.slots).toEqual(['Shell', 'NavIcon']);
+    expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Button', 'Input']);
   });
 });
 

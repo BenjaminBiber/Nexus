@@ -24,6 +24,9 @@ export const FONT_ACCENTED = 'assets/minecraft/textures/font/accented.png';
 export const FONT_NONLATIN = 'assets/minecraft/textures/font/nonlatin_european.png';
 export const BUTTON = 'assets/minecraft/textures/gui/sprites/widget/button.png';
 export const BUTTON_HIGHLIGHTED = 'assets/minecraft/textures/gui/sprites/widget/button_highlighted.png';
+export const BUTTON_DISABLED = 'assets/minecraft/textures/gui/sprites/widget/button_disabled.png';
+export const TEXT_FIELD = 'assets/minecraft/textures/gui/sprites/widget/text_field.png';
+export const TEXT_FIELD_HIGHLIGHTED = 'assets/minecraft/textures/gui/sprites/widget/text_field_highlighted.png';
 export const HOTBAR = 'assets/minecraft/textures/gui/sprites/hud/hotbar.png';
 export const HOTBAR_SELECTION = 'assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png';
 export const LOGO = 'assets/minecraft/textures/gui/title/minecraft.png';
@@ -48,6 +51,9 @@ export const MINECRAFT_ENTRIES: readonly string[] = [
   FONT_NONLATIN,
   BUTTON,
   BUTTON_HIGHLIGHTED,
+  BUTTON_DISABLED,
+  TEXT_FIELD,
+  TEXT_FIELD_HIGHLIGHTED,
   HOTBAR,
   HOTBAR_SELECTION,
   LOGO,
