@@ -17,6 +17,23 @@ export type AccountStrategy = "most-free" | "order";
 export type AdvisorResult = { suggestions: Array<Suggestion>, insufficient: Array<InsufficientData>, };
 
 /**
+ * Autopilot des Dispatchers (`autopilot_for` entscheidet je Ticket)
+ */
+export type AutopilotSettings = { 
+/**
+ * true = keine Freigaben, Fragen entscheidet die Recherche, Merge-Konflikte löst Claude
+ */
+enabled: boolean, 
+/**
+ * Tickets mit diesem Label laufen ohne Autopilot; null = keine Ausnahme
+ */
+exceptLabel: string | null, 
+/**
+ * Höchstens so viele Merge-Sessions je Konflikt (1–5)
+ */
+maxMergeSessions: number, };
+
+/**
  * Zustand des Hauptordners vor einem Merge
  */
 export type CheckoutState = { 
@@ -143,6 +160,11 @@ profiles: Record<string, Profile>, defaultProfile: string, rules: Array<Rule>, e
  * Profilleiter von günstig nach teuer
  */
 ladder: Array<string>, allowFable: boolean, research: ResearchSettings, planning: PlanningSettings, 
+/**
+ * Autopilot: keine Freigaben, Fragen entscheidet die Recherche, Merge-Konflikte mehrfach
+ * per Session
+ */
+autopilot: AutopilotSettings, 
 /**
  * Wahl unter mehreren erlaubten Accounts
  */

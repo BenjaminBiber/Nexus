@@ -7,6 +7,7 @@ pub mod abort_reason;
 pub mod account_chooser;
 pub mod account_references;
 pub mod attempts;
+pub mod autopilot;
 pub mod comments;
 pub mod config;
 pub mod config_normalizer;
