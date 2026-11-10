@@ -49,6 +49,51 @@ describe('DispatchPanel', () => {
     expect((await screen.findByRole('status')).textContent).toContain('Gespeichert in C:/h/dispatch.yaml');
   });
 
+  it('speichert den Abschnitt Autopilot unter autopilot', async () => {
+    const save = vi.fn(async (raw: RawDispatchConfigDto) => ({ ...VIEW, exists: true, raw }));
+    open({ saveDispatchConfig: save });
+    await userEvent.click(await screen.findByLabelText('Autopilot einschalten'));
+    const label = screen.getByLabelText('Ausnahme-Label') as HTMLInputElement;
+    expect(label.value).toBe('interaktiv');
+    await userEvent.clear(label);
+    await userEvent.type(label, 'handarbeit');
+    await userEvent.clear(screen.getByLabelText('Merge-Sessions je Konflikt (1–5)'));
+    await userEvent.type(screen.getByLabelText('Merge-Sessions je Konflikt (1–5)'), '5');
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ autopilot: { enabled: true, exceptLabel: 'handarbeit', maxMergeSessions: 5 } }));
+  });
+
+  it('lehnt Merge-Sessions außerhalb von 1–5 ab und speichert leeres Ausnahme-Label als null', async () => {
+    const save = vi.fn(async (raw: RawDispatchConfigDto) => ({ ...VIEW, exists: true, raw }));
+    open({ saveDispatchConfig: save });
+    await userEvent.clear(await screen.findByLabelText('Merge-Sessions je Konflikt (1–5)'));
+    await userEvent.type(screen.getByLabelText('Merge-Sessions je Konflikt (1–5)'), '6');
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(save).not.toHaveBeenCalled();
+    expect(screen.getByText(/Merge-Sessions je Konflikt muss eine ganze Zahl von 1 bis 5 sein/)).toBeTruthy();
+    await userEvent.clear(screen.getByLabelText('Merge-Sessions je Konflikt (1–5)'));
+    await userEvent.type(screen.getByLabelText('Merge-Sessions je Konflikt (1–5)'), '2');
+    await userEvent.clear(screen.getByLabelText('Ausnahme-Label'));
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ autopilot: { enabled: false, exceptLabel: null, maxMergeSessions: 2 } }));
+  });
+
+  it('ohne Autopilot in der Datei und ohne Änderung kommt kein Feld autopilot dazu', async () => {
+    const save = vi.fn(async (raw: RawDispatchConfigDto) => ({ ...VIEW, exists: true, raw }));
+    open({ saveDispatchConfig: save });
+    await userEvent.click(await screen.findByRole('button', { name: 'Speichern' }));
+    expect(save.mock.calls[0][0]).not.toHaveProperty('autopilot');
+  });
+
+  it('graut bei eingeschaltetem Autopilot die Freigabe vor dem Merge aus', async () => {
+    open();
+    const review = (await screen.findByLabelText('Vor dem Merge auf Freigabe warten')) as HTMLInputElement;
+    expect(review.disabled).toBe(false);
+    await userEvent.click(screen.getByLabelText('Autopilot einschalten'));
+    expect(review.disabled).toBe(true);
+    expect(screen.getByText('Autopilot hat Vorrang (außer Tickets mit Label interaktiv).')).toBeTruthy();
+  });
+
   it('speichert kurz nach der letzten Eingabe automatisch, unfertige Eingaben aber nicht', async () => {
     const save = vi.fn(async (raw: RawDispatchConfigDto) => ({ ...VIEW, exists: true, raw }));
     open({ saveDispatchConfig: save });

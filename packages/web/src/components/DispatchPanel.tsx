@@ -168,6 +168,21 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
       {form && <>
         {show('general') && <>
           <SettingsSection
+            title="Autopilot"
+            description="Tickets laufen ohne Freigaben durch."
+            info="Ob ein Ticket im Autopilot läuft, entscheidet der Dispatcher beim Start: eingeschaltet und ohne Ausnahme-Label."
+          >
+            <SettingRow label="Autopilot einschalten" hint="Keine Freigaben und Abnahmen; Fragen der Agents entscheidet die Recherche; Merge-Konflikte bekommen mehrere Merge-Sessions. Du wirst nur bei echten Sackgassen benachrichtigt.">
+              <input type="checkbox" checked={form.autopilot} onChange={(e) => change({ autopilot: e.target.checked })} />
+            </SettingRow>
+            <SettingRow label="Ausnahme-Label" hint="Tickets mit diesem Label laufen wie bisher mit Freigaben und Fragen.">
+              <input value={form.autopilotExceptLabel} placeholder="leer = keine Ausnahme" onChange={(e) => change({ autopilotExceptLabel: e.target.value })} />
+            </SettingRow>
+            <SettingRow label="Merge-Sessions je Konflikt (1–5)">
+              <input className="short" inputMode="numeric" value={form.autopilotMaxMergeSessions} onChange={(e) => change({ autopilotMaxMergeSessions: e.target.value })} />
+            </SettingRow>
+          </SettingsSection>
+          <SettingsSection
             title="Betrieb"
             description={`Gespeichert nur auf diesem Rechner${data ? ` (${data.view.file})` : ''}.`}
             info="Der Dispatcher übernimmt bereite Tickets aus „Geplant“ deiner Boards und lässt sie von Claude im eigenen Worktree umsetzen; erledigte Tickets werden in den ausgecheckten Branch des Repos gemergt."
@@ -218,8 +233,13 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
                 <option value="squash">Squash (ein Commit je Ticket)</option>
               </select>
             </SettingRow>
-            <SettingRow label="Vor dem Merge auf Freigabe warten" hint="Erledigte Tickets warten in Blockiert, bis du sie abnimmst.">
-              <input type="checkbox" checked={form.reviewBeforeMerge} onChange={(e) => change({ reviewBeforeMerge: e.target.checked })} />
+            <SettingRow
+              label="Vor dem Merge auf Freigabe warten"
+              hint={form.autopilot
+                ? `Autopilot hat Vorrang${form.autopilotExceptLabel.trim() ? ` (außer Tickets mit Label ${form.autopilotExceptLabel.trim()})` : ''}.`
+                : 'Erledigte Tickets warten in Blockiert, bis du sie abnimmst.'}
+            >
+              <input type="checkbox" disabled={form.autopilot} checked={form.reviewBeforeMerge} onChange={(e) => change({ reviewBeforeMerge: e.target.checked })} />
             </SettingRow>
             <SettingRow label="Worktrees" info="Standard: Jedes Ticket bekommt einen eigenen Branch und Worktree und wird einzeln gemergt. „Bündeln“ ist das alte Verhalten: Tickets einer Spec teilen sich einen Worktree.">
               <select value={form.joinWorktrees} onChange={(e) => change({ joinWorktrees: e.target.value === 'sameSpec' ? 'sameSpec' : 'none' })}>
