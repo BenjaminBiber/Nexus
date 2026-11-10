@@ -144,8 +144,10 @@ pub struct DispatchState {
     #[ts(type = "Record<string, ResearchEntry>")]
     pub research: IndexMap<String, ResearchEntry>,
     pub research_auto: ResearchAutoState,
-    /// Recherchen des Autopilots ohne Empfehlung je Frage (Frage-ID → Zahl der Versuche)
-    #[ts(type = "Record<string, number>")]
+    /// Recherchen des Autopilots ohne Empfehlung je Frage (Frage-ID → Zahl der Versuche); leer
+    /// nicht geschrieben, damit state.json ohne Autopilot wie bisher aussieht
+    #[serde(skip_serializing_if = "IndexMap::is_empty")]
+    #[ts(type = "Record<string, number>", optional)]
     pub autopilot_research: IndexMap<String, u32>,
     #[ts(type = "Record<string, PlanningEntry>")]
     pub planning: IndexMap<String, PlanningEntry>,

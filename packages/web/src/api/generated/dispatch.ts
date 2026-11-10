@@ -333,9 +333,10 @@ export type DispatchState = { pausedUntil: string | null,
  */
 accountPauses: Record<string, string>, merges: Record<string, MergeEntry>, research: Record<string, ResearchEntry>, researchAuto: ResearchAutoState, 
 /**
- * Recherchen des Autopilots ohne Empfehlung je Frage (Frage-ID → Zahl der Versuche)
+ * Recherchen des Autopilots ohne Empfehlung je Frage (Frage-ID → Zahl der Versuche); leer
+ * nicht geschrieben, damit state.json ohne Autopilot wie bisher aussieht
  */
-autopilotResearch: Record<string, number>, planning: Record<string, PlanningEntry>, planningAuto: PlanningAutoState, };
+autopilotResearch?: Record<string, number>, planning: Record<string, PlanningEntry>, planningAuto: PlanningAutoState, };
 
 /**
  * Ergebnis der Auswertung (Läufe einer Art, Start im Zeitraum)
