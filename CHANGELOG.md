@@ -84,6 +84,12 @@
   (aktuelles mit `> ` und grüner Fläche), Plaketten als `[Text]`, Filter wie Segmente, Kombi-Knopf
   als `[ Theme installieren | ⋯ ]`, Dialoge mit `## `-Überschrift und `[x]`, Store-Zustand mit
   eckigen Punkten und Store-Kacheln mit `[ Installieren ]`.
+- Neues Theme „Synthwave“ 1.0.0 im Theme-Store (`themes/synthwave/`, Code-Theme): Neon der 80er
+  auf dunklem Violett mit eigener Shell – Rahmen mit Neon-Gitter am Horizont, Sonne und Himmel
+  nach Tageszeit, Navigation mit nummerierten Einträgen, Fortschritt als Laserbalken und
+  Mermaid-Diagramme im Neon-Look. Beim Laden geht die Sonne über dem Gitter auf (abschaltbar).
+  Einstellungen: Farbschema (Outrun, Miami, Nightcall), Stärke des Leuchtens, Horizont, Himmel
+  und VHS-Effekte (Scanlines, Bandzähler, Bildstörung). Schriften im Paket (OFL 1.1).
 
 ## 0.0.2 – 2026-11-06
 

@@ -146,6 +146,22 @@ describe('Synthwave-Theme-Paket', () => {
     expect(manifest.colorScheme).toBe('dark');
   });
 
+  it('nennt das Vorschaubild im Manifest, es liegt als PNG unter 300 KB im gebauten Paket', () => {
+    const manifest = JSON.parse(readFileSync(join(theme, 'manifest.json'), 'utf8'));
+    expect(manifest.preview).toBe('assets/preview.png');
+    const preview = join(dist, manifest.preview);
+    expect(existsSync(preview)).toBe(true);
+    expect(readFileSync(preview).subarray(1, 4).toString()).toBe('PNG');
+    expect(statSync(preview).size).toBeLessThan(300 * 1024);
+  });
+
+  it('der Kopfkommentar von theme.css beschreibt jedes data-synth-*-Attribut', () => {
+    const css = readFileSync(join(theme, 'theme.css'), 'utf8');
+    const head = css.match(/^\/\*[\s\S]*?\*\//)?.[0] ?? '';
+    const attributes = new Set([...css.matchAll(/data-synth-[a-z]+/g)].map((m) => m[0]));
+    for (const attribute of attributes) expect(head, attribute).toContain(attribute);
+  });
+
   it('meldet im Manifest genau die Slots an, die main.tsx liefert', () => {
     const manifest = JSON.parse(readFileSync(join(theme, 'manifest.json'), 'utf8'));
     expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Icon', 'Progress', 'StartAnimation']);
