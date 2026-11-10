@@ -431,6 +431,71 @@
   font-size: 0.8em;
 }
 
+/* Neon-Symbole: Linien in Textfarbe mit Leuchten nach Glow-Stufe */
+:root[data-theme='synthwave'] .synth-icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  filter: drop-shadow(0 0 calc(3px * var(--synth-glow)) currentColor);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a .synth-icon {
+  color: var(--synth-muted);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a:hover .synth-icon {
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a.active .synth-icon {
+  color: var(--synth-magenta);
+}
+
+/* Leerzustand: Palme vor der Sonne, „NO SIGNAL“ flimmert leise */
+:root[data-theme='synthwave'] .synth-icon.synth-empty {
+  width: 120px;
+  height: 80px;
+  color: var(--synth-muted);
+  animation: synth-flicker 4s ease-in-out infinite;
+}
+
+:root[data-theme='synthwave'] .synth-empty-sun-top {
+  stop-color: var(--synth-sun-top);
+}
+
+:root[data-theme='synthwave'] .synth-empty-sun-bottom {
+  stop-color: var(--synth-sun-bottom);
+}
+
+:root[data-theme='synthwave'] .synth-empty-stripes {
+  stroke: var(--synth-bg-deep);
+  stroke-width: 2.5;
+}
+
+:root[data-theme='synthwave'] .synth-empty-palm {
+  stroke: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] .synth-empty-ground {
+  stroke: var(--synth-magenta);
+}
+
+@keyframes synth-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  48% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  52% {
+    opacity: 0.9;
+  }
+}
+
 /* Zähler als kleine Neon-Pille */
 :root[data-theme='synthwave'] .synth-tracks .nav-badge {
   min-width: 18px;
@@ -690,6 +755,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :root[data-theme='synthwave'] .synth-icon.synth-empty {
+    animation: none;
+  }
+
   :root[data-theme='synthwave'] .synth-eq i {
     animation: none;
   }
