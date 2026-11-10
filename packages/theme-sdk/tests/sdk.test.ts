@@ -9,8 +9,8 @@ describe('SDK_VERSION', () => {
     expect(SDK_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
-  it('ist 1.1.0 (stabile API, neu: useThemeAsset)', () => {
-    expect(SDK_VERSION).toBe('1.1.0');
+  it('ist 1.2.0 (stabile API, neu: useConnection und die Accounts in useUsage)', () => {
+    expect(SDK_VERSION).toBe('1.2.0');
   });
 
   it('stimmt mit der Version in package.json überein', () => {

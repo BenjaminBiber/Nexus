@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { ThemeHostProvider, useBoards, useColorScheme, useNav, useNavigate, useOpenSearch, useSettings, useUsage } from '@nexus/theme-sdk';
+import { ThemeHostProvider, useBoards, useColorScheme, useConnection, useNav, useNavigate, useOpenSearch, useSettings, useUsage } from '@nexus/theme-sdk';
 import type { ThemeHost } from '@nexus/theme-sdk';
 
 afterEach(cleanup);
@@ -22,10 +22,19 @@ function fakeHost(): ThemeHost {
       loading: false,
       choose: vi.fn(),
     },
-    usage: { enabled: true, available: true, reason: null, fiveHour: { percent: 42, resetsAt: null }, sevenDay: null },
+    usage: {
+      enabled: true,
+      available: true,
+      reason: null,
+      fiveHour: { percent: 42, resetsAt: null },
+      sevenDay: null,
+      accounts: [{ id: 'a', name: 'Privat', fiveHour: { percent: 42, resetsAt: null }, sevenDay: null, limitFiveHour: 80, limitWeek: null, reason: null }],
+      defaultLimit: 90,
+    },
     settings: { values: { theme: 'dark', claudeUsage: true, compactCards: false, heroImages: true }, loading: false, update: vi.fn(async () => {}) },
     themeSettings: { values: {}, loading: false, set: vi.fn(async () => {}) },
     colorScheme: { scheme: 'dark', themeId: 'dark', mode: 'dark' },
+    connection: { connected: true },
     navigate: vi.fn(),
     openSearch: vi.fn(),
     parts: { search: null, boardSwitcher: null, usage: null, navItems: {}, outlet: null, connection: null, status: null },
@@ -64,6 +73,24 @@ describe('Hooks des SDK', () => {
     }
     render_(fakeHost(), <Usage />);
     expect(screen.getByText('true:42')).toBeTruthy();
+  });
+
+  it('useUsage liefert die Accounts mit ihren Grenzen und die Vorgabe', () => {
+    function Accounts() {
+      const usage = useUsage();
+      return <span>{`${usage.accounts.map((a) => `${a.name}:${a.limitFiveHour ?? '-'}/${a.limitWeek ?? '-'}`).join(',')}|${usage.defaultLimit}`}</span>;
+    }
+    render_(fakeHost(), <Accounts />);
+    expect(screen.getByText('Privat:80/-|90')).toBeTruthy();
+  });
+
+  it('useConnection liefert den Zustand der Live-Verbindung', () => {
+    const host: ThemeHost = { ...fakeHost(), connection: { connected: false } };
+    function Conn() {
+      return <span>{`verbunden:${useConnection().connected}`}</span>;
+    }
+    render_(host, <Conn />);
+    expect(screen.getByText('verbunden:false')).toBeTruthy();
   });
 
   it('useSettings liefert die Einstellungen und ändert sie', () => {
@@ -114,6 +141,7 @@ describe('Hooks des SDK', () => {
     ['useUsage', useUsage],
     ['useSettings', useSettings],
     ['useColorScheme', useColorScheme],
+    ['useConnection', useConnection],
     ['useNavigate', useNavigate],
     ['useOpenSearch', useOpenSearch],
   ] as const)('%s wirft ohne Host-Provider einen klaren Fehler', (name, hook) => {

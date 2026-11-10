@@ -48,10 +48,11 @@ function fakeHost(active: NavItem['id'] | null = 'board'): ThemeHost {
   return {
     nav: NAV.map(([id, label]) => ({ id, label, href: `/p/p1/${id}`, active: id === active })),
     boards: { current: null, projects: [], boards: [], loading: false, choose: vi.fn() },
-    usage: { enabled: false, available: false, reason: null, fiveHour: null, sevenDay: null },
+    usage: { enabled: false, available: false, reason: null, fiveHour: null, sevenDay: null, accounts: [], defaultLimit: 90 },
     settings: { values: null, loading: true, update: vi.fn(async () => {}) },
     themeSettings: { values: {}, loading: false, set: vi.fn(async () => {}) },
     colorScheme: { scheme: 'dark', themeId: 'minecraft', mode: 'minecraft' },
+    connection: { connected: true },
     navigate: vi.fn(),
     openSearch: vi.fn(),
     parts: {

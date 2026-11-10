@@ -35,6 +35,18 @@ export interface UsageWindow {
   resetsAt: string | null;
 }
 
+/** Ein aktiver Account mit seinen Fenstern und Grenzen (null = Vorgabe `defaultLimit`) */
+export interface UsageAccount {
+  id: string;
+  name: string;
+  fiveHour: UsageWindow | null;
+  sevenDay: UsageWindow | null;
+  limitFiveHour: number | null;
+  limitWeek: number | null;
+  /** Grund fehlender Werte (wie `UsageState.reason`), null wenn Werte da sind */
+  reason: string | null;
+}
+
 /** Claude-Verbrauch des ersten aktiven Accounts; `reason` erklärt fehlende Werte */
 export interface UsageState {
   enabled: boolean;
@@ -42,6 +54,15 @@ export interface UsageState {
   reason: string | null;
   fiveHour: UsageWindow | null;
   sevenDay: UsageWindow | null;
+  /** Alle aktiven Accounts; leer ohne Einstellung oder ohne Werte */
+  accounts: UsageAccount[];
+  /** Vorgabe des Dispatchers in Prozent, ab der ein Account als voll gilt */
+  defaultLimit: number;
+}
+
+/** Zustand der Live-Verbindung zum Server */
+export interface ConnectionState {
+  connected: boolean;
 }
 
 /** Nutzereinstellungen, die ein Theme lesen und ändern darf */
@@ -75,6 +96,8 @@ export interface ThemeHost {
   /** Eigene Einstellungen des angezeigten Themes (`settingsSchema`) */
   themeSettings: ThemeSettingsState;
   colorScheme: ColorSchemeState;
+  /** Zustand der Live-Verbindung zum Server */
+  connection: ConnectionState;
   navigate(to: string): void;
   /** Öffnet die globale Suche des Hosts */
   openSearch(): void;

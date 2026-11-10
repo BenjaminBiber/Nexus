@@ -3,7 +3,7 @@
   "name": "Minecraft",
   "version": "0.2.0",
   "author": "Nexus",
-  "sdkVersion": "^1.1",
+  "sdkVersion": "^1.2",
   "colorScheme": "dark",
   "startColor": "#000000",
   "slots": ["Shell", "NavIcon", "Button", "Input", "Progress", "Card", "Panel", "Dialog", "StartAnimation"],
