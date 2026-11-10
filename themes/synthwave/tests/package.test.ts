@@ -148,6 +148,6 @@ describe('Synthwave-Theme-Paket', () => {
 
   it('meldet im Manifest genau die Slots an, die main.tsx liefert', () => {
     const manifest = JSON.parse(readFileSync(join(theme, 'manifest.json'), 'utf8'));
-    expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Icon']);
+    expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Icon', 'StartAnimation']);
   });
 });

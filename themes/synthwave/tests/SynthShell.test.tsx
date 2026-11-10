@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { ThemeHostProvider, type NavItem, type ThemeHost } from '@nexus/theme-sdk';
 import { SynthShell } from '../src/SynthShell.js';
+import { BOOT_KEY, PALETTE_KEY } from '../src/SunriseDrive.js';
 import theme from '../src/main.js';
 
 afterEach(cleanup);
@@ -104,5 +105,16 @@ describe('Rahmen „Kassettendeck“', () => {
     expect(root.getAttribute('data-synth-vhs')).toBe('on');
     unmount();
     for (const name of ['palette', 'glow', 'horizon', 'vhs']) expect(root.getAttribute(`data-synth-${name}`), name).toBeNull();
+  });
+
+  it('merkt sich Startanimation und Farbschema nach dem Laden in localStorage', () => {
+    renderShell({ boot: false, palette: 'nightcall' });
+    expect(window.localStorage.getItem(BOOT_KEY)).toBe('off');
+    expect(window.localStorage.getItem(PALETTE_KEY)).toBe('nightcall');
+    cleanup();
+    renderShell();
+    expect(window.localStorage.getItem(BOOT_KEY)).toBe('on');
+    expect(window.localStorage.getItem(PALETTE_KEY)).toBe('outrun');
+    window.localStorage.clear();
   });
 });
