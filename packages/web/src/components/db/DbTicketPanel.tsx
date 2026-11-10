@@ -4,6 +4,8 @@ import {
   type DbCardDto, type DbColumnId, type DbPriority, type DbStatus, type DbTicketDetailDto,
 } from '../../api/dbTypes.js';
 import { useApi } from '../../api/ApiContext.js';
+import type { RawDispatchConfigDto } from '../../api/dispatchTypes.js';
+import { isAutopilot } from '../../dbboard/autopilot.js';
 import { canEditDependencies } from '../../dbboard/dependencyPicker.js';
 import { useDbTicket, type DbChange } from '../../dbboard/useDbTicket.js';
 import { useRestoreFocus } from '../../hooks/useRestoreFocus.js';
@@ -115,6 +117,16 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
     );
     return () => { cancelled = true; };
   }, [api, branchBoardId]);
+  // Autopilot-Einstellung des Dispatchers für das Abzeichen; ohne Einstellung (Fehler) kein Abzeichen
+  const [autopilot, setAutopilot] = useState<RawDispatchConfigDto['autopilot']>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void api.getDispatchConfig().then(
+      (view) => { if (!cancelled) setAutopilot(view.raw.autopilot ?? null); },
+      () => { if (!cancelled) setAutopilot(null); },
+    );
+    return () => { cancelled = true; };
+  }, [api]);
   const [form, setForm] = useState<Form | null>(null);
   const drafts = form?.drafts ?? null;
   const [tabsDirty, setTabsDirty] = useState(false);
@@ -319,6 +331,12 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
               {ticket && (
                 <span className="muted">
                   Version {ticket.rev} · angelegt von {ticket.createdByName}
+                </span>
+              )}
+              {ticket && isAutopilot(autopilot, ticket.labels) && (
+                <span className="badge" title="Läuft ohne Freigaben und Fragen durch den Dispatcher">
+                  <span className="material-icons" aria-hidden="true">flight</span>
+                  <span>Autopilot</span>
                 </span>
               )}
             </div>
