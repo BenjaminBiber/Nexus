@@ -545,3 +545,119 @@
 [data-theme='minecraft'] .mc-hotbar:focus-within .mc-hotbar-slot--selected:not(:focus-visible) .mc-hotbar-label {
   opacity: 0;
 }
+
+/* ---------- XP-Leiste: experience_bar_background mit experience_bar_progress darüber (182×5 Spielpixel, 2× = 364×10),
+   die Füllung wird beschnitten statt gestreckt; die Level-Zahl steht darüber wie im HUD ---------- */
+[data-theme='minecraft'] .mc-xp {
+  position: relative;
+  display: inline-block;
+  height: 10px;
+  vertical-align: middle;
+}
+
+[data-theme='minecraft'] .mc-xp-bar {
+  position: absolute;
+  inset: 0;
+  background: var(--mc-xp-bg, #3a3a3a) 0 0 / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+
+[data-theme='minecraft'] .mc-xp-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--mc-xp-fill, #80ff20) 0 0 / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+
+[data-theme='minecraft'] .mc-xp-level {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 2px;
+  color: #80ff20;
+  text-shadow:
+    2px 0 #000,
+    -2px 0 #000,
+    0 2px #000,
+    0 -2px #000;
+  line-height: 18px;
+}
+
+/* Grenzstrich (z. B. das Nutzungslimit) als weiße Marke quer über die Leiste */
+[data-theme='minecraft'] .mc-xp-limit {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+}
+
+/* Über der Grenze golden, kritisch rot – die Füllung wird mitgefärbt, weil sie eine Textur ist */
+[data-theme='minecraft'] .mc-xp--over .mc-xp-fill {
+  filter: hue-rotate(-60deg);
+}
+
+[data-theme='minecraft'] .mc-xp--over .mc-xp-level {
+  color: #ffaa00;
+}
+
+[data-theme='minecraft'] .mc-xp--crit .mc-xp-fill {
+  filter: hue-rotate(-100deg);
+}
+
+[data-theme='minecraft'] .mc-xp--crit .mc-xp-level {
+  color: #ff5555;
+}
+
+/* ---------- Slot „Progress“: Leiste in voller Breite, Beschriftung daneben; oben Platz für die Level-Zahl ---------- */
+[data-theme='minecraft'] .mc-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 20px;
+}
+
+[data-theme='minecraft'] .mc-progress .mc-xp {
+  flex: 1;
+}
+
+/* ---------- Slot „Card“: Listeneintrag wie in der Weltenliste – 1 px Grau außen, 1 px Schwarz innen (2× = 2 px),
+   bei Hover und Fokus weiß, auf Schwarz 50 % ---------- */
+[data-theme='minecraft'] .mc-card {
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #808080;
+  outline: 2px solid #000;
+  outline-offset: -4px;
+  padding: 8px;
+}
+
+[data-theme='minecraft'] .mc-card:hover,
+[data-theme='minecraft'] .mc-card:focus-within {
+  border-color: #fff;
+}
+
+[data-theme='minecraft'] .mc-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+/* ---------- Slots „Panel“ und „Dialog“: Fenster auf popup/background (9-Slice Rand 6, Rahmen aus src/ui/Sprite.ts) ---------- */
+[data-theme='minecraft'] .mc-popup {
+  padding: 16px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='minecraft'] .mc-popup-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+[data-theme='minecraft'] .mc-dialog {
+  min-width: 320px;
+  max-width: min(960px, 90vw);
+}

@@ -22,7 +22,11 @@ fn manifest_erlaubt_nur_mojang_domains() {
             "Shell".to_string(),
             "NavIcon".to_string(),
             "Button".to_string(),
-            "Input".to_string()
+            "Input".to_string(),
+            "Progress".to_string(),
+            "Card".to_string(),
+            "Panel".to_string(),
+            "Dialog".to_string()
         ]
     );
     assert!(!manifest.permissions.network.is_empty());
