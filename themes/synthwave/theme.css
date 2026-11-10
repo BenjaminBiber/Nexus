@@ -189,7 +189,8 @@
   --picker-shadow: rgba(0, 0, 0, 0.4);
 }
 
-/* Farbschema „Miami“: Nachtblau, Pink und Türkis */
+/* Farbschema „Miami“: Nachtblau, Pink und Türkis (auch für die Startanimation, die vor der Shell läuft) */
+:root[data-theme='synthwave'] .synth-sunrise[data-synth-palette='miami'],
 :root[data-theme='synthwave'][data-synth-palette='miami'] {
   --synth-bg: #101a2b;
   --synth-bg-deep: #0a111d;
@@ -208,6 +209,7 @@
 }
 
 /* Farbschema „Nightcall“: tiefes Blau, Violett und kühles Neon */
+:root[data-theme='synthwave'] .synth-sunrise[data-synth-palette='nightcall'],
 :root[data-theme='synthwave'][data-synth-palette='nightcall'] {
   --synth-bg: #070b1e;
   --synth-bg-deep: #03050f;
@@ -890,6 +892,154 @@
   }
 }
 
+/* Startanimation „Sunrise Drive“ (1800 ms): Gitter fährt ab 0 ms, Sonne steigt ab 300 ms, Schriftzug ab 900 ms mit
+   Lichtreflex, die letzten 250 ms blenden die Szene aus, damit der Rahmen mit seinem Horizont darunter erscheint */
+:root[data-theme='synthwave'] .synth-sunrise {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  background: var(--synth-bg-deep);
+  animation: synth-sunrise-out 1800ms linear forwards;
+}
+
+:root[data-theme='synthwave'] .synth-sunrise-sky {
+  position: absolute;
+  inset: 0 0 45% 0;
+  background: linear-gradient(
+    to bottom,
+    var(--synth-bg-deep) 0%,
+    color-mix(in srgb, var(--synth-violet) 35%, var(--synth-bg-deep)) 70%,
+    color-mix(in srgb, var(--synth-magenta) 45%, var(--synth-bg-deep)) 100%
+  );
+}
+
+:root[data-theme='synthwave'] .synth-sunrise-sun {
+  position: absolute;
+  left: 50%;
+  bottom: 45%;
+  width: min(360px, 60vw);
+  aspect-ratio: 2 / 1;
+  margin-left: calc(min(360px, 60vw) / -2);
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(to bottom, var(--synth-sun-top), var(--synth-sun-bottom));
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0 52%,
+    transparent 52% 56%,
+    #000 56% 66%,
+    transparent 66% 72%,
+    #000 72% 80%,
+    transparent 80% 88%,
+    #000 88% 94%,
+    transparent 94%
+  );
+  transform: translateY(60%);
+  opacity: 0;
+  animation: synth-sunrise-sun 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 300ms forwards;
+}
+
+:root[data-theme='synthwave'] .synth-sunrise-grid {
+  position: absolute;
+  inset: 55% -50% 0 -50%;
+  background-color: var(--synth-bg-deep);
+  background-image:
+    repeating-linear-gradient(to bottom, var(--synth-magenta) 0 2px, transparent 2px 48px),
+    repeating-linear-gradient(to right, var(--synth-magenta) 0 2px, transparent 2px 64px);
+  transform: perspective(320px) rotateX(62deg);
+  transform-origin: top;
+  animation: synth-drive 0.6s linear 3;
+}
+
+:root[data-theme='synthwave'] .synth-sunrise-title {
+  position: absolute;
+  inset: 22% 0 auto 0;
+  display: flex;
+  justify-content: center;
+}
+
+:root[data-theme='synthwave'] .synth-sunrise-word {
+  position: relative;
+  overflow: hidden;
+  font-family: var(--synth-font-display);
+  font-weight: 800;
+  font-size: clamp(48px, 12vw, 120px);
+  letter-spacing: 0.12em;
+  color: var(--synth-cyan);
+  opacity: 0;
+  transform: scale(1.15);
+  animation: synth-sunrise-word 400ms ease-out 900ms forwards;
+}
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  :root[data-theme='synthwave'] .synth-sunrise-word {
+    background: linear-gradient(to bottom, #fff 0%, var(--synth-cyan) 45%, var(--synth-violet) 50%, var(--synth-magenta) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(var(--synth-glow-magenta));
+  }
+}
+
+/* Lichtreflex: schräger weißer Streifen, der einmal über das Wort läuft */
+:root[data-theme='synthwave'] .synth-sunrise-word::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.85) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: synth-sunrise-glint 450ms ease-in-out 1250ms forwards;
+}
+
+:root[data-theme='synthwave'] .synth-sunrise-skip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6%;
+  text-align: center;
+  font-family: var(--synth-font-display);
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: var(--synth-muted);
+  animation: synth-sunrise-blink 1s steps(1) 1.8;
+}
+
+@keyframes synth-sunrise-sun {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes synth-sunrise-word {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes synth-sunrise-glint {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes synth-sunrise-blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes synth-sunrise-out {
+  86% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root[data-theme='synthwave'] .synth-icon.synth-empty {
     animation: none;
@@ -906,5 +1056,9 @@
   :root[data-theme='synthwave'][data-synth-horizon] :is(.synth-grid, .synth-sun, .synth-stars) {
     animation: none;
     transition: none;
+  }
+
+  :root[data-theme='synthwave'] :is(.synth-sunrise, .synth-sunrise-sun, .synth-sunrise-grid, .synth-sunrise-word, .synth-sunrise-word::after, .synth-sunrise-skip) {
+    animation: none;
   }
 }
