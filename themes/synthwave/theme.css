@@ -345,6 +345,142 @@
   display: grid;
   grid-template-columns: 15rem 1fr;
   min-height: 0;
+  position: relative;
+}
+
+/* Inhalt liegt vor dem Horizont; Karten behalten ihren deckenden Hintergrund */
+:root[data-theme='synthwave'] .synth-body > :not(.synth-horizon) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Horizont: Sterne, Sonne und Gitter am unteren Rand hinter dem Inhalt, nie mehr als halb deckend.
+   Phase über data-synth-sky (dawn, day, dusk, night), Bewegung über data-synth-horizon (animated, still; off rendert nichts). */
+:root[data-theme='synthwave'] .synth-horizon {
+  --synth-sun-y: 35%;
+  --synth-sky-top: var(--synth-violet);
+  --synth-sky-bottom: var(--synth-magenta);
+  --synth-grid-line: var(--synth-magenta);
+  --synth-grid-opacity: 1;
+  --synth-stars-opacity: 0.4;
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 38%;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.5;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--synth-sky-top) 30%, transparent) 40%,
+    color-mix(in srgb, var(--synth-sky-bottom) 45%, transparent) 62%,
+    transparent 62%
+  );
+}
+
+:root[data-theme='synthwave'] .synth-stars {
+  position: absolute;
+  inset: 0 0 38% 0;
+  opacity: var(--synth-stars-opacity);
+  background:
+    radial-gradient(1.5px 1.5px at 8% 30%, var(--synth-fg), transparent),
+    radial-gradient(1px 1px at 19% 62%, var(--synth-fg), transparent),
+    radial-gradient(1.5px 1.5px at 33% 18%, var(--synth-cyan), transparent),
+    radial-gradient(1px 1px at 47% 48%, var(--synth-fg), transparent),
+    radial-gradient(1.5px 1.5px at 61% 24%, var(--synth-fg), transparent),
+    radial-gradient(1px 1px at 72% 70%, var(--synth-cyan), transparent),
+    radial-gradient(1.5px 1.5px at 84% 38%, var(--synth-fg), transparent),
+    radial-gradient(1px 1px at 93% 14%, var(--synth-fg), transparent);
+  transition: opacity 2s ease;
+}
+
+/* Sonne: Halbkreis auf der Horizontlinie, Streifen nach unten breiter */
+:root[data-theme='synthwave'] .synth-sun {
+  position: absolute;
+  left: 50%;
+  bottom: 38%;
+  width: min(220px, 40%);
+  aspect-ratio: 2 / 1;
+  margin-left: calc(min(220px, 40%) / -2);
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(to bottom, var(--synth-sun-top), var(--synth-sun-bottom));
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0 52%,
+    transparent 52% 56%,
+    #000 56% 66%,
+    transparent 66% 72%,
+    #000 72% 80%,
+    transparent 80% 88%,
+    #000 88% 94%,
+    transparent 94%
+  );
+  transform: translateY(var(--synth-sun-y));
+  transition:
+    transform 2s ease,
+    opacity 2s ease;
+}
+
+/* Gitter: waagerechte und senkrechte Linien, nach hinten gekippt und nach oben ausgeblendet */
+:root[data-theme='synthwave'] .synth-grid {
+  position: absolute;
+  inset: 62% -50% 0 -50%;
+  opacity: var(--synth-grid-opacity);
+  background-image:
+    repeating-linear-gradient(to bottom, var(--synth-grid-line) 0 2px, transparent 2px 48px),
+    repeating-linear-gradient(to right, var(--synth-grid-line) 0 2px, transparent 2px 64px);
+  mask-image: linear-gradient(to top, #000, transparent);
+  transform: perspective(320px) rotateX(62deg);
+  transform-origin: bottom;
+  transition: opacity 2s ease;
+}
+
+:root[data-theme='synthwave'][data-synth-horizon='animated'] .synth-grid {
+  animation: synth-drive 2.4s linear infinite;
+}
+
+@keyframes synth-drive {
+  to {
+    background-position:
+      0 48px,
+      0 0;
+  }
+}
+
+/* Phasen: Morgenrot – Sonne tief, Violett nach warmem Rosa */
+:root[data-theme='synthwave'][data-synth-sky='dawn'] .synth-horizon {
+  --synth-sun-y: 60%;
+  --synth-sky-bottom: color-mix(in srgb, var(--synth-sun-bottom) 60%, var(--synth-sun-top));
+  --synth-stars-opacity: 0;
+}
+
+/* Tag – Sonne hoch, Gitter blass, keine Sterne */
+:root[data-theme='synthwave'][data-synth-sky='day'] .synth-horizon {
+  --synth-sun-y: -20%;
+  --synth-sky-top: var(--synth-cyan);
+  --synth-sky-bottom: var(--synth-violet);
+  --synth-grid-opacity: 0.35;
+  --synth-stars-opacity: 0;
+}
+
+/* Dämmerung – Sonne halb versunken, kräftigste Farben (Standardbild) */
+:root[data-theme='synthwave'][data-synth-sky='dusk'] .synth-horizon {
+  --synth-sun-y: 35%;
+  --synth-stars-opacity: 0.4;
+}
+
+/* Nacht – keine Sonne, Sterne sichtbar, Gitter in Cyan */
+:root[data-theme='synthwave'][data-synth-sky='night'] .synth-horizon {
+  --synth-sun-y: 100%;
+  --synth-sky-top: var(--synth-bg-deep);
+  --synth-sky-bottom: var(--synth-violet);
+  --synth-grid-line: var(--synth-cyan);
+  --synth-stars-opacity: 1;
+}
+
+:root[data-theme='synthwave'][data-synth-sky='night'] .synth-sun {
+  opacity: 0;
 }
 
 :root[data-theme='synthwave'] .synth-body .shell-content {
@@ -765,5 +901,10 @@
 
   :root[data-theme='synthwave'] :is(.synth-vu i, .synth-onair-text) {
     animation: none;
+  }
+
+  :root[data-theme='synthwave'][data-synth-horizon] :is(.synth-grid, .synth-sun, .synth-stars) {
+    animation: none;
+    transition: none;
   }
 }
