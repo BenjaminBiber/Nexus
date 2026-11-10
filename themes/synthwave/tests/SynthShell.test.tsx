@@ -72,7 +72,7 @@ describe('Rahmen „Kassettendeck“', () => {
     expect(nav.querySelector('.synth-side')?.textContent).toBe('SIDE A');
     const links = within(nav).getAllByRole('link');
     expect(links.map((a) => a.getAttribute('href'))).toEqual(NAV.map((item) => item.href));
-    expect(links.map((a) => a.querySelector('.synth-track-no')?.textContent)).toEqual(['01', '02', '03', '04', '05']);
+    expect(links.map((a) => a.querySelector('.synth-track-no')?.textContent)).toEqual(['A1', 'A2', 'A3', 'A4', 'A5']);
     expect(within(nav).getByRole('link', { name: /Board/ })).toBeTruthy();
     expect(within(links[1]!).getByText('3')).toBeTruthy();
   });

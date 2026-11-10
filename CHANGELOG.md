@@ -90,6 +90,38 @@
   Mermaid-Diagramme im Neon-Look. Beim Laden geht die Sonne über dem Gitter auf (abschaltbar).
   Einstellungen: Farbschema (Outrun, Miami, Nightcall), Stärke des Leuchtens, Horizont, Himmel
   und VHS-Effekte (Scanlines, Bandzähler, Bildstörung). Schriften im Paket (OFL 1.1).
+- „Synthwave“ 1.1.0: hellere Flächen, Linien und Display oben für mehr Kontrast; das Neon-Gitter
+  steht auf dunklem Boden mit leuchtender Horizontlinie und reicht bis an den Horizont; nachts
+  hängt ein Mond am Himmel. Fokus und Überfahren einheitlich (Felder mit einem Magenta-Rahmen statt
+  Doppelrahmen, Suchfelder ohne inneren Rand, Navigation der Einstellungen wie die Titelliste). In
+  den Einstellungen bleibt die Navigation stehen, nur die Seite scrollt. Aktive Einträge in
+  Titelliste, Einstellungen und Menüs ohne Kante links: der laufende Titel sieht aus wie eine
+  eingelegte Kassette (Rahmen im Sonnenverlauf, Etikettstreifen unten). Die Suche oben nimmt die
+  volle Breite ein und ist ein Leuchtdisplay mit blinkendem Cursor; Display und Deck-Leiste sind
+  heller und mit Neonlinien abgesetzt, der Plus-Knopf leuchtet in Magenta, die VHS-Vignette
+  dunkelt die Ränder nur noch leicht ab.
+  Durchgängig wie ein Gerät der 80er: alle Seitenüberschriften in Chrom-Orbitron, Filter und
+  Umschalter als Tapedeck-Tasten mit LED, Kontrollkästchen als LED-Schalter, Kennzahlen im
+  Dashboard als Leuchtziffern, Diagramme auf Neon-Millimeterpapier (Mermaid: Knoten als
+  Leuchtschilder, auf den Kanten läuft ein Signal, Beschriftungen und Notizen als Bandetiketten),
+  Code-Zeilen als Terminal, Tasten als Gerätetasten, Ticket-Panel mit den Streifen einer
+  Kassettenhülle, Suche mit „◀◀ SEARCH ▶▶“, Scrollbalken im Neonverlauf. Versteckte Details: die
+  Kassette lässt sich über „SIDE A“ umdrehen (Seite B ist die Nachtfahrt, Titel B1, B2 …), mit
+  VHS dreht sie sich nach 45 Minuten von selbst (Auto-Reverse); im Schriftzug setzt ab und zu
+  eine Neonröhre aus; nachts fallen Sternschnuppen; bei getrennter Verbindung steht „OFF AIR“;
+  ein voller Laserbalken meldet „STAGE CLEAR“; und wer den Konami-Code kennt, schaltet in den
+  Overdrive. Bei reduzierter Bewegung bleibt alles ruhig.
+- Neue Themes „Dracula“ 1.0.0 (`themes/dracula/`, dunkel) und „Alucard“ 1.0.0
+  (`themes/alucard/`, hell) im Theme-Store: die Standard-Oberfläche in der Dracula-Palette bzw.
+  ihrem hellen Gegenstück Alucard (draculatheme.com, MIT), Alucard bewusst farbig, aber ruhig:
+  lavendelgetönte Flächen, Knöpfe in Purple, Seitentitel im Verlauf von Purple zu Pink, im Board
+  Spalten ohne Fläche, flach in der Statusfarbe getönte Spaltenköpfe und ein Rahmen in dieser
+  Farbe um jede Karte, dazu in der Navigation ein schlichter
+  Unterstrich für den aktiven Eintrag. Mermaid-Diagramme in den Farben der Palette (Knoten
+  mit Purple-Rand, Kanten in Cyan, Notizen in Yellow, Kreisdiagramme und Git-Graphen in den
+  Akzentfarben), der Fortschrittsring im Ticket-Panel mit Verlauf von Purple nach Pink; Rahmen,
+  Symbole und alles andere bleiben Standard. Schrift und Statusfarben erreichen mindestens 4,5:1
+  Kontrast.
 
 ## 0.0.2 – 2026-11-06
 

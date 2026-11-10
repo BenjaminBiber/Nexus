@@ -94,7 +94,7 @@ describe('Horizont im Rahmen', () => {
     expect(horizon).toBeTruthy();
     expect(horizon.getAttribute('aria-hidden')).toBe('true');
     expect(horizon.parentElement?.firstElementChild).toBe(horizon);
-    for (const part of ['synth-stars', 'synth-sun', 'synth-grid']) expect(horizon.querySelector(`.${part}`), part).toBeTruthy();
+    for (const part of ['synth-stars', 'synth-moon', 'synth-sun', 'synth-grid']) expect(horizon.querySelector(`.${part}`), part).toBeTruthy();
     expect(document.documentElement.getAttribute('data-synth-sky')).toBe('night');
     unmount();
     expect(document.documentElement.getAttribute('data-synth-sky')).toBeNull();

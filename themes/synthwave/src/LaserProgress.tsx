@@ -3,7 +3,8 @@ import type { ProgressProps } from '@nexus/theme-sdk';
 /** Bis zu dieser Schrittzahl gibt es ein Segment je Schritt, darüber einen durchgehenden Balken */
 export const MAX_SEGMENTS = 12;
 
-// Fortschritt als Laserbalken: „▮▮▮▯▯ 3/5 Schritte erledigt“, bei vielen Schritten ein Strahl in Prozent
+// Fortschritt als Laserbalken: „▮▮▮▯▯ 3/5 Schritte erledigt“, bei vielen Schritten ein Strahl in Prozent. Sind alle
+// Schritte erledigt, meldet ein Spielhallen-Schild „STAGE CLEAR“ (nur Schmuck, der Text daneben sagt dasselbe).
 export function LaserProgress({ done, total, label, caption }: ProgressProps) {
   const all = Math.max(0, Math.floor(Number.isFinite(total) ? total : 0));
   const value = Math.min(all, Math.max(0, Math.floor(Number.isFinite(done) ? done : 0)));
@@ -30,6 +31,11 @@ export function LaserProgress({ done, total, label, caption }: ProgressProps) {
       <span className="synth-progress-text">
         {value}/{all} {caption}
       </span>
+      {all > 0 && value === all && (
+        <span className="synth-clear" aria-hidden="true">
+          STAGE CLEAR
+        </span>
+      )}
     </div>
   );
 }

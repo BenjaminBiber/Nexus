@@ -1,0 +1,204 @@
+/* „Alucard“: helles Schema in der Alucard-Palette, dem hellen Gegenstück von Dracula (draculatheme.com, MIT-Lizenz).
+   Farbig, aber ruhig: Flächen mit einem Hauch Lavendel, Seitenleiste und Spalten in kühlem Grau, Knöpfe in Purple,
+   Seitentitel im Verlauf von Purple zu Pink. Jede Karte im Board trägt einen Rahmen in der Statusfarbe ihrer Spalte, der
+   aktive Eintrag der Navigation ist nur unterstrichen. Schrift bleibt fast Schwarz; die Statusfarben kommen aus Green,
+   Yellow, Red, Cyan, Orange und Pink der Palette, getönte Flächen sind die jeweilige Farbe anteilig über Weiß gemischt.
+   Codeblöcke bleiben dunkel wie im hellen Schema, hier in Dracula.
+   Setzt jede Farbvariable des hellen Schemas. --dracula-* sind die Palettenwerte für die Mermaid-Diagramme (main.js liest
+   sie beim Zeichnen). Das dunkle Gegenstück ist das Theme „Dracula“. */
+:root[data-theme='alucard'] {
+  color-scheme: light;
+  --dracula-bg: #fefefe;
+  --dracula-bg-deep: #f1edfa;
+  --dracula-node: #eeebf9;
+  --dracula-note: #f6f1dc;
+  --dracula-current: #d9d1f0;
+  --dracula-fg: #1f1f1f;
+  --dracula-comment: #635f80;
+  --dracula-cyan: #036a96;
+  --dracula-green: #14710a;
+  --dracula-orange: #a34d14;
+  --dracula-pink: #a3144d;
+  --dracula-purple: #644ac9;
+  --dracula-red: #cb3a2a;
+  --dracula-yellow: #846e15;
+  --bg: #f7f5fc;
+  --surface: #fefefe;
+  --surface-alt: #faf8fe;
+  --sidebar-bg: #edeff3;
+  --nav-active-bg: #fefefe;
+  --line: #e4dff1;
+  --line-input: #d8d1ea;
+  --line-soft: #ece7f7;
+  --line-strong: #9c94bb;
+  --line-dashed: #cec4e8;
+  --column-bg: #eff0f4;
+  --column-locked-a: #eff0f4;
+  --column-locked-b: #e6e8ee;
+  --text: #1f1f1f;
+  --text-soft: #3d3a4c;
+  --muted: #635f80;
+  --accent: #644ac9;
+  --accent-hover: #5039b0;
+  --accent-soft: #eeebf9;
+  --accent-soft-hover: #e3ddf6;
+  --on-accent: #fefefe;
+  --primary: #644ac9;
+  --primary-hover: #5039b0;
+  --on-primary: #fefefe;
+  --chip-on-bg: #644ac9;
+  --chip-on-fg: #fefefe;
+  --code-bg: #282a36;
+  --code-fg: #f8f8f2;
+  --code-muted: #8a95c6;
+  --code-btn-bg: #343746;
+  --code-btn-line: #44475a;
+  --status-bg: #eeebf9;
+  --status-fg: #4f39a8;
+  --running-fg: #14710a;
+  --running-bg: #e3f2e1;
+  --waiting-fg: #6e5b0f;
+  --waiting-bg: #f6f1dc;
+  --waiting-line: #ddd08f;
+  --idle-fg: #4a3d8f;
+  --idle-bg: #eeebf9;
+  --blocked-fg: #a82d1f;
+  --blocked-bg: #fae6e3;
+  --orphan-fg: #a3144d;
+  --orphan-bg: #f9e6ee;
+  --unread-fg: #035b80;
+  --unread-bg: #e0eef5;
+  --unread-row-bg: #f1f6fb;
+  --note-bg: #f6f1dc;
+  --note-line: #ddd08f;
+  --note-fg: #6b5910;
+  --ok: #14710a;
+  --ok-fg: #14710a;
+  --ok-ring: #cde5c9;
+  --danger: #cb3a2a;
+  --warn: #a34d14;
+  --usage-ok: #036a96;
+  --usage-warn: #846e15;
+  --usage-crit: #a3144d;
+  --usage-over: #a34d14;
+  --row-waiting-bg: #fbf9ef;
+  --quote-line: #a3144d;
+  --mark: #f3eb9c;
+  --mark-comment: #e3ddf6;
+  --mark-comment-hover: #d6ccf1;
+  --tag-add-line: #9c94bb;
+  --connection-line: #ecbcb4;
+  --connection-fg: #8f2419;
+  --error-bg: #fcf1ef;
+  --answered-bg: #e3f2e1;
+  --answered-line: #b0d4aa;
+  --research-bg: #e0eef5;
+  --research-fg: #035b80;
+  --diff-add-bg: #1f3a2a;
+  --diff-add-fg: #50fa7b;
+  --diff-del-bg: #3a1f26;
+  --diff-del-fg: #ff6e6e;
+  --diff-hunk-fg: #bd93f9;
+  --test-ok: #14710a;
+  --test-fail: #cb3a2a;
+  --status-backlog: #9c94bb;
+  --status-waiting: #b8961a;
+  --status-in-planning: #7c5fe0;
+  --status-planned: #1786b8;
+  --status-in-progress: #d0367a;
+  --status-blocked: #d9412f;
+  --status-done: #2e9a22;
+  --status-not-needed: #cec4e8;
+  --graph-edge: #9c94bb;
+  --graph-critical: #cb3a2a;
+  --graph-upstream: #036a96;
+  --graph-downstream: #644ac9;
+  --chart-done: #14710a;
+  --chart-fail: #cb3a2a;
+  --chart-bar: #644ac9;
+  --chart-track: #ece7f7;
+  --chart-grid: #e4dff1;
+  --chart-axis: #635f80;
+  --chart-other: #cec4e8;
+  --chart-escalated: #a34d14;
+  --reason-max-turns: #cb3a2a;
+  --reason-timeout: #a34d14;
+  --reason-context: #a3144d;
+  --reason-exit-code: #644ac9;
+  --reason-claude-error: #036a96;
+  --reason-no-outcome: #14710a;
+  --reason-rest: #9c94bb;
+  --urgent-row-bg: #fbedeb;
+  --shadow-faint: rgba(80, 57, 176, 0.05);
+  --shadow-mid: rgba(80, 57, 176, 0.1);
+  --shadow-soft: rgba(80, 57, 176, 0.07);
+  --shadow-tab: rgba(80, 57, 176, 0.12);
+  --shadow-strong: rgba(80, 57, 176, 0.14);
+  --backdrop: rgba(40, 30, 70, 0.32);
+  --sheet-shadow: rgba(80, 57, 176, 0.18);
+  --picker-shadow: rgba(80, 57, 176, 0.14);
+  --logo-plate: #ffffff;
+}
+
+/* Markierter Text: Selection in Lavendel */
+:root[data-theme='alucard'] ::selection { background: #d9d1f0; color: #1f1f1f; }
+
+/* Seitenleiste: ruhiges, kühles Grau; der aktive Eintrag ist nur unterstrichen, ohne Fläche */
+:root[data-theme='alucard'] .nav a:hover { background: #e3e5eb; }
+:root[data-theme='alucard'] .nav a.active {
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: #644ac9;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+/* Seitentitel im Verlauf Purple → Pink (über die Breite des Worts, nicht der Zeile) */
+:root[data-theme='alucard'] .shell-main h1 {
+  width: fit-content;
+  background: linear-gradient(90deg, #644ac9, #a3144d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Board: Spalten ohne eigene Fläche; der Spaltenkopf ist flach in der Statusfarbe getönt, jede Karte
+   trägt einen Rahmen in derselben Farbe. Gesperrte Spalten behalten ihr Streifenmuster. */
+:root[data-theme='alucard'] .db-column { --dracula-col: var(--status-backlog); background: transparent; }
+:root[data-theme='alucard'] .db-column.locked { background: repeating-linear-gradient(135deg, var(--column-locked-a) 0 8px, var(--column-locked-b) 8px 16px); }
+/* Der Kopf klebt beim Scrollen oben und deckt mit Seitenhintergrund die ganze Spaltenbreite samt Rand ab, damit die
+   Karten dahinter verschwinden; die getönte, abgerundete Leiste liegt als ::before darin, bündig mit den Karten. */
+:root[data-theme='alucard'] .db-column .column-head {
+  top: -6px;
+  margin: -6px -6px 0;
+  padding: 16px 18px 14px;
+  border-radius: 0;
+  background: var(--bg);
+  box-shadow: none;
+}
+:root[data-theme='alucard'] .db-column .column-head::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  z-index: -1;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--dracula-col) 16%, #fefefe);
+}
+:root[data-theme='alucard'] .db-column[data-status='waiting'] { --dracula-col: var(--status-waiting); }
+:root[data-theme='alucard'] .db-column[data-status='in_planning'] { --dracula-col: var(--status-in-planning); }
+:root[data-theme='alucard'] .db-column[data-status='planned'] { --dracula-col: var(--status-planned); }
+:root[data-theme='alucard'] .db-column[data-status='in_progress'] { --dracula-col: var(--status-in-progress); }
+:root[data-theme='alucard'] .db-column[data-status='blocked'] { --dracula-col: var(--status-blocked); }
+:root[data-theme='alucard'] .db-column[data-status='done'] { --dracula-col: var(--status-done); }
+:root[data-theme='alucard'] .db-column[data-status='not_needed'] { --dracula-col: var(--status-not-needed); }
+:root[data-theme='alucard'] .db-column .card { border: 1.5px solid var(--dracula-col); }
+:root[data-theme='alucard'] .db-column .card:hover { border-color: var(--dracula-col); box-shadow: 0 4px 14px color-mix(in srgb, var(--dracula-col) 22%, transparent); }
+
+/* Tags in zartem Lavendel */
+:root[data-theme='alucard'] .tag { color: #4a3d8f; }
+
+/* Dokumentbaum: Symbole in Cyan (Dokument) und Purple (Glossar) */
+:root[data-theme='alucard'] .doc-tree-icon.is-doc { color: #036a96; }
+:root[data-theme='alucard'] .doc-tree-icon.is-glossary { color: #644ac9; }

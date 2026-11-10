@@ -3,6 +3,7 @@
 import { useEffect, useMemo } from 'react';
 import { useThemeSettings, type ThemeSettingsSchema } from '@nexus/theme-sdk';
 import type { SkyPhase } from './sky.js';
+import type { CassetteSide } from './cassette.js';
 
 export const SYNTH_SETTINGS = {
   palette: {
@@ -79,20 +80,22 @@ export function useSynthSettings(): SynthSettings & { loading: boolean } {
 
 const onOff = (value: boolean) => (value ? 'on' : 'off');
 
-/** Attribute für <html>, auf die theme.css reagiert; data-synth-sky ist die aufgelöste Phase des Himmels */
-export function rootAttributes(settings: SynthSettings, sky: SkyPhase): Record<string, string> {
+/** Attribute für <html>, auf die theme.css reagiert; data-synth-sky ist die aufgelöste Phase des Himmels,
+    data-synth-side die Seite der Kassette (b = Nachtfahrt) */
+export function rootAttributes(settings: SynthSettings, sky: SkyPhase, side: CassetteSide = 'A'): Record<string, string> {
   return {
     'data-synth-palette': settings.palette,
     'data-synth-glow': settings.glow,
     'data-synth-horizon': settings.horizon,
     'data-synth-sky': sky,
     'data-synth-vhs': onOff(settings.vhs),
+    'data-synth-side': side.toLowerCase(),
   };
 }
 
 /** Setzt die Attribute auf <html>, solange der Rahmen steht, und entfernt sie danach wieder */
-export function useRootAttributes(settings: SynthSettings, sky: SkyPhase): void {
-  const attributes = rootAttributes(settings, sky);
+export function useRootAttributes(settings: SynthSettings, sky: SkyPhase, side: CassetteSide = 'A'): void {
+  const attributes = rootAttributes(settings, sky, side);
   const key = JSON.stringify(attributes);
   useEffect(() => {
     const root = document.documentElement;

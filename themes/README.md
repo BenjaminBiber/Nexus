@@ -18,6 +18,10 @@ Versteckte Dateien und Ordner (führender Punkt) und symbolische Links sind nich
 Ordner mit führendem Punkt oder Unterstrich unter `themes/` (z. B. die Vorlage `_template`) werden
 übersprungen.
 
+Nexus lädt `main.js` nur, wenn `slots` im Manifest mindestens einen Slot nennt. Ein Theme, das nur
+das Mermaid-Aussehen (`ThemeDefinition.mermaid`) mitbringen will, braucht also trotzdem einen Slot;
+`dracula` und `alucard` nehmen dafür `Progress` (Fortschrittsring im Ticket-Panel).
+
 ## Bauen
 
 ```
@@ -26,7 +30,7 @@ npm run build:themes
 
 packt jeden Ordner mit `nexus theme pack` nach `dist/themes/<id>.nexus` und bricht bei einem
 ungültigen Theme mit Exit-Code 1 ab. Code-Themes (`package.json` mit Skript `build`, z. B.
-`win95`, `minecraft`, `terminal`, `synthwave`) baut das Skript vorher mit `npm run build` und packt dann ihr `dist/`
+`win95`, `minecraft`, `terminal`, `synthwave`, `dracula`, `alucard`) baut das Skript vorher mit `npm run build` und packt dann ihr `dist/`
 (`main.js`, `manifest.json`, `theme.css`, `assets/`) statt des Quellordners. Die Pakete sind für Release und
 Store-Index; die Desktop-App bündelt sie nicht. Wer sie lokal vorinstallieren will, gibt den Ordner
 `nexus serve` ausdrücklich mit (`--bundled-themes-dir dist/themes` / `NEXUS_BUNDLED_THEMES_DIR`).

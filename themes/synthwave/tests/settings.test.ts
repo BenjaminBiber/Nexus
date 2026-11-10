@@ -46,16 +46,18 @@ describe('Einstellungen „Synthwave“', () => {
       'data-synth-horizon': 'animated',
       'data-synth-sky': 'dusk',
       'data-synth-vhs': 'off',
+      'data-synth-side': 'a',
     });
   });
 
   it('übersetzt abweichende Werte in data-synth-*-Attribute', () => {
-    expect(rootAttributes(resolveSettings({ palette: 'miami', glow: 'high', horizon: 'off', vhs: true }), 'night')).toEqual({
+    expect(rootAttributes(resolveSettings({ palette: 'miami', glow: 'high', horizon: 'off', vhs: true }), 'night', 'B')).toEqual({
       'data-synth-palette': 'miami',
       'data-synth-glow': 'high',
       'data-synth-horizon': 'off',
       'data-synth-sky': 'night',
       'data-synth-vhs': 'on',
+      'data-synth-side': 'b',
     });
   });
 });
