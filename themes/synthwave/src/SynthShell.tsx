@@ -1,6 +1,8 @@
 import { BoardSwitcher, SearchButton, useNav, type ShellProps } from '@nexus/theme-sdk';
 import { useRootAttributes, useSynthSettings } from './settings.js';
 import { TrackList } from './TrackList.js';
+import { VuMeter } from './VuMeter.js';
+import { OnAir } from './OnAir.js';
 
 // Rahmen im Schema „Synthwave“ als Kassettendeck: oben das Display mit Schriftzug, Board-Auswahl und Suche, links die
 // Navigation als Titelliste der A-Seite, rechts die Seite und unten die Deck-Leiste mit dem Etikett des laufenden Titels.
@@ -29,6 +31,9 @@ export function SynthShell({ content }: ShellProps) {
       </div>
       <footer className="synth-deck" data-section={active?.id ?? 'board'}>
         <span className="synth-tape-label">{active?.label ?? ''}</span>
+        <VuMeter />
+        <span className="synth-spacer" />
+        <OnAir />
       </footer>
     </div>
   );

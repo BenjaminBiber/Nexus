@@ -490,12 +490,161 @@
   border-top: 1px solid var(--synth-line);
 }
 
+/* Bandetikett: cremefarbener Aufkleber mit Schreibschrift, leicht schief aufgeklebt */
 :root[data-theme='synthwave'] .synth-tape-label {
+  font-family: var(--synth-font-script);
+  font-size: 18px;
+  line-height: 1.2;
+  padding: 1px 12px;
+  color: #2a1a3a;
+  background: #f4ead2;
+  border-radius: 2px;
+  transform: rotate(-1deg);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+  white-space: nowrap;
+}
+
+:root[data-theme='synthwave'] .synth-tape-label:empty {
+  display: none;
+}
+
+:root[data-theme='synthwave'] .synth-spacer {
+  flex: 1;
+}
+
+/* VU-Meter: 12 Segmente, grün bis 8, dann Warnung und Spitze; aus = 15 % Deckkraft */
+:root[data-theme='synthwave'] .synth-vu-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+:root[data-theme='synthwave'] .synth-vu {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--synth-font-display);
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--synth-cyan);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--synth-muted);
+}
+
+:root[data-theme='synthwave'] .synth-vu-tag {
+  width: 2.2em;
+}
+
+:root[data-theme='synthwave'] .synth-vu-value {
+  min-width: 3.5em;
+  color: var(--synth-fg);
+}
+
+:root[data-theme='synthwave'] .synth-vu-bar {
+  display: flex;
+  gap: 2px;
+}
+
+:root[data-theme='synthwave'] .synth-vu i {
+  --synth-seg: var(--synth-ok);
+  display: block;
+  width: 8px;
+  height: 10px;
+  border-radius: 1px;
+  background: var(--synth-seg);
+  opacity: 0.15;
+}
+
+:root[data-theme='synthwave'] .synth-vu[data-slim] i {
+  height: 4px;
+}
+
+:root[data-theme='synthwave'] .synth-vu i[data-zone='warn'] {
+  --synth-seg: var(--synth-warn);
+}
+
+:root[data-theme='synthwave'] .synth-vu i[data-zone='peak'] {
+  --synth-seg: var(--synth-danger);
+}
+
+:root[data-theme='synthwave'] .synth-vu i[data-on] {
+  opacity: 1;
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-seg);
+}
+
+:root[data-theme='synthwave'] .synth-vu i[data-on][data-top][data-zone='peak'] {
+  animation: synth-vu-peak 1.6s ease-in-out infinite alternate;
+}
+
+:root[data-theme='synthwave'] .synth-vu-off {
+  font-family: var(--synth-font-display);
+  font-size: 10px;
+  color: var(--synth-muted);
+  opacity: 0.6;
+}
+
+@keyframes synth-vu-peak {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.55;
+  }
+}
+
+/* Schild „ON AIR“: leuchtet bei bestehender Verbindung; der Punkt des Hosts ist nur optisch versteckt */
+:root[data-theme='synthwave'] .synth-onair {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+:root[data-theme='synthwave'] .synth-onair > :not(.synth-onair-text) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+:root[data-theme='synthwave'] .synth-onair-text {
+  font-family: var(--synth-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  padding: 2px 8px;
+  color: var(--synth-danger);
+  border: 1px solid var(--synth-danger);
+  border-radius: 3px;
+  text-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-danger);
+  box-shadow:
+    0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-danger) 60%, transparent),
+    inset 0 0 calc(6px * var(--synth-glow)) color-mix(in srgb, var(--synth-danger) 40%, transparent);
+}
+
+:root[data-theme='synthwave'] .synth-onair:not(:has(.live:not(.off))) .synth-onair-text {
+  color: color-mix(in srgb, var(--synth-danger) 30%, var(--synth-bg-deep));
+  border-color: color-mix(in srgb, var(--synth-danger) 25%, var(--synth-bg-deep));
+  text-shadow: none;
+  box-shadow: none;
+  animation: synth-onair-off 0.5s steps(1, end) 1;
+}
+
+@keyframes synth-onair-off {
+  0% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* Schmale Fenster (Breakpoint der Standard-Shell): Titelliste wird zur Leiste oben, ohne Nummern */
@@ -534,10 +683,18 @@
   :root[data-theme='synthwave'] .synth-body .shell-content {
     display: block;
   }
+
+  :root[data-theme='synthwave'] .synth-tape-label {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root[data-theme='synthwave'] .synth-eq i {
+    animation: none;
+  }
+
+  :root[data-theme='synthwave'] :is(.synth-vu i, .synth-onair-text) {
     animation: none;
   }
 }
