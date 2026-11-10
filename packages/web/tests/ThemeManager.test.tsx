@@ -97,7 +97,9 @@ describe('Darstellung › Themes', () => {
     const file = await themeFile(manifest('neu'));
     fireEvent.change(input, { target: { files: [file] } });
     expect(installTheme).not.toHaveBeenCalled();
-    fireEvent.click(await within(dialog).findByRole('button', { name: 'Installieren' }));
+    const confirm = await screen.findByRole('alertdialog', { name: 'Theme installieren?' });
+    expect(dialog.contains(confirm)).toBe(false);
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Installieren' }));
     await waitFor(() => expect(installTheme).toHaveBeenCalledWith(file));
     expect(await screen.findByRole('listitem', { name: 'Theme neu' })).toBeTruthy();
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Theme installieren' })).toBeNull());
@@ -133,18 +135,22 @@ describe('Darstellung › Themes', () => {
     expect(screen.queryByRole('dialog', { name: 'Theme installieren' })).toBeNull();
   });
 
-  it('verwaltet die Theme-Stores in einem Dialog neben der Suche', async () => {
+  it('verwaltet die Theme-Stores über das Dreipunkt-Menü am Installieren-Knopf', async () => {
     const addStoreRepo = vi.fn(async (url: string) => ({ id: 'r1', url, addedAt: '2026-01-01' }));
     open({ listThemes: async () => [], addStoreRepo });
     await tiles();
     expect(screen.queryByLabelText('Repo-URL')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Theme-Stores verwalten' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Weitere Aktionen' }));
+    const menu = screen.getByRole('menu', { name: 'Weitere Aktionen' });
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'Theme-Stores verwalten' }));
+    expect(screen.queryByRole('menu')).toBeNull();
     const dialog = await screen.findByRole('dialog', { name: 'Theme-Stores' });
     fireEvent.change(within(dialog).getByLabelText('Repo-URL'), { target: { value: 'https://x.example/i.json' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Hinzufügen' }));
     await waitFor(() => expect(addStoreRepo).toHaveBeenCalledWith('https://x.example/i.json'));
     expect(await within(dialog).findByText('https://x.example/i.json')).toBeTruthy();
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Schließen' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Dialog schließen' }));
     expect(screen.queryByRole('dialog', { name: 'Theme-Stores' })).toBeNull();
   });
 

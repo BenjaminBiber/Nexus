@@ -57,6 +57,13 @@
   mitverteilt). Aufnahme mit `scripts/screenshots/theme-previews.mjs`; die Demodaten der
   README-Screenshots liegen jetzt gemeinsam in `scripts/screenshots/demo.mjs`.
 - Die Fensterleiste von „Windows 95“ heißt „Nexus“ statt „AI Harness“.
+- „Theme installieren“ ist ein Kombi-Knopf: Das Dreipunkt-Menü daneben öffnet „Theme-Stores
+  verwalten“ (statt des Plus-Knopfs neben der Suche).
+- Der Dialog „Theme installieren“ ist neu gestaltet: aufklappbarer Zustand der Theme-Stores
+  (erreichbar oder nicht, mit Fehlercode, Erklärung, „Releases öffnen“ bei GitHub und „Erneut
+  prüfen“), Suche mit Anzahl und Kacheln mit Vorschaubild, Version, Store und Installieren.
+- Die Rückfrage vor dem Installieren oder Aktualisieren ist ein eigener Dialog über dem Store
+  statt eines Kastens darin; Esc schließt nur die Rückfrage.
 
 ## 0.0.2 – 2026-11-06
 
