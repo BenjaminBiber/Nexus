@@ -5,6 +5,10 @@ import {
   BUTTON,
   BUTTON_DISABLED,
   BUTTON_HIGHLIGHTED,
+  CHECKBOX,
+  CHECKBOX_HIGHLIGHTED,
+  CHECKBOX_SELECTED,
+  CHECKBOX_SELECTED_HIGHLIGHTED,
   FOOTER_SEPARATOR,
   HEADER_SEPARATOR,
   HOTBAR,
@@ -13,6 +17,8 @@ import {
   MENU_LIST_BACKGROUND,
   PANORAMA_OVERLAY,
   POPUP_BACKGROUND,
+  SCROLLER,
+  SCROLLER_BACKGROUND,
   TEXT_FIELD,
   TEXT_FIELD_HIGHLIGHTED,
   XP_BACKGROUND,
@@ -46,6 +52,12 @@ function cssVariables(urls: Record<string, string>): CSSProperties {
   set('--mc-popup', POPUP_BACKGROUND);
   set('--mc-xp-bg', XP_BACKGROUND);
   set('--mc-xp-fill', XP_PROGRESS);
+  set('--mc-scroller', SCROLLER);
+  set('--mc-scroller-bg', SCROLLER_BACKGROUND);
+  set('--mc-checkbox', CHECKBOX);
+  set('--mc-checkbox-highlighted', CHECKBOX_HIGHLIGHTED);
+  set('--mc-checkbox-selected', CHECKBOX_SELECTED);
+  set('--mc-checkbox-selected-highlighted', CHECKBOX_SELECTED_HIGHLIGHTED);
   return vars as CSSProperties;
 }
 

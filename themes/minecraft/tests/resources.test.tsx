@@ -64,7 +64,7 @@ describe('resolveClientJar', () => {
 });
 
 describe('MINECRAFT_ENTRIES', () => {
-  it('enthält Schrift-Atlas, Schrift-Definition, Button-Texturen, Hotbar, Popup- und XP-Texturen, Logo, Untermenü-Grafiken und die Item-Symbole der Navigation, aber kein Panorama', () => {
+  it('enthält Schrift-Atlas, Schrift-Definition, Button-Texturen, Scrollbalken, Ankreuzfelder, Hotbar, Popup- und XP-Texturen, Logo, Untermenü-Grafiken und die Item-Symbole der Navigation, aber kein Panorama', () => {
     expect([...MINECRAFT_ENTRIES]).toEqual([
       'assets/minecraft/textures/font/ascii.png',
       'assets/minecraft/font/include/default.json',
@@ -76,6 +76,12 @@ describe('MINECRAFT_ENTRIES', () => {
       'assets/minecraft/textures/gui/sprites/widget/button_disabled.png',
       'assets/minecraft/textures/gui/sprites/widget/text_field.png',
       'assets/minecraft/textures/gui/sprites/widget/text_field_highlighted.png',
+      'assets/minecraft/textures/gui/sprites/widget/scroller.png',
+      'assets/minecraft/textures/gui/sprites/widget/scroller_background.png',
+      'assets/minecraft/textures/gui/sprites/widget/checkbox.png',
+      'assets/minecraft/textures/gui/sprites/widget/checkbox_highlighted.png',
+      'assets/minecraft/textures/gui/sprites/widget/checkbox_selected.png',
+      'assets/minecraft/textures/gui/sprites/widget/checkbox_selected_highlighted.png',
       'assets/minecraft/textures/gui/sprites/hud/hotbar.png',
       'assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png',
       'assets/minecraft/textures/gui/sprites/popup/background.png',
@@ -90,7 +96,7 @@ describe('MINECRAFT_ENTRIES', () => {
         (item) => `assets/minecraft/textures/item/${item}.png`,
       ),
     ]);
-    expect(MINECRAFT_ENTRIES.length).toBe(29);
+    expect(MINECRAFT_ENTRIES.length).toBe(35);
     expect(MINECRAFT_ENTRIES.some((e) => e.includes('panorama'))).toBe(false);
   });
 

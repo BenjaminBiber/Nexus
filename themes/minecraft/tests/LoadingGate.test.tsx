@@ -50,6 +50,18 @@ describe('LoadingGate', () => {
     expect(shell.style.getPropertyValue('--mc-popup')).toBe(at('assets/minecraft/textures/gui/sprites/popup/background.png'));
     expect(shell.style.getPropertyValue('--mc-xp-bg')).toBe(at('assets/minecraft/textures/gui/sprites/hud/experience_bar_background.png'));
     expect(shell.style.getPropertyValue('--mc-xp-fill')).toBe(at('assets/minecraft/textures/gui/sprites/hud/experience_bar_progress.png'));
+    expect(shell.style.getPropertyValue('--mc-scroller')).toBe(at('assets/minecraft/textures/gui/sprites/widget/scroller.png'));
+    expect(shell.style.getPropertyValue('--mc-scroller-bg')).toBe(at('assets/minecraft/textures/gui/sprites/widget/scroller_background.png'));
+    expect(shell.style.getPropertyValue('--mc-checkbox')).toBe(at('assets/minecraft/textures/gui/sprites/widget/checkbox.png'));
+    expect(shell.style.getPropertyValue('--mc-checkbox-highlighted')).toBe(
+      at('assets/minecraft/textures/gui/sprites/widget/checkbox_highlighted.png'),
+    );
+    expect(shell.style.getPropertyValue('--mc-checkbox-selected')).toBe(
+      at('assets/minecraft/textures/gui/sprites/widget/checkbox_selected.png'),
+    );
+    expect(shell.style.getPropertyValue('--mc-checkbox-selected-highlighted')).toBe(
+      at('assets/minecraft/textures/gui/sprites/widget/checkbox_selected_highlighted.png'),
+    );
   });
 
   it('ohne Netz: Hinweis mit „Erneut versuchen“, Seite bleibt bedienbar', () => {
