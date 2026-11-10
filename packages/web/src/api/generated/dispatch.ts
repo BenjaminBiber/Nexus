@@ -331,7 +331,11 @@ export type DispatchState = { pausedUntil: string | null,
 /**
  * Pausen einzelner Claude-Accounts (Nutzungslimit): Account-ID → ISO-Zeitpunkt
  */
-accountPauses: Record<string, string>, merges: Record<string, MergeEntry>, research: Record<string, ResearchEntry>, researchAuto: ResearchAutoState, planning: Record<string, PlanningEntry>, planningAuto: PlanningAutoState, };
+accountPauses: Record<string, string>, merges: Record<string, MergeEntry>, research: Record<string, ResearchEntry>, researchAuto: ResearchAutoState, 
+/**
+ * Recherchen des Autopilots ohne Empfehlung je Frage (Frage-ID → Zahl der Versuche)
+ */
+autopilotResearch: Record<string, number>, planning: Record<string, PlanningEntry>, planningAuto: PlanningAutoState, };
 
 /**
  * Ergebnis der Auswertung (Läufe einer Art, Start im Zeitraum)
