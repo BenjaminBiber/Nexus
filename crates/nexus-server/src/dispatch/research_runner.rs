@@ -750,13 +750,14 @@ Repo-Pfad setzen.",
             )
             .await?;
         let board = ctx.board(ticket.board_id).await?;
-        ctx.notify(&DispatchNotice {
-            kind: DispatchNoticeKind::Blocked,
-            ticket_id: Some(ticket.id.clone()),
-            title: ticket.title.clone(),
-            text: reason.to_string(),
-            repo_path: board.and_then(|board| board.repo_path),
-        })
+        // Nur Autopilot-Tickets landen hier: „Autopilot steckt fest“ statt „blockiert“
+        ctx.notify(&DispatchNotice::blocked(
+            true,
+            &ticket.id,
+            &ticket.title,
+            reason,
+            board.and_then(|board| board.repo_path),
+        ))
         .await;
         Ok(())
     }

@@ -1028,9 +1028,12 @@ async fn autopilot_ohne_empfehlung_zweiter_versuch_mit_groesserem_profil_dann_bl
     assert_eq!(blocked.status, TicketStatus::Blocked);
     assert_eq!(blocked.blocked_reason.as_deref(), Some(reason.as_str()));
     let notice = f.notices.last().expect("Meldung");
-    assert_eq!(notice.kind, DispatchNoticeKind::Blocked);
+    assert_eq!(notice.kind, DispatchNoticeKind::Stuck);
     assert_eq!(notice.ticket_id.as_deref(), Some(ticket.as_str()));
-    assert_eq!(notice.text, reason);
+    assert_eq!(
+        notice.text,
+        format!("Autopilot steckt fest: {ticket} – {reason}")
+    );
     assert_eq!(
         detail(&f, &question).await.view.question.state,
         QuestionState::Open

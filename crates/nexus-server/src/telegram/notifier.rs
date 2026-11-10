@@ -82,6 +82,8 @@ impl TelegramNotice<'_> {
             DispatchNoticeKind::Question => Occasion::Question,
             DispatchNoticeKind::Merged => Occasion::Merged,
             DispatchNoticeKind::Paused => Occasion::Paused,
+            // Eine Sackgasse im Autopilot: Schalter und Knöpfe wie bei einem blockierten Ticket
+            DispatchNoticeKind::Stuck => Occasion::Blocked,
             DispatchNoticeKind::Blocked => match notice.text.trim() {
                 reason if reason.starts_with(MERGE_PREFIX) => Occasion::Merge,
                 reason if reason.starts_with(REVIEW_PREFIX) => Occasion::Review,
@@ -278,6 +280,23 @@ mod tests {
             TelegramNotice::Dispatch(&notice(DispatchNoticeKind::Blocked, "Zugang fehlt"))
                 .occasion(),
             Occasion::Blocked
+        );
+    }
+
+    #[test]
+    fn stuck_zaehlt_wie_blockiert_und_traegt_die_knoepfe_dazu() {
+        // Auch ein Grund mit „Merge:“ dahinter bleibt hier ein blockiertes Ticket
+        let stuck = notice(
+            DispatchNoticeKind::Stuck,
+            "Autopilot steckt fest: NXS-0042 – Merge: Konflikt",
+        );
+        assert_eq!(
+            TelegramNotice::Dispatch(&stuck).occasion(),
+            Occasion::Blocked
+        );
+        assert_eq!(
+            labels(&TelegramNotice::Dispatch(&stuck).keyboard().expect("Knöpfe")),
+            ["Grund", "Kommentar schreiben", "Zurück nach Geplant"]
         );
     }
 
