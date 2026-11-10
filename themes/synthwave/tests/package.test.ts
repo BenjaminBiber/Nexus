@@ -1,5 +1,5 @@
 // Paket: Vite-Build nach dist/ mit main.js (ESM, export default), manifest.json und theme.css; React und SDK bleiben extern
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -86,7 +86,7 @@ describe('Synthwave-Theme-Paket', () => {
     expect(literal.sort()).toEqual([...BASE].sort());
   });
 
-  it('gilt nur im Schema „Synthwave“: jede Regel hängt an :root[data-theme=\'synthwave\'], kein @import, kein url()', () => {
+  it('gilt nur im Schema „Synthwave“: jede Regel hängt an :root[data-theme=\'synthwave\'], kein @import, url() nur auf Schriften im Paket', () => {
     const css = readFileSync(join(theme, 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     const frame = /^(from|to|\d+%)$/;
     const selectors = [...css.matchAll(/([^{}]+)\{/g)]
@@ -96,7 +96,28 @@ describe('Synthwave-Theme-Paket', () => {
     expect(parts.length).toBeGreaterThan(0);
     expect(parts.filter((p) => !p.startsWith(":root[data-theme='synthwave']"))).toEqual([]);
     expect(css).not.toMatch(/@import/);
-    expect(css).not.toMatch(/url\(/);
+    // url() nur relativ und auf Dateien, die im gebauten Paket liegen
+    const urls = [...css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)].map((m) => m[1]!);
+    expect(urls).toHaveLength(5);
+    for (const url of urls) {
+      expect(url).toMatch(/^assets\/fonts\/[\w-]+\.woff2$/);
+      expect(existsSync(join(dist, url)), url).toBe(true);
+    }
+  });
+
+  it('die Schriften sind zusammen kleiner als 150 KB, der Kopfkommentar nennt Schriften und Lizenz', () => {
+    const fonts = join(theme, 'assets', 'fonts');
+    const total = readdirSync(fonts).reduce((sum, file) => sum + statSync(join(fonts, file)).size, 0);
+    expect(total).toBeLessThan(150 * 1024);
+    const head = readFileSync(join(theme, 'theme.css'), 'utf8').match(/^\/\*[\s\S]*?\*\//)?.[0] ?? '';
+    for (const text of ['SIL Open Font License', 'Orbitron', 'Exo 2', 'Mr Dafoe']) expect(head, text).toContain(text);
+  });
+
+  it('Fließtext leuchtet nicht: keine Regel setzt text-shadow auf body', () => {
+    const css = readFileSync(join(theme, 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
+    const body = rules.filter(([, sel]) => topLevel(sel!).some((p) => /(^|\s)body(\s*$|[\s.:[])/.test(p.trim())));
+    expect(body.filter(([, , decl]) => /text-shadow/.test(decl!)).map(([, sel]) => sel!.trim())).toEqual([]);
   });
 
   it('jedes Farbschema außer Outrun setzt genau die 14 Grundwerte', () => {
