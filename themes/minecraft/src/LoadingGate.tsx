@@ -12,8 +12,11 @@ import {
   MENU_BACKGROUND,
   MENU_LIST_BACKGROUND,
   PANORAMA_OVERLAY,
+  POPUP_BACKGROUND,
   TEXT_FIELD,
   TEXT_FIELD_HIGHLIGHTED,
+  XP_BACKGROUND,
+  XP_PROGRESS,
   panorama,
   type MinecraftResources,
 } from './resources.js';
@@ -40,6 +43,9 @@ function cssVariables(urls: Record<string, string>): CSSProperties {
   set('--mc-list-bg', MENU_LIST_BACKGROUND);
   set('--mc-sep-top', HEADER_SEPARATOR);
   set('--mc-sep-bottom', FOOTER_SEPARATOR);
+  set('--mc-popup', POPUP_BACKGROUND);
+  set('--mc-xp-bg', XP_BACKGROUND);
+  set('--mc-xp-fill', XP_PROGRESS);
   return vars as CSSProperties;
 }
 

@@ -5,11 +5,24 @@ import { NavIcon } from './NavIcon.js';
 import { THEME_ID } from './resources.js';
 import { MINECRAFT_SETTINGS } from './settings.js';
 import { McButtonSlot } from './slots/McButtonSlot.js';
+import { McCard } from './slots/McCard.js';
+import { McDialog } from './slots/McDialog.js';
 import { McInput } from './slots/McInput.js';
+import { McPanel } from './slots/McPanel.js';
+import { McProgress } from './slots/McProgress.js';
 
 const theme: ThemeDefinition = {
   id: THEME_ID,
-  slots: { Shell: MinecraftShell, NavIcon, Button: McButtonSlot, Input: McInput },
+  slots: {
+    Shell: MinecraftShell,
+    NavIcon,
+    Button: McButtonSlot,
+    Input: McInput,
+    Progress: McProgress,
+    Card: McCard,
+    Panel: McPanel,
+    Dialog: McDialog,
+  },
   settingsSchema: MINECRAFT_SETTINGS,
 };
 

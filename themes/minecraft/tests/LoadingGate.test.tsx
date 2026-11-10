@@ -47,6 +47,9 @@ describe('LoadingGate', () => {
     expect(shell.style.getPropertyValue('--mc-list-bg')).toBe(at('assets/minecraft/textures/gui/menu_list_background.png'));
     expect(shell.style.getPropertyValue('--mc-sep-top')).toBe(at('assets/minecraft/textures/gui/header_separator.png'));
     expect(shell.style.getPropertyValue('--mc-sep-bottom')).toBe(at('assets/minecraft/textures/gui/footer_separator.png'));
+    expect(shell.style.getPropertyValue('--mc-popup')).toBe(at('assets/minecraft/textures/gui/sprites/popup/background.png'));
+    expect(shell.style.getPropertyValue('--mc-xp-bg')).toBe(at('assets/minecraft/textures/gui/sprites/hud/experience_bar_background.png'));
+    expect(shell.style.getPropertyValue('--mc-xp-fill')).toBe(at('assets/minecraft/textures/gui/sprites/hud/experience_bar_progress.png'));
   });
 
   it('ohne Netz: Hinweis mit „Erneut versuchen“, Seite bleibt bedienbar', () => {

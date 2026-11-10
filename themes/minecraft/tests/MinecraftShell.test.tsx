@@ -99,13 +99,14 @@ afterEach(() => {
 });
 
 describe('Theme-Definition', () => {
-  it('ersetzt die Slots Shell, NavIcon, Button und Input', () => {
-    expect(Object.keys(theme.slots).sort()).toEqual(['Button', 'Input', 'NavIcon', 'Shell']);
+  it('ersetzt die Slots Shell, NavIcon, Button, Input, Progress, Card, Panel und Dialog', () => {
+    expect(Object.keys(theme.slots).sort()).toEqual(['Button', 'Card', 'Dialog', 'Input', 'NavIcon', 'Panel', 'Progress', 'Shell']);
   });
 
-  it('manifest.json nennt die Slots Shell, NavIcon, Button und Input', () => {
+  it('manifest.json nennt dieselben Slots wie die Theme-Definition', () => {
     const manifest = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'manifest.json'), 'utf8')) as { slots: string[] };
-    expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Button', 'Input']);
+    expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Button', 'Input', 'Progress', 'Card', 'Panel', 'Dialog']);
+    expect([...manifest.slots].sort()).toEqual(Object.keys(theme.slots).sort());
   });
 });
 

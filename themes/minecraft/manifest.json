@@ -6,7 +6,7 @@
   "sdkVersion": "^1.1",
   "colorScheme": "dark",
   "startColor": "#3b2a1a",
-  "slots": ["Shell", "NavIcon", "Button", "Input"],
+  "slots": ["Shell", "NavIcon", "Button", "Input", "Progress", "Card", "Panel", "Dialog"],
   "permissions": {
     "network": [
       "piston-meta.mojang.com",

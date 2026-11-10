@@ -29,7 +29,12 @@ export const TEXT_FIELD = 'assets/minecraft/textures/gui/sprites/widget/text_fie
 export const TEXT_FIELD_HIGHLIGHTED = 'assets/minecraft/textures/gui/sprites/widget/text_field_highlighted.png';
 export const HOTBAR = 'assets/minecraft/textures/gui/sprites/hud/hotbar.png';
 export const HOTBAR_SELECTION = 'assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png';
-export const LOGO = 'assets/minecraft/textures/gui/title/minecraft.png';
+/** Fenster-Hintergrund für Bereiche und Dialoge (236×34 Spielpixel, 9-Slice Rand 6) */
+export const POPUP_BACKGROUND = 'assets/minecraft/textures/gui/sprites/popup/background.png';
+/** XP-Leiste des HUD: leere Leiste und Füllung, je 182×5 Spielpixel */
+export const XP_BACKGROUND = 'assets/minecraft/textures/gui/sprites/hud/experience_bar_background.png';
+export const XP_PROGRESS = 'assets/minecraft/textures/gui/sprites/hud/experience_bar_progress.png';
+export const LOGO ='assets/minecraft/textures/gui/title/minecraft.png';
 export const MENU_BACKGROUND = 'assets/minecraft/textures/gui/menu_background.png';
 export const MENU_LIST_BACKGROUND = 'assets/minecraft/textures/gui/menu_list_background.png';
 export const HEADER_SEPARATOR = 'assets/minecraft/textures/gui/header_separator.png';
@@ -56,6 +61,9 @@ export const MINECRAFT_ENTRIES: readonly string[] = [
   TEXT_FIELD_HIGHLIGHTED,
   HOTBAR,
   HOTBAR_SELECTION,
+  POPUP_BACKGROUND,
+  XP_BACKGROUND,
+  XP_PROGRESS,
   LOGO,
   MENU_BACKGROUND,
   MENU_LIST_BACKGROUND,
