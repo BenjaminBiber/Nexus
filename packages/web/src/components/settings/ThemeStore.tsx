@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useApi } from '../../api/ApiContext.js';
 import { ApiError } from '../../api/ApiError.js';
 import type { ThemeManifest } from '../../api/generated/themes.js';
-import type { StoreIndexEntryDto, StoreUpdateDto } from '../../api/types.js';
+import type { StoreIndexEntryDto, StoreIndexRepoDto, StoreUpdateDto } from '../../api/types.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { Notice } from './Notice.js';
 import { ThemeInstallDialog } from './ThemeInstallDialog.js';
@@ -20,7 +20,8 @@ type Pending =
   | { kind: 'install'; entry: StoreIndexEntryDto }
   | { kind: 'update'; update: StoreUpdateDto; hasCode: boolean; domains: string[] };
 
-// Store-Liste aller eingetragenen Repos mit Suche, Installieren (mit Rückfrage) und Updates (Bestätigung bei Code oder neuen Domains, D2)
+// Store-Liste aller eingetragenen Repos: Zustand der Stores (aufklappbar, mit erneuter Prüfung), Suche, Kacheln mit Vorschau
+// und Installieren (Rückfrage als eigener Dialog) sowie Updates (Bestätigung bei Code oder neuen Domains, D2)
 export function ThemeStore({ installed, onInstalled, reloadKey = 0, onManageRepos }: Props) {
   const api = useApi();
   const index = useAsync(() => api.getStoreIndex(), [api, reloadKey]);
@@ -30,6 +31,8 @@ export function ThemeStore({ installed, onInstalled, reloadKey = 0, onManageRepo
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [rechecked, setRechecked] = useState(false);
 
   const data = index.state.status === 'ready' ? index.state.data : null;
   const q = query.trim().toLowerCase();
@@ -80,33 +83,58 @@ export function ThemeStore({ installed, onInstalled, reloadKey = 0, onManageRepo
     }
   });
 
+  // Lädt Index und Updates neu, ohne die Kacheln auszublenden
+  const recheck = async () => {
+    if (checking) return;
+    setChecking(true);
+    await Promise.all([index.refresh(), updates.refresh()]);
+    setChecking(false);
+    setRechecked(true);
+  };
+
+  const count = entries.length === 1 ? '1 Theme' : `${entries.length} Themes`;
+
   return (
     <div className="theme-store">
+      {notice && <Notice tone="ok">{notice}</Notice>}
+      {error && <p className="save-status error" role="alert">{error}</p>}
+      {index.state.status === 'error' && <Notice tone="error">Store konnte nicht geladen werden: {index.state.message}</Notice>}
+
+      {data && data.repos.length > 0 && (
+        <StoreStatus repos={data.repos} checking={checking} lastChecked={rechecked ? 'gerade eben' : 'beim Öffnen des Dialogs'} onRecheck={() => void recheck()} />
+      )}
+
       {updateList.length > 0 && (
-        <>
+        <section className="store-updates" aria-labelledby="store-updates">
           <span id="store-updates" className="theme-store-label">Updates</span>
-          <ul className="snippet-list" aria-labelledby="store-updates">
+          <ul className="store-update-list" aria-labelledby="store-updates">
             {updateList.map((u) => (
-              <li key={`${u.repoId}/${u.id}`} className="snippet-row">
-                <span>{u.name}</span>
-                <span className="muted">{u.installedVersion} → {u.availableVersion}</span>
+              <li key={`${u.repoId}/${u.id}`} className="store-update-row">
+                <span className="store-update-name">{u.name}</span>
+                <span className="muted store-update-versions">{u.installedVersion} → {u.availableVersion}</span>
                 <button type="button" className="btn" disabled={busy} onClick={() => void update(u)}>Aktualisieren</button>
               </li>
             ))}
           </ul>
-        </>
+        </section>
       )}
-      {updates.state.status === 'ready' && updates.state.data.errors.map((e) => (
+      {/* Stores, die schon beim Index scheitern, erklärt ihre Zeile im Zustand; nur übrige Fehler der Update-Prüfung */}
+      {updates.state.status === 'ready' && updates.state.data.errors.filter((e) => !data?.repos.some((r) => r.id === e.repoId && !r.ok)).map((e) => (
         <Notice key={`${e.repoId}/${e.code}`} tone="info">Update-Prüfung: {e.message}</Notice>
       ))}
-      <input type="search" className="theme-store-search" aria-label="Store durchsuchen" placeholder="Themes suchen …" value={query} onChange={(e) => setQuery(e.target.value)} />
-      {index.state.status === 'error' && <Notice tone="error">Store konnte nicht geladen werden: {index.state.message}</Notice>}
-      {data?.repos.filter((r) => !r.ok).map((r) => (
-        <Notice key={r.id} tone="warn">{r.url}: {r.error?.message ?? 'Repo nicht ladbar'}</Notice>
-      ))}
+
+      <div className="store-search-row">
+        <label className="store-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          <input type="search" aria-label="Store durchsuchen" placeholder="Themes suchen …" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </label>
+        {data && data.repos.length > 0 && <span className="store-count">{count}</span>}
+      </div>
+
       {data && data.repos.length === 0 && (
         <div className="theme-store-empty">
-          <p className="muted">Noch kein Theme-Store eingetragen. Füge einen Store hinzu, um Themes zu finden.</p>
+          <strong>Noch kein Theme-Store eingetragen</strong>
+          <p className="muted">Füge einen Store hinzu, um Themes zu finden.</p>
           {onManageRepos && (
             <button type="button" className="btn" onClick={onManageRepos}>
               <span className="material-icons" aria-hidden="true">add</span>
@@ -115,26 +143,50 @@ export function ThemeStore({ installed, onInstalled, reloadKey = 0, onManageRepo
           )}
         </div>
       )}
-      {data && data.repos.length > 0 && entries.length === 0 && <p className="muted">Keine Themes gefunden</p>}
+      {data && data.repos.length > 0 && entries.length === 0 && (
+        <div className="theme-store-empty is-centered">
+          <strong>Keine Themes gefunden</strong>
+          {q && <span className="muted">Kein Theme passt zu „{query.trim()}“.</span>}
+        </div>
+      )}
+
       <ul className="store-grid">
         {entries.map((e) => (
           <li key={`${e.repoId}/${e.id}`} className="store-card">
-            {e.preview && <img src={e.preview} alt={`Vorschau: ${e.name}`} />}
-            <strong>{e.name}</strong>
-            <span className="muted">Version {e.version}</span>
-            {e.description && <p>{e.description}</p>}
-            <span className="muted store-repo">{e.repoUrl}</span>
-            {!e.compatible && <span className="notice warn">Nicht kompatibel</span>}
-            {isInstalled(e) ? (
-              <span className="muted">Installiert</span>
-            ) : (
-              <button type="button" className="btn primary" disabled={busy || !e.compatible} onClick={() => setPending({ kind: 'install', entry: e })}>Installieren</button>
-            )}
+            <div className="store-card-preview">
+              {e.preview ? (
+                <img src={e.preview} alt={`Vorschau: ${e.name}`} loading="lazy" />
+              ) : (
+                <div className="store-card-nopreview">
+                  <span className="material-icons" aria-hidden="true">image</span>
+                  Keine Vorschau
+                </div>
+              )}
+            </div>
+            <div className="store-card-body">
+              <div className="store-card-title">
+                <h3>{e.name}</h3>
+                <span className="store-card-version">v{e.version}</span>
+              </div>
+              <span className="store-card-host">
+                <StoreIcon />
+                {repoLabel(e.repoUrl).name}
+              </span>
+              {e.description && <p className="store-card-desc">{e.description}</p>}
+              {!e.compatible && <span className="store-pill is-warn">Nicht kompatibel</span>}
+              {isInstalled(e) ? (
+                <button type="button" className="store-card-btn is-installed" disabled>
+                  <span className="material-icons" aria-hidden="true">check</span>
+                  Installiert
+                </button>
+              ) : (
+                <button type="button" className="store-card-btn" disabled={busy || !e.compatible} onClick={() => setPending({ kind: 'install', entry: e })}>Installieren</button>
+              )}
+            </div>
           </li>
         ))}
       </ul>
-      {notice && <Notice tone="ok">{notice}</Notice>}
-      {error && <p className="save-status error" role="alert">{error}</p>}
+
       {pending?.kind === 'install' && (
         <ThemeInstallDialog
           manifest={{ name: pending.entry.name, version: pending.entry.version }}
@@ -157,5 +209,115 @@ export function ThemeStore({ installed, onInstalled, reloadKey = 0, onManageRepo
         />
       )}
     </div>
+  );
+}
+
+// Zustand der eingetragenen Stores: Kopfzeile mit Punkten und Zusammenfassung, aufgeklappt je Store eine Zeile.
+// Startet eingeklappt; Fehler zeigt die Kopfzeile (roter Punkt, Hinweis).
+function StoreStatus({ repos, checking, lastChecked, onRecheck }: { repos: StoreIndexRepoDto[]; checking: boolean; lastChecked: string; onRecheck: () => void }) {
+  const failed = repos.filter((r) => !r.ok).length;
+  const [open, setOpen] = useState(false);
+  const reachable = repos.length - failed;
+  return (
+    <section className="store-status">
+      <button type="button" className="store-status-head" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <StoreIcon />
+        <span className="store-status-title">Theme-Stores</span>
+        <span className="store-status-dots" aria-hidden="true">
+          {repos.map((r) => <span key={r.id} className={`store-dot${r.ok ? '' : ' is-error'}${checking && !r.ok ? ' is-checking' : ''}`} />)}
+        </span>
+        <span className="store-status-summary">{reachable} von {repos.length} erreichbar</span>
+        {failed > 0 && <span className="store-pill is-error">{failed === 1 ? '1 Store nicht erreichbar' : `${failed} Stores nicht erreichbar`}</span>}
+        <span className="store-status-toggle">{open ? 'Ausblenden' : 'Details'}</span>
+        <svg className="store-status-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+      </button>
+      {open && (
+        <ul className="store-status-list" aria-label="Theme-Stores">
+          {repos.map((r) => <StoreRow key={r.id} repo={r} checking={checking} lastChecked={lastChecked} onRecheck={onRecheck} />)}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function StoreRow({ repo, checking, lastChecked, onRecheck }: { repo: StoreIndexRepoDto; checking: boolean; lastChecked: string; onRecheck: () => void }) {
+  const label = repoLabel(repo.url);
+  if (repo.ok) {
+    return (
+      <li className="store-row">
+        <span className="store-dot" aria-hidden="true" />
+        <div className="store-row-text">
+          <span className="store-row-name">{label.name}</span>
+          <span className="store-row-url" title={repo.url}>{label.path}</span>
+        </div>
+        <span className="store-row-count">{repo.entryCount === 1 ? '1 Theme' : `${repo.entryCount} Themes`}</span>
+        <span className="store-pill is-ok">Erreichbar</span>
+      </li>
+    );
+  }
+  const badge = checking ? 'prüfe …' : errorBadge(repo.error);
+  const notFound = /\b404\b/.test(repo.error?.message ?? '');
+  const text = notFound && label.releases
+    ? 'Der Store antwortet mit „Nicht gefunden“. Meist fehlt im neuesten Release die Datei nexus-themes.json – oder das Repo ist privat.'
+    : repo.error?.message ?? 'Der Store konnte nicht geladen werden.';
+  return (
+    <li className="store-row is-error">
+      <span className={`store-dot is-error${checking ? ' is-checking' : ''}`} aria-hidden="true" />
+      <div className="store-row-text">
+        <div className="store-row-line">
+          <span className="store-row-name">{label.name}</span>
+          <span className={`store-row-badge${checking ? ' is-checking' : ''}`}>{badge}</span>
+        </div>
+        <span className="store-row-url" title={repo.url}>{label.path}</span>
+        <p className="store-row-error">{text} Themes aus diesem Store und die Update-Prüfung sind solange nicht verfügbar.</p>
+        <span className="store-row-checked">Zuletzt geprüft: {lastChecked}</span>
+      </div>
+      <div className="store-row-actions">
+        {label.releases && (
+          <a className="store-row-link" href={label.releases} target="_blank" rel="noreferrer">
+            Releases öffnen
+            <span className="material-icons" aria-hidden="true">open_in_new</span>
+          </a>
+        )}
+        <button type="button" className="btn store-row-retry" disabled={checking} onClick={onRecheck}>
+          <span className="material-icons" aria-hidden="true">refresh</span>
+          {checking ? 'Prüfe …' : 'Erneut prüfen'}
+        </button>
+      </div>
+    </li>
+  );
+}
+
+// Kurzer Fehlerhinweis je Code; bei HTTP-Fehlern der Status aus der Meldung des Servers
+function errorBadge(error: StoreIndexRepoDto['error']): string {
+  if (!error) return 'Fehler';
+  const status = /HTTP (\d{3})/.exec(error.message)?.[1] ?? /\b(\d{3})\b/.exec(error.message)?.[1];
+  switch (error.code) {
+    case 'store-index-http': return status ? `HTTP ${status}` : 'HTTP-Fehler';
+    case 'store-index-timeout': return 'Zeitüberschreitung';
+    case 'store-index-unreachable': return 'Nicht erreichbar';
+    case 'store-index-too-large': return 'Zu groß';
+    case 'store-index-invalid': return 'Ungültig';
+    default: return error.code;
+  }
+}
+
+// Anzeigename eines Store-Repos: GitHub-Releases als „github.com/owner/repo“ mit Link auf die Releases, sonst Host (mit Port)
+function repoLabel(url: string): { name: string; path: string; releases?: string } {
+  try {
+    const u = new URL(url);
+    const gh = u.hostname === 'github.com' ? /^\/([^/]+)\/([^/]+)\/(releases\/.*)$/.exec(u.pathname) : null;
+    if (gh) return { name: `github.com/${gh[1]}/${gh[2]}`, path: `…/${gh[3]}`, releases: `https://github.com/${gh[1]}/${gh[2]}/releases` };
+    return { name: u.host, path: url };
+  } catch {
+    return { name: url, path: url };
+  }
+}
+
+function StoreIcon() {
+  return (
+    <svg className="store-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="7" rx="2" /><rect x="3" y="13" width="18" height="7" rx="2" /><path d="M7 7.5h.01" /><path d="M7 16.5h.01" />
+    </svg>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useContext, useId, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useContext, useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useApi } from '../../api/ApiContext.js';
 import type { ThemeManifest } from '../../api/generated/themes.js';
@@ -109,10 +109,7 @@ export function ThemesPanel() {
       >
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /></svg>
       </button>
-      <button type="button" className="btn primary theme-install-btn" aria-haspopup="dialog" onClick={() => setDialog('store')}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12" /><path d="M7 11l5 5 5-5" /><path d="M4 20h16" /></svg>
-        <span>Theme installieren</span>
-      </button>
+      <InstallSplitButton onInstall={() => setDialog('store')} onManageRepos={() => setDialog('repos')} />
     </div>
   );
 
@@ -133,16 +130,6 @@ export function ThemesPanel() {
                 </button>
               ))}
             </div>
-            <button
-              type="button"
-              className="icon-btn theme-repos-btn"
-              aria-label="Theme-Stores verwalten"
-              title="Theme-Store hinzufügen oder verwalten"
-              aria-haspopup="dialog"
-              onClick={() => setDialog('repos')}
-            >
-              <span className="material-icons" aria-hidden="true">add</span>
-            </button>
             <label className="theme-search">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
               <span className="sr-only">Themes durchsuchen</span>
@@ -196,6 +183,71 @@ export function ThemesPanel() {
         </ModalFrame>
       )}
     </SettingsPanel>
+  );
+}
+
+// Kombi-Knopf „Theme installieren“ mit Dreipunkt-Menü (Theme-Stores verwalten). Menü: Pfeiltasten, Esc und Klick daneben schließen.
+function InstallSplitButton({ onInstall, onManageRepos }: { onInstall: () => void; onManageRepos: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const menuId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    ref.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+
+  const close = () => {
+    setOpen(false);
+    toggle.current?.focus();
+  };
+
+  const onMenuKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    const at = items.indexOf(document.activeElement as HTMLElement);
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      close();
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[(at + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length]?.focus();
+    } else if (e.key === 'Tab') {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div className="theme-install-split" ref={ref}>
+      <button type="button" className="btn primary theme-install-btn" aria-haspopup="dialog" onClick={onInstall}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12" /><path d="M7 11l5 5 5-5" /><path d="M4 20h16" /></svg>
+        <span>Theme installieren</span>
+      </button>
+      <button
+        ref={toggle}
+        type="button"
+        className="btn primary theme-install-more"
+        aria-label="Weitere Aktionen"
+        title="Weitere Aktionen"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        onClick={() => setOpen(!open)}
+      >
+        <span className="material-icons" aria-hidden="true">more_horiz</span>
+      </button>
+      {open && (
+        <div id={menuId} className="theme-install-menu" role="menu" aria-label="Weitere Aktionen" onKeyDown={onMenuKey}>
+          <button type="button" role="menuitem" onClick={() => { setOpen(false); onManageRepos(); }}>
+            <span className="material-icons" aria-hidden="true">dns</span>
+            <span>Theme-Stores verwalten</span>
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -285,18 +337,19 @@ function UploadError({ error }: { error: { message: string; fields: string[] } }
 }
 
 // Dialog der Themes-Seite: Kopf mit Titel, Satz darunter, optionaler Aktion und Schließen; Esc und Klick daneben schließen.
-// Steht darin eine Installations-Rückfrage, bricht Esc nur diese ab (sie hört selbst auf Esc)
+// Liegt eine Installations-Rückfrage (eigener Dialog darüber) offen, gelten Esc und Klick daneben nur ihr
 function ModalFrame({ title, hint, action, wide, onClose, children }: { title: string; hint?: string; action?: ReactNode; wide?: boolean; onClose: () => void; children: ReactNode }) {
   const titleId = useId();
+  const closeUnlessConfirming = () => { if (!document.querySelector('.theme-install-modal')) onClose(); };
   return (
-    <DbModal labelledBy={titleId} onEscape={() => { if (!document.querySelector('.theme-modal .theme-install')) onClose(); }} onBackdrop={onClose} className={`panel db-modal theme-modal${wide ? ' wide' : ''}`}>
+    <DbModal labelledBy={titleId} onEscape={closeUnlessConfirming} onBackdrop={closeUnlessConfirming} className={`panel db-modal theme-modal${wide ? ' wide theme-modal-store' : ''}`}>
       <header className="theme-modal-head">
         <div className="theme-modal-title">
           <h2 id={titleId}>{title}</h2>
           {hint && <p>{hint}</p>}
         </div>
         {action}
-        <button type="button" className="icon-btn" aria-label="Schließen" onClick={onClose}>
+        <button type="button" className="icon-btn theme-modal-close" aria-label="Dialog schließen" onClick={onClose}>
           <span className="material-icons" aria-hidden="true">close</span>
         </button>
       </header>

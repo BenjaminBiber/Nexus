@@ -33,14 +33,17 @@ function setup(opts: { index?: StoreIndexDto; updates?: StoreUpdatesDto; install
 }
 
 describe('Store: Durchsuchen', () => {
-  it('zeigt Name, Version, Beschreibung, Vorschau und Repo', async () => {
+  it('zeigt Name, Version, Beschreibung, Vorschau und Store', async () => {
     setup();
     const card = (await screen.findByText('Forest')).closest('li')!;
-    expect(within(card).getByText('Version 1.0.0')).toBeTruthy();
+    expect(within(card).getByText('v1.0.0')).toBeTruthy();
     expect(within(card).getByText('Grüner Wald')).toBeTruthy();
     expect(within(card).getByAltText('Vorschau: Forest')).toBeTruthy();
-    expect(within(card).getByText(repoOk.url)).toBeTruthy();
-    expect(within(screen.getByText('Ocean').closest('li')!).queryByRole('img')).toBeNull();
+    expect(within(card).getByText('example.com')).toBeTruthy();
+    const ocean = screen.getByText('Ocean').closest('li')!;
+    expect(within(ocean).queryByRole('img')).toBeNull();
+    expect(within(ocean).getByText('Keine Vorschau')).toBeTruthy();
+    expect(screen.getByText('2 Themes')).toBeTruthy();
   });
 
   it('filtert nach Name, id und Beschreibung', async () => {
@@ -52,9 +55,11 @@ describe('Store: Durchsuchen', () => {
     await userEvent.clear(search);
     await userEvent.type(search, 'ocea');
     expect(screen.getByText('Ocean')).toBeTruthy();
+    expect(screen.getByText('1 Theme')).toBeTruthy();
     await userEvent.clear(search);
     await userEvent.type(search, 'xyz');
     expect(screen.getByText('Keine Themes gefunden')).toBeTruthy();
+    expect(screen.getByText('Kein Theme passt zu „xyz“.')).toBeTruthy();
   });
 
   it('weist ohne Repos auf die Repo-Verwaltung hin', async () => {
@@ -74,7 +79,40 @@ describe('Store: Durchsuchen', () => {
 
   it('zeigt die Meldung eines fehlerhaften Repos und die übrigen Einträge', async () => {
     setup({ index: { entries: [entry()], repos: [repoOk, { id: 'r2', url: 'https://bad.example/x.json', ok: false, entryCount: 0, skipped: [], error: { code: 'store-index-http', message: 'Repo antwortet mit 404' } }] } });
-    expect(await screen.findByText(/Repo antwortet mit 404/)).toBeTruthy();
+    await userEvent.click(await screen.findByRole('button', { name: /Theme-Stores/ }));
+    expect(screen.getByText(/Repo antwortet mit 404/)).toBeTruthy();
+    expect(screen.getByText('HTTP 404')).toBeTruthy();
+    expect(screen.getByText('Ocean')).toBeTruthy();
+  });
+
+  it('fasst die Stores zusammen und klappt die Details auf', async () => {
+    setup();
+    const head = await screen.findByRole('button', { name: /Theme-Stores/ });
+    expect(head.textContent).toContain('1 von 1 erreichbar');
+    expect(head.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('list', { name: 'Theme-Stores' })).toBeNull();
+    await userEvent.click(head);
+    const list = screen.getByRole('list', { name: 'Theme-Stores' });
+    expect(within(list).getByText('Erreichbar')).toBeTruthy();
+    expect(within(list).getByText('2 Themes')).toBeTruthy();
+  });
+
+  it('startet auch bei einem nicht erreichbaren GitHub-Store eingeklappt, verlinkt die Releases und prüft erneut', async () => {
+    const url = 'https://github.com/acme/themes/releases/latest/download/nexus-themes.json';
+    const bad = { id: 'r2', url, ok: false, entryCount: 0, skipped: [], error: { code: 'store-index-http', message: 'Das Repo antwortet mit HTTP 404.' } };
+    const getStoreIndex = vi.fn(async () => ({ entries: [entry()], repos: [repoOk, bad] }));
+    setup({ extra: { getStoreIndex } });
+    const head = await screen.findByRole('button', { name: /Theme-Stores/ });
+    expect(head.getAttribute('aria-expanded')).toBe('false');
+    expect(head.textContent).toContain('1 Store nicht erreichbar');
+    await userEvent.click(head);
+    const list = screen.getByRole('list', { name: 'Theme-Stores' });
+    expect(within(list).getByText('github.com/acme/themes')).toBeTruthy();
+    expect(within(list).getByText(/Meist fehlt im neuesten Release die Datei nexus-themes.json/)).toBeTruthy();
+    expect(within(list).getByRole('link', { name: /Releases öffnen/ }).getAttribute('href')).toBe('https://github.com/acme/themes/releases');
+    await userEvent.click(within(list).getByRole('button', { name: /Erneut prüfen/ }));
+    await waitFor(() => expect(getStoreIndex).toHaveBeenCalledTimes(2));
+    expect(await within(list).findByText('Zuletzt geprüft: gerade eben')).toBeTruthy();
     expect(screen.getByText('Ocean')).toBeTruthy();
   });
 });

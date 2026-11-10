@@ -614,6 +614,149 @@
 [data-theme='win95'] .tx-bubble { border: 0; background: var(--w95-tooltip); box-shadow: inset 0 0 0 1px var(--w95-dark); }
 [data-theme='win95'] .sp-head :is(.sp-facts, .sp-fact .material-icons, .sp-kicker .muted) { color: var(--w95-title-fg); }
 
+/* ---------- Einstellungen › Themes und Theme-Store: Kacheln, Kombi-Knopf, Dialoge ---------- */
+
+/* Seitenkopf: Zurücksetzen und Kombi-Knopf in Knopfhöhe; der Kombi-Knopf als zwei aneinanderliegende Knöpfe */
+[data-theme='win95'] :is(.theme-reset, .theme-install-btn, .theme-install-more) { height: 23px; min-height: 23px; }
+[data-theme='win95'] .theme-reset { width: 28px; }
+[data-theme='win95'] .theme-reset svg { width: 14px; height: 14px; }
+[data-theme='win95'] .theme-install-btn { gap: 6px; padding: 0 10px; font-size: 12px; }
+[data-theme='win95'] .theme-install-btn svg { width: 14px; height: 14px; }
+[data-theme='win95'] .theme-install-split { gap: 0; border-radius: 0; }
+[data-theme='win95'] .theme-install-split:has(> :focus-visible) { outline: none; }
+[data-theme='win95'] .theme-install-split > .btn:focus-visible { background: var(--w95-face); outline: 1px dotted var(--w95-dark); outline-offset: -4px; }
+[data-theme='win95'] .theme-install-more { width: 23px; min-width: 23px; border: 0; box-shadow: var(--w95-raised); }
+[data-theme='win95'] .theme-install-more .material-icons { font-size: 16px; }
+[data-theme='win95'] .theme-install-more[aria-expanded='true'] { box-shadow: var(--w95-pressed); padding-top: 1px; padding-left: 1px; }
+/* Menü am Kombi-Knopf: erhabene Fläche, Eintrag beim Überfahren blau */
+[data-theme='win95'] .theme-install-menu { top: 100%; min-width: 200px; padding: 3px; border: 0; border-radius: 0; background: var(--w95-face); box-shadow: var(--w95-outer); }
+[data-theme='win95'] .theme-install-menu [role='menuitem'] { gap: 8px; padding: 3px 20px 3px 6px; border-radius: 0; font-size: 12px; }
+[data-theme='win95'] .theme-install-menu [role='menuitem']:is(:hover, :focus-visible) { background: var(--w95-select-bg); color: var(--w95-select-fg); outline: none; }
+[data-theme='win95'] .theme-install-menu [role='menuitem'] .material-icons { font-size: 16px; color: inherit; }
+
+/* Filter als Knopfreihe (gewählt = eingedrückt, geriffelt), Suche als eingelassenes Feld mit Lupe */
+[data-theme='win95'] .theme-filter { gap: 0; padding: 0; border-radius: 0; background: none; }
+[data-theme='win95'] .theme-filter button { height: 23px; padding: 0 10px; border-radius: 0; background: var(--w95-face); color: var(--w95-dark); font-size: 12px; font-weight: 400; box-shadow: var(--w95-raised); }
+[data-theme='win95'] .theme-filter button[aria-pressed='true'] { background: var(--w95-dither); box-shadow: var(--w95-pressed); padding-top: 1px; }
+[data-theme='win95'] .theme-filter-count { color: var(--w95-dark); font-weight: 400; }
+[data-theme='win95'] .theme-search { height: 22px; min-width: 200px; gap: 4px; padding: 0 4px; border: 0; border-radius: 0; background: var(--w95-field); color: var(--w95-dark); box-shadow: var(--w95-sunken); }
+[data-theme='win95'] .theme-search:focus-within { border-color: transparent; }
+[data-theme='win95'] .theme-search svg { width: 13px; height: 13px; }
+[data-theme='win95'] .theme-search :is(input:not([type='checkbox']):not([type='radio']):not([type='range'])) { min-height: 0; padding: 0; background: transparent; box-shadow: none; }
+
+/* Theme-Kacheln wie Auswahlkarten: erhaben, das aktuelle eingedrückt und geriffelt; Vorschau eingelassen */
+[data-theme='win95'] .theme-grid { gap: 10px; }
+[data-theme='win95'] .theme-card { gap: 8px; padding: 6px; border: 0; border-radius: 0; background: var(--w95-face); box-shadow: var(--w95-raised); }
+[data-theme='win95'] .theme-card.active { border: 0; background: var(--w95-dither); box-shadow: var(--w95-pressed); }
+[data-theme='win95'] .theme-card:has(.theme-select:hover:not(:disabled)) { border-color: transparent; }
+[data-theme='win95'] .theme-select { border-radius: 0; }
+[data-theme='win95'] .theme-select:focus-visible { outline: 1px dotted var(--w95-dark); outline-offset: -5px; }
+[data-theme='win95'] .theme-preview { height: 120px; border-radius: 0; border: 1px solid; border-color: var(--w95-shadow) var(--w95-light) var(--w95-light) var(--w95-shadow); }
+[data-theme='win95'] .theme-card-title { gap: 2px; padding: 0 2px; }
+[data-theme='win95'] .theme-card-name strong { font-size: 12px; font-weight: 700; }
+[data-theme='win95'] .theme-card-meta { font-size: 11px; color: var(--w95-dark); }
+[data-theme='win95'] .theme-card-chips { gap: 4px; padding: 0 2px 2px; }
+/* Plaketten: kleine eingelassene Felder; „aktuell“ in Auswahlblau */
+[data-theme='win95'] :is(.theme-chip, .theme-badge.current, .store-pill, .store-card-version, .store-row-badge) {
+  height: auto; padding: 1px 5px; border: 0; border-radius: 0; background: var(--w95-field); color: var(--w95-dark); font-family: var(--font-sans); font-size: 11px; font-weight: 400; box-shadow: inset 0 0 0 1px var(--w95-shadow);
+}
+[data-theme='win95'] .theme-chip svg { width: 11px; height: 11px; }
+[data-theme='win95'] .theme-chip.official { color: var(--w95-navy); }
+[data-theme='win95'] .theme-chip.with-code { background: var(--w95-tooltip); color: var(--w95-dark); }
+[data-theme='win95'] .theme-badge.current { background: var(--w95-select-bg); color: var(--w95-select-fg); box-shadow: none; }
+[data-theme='win95'] .theme-remove { width: 22px; height: 21px; min-width: 0; margin: -2px 0; padding: 0; }
+[data-theme='win95'] .theme-remove .material-icons { font-size: 15px; }
+[data-theme='win95'] .theme-remove:hover:not(:disabled) { color: var(--w95-dark); background: var(--w95-face); }
+[data-theme='win95'] :is(.theme-empty, .theme-store-empty) { border: 0; border-radius: 0; background: var(--w95-face); color: var(--w95-dark); box-shadow: var(--w95-etched); }
+
+/* Dialoge der Themes-Seite: Fenster mit blauer Titelleiste, Schließen als Kreuzknopf darin; Satz und Datei-Knopf darunter */
+[data-theme='win95'] .db-modal.theme-modal { gap: 8px; padding: 3px; border-radius: 0; box-shadow: var(--w95-outer); }
+[data-theme='win95'] .db-modal.theme-modal .theme-modal-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'bar bar' 'hint action'; align-items: center; gap: 8px 12px; padding: 0; }
+[data-theme='win95'] .theme-modal-head .theme-modal-title { display: contents; }
+[data-theme='win95'] .db-modal.theme-modal .theme-modal-title h2 { grid-area: bar; margin: 0; padding: 3px 26px 3px 4px; background: var(--w95-title); color: var(--w95-title-fg); font-size: 12px; font-weight: 700; letter-spacing: 0; }
+[data-theme='win95'] .db-modal.theme-modal .theme-modal-title p { grid-area: hint; margin: 0 0 0 9px; color: var(--w95-dark); font-size: 12px; }
+[data-theme='win95'] .theme-modal-head > :not(.theme-modal-title):not(.theme-modal-close) { grid-area: action; margin-right: 9px; }
+[data-theme='win95'] .db-modal.theme-modal .theme-modal-close { grid-area: bar; justify-self: end; z-index: 1; width: 16px; height: 14px; min-width: 0; min-height: 0; margin-right: 3px; padding: 0; color: var(--w95-dark); box-shadow: var(--w95-raised); }
+[data-theme='win95'] .theme-modal-close .material-icons { font-size: 12px; font-weight: 700; }
+[data-theme='win95'] .theme-modal-close:active { padding: 1px 0 0 1px; box-shadow: var(--w95-pressed); }
+[data-theme='win95'] .db-modal.theme-modal .theme-file-btn { gap: 6px; height: 23px; padding: 0 10px; border: 0; border-radius: 0; font-size: 12px; font-weight: 400; box-shadow: var(--w95-raised); }
+[data-theme='win95'] .theme-file-btn .material-icons { font-size: 15px; }
+[data-theme='win95'] .theme-file-btn:focus-within { outline: 1px dotted var(--w95-dark); outline-offset: -4px; }
+[data-theme='win95'] .db-modal.theme-modal > :not(.theme-modal-head) { margin-inline: 9px; }
+[data-theme='win95'] .db-modal.theme-modal > :last-child { margin-bottom: 9px; }
+[data-theme='win95'] .db-modal.theme-modal-store .theme-store { gap: 10px; padding: 0; }
+/* Rückfragen (Installieren, Entfernen): Meldungsfenster, Überschrift als Titelleiste */
+[data-theme='win95'] .db-modal.theme-confirm { gap: 10px; border-radius: 0; }
+[data-theme='win95'] .db-modal.theme-confirm h2 { order: -1; margin: 0 -9px; padding: 2px 4px; background: var(--w95-title); color: var(--w95-title-fg); font-size: 12px; font-weight: 700; }
+[data-theme='win95'] .theme-confirm-icon { width: 32px; height: 32px; border-radius: 0; background: none; color: var(--w95-navy); }
+[data-theme='win95'] .theme-confirm-icon.is-code { color: var(--w95-maroon); }
+[data-theme='win95'] .theme-confirm-icon .material-icons { font-size: 32px; }
+[data-theme='win95'] .theme-confirm p { color: var(--w95-dark); font-size: 12px; }
+[data-theme='win95'] .theme-install-label { color: var(--w95-dark); font-size: 12px; letter-spacing: 0; text-transform: none; }
+[data-theme='win95'] .theme-install-domains ul { padding: 4px 4px 4px 22px; background: var(--w95-field); box-shadow: var(--w95-sunken); font-family: var(--font-sans); font-size: 12px; }
+[data-theme='win95'] .theme-confirm .actions { justify-content: center; margin-top: 2px; }
+
+/* Theme-Stores verwalten: Liste als weißes, eingelassenes Feld */
+[data-theme='win95'] .store-repo-list { gap: 0; padding: 2px; background: var(--w95-field); box-shadow: var(--w95-sunken); }
+[data-theme='win95'] .store-repo-list:empty { display: none; }
+[data-theme='win95'] .store-repo-row { padding: 2px 2px 2px 6px; border: 0; border-radius: 0; background: none; font-size: 12px; }
+[data-theme='win95'] .store-repo-row > .material-icons { color: var(--w95-dark); font-size: 15px; }
+
+/* Zustand der Stores: Gruppenrahmen; aufgeklappt als weiße Liste wie eine Listenansicht */
+[data-theme='win95'] .store-status { border: 0; border-radius: 0; background: var(--w95-face); box-shadow: var(--w95-etched); }
+[data-theme='win95'] .store-status-head { min-height: 28px; gap: 8px; padding: 0 8px; font-size: 12px; }
+[data-theme='win95'] .store-status-head:focus-visible { outline: 1px dotted var(--w95-dark); outline-offset: -4px; }
+[data-theme='win95'] .store-icon { color: var(--w95-dark); }
+[data-theme='win95'] :is(.store-status-title, .store-status-summary, .store-status-toggle) { font-size: 12px; color: var(--w95-dark); }
+[data-theme='win95'] .store-status-title { font-weight: 700; }
+[data-theme='win95'] .store-status-chevron { stroke: var(--w95-dark); }
+[data-theme='win95'] .store-dot { width: 8px; height: 8px; border-radius: 0; background: var(--w95-green); box-shadow: inset 0 0 0 1px var(--w95-dark); }
+[data-theme='win95'] .store-dot.is-error { background: var(--w95-red); }
+[data-theme='win95'] .store-dot.is-checking { background: var(--w95-yellow); animation: none; }
+[data-theme='win95'] .store-pill.is-ok { color: var(--w95-green); }
+[data-theme='win95'] :is(.store-pill.is-error, .store-row-badge) { color: var(--w95-maroon); }
+[data-theme='win95'] .store-row-badge.is-checking { color: var(--w95-dark); }
+[data-theme='win95'] .store-status-list { margin: 0 6px 6px; padding: 2px; border: 0; background: var(--w95-field); box-shadow: var(--w95-sunken); }
+[data-theme='win95'] .store-row { gap: 10px; padding: 6px 8px; }
+[data-theme='win95'] .store-row + .store-row { border-top: 1px dotted var(--w95-shadow); }
+[data-theme='win95'] .store-row.is-error > .store-dot { margin-top: 3px; }
+[data-theme='win95'] :is(.store-row-name, .store-row-count) { font-size: 12px; color: var(--w95-dark); }
+[data-theme='win95'] .store-row-name { font-weight: 700; }
+[data-theme='win95'] .store-row-url { font-size: 11px; color: var(--w95-shadow); }
+[data-theme='win95'] .store-row-error { margin-top: 2px; font-size: 12px; color: var(--w95-dark); }
+[data-theme='win95'] .store-row-checked { font-size: 11px; color: var(--w95-shadow); }
+[data-theme='win95'] .store-row-link { height: 23px; padding: 0 4px; border-radius: 0; color: var(--w95-blue); font-size: 12px; font-weight: 400; text-decoration: underline; }
+[data-theme='win95'] .store-row-link:hover { background: none; }
+[data-theme='win95'] .store-row-link .material-icons { font-size: 13px; }
+[data-theme='win95'] .store-row-retry { gap: 4px; height: 23px; }
+[data-theme='win95'] .store-row-retry .material-icons { font-size: 14px; animation: none; }
+
+/* Updates, Suche und Anzahl */
+[data-theme='win95'] .store-update-list { gap: 0; padding: 2px; background: var(--w95-field); box-shadow: var(--w95-sunken); }
+[data-theme='win95'] .store-update-row { padding: 2px 2px 2px 6px; border: 0; border-radius: 0; font-size: 12px; }
+[data-theme='win95'] .store-search { flex: 1; }
+[data-theme='win95'] .store-search svg { left: 6px; width: 13px; height: 13px; stroke: var(--w95-dark); }
+[data-theme='win95'] .store-search :is(input:not([type='checkbox']):not([type='radio']):not([type='range'])) { height: 22px; padding-left: 24px; }
+[data-theme='win95'] .store-count { color: var(--w95-dark); font-size: 12px; }
+
+/* Store-Kacheln: erhabene Kacheln, Vorschau eingelassen, Installieren als Knopf; installiert = eingedrückt mit grünem Haken */
+[data-theme='win95'] .store-grid { gap: 10px; }
+[data-theme='win95'] .store-card { border: 0; border-radius: 0; background: var(--w95-face); box-shadow: var(--w95-raised); }
+[data-theme='win95'] .store-card-preview { height: 150px; padding: 6px 6px 0; border-bottom: 0; background: none; }
+[data-theme='win95'] .store-card-preview img { border-radius: 0; box-shadow: none; border: 1px solid; border-color: var(--w95-shadow) var(--w95-light) var(--w95-light) var(--w95-shadow); box-sizing: border-box; }
+[data-theme='win95'] .store-card-nopreview { gap: 4px; border: 0; border-radius: 0; background: var(--w95-field); color: var(--w95-shadow); font-size: 12px; box-shadow: var(--w95-shallow); }
+[data-theme='win95'] .store-card-body { gap: 6px; padding: 8px; }
+[data-theme='win95'] .store-card-title h3 { font-size: 12px; font-weight: 700; }
+[data-theme='win95'] .store-card-host { margin-top: -2px; gap: 4px; font-size: 11px; color: var(--w95-dark); }
+[data-theme='win95'] .store-card-desc { margin: 0; font-size: 12px; color: var(--w95-dark); }
+[data-theme='win95'] .store-card-btn { gap: 4px; height: 23px; margin-top: 4px; border: 0; border-radius: 0; background: var(--w95-face); color: var(--w95-dark); font-size: 12px; font-weight: 400; box-shadow: var(--w95-raised); }
+[data-theme='win95'] .store-card-btn:hover:not(:disabled) { opacity: 1; }
+[data-theme='win95'] .store-card-btn:active:not(:disabled) { padding-top: 1px; box-shadow: var(--w95-pressed); }
+[data-theme='win95'] .store-card-btn:focus-visible { outline: 1px dotted var(--w95-dark); outline-offset: -4px; }
+[data-theme='win95'] .store-card-btn.is-installed { color: var(--w95-dark); text-shadow: none; background: var(--w95-dither); box-shadow: var(--w95-pressed); }
+[data-theme='win95'] .store-card-btn.is-installed .material-icons { color: var(--w95-green); font-size: 15px; }
+[data-theme='win95'] .store-pill.is-warn { color: var(--w95-maroon); }
+
 /* Schmale Fenster: Symbole oben als Leiste */
 @media (max-width: 700px) {
   .w95-desktop { flex-direction: column; }

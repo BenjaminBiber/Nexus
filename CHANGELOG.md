@@ -57,6 +57,33 @@
   mitverteilt). Aufnahme mit `scripts/screenshots/theme-previews.mjs`; die Demodaten der
   README-Screenshots liegen jetzt gemeinsam in `scripts/screenshots/demo.mjs`.
 - Die Fensterleiste von „Windows 95“ heißt „Nexus“ statt „AI Harness“.
+- „Theme installieren“ ist ein Kombi-Knopf: Das Dreipunkt-Menü daneben öffnet „Theme-Stores
+  verwalten“ (statt des Plus-Knopfs neben der Suche).
+- Der Dialog „Theme installieren“ ist neu gestaltet: aufklappbarer Zustand der Theme-Stores
+  (erreichbar oder nicht, mit Fehlercode, Erklärung, „Releases öffnen“ bei GitHub und „Erneut
+  prüfen“), Suche mit Anzahl und Kacheln mit Vorschaubild, Version, Store und Installieren.
+- Die Rückfrage vor dem Installieren oder Aktualisieren ist ein eigener Dialog über dem Store
+  statt eines Kastens darin; Esc schließt nur die Rückfrage.
+- Der Zustand der Theme-Stores im Dialog „Theme installieren“ ist anfangs eingeklappt; Fehler
+  zeigt die Kopfzeile auch eingeklappt an.
+- Der Fokusrahmen des Kombi-Knopfs „Theme installieren“ umschließt beide Hälften statt nur der
+  fokussierten.
+- „Windows 95“ 1.3.0: Themes-Seite und Theme-Store im Win95-Stil – Theme-Kacheln als Knöpfe
+  (aktuelles eingedrückt), Plaketten als eingelassene Felder, Kombi-Knopf mit Menü, Dialoge mit
+  blauer Titelleiste und Kreuzknopf, Store-Zustand als Gruppenrahmen mit Listenansicht,
+  Store-Kacheln mit „Installieren“-Knopf und Rückfragen als Meldungsfenster.
+- „Terminal“ 2.0.0 (braucht SDK 1.2): Einstellungen unter Darstellung für Schrift (JetBrains Mono,
+  IBM Plex Mono oder Geist Mono, 12–14 px, Ligaturen), Symbole (Nerd Font, Unicode oder keine),
+  acht Farbschemata (GitHub Dark, Dracula, Gruvbox, Tokyo Night, Solarized, Nord, Phosphor grün
+  und bernstein) und Effekte (Röhrenmonitor, Cursor-Blinken, getippte Ausgabe, Boot-Meldungen).
+  Prompt- und Statuszeile im Powerline-Stil mit Status des letzten Befehls, Docs-Baum mit Linien
+  wie `tree`, Fortschritt als `[#####·····]`, eckige Mermaid-Diagramme und neue Befehle `man`,
+  `top`, `fetch`/`neofetch`, `history` und `cowsay`. Schriften liegen im Paket (OFL 1.1, Nerd-Font-
+  Teilmenge MIT).
+- „Terminal“ 2.1.0: Themes-Seite und Theme-Store im Terminal-Stil – eckige Kacheln mit Linie
+  (aktuelles mit `> ` und grüner Fläche), Plaketten als `[Text]`, Filter wie Segmente, Kombi-Knopf
+  als `[ Theme installieren | ⋯ ]`, Dialoge mit `## `-Überschrift und `[x]`, Store-Zustand mit
+  eckigen Punkten und Store-Kacheln mit `[ Installieren ]`.
 
 ## 0.0.3 – 2026-11-09
 

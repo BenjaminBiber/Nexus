@@ -37,19 +37,19 @@
   {
     "id": "terminal",
     "name": "Terminal",
-    "version": "1.0.0",
-    "sdkVersion": "^1.1",
-    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/terminal-1.0.0.nexus",
-    "sha256": "8ace8bee9f9db6d41b47c04104d51beda6f462ef34dedf2982f4f78f29df7470",
-    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/terminal-1.0.0-preview.png"
+    "version": "2.1.0",
+    "sdkVersion": "^1.2",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/terminal-2.1.0.nexus",
+    "sha256": "25a62a82411af2d65daf65c58d0cba0b2df811c1fc69e7c8fc458a8098f8ce28",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/terminal-2.1.0-preview.png"
   },
   {
     "id": "win95",
     "name": "Windows 95",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "sdkVersion": "^1.2",
-    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/win95-1.2.0.nexus",
-    "sha256": "7f7b3a7edeb9db7e02c87c65db76f88d1c99dc3f67c1da54b21f31219dec746c",
-    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/win95-1.2.0-preview.png"
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/win95-1.3.0.nexus",
+    "sha256": "f9303fbb8eb006355b0ed1a6740a486bca429ac7dc6f536dbc4889b8d0026129",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/win95-1.3.0-preview.png"
   }
 ]

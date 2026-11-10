@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { BoardSwitcher, UsageMeter, useNav, type ShellProps } from '@nexus/theme-sdk';
+import { rememberBoot } from './BootScreen.js';
+import { TermGlyph } from './glyphs.js';
+import { useRootAttributes, useTerminalSettings } from './settings.js';
 import { TerminalPrompt, type TerminalPromptHandle } from './TerminalPrompt.js';
 import { useTerminalActions, useTerminalPath } from './useTerminalActions.js';
 
@@ -20,14 +23,22 @@ function useClock(): Date {
   return now;
 }
 
-// Rahmen im Schema „Terminal“: oben die Prompt-Zeile mit Befehlseingabe und der Board-Auswahl, links die Navigation als
-// Ausgabe von „ls ~/“, rechts die Seite und unten eine Statuszeile wie in vim/tmux mit Bereich, Claude-Nutzung, Tasten und Uhr.
+// Rahmen im Schema „Terminal“: oben die Prompt-Zeile in Powerline-Segmenten mit Befehlseingabe und der Board-Auswahl,
+// links die Navigation als Ausgabe von „ls --icons ~/“, rechts die Seite und unten eine Statuszeile wie in vim/tmux mit
+// Bereich, Claude-Nutzung, Tasten und Uhr. Die Einstellungen des Themes landen als data-term-* auf <html>.
 export function TerminalFrame({ pid, nav, content }: ShellProps) {
   const path = useTerminalPath(pid);
   const active = useNav().find((item) => item.active)?.id;
   const actions = useTerminalActions(pid);
   const prompt = useRef<TerminalPromptHandle>(null);
   const now = useClock();
+  const settings = useTerminalSettings();
+  useRootAttributes(settings);
+
+  // Die Startanimation läuft vor dem Rahmen und kennt die Einstellungen nicht: Schalter für den nächsten Start merken
+  useEffect(() => {
+    if (!settings.loading) rememberBoot(settings.boot);
+  }, [settings.loading, settings.boot]);
 
   // „/“ springt von überall in die Prompt-Zeile
   useEffect(() => {
@@ -47,19 +58,21 @@ export function TerminalFrame({ pid, nav, content }: ShellProps) {
   return (
     <div className="term-screen">
       <header className="term-topbar">
-        <TerminalPrompt ref={prompt} actions={actions} path={path} />
+        <TerminalPrompt ref={prompt} actions={actions} path={path} typeOutput={settings.typeOutput} />
         <div className="term-board">
           <BoardSwitcher />
         </div>
       </header>
       <div className="term-body">
         <nav className="nav term-nav" aria-label="Hauptnavigation">
-          <div className="term-nav-hint" aria-hidden="true">$ ls ~/</div>
+          <div className="term-nav-hint" aria-hidden="true">
+            {settings.icons === 'off' ? '$ ls ~/' : '$ ls --icons ~/'}
+          </div>
           {nav}
         </nav>
         {content}
       </div>
-      <footer className="term-statusline">
+      <footer className="term-statusline" data-section={section}>
         <span className="term-mode">{section.toUpperCase()}</span>
         <span className="term-status-usage">
           <UsageMeter />
@@ -69,6 +82,7 @@ export function TerminalFrame({ pid, nav, content }: ShellProps) {
           <kbd>/</kbd> Befehl · <kbd>Tab</kbd> ergänzen · <kbd>↑↓</kbd> Verlauf · <kbd>Strg K</kbd> Suchen
         </span>
         <time className="term-clock" dateTime={now.toISOString()} title={date}>
+          <TermGlyph name="clock" />
           {time}
         </time>
       </footer>
