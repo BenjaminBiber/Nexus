@@ -30,6 +30,9 @@ ungültigen Theme mit Exit-Code 1 ab. Code-Themes (`package.json` mit Skript `bu
 App bündelt `dist/themes/` als Ressource `themes/`. `nexus serve` nimmt in der Entwicklung
 `dist/themes/` (oder `--bundled-themes-dir` / `NEXUS_BUNDLED_THEMES_DIR`).
 
+Bibliotheken, die ein Theme bündelt (z. B. `opentype.js` des Minecraft-Themes), stehen in den
+`devDependencies` der Wurzel, weil Themes keine Workspaces sind.
+
 ## Theme-Store
 
 Jedes Release hängt die Themes als `<id>-<version>.nexus` und einen Store-Index

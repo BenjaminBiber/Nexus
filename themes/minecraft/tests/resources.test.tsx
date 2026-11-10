@@ -64,9 +64,13 @@ describe('resolveClientJar', () => {
 });
 
 describe('MINECRAFT_ENTRIES', () => {
-  it('enthält Schrift-Atlas, Button-Texturen, Hotbar, Logo, Untermenü-Grafiken und die Item-Symbole der Navigation, aber kein Panorama', () => {
+  it('enthält Schrift-Atlas, Schrift-Definition, Button-Texturen, Hotbar, Logo, Untermenü-Grafiken und die Item-Symbole der Navigation, aber kein Panorama', () => {
     expect([...MINECRAFT_ENTRIES]).toEqual([
       'assets/minecraft/textures/font/ascii.png',
+      'assets/minecraft/font/include/default.json',
+      'assets/minecraft/font/include/space.json',
+      'assets/minecraft/textures/font/accented.png',
+      'assets/minecraft/textures/font/nonlatin_european.png',
       'assets/minecraft/textures/gui/sprites/widget/button.png',
       'assets/minecraft/textures/gui/sprites/widget/button_highlighted.png',
       'assets/minecraft/textures/gui/sprites/hud/hotbar.png',
@@ -80,7 +84,7 @@ describe('MINECRAFT_ENTRIES', () => {
         (item) => `assets/minecraft/textures/item/${item}.png`,
       ),
     ]);
-    expect(MINECRAFT_ENTRIES.length).toBe(19);
+    expect(MINECRAFT_ENTRIES.length).toBe(23);
     expect(MINECRAFT_ENTRIES.some((e) => e.includes('panorama'))).toBe(false);
   });
 
