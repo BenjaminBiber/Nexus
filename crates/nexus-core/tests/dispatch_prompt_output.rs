@@ -55,6 +55,7 @@ fn work(cfg: &DispatchConfig, answers: &[AnsweredQuestion], feedback: &[String])
         branch: "ticket/ARC-0009-rabatte",
         answers,
         feedback,
+        autopilot: false,
         cfg,
     })
 }

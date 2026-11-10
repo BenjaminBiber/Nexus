@@ -6,7 +6,9 @@
 
 use crate::dispatch::config::DispatchConfig;
 use crate::dispatch::prompt_check::PromptKind;
-use crate::dispatch::prompt_defaults::{default_template, ACCEPTANCE_RULE, LINK_RULE, TOOL_RULE};
+use crate::dispatch::prompt_defaults::{
+    default_template, ACCEPTANCE_RULE, LINK_RULE, OUTCOMES, OUTCOMES_AUTOPILOT, TOOL_RULE,
+};
 use crate::dispatch::prompt_template::{PromptTemplate, PromptValue, PromptValues};
 
 /// Entschiedene Frage zum Ticket, die der nächste Lauf kennen muss
@@ -28,6 +30,9 @@ pub struct WorkPromptInput<'a> {
     pub answers: &'a [AnsweredQuestion],
     /// Rückmeldungen aus dem Review („Zurück an den Agenten“) seit dem letzten Start
     pub feedback: &'a [String],
+    /// Gilt der Autopilot für das Ticket? Dann bietet die Anweisung keinen Ausgang
+    /// „Human Interaction“ an (Entscheidung nur über `autopilot_for`).
+    pub autopilot: bool,
     pub cfg: &'a DispatchConfig,
 }
 
@@ -86,22 +91,21 @@ impl DispatchPrompt {
                 steps.join("; ")
             )
         };
-        self.render(
-            PromptKind::Work,
-            cfg,
-            values(&[
-                ("ticketId", input.ticket_id.to_string()),
-                ("title", input.title.to_string()),
-                ("agent", input.agent.to_string()),
-                ("branch", input.branch.to_string()),
-                ("worktreeSetup", worktree_setup),
-                ("linkRule", LINK_RULE.to_string()),
-                ("toolRule", TOOL_RULE.to_string()),
-                ("answers", answers_block(input.answers)),
-                ("feedback", feedback_block(input.feedback)),
-                ("promptExtra", prompt_extra(cfg)),
-            ]),
-        )
+        let mut values = values(&[
+            ("ticketId", input.ticket_id.to_string()),
+            ("title", input.title.to_string()),
+            ("agent", input.agent.to_string()),
+            ("branch", input.branch.to_string()),
+            ("worktreeSetup", worktree_setup),
+            ("linkRule", LINK_RULE.to_string()),
+            ("toolRule", TOOL_RULE.to_string()),
+            ("answers", answers_block(input.answers)),
+            ("feedback", feedback_block(input.feedback)),
+            ("promptExtra", prompt_extra(cfg)),
+        ]);
+        let outcomes = outcomes_block(input.autopilot, &values);
+        values.insert("outcomes".to_string(), PromptValue::Text(outcomes));
+        self.render(PromptKind::Work, cfg, values)
     }
 
     /// Anweisung für einen Recherche-Lauf zu einer offenen Frage (losgelöster Worktree, nur lesend)
@@ -180,6 +184,19 @@ fn values(pairs: &[(&str, String)]) -> PromptValues {
         .collect()
 }
 
+/// Die Ausgänge eines Umsetzungslaufs mit eingesetzter Ticket-ID und eingesetztem Agent; im
+/// Autopilot ohne den Ausgang „Human Interaction“
+fn outcomes_block(autopilot: bool, values: &PromptValues) -> String {
+    let template = if autopilot {
+        OUTCOMES_AUTOPILOT
+    } else {
+        OUTCOMES
+    };
+    PromptTemplate::new()
+        .render(template, values)
+        .expect("die Ausgänge kennen nur bekannte Platzhalter")
+}
+
 /// Die entschiedenen Fragen als Block; die trennende Leerzeile gehört zum Wert, damit die
 /// Vorlage mit einer einzigen Zeile auskommt, die im leeren Fall ganz wegfällt.
 fn answers_block(answers: &[AnsweredQuestion]) -> String {
@@ -255,6 +272,16 @@ mod tests {
 
     /// Der Umsetzungs-Prompt des Beispiel-Tickets
     fn work(cfg: &DispatchConfig, answers: &[AnsweredQuestion], feedback: &[String]) -> String {
+        work_mit_autopilot(cfg, answers, feedback, false)
+    }
+
+    /// Der Umsetzungs-Prompt des Beispiel-Tickets, mit oder ohne Autopilot
+    fn work_mit_autopilot(
+        cfg: &DispatchConfig,
+        answers: &[AnsweredQuestion],
+        feedback: &[String],
+        autopilot: bool,
+    ) -> String {
         DispatchPrompt::new().work(&WorkPromptInput {
             ticket_id: "ARC-0009",
             title: "Rabatte",
@@ -262,6 +289,7 @@ mod tests {
             branch: "ticket/ARC-0009-rabatte",
             answers,
             feedback,
+            autopilot,
             cfg,
         })
     }
@@ -559,6 +587,77 @@ mod tests {
             }),
             "Merge ticket/ARC-0009 nach main für ARC-0009 als merger; Rückzug mit git merge --abort"
         );
+    }
+
+    #[test]
+    fn autopilot_bietet_keinen_ausgang_human_interaction_an() {
+        let cfg = cfg();
+        let text = work_mit_autopilot(&cfg, &[], &[], true);
+        contains_all(
+            &text,
+            &[
+                "Es gibt keine Abnahme durch einen Menschen",
+                "Am Ende genau einer der drei Ausgänge, immer mit --by junior-ARC-0009:",
+                "harness board done ARC-0009 --acceptance",
+                "harness board question add",
+                "--ticket ARC-0009",
+                "blockiert mit Grund",
+                "harness board set ARC-0009 --status blocked --blocked-reason \"<Grund>\"",
+            ],
+        );
+        assert!(!text.contains("--blocked-reason \"Human Interaction"));
+        assert!(!text.contains("vier Ausgänge"));
+        // „Human Interaction“ steht nur im Verbotssatz
+        assert_eq!(text.matches("Human Interaction").count(), 1);
+        assert!(text.contains("Human Interaction gibt es nicht."));
+        assert!(!text.contains("{{"));
+    }
+
+    #[test]
+    fn ohne_autopilot_bleibt_human_interaction_ein_ausgang() {
+        let cfg = cfg();
+        let text = work(&cfg, &[], &[]);
+        contains_all(
+            &text,
+            &[
+                "Am Ende genau einer der vier Ausgänge",
+                "--blocked-reason \"Human Interaction: <was>\"",
+            ],
+        );
+        assert!(!text.contains("Es gibt keine Abnahme durch einen Menschen"));
+    }
+
+    #[test]
+    fn eigene_vorlage_darf_die_ausgange_als_platzhalter_einsetzen() {
+        let vorlage = "Du bist {{agent}}, Ticket {{ticketId}}.\n{{outcomes}}";
+        let cfg = with_prompt("work", vorlage);
+        let normal = work(&cfg, &[], &[]);
+        let autopilot = work_mit_autopilot(&cfg, &[], &[], true);
+        assert!(normal.contains("--blocked-reason \"Human Interaction: <was>\""));
+        assert!(normal.contains("harness board done ARC-0009"));
+        assert!(!autopilot.contains("--blocked-reason \"Human Interaction"));
+        assert!(autopilot.contains("harness board done ARC-0009"));
+    }
+
+    #[test]
+    fn eigene_vorlage_ohne_ausgange_bleibt_unverandert() {
+        let vorlage = [
+            "Du bist {{agent}}, Ticket {{ticketId}}.",
+            "harness board done {{ticketId}} --by {{agent}}",
+            "harness board set {{ticketId}} --status blocked --by {{agent}}",
+            "harness board question add \"F\" --ticket {{ticketId}} --by {{agent}}",
+        ]
+        .join("\n");
+        let cfg = with_prompt("work", &vorlage);
+        let erwartet = [
+            "Du bist junior-ARC-0009, Ticket ARC-0009.",
+            "harness board done ARC-0009 --by junior-ARC-0009",
+            "harness board set ARC-0009 --status blocked --by junior-ARC-0009",
+            "harness board question add \"F\" --ticket ARC-0009 --by junior-ARC-0009",
+        ]
+        .join("\n");
+        assert_eq!(work(&cfg, &[], &[]), erwartet);
+        assert_eq!(work_mit_autopilot(&cfg, &[], &[], true), erwartet);
     }
 
     #[test]
