@@ -1438,7 +1438,115 @@
   }
 }
 
+/* ---------- Fortschritt als Laserbalken (Slot Progress) ---------- */
+:root[data-theme='synthwave'] .synth-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+:root[data-theme='synthwave'] .synth-laser {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 3px;
+  min-width: 48px;
+}
+
+/* Segmente: flache Balken, aus = Linienfarbe, an = Cyan mit Leuchten */
+:root[data-theme='synthwave'] .synth-laser > i {
+  flex: 1 1 0;
+  min-width: 4px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--synth-line);
+}
+
+:root[data-theme='synthwave'] .synth-laser > i[data-on] {
+  background: var(--synth-cyan);
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) color-mix(in srgb, var(--synth-cyan) 80%, transparent);
+}
+
+/* Strahlspitze: das letzte leuchtende Segment in Magenta */
+:root[data-theme='synthwave'] .synth-laser:not(.synth-laser-beam) > i[data-on]:not(:has(+ i[data-on])) {
+  background: var(--synth-magenta);
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 85%, transparent);
+}
+
+/* Durchgehender Balken ab 13 Schritten: Verlauf Cyan → Magenta, Spitze mit hellem Punkt */
+:root[data-theme='synthwave'] .synth-laser-beam {
+  display: block;
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--synth-line);
+}
+
+:root[data-theme='synthwave'] .synth-laser-beam > i {
+  display: block;
+  position: relative;
+  flex: none;
+  height: 100%;
+  max-width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--synth-cyan), var(--synth-magenta));
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 60%, transparent);
+}
+
+:root[data-theme='synthwave'] .synth-laser-beam > i::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--synth-fg) 90%, white);
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] .synth-progress-text {
+  flex: none;
+  color: var(--synth-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Voll: alles in Grün, der Balken blitzt einmal auf */
+:root[data-theme='synthwave'] .synth-progress[data-complete] .synth-laser > i {
+  background: var(--synth-ok);
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-ok) 80%, transparent);
+}
+
+:root[data-theme='synthwave'] .synth-progress[data-complete] .synth-laser-beam > i::after {
+  background: var(--synth-ok);
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-ok);
+}
+
+:root[data-theme='synthwave'] .synth-progress[data-complete] .synth-laser {
+  animation: synth-flash 600ms ease-out 1;
+}
+
+@keyframes synth-flash {
+  0%,
+  to {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  35% {
+    opacity: 0.3;
+    filter: brightness(2.2);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* synth-flash: der volle Balken bleibt grün, er blitzt nicht */
+  :root[data-theme='synthwave'] .synth-progress[data-complete] .synth-laser {
+    animation: none;
+  }
+
   :root[data-theme='synthwave'] .synth-icon.synth-empty {
     animation: none;
   }

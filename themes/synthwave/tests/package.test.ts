@@ -148,7 +148,15 @@ describe('Synthwave-Theme-Paket', () => {
 
   it('meldet im Manifest genau die Slots an, die main.tsx liefert', () => {
     const manifest = JSON.parse(readFileSync(join(theme, 'manifest.json'), 'utf8'));
-    expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Icon', 'StartAnimation']);
+    expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Icon', 'Progress', 'StartAnimation']);
+  });
+
+  it('der Laserbalken blitzt bei 100 % einmal auf und steht bei reduzierter Bewegung still', () => {
+    const css = readFileSync(join(theme, 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(css).toMatch(/@keyframes synth-flash\b/);
+    expect(css).toMatch(/\[data-complete\][^{]*\{[^}]*animation:[^;]*synth-flash[^;]*\b1\b/);
+    const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(reduced).toMatch(/synth-progress\[data-complete\][^{]*\{[^}]*animation: none/);
   });
 
   it('setzt für jeden Status des Boards eine eigene Neonfarbe über --synth-status', () => {
