@@ -28,6 +28,24 @@ describe('DbTicketPanel', () => {
     expect(screen.getByText(/Version 3/)).toBeTruthy();
   });
 
+  it('zeigt das Abzeichen Autopilot nur ohne Ausnahme-Label', async () => {
+    const config = async () => ({ file: 'd.yaml', exists: true, raw: { autopilot: { enabled: true, exceptLabel: 'interaktiv' } }, config: null, error: null });
+    openPanel({ getDispatchConfig: config });
+    expect(await screen.findByText('Autopilot')).toBeTruthy();
+    cleanup();
+    openPanel({ getDispatchConfig: config }, { ...DETAIL, labels: ['ui', 'Interaktiv'] });
+    await screen.findByLabelText('Titel');
+    await act(async () => {});
+    expect(screen.queryByText('Autopilot')).toBeNull();
+  });
+
+  it('zeigt kein Abzeichen, solange der Autopilot aus ist', async () => {
+    openPanel();
+    await screen.findByLabelText('Titel');
+    await act(async () => {});
+    expect(screen.queryByText('Autopilot')).toBeNull();
+  });
+
   it('speichert den Titel mit Enter und Felder beim Verlassen, jeweils mit der gelesenen Version', async () => {
     const { patchDbTicket, onChanged } = openPanel();
     const title = await screen.findByLabelText('Titel');

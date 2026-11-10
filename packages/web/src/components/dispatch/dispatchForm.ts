@@ -91,6 +91,12 @@ export interface DispatchForm {
   planningAcceptance: boolean;
   /** Profil der Planung („Planen“ im Ticket); leer = Profil „planning“, falls vorhanden, sonst Standardprofil */
   planningProfile: string;
+  /** Autopilot eingeschaltet */
+  autopilot: boolean;
+  /** Tickets mit diesem Label laufen ohne Autopilot; leer = keine Ausnahme */
+  autopilotExceptLabel: string;
+  /** Merge-Sessions je Konflikt (1–5) */
+  autopilotMaxMergeSessions: string;
 }
 
 const text = (v: unknown): string => (v === undefined || v === null ? '' : String(v));
@@ -142,6 +148,10 @@ export function toForm(raw: RawDispatchConfigDto): DispatchForm {
     planningWip: text(raw.planning?.wip ?? 1),
     planningAcceptance: raw.planning?.acceptance !== false,
     planningProfile: text(raw.planning?.profile),
+    autopilot: raw.autopilot?.enabled === true,
+    // Vorgabe des Servers „interaktiv“; ein ausdrückliches null heißt „keine Ausnahme“
+    autopilotExceptLabel: raw.autopilot?.exceptLabel === undefined ? 'interaktiv' : text(raw.autopilot.exceptLabel),
+    autopilotMaxMergeSessions: text(raw.autopilot?.maxMergeSessions ?? 3),
   };
 }
 
@@ -166,6 +176,7 @@ export function checkForm(form: DispatchForm): string | null {
     numberError('Gleichzeitige Recherchen', form.researchWip, 1, 5),
     numberError('Automatische Recherchen je Tag', form.researchMaxPerDay, 1),
     numberError('Gleichzeitige Planungen', form.planningWip, 1, 5),
+    numberError('Merge-Sessions je Konflikt', form.autopilotMaxMergeSessions, 1, 5),
   ];
   const seen = new Set<string>();
   form.profiles.forEach((p, i) => {
@@ -233,6 +244,14 @@ function planning(form: DispatchForm, base: RawDispatchConfigDto): Pick<RawDispa
   const { maxPerDay: _old, ...rest } = (base.planning ?? {}) as NonNullable<RawDispatchConfigDto['planning']> & { maxPerDay?: number };
   const acceptance = rest.acceptance !== undefined || !form.planningAcceptance ? { acceptance: form.planningAcceptance } : {};
   return { planning: { ...rest, auto: form.planningAuto, wip: num(form.planningWip), ...acceptance, profile } };
+}
+
+// Abschnitt autopilot der Einstellung; fehlt er in `base` und weicht das Formular nicht von den Vorgaben ab, bleibt er weg.
+function autopilot(form: DispatchForm, base: RawDispatchConfigDto): Pick<RawDispatchConfigDto, 'autopilot'> {
+  const exceptLabel = form.autopilotExceptLabel.trim() || null;
+  const changed = form.autopilot || exceptLabel !== 'interaktiv' || form.autopilotMaxMergeSessions.trim() !== '3';
+  if (!base.autopilot && !changed) return {};
+  return { autopilot: { ...base.autopilot, enabled: form.autopilot, exceptLabel, maxMergeSessions: num(form.autopilotMaxMergeSessions) } };
 }
 
 // Abschnitt prompts der Einstellung; ohne eigene Vorlage und ohne Abschnitt in der Datei bleibt er weg.
@@ -303,6 +322,7 @@ export function toRaw(form: DispatchForm, base: RawDispatchConfigDto): RawDispat
     ...prompts(form, base),
     ...research(form, base),
     ...planning(form, base),
+    ...autopilot(form, base),
     claude: { ...base.claude, command: form.command.trim() || 'claude', permissionMode: form.permissionMode.trim() || null, allowedTools: list(form.allowedTools, /\n/),
       ...(form.gitBashPath.trim() ? { gitBashPath: form.gitBashPath.trim() } : 'gitBashPath' in (base.claude ?? {}) ? { gitBashPath: null } : {}),
     },
