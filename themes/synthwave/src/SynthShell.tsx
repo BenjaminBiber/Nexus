@@ -7,6 +7,8 @@ import { OnAir } from './OnAir.js';
 import { Horizon } from './Horizon.js';
 import { useSkyPhase } from './sky.js';
 import { rememberBoot, rememberPalette } from './SunriseDrive.js';
+import { TapeCounter } from './TapeCounter.js';
+import { useTracking } from './useTracking.js';
 
 // Rahmen im Schema „Synthwave“ als Kassettendeck: oben das Display mit Schriftzug, Board-Auswahl und Suche, links die
 // Navigation als Titelliste der A-Seite, rechts die Seite und unten die Deck-Leiste mit dem Etikett des laufenden Titels.
@@ -16,6 +18,7 @@ export function SynthShell({ content }: ShellProps) {
   const settings = useSynthSettings();
   const sky = useSkyPhase(settings.sky);
   useRootAttributes(settings, sky);
+  useTracking(active?.id, settings.vhs);
 
   // Startanimation läuft vor der Shell: Schalter und Farbschema für den nächsten Start merken
   useEffect(() => {
@@ -36,6 +39,7 @@ export function SynthShell({ content }: ShellProps) {
         <div className="synth-search">
           <SearchButton />
         </div>
+        <TapeCounter vhs={settings.vhs} />
       </header>
       <div className="synth-body">
         {settings.horizon !== 'off' && <Horizon />}

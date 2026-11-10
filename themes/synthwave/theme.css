@@ -1541,7 +1541,103 @@
   }
 }
 
+/* VHS: Scanlines und dunkle Ränder als Ebene über allem (ohne Klicks abzufangen), leichtes Flimmern */
+:root[data-theme='synthwave'][data-synth-vhs='on'] .synth-screen::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 2px, color-mix(in srgb, var(--synth-bg-deep) 14%, transparent) 2px 3px),
+    radial-gradient(ellipse at center, transparent 60%, color-mix(in srgb, var(--synth-bg-deep) 60%, transparent) 100%);
+  animation: synth-vhs-flicker 7s steps(1) infinite;
+}
+
+@keyframes synth-vhs-flicker {
+  0%,
+  96%,
+  100% {
+    opacity: 1;
+  }
+  97% {
+    opacity: 0.84;
+  }
+  98% {
+    opacity: 0.94;
+  }
+}
+
+/* Bildstörung beim Bereichswechsel: Zeilensprung, ein helles Band läuft durch, Farbversatz nur auf Überschriften */
+:root[data-theme='synthwave'][data-synth-tracking] .synth-body {
+  animation: synth-tracking 160ms steps(1) both;
+}
+
+:root[data-theme='synthwave'][data-synth-tracking] .synth-body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto;
+  height: 14px;
+  z-index: 2147482999;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--synth-fg) 22%, transparent);
+  animation: synth-tracking-band 160ms linear both;
+}
+
+:root[data-theme='synthwave'][data-synth-tracking] .synth-body :is(h1, h2, h3) {
+  text-shadow: -2px 0 var(--synth-cyan), 2px 0 var(--synth-magenta);
+}
+
+@keyframes synth-tracking {
+  0% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(2px);
+  }
+  80% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes synth-tracking-band {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100vh);
+  }
+}
+
+/* Einblendung im Display: Bandzähler bzw. Uhrzeit rechts */
+:root[data-theme='synthwave'] :is(.synth-osd, .synth-clock) {
+  margin-left: auto;
+  font-family: 'Orbitron', sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+:root[data-theme='synthwave'] .synth-osd {
+  color: var(--synth-cyan);
+  text-shadow: var(--synth-glow-cyan);
+}
+
+:root[data-theme='synthwave'] .synth-clock {
+  color: var(--synth-muted);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* synth-vhs-flicker und synth-tracking: die ruhende Ebene bleibt, sie flimmert und springt nicht */
+  :root[data-theme='synthwave'] .synth-screen::after {
+    animation: none;
+  }
+
+  :root[data-theme='synthwave'][data-synth-tracking] .synth-body,
+  :root[data-theme='synthwave'][data-synth-tracking] .synth-body::before {
+    animation: none;
+  }
+
   /* synth-flash: der volle Balken bleibt grün, er blitzt nicht */
   :root[data-theme='synthwave'] .synth-progress[data-complete] .synth-laser {
     animation: none;
