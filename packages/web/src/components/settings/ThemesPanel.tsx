@@ -47,7 +47,7 @@ function fromManifest(m: ThemeManifest): ThemeEntry {
   };
 }
 
-// Darstellung › Themes: Kacheln aller Themes mit Filter und Suche, Anwenden, Entfernen und Einstellungen des aktiven Themes;
+// Darstellung › Themes: Kacheln aller Themes mit Filter und Suche, Anwenden per Klick auf die Kachel, Entfernen und Einstellungen des aktiven Themes;
 // Installieren (Store oder Datei) und die Verwaltung der Theme-Stores liegen in Dialogen
 export function ThemesPanel() {
   const api = useApi();

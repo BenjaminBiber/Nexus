@@ -28,22 +28,33 @@ function reExport(spec: string): string {
   ].join('\n');
 }
 
-// Erzeugt je Host-Modul ein eigenes Re-Export-Chunk (teilt React mit der App) und setzt die Import-Map in die gebaute index.html.
-// Nur im Build: der Dev-Server bekommt keine Import-Map, Theme-Code wird gegen den Build geprüft.
-export function hostModules(): Plugin {
-  return {
+// Re-Export-Module als virtuelle Module (gemeinsam für Build und Dev-Server)
+const virtualModules = {
+  resolveId(id: string) {
+    return id.startsWith(PREFIX) ? id : null;
+  },
+  load(id: string) {
+    return id.startsWith(PREFIX) ? reExport(id.slice(PREFIX.length)) : null;
+  },
+};
+
+// Import-Map als erstes Element im <head>, damit sie vor jedem Modul-Skript steht
+function importMapTag(imports: Record<string, string>) {
+  return [{ tag: 'script', attrs: { type: 'importmap' }, children: JSON.stringify({ imports }), injectTo: 'head-prepend' as const }];
+}
+
+// Stellt installierten Themes React und das Theme-SDK des Hosts über eine Import-Map bereit, damit sie dieselben Instanzen wie die App nutzen.
+// Build: je Host-Modul ein eigenes Re-Export-Chunk. Dev-Server: dieselben Re-Export-Module über Vites /@id/-Adressen;
+// Vite löst darin react & Co. auf dieselben vorgebündelten Module auf wie in der App.
+export function hostModules(): Plugin[] {
+  const build: Plugin = {
     name: 'nexus-host-modules',
     apply: 'build',
+    ...virtualModules,
     buildStart() {
       for (const [spec, name] of Object.entries(HOST_MODULES)) {
         this.emitFile({ type: 'chunk', id: PREFIX + spec, name: `host-${name}`, preserveSignature: 'strict' });
       }
-    },
-    resolveId(id) {
-      return id.startsWith(PREFIX) ? id : null;
-    },
-    load(id) {
-      return id.startsWith(PREFIX) ? reExport(id.slice(PREFIX.length)) : null;
     },
     transformIndexHtml: {
       order: 'post',
@@ -55,8 +66,24 @@ export function hostModules(): Plugin {
             imports[file.facadeModuleId.slice(PREFIX.length)] = `/${file.fileName}`;
           }
         }
-        return [{ tag: 'script', attrs: { type: 'importmap' }, children: JSON.stringify({ imports }), injectTo: 'head-prepend' }];
+        return importMapTag(imports);
       },
     },
   };
+
+  const dev: Plugin = {
+    name: 'nexus-host-modules-dev',
+    apply: 'serve',
+    ...virtualModules,
+    transformIndexHtml: {
+      order: 'post',
+      handler() {
+        // Vite schreibt das Null-Byte virtueller IDs in Adressen als __x00__
+        const imports = Object.fromEntries(Object.keys(HOST_MODULES).map((spec) => [spec, `/@id/__x00__nexus-host:${spec}`]));
+        return importMapTag(imports);
+      },
+    },
+  };
+
+  return [build, dev];
 }

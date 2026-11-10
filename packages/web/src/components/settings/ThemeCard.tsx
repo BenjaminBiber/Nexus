@@ -32,15 +32,30 @@ type Props = {
   onRemove?: () => void;
 };
 
-// Kachel eines Themes: Vorschau, Name mit „aktuell“, Herkunft, Merkmale und Anwenden bzw. Entfernen
+// Kachel eines Themes: Vorschau, Name mit „aktuell“, Herkunft und Merkmale; ein Klick auf die Kachel wendet das Theme an,
+// installierte Themes lassen sich über den Papierkorb neben dem Namen entfernen
 export function ThemeCard({ theme, active, disabled, onApply, onRemove }: Props) {
   return (
     <li className={`theme-card${active ? ' active' : ''}`} aria-label={theme.name} aria-current={active ? 'true' : undefined}>
+      {/* Liegt über der ganzen Kachel, damit sie überall klickbar ist; der Entfernen-Knopf liegt darüber */}
+      <button
+        type="button"
+        className="theme-select"
+        aria-label={active ? `${theme.name} in Verwendung` : `${theme.name} anwenden`}
+        title={active ? undefined : 'Anwenden'}
+        disabled={disabled || active}
+        onClick={onApply}
+      />
       <ThemePreview theme={theme} />
       <div className="theme-card-title">
         <div className="theme-card-name">
           <strong>{theme.name}</strong>
           {active && <span className="theme-badge current">aktuell</span>}
+          {onRemove && (
+            <button type="button" className="icon-btn theme-remove" aria-label={`${theme.name} entfernen`} title="Entfernen" disabled={disabled} onClick={onRemove}>
+              <span className="material-icons" aria-hidden="true">delete</span>
+            </button>
+          )}
         </div>
         <span className="theme-card-meta">{theme.meta}</span>
       </div>
@@ -60,16 +75,6 @@ export function ThemeCard({ theme, active, disabled, onApply, onRemove }: Props)
             Mit Code
           </span>
         )}
-      </div>
-      <div className="theme-card-foot">
-        {onRemove && (
-          <button type="button" className="icon-btn theme-remove" aria-label={`${theme.name} entfernen`} title="Entfernen" disabled={disabled} onClick={onRemove}>
-            <span className="material-icons" aria-hidden="true">delete</span>
-          </button>
-        )}
-        <button type="button" className="theme-apply" aria-label={active ? `${theme.name} in Verwendung` : `${theme.name} anwenden`} disabled={disabled || active} onClick={onApply}>
-          {active ? 'In Verwendung' : 'Anwenden'}
-        </button>
       </div>
     </li>
   );

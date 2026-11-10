@@ -83,9 +83,21 @@ describe('main.js des aktiven Themes', () => {
   });
 
   it('fällt bei fehlendem Manifest auf den Standard zurück', async () => {
-    const result = await loadActiveThemeModule(deps({ fetchManifest: vi.fn(async () => { throw new Error('404'); }) }));
+    const result = await loadActiveThemeModule(deps({ fetchManifest: vi.fn(async () => { throw new Error('HTTP 404'); }) }));
     expect(result.status).toBe('failed');
-    expect(getThemeNotice()).toBeTruthy();
+    expect(getThemeNotice()).toContain('Manifest nicht lesbar: HTTP 404');
+  });
+
+  it('nennt es beim Namen, wenn statt des Manifests kein JSON kommt (etwa die index.html)', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('<!doctype html>', { headers: { 'content-type': 'text/html' } }));
+    try {
+      const { fetchManifest: _ignored, ...rest } = deps();
+      const result = await loadActiveThemeModule(rest);
+      expect(result.status).toBe('failed');
+      expect(getThemeNotice()).toContain('Manifest nicht lesbar: keine JSON-Antwort (text/html)');
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 
   it('bricht nach dem Zeitlimit ab und registriert ein spätes Modul nicht', async () => {

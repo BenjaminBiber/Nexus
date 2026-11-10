@@ -68,7 +68,12 @@ export async function loadActiveThemeModule(deps: ThemeModuleDeps = {}): Promise
     (async (id: string) => {
       const res = await fetch(`${base}/themes/${id}/manifest.json`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return (await res.json()) as ThemeModuleManifest;
+      // Liefert die Adresse etwas anderes als JSON (etwa die index.html, weil /themes nicht beim Server ankommt), klar benennen
+      try {
+        return (await res.json()) as ThemeModuleManifest;
+      } catch {
+        throw new Error(`keine JSON-Antwort (${res.headers.get('content-type') ?? 'ohne Content-Type'})`);
+      }
     });
 
   const id = storedMode();
@@ -96,7 +101,8 @@ export async function loadActiveThemeModule(deps: ThemeModuleDeps = {}): Promise
       manifest = await Promise.race([fetchManifest(id), timeout]);
     } catch (e) {
       if (e instanceof TimeoutError) throw e;
-      return fail('failed', id, `Theme „${id}“ konnte nicht geladen werden (Manifest fehlt) – Standard wird gezeigt.`);
+      const reason = e instanceof Error ? e.message : String(e);
+      return fail('failed', id, `Theme „${id}“ konnte nicht geladen werden (Manifest nicht lesbar: ${reason}) – Standard wird gezeigt.`);
     }
     if (!Array.isArray(manifest.slots) || manifest.slots.length === 0) return { status: 'skipped', themeId: id };
     if (!satisfiesSdkRange(sdkVersion, manifest.sdkVersion ?? '')) {
