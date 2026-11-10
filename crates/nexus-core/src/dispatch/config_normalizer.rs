@@ -12,9 +12,9 @@ use serde_json::{json, Value};
 
 use crate::accounts::is_account_id;
 use crate::dispatch::config::{
-    AccountStrategy, ClaudeSettings, DispatchConfig, JoinWorktrees, MergeStrategy,
-    PlanningSettings, Profile, PromptProblem, PromptTemplates, ResearchSettings, Rule,
-    RuleCondition, TimeWindow, WorktreeSetupStep, ACCOUNT_STRATEGIES, DEFAULT_ALLOWED_TOOLS,
+    AccountStrategy, AutopilotSettings, ClaudeSettings, DispatchConfig, JoinWorktrees,
+    MergeStrategy, PlanningSettings, Profile, PromptProblem, PromptTemplates, ResearchSettings,
+    Rule, RuleCondition, TimeWindow, WorktreeSetupStep, ACCOUNT_STRATEGIES, DEFAULT_ALLOWED_TOOLS,
     EFFORT_LEVELS, JOIN_WORKTREES, MERGE_STRATEGIES, MODEL_ALIASES, PROMPT_KINDS,
 };
 use crate::dispatch::js_value::{field, field_or_null, is_integer, js_number, js_string};
@@ -188,6 +188,7 @@ impl DispatchConfigNormalizer {
             allow_fable,
             research,
             planning,
+            autopilot: self.autopilot(field_or_null(input, "autopilot"))?,
             account_strategy: self.account_strategy(field_or_null(input, "accountStrategy"))?,
             account_limit_percent: int(
                 coalesce(field_or_null(input, "accountLimitPercent"), &json!(90)),
@@ -256,6 +257,7 @@ impl DispatchConfigNormalizer {
             "accountResetGraceMinutes": 30,
             "research": { "auto": false, "wip": 1, "maxPerDay": 10 },
             "planning": { "auto": false, "wip": 1, "acceptance": true, "profile": null },
+            "autopilot": { "enabled": false, "exceptLabel": "interaktiv", "maxMergeSessions": 3 },
             "promptExtra": "",
             // Eigene Vorlagen; null = die Standardvorlage der jeweiligen Laufart
             "prompts": { "work": null, "plan": null, "research": null, "merge": null },
@@ -543,6 +545,29 @@ impl DispatchConfigNormalizer {
                 Some(name) => Some(known(profiles, &name, "planning.profile")?),
                 None => None,
             },
+        })
+    }
+
+    /// Autopilot: Schalter (Vorgabe aus), Ausnahme-Label (Vorgabe „interaktiv“, leer = keins),
+    /// Merge-Sessions je Konflikt (1–5, Vorgabe 3)
+    fn autopilot(&self, value: &Value) -> Result<AutopilotSettings> {
+        if !value.is_null() && !value.is_object() {
+            return Err(fail(
+                "autopilot muss ein Objekt sein (enabled, exceptLabel, maxMergeSessions).",
+            ));
+        }
+        Ok(AutopilotSettings {
+            enabled: field_or_null(value, "enabled") == &Value::Bool(true),
+            except_label: match field(value, "exceptLabel") {
+                None => Some("interaktiv".to_string()),
+                Some(label) => text(label),
+            },
+            max_merge_sessions: int(
+                coalesce(field_or_null(value, "maxMergeSessions"), &json!(3)),
+                "autopilot.maxMergeSessions",
+                1,
+                Some(5),
+            )?,
         })
     }
 
@@ -1236,6 +1261,56 @@ mod tests {
             json!({ "planning": "schwer" }),
             "planning muss ein Objekt sein (auto, wip, acceptance, profile)",
         );
+    }
+
+    #[test]
+    fn autopilot_vorgaben_und_grenzen() {
+        let vorgabe = AutopilotSettings {
+            enabled: false,
+            except_label: Some("interaktiv".to_string()),
+            max_merge_sessions: 3,
+        };
+        assert_eq!(normalize(json!({})).autopilot, vorgabe);
+        assert_eq!(normalize(json!({ "autopilot": null })).autopilot, vorgabe);
+        assert_eq!(example().autopilot, vorgabe);
+        assert_eq!(
+            normalize(json!({
+                "autopilot": { "enabled": true, "exceptLabel": " handarbeit ", "maxMergeSessions": 5 }
+            }))
+            .autopilot,
+            AutopilotSettings {
+                enabled: true,
+                except_label: Some("handarbeit".to_string()),
+                max_merge_sessions: 5,
+            }
+        );
+        assert_eq!(
+            normalize(json!({ "autopilot": { "exceptLabel": "  " } }))
+                .autopilot
+                .except_label,
+            None
+        );
+        rejects(
+            json!({ "autopilot": { "maxMergeSessions": 0 } }),
+            "autopilot.maxMergeSessions muss eine ganze Zahl von 1 bis 5 sein.",
+        );
+        rejects(
+            json!({ "autopilot": { "maxMergeSessions": 6 } }),
+            "autopilot.maxMergeSessions muss eine ganze Zahl von 1 bis 5 sein.",
+        );
+        rejects(
+            json!({ "autopilot": true }),
+            "autopilot muss ein Objekt sein (enabled, exceptLabel, maxMergeSessions).",
+        );
+    }
+
+    #[test]
+    fn autopilot_bleibt_beim_speichern_erhalten() {
+        let erst = normalize(json!({
+            "autopilot": { "enabled": true, "exceptLabel": "x", "maxMergeSessions": 2 }
+        }));
+        let wieder = normalize(serde_json::to_value(&erst).unwrap());
+        assert_eq!(wieder.autopilot, erst.autopilot);
     }
 
     #[test]

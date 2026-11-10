@@ -80,6 +80,13 @@ fn cmd(words: &[&str]) -> Regex {
     Regex::new(&words.join(r"\s+(?:--?\S+\s+)*")).unwrap()
 }
 
+/// Wie [`cmd`], erkennt aber auch den Platzhalter `{{outcomes}}`: der setzt die Ausgänge des
+/// Laufs mit allen Board-Befehlen ein
+fn cmd_or_outcomes(words: &[&str]) -> Regex {
+    let command = words.join(r"\s+(?:--?\S+\s+)*");
+    Regex::new(&format!("(?:{command})|{}", ph("outcomes"))).unwrap()
+}
+
 /// Ein Pflichtteil, der nur auf einen Platzhalter prüft
 fn placeholder_rule(name: &'static str, label: &'static str) -> Rule {
     Rule {
@@ -96,12 +103,12 @@ static RULES_WORK: LazyLock<Vec<Rule>> = LazyLock::new(|| {
         Rule {
             id: "done",
             label: "Ausgang erledigt: harness board done {{ticketId}}",
-            test: cmd(&["harness", "board", "done", &ph("ticketId")]),
+            test: cmd_or_outcomes(&["harness", "board", "done", &ph("ticketId")]),
         },
         Rule {
             id: "blocked",
             label: "Ausgang blockiert: harness board set {{ticketId}} --status blocked",
-            test: cmd(&[
+            test: cmd_or_outcomes(&[
                 "harness",
                 "board",
                 "set",
@@ -113,7 +120,7 @@ static RULES_WORK: LazyLock<Vec<Rule>> = LazyLock::new(|| {
         Rule {
             id: "question",
             label: "Ausgang Frage: harness board question add … --ticket {{ticketId}}",
-            test: cmd(&[
+            test: cmd_or_outcomes(&[
                 "harness",
                 "board",
                 "question",
@@ -125,7 +132,7 @@ static RULES_WORK: LazyLock<Vec<Rule>> = LazyLock::new(|| {
         Rule {
             id: "by-agent",
             label: "Kennzeichnung --by {{agent}}",
-            test: cmd(&["--by", &ph("agent")]),
+            test: cmd_or_outcomes(&["--by", &ph("agent")]),
         },
     ]
 });
@@ -347,6 +354,29 @@ mod tests {
                 assert!(missing.contains(&part.id), "{kind}/{}", part.id);
             }
         }
+    }
+
+    #[test]
+    fn die_standardvorlagen_bestehen_die_prufung() {
+        let check = PromptTemplateCheck::new();
+        for kind in PromptTemplateCheck::KINDS {
+            let template = crate::dispatch::prompt_defaults::default_template(kind);
+            assert_eq!(check.missing(kind, template), vec![], "{kind}");
+        }
+    }
+
+    #[test]
+    fn der_platzhalter_ausgange_erfullt_die_ausgang_pflichtteile() {
+        let check = PromptTemplateCheck::new();
+        let template = "Du bist {{agent}}, Ticket {{ticketId}}.\n{{outcomes}}";
+        assert_eq!(check.missing(PromptKind::Work, template), vec![]);
+        // Ohne Platzhalter und ohne Befehle fehlen sie weiterhin
+        let missing: Vec<String> = check
+            .missing(PromptKind::Work, "Du bist {{agent}}, Ticket {{ticketId}}.")
+            .into_iter()
+            .map(|part| part.id)
+            .collect();
+        assert_eq!(missing, ["done", "blocked", "question", "by-agent"]);
     }
 
     #[test]

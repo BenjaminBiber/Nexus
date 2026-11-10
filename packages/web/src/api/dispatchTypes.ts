@@ -1,4 +1,5 @@
 // Typen der Dispatcher-Routen (/api/dispatch), wie sie der Server liefert.
+import type { AutopilotSettings } from './generated/dispatch.js';
 
 export interface DispatchProfileDto {
   model?: string | null;
@@ -63,6 +64,8 @@ export interface RawDispatchConfigDto {
   accountResetGraceMinutes?: number;
   research?: { auto?: boolean; wip?: number; maxPerDay?: number; profile?: string | null } | null;
   planning?: { auto?: boolean; wip?: number; acceptance?: boolean; profile?: string | null } | null;
+  /** Autopilot: keine Freigaben, Fragen entscheidet die Recherche, Merge-Konflikte mehrfach */
+  autopilot?: Partial<AutopilotSettings> | null;
 }
 
 export type DispatchPromptKindDto = 'work' | 'plan' | 'research' | 'merge';

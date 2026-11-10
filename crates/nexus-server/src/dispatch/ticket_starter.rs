@@ -326,6 +326,10 @@ Schritte, {} min). Grund: {}.{}{}",
             branch: &branch,
             answers: &answers,
             feedback: &feedback,
+            autopilot: nexus_core::dispatch::autopilot::autopilot_for(
+                &ctx.cfg,
+                &detail.ticket.labels,
+            ),
             cfg: &ctx.cfg,
         });
         let record = ctx

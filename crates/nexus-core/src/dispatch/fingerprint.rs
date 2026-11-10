@@ -270,7 +270,9 @@ mod tests {
     /// Referenzwerte, ursprünglich aus dem TypeScript-Stand (einmaliges tsx-Skript, das
     /// `DispatchConfigFingerprint.hash` über die drei Einstellungen laufen ließ
     /// (`normalize({})`, `normalize(example())` und das Beispiel mit eigener work-Vorlage und
-    /// promptExtra)). Neu gesetzt, seit die Tool-Listen auch `Bash(nexus…)` erlauben.
+    /// promptExtra)). Neu gesetzt, seit die Tool-Listen auch `Bash(nexus…)` erlauben; der dritte
+    /// Wert außerdem, seit die Standardvorlage `{{outcomes}}` enthält (er hasht diese Vorlage
+    /// als eigene).
     #[test]
     fn stimmt_mit_den_referenzwerten_aus_typescript_uberein() {
         let normalizer = DispatchConfigNormalizer::new();
@@ -291,7 +293,7 @@ mod tests {
             "merge": null,
         });
         let eigene = normalizer.normalize(&raw).unwrap();
-        assert_eq!(fingerprint.hash(&eigene), "5369d71ff3e36193");
+        assert_eq!(fingerprint.hash(&eigene), "85da044d3a57ce09");
     }
 
     /// Der gehashte Inhalt der leeren Einstellung, Zeichen für Zeichen wie in TypeScript

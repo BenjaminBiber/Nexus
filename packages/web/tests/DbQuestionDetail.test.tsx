@@ -172,6 +172,18 @@ describe('DbQuestionDetailPage', () => {
     expect(decideDbQuestion).toHaveBeenCalledWith('ARC-F0001', { rev: 3, option: 'O2', reason: '' });
   });
 
+  it('kennzeichnet eine vom Autopilot entschiedene Frage', async () => {
+    open({ getDbQuestion: vi.fn(async () => decided(DETAIL, 4, { reason: 'Autopilot: Empfehlung der Recherche' })) });
+    const box = await screen.findByRole('region', { name: 'Entscheidung' });
+    expect(within(box).getByText('vom Autopilot entschieden')).toBeTruthy();
+  });
+
+  it('kennzeichnet eine von Hand entschiedene Frage nicht', async () => {
+    open({ getDbQuestion: vi.fn(async () => decided(DETAIL, 4)) });
+    await screen.findByRole('region', { name: 'Entscheidung' });
+    expect(screen.queryByText('vom Autopilot entschieden')).toBeNull();
+  });
+
   it('verlangt beim Verwerfen eine Begründung und öffnet wieder', async () => {
     const discardDbQuestion = vi.fn(async () => ({ ...decided(DETAIL, 4, { outcome: 'discarded', option: null, reason: 'doppelt' }), state: 'discarded' as const }));
     const reopenDbQuestion = vi.fn(async () => ({ ...DETAIL, rev: 5 }));

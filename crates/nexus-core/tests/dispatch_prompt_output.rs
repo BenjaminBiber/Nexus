@@ -55,6 +55,7 @@ fn work(cfg: &DispatchConfig, answers: &[AnsweredQuestion], feedback: &[String])
         branch: "ticket/ARC-0009-rabatte",
         answers,
         feedback,
+        autopilot: false,
         cfg,
     })
 }
@@ -312,6 +313,7 @@ fn merge_session_ohne_und_mit_zusatz_anweisung() {
             agent: "junior-ARC-0009",
             branch: "ticket/ARC-0009-rabatte",
             target: "main",
+            previous_attempts: None,
             cfg,
         })
     };

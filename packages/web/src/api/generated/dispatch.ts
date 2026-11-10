@@ -17,6 +17,23 @@ export type AccountStrategy = "most-free" | "order";
 export type AdvisorResult = { suggestions: Array<Suggestion>, insufficient: Array<InsufficientData>, };
 
 /**
+ * Autopilot des Dispatchers (`autopilot_for` entscheidet je Ticket)
+ */
+export type AutopilotSettings = { 
+/**
+ * true = keine Freigaben, Fragen entscheidet die Recherche, Merge-Konflikte löst Claude
+ */
+enabled: boolean, 
+/**
+ * Tickets mit diesem Label laufen ohne Autopilot; null = keine Ausnahme
+ */
+exceptLabel: string | null, 
+/**
+ * Höchstens so viele Merge-Sessions je Konflikt (1–5)
+ */
+maxMergeSessions: number, };
+
+/**
  * Zustand des Hauptordners vor einem Merge
  */
 export type CheckoutState = { 
@@ -143,6 +160,11 @@ profiles: Record<string, Profile>, defaultProfile: string, rules: Array<Rule>, e
  * Profilleiter von günstig nach teuer
  */
 ladder: Array<string>, allowFable: boolean, research: ResearchSettings, planning: PlanningSettings, 
+/**
+ * Autopilot: keine Freigaben, Fragen entscheidet die Recherche, Merge-Konflikte mehrfach
+ * per Session
+ */
+autopilot: AutopilotSettings, 
 /**
  * Wahl unter mehreren erlaubten Accounts
  */
@@ -309,7 +331,12 @@ export type DispatchState = { pausedUntil: string | null,
 /**
  * Pausen einzelner Claude-Accounts (Nutzungslimit): Account-ID → ISO-Zeitpunkt
  */
-accountPauses: Record<string, string>, merges: Record<string, MergeEntry>, research: Record<string, ResearchEntry>, researchAuto: ResearchAutoState, planning: Record<string, PlanningEntry>, planningAuto: PlanningAutoState, };
+accountPauses: Record<string, string>, merges: Record<string, MergeEntry>, research: Record<string, ResearchEntry>, researchAuto: ResearchAutoState, 
+/**
+ * Recherchen des Autopilots ohne Empfehlung je Frage (Frage-ID → Zahl der Versuche); leer
+ * nicht geschrieben, damit state.json ohne Autopilot wie bisher aussieht
+ */
+autopilotResearch?: Record<string, number>, planning: Record<string, PlanningEntry>, planningAuto: PlanningAutoState, };
 
 /**
  * Ergebnis der Auswertung (Läufe einer Art, Start im Zeitraum)
@@ -384,6 +411,11 @@ export type MergeEntry = { ticketId: string, branch: string, phase: MergePhase,
  * true, sobald für diesen Merge-Versuch eine Merge-Session gestartet wurde
  */
 sessionUsed: boolean, 
+/**
+ * Merge-Sessions für den aktuellen Stand des Zielbranches; ältere Dateien kennen nur
+ * `session_used` und laden mit 1, wenn es gesetzt ist
+ */
+sessions: number, 
 /**
  * „Merge wartet auf …“ wurde schon kommentiert
  */

@@ -11,10 +11,12 @@ use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use nexus_core::board::basics::{TicketStatus, MAX_BLOCKED_REASON_LENGTH};
+use nexus_core::board::basics::{is_human_interaction, TicketStatus, MAX_BLOCKED_REASON_LENGTH};
 use nexus_core::board::ticket_service::{TicketDetail, TicketPatch, WriteOptions};
 use nexus_core::board::types::Board;
 use nexus_core::clock::iso;
+use nexus_core::dispatch::autopilot::autopilot_for;
+use nexus_core::dispatch::config::AUTOPILOT_PREFIX;
 use nexus_core::dispatch::{
     limit_pause, markers, MergeEntry, MergePhase, RunEnd, RunKind, RunRecord, SetupFailure,
     SETUP_REASON_PREFIX,
@@ -175,10 +177,95 @@ impl<'a> ResultHandler<'a> {
             }
             // Freigabe vor dem Merge: wartet als Human Interaction auf „Übernehmen“ oder
             // „Zurück an den Agenten“
-            if ctx.cfg.review_before_merge && detail.ticket.branch.is_some() {
+            // Im Autopilot gibt es keine Freigabe
+            if ctx.cfg.review_before_merge
+                && detail.ticket.branch.is_some()
+                && !autopilot_for(&ctx.cfg, &detail.ticket.labels)
+            {
                 self.reviews.hold(ctx, &detail, record, end).await?;
                 return Ok(HandleResult::new(HandleOutcome::Review));
             }
+            return self.schedule_merge(&detail, record).await;
+        }
+        if detail.ticket.assignee.as_deref() != Some(record.agent.as_str()) {
+            return Ok(HandleResult::new(HandleOutcome::Taken));
+        }
+        if detail.ticket.status == TicketStatus::Blocked
+            && autopilot_for(&ctx.cfg, &detail.ticket.labels)
+            && is_human_interaction(detail.ticket.blocked_reason.as_deref())
+        {
+            return self.auto_accept(&detail, record).await;
+        }
+        if detail.ticket.status == TicketStatus::Blocked {
+            // Im Autopilot ist das eine Sackgasse: „Autopilot steckt fest“ statt „blockiert“
+            ctx.notify(&DispatchNotice::blocked(
+                autopilot_for(&ctx.cfg, &detail.ticket.labels),
+                &detail.ticket.id,
+                &detail.ticket.title,
+                detail
+                    .ticket
+                    .blocked_reason
+                    .as_deref()
+                    .unwrap_or("Blockiert"),
+                board.as_ref().and_then(|board| board.repo_path.clone()),
+            ))
+            .await;
+            return Ok(HandleResult {
+                outcome: HandleOutcome::Blocked,
+                abort: None,
+                blocked_reason: detail.ticket.blocked_reason.clone(),
+            });
+        }
+        self.evaluate_open(&detail, record, end, reason, board.as_ref())
+            .await
+    }
+
+    /// Autopilot: nimmt ein auf „Human Interaction: …“ blockiertes Ticket selbst ab
+    /// (Abnahme-Text fehlt → der Grund), vermerkt das am Ticket und merkt den Merge vor
+    async fn auto_accept(&self, detail: &TicketDetail, record: &RunRecord) -> Result<HandleResult> {
+        let ctx = self.ctx;
+        let id = &detail.ticket.id;
+        let reason = detail
+            .ticket
+            .blocked_reason
+            .clone()
+            .unwrap_or_default()
+            .trim()
+            .to_string();
+        let tickets = &ctx.services().tickets;
+        if detail.ticket.acceptance.trim().is_empty() {
+            tickets
+                .update(
+                    id,
+                    &TicketPatch {
+                        acceptance: Some(reason.clone()),
+                        ..TicketPatch::default()
+                    },
+                    ctx.actor(),
+                    &WriteOptions::default(),
+                )
+                .await?;
+        }
+        tickets
+            .accept(id, ctx.actor(), &WriteOptions::default())
+            .await?;
+        ctx.comment(
+            id,
+            &format!("{AUTOPILOT_PREFIX} automatisch abgenommen – {reason}"),
+        )
+        .await?;
+        let accepted = tickets.get(id).await?;
+        self.schedule_merge(&accepted, record).await
+    }
+
+    /// Merkt den Merge eines erledigten Tickets vor (Ausgang done)
+    async fn schedule_merge(
+        &self,
+        detail: &TicketDetail,
+        record: &RunRecord,
+    ) -> Result<HandleResult> {
+        let ctx = self.ctx;
+        {
             let id = detail.ticket.id.clone();
             let branch = detail
                 .ticket
@@ -196,6 +283,7 @@ impl<'a> ResultHandler<'a> {
                             branch,
                             phase: MergePhase::Pending,
                             session_used: false,
+                            sessions: 0,
                             wait_noted: false,
                             target: None,
                             target_head: None,
@@ -207,30 +295,20 @@ impl<'a> ResultHandler<'a> {
                 })
                 .await?;
             ctx.log(&format!("erledigt {} – Merge vorgemerkt", detail.ticket.id));
-            return Ok(HandleResult::new(HandleOutcome::Done));
         }
-        if detail.ticket.assignee.as_deref() != Some(record.agent.as_str()) {
-            return Ok(HandleResult::new(HandleOutcome::Taken));
-        }
-        if detail.ticket.status == TicketStatus::Blocked {
-            ctx.notify(&DispatchNotice {
-                kind: DispatchNoticeKind::Blocked,
-                ticket_id: Some(detail.ticket.id.clone()),
-                title: detail.ticket.title.clone(),
-                text: detail
-                    .ticket
-                    .blocked_reason
-                    .clone()
-                    .unwrap_or_else(|| "Blockiert".to_string()),
-                repo_path: board.as_ref().and_then(|board| board.repo_path.clone()),
-            })
-            .await;
-            return Ok(HandleResult {
-                outcome: HandleOutcome::Blocked,
-                abort: None,
-                blocked_reason: detail.ticket.blocked_reason.clone(),
-            });
-        }
+        Ok(HandleResult::new(HandleOutcome::Done))
+    }
+
+    /// Auswertung eines Laufs, dessen Ticket weder erledigt noch blockiert ist
+    async fn evaluate_open(
+        &self,
+        detail: &TicketDetail,
+        record: &RunRecord,
+        end: &RunEnd,
+        reason: Option<&str>,
+        board: Option<&Board>,
+    ) -> Result<HandleResult> {
+        let ctx = self.ctx;
         if detail.ticket.status != TicketStatus::InProgress {
             return Ok(HandleResult::new(HandleOutcome::Other));
         }
@@ -271,7 +349,7 @@ Worktree bleiben. Nach der Entscheidung geht es dort weiter.",
             // Kein Fehler des Tickets: nicht als Versuch zählen, sondern pausieren, bis Claude
             // Code wieder da ist
             self.pause(
-                &detail,
+                detail,
                 board.as_ref().and_then(|board| board.repo_path.clone()),
                 &format!(
                     "{}: Claude Code wurde nicht gefunden (Befehl „{}“), Ticket zurück nach \
@@ -296,7 +374,7 @@ installieren oder den Befehl in der Einstellung prüfen. Zählt nicht als Versuc
                 < LIMIT_PAUSES_FREE
             {
                 self.limit_pause(
-                    &detail,
+                    detail,
                     record,
                     board.as_ref().and_then(|board| board.repo_path.clone()),
                 )
@@ -305,7 +383,7 @@ installieren oder den Befehl in der Einstellung prüfen. Zählt nicht als Versuc
             }
             return self
                 .abort(
-                    &detail,
+                    detail,
                     &format!("Nutzungslimit zum {}. Mal in Folge", LIMIT_PAUSES_FREE + 1),
                     &ctx.output.shown(&end.result.output, &summary),
                     Some(&record.log_file),
@@ -319,7 +397,7 @@ installieren oder den Befehl in der Einstellung prüfen. Zählt nicht als Versuc
                 .abort_reason(&end.result, &summary, &record.run, None),
         };
         self.abort(
-            &detail,
+            detail,
             &reason,
             &ctx.output.shown(&end.result.output, &summary),
             Some(&record.log_file),

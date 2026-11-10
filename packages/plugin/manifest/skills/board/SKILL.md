@@ -281,6 +281,51 @@ das Ticket in den Zustand, in dem der Dispatcher es übernimmt, und legst das Pr
 Mehrere Tickets („bereite ARC-0007 bis ARC-0010 vor“) nacheinander genauso. Starten musst du nichts – der Dispatcher
 prüft jede Minute (sofort: `nexus board dispatch run`, nur wenn der Nutzer es will).
 
+## Autopilot
+
+Mit dem Autopilot läuft ein Feature von Ticket zu Ticket durch, ohne dass der Nutzer freigeben, abnehmen, Fragen
+beantworten oder Merge-Konflikte lösen muss. Der Dispatcher unterbricht nur noch bei echten Sackgassen – und meldet
+sie dann.
+
+**Schalter.** In `~/.nexus/dispatch.yaml` (Einstellungen → Dispatcher, Abschnitt „Autopilot“) steht der Block
+`autopilot`; er gilt global für alle Boards des Dispatchers und ist standardmäßig aus:
+
+- `autopilot.enabled` – Hauptschalter (Vorgabe `false`).
+- `autopilot.exceptLabel` – Tickets mit diesem Label laufen wie ohne Autopilot (Vorgabe `interaktiv`, Vergleich ohne
+  Groß-/Kleinschreibung; leer = keine Ausnahme). Soll der Nutzer ein Ticket selbst freigeben oder abnehmen, bekommt es
+  dieses Label (`nexus board set <ID> --label …` ersetzt die Labels: bisherige mitgeben).
+- `autopilot.maxMergeSessions` – Merge-Sessions je Stand des Zielbranches, 1 bis 5 (Vorgabe 3).
+
+Ob der Autopilot für ein Ticket gilt, entscheidet allein der Dispatcher (Schalter an und kein Ausnahme-Label); das
+nie selbst nachbauen. Ohne Autopilot, also bei ausgeschaltetem Schalter oder mit Ausnahme-Label, ändert sich nichts.
+
+**Was entfällt – Verhalten je Fall:**
+
+| Fall | Im Autopilot |
+| --- | --- |
+| Review vor dem Merge (`reviewBeforeMerge`) | wird übersprungen: Das Ticket geht nach Erledigt direkt in den Merge |
+| Ausgang `Human Interaction` | gibt es nicht; die Arbeitsanweisung nennt ihn nicht, Prüfbares prüft der Agent selbst und schließt mit `erledigt` ab. Setzt ein Agent ihn trotzdem, nimmt der Dispatcher das Ticket selbst ab (Kommentar „Autopilot: automatisch abgenommen – <Grund>“) und mergt |
+| Frage eines Agents (Umsetzung `junior-…` oder Planung `planner-…`) | wird weiter angelegt; die Recherche läuft sofort (auch bei ausgeschalteter Automatik, ohne Tageslimit; `research.wip`, Pause und Zeitfenster gelten) und die eine empfohlene Option wird als Antwort übernommen, mit Begründung „Autopilot: Empfehlung der Recherche übernommen“. Die Antwort fließt wie sonst in den nächsten Lauf; „Wieder öffnen“ bleibt möglich |
+| Frage ohne eindeutige Empfehlung (keine oder mehrere `recommended`) | eine zweite Recherche mit der nächsten Stufe der Profilleiter; danach geht das Ticket auf Blockiert mit Grund `Autopilot: keine Empfehlung zu <Frage-ID>` |
+| Merge-Konflikt | statt einer Merge-Session bis zu `maxMergeSessions`; jede weitere mit einem Profil eine Stufe höher (die oberste Stufe wiederholt sich) und mit dem Ergebnis der vorigen Session im Auftrag. Ein weiterlaufender Zielbranch und „Erneut mergen“ setzen die Zählung zurück |
+| Planungsläufe | unverändert; ihre Fragen laufen wie die der Umsetzung |
+
+**Was dem Nutzer bleibt:**
+
+- Fragen, die ein **Mensch** oder eine **interaktive Claude-Session** gestellt hat, beantwortet der Autopilot nie.
+  Entscheiden darf nur der Nutzer; das gilt auch für automatisch entschiedene Fragen („Wieder öffnen“).
+- Externe Blocker: ein Agent meldet `blockiert mit Grund` (Zugang, Umgebung), Abbrüche bis `maxAttempts`, Board ohne
+  Repo-Pfad, gescheiterte Einrichtung – wie ohne Autopilot.
+- Keine Empfehlung der Recherche (siehe oben) und alle Merge-Sessions gescheitert: Blockiert mit Grund
+  `Merge: Autopilot – <n> Merge-Sessions ohne Lösung (…)`; der Nutzer löst den Konflikt und stößt den Merge mit
+  `nexus board merge <ID>` an.
+- Jede Blockade eines Autopilot-Tickets wird als Benachrichtigung „Autopilot steckt fest: <ID> – <Grund>“ gemeldet
+  (statt der normalen Blockiert-Meldung).
+
+Im Ticket-Panel trägt ein Ticket mit Autopilot das Abzeichen „Autopilot“; automatisch entschiedene Fragen zeigen
+„vom Autopilot entschieden“ (Begründung beginnt mit `Autopilot:`). Als Agent des Dispatchers richtest du dich nach der Arbeitsanweisung des Laufs; was dort als
+Ausgang steht, gilt (siehe „Vom Dispatcher gestartet“).
+
 ## Vom Dispatcher gestartet
 
 Der Nexus-Server übernimmt bereite Tickets (Geplant, Label `auto`, Plan, Handbuch und Abnahme vorhanden) der eigenen
@@ -303,9 +348,12 @@ Ticket schon:
      Tests, Build und Lint deshalb mit Bash oder PowerShell ausführen – nur so erscheinen sie im Review.
    - **Human Interaction:** `nexus board set <ID> --status blockiert --blocked-reason "Human Interaction: …" --by junior-<ID>`.
      Gemergt wird erst, wenn der Nutzer abnimmt (`nexus board accept`); andere Tickets warten nicht darauf.
+     Diesen Ausgang gibt es im Autopilot nicht (siehe „Autopilot“): Die Arbeitsanweisung nennt dann nur drei Ausgänge,
+     Prüfbares prüfst du selbst (Tests, Build) und schließt mit „erledigt“ ab.
    - **Frage:** `nexus board question add "…" --description "…" --ticket <ID> --author junior-<ID>` (nach den Schreibregeln,
      siehe „Fragen“), dann den Lauf beenden.
-     Das Ticket geht zurück nach Geplant und läuft nach der Entscheidung im selben Worktree weiter.
+     Das Ticket geht zurück nach Geplant und läuft nach der Entscheidung im selben Worktree weiter. Im Autopilot
+     entscheidet die Recherche (siehe „Autopilot“); die Antwort steht dann mit Vorsilbe `Autopilot:` in der Begründung.
    - **blockiert mit Grund** (Zugang, Umgebung): `nexus board set <ID> --status blockiert --blocked-reason "…" --by junior-<ID>`.
 4. Steht in der Arbeitsanweisung eine **Rückmeldung aus dem Review**, hat ein Mensch die Umsetzung angesehen und
    zurückgegeben. Sie gilt vor Plan und Handbuch; es geht im selben Worktree und Branch weiter, danach wieder „erledigt“.
