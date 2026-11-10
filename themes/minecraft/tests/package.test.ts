@@ -43,6 +43,9 @@ describe('Minecraft-Theme-Paket', () => {
     expect(main).toMatch(/from\s*["']@nexus\/theme-sdk["']/);
     expect(main).toMatch(/from\s*["']react\/jsx-runtime["']/);
     expect(main).not.toContain('react.transitional.element');
+    // opentype.js steckt gebündelt in main.js, es wird nicht zur Laufzeit importiert
+    expect(main).not.toMatch(/from\s*["']opentype\.js["']/);
+    expect(main).toContain('unitsPerEm');
   });
 
   it('nexus theme pack dist erzeugt ein Paket ohne Mojang-Dateien', () => {
