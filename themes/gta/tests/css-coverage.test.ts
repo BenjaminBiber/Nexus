@@ -64,6 +64,55 @@ const HOST: Record<string, Record<string, string>> = {
     Trefferkopf: '.search-group-title',
     'Knopf Suchen': '.global-search',
   },
+  board: {
+    Board: '.page.db-board',
+    'Kopf des Boards': '.db-board-head',
+    Spaltenreihe: '.db-columns',
+    Spalte: '.db-column',
+    Spaltenkopf: '.db-column .column-head',
+    Spaltenpunkt: '.db-column .column-dot',
+    Spaltenzähler: '.column-head .count',
+    'leere Spalte': '.column-empty',
+    'gesperrte Spalte': '.db-column.locked',
+    Ablagefläche: '.db-column.drop',
+    'gesperrte Ablage': '.db-column.drop-blocked',
+    Karte: '.db-card',
+    'Karte beim Überfahren': '.db-card:is(:hover, :focus-within)',
+    'ausgewählte Karte': '.db-card:focus-within',
+    'blockierte Karte': '.db-card:has(.badge.blocked)',
+    'wartende Karte': '.db-card.is-waiting',
+    'Karte beim Ziehen': '.db-card:active',
+    Kartennummer: '.card-id',
+    Kartentitel: '.card-title',
+    Wartehinweis: '.card-waiting',
+    Fortschrittsbalken: '.card-steps-bar',
+    Fortschritt: '.card-steps-fill',
+    'Marke Frage auf der Karte': '.db-card .badge.question',
+    'Marke Planung auf der Karte': '.db-card .badge.waiting',
+    'Knopf Ticket anlegen': '.db-fab-dot',
+  },
+  'ticket-panel': {
+    'Ticket-Panel': '.db-panel',
+    'Kopf des Panels': '.db-panel-head',
+    Titel: '.db-title',
+    Felder: '.db-fields',
+    'Feld zum Ankreuzen': '.db-field-check',
+    Seitenleiste: '.db-panel-side',
+    'Titel der Seitenleiste': '.db-side-title',
+    Reiterleiste: '.db-tablist',
+    Reiter: ".db-tablist [role='tab']",
+    'aktiver Reiter': ".db-tablist [role='tab'].active",
+    Schritt: '.db-step',
+    'erledigter Schritt': '.db-step.done',
+    Kommentar: '.db-entries > .entry',
+    Verlaufseintrag: '.tl-body',
+    Verlaufspunkt: '.tl-dot',
+    Abhängigkeit: '.dep',
+    'offene Abhängigkeit': '.dep.is-open',
+    'Titel eines Bereichs': '.db-drawer-title',
+    Review: '.db-review',
+    'Diff im Review': '.db-review-patch',
+  },
 };
 
 const ROOT = ":root[data-theme='gta']";
@@ -126,6 +175,20 @@ function sources(dir: string): string {
     .join('\n');
 }
 
+// Selektoren nur aus dem Abschnitt eines Stils (ohne dessen Präfix)
+const STYLE_PREFIX = { v: ":root[data-theme='gta']:not([data-gta-style='sa'])", sa: ":root[data-theme='gta'][data-gta-style='sa']" };
+function styleSelectors(text: string, style: keyof typeof STYLE_PREFIX): string[] {
+  const prefix = STYLE_PREFIX[style];
+  return [...stripComments(text).matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .filter((m) => m[2]!.trim() !== '')
+    .flatMap((m) => topLevel(m[1]!))
+    .filter((s) => s.startsWith(prefix) && !s.startsWith(`${prefix}[`))
+    .map((s) => s.slice(prefix.length).trim());
+}
+
+// Board und Ticket-Panel bekommen in jedem Stil einen eigenen Look, nicht nur die gemeinsame Form
+const PER_STYLE = ['.db-column .column-head', '.column-head .count', '.db-card', '.db-card:is(:hover, :focus-within)', '.card-id', '.card-title', '.card-steps-bar', '.card-waiting', '.db-fab-dot', '.db-title', ".db-tablist [role='tab'].active"];
+
 const rules = selectors(readFileSync(join(root, 'theme.css'), 'utf8'));
 const code = sources(web);
 const entries = Object.entries(HOST).flatMap(([group, list]) => Object.entries(list).map(([name, selector]) => ({ group, name, selector })));
@@ -149,6 +212,16 @@ describe('Abdeckung der Host-Selektoren in theme.css', () => {
     for (const name of elements.filter((e) => !['h2', 'pre', 'code', 'blockquote', 'table', 'a', 'th'].includes(e))) {
       expect(code, name).toMatch(new RegExp(`<${name}[\\s>/]`));
     }
+  });
+
+  it.each((['v', 'sa'] as const).flatMap((style) => PER_STYLE.map((selector) => ({ style, selector }))))('Stil $style gestaltet $selector', ({ style, selector }) => {
+    expect(covered(styleSelectors(readFileSync(join(root, 'theme.css'), 'utf8'), style), selector)).toBe(true);
+  });
+
+  it('die Abschnitte der Stile werden getrennt gelesen', () => {
+    const css = ":root[data-theme='gta']:not([data-gta-style='sa']) .a { color: red; } :root[data-theme='gta'][data-gta-style='sa'] .b { color: red; } :root[data-theme='gta'] .c { color: red; }";
+    expect(styleSelectors(css, 'v')).toEqual(['.a']);
+    expect(styleSelectors(css, 'sa')).toEqual(['.b']);
   });
 
   it('die Prüfung erkennt fehlende und nur angefangene Selektoren', () => {
