@@ -192,7 +192,8 @@
   --waiting-line: color-mix(in srgb, var(--gta-warn) 45%, var(--gta-bg));
   --idle-fg: var(--gta-text-dim);
   --idle-bg: var(--surface-alt);
-  --blocked-fg: var(--gta-danger);
+  /* Rot als Textfarbe aufgehellt wie bei .field-error, sonst unter 4,5:1 auf den getönten Flächen */
+  --blocked-fg: color-mix(in srgb, var(--gta-danger) 70%, #fff);
   --blocked-bg: color-mix(in srgb, var(--gta-danger) 14%, var(--gta-bg));
   --orphan-fg: var(--gta-c-in_planning);
   --orphan-bg: color-mix(in srgb, var(--gta-c-in_planning) 14%, var(--gta-bg));
@@ -211,7 +212,7 @@
   --danger: var(--gta-danger);
   --warn: var(--gta-warn);
   --connection-line: color-mix(in srgb, var(--gta-danger) 45%, var(--gta-bg));
-  --connection-fg: var(--gta-danger);
+  --connection-fg: color-mix(in srgb, var(--gta-danger) 70%, #fff);
   --error-bg: color-mix(in srgb, var(--gta-danger) 8%, var(--gta-bg));
   --answered-bg: color-mix(in srgb, var(--gta-ok) 14%, var(--gta-bg));
   --answered-line: color-mix(in srgb, var(--gta-ok) 40%, var(--gta-bg));
@@ -779,6 +780,13 @@
 
 :root[data-theme='gta'] :is(.field-error, .error) {
   color: color-mix(in srgb, var(--gta-danger) 70%, #fff);
+}
+
+/* Wo der Kern --danger als Textfarbe nimmt, steht der aufgehellte Ton (--danger bleibt die Flächenfarbe) */
+:root[data-theme='gta'] .usage-num.crit,
+:root[data-theme='gta'] .kpi-value.tone-bad,
+:root[data-theme='gta'] .ladder-summary .tone-bad {
+  color: var(--blocked-fg);
 }
 
 /* Leere Zustände und Laden */
@@ -2867,7 +2875,7 @@
   --gta-accent-ink: #000000;
   --gta-ok: #72cc72;
   --gta-warn: #f0c850;
-  --gta-danger: #e03232;
+  --gta-danger: #dc2f2f;
   --gta-money: #72cc72;
   --gta-c-backlog: #a9b0b5;
   --gta-c-waiting: #ff8555;
@@ -3222,6 +3230,14 @@
   border-top-color: var(--gta-accent);
   background: #fff;
   color: #000;
+}
+
+/* Fokusring auf weißen Flächen (aktiver Reiter, aktive Kategorie, Elemente der angesteuerten Karte) in Schwarz; die
+   Akzentfarbe erreicht auf Weiß keine 3:1 */
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-tab[aria-current='page']:focus-visible,
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-cat[aria-pressed='true']:focus-visible,
+:root[data-theme='gta']:not([data-gta-style='sa']) .db-card:is(:hover, :focus-within) :focus-visible {
+  outline-color: #000000;
 }
 
 :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-badge {
@@ -5899,10 +5915,15 @@
   background: color-mix(in srgb, var(--gta-accent) 26%, transparent);
 }
 
+/* Ticket-ID: hell genug für 4,5:1 auch über der hellsten Stelle der Szene, auf der getönten Karte weiß */
 :root[data-theme='gta'][data-gta-style='sa'] .card-id {
-  font: 400 9.5px/1.4 var(--gta-font-title);
+  font: 400 10.5px/1.4 var(--gta-font-title);
   letter-spacing: 0.05em;
-  color: var(--sa-slate);
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .db-card:is(:hover, :focus-within) .card-id {
+  color: var(--gta-text);
 }
 
 :root[data-theme='gta'][data-gta-style='sa'] .card-title {
@@ -5932,8 +5953,13 @@
   letter-spacing: 0.05em;
 }
 
+/* Rote Marken hell genug für 4,5:1 über der hellsten Stelle der Szene, auf der getönten Karte noch heller */
 :root[data-theme='gta'][data-gta-style='sa'] .db-card :is(.badge.blocked, .badge.prio-high, .badge.prio-urgent) {
-  color: #e0575a;
+  color: #ff8a8c;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .db-card:is(:hover, :focus-within) :is(.badge.blocked, .badge.prio-high, .badge.prio-urgent) {
+  color: #ffa8a8;
 }
 
 :root[data-theme='gta'][data-gta-style='sa'] .db-card .badge.question {
@@ -6150,10 +6176,15 @@
   font: 700 14px/1.3 var(--gta-font-ui);
 }
 
+/* Wie die Ticket-ID der Karte: 4,5:1 über der Szene, auf der getönten Zeile weiß */
 :root[data-theme='gta'][data-gta-style='sa'] .inbox-id {
-  color: var(--sa-slate);
-  font: 400 9.5px/1.4 var(--gta-font-title);
+  color: var(--gta-text-dim);
+  font: 400 10.5px/1.4 var(--gta-font-title);
   letter-spacing: 0.05em;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .inbox-row:is(:hover, :focus-within) .inbox-id {
+  color: var(--gta-text);
 }
 
 /* Dashboard wie die Tafeln Statistik und Zahlen: Kennzahlen in Passion One mit Kontur, Überschriften gotisch */
