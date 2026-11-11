@@ -27,6 +27,15 @@
     "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/dracula-1.0.0-preview.png"
   },
   {
+    "id": "gta",
+    "name": "GTA",
+    "version": "1.0.0",
+    "sdkVersion": "^1.2",
+    "downloadUrl": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/gta-1.0.0.nexus",
+    "sha256": "7910cde23731103d2c517715e4a5c538a604d1e404f72b28e6c18c3e172ee268",
+    "preview": "https://github.com/BenjaminBiber/Nexus/releases/download/v0.0.0/gta-1.0.0-preview.png"
+  },
+  {
     "id": "minecraft",
     "name": "Minecraft",
     "version": "0.2.0",

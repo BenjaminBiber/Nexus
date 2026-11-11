@@ -19,6 +19,7 @@ fn referenz_index_der_mitgelieferten_themes_ist_gueltig_und_kompatibel() {
             "alucard",
             "catppuccin",
             "dracula",
+            "gta",
             "minecraft",
             "pastel",
             "signal",
