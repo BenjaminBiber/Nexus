@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
+import { useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { useGame, type Game } from '../data/GameContext.js';
 import type { Blip } from '../data/derive.js';
 import { formatMoneyV, formatPercent } from '../shared/format.js';
+import { useStatsDialog } from '../shared/useStatsDialog.js';
 
 type Category = 'general' | 'columns' | 'usage';
 
@@ -119,53 +120,13 @@ function Checklist({ game }: { game: Game }) {
   );
 }
 
-const FOCUSABLE = 'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
-
-// Tab bleibt im Dialog: am Ende wieder vorne, am Anfang wieder hinten
-function trapTab(event: KeyboardEvent<HTMLElement>): void {
-  const items = [...event.currentTarget.querySelectorAll<HTMLElement>(FOCUSABLE)];
-  const first = items[0];
-  const last = items.at(-1);
-  if (!first || !last) return;
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault();
-    last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault();
-    first.focus();
-  }
-}
-
 // Stats-Menü im Aufbau der Statistik-Seite des Pausenmenüs: links Kategorien, Mitte Zeilen, rechts die
 // 100-%-Checkliste. Fokus beim Öffnen hinein, Esc, Schließen oder ein Klick daneben schließen, danach Fokus zurück auf
 // `returnFocus`. Der Rahmen setzt den Dialog an die Stelle des Inhalts.
 export function VStats({ returnFocus }: { returnFocus?: RefObject<HTMLElement | null> }) {
   const game = useGame();
   const [category, setCategory] = useState<Category>('general');
-  const dialog = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    dialog.current?.querySelector<HTMLElement>('[aria-pressed="true"]')?.focus();
-    const back = returnFocus?.current;
-    return () => back?.focus();
-  }, [returnFocus]);
-
-  // Wechselt die Seite (etwa mit Q oder E), schließt das Menü, damit der Inhalt nicht unsichtbar weiterläuft
-  const { setStatsOpen } = game;
-  const page = game.active?.id;
-  const opened = useRef(page);
-  useEffect(() => {
-    if (page !== opened.current) setStatsOpen(false);
-  }, [page, setStatsOpen]);
-
-  const close = () => game.setStatsOpen(false);
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Escape') {
-      event.stopPropagation();
-      close();
-    }
-    if (event.key === 'Tab') trapTab(event);
-  };
+  const { ref: dialog, onKeyDown, close } = useStatsDialog('[aria-pressed="true"]', returnFocus);
   const title = CATEGORIES.find(([id]) => id === category)![1];
 
   return (

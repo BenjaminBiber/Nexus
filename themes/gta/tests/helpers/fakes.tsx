@@ -130,6 +130,7 @@ export function fakeGame(overrides: Partial<Game> = {}): Game {
     banner: null,
     dismissBanner: vi.fn(),
     phone: null,
+    declined: false,
     dismissPhone: vi.fn(),
     answerPhone: vi.fn(),
     zone: null,

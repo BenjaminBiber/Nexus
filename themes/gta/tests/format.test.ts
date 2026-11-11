@@ -1,6 +1,6 @@
 // Anzeigeformate für Geld, Uhr und Prozent
 import { describe, expect, it } from 'vitest';
-import { formatClockSa, formatClockV, formatMoneySa, formatMoneyV, formatPercent } from '../src/shared/format.js';
+import { formatAmountSa, formatClockSa, formatClockV, formatMoneySa, formatMoneyV, formatPercent } from '../src/shared/format.js';
 
 describe('Geld', () => {
   it('GTA V: Dollar mit deutschen Tausenderpunkten', () => {
@@ -15,6 +15,12 @@ describe('Geld', () => {
     expect(formatMoneySa(184_000)).toBe('$00184000');
     expect(formatMoneySa(0)).toBe('$00000000');
     expect(formatMoneySa(123_456_789)).toBe('$123456789');
+  });
+
+  it('San Andreas als Betrag (Banner, Cheat): ohne führende Nullen', () => {
+    expect(formatAmountSa(40_000)).toBe('$40000');
+    expect(formatAmountSa(250_000)).toBe('$250000');
+    expect(formatAmountSa(-3)).toBe('$0');
   });
 
   it('negative Werte und NaN wie 0', () => {

@@ -15,6 +15,11 @@ export function formatMoneySa(n: number): string {
   return `$${String(whole(n)).padStart(8, '0')}`;
 }
 
+/** San Andreas als Betrag (Banner, Cheat): `$40000` */
+export function formatAmountSa(n: number): string {
+  return `$${whole(n)}`;
+}
+
 /** San Andreas: `09:41` */
 export function formatClockSa(date: Date): string {
   return `${two(date.getHours())}:${two(date.getMinutes())}`;

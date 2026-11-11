@@ -34,6 +34,17 @@ export function useChanged<T>(value: T | null | undefined, ms: number): T | null
   return shown ? shown.value : null;
 }
 
+/** Schalter, der nach `fire()` für `ms` Millisekunden an ist; ein weiteres `fire()` startet die Zeit neu */
+export function useFlash(ms: number): { on: boolean; fire(): void } {
+  const [on, setOn] = useState(false);
+  const timer = useTimer();
+  const fire = useCallback(() => {
+    setOn(true);
+    timer.start(ms, () => setOn(false));
+  }, [ms, timer]);
+  return useMemo(() => ({ on, fire }), [on, fire]);
+}
+
 /** Meldet, wenn ein Zähler steigt (der erste Wert löst nichts aus); bleibt bis `clear()` oder `ms` Millisekunden */
 export function useIncrease(count: number, ms: number, enabled: boolean): { value: number | null; clear(): void } {
   // Zahl der neuen seit dem Einblenden; weitere Anstiege zählen dazu
