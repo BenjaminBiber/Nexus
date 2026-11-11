@@ -15,6 +15,11 @@ export function formatMoneySa(n: number): string {
   return `$${String(whole(n)).padStart(8, '0')}`;
 }
 
+/** San Andreas als Betrag (Banner, Cheat): `$40000` */
+export function formatAmountSa(n: number): string {
+  return `$${whole(n)}`;
+}
+
 /** San Andreas: `09:41` */
 export function formatClockSa(date: Date): string {
   return `${two(date.getHours())}:${two(date.getMinutes())}`;
@@ -23,6 +28,16 @@ export function formatClockSa(date: Date): string {
 /** GTA V: `Mittwoch 09:41` */
 export function formatClockV(date: Date): string {
   return `${WEEKDAYS[date.getDay()]} ${formatClockSa(date)}`;
+}
+
+/** Anteil als ganze Prozent, auf 0..100 begrenzt: `0.424` → `42` */
+export function percentOf(fraction: number): number {
+  return Math.round(Math.min(1, Math.max(0, fraction)) * 100);
+}
+
+/** `1 offenes Ticket`, `5 offene Tickets` */
+export function openTickets(n: number): string {
+  return n === 1 ? '1 offenes Ticket' : `${n} offene Tickets`;
 }
 
 /** `0.42` → `42 %` */

@@ -5,7 +5,7 @@ import { useBoards, useNav, useNavigate, useUsage, type NavItem } from '@nexus/t
 import { useActiveStyle, useGtaSettings, type GtaSettings } from '../settings.js';
 import { useBanners } from '../shared/banners.js';
 import { useGameKeys, type CheatId } from '../shared/keys.js';
-import { useChanged, useIncrease } from '../shared/transient.js';
+import { useChanged, useFlash, useIncrease } from '../shared/transient.js';
 import { useClock } from '../shared/useClock.js';
 import { deriveGame, type GameState } from './derive.js';
 import { boardEvents, quotaEvent, type GameEvent } from './events.js';
@@ -19,6 +19,8 @@ const PHONE_MS = 15_000;
 const ZONE_MS = 2500;
 const STATION_MS = 3000;
 const CHEAT_MS = 3000;
+/** So lange meldet `declined` einen abgelehnten Anruf (ms) */
+export const DECLINED_MS = 4000;
 
 export interface Game extends GameState {
   pid: string;
@@ -33,7 +35,8 @@ export interface Game extends GameState {
   banner: GameEvent | null;
   dismissBanner(): void;
   phone: { count: number } | null; // neue Fragen; nur wenn settings.banners
-  dismissPhone(): void;
+  declined: boolean; // kurz nach dem Ablehnen eines Anrufs
+  dismissPhone(): void; // ablehnen
   answerPhone(): void; // zur Seite „Fragen“ und schließen
   zone: string | null; // Name der Seite nach einem Seitenwechsel
   station: string | null; // Name des Boards nach einem Board-Wechsel
@@ -128,11 +131,17 @@ export function GameProvider({ pid, children }: { pid: string; children: ReactNo
 
   const call = useIncrease(state.questions, PHONE_MS, settings.banners);
   const phoneCount = call.value;
-  const dismissPhone = call.clear;
+  const declined = useFlash(DECLINED_MS);
+  const { clear: hangUp } = call;
+  const { fire: decline } = declined;
+  const dismissPhone = useCallback(() => {
+    if (phoneCount !== null) decline();
+    hangUp();
+  }, [phoneCount, decline, hangUp]);
   const answerPhone = useCallback(() => {
     if (questionsHref) navigate(questionsHref);
-    dismissPhone();
-  }, [questionsHref, navigate, dismissPhone]);
+    hangUp();
+  }, [questionsHref, navigate, hangUp]);
 
   const zone = useChanged(active?.label, ZONE_MS);
   const station = useChanged(boardName, STATION_MS);
@@ -162,6 +171,7 @@ export function GameProvider({ pid, children }: { pid: string; children: ReactNo
       banner: banners.current,
       dismissBanner: banners.dismiss,
       phone: phoneCount === null ? null : { count: phoneCount },
+      declined: declined.on,
       dismissPhone,
       answerPhone,
       zone,
@@ -170,7 +180,7 @@ export function GameProvider({ pid, children }: { pid: string; children: ReactNo
       statsOpen,
       setStatsOpen,
     }),
-    [state, pid, settings, style, boardName, nav, active, now, cheats.wanted, cheats.bonus, cheats.cheat, banners.current, banners.dismiss, phoneCount, dismissPhone, answerPhone, zone, station, statsOpen],
+    [state, pid, settings, style, boardName, nav, active, now, cheats.wanted, cheats.bonus, cheats.cheat, banners.current, banners.dismiss, phoneCount, declined.on, dismissPhone, answerPhone, zone, station, statsOpen],
   );
 
   return <GameContext.Provider value={game}>{children}</GameContext.Provider>;

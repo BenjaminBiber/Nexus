@@ -1,12 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
 import type { StartAnimationProps } from '@nexus/theme-sdk';
-import { rememberedBoot } from '../settings.js';
 import { Wordmark } from '../shared/Wordmark.js';
-import { reducedMotion } from '../shared/motion.js';
+import { useBoot, useTip } from '../shared/useBoot.js';
 import { SceneArt } from './VScene.js';
 
-/** Dauer des Ladebildschirms (ms) */
-export const BOOT_MS = 3200;
+export { BOOT_MS } from '../shared/useBoot.js';
 
 /** Tipps zum Board; einer erscheint zufällig */
 export const TIPS = [
@@ -20,33 +17,10 @@ export const TIPS = [
 ];
 
 // Ladebildschirm im Stil GTA V: zwei schräg geteilte Bildflächen mit der Abendszene in Rasterpunkten, unten links die
-// Wortmarke, rechts ein Tipp und der Lade-Kreis. Läuft vor dem Rahmen und außerhalb des Hosts; der Schalter kommt deshalb
-// aus localStorage. Jede Taste oder ein Klick beendet ihn; ausgeschaltet oder bei reduzierter Bewegung endet er unsichtbar.
+// Wortmarke, rechts ein Tipp und der Lade-Kreis. Ablauf, Abbruch und Schalter: useBoot.
 export function VBoot({ onDone }: StartAnimationProps) {
-  const [enabled] = useState(() => rememberedBoot() && !reducedMotion());
-  const [tip] = useState(() => TIPS[Math.min(TIPS.length - 1, Math.floor(Math.random() * TIPS.length))]!);
-  const done = useRef(false);
-
-  useEffect(() => {
-    const finish = () => {
-      if (done.current) return;
-      done.current = true;
-      onDone();
-    };
-    if (!enabled) {
-      finish();
-      return;
-    }
-    const timer = window.setTimeout(finish, BOOT_MS);
-    window.addEventListener('keydown', finish);
-    window.addEventListener('pointerdown', finish);
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener('keydown', finish);
-      window.removeEventListener('pointerdown', finish);
-    };
-  }, [enabled, onDone]);
-
+  const enabled = useBoot(onDone);
+  const tip = useTip(TIPS);
   if (!enabled) return null;
   return (
     <div className="gta-boot gta-v-boot" data-gta-part="boot">

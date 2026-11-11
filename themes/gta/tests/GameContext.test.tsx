@@ -3,7 +3,7 @@
 import { act, cleanup, render, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ThemeHostProvider, type ThemeHost } from '@nexus/theme-sdk';
-import { CHEAT_MONEY, GameProvider, MAX_WANTED, useGame, type Game } from '../src/data/GameContext.js';
+import { CHEAT_MONEY, DECLINED_MS, GameProvider, MAX_WANTED, useGame, type Game } from '../src/data/GameContext.js';
 import { STEP_REWARD, TICKET_REWARD } from '../src/data/derive.js';
 import type { BoardView } from '../src/data/types.js';
 import { BANNER_MS } from '../src/shared/banners.js';
@@ -109,6 +109,7 @@ describe('GameProvider: Werte', () => {
       boardName: 'Nova Shop',
       banner: null,
       phone: null,
+      declined: false,
       zone: null,
       station: null,
       cheat: null,
@@ -187,6 +188,20 @@ describe('GameProvider: Anruf', () => {
     act(() => game.dismissPhone());
     expect(game.phone).toBeNull();
     expect(value.navigate).toHaveBeenCalledTimes(1);
+  });
+
+  it('nach dem Ablehnen meldet declined kurz den abgelehnten Anruf, nach dem Annehmen nicht', async () => {
+    const value = host();
+    const { update } = await mount(value);
+    expect(game.declined).toBe(false);
+    await update(host({ navigate: value.navigate, nav: fakeNav('board', { questions: 2 }) }));
+    act(() => game.answerPhone());
+    expect(game.declined).toBe(false);
+    await update(host({ navigate: value.navigate, nav: fakeNav('board', { questions: 3 }) }));
+    act(() => game.dismissPhone());
+    expect(game.declined).toBe(true);
+    tick(DECLINED_MS);
+    expect(game.declined).toBe(false);
   });
 });
 
