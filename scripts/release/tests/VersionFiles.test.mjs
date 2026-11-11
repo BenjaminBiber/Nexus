@@ -95,6 +95,27 @@ describe('VersionFiles', () => {
     expect(JSON.parse(repo.read('package-lock.json')).packages['packages/cli'].dependencies['@fix/core']).toBe('0.2.0');
   });
 
+  it('lässt ein Paket mit eigener Versionslinie unverändert', () => {
+    // Das Theme-SDK zählt eigene Versionen; weder seine Version noch ein exakter Pin darauf gehört zum Repo
+    repo.write('packages/theme-sdk/package.json', '{\n  "name": "@fix/theme-sdk",\n  "version": "1.2.0"\n}\n');
+    const cli = JSON.parse(repo.read('packages/cli/package.json'));
+    cli.dependencies['@fix/theme-sdk'] = '1.2.0';
+    repo.write('packages/cli/package.json', `${JSON.stringify(cli, null, 2)}\n`);
+    const lock = JSON.parse(repo.read('package-lock.json'));
+    lock.packages['packages/theme-sdk'] = { name: '@fix/theme-sdk', version: '1.2.0' };
+    lock.packages['packages/cli'].dependencies['@fix/theme-sdk'] = '1.2.0';
+    repo.write('package-lock.json', `${JSON.stringify(lock, null, 2)}\n`);
+
+    expect(named(files().collect().places)).toEqual(ALL_PLACES);
+    files().set('0.2.0');
+    expect(files().check().deviations).toEqual([]);
+    expect(JSON.parse(repo.read('packages/theme-sdk/package.json')).version).toBe('1.2.0');
+    expect(JSON.parse(repo.read('packages/cli/package.json')).dependencies['@fix/theme-sdk']).toBe('1.2.0');
+    const after = JSON.parse(repo.read('package-lock.json')).packages;
+    expect(after['packages/theme-sdk'].version).toBe('1.2.0');
+    expect(after['packages/cli'].dependencies['@fix/theme-sdk']).toBe('1.2.0');
+  });
+
   it('entfernt eine Version aus tauri.conf.json und warnt davor', () => {
     const { warnings } = files().set('0.2.0');
     expect(warnings.join('\n')).toContain('tauri.conf.json');
