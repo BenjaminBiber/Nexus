@@ -57,6 +57,12 @@
       "path": "/api/user-settings",
       "body": { "ntfyTopic": "" }
     },
+    {
+      "name": "Gruppierung und Archiv der Erledigt-Spalte setzen",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "doneGrouping": "spec", "doneArchiveDays": 14 }
+    },
 
     {
       "name": "unbekannte Art der Meldung",
@@ -123,6 +129,18 @@
       "method": "PUT",
       "path": "/api/user-settings",
       "body": { "ntfyToken": 42 }
+    },
+    {
+      "name": "unbekannte Gruppierung der Erledigt-Spalte",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "doneGrouping": "liste" }
+    },
+    {
+      "name": "Archiv-Tage außerhalb von 0 bis 365",
+      "method": "PUT",
+      "path": "/api/user-settings",
+      "body": { "doneArchiveDays": 366 }
     },
     { "name": "nach den Fehlern unverändert", "method": "GET", "path": "/api/user-settings" }
   ]
