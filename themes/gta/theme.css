@@ -2027,6 +2027,11 @@
   bottom: 84px;
 }
 
+/* Klingelt das Handy (unten rechts unter den Seitenblättern des Kerns), weicht der Knopf nach oben aus */
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa:has(.gta-sa-phone) .db-fab {
+  bottom: 236px;
+}
+
 /* Fuß: Untertitel mittig, Zone rechts */
 :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-bottom {
   grid-row: 3;
@@ -2085,7 +2090,7 @@
   position: absolute;
   right: var(--sa-gx);
   bottom: 74px;
-  z-index: 20;
+  z-index: 9;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -2563,7 +2568,15 @@
    Radar behalten ihren eigenen Platz und überdecken keinen Inhalt */
 @media (max-width: 1100px) {
   :root[data-theme='gta'][data-gta-style='sa'] .gta-sa {
-    --sa-side: 150px;
+    --sa-side: 158px;
+  }
+
+  :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-menu-label {
+    white-space: normal;
+  }
+
+  :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-keys {
+    display: none;
   }
 
   :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-title {
