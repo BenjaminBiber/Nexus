@@ -336,7 +336,7 @@
    mit den Tokens der Stile; Rundungen, Maße und Mono-Schrift kommen über die Variablen des Kerns. ---- */
 
 /* Überschriften: GTA V in Versalien der Titelschrift, San Andreas in Pirata One mit Kontur */
-:root[data-theme='gta'] :is(.page-title, .page > h1, .page > div > h1, .settings-head h2, .settings-nav-title) {
+:root[data-theme='gta'] :is(.page-title, .page > h1, .page > div > h1, .page-head > h1, .settings-head h2, .settings-nav-title) {
   color: var(--gta-title-color);
   font-family: var(--gta-head-family);
   font-weight: var(--gta-head-weight);
@@ -345,7 +345,7 @@
   text-shadow: var(--gta-title-shadow);
 }
 
-:root[data-theme='gta'] :is(.page-title, .page > h1, .page > div > h1, .settings-head h2) {
+:root[data-theme='gta'] :is(.page-title, .page > h1, .page > div > h1, .page-head > h1, .settings-head h2) {
   font-size: var(--gta-title-size);
   line-height: 1.05;
 }
@@ -380,15 +380,7 @@
   color: var(--gta-text-dim);
 }
 
-/* Links */
-:root[data-theme='gta'] a {
-  color: var(--gta-accent);
-}
-
-:root[data-theme='gta'] a:hover {
-  color: var(--gta-text);
-}
-
+/* Links: Farbe kommt über --accent des Kerns; Knöpfe, die wie Links aussehen, unterstrichen */
 :root[data-theme='gta'] :is(.link-btn, .link-button, .collapsible-toggle, .doc-side-actions .link-button) {
   color: var(--gta-accent);
   text-decoration: underline;
@@ -504,6 +496,32 @@
   box-shadow: var(--gta-field-ring-focus);
   outline: 2px solid var(--gta-accent);
   outline-offset: 0;
+}
+
+/* Suchfelder mit Symbol: Rahmen und Linie gehören dem Wrapper, das Eingabefeld darin bleibt flach */
+:root[data-theme='gta'] :is(.db-search, .theme-search) {
+  border: var(--gta-field-border);
+  border-radius: 0;
+  background: var(--gta-field-bg);
+  box-shadow: var(--gta-field-ring);
+}
+
+:root[data-theme='gta'] :is(.db-search, .theme-search):hover:not(:focus-within) {
+  box-shadow: var(--gta-field-ring-hover);
+}
+
+:root[data-theme='gta'] :is(.db-search, .theme-search):focus-within {
+  border: var(--gta-field-border);
+  box-shadow: var(--gta-field-ring-focus);
+  outline: 2px solid var(--gta-accent);
+  outline-offset: 0;
+}
+
+:root[data-theme='gta'] :is(.db-search, .theme-search) input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):is(*, :hover, :focus) {
+  border: 0;
+  background: none;
+  box-shadow: none;
+  outline: 0;
 }
 
 :root[data-theme='gta'] :is(input, select, textarea):disabled {
@@ -674,7 +692,7 @@
 }
 
 /* Popups, Menüs und Tooltips: fast deckende schwarze Fläche mit Rand des Stils */
-:root[data-theme='gta'] :is(.info-pop, .runs-tip, .doc-open-menu, .doc-open-error, .theme-install-menu, .branch-combo-list, .dep-menu, .db-fab-menu, .usage-pop, .comment-hover, .selection-popover, .section-editor, .bp-status .live-text, .theme-notice, .doc-job) {
+:root[data-theme='gta'] :is(.info-pop, .runs-tip, .doc-open-menu, .doc-open-error, .theme-install-menu, .branch-combo-list, .dep-menu, .usage-pop, .comment-hover, .selection-popover, .section-editor, .bp-status .live-text, .theme-notice, .doc-job) {
   border: var(--gta-box-border);
   border-radius: 0;
   background: var(--gta-pop-bg);
