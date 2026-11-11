@@ -127,7 +127,8 @@ function trapTab(event: KeyboardEvent<HTMLElement>): void {
 }
 
 // Stats-Menü im Aufbau der Statistik-Seite des Pausenmenüs: links Kategorien, Mitte Zeilen, rechts die
-// 100-%-Checkliste. Fokus beim Öffnen hinein, Esc oder Schließen schließen, danach Fokus zurück auf `returnFocus`.
+// 100-%-Checkliste. Fokus beim Öffnen hinein, Esc, Schließen oder ein Klick daneben schließen, danach Fokus zurück auf
+// `returnFocus`. Der Rahmen setzt den Dialog an die Stelle des Inhalts.
 export function VStats({ returnFocus }: { returnFocus?: RefObject<HTMLElement | null> }) {
   const game = useGame();
   const [category, setCategory] = useState<Category>('general');
@@ -150,7 +151,8 @@ export function VStats({ returnFocus }: { returnFocus?: RefObject<HTMLElement | 
   const title = CATEGORIES.find(([id]) => id === category)![1];
 
   return (
-    <div className="gta-v-stats-layer">
+    <>
+      <div className="gta-v-stats-backdrop" aria-hidden="true" onClick={close} />
       <div ref={dialog} className="gta-v-stats" role="dialog" aria-modal="true" aria-label="Stats" data-gta-part="stats" onKeyDown={onKeyDown}>
         <div className="gta-v-stats-col">
           <h2 className="gta-v-h">Stats</h2>
@@ -177,6 +179,6 @@ export function VStats({ returnFocus }: { returnFocus?: RefObject<HTMLElement | 
           <Checklist game={game} />
         </div>
       </div>
-    </div>
+    </>
   );
 }

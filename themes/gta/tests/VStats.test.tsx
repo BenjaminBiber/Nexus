@@ -73,13 +73,15 @@ describe('VStats', () => {
     expect(next).toEqual(['NOVA-0004 Zahlungsanbieter', 'NOVA-0003 Kasse', 'NOVA-0005 Gutscheine']);
   });
 
-  it('Esc und der Schließen-Knopf schließen das Menü', () => {
+  it('Esc, der Schließen-Knopf und ein Klick daneben schließen das Menü', () => {
     const game = fakeGame({ statsOpen: true });
     renderWithGame(<VStats />, game);
     fireEvent.keyDown(dialog(), { key: 'Escape' });
     expect(game.setStatsOpen).toHaveBeenLastCalledWith(false);
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Stats schließen' }));
     expect(game.setStatsOpen).toHaveBeenCalledTimes(2);
+    fireEvent.click(document.querySelector('.gta-v-stats-backdrop')!);
+    expect(game.setStatsOpen).toHaveBeenCalledTimes(3);
   });
 
   it('Tab bleibt im Dialog: vom letzten zum ersten Element und zurück', () => {

@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from 'react';
-import { useOpenSearch } from '@nexus/theme-sdk';
+import { useBoards, useOpenSearch } from '@nexus/theme-sdk';
 import { useGame } from '../data/GameContext.js';
 import { Wordmark } from '../shared/Wordmark.js';
 import { VBanner } from './VBanner.js';
@@ -11,12 +11,14 @@ import { VScene } from './VScene.js';
 import { VStats } from './VStats.js';
 import { VTabs } from './VTabs.js';
 
-// Board und Seite unten rechts; nach einem Seitenwechsel kurz hervorgehoben
+// Projekt, Board und Seite unten rechts; nach einem Seitenwechsel kurz hervorgehoben
 function Zone() {
   const { boardName, active, zone } = useGame();
+  const boards = useBoards();
+  const project = boards.projects.find((p) => p.id === boards.current?.project)?.name;
   return (
     <div className="gta-v-zone" data-gta-part="zone" data-flash={zone ? '' : undefined}>
-      <small className="gta-v-zone-board">{boardName ?? ''}</small>
+      <small className="gta-v-zone-board">{[project, boardName].filter(Boolean).join(' · ')}</small>
       <span key={zone ?? ''} className="gta-v-zone-page">
         {active?.label ?? ''}
       </span>
@@ -49,7 +51,7 @@ export function VShell({ content }: { content: ReactNode }) {
   const statsButton = useRef<HTMLButtonElement>(null);
   const dead = game.banner?.kind === 'busted' || game.banner?.kind === 'wasted';
   return (
-    <div className="gta-frame gta-v" data-gta-part="shell" data-dead={dead ? '' : undefined}>
+    <div className="gta-frame gta-v" data-gta-part="shell" data-dead={dead ? '' : undefined} data-stats={game.statsOpen ? '' : undefined}>
       <VScene />
       <div className="gta-v-frame">
         <header className="gta-v-top">
@@ -82,9 +84,9 @@ export function VShell({ content }: { content: ReactNode }) {
             </div>
           </div>
         </footer>
+        {game.statsOpen && <VStats returnFocus={statsButton} />}
       </div>
       <VBanner />
-      {game.statsOpen && <VStats returnFocus={statsButton} />}
     </div>
   );
 }

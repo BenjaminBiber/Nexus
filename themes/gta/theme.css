@@ -533,12 +533,16 @@
 }
 
 :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-board .bp-text .bp-project {
-  order: 2;
+  flex: none;
   color: inherit;
   font: inherit;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-board .bp-text .bp-project::before {
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-board .bp-text .bp-name {
+  flex: 0 1 auto;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-board .bp-text .bp-project::after {
   content: '\00a0·\00a0';
 }
 
@@ -655,6 +659,8 @@
 
 /* Inhalt des Kerns: eigener Scroll-Bereich zwischen Reiterzeile und Fußleiste */
 :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-main {
+  grid-row: 3;
+  grid-column: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -667,8 +673,16 @@
   flex: 1;
 }
 
+/* Der runde Knopf „Neues Ticket“ des Boards (fest am Fensterrand) sitzt über der Fußleiste, wie in der Preview am Ende
+   des Inhalts; sonst verdeckt er Ort, Tasten und Stats */
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v .db-fab {
+  right: calc(var(--v-gx) + 10px);
+  bottom: 168px;
+}
+
 /* Fußleiste: Minimap, Handy, Ort, Tasten */
 :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-bottom {
+  grid-row: 4;
   display: flex;
   align-items: flex-end;
   gap: 14px;
@@ -1062,14 +1076,30 @@
   animation: gta-v-post 0.5s 1s both;
 }
 
-/* Stats-Menü: drei Spalten wie die Statistik-Seite der Preview über abgedunkeltem Rahmen */
-:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats-layer {
+/* Stats-Menü: drei Spalten wie die Statistik-Seite der Preview, an der Stelle des Inhalts (der solange verborgen ist).
+   Die Fläche dahinter dunkelt den übrigen Rahmen ab; ein Klick darauf schließt das Menü. */
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v[data-stats] .gta-v-main {
+  visibility: hidden;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats-backdrop {
   position: absolute;
   inset: 0;
-  z-index: 50;
-  display: flex;
-  padding: 120px var(--v-gx) 150px;
-  background: rgba(0, 0, 0, 0.55);
+  z-index: 4;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats {
+  position: relative;
+  z-index: 5;
+  grid-row: 3;
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: minmax(180px, 250px) minmax(0, 1fr) minmax(220px, 320px);
+  gap: 4px;
+  min-height: 0;
+  margin: 8px var(--v-gx) 0;
+  overflow: auto;
   animation: gta-v-page 0.18s ease-out;
 }
 
@@ -1078,15 +1108,6 @@
     opacity: 0;
     transform: translateY(6px);
   }
-}
-
-:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats {
-  display: grid;
-  grid-template-columns: minmax(180px, 250px) minmax(0, 1fr) minmax(220px, 320px);
-  gap: 4px;
-  width: 100%;
-  min-height: 0;
-  overflow: auto;
 }
 
 :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats-col {

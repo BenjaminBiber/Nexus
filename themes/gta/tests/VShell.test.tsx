@@ -42,6 +42,12 @@ describe('VShell', () => {
     expect(part('zone')!.hasAttribute('data-flash')).toBe(true);
   });
 
+  it('nennt mit aktuellem Board auch das Projekt davor', () => {
+    const host = fakeHost({ boards: { ...fakeHost().boards, current: { project: 'p1', board: 1 } } });
+    renderWithGame(<VShell content={content} />, fakeGame(), host);
+    expect(part('zone')!.querySelector('.gta-v-zone-board')?.textContent).toBe('Nova · Nova Shop');
+  });
+
   it('Tastenhinweise: Q und E für die Reiter, Strg K öffnet per Klick die Suche', () => {
     const host = fakeHost();
     renderWithGame(<VShell content={content} />, fakeGame(), host);
