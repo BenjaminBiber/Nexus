@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeHostProvider } from '@nexus/theme-sdk';
-import type { BoardsState, ColorSchemeState, SettingsState, ShellParts, ThemeHost, ThemeSettings, UsageState } from '@nexus/theme-sdk';
+import type { BoardsState, ColorSchemeState, NavIconName, SettingsState, ShellParts, ThemeHost, ThemeSettings, UsageState } from '@nexus/theme-sdk';
 import { useApi } from '../api/ApiContext.js';
 import type { ThemeMode, UserSettingsDto } from '../api/types.js';
 import type { UsageOverviewDto } from '../api/usageTypes.js';
 import { REFRESH_MS, USAGE_SETTING_EVENT } from '../components/ClaudeUsageMeter.js';
+import { useOwnOpenQuestionsCount } from '../components/DbQuestionsNavLink.js';
+import { useNewDocsCount } from '../components/DocsNavLink.js';
+import { useInboxCount } from '../components/inbox/InboxNavLink.js';
 import { useBoardProject } from '../dbboard/boardProject.js';
 import { currentBoard, useBoardChoices } from '../dbboard/useBoardChoices.js';
 import { NAV_ITEMS } from './navItems.js';
@@ -38,6 +41,14 @@ function useHostUsage(): UsageState {
     if (!overview || !usage) return { ...NO_USAGE, enabled: Boolean(overview?.enabled) };
     return { enabled: true, available: usage.available, reason: usage.reason, fiveHour: usage.fiveHour, sevenDay: usage.sevenDay };
   }, [overview]);
+}
+
+// Zähler der Navigation wie in der Seitenleiste; 0 heißt kein Zähler
+function useNavBadges(pid: string): Partial<Record<NavIconName, number>> {
+  const inbox = useInboxCount();
+  const questions = useOwnOpenQuestionsCount();
+  const docs = useNewDocsCount(pid);
+  return useMemo(() => ({ inbox, questions, docs }), [inbox, questions, docs]);
 }
 
 // Lesbarer Ausschnitt der Nutzereinstellungen
@@ -80,13 +91,15 @@ export function NexusThemeHost({ pid, parts, openSearch, children }: { pid: stri
   const themeId = useDisplayedTheme();
   const themeSettings = useThemeSettingsState(themeId);
 
+  const badges = useNavBadges(pid);
   const nav = useMemo(
     () =>
       NAV_ITEMS.map(({ id, label }) => {
         const href = `/p/${pid}/${id}`;
-        return { id, label, href, active: pathname === href || pathname.startsWith(`${href}/`) };
+        const badge = badges[id];
+        return { id, label, href, active: pathname === href || pathname.startsWith(`${href}/`), ...(badge ? { badge } : {}) };
       }),
-    [pid, pathname],
+    [pid, pathname, badges],
   );
   const { state, choose } = choices;
   const shown = context?.shown ?? null;
