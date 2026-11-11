@@ -1,0 +1,63 @@
+// Kurz eingeblendete Werte: Zonenname nach Seitenwechsel, Board-Name nach Board-Wechsel, Anruf bei neuen Fragen.
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+type Timer = ReturnType<typeof setTimeout> | undefined;
+
+// Timer, der beim Abbauen sicher weggeräumt wird
+function useTimer(): { start(ms: number, done: () => void): void; stop(): void } {
+  const timer = useRef<Timer>(undefined);
+  const stop = useCallback(() => clearTimeout(timer.current), []);
+  const start = useCallback((ms: number, done: () => void) => {
+    clearTimeout(timer.current);
+    timer.current = setTimeout(done, ms);
+  }, []);
+  useEffect(() => stop, [stop]);
+  return useMemo(() => ({ start, stop }), [start, stop]);
+}
+
+/** Liefert den neuen Wert für `ms` Millisekunden, nachdem er sich geändert hat. Der erste definierte Wert löst nichts aus. */
+export function useChanged<T>(value: T | null | undefined, ms: number): T | null {
+  const [shown, setShown] = useState<{ value: T } | null>(null);
+  // Letzter definierter Wert; null und undefined dazwischen zählen nicht als Änderung
+  const known = useRef<{ value: T } | null>(null);
+  const timer = useTimer();
+
+  useEffect(() => {
+    if (value === null || value === undefined) return;
+    const before = known.current;
+    known.current = { value };
+    if (!before || Object.is(before.value, value)) return;
+    setShown({ value });
+    timer.start(ms, () => setShown(null));
+  }, [value, ms, timer]);
+
+  return shown ? shown.value : null;
+}
+
+/** Meldet, wenn ein Zähler steigt (der erste Wert löst nichts aus); bleibt bis `clear()` oder `ms` Millisekunden */
+export function useIncrease(count: number, ms: number, enabled: boolean): { value: number | null; clear(): void } {
+  // Zahl der neuen seit dem Einblenden; weitere Anstiege zählen dazu
+  const [value, setValue] = useState<number | null>(null);
+  const known = useRef<number | null>(null);
+  const timer = useTimer();
+
+  const clear = useCallback(() => {
+    timer.stop();
+    setValue(null);
+  }, [timer]);
+
+  useEffect(() => {
+    const before = known.current;
+    known.current = count;
+    if (!enabled || before === null || count <= before) return;
+    setValue((shown) => (shown ?? 0) + count - before);
+    timer.start(ms, () => setValue(null));
+  }, [count, enabled, ms, timer]);
+
+  useEffect(() => {
+    if (!enabled) clear();
+  }, [enabled, clear]);
+
+  const shown = enabled ? value : null;
+  return useMemo(() => ({ value: shown, clear }), [shown, clear]);
+}
