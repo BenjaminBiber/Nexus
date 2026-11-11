@@ -4,7 +4,8 @@ import type { DbBoardViewDto, DbStatus } from '../api/dbTypes.js';
 export function moveDbCard(view: DbBoardViewDto, id: string, status: DbStatus): DbBoardViewDto {
   const card = view.columns.flatMap((c) => c.tickets).find((c) => c.id === id);
   if (!card) return view;
-  const moved = { ...card, status, column: status, waiting: false };
+  // Das Erledigt-Datum gilt sofort, damit die Karte in „Erledigt“ gleich im richtigen Abschnitt steht
+  const moved = { ...card, status, column: status, waiting: false, doneAt: status === 'done' ? new Date().toISOString() : null };
   return {
     ...view,
     columns: view.columns.map((column) => ({

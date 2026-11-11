@@ -13,7 +13,7 @@ import { renderWithApp } from './helpers/renderWithApp.js';
 
 afterEach(cleanup);
 
-const SETTINGS: UserSettingsDto = { notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, hideInPlanning: false, ntfy: false, ntfyServer: 'https://ntfy.sh', ntfyTopic: '', ntfyToken: '', setupPrompts: { pluginDismissed: false, migrationDismissed: [] } };
+const SETTINGS: UserSettingsDto = { notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, hideInPlanning: false, doneGrouping: 'time', doneArchiveDays: 0, ntfy: false, ntfyServer: 'https://ntfy.sh', ntfyTopic: '', ntfyToken: '', setupPrompts: { pluginDismissed: false, migrationDismissed: [] } };
 
 describe('Bausteine der Einstellungen', () => {
   it('verbindet Beschriftung und Hinweis einer Zeile mit dem Eingabefeld', () => {

@@ -360,6 +360,9 @@ export interface SetupPromptsDto {
   migrationDismissed: number[];
 }
 
+/** Gruppierung der Spalte „Erledigt“ auf dem Board */
+export type DoneGrouping = 'time' | 'spec';
+
 export interface UserSettingsDto {
   notifications: NotificationMode;
   heroImages: boolean;
@@ -368,6 +371,10 @@ export interface UserSettingsDto {
   compactCards: boolean;
   hideNotNeeded: boolean;
   hideInPlanning: boolean;
+  /** Gruppierung der Spalte „Erledigt“ */
+  doneGrouping: DoneGrouping;
+  /** Gemergte Tickets verschwinden nach so vielen Tagen aus „Erledigt“ (0 = nie) */
+  doneArchiveDays: number;
   ntfy: boolean;
   ntfyServer: string;
   ntfyTopic: string;
