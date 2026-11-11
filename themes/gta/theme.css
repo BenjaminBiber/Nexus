@@ -1678,6 +1678,15 @@
   background: #000000;
 }
 
+/* Titel der Session in der Schmuckschrift wie der Titel des Auftrags im Ticket-Panel */
+:root[data-theme='gta'] .sheet-head.sp-head h2 {
+  color: var(--gta-title-color);
+  font: 400 clamp(22px, 2.4vw, 30px)/1.2 var(--gta-font-script);
+  letter-spacing: 0.01em;
+  text-transform: none;
+  text-shadow: var(--gta-title-shadow);
+}
+
 :root[data-theme='gta'] .sp-tabs {
   background: transparent;
 }
@@ -1850,6 +1859,16 @@
   font: 400 clamp(26px, 2.8vw, 36px)/1.2 var(--gta-font-script);
   letter-spacing: 0.01em;
   text-shadow: var(--gta-title-shadow);
+}
+
+/* Bezüge (wartende Tickets, Abhängigkeiten): Überschriften in der Akzentfarbe wie die Zwischentitel der Preview */
+:root[data-theme='gta'] .db-question-relations h2 {
+  color: var(--gta-head-accent);
+  font-family: var(--gta-head-family);
+  font-weight: var(--gta-head-weight);
+  letter-spacing: var(--gta-head-track);
+  text-transform: var(--gta-head-case);
+  text-shadow: var(--gta-head-shadow);
 }
 
 :root[data-theme='gta'] .option-card,
@@ -5121,6 +5140,15 @@
   color: var(--sa-slate);
   font: 400 10px/1.4 var(--gta-font-title);
   letter-spacing: 0.05em;
+}
+
+/* Michroma ist breit: die Spalte der Nummer wächst, damit „NOVA-F0001“ ganz zu lesen ist */
+:root[data-theme='gta'][data-gta-style='sa'] .todo-row {
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .todo-row.flagged {
+  grid-template-columns: 18px 96px minmax(0, 1fr) auto;
 }
 
 :root[data-theme='gta'][data-gta-style='sa'] .todo-head {
