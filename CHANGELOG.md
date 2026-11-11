@@ -14,18 +14,6 @@
 
 ### Sonstiges
 
-## 0.1.0 – 2026-11-11
-
-### Vertrag
-
-- Keine Änderungen.
-
-### Angekündigt
-
-- Keine.
-
-### Sonstiges
-
 - Einrichtung, Anleitung, Session-Hinweise, Dispatcher-Prompts, Hilfe und Fehlermeldungen nennen
   den Befehl jetzt `nexus …` (statt `harness …`) und das Produkt Nexus (statt AI Harness).
   `harness` bleibt als Alias nutzbar: Der Dispatcher erlaubt beide Namen, eigene Prompt-Vorlagen
