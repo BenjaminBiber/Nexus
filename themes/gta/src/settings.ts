@@ -117,6 +117,18 @@ export function useActiveStyle(): Style {
   return activeStyle(useGtaSettings());
 }
 
+/** Stil für Slots, die der Host auch ohne Theme-Host rendert (Seiten ohne Projekt): dort der gemerkte Stil.
+ *  useThemeSettings liest nur den Context und wirft ohne Host danach; die Reihenfolge der Hooks bleibt gleich. */
+export function useSlotStyle(): Style {
+  let state: ReturnType<typeof useThemeSettings>;
+  try {
+    state = useThemeSettings();
+  } catch {
+    return rememberedStyle();
+  }
+  return state.loading ? rememberedStyle() : resolveSettings(state.values ?? {}).style;
+}
+
 /** Setzt die Attribute auf <html>, solange der Rahmen steht, und entfernt sie danach wieder */
 export function useRootAttributes(settings: GtaSettings & { loading: boolean }): void {
   const key = JSON.stringify(rootAttributes(settings, activeStyle(settings)));

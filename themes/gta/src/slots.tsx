@@ -1,8 +1,8 @@
-// Slots außer der Shell: je Stil eigene Bausteine. NavIcon, Icon und Progress laufen im Host und folgen dem aktiven Stil;
-// die Startanimation läuft vor dem Host und nimmt den gemerkten Stil.
+// Slots außer der Shell: je Stil eigene Bausteine. NavIcon, Icon und Progress folgen dem aktiven Stil (ohne Theme-Host,
+// auf Seiten ohne Projekt, dem gemerkten); die Startanimation läuft vor dem Host und nimmt den gemerkten Stil.
 import { useState, type ComponentType } from 'react';
 import type { IconName, NavIconName, ProgressProps, StartAnimationProps } from '@nexus/theme-sdk';
-import { rememberedStyle, useActiveStyle, type GtaSettings } from './settings.js';
+import { rememberedStyle, useSlotStyle, type GtaSettings } from './settings.js';
 import { SaBoot } from './sa/SaBoot.js';
 import { SaIcon } from './sa/SaIcon.js';
 import { SaNavIcon } from './sa/SaNavIcon.js';
@@ -26,17 +26,17 @@ export const STYLE_SLOTS: Record<GtaSettings['style'], StyleSlots> = {
 };
 
 export function GtaNavIcon({ name }: { name: NavIconName }) {
-  const { NavIcon } = STYLE_SLOTS[useActiveStyle()];
+  const { NavIcon } = STYLE_SLOTS[useSlotStyle()];
   return <NavIcon name={name} />;
 }
 
 export function GtaIcon({ name }: { name: IconName }) {
-  const { Icon } = STYLE_SLOTS[useActiveStyle()];
+  const { Icon } = STYLE_SLOTS[useSlotStyle()];
   return <Icon name={name} />;
 }
 
 export function GtaProgress(props: ProgressProps) {
-  const { Progress } = STYLE_SLOTS[useActiveStyle()];
+  const { Progress } = STYLE_SLOTS[useSlotStyle()];
   return <Progress {...props} />;
 }
 

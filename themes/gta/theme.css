@@ -232,7 +232,7 @@
   --diff-add-bg: color-mix(in srgb, var(--gta-ok) 14%, var(--code-bg));
   --diff-add-fg: var(--gta-ok);
   --diff-del-bg: color-mix(in srgb, var(--gta-danger) 14%, var(--code-bg));
-  --diff-del-fg: var(--gta-danger);
+  --diff-del-fg: color-mix(in srgb, var(--gta-danger) 70%, #fff);
   --diff-hunk-fg: var(--gta-accent);
   --test-ok: var(--gta-ok);
   --test-fail: var(--gta-danger);
@@ -542,6 +542,12 @@
   color: var(--gta-text);
 }
 
+/* Gewählte Option in der Auswahl des Stils (weiß bzw. Akzentfarbe), sonst färbt der Browser sie hell auf hell */
+:root[data-theme='gta'] select option:checked {
+  background: var(--gta-sel-bg);
+  color: var(--gta-sel-fg);
+}
+
 /* Kontrollkästchen und Optionen: eckiges Kästchen, gewählt mit gefülltem Kern in der Akzentfarbe */
 :root[data-theme='gta'] input:is([type='checkbox'], [type='radio']):not(.switch) {
   -webkit-appearance: none;
@@ -787,8 +793,13 @@
   color: var(--gta-text-dim);
 }
 
-:root[data-theme='gta'] .state.loading .loader-n {
+/* Ladebild hell auf dunklem Grund, überall wo es erscheint */
+:root[data-theme='gta'] .loader-n {
   filter: invert(1);
+}
+
+:root[data-theme='gta'] .state.loading {
+  color: var(--gta-text-dim);
 }
 
 :root[data-theme='gta'] .loader-caption {
@@ -1927,6 +1938,904 @@
 
 :root[data-theme='gta'] .research-earlier summary:hover {
   background: var(--gta-hover-bg);
+}
+
+/* ---- Docs, Anleitung, Einstellungen samt Theme-Store, Diff und Code, Diagramme und Seiten ohne Rahmen. Hier stehen
+   Form und Zustände, den Look der Spiele (Zeilen, Auswahl, Schriften) setzen die Stil-Abschnitte ---- */
+
+/* Docs: Explorer und Dokument als Paneele über der Szene, der Ziehgriff dazwischen als schmale Fuge */
+:root[data-theme='gta'] .docs-workbench {
+  background: transparent;
+}
+
+:root[data-theme='gta'] :is(.docs-explorer, .docs-main) {
+  background: var(--gta-panel);
+}
+
+:root[data-theme='gta'] .docs-gutter {
+  border-left: 0;
+}
+
+:root[data-theme='gta'] .docs-gutter:is(:hover, :focus-visible) {
+  background: var(--gta-accent);
+}
+
+/* Kopf des Explorers wie der Kopf einer Liste: schwarzer Balken, Titel in Versalien, Zähler rechts */
+:root[data-theme='gta'] .docs-explorer-head {
+  border-bottom: 0;
+  background: var(--gta-panel-2);
+}
+
+:root[data-theme='gta'] .docs-explorer-head h1 {
+  color: var(--gta-text);
+  font: var(--gta-label-font);
+  font-size: 15px;
+  letter-spacing: var(--gta-head-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] .docs-explorer-count {
+  color: var(--gta-text-dim);
+  font-family: var(--gta-font-title);
+}
+
+/* Board-Umschalter der Docs: Feld des Stils, Liste wie die übrigen Popups */
+:root[data-theme='gta'] .docs-boards-trigger {
+  border: var(--gta-field-border);
+  border-radius: 0;
+  background: var(--gta-field-bg);
+  box-shadow: var(--gta-field-ring);
+}
+
+:root[data-theme='gta'] .docs-boards-trigger:hover {
+  background: var(--gta-field-bg);
+  box-shadow: var(--gta-field-ring-hover);
+}
+
+:root[data-theme='gta'] .docs-boards-trigger[aria-expanded='true'] {
+  box-shadow: var(--gta-field-ring-focus);
+}
+
+:root[data-theme='gta'] .docs-boards-pop {
+  border: var(--gta-box-border);
+  border-radius: 0;
+  background: var(--gta-pop-bg);
+  box-shadow: var(--gta-box-shadow);
+}
+
+:root[data-theme='gta'] .docs-boards-option {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .docs-boards-option:hover {
+  background: var(--gta-hover-bg);
+}
+
+/* Baum: eckige Zeilen, Hilfslinien in der Linienfarbe, Symbole in den Kennfarben des Stils */
+:root[data-theme='gta'] .doc-tree-group::before {
+  background: var(--gta-line);
+}
+
+:root[data-theme='gta'] .doc-tree-row {
+  min-height: 28px;
+  margin: 0 4px;
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .doc-tree-item:focus-visible > .doc-tree-row {
+  box-shadow: inset 0 0 0 2px var(--gta-accent);
+}
+
+:root[data-theme='gta'] .doc-tree-chevron {
+  color: inherit;
+  opacity: 0.7;
+}
+
+:root[data-theme='gta'] .doc-tree-icon.is-doc {
+  color: var(--gta-c-planned);
+}
+
+:root[data-theme='gta'] .doc-tree-icon.is-glossary {
+  color: var(--gta-c-in_planning);
+}
+
+:root[data-theme='gta'] .doc-tree-icon.is-other {
+  color: var(--gta-text-dim);
+}
+
+/* Neues Dokument: eckiger Blip in Rot mit schwarzem Rand */
+:root[data-theme='gta'] .doc-tree-new {
+  border-radius: 0;
+  box-shadow: 0 0 0 1px #000;
+}
+
+:root[data-theme='gta'] .doc-tree-empty {
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] .spec-progress-pie-ground {
+  fill: rgba(255, 255, 255, 0.18);
+}
+
+/* Dokument: außerhalb der Werkbank ein Paneel, in der Werkbank die Fläche des Paneels darum */
+:root[data-theme='gta'] .doc {
+  border: var(--gta-panel-border);
+  border-radius: 0;
+  background: var(--gta-panel);
+  box-shadow: none;
+}
+
+:root[data-theme='gta'] .docs-workbench .doc {
+  border: 0;
+  background: transparent;
+}
+
+:root[data-theme='gta'] :is(.doc-head, .doc-path, .doc-side-actions, .doc-tool) {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme='gta'] .doc-path {
+  color: var(--gta-text-dim);
+  font-family: var(--gta-font-mono);
+}
+
+/* Werkzeugspalte: schmaler Scrollbalken, Titel der Abschnitte wie Beschriftungen, aufgeklappt in der Textfarbe */
+:root[data-theme='gta'] .doc-side {
+  scrollbar-width: thin;
+}
+
+:root[data-theme='gta'] .doc-tool-title {
+  color: var(--gta-label-color);
+  font: var(--gta-label-font);
+  letter-spacing: var(--gta-label-track);
+}
+
+:root[data-theme='gta'] :is(.doc-tool-title:hover, .doc-tool.open > .doc-tool-title) {
+  color: var(--gta-text);
+}
+
+/* Kommentare am Rand: Kasten des Stils, jeder Kommentar mit Kante in der Akzentfarbe; erledigte grau */
+:root[data-theme='gta'] .doc-comments {
+  border: var(--gta-panel-border);
+  border-radius: 0;
+  background: var(--gta-panel);
+}
+
+:root[data-theme='gta'] .doc-comments > .muted {
+  border-color: var(--gta-line);
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .doc-comment-item {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  background: var(--gta-panel-2);
+  box-shadow: inset 3px 0 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'] .doc-comment-item.resolved {
+  background: var(--gta-panel);
+  box-shadow: inset 3px 0 0 var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] :is(.doc-comment-quote, .doc-comment-draft-quote, .selection-popover-form .doc-comment-draft-quote, .revise-dialog .doc-comment-draft-quote) {
+  border-left-color: var(--gta-accent);
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .doc-comment-quote {
+  color: var(--gta-text);
+}
+
+/* Markierung im Text: Unterstrich in der Akzentfarbe auf getönter Fläche, eckig */
+:root[data-theme='gta'] mark.doc-comment {
+  border-radius: 0;
+  color: var(--gta-text);
+  box-shadow: inset 0 -2px 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'] .comment-hover {
+  border-left: 3px solid var(--gta-accent);
+}
+
+/* Popup an der Auswahl und Bearbeiten einer Überschrift: Knöpfe des Stils */
+:root[data-theme='gta'] .selection-popover-trigger {
+  border-radius: 0;
+  background: var(--gta-primary-bg);
+  color: var(--gta-primary-fg);
+}
+
+:root[data-theme='gta'] .selection-popover-trigger:hover {
+  background: var(--gta-primary-hover);
+  color: var(--gta-primary-fg);
+}
+
+:root[data-theme='gta'] :is(.selection-popover-icon, .heading-edit) {
+  border: 1px solid var(--gta-line);
+  border-radius: 0;
+  background: var(--gta-btn-bg);
+  color: var(--gta-btn-fg);
+}
+
+:root[data-theme='gta'] :is(.selection-popover-icon, .heading-edit):hover {
+  border-color: var(--gta-accent);
+  background: var(--gta-hover-bg);
+  color: var(--gta-hover-fg);
+}
+
+:root[data-theme='gta'] .heading-edit {
+  font: var(--gta-btn-font);
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] button.doc-ticket-title:hover {
+  color: var(--gta-accent);
+}
+
+/* Entwürfe für Tickets und Fragen: Kacheln links wie Aufträge, die gewählte mit Kante in der Akzentfarbe */
+:root[data-theme='gta'] .draft-tiles-pane {
+  border-color: var(--gta-line);
+  background: var(--gta-panel-2);
+}
+
+:root[data-theme='gta'] :is(.dd-card, .draft-tile) {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  background: var(--gta-panel);
+  box-shadow: none;
+}
+
+:root[data-theme='gta'] .draft-tile.is-active {
+  border-color: var(--gta-accent);
+  box-shadow: inset 3px 0 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'] .draft-tile-pick {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .draft-tile-pick:hover {
+  background: var(--gta-hover-bg);
+}
+
+:root[data-theme='gta'] .draft-foot {
+  border-color: var(--gta-line);
+}
+
+/* Hinweis auf laufende Ticket-Erzeugung: Symbol in der Akzentfarbe */
+:root[data-theme='gta'] .doc-job {
+  border-left: 3px solid var(--gta-accent);
+}
+
+/* Anleitung: Sprungmarken als Knöpfe des Stils, Phasen mit Nummer in der HUD-Schrift, Schritte als Zeilen */
+:root[data-theme='gta'] .guide-nav a {
+  border-radius: 0;
+  font: var(--gta-btn-font);
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] .lead {
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] .phase-no {
+  border-radius: 0;
+  background: var(--gta-primary-bg);
+  color: var(--gta-primary-fg);
+  font: 400 20px/1 var(--gta-font-hud);
+  box-shadow: 0 0 0 2px #000;
+}
+
+:root[data-theme='gta'] .panel > h3 {
+  color: var(--gta-head-color);
+  font-family: var(--gta-head-family);
+  font-size: 22px;
+  font-weight: var(--gta-head-weight);
+  letter-spacing: var(--gta-head-track);
+  text-transform: var(--gta-head-case);
+  text-shadow: var(--gta-head-shadow);
+}
+
+:root[data-theme='gta'] .num {
+  border: 2px solid var(--gta-line);
+  border-radius: 0;
+  background: #000;
+  color: var(--gta-text);
+  font: 600 13px/1 var(--gta-font-title);
+}
+
+:root[data-theme='gta'] .step-place {
+  border-radius: 0;
+  box-shadow: inset 3px 0 0 var(--gta-c-in_planning);
+}
+
+:root[data-theme='gta'] .step-when {
+  color: var(--gta-text-dim);
+}
+
+/* Begriffe und häufige Fragen: Begriff wie die Zwischentitel der Preview in der Akzentfarbe */
+:root[data-theme='gta'] .terms dt {
+  color: var(--gta-head-accent);
+  font: var(--gta-label-font);
+  font-size: 13px;
+  letter-spacing: var(--gta-label-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] .terms dd {
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta'] details {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme='gta'] summary:hover {
+  color: var(--gta-accent);
+}
+
+/* Befehl zum Kopieren: schwarzer Kasten mit feiner Linie, Prompt in der Akzentfarbe */
+:root[data-theme='gta'] .code {
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.8);
+  box-shadow: inset 0 0 0 1px var(--gta-line);
+}
+
+:root[data-theme='gta'] .code::before {
+  color: var(--gta-accent);
+}
+
+/* Einstellungen: Navigation als Spalte des Menüs, Abschnitte als Kästen des Stils */
+:root[data-theme='gta'] .settings-nav {
+  border-right: 0;
+  background: var(--gta-panel);
+}
+
+:root[data-theme='gta'] .settings-nav a {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .settings-nav a .nav-icon {
+  color: inherit;
+}
+
+:root[data-theme='gta'] .settings-subnav {
+  border-left-color: var(--gta-line);
+}
+
+:root[data-theme='gta'] .settings-head-sub {
+  color: var(--gta-text-dim);
+}
+
+/* Der Titel in der Schrift des Stils ist breit: Speicherstand und Knöpfe rücken bei wenig Platz unter ihn */
+:root[data-theme='gta'] .settings-head {
+  flex-wrap: wrap;
+}
+
+:root[data-theme='gta'] .settings-head-text {
+  flex: 1 1 320px;
+}
+
+:root[data-theme='gta'] .settings-section-title h3 {
+  color: var(--gta-head-color);
+  font-family: var(--gta-head-family);
+  font-size: 19px;
+  font-weight: var(--gta-head-weight);
+  letter-spacing: var(--gta-head-track);
+  text-transform: var(--gta-head-case);
+  text-shadow: var(--gta-head-shadow);
+}
+
+:root[data-theme='gta'] .settings-section-head p {
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] :is(.settings-card, .tg-card, .tg-hero) {
+  border: var(--gta-panel-border);
+  border-radius: 0;
+  background: var(--gta-panel);
+  box-shadow: none;
+}
+
+:root[data-theme='gta'] :is(.settings-card > * + *, .tg-card-head, .tg-chat, .tg-field-row + .tg-field-row, .tg-advanced, .account-actions, .account-remove, .account-more, .account-login, .project-row) {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Zeilen: Tastaturfokus in einem Feld der Zeile zeigt die Akzentkante links */
+:root[data-theme='gta'] .setting-row:focus-within {
+  box-shadow: inset 3px 0 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'] .setting-hint {
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] .save-status {
+  font: var(--gta-label-font);
+  letter-spacing: var(--gta-label-track);
+  text-transform: uppercase;
+}
+
+/* Fußleiste und Leiste zum Speichern: schwarzer Balken des Stils, ohne Weichzeichner */
+:root[data-theme='gta'] :is(.settings-footer, .tg-savebar, .accounts-notice) {
+  border: var(--gta-box-border);
+  border-radius: 0;
+  background: var(--gta-panel-2);
+  backdrop-filter: none;
+  box-shadow: var(--gta-box-shadow);
+}
+
+/* Meldungen: Fläche in der Farbe des Zustands, Kante links in derselben Farbe */
+:root[data-theme='gta'] .notice {
+  border-radius: 0;
+  box-shadow: inset 3px 0 0 currentColor;
+}
+
+:root[data-theme='gta'] .settings-card > .notice:is(:first-child, :last-child) {
+  border-radius: 0;
+}
+
+/* Auswahlkarten (Benachrichtigungen, Spracherkennung): Kasten des Stils, gewählt mit Rand in der Akzentfarbe */
+:root[data-theme='gta'] :is(.choice, .speech-service, .suggestion-card, .token-row, .store-repo-row, .store-update-row) {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0;
+  background: var(--gta-panel-2);
+}
+
+:root[data-theme='gta'] :is(.choice, .speech-service):hover {
+  border-color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] :is(.choice.selected, .speech-service.on) {
+  border-color: var(--gta-accent);
+  background: var(--gta-panel-2);
+  box-shadow: inset 0 3px 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'] .choice.selected .choice-icon {
+  stroke: var(--gta-accent);
+}
+
+:root[data-theme='gta'] .choice-label {
+  font: var(--gta-btn-font);
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] .choice-hint {
+  color: var(--gta-text-dim);
+}
+
+/* Accounts, Telegram und Spracherkennung: eckige Kacheln, Marken und Logos */
+:root[data-theme='gta'] .account-tile {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .account-tile.off {
+  border: 1px dashed var(--gta-line);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='gta'] :is(.tg-avatar, .tg-badge, .tg-chat-icon, .speech-logo, .card-power, .qr-code, .tg-pair-modal-body > .qr-code) {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] :is(.tg-card-head, .optimization-group) {
+  color: var(--gta-label-color);
+  font: var(--gta-label-font);
+  letter-spacing: var(--gta-label-track);
+}
+
+:root[data-theme='gta'] .tg-toggle-row:hover {
+  background: var(--gta-hover-bg);
+}
+
+/* Dispatcher: Kopf der Tabellen wie Beschriftungen, Vorschläge mit Kante in der Akzentfarbe */
+:root[data-theme='gta'] .dispatch-row.head {
+  color: var(--gta-label-color);
+  font: var(--gta-label-font);
+  letter-spacing: var(--gta-label-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] .suggestion-card {
+  box-shadow: inset 3px 0 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'] .suggestion-card.hint {
+  border-style: dashed;
+  box-shadow: none;
+}
+
+/* Theme-Auswahl: Kacheln mit Vorschau in schwarzem Rahmen, Filter als Reiter, Marken eckig */
+:root[data-theme='gta'] .theme-card {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0;
+  background: var(--gta-panel);
+}
+
+:root[data-theme='gta'] .theme-card.active {
+  border-color: var(--gta-accent);
+  box-shadow: inset 0 3px 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'] .theme-card:has(.theme-select:hover:not(:disabled)) {
+  border-color: var(--gta-text);
+}
+
+:root[data-theme='gta'] .theme-select {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .theme-preview,
+:root[data-theme='gta'] .store-card-preview img {
+  border: 2px solid #000;
+  border-radius: 0;
+  box-shadow: 0 0 0 1px var(--gta-line);
+}
+
+:root[data-theme='gta'] .theme-card-name strong {
+  font: var(--gta-btn-font);
+  font-size: 16px;
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] :is(.theme-badge.current, .theme-chip, .store-pill, .store-row-badge, .store-card-version, .dep-graph-chip) {
+  border-radius: 0;
+  font: var(--gta-chip-font);
+  letter-spacing: var(--gta-chip-track);
+  text-transform: var(--gta-chip-case);
+}
+
+:root[data-theme='gta'] .theme-chip:not(.official):not(.with-code) {
+  background: var(--gta-chip-bg);
+  color: var(--gta-text);
+  box-shadow: var(--gta-chip-edge);
+}
+
+:root[data-theme='gta'] .theme-filter {
+  gap: 2px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+:root[data-theme='gta'] .theme-filter button {
+  border-radius: 0;
+  background: var(--gta-tab-bg);
+  color: var(--gta-tab-fg);
+  font: var(--gta-tab-font);
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] .theme-filter button:hover {
+  background: var(--gta-hover-bg);
+  color: var(--gta-hover-fg);
+}
+
+:root[data-theme='gta'] .theme-filter button[aria-pressed='true'] {
+  background: var(--gta-tab-on-bg);
+  color: var(--gta-tab-on-fg);
+  box-shadow: var(--gta-tab-on-mark);
+}
+
+:root[data-theme='gta'] .theme-filter-count {
+  color: inherit;
+  opacity: 0.7;
+}
+
+:root[data-theme='gta'] .theme-reset {
+  border: 1px solid var(--gta-line);
+  border-radius: 0;
+  background: var(--gta-btn-bg);
+}
+
+:root[data-theme='gta'] .theme-install-split {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] :is(.theme-empty, .theme-store-empty) {
+  border: 1px dashed var(--gta-line);
+  border-radius: 0;
+  background: var(--gta-panel);
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] :is(.theme-modal, .theme-confirm, .theme-confirm-icon) {
+  border-radius: 0;
+}
+
+/* Kopf des Store-Dialogs wie ein Seitenkopf */
+:root[data-theme='gta'] .theme-modal-head :is(h2, .theme-modal-title h2) {
+  color: var(--gta-title-color);
+  font-family: var(--gta-head-family);
+  font-weight: var(--gta-head-weight);
+  letter-spacing: var(--gta-head-track);
+  text-transform: var(--gta-head-case);
+  text-shadow: var(--gta-title-shadow);
+}
+
+:root[data-theme='gta'] .theme-modal-store .theme-file-btn {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] :is(.theme-store-label, .theme-install-label) {
+  color: var(--gta-label-color);
+  font: var(--gta-label-font);
+  letter-spacing: var(--gta-label-track);
+}
+
+/* Theme-Store: Karten wie die Kacheln der Theme-Auswahl, Installieren als primärer Knopf, installiert grün */
+:root[data-theme='gta'] .store-card {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0;
+  background: var(--gta-panel);
+}
+
+:root[data-theme='gta'] .store-card-preview {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='gta'] .store-card-nopreview {
+  border-color: var(--gta-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] .store-card-title h3 {
+  font: var(--gta-btn-font);
+  font-size: 16px;
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] :is(.store-card-host, .store-card-desc, .store-count, .store-row-count, .store-status-summary, .store-status-toggle, .store-row-error) {
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] .store-card-btn {
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: var(--gta-primary-bg);
+  color: var(--gta-primary-fg);
+  font: var(--gta-btn-font);
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] .store-card-btn:hover:not(:disabled) {
+  background: var(--gta-primary-hover);
+  opacity: 1;
+}
+
+:root[data-theme='gta'] .store-card-btn.is-installed {
+  border-color: var(--answered-line);
+  background: var(--running-bg);
+  color: var(--gta-ok);
+}
+
+:root[data-theme='gta'] .store-status {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0;
+  background: var(--gta-panel-2);
+}
+
+:root[data-theme='gta'] :is(.store-status-list, .store-row + .store-row) {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme='gta'] .store-status-list {
+  background: var(--gta-panel);
+}
+
+:root[data-theme='gta'] .store-status-title {
+  font: var(--gta-btn-font);
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] .store-dot {
+  border-radius: 0;
+  box-shadow: 0 0 0 1px #000;
+}
+
+:root[data-theme='gta'] .store-row {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .store-row-link {
+  border-radius: 0;
+  color: var(--gta-accent);
+}
+
+:root[data-theme='gta'] .store-row-link:hover {
+  background: var(--gta-hover-bg);
+  color: var(--gta-hover-fg);
+}
+
+:root[data-theme='gta'] .store-search svg {
+  stroke: var(--gta-text-dim);
+}
+
+/* Diff und Code: Zeilen auf schwarzem Grund, hinzugefügt grün, entfernt rot (heller, damit lesbar), jeweils mit
+   Kante links; Zeilennummern grau mit Trennlinie, Hunks und Dateiköpfe in der Akzentfarbe */
+:root[data-theme='gta'] :is(.revise-diff, .prompt-diff) {
+  border: 0;
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 0 0 1px var(--gta-line);
+}
+
+:root[data-theme='gta'] .diff-line {
+  font-family: var(--gta-font-mono);
+}
+
+:root[data-theme='gta'] .diff-sign {
+  color: inherit;
+  opacity: 0.8;
+}
+
+:root[data-theme='gta'] :is(.diff-add, .db-review-patch .add) {
+  background: var(--diff-add-bg);
+  color: var(--diff-add-fg);
+  box-shadow: inset 3px 0 0 var(--gta-ok);
+}
+
+:root[data-theme='gta'] :is(.diff-remove, .db-review-patch .del) {
+  background: var(--diff-del-bg);
+  color: var(--diff-del-fg);
+  box-shadow: inset 3px 0 0 var(--gta-danger);
+}
+
+:root[data-theme='gta'] :is(.fd-hunk-head, .db-review-patch .hunk) {
+  background: var(--accent-soft);
+  color: var(--gta-accent);
+}
+
+:root[data-theme='gta'] .fd-hunk + .fd-hunk {
+  border-color: var(--gta-line);
+}
+
+:root[data-theme='gta'] .fd-num {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] .fc-head {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='gta'] :is(.fc-status, .fc-ratio > span) {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .db-review-path {
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta'] :is(.db-review-file, .db-review-test) summary:hover {
+  color: var(--gta-accent);
+}
+
+/* Diagramme: Rahmen als schwarzer Kasten mit Linie oben in der Akzentfarbe; das SVG liefert gtaMermaid */
+:root[data-theme='gta'] .diagram {
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 0 1px var(--gta-line), inset 0 3px 0 var(--gta-accent);
+}
+
+/* Der Knopf „Vollbild“ sitzt in einer eigenen Leiste oben im Rahmen und verdeckt keinen Knoten */
+:root[data-theme='gta'] .diagram-wrap > .diagram {
+  padding-top: 44px;
+}
+
+:root[data-theme='gta'] .diagram-expand {
+  top: 6px;
+  right: 6px;
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .diagram-viewer-bar {
+  border-color: var(--gta-line);
+  background: var(--gta-panel-2);
+}
+
+:root[data-theme='gta'] .diagram-viewer-bar strong {
+  font: var(--gta-btn-font);
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+}
+
+/* Abhängigkeiten: Kopf und Legende als schwarze Balken, Fläche wie die Karte mit Raster, Knoten als schwarze Kästen */
+:root[data-theme='gta'] :is(.dep-graph-head, .dep-graph-legend) {
+  border-color: var(--gta-line);
+  background: var(--gta-panel-2);
+}
+
+:root[data-theme='gta'] .dep-graph-name h2 {
+  color: var(--gta-head-color);
+  font-family: var(--gta-head-family);
+  font-size: 20px;
+  font-weight: var(--gta-head-weight);
+  letter-spacing: var(--gta-head-track);
+  text-transform: var(--gta-head-case);
+  text-shadow: var(--gta-head-shadow);
+}
+
+:root[data-theme='gta'] :is(.dep-graph-logo, .dep-graph-switch, .dep-graph-zoom, .dep-graph-zoom-value, .dep-graph-zoom .icon-btn) {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] :is(.dep-graph-switch-track, .dep-graph-switch-track::after) {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .dep-graph-legend-title {
+  color: var(--gta-label-color);
+  font: var(--gta-label-font);
+  letter-spacing: var(--gta-label-track);
+}
+
+:root[data-theme='gta'] .dep-graph-stage {
+  background-color: rgba(0, 0, 0, 0.75);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+}
+
+/* :where hält die Spezifität klein: Überfahren, Fokus, kritischer Pfad und Nachbarn färben die Linie wie im Kern */
+:root[data-theme='gta'] :where(.dep-graph-box) {
+  fill: #000;
+  stroke: var(--gta-line);
+  rx: 0;
+  ry: 0;
+}
+
+:root[data-theme='gta'] .dep-graph-node.is-current .dep-graph-box {
+  fill: color-mix(in srgb, var(--gta-accent) 22%, #000);
+}
+
+:root[data-theme='gta'] .dep-graph-id {
+  fill: var(--gta-text-dim);
+  font-family: var(--gta-font-title);
+  letter-spacing: 0.06em;
+}
+
+:root[data-theme='gta'] .dep-graph-title {
+  fill: var(--gta-text);
+}
+
+/* Seiten ohne Rahmen (Start ohne Projekt, Link öffnen) und Fehler ganzer Seiten: Kasten mit roter Kante. Nur der
+   Fehler als ganze Seite, nicht Fehler in Paneelen */
+:root[data-theme='gta'] #root > .state:not(.empty):not(.loading),
+:root[data-theme='gta'] .page > .state:not(.empty):not(.loading) {
+  margin: 24px auto;
+  max-width: 560px;
+  background: var(--gta-panel);
+  box-shadow: inset 0 3px 0 var(--gta-danger);
+}
+
+:root[data-theme='gta'] .state:not(.empty):not(.loading) > h2 {
+  color: var(--gta-head-color);
+  font-family: var(--gta-head-family);
+  font-size: 22px;
+  font-weight: var(--gta-head-weight);
+  letter-spacing: var(--gta-head-track);
+  text-transform: var(--gta-head-case);
+  text-shadow: var(--gta-head-shadow);
+}
+
+:root[data-theme='gta'] .theme-notice button:not(.theme-notice-action) {
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] .theme-notice .theme-notice-action {
+  border-color: var(--gta-line);
+  border-radius: 0;
 }
 
 /* Reduzierte Bewegung: keine Animationen und Übergänge, auch nicht in den Stil-Abschnitten */
@@ -3657,6 +4566,110 @@
   outline-color: #000000;
 }
 
+/* Docs wie die Seite „Docs“ der Preview: Baum aus Menüzeilen, das offene Dokument als weiße Zeile; Fließtext leicht
+   gedämpft wie in den Paneelen */
+:root[data-theme='gta']:not([data-gta-style='sa']) .doc-tree-row {
+  color: var(--gta-text);
+  font-weight: 500;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .doc-tree-row:hover,
+:root[data-theme='gta']:not([data-gta-style='sa']) .doc-tree-row.on {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: none;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .doc-tree-row:is(:hover, .on) :is(.doc-tree-icon, .doc-tree-chevron) {
+  color: #000000;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .doc-tree-row.on {
+  box-shadow: inset 3px 0 0 var(--gta-accent);
+}
+
+/* Fokus auf der weißen Zeile in Schwarz, die Akzentfarbe wäre auf Weiß zu blass */
+:root[data-theme='gta']:not([data-gta-style='sa']) .doc-tree-item:focus-visible > .doc-tree-row:is(.on, :hover) {
+  box-shadow: inset 0 0 0 2px #000000;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .doc {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* Anleitung: Sprungmarken als Reiter des Pausenmenüs, Schritte mit Titel in Versalien */
+:root[data-theme='gta']:not([data-gta-style='sa']) .guide-nav a {
+  border: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .guide-nav a:hover {
+  background: #ffffff;
+  color: #000000;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .step {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .step-title {
+  font: 700 17px/1.2 var(--gta-font-title);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Einstellungen wie die Seite „Einstellungen“ der Preview: Navigation aus Menüzeilen, der offene Bereich weiß; Zeilen
+   beim Überfahren aufgehellt */
+:root[data-theme='gta']:not([data-gta-style='sa']) .settings-nav a {
+  color: var(--gta-text);
+  font: 500 15px/1.2 var(--gta-font-ui);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .settings-nav a:hover,
+:root[data-theme='gta']:not([data-gta-style='sa']) .settings-nav a.active {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: none;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .settings-nav a.active {
+  box-shadow: inset 3px 0 0 var(--gta-accent);
+}
+
+/* Tastaturfokus: die Zeile wird weiß wie beim Überfahren, der Ring darin schwarz */
+:root[data-theme='gta']:not([data-gta-style='sa']) .settings-nav a:focus-visible {
+  background: #ffffff;
+  color: #000000;
+  outline-color: #000000;
+  outline-offset: -2px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .setting-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) :is(.setting-title label, .setting-label) {
+  font: 500 15px/1.25 var(--gta-font-ui);
+}
+
+/* Theme-Auswahl und Store: Kacheln ohne Rand, beim Überfahren weiß umrandet, das aktive Theme mit Akzentlinie */
+:root[data-theme='gta']:not([data-gta-style='sa']) .theme-card,
+:root[data-theme='gta']:not([data-gta-style='sa']) .store-card {
+  border-color: transparent;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .theme-card.active {
+  border-color: #ffffff;
+  box-shadow: inset 0 4px 0 var(--gta-accent);
+}
+
+/* Seiten ohne Rahmen (Start ohne Projekt, Link öffnen): Abendhimmel der Szene statt Schwarz. Dort setzt keine Shell
+   data-gta-style, deshalb gilt auf diesen Seiten immer der Grundstil GTA V */
+:root[data-theme='gta']:not([data-gta-style='sa']) body:not(:has(.gta-frame)) {
+  background: linear-gradient(180deg, #120a24 0%, #2a1537 45%, #5a2a3a 80%, #07050c 100%) fixed;
+}
+
 /* Schmales Fenster: kleinere Minimap, keine Tastenhinweise, Stats-Menü einspaltig */
 @media (max-width: 820px) {
   :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-radar {
@@ -5270,6 +6283,158 @@
 
 :root[data-theme='gta'][data-gta-style='sa'] .option-card.picked .option-title {
   color: var(--gta-accent);
+}
+
+/* Docs wie die Tafel „Docs“: Baum als schlichte Liste, beim Überfahren getönt, das offene Dokument fett in der
+   Akzentfarbe; Kästen mit schwarzer Kontur */
+:root[data-theme='gta'][data-gta-style='sa'] :is(.docs-explorer, .docs-main) {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .docs-explorer-head h1 {
+  color: #ffffff;
+  font: 400 24px/1 var(--gta-font-script);
+  letter-spacing: 0.01em;
+  text-transform: none;
+  text-shadow: var(--sa-o1);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .doc-tree-row {
+  color: #cfd6dd;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .doc-tree-row:hover {
+  background: color-mix(in srgb, var(--gta-accent) 12%, transparent);
+  color: #ffffff;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .doc-tree-row.on {
+  background: color-mix(in srgb, var(--gta-accent) 10%, transparent);
+  color: var(--gta-accent);
+  font-weight: 700;
+  box-shadow: inset 2px 0 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .doc-tree-item:focus-visible > .doc-tree-row {
+  box-shadow: inset 0 0 0 2px var(--gta-accent);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .doc {
+  color: #e6e6e6;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] :is(.doc-comments, .doc-comment-item, .draft-tile, .dd-card) {
+  box-shadow: 0 0 0 1px var(--gta-line);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .doc-comment-item {
+  border: 2px solid #000;
+  box-shadow: 0 0 0 1px var(--gta-line), inset 3px 0 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .doc-comment-item.resolved {
+  box-shadow: 0 0 0 1px var(--gta-line), inset 3px 0 0 var(--gta-text-dim);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .draft-tile.is-active {
+  border-color: #000;
+  box-shadow: 0 0 0 2px var(--gta-accent);
+}
+
+/* Anleitung: Sprungmarken als Menüzeilen in Michroma, Schritte mit feiner Trennlinie wie die Listen der Preview */
+:root[data-theme='gta'][data-gta-style='sa'] .guide-nav a {
+  border: 0;
+  background: transparent;
+  color: var(--sa-slate, #7f93a8);
+  text-shadow: var(--sa-o1);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .guide-nav a:hover {
+  color: #ffffff;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .step {
+  border-top-color: rgba(255, 255, 255, 0.07);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .step-title {
+  color: #ffffff;
+  font: 700 15px/1.3 var(--gta-font-ui);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .num {
+  border-color: #000;
+  color: var(--gta-accent);
+  box-shadow: 0 0 0 1px var(--gta-line);
+}
+
+/* Einstellungen wie die Tafel „Optionen“: Einträge in Michroma-Versalien, grau, beim Überfahren weiß, der offene
+   Bereich in der Akzentfarbe; die Namen der Einstellungen ebenso */
+:root[data-theme='gta'][data-gta-style='sa'] .settings-nav {
+  flex-basis: 252px;
+  border: 2px solid #000;
+  background: rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 0 1px var(--gta-line);
+}
+
+/* Michroma ist breit: kleinere Schrift, damit auch „Arbeitsverzeichnisse“ in die Spalte passt */
+:root[data-theme='gta'][data-gta-style='sa'] .settings-nav a {
+  color: var(--sa-slate, #7f93a8);
+  font: 400 10px/1.25 var(--gta-font-title);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-shadow: var(--sa-o1);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .settings-nav a:hover {
+  background: transparent;
+  color: #ffffff;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .settings-nav a.active {
+  background: color-mix(in srgb, var(--gta-accent) 10%, transparent);
+  color: var(--gta-accent);
+  box-shadow: inset 2px 0 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] :is(.settings-card, .tg-card, .tg-hero, .theme-card, .store-card, .store-status) {
+  border: 2px solid #000;
+  box-shadow: 0 0 0 1px var(--gta-line);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] :is(.setting-title label, .setting-label) {
+  color: var(--sa-slate, #7f93a8);
+  font: 400 12px/1.3 var(--gta-font-title);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-shadow: var(--sa-o1);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .setting-row:hover :is(.setting-title label, .setting-label) {
+  color: #ffffff;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .setting-row:focus-within :is(.setting-title label, .setting-label) {
+  color: var(--gta-accent);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .setting-hint {
+  color: #cfd6dd;
+}
+
+/* Theme-Auswahl und Store: Tafeln mit schwarzer Kontur, das aktive Theme mit Rahmen und Namen in der Akzentfarbe */
+:root[data-theme='gta'][data-gta-style='sa'] .theme-card.active {
+  border-color: #000;
+  box-shadow: 0 0 0 2px var(--gta-accent);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .theme-card.active .theme-card-name strong {
+  color: var(--gta-accent);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] :is(.theme-card-name strong, .store-card-title h3) {
+  font: 400 12px/1.3 var(--gta-font-title);
+  letter-spacing: 0.04em;
 }
 
 /* Kleines Fenster (bis 1024 × 700): schmalere Menüspalte und kleineres Radar, Hilfekasten unter dem Titel; HUD und
