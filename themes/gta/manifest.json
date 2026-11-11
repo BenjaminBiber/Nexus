@@ -6,6 +6,7 @@
   "sdkVersion": "^1.2",
   "colorScheme": "dark",
   "startColor": "#0b0d0f",
+  "preview": "assets/preview.png",
   "slots": ["Shell", "NavIcon", "Icon", "Progress", "StartAnimation"],
   "permissions": { "network": [] },
   "settingsSchema": {

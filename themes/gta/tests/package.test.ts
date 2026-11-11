@@ -1,6 +1,6 @@
 // Paket: Vite-Build nach dist/ mit main.js (ESM, export default), manifest.json, theme.css und den Schriften; React und SDK
 // bleiben extern. Dazu der Aufbau von theme.css: gemeinsamer Teil, GTA V und San Andreas mit denselben Tokens.
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -101,7 +101,7 @@ describe('GTA-Theme-Paket', () => {
     expect(existsSync(join(dist, 'src'))).toBe(false);
   });
 
-  it('das Manifest beschreibt ein dunkles Theme mit Rahmen, ohne fremde Domains und noch ohne Vorschaubild', () => {
+  it('das Manifest beschreibt ein dunkles Theme mit Rahmen und ohne fremde Domains', () => {
     const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
     expect(manifest).toMatchObject({
       id: 'gta',
@@ -113,7 +113,18 @@ describe('GTA-Theme-Paket', () => {
       startColor: '#0b0d0f',
       permissions: { network: [] },
     });
-    expect(manifest).not.toHaveProperty('preview');
+  });
+
+  it('liefert das Vorschaubild als PNG mit 640 × 320 und höchstens 300 KB im Paket', () => {
+    const manifest = JSON.parse(readFileSync(join(dist, 'manifest.json'), 'utf8'));
+    expect(manifest.preview).toBe('assets/preview.png');
+    const preview = join(dist, manifest.preview);
+    expect(existsSync(preview)).toBe(true);
+    const png = readFileSync(preview);
+    expect(png.subarray(1, 4).toString()).toBe('PNG');
+    // Breite und Höhe stehen im IHDR-Block ab Byte 16
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([640, 320]);
+    expect(statSync(preview).size).toBeLessThanOrEqual(300 * 1024);
   });
 
   it('Schema und Slots stehen gleich im Manifest und im Code', () => {
