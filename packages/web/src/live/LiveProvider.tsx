@@ -27,8 +27,16 @@ export function LiveProvider({ pid, children, releaseDelayMs = 1000 }: { pid: st
   const releaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const releaseDelay = useRef(releaseDelayMs);
   releaseDelay.current = releaseDelayMs;
-  useEffect(() => () => {
-    if (releaseTimer.current) clearTimeout(releaseTimer.current);
+  // Beim Aushängen räumt React erst diesen Anbieter ab und dann die Beobachter. Deren Abmeldung darf danach
+  // keinen Timer mehr starten: er liefe ins Leere und setzte Zustand in einem abgebauten Baum
+  const unmounted = useRef(false);
+  useEffect(() => {
+    unmounted.current = false;
+    return () => {
+      unmounted.current = true;
+      if (releaseTimer.current) clearTimeout(releaseTimer.current);
+      releaseTimer.current = null;
+    };
   }, []);
 
   // Die Erlaubnis kommt von der Plattform und damit erst später; ein Wechsel verbindet den Strom neu.
@@ -95,7 +103,7 @@ export function LiveProvider({ pid, children, releaseDelayMs = 1000 }: { pid: st
       releaseTimer.current = null;
       const last = projectWatchers.current.at(-1);
       if (last) setDbProject(last.projectId);
-      else releaseTimer.current = setTimeout(() => {
+      else if (!unmounted.current) releaseTimer.current = setTimeout(() => {
         releaseTimer.current = null;
         if (!projectWatchers.current.length) setDbProject(null);
       }, releaseDelay.current);
