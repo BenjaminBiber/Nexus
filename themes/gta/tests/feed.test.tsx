@@ -2,7 +2,7 @@
 // Board-Stand laden und aktuell halten: Ereignisstrom, kein Stau, Sicherheitsnetz, Aufräumen, verspätete Antworten
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useBoardFeed } from '../src/data/feed.js';
+import { REQUEST_MS, useBoardFeed } from '../src/data/feed.js';
 import type { BoardView } from '../src/data/types.js';
 
 // Falsche EventSource: merkt sich alle Ströme, Nachrichten kommen per emit()
@@ -14,6 +14,7 @@ class FakeEventSource {
   readyState = FakeEventSource.OPEN;
   onmessage: ((event: { data: string }) => void) | null = null;
   onerror: (() => void) | null = null;
+  onopen: (() => void) | null = null;
   constructor(readonly url: string) {
     FakeEventSource.all.push(this);
   }
@@ -34,8 +35,10 @@ interface Call {
 }
 let calls: Call[];
 
+// Wie das echte fetch: ein Abbruch lässt die Anfrage scheitern
 function fakeFetch(url: string, init: { signal: AbortSignal }) {
   return new Promise((resolve, reject) => {
+    init.signal.addEventListener('abort', () => reject(new DOMException('abgebrochen', 'AbortError')));
     calls.push({
       url,
       signal: init.signal,
@@ -203,6 +206,55 @@ describe('useBoardFeed', () => {
     await answer(calls[3]!, view(3, 'Kasse'));
     expect(result.current.failed).toBe(false);
     expect(result.current.view?.columns[0]!.tickets[0]!.title).toBe('Kasse');
+  });
+
+  it('nach einer Unterbrechung des Stroms wird beim Wiederverbinden einmal nachgeladen', async () => {
+    renderHook(() => useBoardFeed('p1', 3));
+    await answer(calls[0]!, view(3));
+    const source = FakeEventSource.all[0]!;
+    act(() => source.onopen?.());
+    expect(calls).toHaveLength(1);
+    act(() => source.onerror?.());
+    act(() => source.onopen?.());
+    expect(calls).toHaveLength(2);
+    await answer(calls[1]!, view(3));
+    act(() => source.onopen?.());
+    expect(calls).toHaveLength(2);
+  });
+
+  it('eine hängende Anfrage wird nach REQUEST_MS abgebrochen und zählt als Fehler', async () => {
+    const { result } = renderHook(() => useBoardFeed('p1', 3));
+    await answer(calls[0]!, view(3));
+    FakeEventSource.all[0]!.emit({ type: 'reset' });
+    FakeEventSource.all[0]!.emit({ type: 'reset' });
+    tick(REQUEST_MS - 1);
+    expect(calls[1]!.signal.aborted).toBe(false);
+    tick(1);
+    await flush();
+    expect(calls[1]!.signal.aborted).toBe(true);
+    expect(result.current).toEqual({ view: view(3), failed: true });
+    // Das wartende Nachladen läuft danach
+    expect(calls).toHaveLength(3);
+    await answer(calls[2]!, view(3));
+    expect(result.current.failed).toBe(false);
+  });
+
+  it('Rückwechsel A → B → A zeigt nicht den alten Stand von A', async () => {
+    const { result, rerender } = renderHook(({ id }) => useBoardFeed('p1', id), { initialProps: { id: 3 } });
+    await answer(calls[0]!, view(3));
+    rerender({ id: 4 });
+    rerender({ id: 3 });
+    expect(result.current.view).toBeNull();
+    await answer(last(calls), view(3, 'neu'));
+    expect(result.current.view?.columns[0]!.tickets[0]!.title).toBe('neu');
+  });
+
+  it('Wechsel des Projekts bei gleichem Board: neuer Strom', () => {
+    const { rerender } = renderHook(({ pid }) => useBoardFeed(pid, 3), { initialProps: { pid: 'p1' } });
+    rerender({ pid: 'p2' });
+    expect(FakeEventSource.all[0]!.readyState).toBe(FakeEventSource.CLOSED);
+    expect(last(FakeEventSource.all).url).toBe('/api/projects/p2/events?dbBoard=3');
+    expect(calls).toHaveLength(2);
   });
 
   it('Fehler beim ersten Laden: kein Stand, failed', async () => {

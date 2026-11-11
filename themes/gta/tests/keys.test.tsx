@@ -102,7 +102,14 @@ describe('useGameKeys', () => {
     press('HESOYAM', { ctrlKey: true });
     press('HESOYAM', { altKey: true });
     press('HESOYAM', { metaKey: true });
+    press('HESOYAM', { repeat: true });
     expect(onCheat).not.toHaveBeenCalled();
+    // contenteditable="false" ist kein Feld
+    const plain = document.body.appendChild(document.createElement('div'));
+    plain.setAttribute('contenteditable', 'false');
+    press('HESOYAM', {}, plain);
+    expect(onCheat).toHaveBeenCalledTimes(1);
+    onCheat.mockClear();
     // Bereits behandelt: zählt nicht, der Code bleibt unvollständig
     press('HESO');
     const handled = new KeyboardEvent('keydown', { key: 'Y', bubbles: true, cancelable: true });

@@ -56,6 +56,6 @@ function parseColumn(json: unknown): Column | null {
 
 /** Nimmt die Antwort des Servers tolerant an; unbekannte Spalten und kaputte Karten fallen weg, bei Unsinn null */
 export function parseBoardView(json: unknown): BoardView | null {
-  if (!isRecord(json) || typeof json.boardId !== 'number' || !Array.isArray(json.columns)) return null;
-  return { boardId: json.boardId, columns: json.columns.map(parseColumn).filter((c): c is Column => c !== null) };
+  if (!isRecord(json) || !Number.isFinite(json.boardId) || !Array.isArray(json.columns)) return null;
+  return { boardId: json.boardId as number, columns: json.columns.map(parseColumn).filter((c): c is Column => c !== null) };
 }

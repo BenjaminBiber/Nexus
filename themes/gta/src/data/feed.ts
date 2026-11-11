@@ -10,14 +10,26 @@ export interface BoardFeed {
 }
 
 export const SAFETY_MS = 30_000;
+/** Länger wartet eine Anfrage nicht; danach gilt sie als gescheitert und blockiert kein Nachladen mehr */
+export const REQUEST_MS = 20_000;
 const OPEN = 1; // EventSource.OPEN
 
 const EMPTY: BoardFeed = { view: null, failed: false };
 
-// Strom des Boards oder null, wenn es keinen EventSource gibt
+// Strom des Boards oder null, wenn es keinen EventSource gibt. Nach einer Unterbrechung kann eine Änderung verpasst
+// worden sein; deshalb beim Wiederverbinden einmal nachladen.
 function openStream(pid: string, boardId: number, onChange: () => void): EventSource | null {
   if (typeof EventSource === 'undefined') return null;
   const source = new EventSource(eventsUrl(pid, boardId));
+  let wasDown = false;
+  source.onerror = () => {
+    wasDown = true;
+  };
+  source.onopen = () => {
+    if (!wasDown) return;
+    wasDown = false;
+    onChange();
+  };
   source.onmessage = (event: MessageEvent) => {
     let message: { type?: unknown; boardId?: unknown };
     try {
@@ -41,6 +53,7 @@ export function useBoardFeed(pid: string, boardId: number | null): BoardFeed {
     setState({ key, feed: EMPTY });
     let alive = true;
     let running: AbortController | null = null;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     let again = false;
 
     const load = () => {
@@ -50,7 +63,9 @@ export function useBoardFeed(pid: string, boardId: number | null): BoardFeed {
       }
       const controller = new AbortController();
       running = controller;
+      timeout = setTimeout(() => controller.abort(), REQUEST_MS);
       void fetchBoardView(boardId, controller.signal).then((view) => {
+        clearTimeout(timeout);
         if (!alive) return;
         running = null;
         setState((prev) => {
@@ -74,6 +89,7 @@ export function useBoardFeed(pid: string, boardId: number | null): BoardFeed {
       alive = false;
       source?.close();
       clearInterval(safety);
+      clearTimeout(timeout);
       running?.abort();
     };
   }, [pid, boardId, key]);

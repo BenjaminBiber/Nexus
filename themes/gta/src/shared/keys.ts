@@ -16,7 +16,7 @@ export const CHEATS: Record<string, CheatId> = {
 const CODES = Object.keys(CHEATS);
 const BUFFER = 12;
 const PAUSE_MS = 3000;
-const FIELDS = 'input, textarea, select, [contenteditable], [role="textbox"]';
+const FIELDS = 'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]';
 
 /** Länge des längsten Endes von buffer, das Anfang eines Cheat-Codes ist */
 export function cheatProgress(buffer: string): number {
@@ -33,9 +33,10 @@ export function matchCheat(buffer: string): CheatId | null {
   return code ? CHEATS[code]! : null;
 }
 
-// Taste für uns? Nur einzelne Buchstaben ohne Strg/Alt/Meta, nicht in Feldern, nicht schon behandelt
+// Taste für uns? Nur einzelne Buchstaben ohne Strg/Alt/Meta, nicht in Feldern, nicht schon behandelt; gehaltene Tasten
+// wiederholen nichts (sonst rast ein gehaltenes E durch die ganze Navigation)
 function letterOf(event: KeyboardEvent): string | null {
-  if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey) return null;
+  if (event.defaultPrevented || event.repeat || event.ctrlKey || event.altKey || event.metaKey) return null;
   if (!/^[a-z]$/i.test(event.key)) return null;
   if (event.target instanceof Element && event.target.closest(FIELDS)) return null;
   return event.key.toUpperCase();

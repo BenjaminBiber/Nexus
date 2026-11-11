@@ -66,7 +66,7 @@ describe('parseBoardView', () => {
   });
 
   it('liefert bei Unsinn null', () => {
-    for (const json of [null, undefined, 'x', 3, [], {}, { boardId: 'a', columns: [] }, { boardId: 1 }, { boardId: 1, columns: {} }]) {
+    for (const json of [null, undefined, 'x', 3, [], {}, { boardId: 'a', columns: [] }, { boardId: Number.NaN, columns: [] },{ boardId: 1 }, { boardId: 1, columns: {} }]) {
       expect(parseBoardView(json), JSON.stringify(json)).toBeNull();
     }
   });
