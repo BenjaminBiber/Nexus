@@ -175,6 +175,20 @@ function sources(dir: string): string {
     .join('\n');
 }
 
+// Selektoren nur aus dem Abschnitt eines Stils (ohne dessen Präfix)
+const STYLE_PREFIX = { v: ":root[data-theme='gta']:not([data-gta-style='sa'])", sa: ":root[data-theme='gta'][data-gta-style='sa']" };
+function styleSelectors(text: string, style: keyof typeof STYLE_PREFIX): string[] {
+  const prefix = STYLE_PREFIX[style];
+  return [...stripComments(text).matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .filter((m) => m[2]!.trim() !== '')
+    .flatMap((m) => topLevel(m[1]!))
+    .filter((s) => s.startsWith(prefix) && !s.startsWith(`${prefix}[`))
+    .map((s) => s.slice(prefix.length).trim());
+}
+
+// Board und Ticket-Panel bekommen in jedem Stil einen eigenen Look, nicht nur die gemeinsame Form
+const PER_STYLE = ['.db-column .column-head', '.column-head .count', '.db-card', '.db-card:is(:hover, :focus-within)', '.card-id', '.card-title', '.card-steps-bar', '.card-waiting', '.db-fab-dot', '.db-title', ".db-tablist [role='tab'].active"];
+
 const rules = selectors(readFileSync(join(root, 'theme.css'), 'utf8'));
 const code = sources(web);
 const entries = Object.entries(HOST).flatMap(([group, list]) => Object.entries(list).map(([name, selector]) => ({ group, name, selector })));
@@ -198,6 +212,16 @@ describe('Abdeckung der Host-Selektoren in theme.css', () => {
     for (const name of elements.filter((e) => !['h2', 'pre', 'code', 'blockquote', 'table', 'a', 'th'].includes(e))) {
       expect(code, name).toMatch(new RegExp(`<${name}[\\s>/]`));
     }
+  });
+
+  it.each((['v', 'sa'] as const).flatMap((style) => PER_STYLE.map((selector) => ({ style, selector }))))('Stil $style gestaltet $selector', ({ style, selector }) => {
+    expect(covered(styleSelectors(readFileSync(join(root, 'theme.css'), 'utf8'), style), selector)).toBe(true);
+  });
+
+  it('die Abschnitte der Stile werden getrennt gelesen', () => {
+    const css = ":root[data-theme='gta']:not([data-gta-style='sa']) .a { color: red; } :root[data-theme='gta'][data-gta-style='sa'] .b { color: red; } :root[data-theme='gta'] .c { color: red; }";
+    expect(styleSelectors(css, 'v')).toEqual(['.a']);
+    expect(styleSelectors(css, 'sa')).toEqual(['.b']);
   });
 
   it('die Prüfung erkennt fehlende und nur angefangene Selektoren', () => {
