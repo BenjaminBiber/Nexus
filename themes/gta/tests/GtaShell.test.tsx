@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, renderHook, within } from '@testing-library/react';
 import { ThemeHostProvider, type ThemeHost } from '@nexus/theme-sdk';
 import { GtaShell } from '../src/GtaShell.js';
+import { useGame } from '../src/data/GameContext.js';
 import { BOOT_KEY, STYLE_KEY, useActiveStyle } from '../src/settings.js';
 import theme from '../src/main.js';
 
@@ -65,6 +66,20 @@ describe('Rahmen „GTA“ (Platzhalter)', () => {
     const nav = shell.querySelector('nav.gta-nav') as HTMLElement;
     expect(within(nav).getByRole('link', { name: 'nav-board' }).getAttribute('href')).toBe('/p/p1/board');
     expect(within(shell).getByRole('main').textContent).toBe('seiten-inhalt');
+  });
+
+  it('stellt Navigation und Inhalt den GameProvider bereit', () => {
+    function Probe() {
+      const game = useGame();
+      return <span>spiel-{game.pid}-{game.loaded ? 'geladen' : 'leer'}</span>;
+    }
+    const host = fakeHost();
+    render(
+      <ThemeHostProvider value={host}>
+        <GtaShell pid="p1" nav={<Probe />} content={<main>seiten-inhalt</main>} parts={host.parts} />
+      </ThemeHostProvider>,
+    );
+    expect(document.querySelector('nav.gta-nav')?.textContent).toBe('spiel-p1-leer');
   });
 
   it('legt Stil, Akzent und Radar als data-gta-* auf <html> und räumt sie beim Abbau weg', () => {
