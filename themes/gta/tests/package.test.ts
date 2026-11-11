@@ -187,7 +187,7 @@ describe('GTA-Theme-Paket', () => {
       expect(existsSync(join(dist, url)), url).toBe(true);
     }
     const faces = text.match(/@font-face\s*\{[^}]*\}/g) ?? [];
-    const fonts = readdirSync(join(root, 'assets', 'fonts'));
+    const fonts = readdirSync(join(root, 'assets', 'fonts')).filter((name) => name.endsWith('.woff2'));
     expect(fonts).toHaveLength(12);
     for (const font of fonts) {
       const face = faces.filter((f) => f.includes(`url('assets/fonts/${font}')`));
@@ -207,9 +207,54 @@ describe('GTA-Theme-Paket', () => {
     // Yellowtail steht laut den Namensdaten der Schrift unter der Apache-Lizenz, nicht unter der OFL
     expect(head).toMatch(/Yellowtail[^\n]*\n?[^\n]*Apache License 2\.0/);
     expect(head).toContain('Google Fonts');
+    expect(head).toContain('assets/fonts/licenses.json');
     const attributes = new Set([...text.matchAll(/data-gta-[a-z]+/g)].map((m) => m[0]));
     for (const attribute of ['data-gta-style', 'data-gta-accent', 'data-gta-radar']) attributes.add(attribute);
     for (const attribute of attributes) expect(head, attribute).toContain(attribute);
+  });
+
+  describe('Lizenztexte der Schriften (assets/fonts/licenses.json)', () => {
+    interface Licenses {
+      fonts: { family: string; files: string[]; copyright: string[]; license: string }[];
+      texts: Record<string, string>;
+    }
+    const licenses = (): Licenses => JSON.parse(readFileSync(join(dist, 'assets', 'fonts', 'licenses.json'), 'utf8'));
+
+    it('liegt im gebauten Paket', () => {
+      expect(existsSync(join(dist, 'assets', 'fonts', 'licenses.json'))).toBe(true);
+    });
+
+    it('jede Schriftdatei steht in genau einem Eintrag, mit Copyright und Lizenz', () => {
+      const { fonts } = licenses();
+      const files = readdirSync(join(root, 'assets', 'fonts')).filter((name) => name.endsWith('.woff2'));
+      for (const file of files) expect(fonts.filter((f) => f.files.includes(file)), file).toHaveLength(1);
+      expect(fonts.flatMap((f) => f.files).sort()).toEqual([...files].sort());
+      for (const font of fonts) {
+        expect(font.copyright.length, font.family).toBeGreaterThan(0);
+        expect(['OFL-1.1', 'Apache-2.0'], font.family).toContain(font.license);
+      }
+      expect(fonts.find((f) => f.family === 'Yellowtail')?.license).toBe('Apache-2.0');
+    });
+
+    it('jede genannte Lizenz hat ihren Text', () => {
+      const { fonts, texts } = licenses();
+      for (const license of new Set(fonts.map((f) => f.license))) expect(texts[license], license).toBeTruthy();
+    });
+
+    it('OFL 1.1 vollständig, ohne den Platzhalter-Kopf', () => {
+      const ofl = licenses().texts['OFL-1.1']!;
+      expect(ofl).toContain('SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007');
+      expect(ofl).toContain('PERMISSION & CONDITIONS');
+      expect(ofl).not.toContain('<dates>');
+      expect(ofl.length).toBeGreaterThanOrEqual(4000);
+    });
+
+    it('Apache 2.0 vollständig', () => {
+      const apache = licenses().texts['Apache-2.0']!;
+      expect(apache).toContain('Version 2.0, January 2004');
+      expect(apache).toContain('TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION');
+      expect(apache.length).toBeGreaterThanOrEqual(11000);
+    });
   });
 
   it('am Ende des gemeinsamen Abschnitts stehen Animationen und Übergänge bei reduzierter Bewegung still', () => {
