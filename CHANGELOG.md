@@ -14,6 +14,12 @@
 
 ### Sonstiges
 
+- Einrichtung, Anleitung, Session-Hinweise, Dispatcher-Prompts, Hilfe und Fehlermeldungen nennen
+  den Befehl jetzt `nexus …` (statt `harness …`) und das Produkt Nexus (statt AI Harness).
+  `harness` bleibt als Alias nutzbar: Der Dispatcher erlaubt beide Namen, eigene Prompt-Vorlagen
+  mit `harness board …` bleiben gültig, und Läufe mit dem alten Namen werden weiter lesbar
+  zusammengefasst. Kennungen wie der Kopf `X-Harness` und der Git-Trailer `Harness-Squashed`
+  bleiben unverändert.
 - Jedes Release enthält die Themes aus `themes/` als `<id>-<version>.nexus` und den Store-Index
   `nexus-themes.json`. Der Theme-Store hat dieses Repo
   (`https://github.com/BenjaminBiber/Nexus/releases/latest/download/nexus-themes.json`)
