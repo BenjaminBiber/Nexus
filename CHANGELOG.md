@@ -14,6 +14,18 @@
 
 ### Sonstiges
 
+## 0.1.3 – 2026-11-11
+
+### Vertrag
+
+- Keine Änderungen.
+
+### Angekündigt
+
+- Keine.
+
+### Sonstiges
+
 - Die Spalte „Erledigt“ des Boards zeigt Tickets als kompakte Zeilen (Nummer, Erledigt-Datum,
   Titel) in Abschnitten: „Heute“, „Letzte 7 Tage“ und eingeklappt „Älter“, ganz oben „Wartet auf
   Merge“ für erledigte Tickets, deren Branch noch offen ist. Das Dreipunkt-Menü am Spaltenkopf
