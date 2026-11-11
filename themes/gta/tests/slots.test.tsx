@@ -107,6 +107,15 @@ describe('Wahl nach Stil', () => {
     expect(container.textContent).toBe('sa-naviconsa-iconsa-progress');
   });
 
+  // Seiten ohne Projekt (Start, Link öffnen) rendern Symbole ohne Theme-Host
+  it('ohne Host scheitern NavIcon, Icon und Progress nicht, sondern nehmen den gemerkten Stil', () => {
+    window.localStorage.setItem(STYLE_KEY, 'sa');
+    expect(render(slots).container.textContent).toBe('sa-naviconsa-iconsa-progress');
+    cleanup();
+    window.localStorage.setItem(STYLE_KEY, 'v');
+    expect(render(slots).container.textContent).not.toContain('sa-');
+  });
+
   it('StartAnimation nimmt den gemerkten Stil', () => {
     window.localStorage.setItem(STYLE_KEY, 'sa');
     expect(render(<GtaStartAnimation onDone={vi.fn()} />).container.textContent).toBe('sa-boot');
