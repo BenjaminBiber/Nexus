@@ -65,6 +65,22 @@ describe('VStats', () => {
     expect(dialog().textContent).toContain('Claude-Verbrauch ist gerade nicht verfügbar');
   });
 
+  it('ohne Board-Stand Striche statt 0, Bekanntes bleibt', () => {
+    open({ loaded: false, total: 0, done: 0, open: 0, blocked: 0, boardProgress: null, stepsDone: 0, stepsTotal: 0, wanted: 0, moneyShown: 0, blips: [] });
+    expect(rows()).toEqual({
+      'Tickets gesamt': '–',
+      Abgeschlossen: '–',
+      Offen: '–',
+      Blockiert: '–',
+      'Fortschritt des Boards': '–',
+      'Schritte erledigt': '–',
+      'Offene Fragen': '1',
+      Fahndungslevel: '–Stufe 0 von 5',
+      'Verdient insgesamt': '$–',
+    });
+    expect(dialog().querySelector('.gta-v-pct')?.textContent).toBe('–kein Board-Stand');
+  });
+
   it('rechts die 100-%-Checkliste mit Prozent, Anzahl und den nächsten drei Tickets', () => {
     open();
     const list = dialog().querySelector('.gta-v-checklist') as HTMLElement;

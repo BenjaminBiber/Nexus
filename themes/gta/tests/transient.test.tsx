@@ -2,7 +2,7 @@
 // Kurz eingeblendete Werte: nach einer Änderung bzw. wenn ein Zähler steigt
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useChanged, useIncrease } from '../src/shared/transient.js';
+import { HOLD_MS, SETTLE_MS, useChanged, useIncrease } from '../src/shared/transient.js';
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
@@ -54,8 +54,59 @@ describe('useChanged', () => {
 });
 
 describe('useIncrease', () => {
+  // Wie der echte Host: Start bei 0, die echte Zahl kommt kurz danach
+  function mounted(count = 0, enabled = true) {
+    const view = renderHook(({ count, on }) => useIncrease(count, 15_000, on), { initialProps: { count, on: enabled } });
+    return { ...view, set: (next: number, on = enabled) => view.rerender({ count: next, on }) };
+  }
+  const settle = () => act(() => vi.advanceTimersByTime(SETTLE_MS));
+
+  it('in der Anlaufzeit setzt jeder Wert nur die Grundlinie', () => {
+    const { result, set } = mounted();
+    set(3);
+    expect(result.current.value).toBeNull();
+    settle();
+    expect(result.current.value).toBeNull();
+    set(4);
+    expect(result.current.value).toBe(1);
+  });
+
+  it('fällt der Zähler auf 0, gilt der alte Stand in der Haltezeit weiter als Grundlinie', () => {
+    const { result, set } = mounted(3);
+    settle();
+    set(0);
+    set(3);
+    expect(result.current.value).toBeNull();
+    set(0);
+    set(4);
+    expect(result.current.value).toBe(1);
+  });
+
+  it('nach der Haltezeit verfällt der alte Stand', () => {
+    const { result, set } = mounted(3);
+    settle();
+    set(0);
+    act(() => vi.advanceTimersByTime(HOLD_MS));
+    set(1);
+    expect(result.current.value).toBe(1);
+  });
+
+  it('räumt Anlauf-, Halte- und Anzeigezeit beim Abbauen weg', () => {
+    const { set, unmount } = mounted(3);
+    set(5);
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
+    const again = mounted(3);
+    settle();
+    again.set(0);
+    again.set(4);
+    again.unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it('der erste Wert löst nichts aus; ein Anstieg meldet die Zahl der neuen', () => {
     const { result, rerender } = renderHook(({ count }) => useIncrease(count, 15_000, true), { initialProps: { count: 3 } });
+    settle();
     expect(result.current.value).toBeNull();
     rerender({ count: 2 });
     expect(result.current.value).toBeNull();
@@ -65,6 +116,7 @@ describe('useIncrease', () => {
 
   it('weitere Anstiege zählen dazu und starten die Zeit neu; nach ms weg', () => {
     const { result, rerender } = renderHook(({ count }) => useIncrease(count, 15_000, true), { initialProps: { count: 0 } });
+    settle();
     rerender({ count: 1 });
     act(() => vi.advanceTimersByTime(10_000));
     rerender({ count: 3 });
@@ -77,6 +129,7 @@ describe('useIncrease', () => {
 
   it('clear() blendet sofort aus', () => {
     const { result, rerender } = renderHook(({ count }) => useIncrease(count, 15_000, true), { initialProps: { count: 0 } });
+    settle();
     rerender({ count: 1 });
     act(() => result.current.clear());
     expect(result.current.value).toBeNull();
@@ -87,6 +140,7 @@ describe('useIncrease', () => {
 
   it('abgeschaltet meldet es nichts und holt Anstiege auch später nicht nach', () => {
     const { result, rerender } = renderHook(({ count, on }) => useIncrease(count, 15_000, on), { initialProps: { count: 0, on: false } });
+    settle();
     rerender({ count: 2, on: false });
     expect(result.current.value).toBeNull();
     rerender({ count: 2, on: true });

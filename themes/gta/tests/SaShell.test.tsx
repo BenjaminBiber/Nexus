@@ -67,6 +67,13 @@ describe('SaShell', () => {
     for (const name of ['phone', 'banner', 'stats', 'cheat']) expect(part(name), name).not.toBeNull();
   });
 
+  it('das Handy liegt im Fuß des Rahmens, nicht über dem Inhalt', () => {
+    renderWithGame(<SaShell content={content} />, fakeGame({ phone: { count: 1 } }));
+    const bottom = part('shell')!.querySelector('.gta-sa-bottom') as HTMLElement;
+    expect(bottom.contains(part('phone'))).toBe(true);
+    expect(part('shell')!.querySelector('.gta-sa-main')?.contains(part('phone'))).toBe(false);
+  });
+
   it('Busted und Wasted dunkeln den Rahmen ab, Mission Passed nicht; <html> bleibt unberührt', () => {
     const events = [
       [{ kind: 'busted', ticketId: 'NOVA-0004', title: 'Zahlungsanbieter', reason: null }, true],

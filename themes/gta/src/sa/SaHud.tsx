@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { MAX_WANTED, useGame } from '../data/GameContext.js';
-import { formatClockSa, formatMoneySa, percentOf } from '../shared/format.js';
+import { formatClockSa, formatMoneySa, MONEY_UNKNOWN_SA, percentOf } from '../shared/format.js';
 import { useCountUp } from '../shared/useCountUp.js';
 
 const STAR = 'M12 1.8l3 6.6 7.2.8-5.4 4.9 1.5 7.1L12 17.6l-6.3 3.6 1.5-7.1L1.8 9.2 9 8.4z';
@@ -53,12 +53,12 @@ function Meter({ kind, name, quota, value }: { kind: 'armor' | 'health'; name: s
   );
 }
 
-// Kontostand in Grün mit acht Stellen; zählt bei Änderung hoch
-function Cash({ money }: { money: number }) {
-  const { value, counting } = useCountUp(money);
+// Kontostand in Grün mit acht Stellen; zählt bei Änderung hoch, ohne Board-Stand acht Striche
+function Cash({ money, loaded }: { money: number; loaded: boolean }) {
+  const { value, counting } = useCountUp(money, loaded);
   return (
     <div className="gta-sa-cash" title="Spielgeld: verdient mit erledigten Schritten und Tickets" data-up={counting ? '' : undefined}>
-      {formatMoneySa(value)}
+      {loaded ? formatMoneySa(value) : MONEY_UNKNOWN_SA}
     </div>
   );
 }
@@ -95,7 +95,7 @@ export function SaHud() {
         <Meter kind="armor" name="Panzerung" quota="7-Tage-Kontingent" value={game.quota7d} />
         <Meter kind="health" name="Gesundheit" quota="5-Stunden-Kontingent" value={game.quota5h} />
       </div>
-      <Cash money={game.moneyShown} />
+      <Cash money={game.moneyShown} loaded={game.loaded} />
       <Stars wanted={game.wanted} />
     </div>
   );

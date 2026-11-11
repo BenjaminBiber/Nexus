@@ -88,9 +88,10 @@ function Meter({ bar }: { bar: Bar }) {
 // Minimap unten links: eckige Karte mit den offenen Tickets als Blips (blockierte blinken), als Ganzes ein Link zum
 // Board. Darunter Fortschritt des Boards und die beiden Claude-Kontingente als Balken.
 export function VMinimap() {
-  const { blips, open, boardProgress, quota5h, quota7d } = useGame();
+  const { blips, open, loaded, boardProgress, quota5h, quota7d } = useGame();
+  const noBoard = loaded ? 'Fortschritt des Boards: noch keine Tickets' : 'Fortschritt des Boards: kein Board-Stand';
   const bars: Bar[] = [
-    { label: 'BOARD', name: 'Fortschritt des Boards', value: boardProgress, color: 'var(--gta-ok)', empty: 'Fortschritt des Boards: noch keine Tickets' },
+    { label: 'BOARD', name: 'Fortschritt des Boards', value: loaded ? boardProgress : null, color: 'var(--gta-ok)', empty: noBoard },
     { label: '5 STD', name: 'Claude: Rest des 5-Stunden-Kontingents', value: quota5h, color: 'var(--gta-c-planned)', empty: 'Claude-Verbrauch nicht verfügbar' },
     { label: '7 T', name: 'Claude: Rest des 7-Tage-Kontingents', value: quota7d, color: 'var(--gta-warn)', empty: 'Claude-Verbrauch nicht verfügbar' },
   ];
@@ -104,7 +105,7 @@ export function VMinimap() {
               <Blips blips={blips} />
               <Marks />
             </svg>
-            <span className="gta-sr">Minimap: {openTickets(open)}, zum Board</span>
+            <span className="gta-sr">{loaded ? `Minimap: ${openTickets(open)}, zum Board` : 'Minimap, zum Board'}</span>
           </>
         )}
       </NavLink>

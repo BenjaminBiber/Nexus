@@ -15,6 +15,12 @@ export function formatMoneySa(n: number): string {
   return `$${String(whole(n)).padStart(8, '0')}`;
 }
 
+/** Platzhalter für Zahlen ohne Board-Stand (nicht 0: das sähe aus wie ein leeres Board) */
+export const UNKNOWN = '–';
+/** Kontostand ohne Board-Stand: `$–` bzw. acht Striche wie die Stellen in San Andreas */
+export const MONEY_UNKNOWN_V = `$${UNKNOWN}`;
+export const MONEY_UNKNOWN_SA = '$--------';
+
 /** San Andreas als Betrag (Banner, Cheat): `$40000` */
 export function formatAmountSa(n: number): string {
   return `$${whole(n)}`;

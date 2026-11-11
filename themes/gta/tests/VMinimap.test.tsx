@@ -69,4 +69,12 @@ describe('VMinimap', () => {
       expect(bar.getAttribute('title')).toMatch(/nicht verfügbar|noch keine Tickets/);
     }
   });
+
+  it('ohne Board-Stand nennt der Link keine Zahl, der Board-Balken ist leer und sagt warum', () => {
+    renderWithGame(<VMinimap />, fakeGame({ loaded: false, open: 0, boardProgress: null, blips: [] }));
+    expect(screen.getByRole('link', { name: 'Minimap, zum Board' })).toBeTruthy();
+    const board = bars()[0]!;
+    expect(board.hasAttribute('data-empty')).toBe(true);
+    expect(board.getAttribute('title')).toBe('Fortschritt des Boards: kein Board-Stand');
+  });
 });

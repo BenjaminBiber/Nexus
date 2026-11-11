@@ -47,7 +47,7 @@ function Blips({ blips }: { blips: Blip[] }) {
 // Rundes Radar unten in der Menüspalte: Karte im Kreis, je offenem Ticket ein Blip in der Spaltenfarbe (blockierte
 // blinken), Spieler-Pfeil in der Mitte, schwarzer Ring mit „N“. Als Ganzes ein Link zum Board.
 export function SaRadar() {
-  const { blips, open } = useGame();
+  const { blips, open, loaded } = useGame();
   const clip = `${useId()}-clip`;
   return (
     <div className="gta-sa-radar" data-gta-part="radar">
@@ -74,7 +74,7 @@ export function SaRadar() {
                 </text>
               </g>
             </svg>
-            <span className="gta-sr">Radar: {openTickets(open)}, zum Board</span>
+            <span className="gta-sr">{loaded ? `Radar: ${openTickets(open)}, zum Board` : 'Radar, zum Board'}</span>
           </>
         )}
       </NavLink>

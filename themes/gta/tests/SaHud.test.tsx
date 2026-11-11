@@ -51,6 +51,11 @@ describe('SaHud', () => {
     expect(cash().textContent).toBe('$00184000');
   });
 
+  it('ohne Board-Stand acht Striche statt $00000000', () => {
+    renderWithGame(<SaHud />, fakeGame({ loaded: false, moneyShown: 0 }));
+    expect(cash().textContent).toBe('$--------');
+  });
+
   it('Panzerung zeigt den Rest des 7-Tage-, Gesundheit den des 5-Stunden-Kontingents', () => {
     renderWithGame(<SaHud />, fakeGame({ quota5h: 0.62, quota7d: 0.81 }));
     expect(bar(/Panzerung/).getAttribute('aria-valuenow')).toBe('81');

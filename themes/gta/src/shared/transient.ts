@@ -45,12 +45,22 @@ export function useFlash(ms: number): { on: boolean; fire(): void } {
   return useMemo(() => ({ on, fire }), [on, fire]);
 }
 
-/** Meldet, wenn ein Zähler steigt (der erste Wert löst nichts aus); bleibt bis `clear()` oder `ms` Millisekunden */
+/** Anlaufzeit nach dem Mount: Der Host liefert Zähler erst als 0, dann die echte Zahl – das ist kein Anstieg. */
+export const SETTLE_MS = 5000;
+/** So lange gilt nach einem Fall auf 0 der alte Stand weiter als Grundlinie (Projektwechsel, Neuladen). */
+export const HOLD_MS = 30_000;
+
+/** Meldet, wenn ein Zähler steigt (nicht in der Anlaufzeit); bleibt bis `clear()` oder `ms` Millisekunden */
 export function useIncrease(count: number, ms: number, enabled: boolean): { value: number | null; clear(): void } {
   // Zahl der neuen seit dem Einblenden; weitere Anstiege zählen dazu
   const [value, setValue] = useState<number | null>(null);
   const known = useRef<number | null>(null);
+  const settled = useRef(false);
+  // Stand vor einem Fall auf 0, solange die Haltezeit läuft
+  const held = useRef<number | null>(null);
   const timer = useTimer();
+  const settle = useTimer();
+  const hold = useTimer();
 
   const clear = useCallback(() => {
     timer.stop();
@@ -58,12 +68,25 @@ export function useIncrease(count: number, ms: number, enabled: boolean): { valu
   }, [timer]);
 
   useEffect(() => {
+    settle.start(SETTLE_MS, () => (settled.current = true));
+  }, [settle]);
+
+  useEffect(() => {
     const before = known.current;
     known.current = count;
-    if (!enabled || before === null || count <= before) return;
-    setValue((shown) => (shown ?? 0) + count - before);
+    if (before === null || !settled.current || count === before) return;
+    if (count === 0) {
+      held.current = before;
+      hold.start(HOLD_MS, () => (held.current = null));
+      return;
+    }
+    const base = Math.max(before, held.current ?? 0);
+    held.current = null;
+    hold.stop();
+    if (!enabled || count <= base) return;
+    setValue((shown) => (shown ?? 0) + count - base);
     timer.start(ms, () => setValue(null));
-  }, [count, enabled, ms, timer]);
+  }, [count, enabled, ms, timer, hold]);
 
   useEffect(() => {
     if (!enabled) clear();

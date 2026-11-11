@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode, RefObject } from 'react';
 import { useGame, type Game } from '../data/GameContext.js';
-import { formatMoneySa, formatPercent, percentOf } from '../shared/format.js';
+import { formatMoneySa, formatPercent, MONEY_UNKNOWN_SA, percentOf, UNKNOWN } from '../shared/format.js';
 import { useStatsDialog } from '../shared/useStatsDialog.js';
 
 // Lage der Reviere auf der Karte der Preview (x, y, Breite, Höhe), eins je Spalte des Boards; das Board hat höchstens
@@ -47,12 +47,12 @@ function Statistics({ game }: { game: Game }) {
   return (
     <Panel title="Statistik">
       <Stat name="Respekt" hint="Fortschritt des Boards" value={game.boardProgress === null ? '–' : formatPercent(game.boardProgress)} fill={game.boardProgress ?? 0} />
-      <Stat name="Ausdauer" hint="5-Stunden-Kontingent" value={free(game.quota5h)} fill={game.quota5h ?? 0} color="var(--gta-danger)" />
+      <Stat name="Gesundheit" hint="5-Stunden-Kontingent" value={free(game.quota5h)} fill={game.quota5h ?? 0} color="var(--gta-danger)" />
       <Stat name="Panzerung" hint="7-Tage-Kontingent" value={free(game.quota7d)} fill={game.quota7d ?? 0} />
       <Stat
         name="Schritte"
         hint="offener Tickets"
-        value={`${game.stepsDone}/${game.stepsTotal}`}
+        value={game.loaded ? `${game.stepsDone}/${game.stepsTotal}` : UNKNOWN}
         fill={game.stepsTotal ? game.stepsDone / game.stepsTotal : 0}
         color="var(--gta-c-in_progress)"
       />
@@ -102,15 +102,17 @@ function Turfs({ game }: { game: Game }) {
   );
 }
 
+// Ohne Board-Stand stehen Striche statt 0 – sonst sähe es aus wie ein leeres Board
 function Numbers({ game }: { game: Game }) {
+  const board = (value: ReactNode) => (game.loaded ? value : UNKNOWN);
   const rows: [string, ReactNode][] = [
-    ['Tickets gesamt', game.total],
-    ['Abgeschlossen', game.done],
-    ['Offen', game.open],
-    ['Blockiert', game.blocked],
+    ['Tickets gesamt', board(game.total)],
+    ['Abgeschlossen', board(game.done)],
+    ['Offen', board(game.open)],
+    ['Blockiert', board(game.blocked)],
     ['Offene Fragen', game.questions],
     ['Fahndungslevel', game.wanted],
-    ['Verdient insgesamt', formatMoneySa(game.moneyShown)],
+    ['Verdient insgesamt', game.loaded ? formatMoneySa(game.moneyShown) : MONEY_UNKNOWN_SA],
   ];
   return (
     <Panel title="Zahlen">

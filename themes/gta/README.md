@@ -24,7 +24,7 @@ gestaltet. Zwei Stile, umschaltbar unter **Einstellungen → Darstellung → Ein
 
 - **Geld** ist Spielgeld, keine echten Kosten: 40.000 je erledigtem Ticket, 2.500 je erledigtem Schritt offener
   Tickets. Nicht benötigte Tickets zählen nicht.
-- **Sterne:** Zahl der blockierten Tickets (höchstens sechs).
+- **Sterne:** Zahl der blockierten Tickets (höchstens fünf in GTA V bzw. sechs in San Andreas).
 - **Balken:** in GTA V unter der Minimap der Fortschritt des Boards (Anteil erledigter Tickets) und der Rest des
   5-Stunden- und des 7-Tage-Kontingents von Claude; in San Andreas stehen Panzerung und Gesundheit für die beiden
   Kontingente.
@@ -41,11 +41,12 @@ gestaltet. Zwei Stile, umschaltbar unter **Einstellungen → Darstellung → Ein
 - **Cheats** (Buchstaben nacheinander tippen, außerhalb von Feldern):
   - `HESOYAM`, `TURTLE`: 250.000 Spielgeld mehr bis zum Neuladen.
   - `AEZAKMI`, `LAWYERUP`: Sterne auf null.
-  - `BRINGITON`, `FUGITIVE`: Sterne auf sechs.
+  - `BRINGITON`, `FUGITIVE`: alle Sterne (fünf in GTA V, sechs in San Andreas).
 
   Die Sterne gelten, bis sich die Zahl blockierter Tickets ändert. Cheats ändern nur die Anzeige, nie das Board.
 
-Tasten werden nie in Feldern oder mit Strg/Alt/Meta ausgewertet; Tab und Pfeiltasten bleiben frei. Es gibt keine
+Tasten werden nie in Feldern oder mit Strg/Alt/Meta ausgewertet; sie ruhen, solange ein Dialog, ein Seitenblatt, ein
+Menü oder die Suche offen ist oder der Ladebildschirm läuft. Tab und Pfeiltasten bleiben frei. Es gibt keine
 Klänge. Bei „Bewegung reduzieren“ (`prefers-reduced-motion`) stehen Animationen still.
 
 ## Herkunft
@@ -62,7 +63,8 @@ Die Schriften liegen unter `assets/fonts` (Teilmenge latin, Quelle Google Fonts)
 | San Andreas | Passion One | SIL Open Font License 1.1 |
 | San Andreas | Pirata One | SIL Open Font License 1.1 |
 
-Urheber stehen im Kopfkommentar von `theme.css`. Die Wortmarken sind aus diesen freien Schriften erzeugte Pfade
+Urheber stehen im Kopfkommentar von `theme.css`. Copyright und Lizenz je Schrift sowie der vollständige Text beider
+Lizenzen liegen im Paket unter `assets/fonts/licenses.json`. Die Wortmarken sind aus diesen freien Schriften erzeugte Pfade
 (`src/shared/wordmarks.ts`); Szenen, Symbole, Radar, Faust und Handy sind selbst gezeichnetes SVG/CSS. Das Paket enthält
 **kein Originalmaterial** des Spiels und lädt nichts nach (`permissions.network` ist leer).
 

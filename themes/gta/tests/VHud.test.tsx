@@ -76,6 +76,17 @@ describe('VHud', () => {
     expect(cash().hasAttribute('data-up')).toBe(false);
   });
 
+  it('ohne Board-Stand ein Platzhalter statt $0; der erste Stand springt, statt hochzuzählen', () => {
+    vi.useFakeTimers();
+    const game = fakeGame({ loaded: false, moneyShown: 0 });
+    const view = render(wrap(game, <VHud />));
+    const cash = () => hud().querySelector('.gta-v-cash') as HTMLElement;
+    expect(cash().textContent).toBe('$–');
+    view.rerender(wrap({ ...game, loaded: true, moneyShown: 140_000 }, <VHud />));
+    expect(cash().textContent).toBe('$140.000');
+    expect(cash().hasAttribute('data-up')).toBe(false);
+  });
+
   it('bei reduzierter Bewegung springt das Geld sofort', () => {
     mockMotion(true);
     const game = fakeGame({ moneyShown: 100_000 });

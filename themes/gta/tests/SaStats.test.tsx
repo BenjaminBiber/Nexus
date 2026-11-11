@@ -31,21 +31,40 @@ describe('SaStats', () => {
     expect(dialog().contains(document.activeElement)).toBe(true);
   });
 
-  it('„Statistik“: Respekt, Ausdauer, Panzerung und Schritte als Balken mit Zahl', () => {
+  it('„Statistik“: Respekt, Gesundheit, Panzerung und Schritte als Balken mit Zahl', () => {
     open({ quota5h: 0.62, quota7d: 0.81 });
     expect(stats()).toEqual([
       ['Respekt', '29 %', '29%'],
-      ['Ausdauer', '62 % frei', '62%'],
+      ['Gesundheit', '62 % frei', '62%'],
       ['Panzerung', '81 % frei', '81%'],
       ['Schritte', '3/12', '25%'],
     ]);
+  });
+
+  it('ohne Board-Stand Striche statt 0 in Statistik und Zahlen, Bekanntes bleibt', () => {
+    open({ loaded: false, total: 0, done: 0, open: 0, blocked: 0, boardProgress: null, stepsDone: 0, stepsTotal: 0, wanted: 0, moneyShown: 0, quota5h: 0.5 });
+    expect(stats()).toEqual([
+      ['Respekt', '–', '0%'],
+      ['Gesundheit', '50 % frei', '50%'],
+      ['Panzerung', '82 % frei', '82%'],
+      ['Schritte', '–', '0%'],
+    ]);
+    expect(numbers()).toEqual({
+      'Tickets gesamt': '–',
+      Abgeschlossen: '–',
+      Offen: '–',
+      Blockiert: '–',
+      'Offene Fragen': '1',
+      Fahndungslevel: '0',
+      'Verdient insgesamt': '$--------',
+    });
   });
 
   it('„Statistik“ ohne Werte: Striche und leere Balken', () => {
     open({ boardProgress: null, quota5h: null, quota7d: null, stepsDone: 0, stepsTotal: 0 });
     expect(stats()).toEqual([
       ['Respekt', '–', '0%'],
-      ['Ausdauer', '–', '0%'],
+      ['Gesundheit', '–', '0%'],
       ['Panzerung', '–', '0%'],
       ['Schritte', '0/0', '0%'],
     ]);

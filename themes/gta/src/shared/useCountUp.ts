@@ -6,15 +6,22 @@ import { reducedMotion } from './motion.js';
 export const COUNT_MS = 1200;
 const STEP_MS = 40;
 
-/** Angezeigter Wert und ob gerade gezählt wird */
-export function useCountUp(target: number): { value: number; counting: boolean } {
+/**
+ * Angezeigter Wert und ob gerade gezählt wird. `live` = es gibt einen Board-Stand; gezählt wird nur zwischen zwei
+ * geladenen Ständen. Der erste Stand springt, ebenso der nach einem Board-Wechsel (der Feed meldet dazwischen keinen
+ * Stand) – sonst sähe das Geld des Boards aus wie gerade verdient.
+ */
+export function useCountUp(target: number, live = true): { value: number; counting: boolean } {
   const [state, setState] = useState({ value: target, counting: false });
   const shown = useRef(target);
+  const wasLive = useRef(live);
 
   useEffect(() => {
     const from = shown.current;
+    const counts = live && wasLive.current;
+    wasLive.current = live;
     if (from === target) return;
-    if (reducedMotion()) {
+    if (!counts || reducedMotion()) {
       shown.current = target;
       setState({ value: target, counting: false });
       return;
@@ -27,8 +34,10 @@ export function useCountUp(target: number): { value: number; counting: boolean }
       if (k >= 1) clearInterval(timer);
     }, STEP_MS);
     return () => clearInterval(timer);
-  }, [target]);
+  }, [target, live]);
 
-  // Vor dem ersten Schritt schon als „zählt“ melden, damit die Farbe sofort wechselt
-  return state.value === target ? { value: target, counting: false } : { value: state.value, counting: true };
+  // Springt der Wert, steht er schon in diesem Render da (wasLive ändert erst der Effekt nach dem Zeichnen) – sonst
+  // zeigte ein Frame noch den alten Stand. Vor dem ersten Schritt schon als „zählt“ melden, damit die Farbe wechselt.
+  if (!live || !wasLive.current || state.value === target) return { value: target, counting: false };
+  return { value: state.value, counting: true };
 }

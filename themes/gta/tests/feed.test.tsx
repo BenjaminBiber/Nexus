@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // Board-Stand laden und aktuell halten: Ereignisstrom, kein Stau, Sicherheitsnetz, Aufräumen, verspätete Antworten
-import { act, renderHook } from '@testing-library/react';
+import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { REQUEST_MS, useBoardFeed } from '../src/data/feed.js';
 import type { BoardView } from '../src/data/types.js';
@@ -72,7 +72,16 @@ async function answer(call: Call, json: unknown) {
 const tick = (ms: number) => act(() => vi.advanceTimersByTime(ms));
 const last = <T,>(list: T[]) => list[list.length - 1]!;
 
+// Sichtbarkeit des Tabs setzen und wie der Browser melden
+let shown: DocumentVisibilityState = 'visible';
+function visibility(state: DocumentVisibilityState) {
+  shown = state;
+  act(() => void document.dispatchEvent(new Event('visibilitychange')));
+}
+Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => shown });
+
 beforeEach(() => {
+  shown = 'visible';
   calls = [];
   FakeEventSource.all = [];
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
@@ -84,6 +93,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // Hooks abbauen, sonst lauschen sie im nächsten Test noch auf visibilitychange
+  cleanup();
   // Nichts in die Konsole
   expect(console.error).not.toHaveBeenCalled();
   expect(console.warn).not.toHaveBeenCalled();
@@ -169,6 +180,60 @@ describe('useBoardFeed', () => {
     expect(calls[0]!.signal.aborted).toBe(true);
     tick(120_000);
     expect(calls).toHaveLength(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('verstecken schließt den Strom und stoppt das Sicherheitsnetz', async () => {
+    renderHook(() => useBoardFeed('p1', 3));
+    await answer(calls[0]!, view(3));
+    visibility('hidden');
+    expect(FakeEventSource.all[0]!.readyState).toBe(FakeEventSource.CLOSED);
+    tick(120_000);
+    expect(calls).toHaveLength(1);
+    expect(FakeEventSource.all).toHaveLength(1);
+  });
+
+  it('zeigen öffnet den Strom wieder und lädt genau einmal', async () => {
+    const { result } = renderHook(() => useBoardFeed('p1', 3));
+    await answer(calls[0]!, view(3));
+    visibility('hidden');
+    visibility('visible');
+    expect(FakeEventSource.all).toHaveLength(2);
+    expect(last(FakeEventSource.all).readyState).toBe(FakeEventSource.OPEN);
+    expect(calls).toHaveLength(2);
+    // Ein weiteres Ereignis bei schon sichtbarem Tab ändert nichts
+    visibility('visible');
+    expect(FakeEventSource.all).toHaveLength(2);
+    expect(calls).toHaveLength(2);
+    await answer(calls[1]!, view(3, 'Kasse'));
+    expect(result.current.view?.columns[0]!.tickets[0]!.title).toBe('Kasse');
+    last(FakeEventSource.all).emit({ type: 'reset' });
+    expect(calls).toHaveLength(3);
+  });
+
+  it('Mount im versteckten Tab: lädt einmal, öffnet keinen Strom, bis der Tab sichtbar wird', async () => {
+    visibility('hidden');
+    renderHook(() => useBoardFeed('p1', 3));
+    await answer(calls[0]!, view(3));
+    expect(FakeEventSource.all).toHaveLength(0);
+    tick(120_000);
+    expect(calls).toHaveLength(1);
+    visibility('visible');
+    expect(FakeEventSource.all).toHaveLength(1);
+    expect(calls).toHaveLength(2);
+  });
+
+  it('beim Abbauen: Lauscher auf visibilitychange entfernt, keine Timer mehr', () => {
+    const remove = vi.spyOn(document, 'removeEventListener');
+    const { unmount } = renderHook(() => useBoardFeed('p1', 3));
+    visibility('hidden');
+    visibility('visible');
+    unmount();
+    expect(remove.mock.calls.filter((c) => c[0] === 'visibilitychange')).toHaveLength(1);
+    visibility('hidden');
+    visibility('visible');
+    expect(FakeEventSource.all).toHaveLength(2);
+    expect(FakeEventSource.all.every((s) => s.readyState === FakeEventSource.CLOSED)).toBe(true);
     expect(vi.getTimerCount()).toBe(0);
   });
 
