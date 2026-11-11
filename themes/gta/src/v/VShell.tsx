@@ -2,9 +2,13 @@ import { useRef, type ReactNode } from 'react';
 import { useOpenSearch } from '@nexus/theme-sdk';
 import { useGame } from '../data/GameContext.js';
 import { Wordmark } from '../shared/Wordmark.js';
+import { VBanner } from './VBanner.js';
 import { VHud } from './VHud.js';
+import { VMinimap } from './VMinimap.js';
 import { VNotice } from './VNotice.js';
+import { VPhone } from './VPhone.js';
 import { VScene } from './VScene.js';
+import { VStats } from './VStats.js';
 import { VTabs } from './VTabs.js';
 
 // Board und Seite unten rechts; nach einem Seitenwechsel kurz hervorgehoben
@@ -38,12 +42,14 @@ function Keys() {
 }
 
 // Rahmen im Stil GTA V: das Pausenmenü über der Abendszene. Kopf mit Wortmarke, Hinweisfeld und HUD, darunter die
-// Reiterzeile, der Inhalt des Kerns in einem eigenen Scroll-Bereich und die Fußleiste mit Ort, Tasten und Stats.
+// Reiterzeile, der Inhalt des Kerns in einem eigenen Scroll-Bereich und die Fußleiste mit Minimap, Handy, Ort, Tasten und
+// Stats. Banner und Stats-Menü liegen über allem; bei Busted und Wasted wird der Rahmen grau (data-dead).
 export function VShell({ content }: { content: ReactNode }) {
   const game = useGame();
   const statsButton = useRef<HTMLButtonElement>(null);
+  const dead = game.banner?.kind === 'busted' || game.banner?.kind === 'wasted';
   return (
-    <div className="gta-frame gta-v" data-gta-part="shell">
+    <div className="gta-frame gta-v" data-gta-part="shell" data-dead={dead ? '' : undefined}>
       <VScene />
       <div className="gta-v-frame">
         <header className="gta-v-top">
@@ -56,6 +62,8 @@ export function VShell({ content }: { content: ReactNode }) {
         <VTabs />
         <div className="gta-v-main">{content}</div>
         <footer className="gta-v-bottom">
+          {game.settings.radar && <VMinimap />}
+          <VPhone />
           <span className="gta-v-spacer" />
           <div className="gta-v-corner">
             <Zone />
@@ -75,6 +83,8 @@ export function VShell({ content }: { content: ReactNode }) {
           </div>
         </footer>
       </div>
+      <VBanner />
+      {game.statsOpen && <VStats returnFocus={statsButton} />}
     </div>
   );
 }

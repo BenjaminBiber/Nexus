@@ -58,6 +58,40 @@ describe('VShell', () => {
     expect(game.setStatsOpen).toHaveBeenCalledWith(true);
   });
 
+  it('die Minimap folgt dem Schalter Radar', () => {
+    const view = renderWithGame(<VShell content={content} />);
+    expect(part('radar')).not.toBeNull();
+    view.unmount();
+    const game = fakeGame();
+    renderWithGame(<VShell content={content} />, { ...game, settings: { ...game.settings, radar: false } });
+    expect(part('radar')).toBeNull();
+  });
+
+  it('Handy, Banner und Stats-Menü erscheinen nur, wenn das Spiel sie meldet', () => {
+    const view = renderWithGame(<VShell content={content} />);
+    for (const name of ['phone', 'banner', 'stats']) expect(part(name), name).toBeNull();
+    view.unmount();
+    renderWithGame(
+      <VShell content={content} />,
+      fakeGame({ phone: { count: 1 }, banner: { kind: 'passed', ticketId: 'NOVA-0003', title: 'Kasse', reward: 40_000 }, statsOpen: true }),
+    );
+    for (const name of ['phone', 'banner', 'stats']) expect(part(name), name).not.toBeNull();
+  });
+
+  it('Busted und Wasted legen den grauen Filter auf den Rahmen, Mission Passed nicht', () => {
+    const events = [
+      [{ kind: 'busted', ticketId: 'NOVA-0004', title: 'Zahlungsanbieter', reason: null }, true],
+      [{ kind: 'wasted' }, true],
+      [{ kind: 'passed', ticketId: 'NOVA-0003', title: 'Kasse', reward: 40_000 }, false],
+    ] as const;
+    for (const [banner, dead] of events) {
+      const view = renderWithGame(<VShell content={content} />, fakeGame({ banner }));
+      expect(part('shell')!.hasAttribute('data-dead'), banner.kind).toBe(dead);
+      view.unmount();
+    }
+    expect(document.documentElement.getAttribute('style')).toBeNull();
+  });
+
   it('das Hinweisfeld erscheint nur bei Bedarf: Cheat-Meldung oder Board-Wechsel', () => {
     const view = renderWithGame(<VShell content={content} />);
     expect(part('cheat')).toBeNull();

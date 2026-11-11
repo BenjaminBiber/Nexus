@@ -779,6 +779,472 @@
   color: #000;
 }
 
+/* Minimap: eckige Karte mit schwarzem Rand, darunter drei Balken in den Breiten der Preview */
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-radar {
+  flex: none;
+  width: 188px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-map {
+  display: block;
+  height: 106px;
+  border: 3px solid #000;
+  outline: 1px solid rgba(255, 255, 255, 0.18);
+  background: #27343b;
+  overflow: hidden;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-map:hover {
+  outline-color: var(--gta-accent);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-map:focus-visible {
+  outline: 2px solid var(--gta-accent);
+  outline-offset: 2px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-map svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-blip[data-blink] {
+  animation: gta-v-blip 1s ease-in-out infinite;
+}
+
+@keyframes gta-v-blip {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-bars,
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-bar-labels {
+  display: grid;
+  grid-template-columns: 5fr 3.4fr 1.6fr;
+  gap: 2px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-bars {
+  margin-top: 2px;
+  padding: 2px;
+  background: #000;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-bar {
+  display: block;
+  height: 7px;
+  background: linear-gradient(90deg, var(--v-c) var(--v-p), color-mix(in srgb, var(--v-c) 30%, #000) 0);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-bar[data-empty] {
+  opacity: 0.4;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-bar-labels {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.7);
+  font: 600 10.5px/1 var(--gta-font-title);
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 1px #000;
+}
+
+/* Handy-Nachricht: Beitrag mit gelbem Fragezeichen neben der Minimap */
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-phone {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 9px;
+  width: min(300px, 30vw);
+  padding: 7px 9px;
+  background: var(--gta-panel-2);
+  animation: gta-v-post 0.35s ease-out;
+}
+
+@keyframes gta-v-post {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-phone-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  background: var(--gta-warn);
+  color: #000;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-phone-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-phone-body {
+  min-width: 0;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-phone-body > b {
+  display: block;
+  font: 700 14px/1.1 var(--gta-font-title);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-phone-body > span {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.25;
+  opacity: 0.9;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-phone-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-phone-actions button {
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 3px;
+  font: 700 12px/24px var(--gta-font-title);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-phone-open {
+  background: var(--gta-ok);
+  color: #000;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-phone-close {
+  background: var(--gta-danger);
+  color: #fff;
+}
+
+/* Busted und Wasted: Rahmen und Szene grau und dunkel; der Filter liegt auf dem Rahmen, nicht auf <html> */
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v[data-dead] .gta-v-world {
+  filter: blur(4px) grayscale(1) brightness(0.42);
+  transform: scale(1.12);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v[data-dead] .gta-v-frame {
+  filter: grayscale(1) brightness(0.6);
+}
+
+/* Banner: dunkles Band quer über die Mitte; Klicks daneben gehen an den Inhalt */
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-banner {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-band {
+  width: 100%;
+  padding: 30px 0 28px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.84) 16%, rgba(0, 0, 0, 0.84) 84%, transparent);
+  text-align: center;
+  cursor: pointer;
+  pointer-events: auto;
+  animation: gta-v-band 0.3s ease-out;
+}
+
+@keyframes gta-v-band {
+  from {
+    opacity: 0;
+    transform: scaleY(0.5);
+  }
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-band .gta-wordmark {
+  margin: 0 auto;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-big {
+  height: clamp(60px, 10.5vw, 124px);
+  animation: gta-v-slam 0.55s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+@keyframes gta-v-slam {
+  from {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-band [data-wordmark='missionPassed'] {
+  color: var(--gta-warn);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-band [data-wordmark='busted'] {
+  color: #4a8fd0;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-band [data-wordmark='wasted'] {
+  color: #c8302f;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-banner-title {
+  margin: 6px 0 14px;
+  font: 400 clamp(22px, 2.6vw, 32px)/1.2 var(--gta-font-script);
+  text-shadow: 0 2px 0 #000;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-banner-text {
+  margin: 8px 0 0;
+  font: 500 16px/1.4 var(--gta-font-ui);
+  opacity: 0.9;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-results {
+  display: grid;
+  gap: 2px;
+  width: min(430px, 86vw);
+  margin: 0 auto 12px;
+  text-align: left;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-result {
+  display: grid;
+  grid-template-columns: 1fr auto 20px;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 15px;
+  animation: gta-v-post 0.4s both;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-result + .gta-v-result {
+  animation-delay: 0.25s;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-result b {
+  font: 700 16px/1 var(--gta-font-title);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-check {
+  width: 16px;
+  height: 16px;
+  background: var(--gta-ok);
+  clip-path: polygon(14% 52%, 0 67%, 38% 100%, 100% 22%, 85% 8%, 37% 68%);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-medal {
+  display: inline-grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  margin: 4px 0 10px;
+  border: 3px solid #000;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3b8, #d8a520 65%, #8a6410);
+  color: #3a2a00;
+  font: 700 15px/1 var(--gta-font-title);
+  letter-spacing: 0.08em;
+  animation: gta-v-slam 0.5s 0.8s both;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-respect {
+  height: 34px;
+  color: #fff;
+  animation: gta-v-post 0.5s 1s both;
+}
+
+/* Stats-Menü: drei Spalten wie die Statistik-Seite der Preview über abgedunkeltem Rahmen */
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  padding: 120px var(--v-gx) 150px;
+  background: rgba(0, 0, 0, 0.55);
+  animation: gta-v-page 0.18s ease-out;
+}
+
+@keyframes gta-v-page {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats {
+  display: grid;
+  grid-template-columns: minmax(180px, 250px) minmax(0, 1fr) minmax(220px, 320px);
+  gap: 4px;
+  width: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  background: var(--gta-panel-2);
+  font: 600 15px/1 var(--gta-font-title);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-h-note {
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  background: var(--gta-panel);
+  color: #fff;
+  font: 500 15px/1.2 var(--gta-font-ui);
+  text-align: left;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-row-label {
+  flex: 1;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-row-value {
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-cat {
+  cursor: pointer;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-cat:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-cat[aria-pressed='true'] {
+  background: #fff;
+  box-shadow: inset 4px 0 0 var(--gta-accent);
+  color: #000;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-cat:focus-visible {
+  outline-offset: -2px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  margin-top: auto;
+  border: 0;
+  background: var(--gta-panel-2);
+  color: #fff;
+  font: 600 15px/1 var(--gta-font-title);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats-close:hover {
+  background: #fff;
+  color: #000;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats-hint {
+  margin: 0;
+  padding: 12px;
+  background: var(--gta-panel);
+}
+
+/* Segmentbalken: Akzent bis --v-p, in --v-n Teile geschnitten */
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-statbar {
+  --v-n: 5;
+  flex: 0 0 150px;
+  height: 8px;
+  background: linear-gradient(90deg, var(--v-c, var(--gta-accent)) var(--v-p), rgba(255, 255, 255, 0.22) 0);
+  mask: repeating-linear-gradient(90deg, #000 0 calc(100% / var(--v-n) - 3px), transparent 0 calc(100% / var(--v-n)));
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-pane {
+  flex: 1;
+  padding: 16px 20px;
+  background: var(--gta-panel);
+  overflow: auto;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-checklist .gta-v-statbar {
+  display: block;
+  margin-top: 10px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-pct {
+  font: 700 46px/1 var(--gta-font-title);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-pct small {
+  margin-left: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font: 500 14px/1 var(--gta-font-title);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-checklist h3 {
+  margin: 16px 0 8px;
+  color: var(--gta-accent);
+  font: 700 15px/1 var(--gta-font-title);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-checklist ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-checklist li,
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-checklist p {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-checklist li b {
+  font-weight: 600;
+}
+
 /* ==== San Andreas ==== */
 
 /* Werte aus der Preview „San Andreas“: Arimo im Fließtext, Michroma für Menü und Knöpfe, Passion One im HUD, Pirata One
