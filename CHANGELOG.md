@@ -22,6 +22,17 @@
   gemergte Tickets vom Board verschwinden (Standard: nie); die Suche findet sie weiter. Die API
   liefert dafür `doneAt` je Karte und in den persönlichen Einstellungen `doneGrouping` (`time`,
   `spec`) und `doneArchiveDays` (0 bis 365).
+- Desktop-App: Installierte Themes lassen sich wieder anwenden, und ihre Vorschaubilder
+  erscheinen. Seit die Oberfläche aus den Dateien der App kommt, gingen `theme.css`,
+  Vorschaubilder, CSS-Schnipsel und der Asset-Proxy der Themes an die App statt an den lokalen
+  Server, und Schriften und Module der Themes scheiterten am Start-Token. Die Oberfläche spricht
+  dafür jetzt den Server an, die CSP lässt dessen Stylesheets und Schriften zu (`style-src`,
+  `font-src`), und Dateien unter `/themes/` liest die App ohne Start-Token. `themeAssetUrl` und
+  `useThemeAsset` aus `@nexus/theme-sdk` liefern in der App die Adresse des Servers samt Token.
+- Vorschaubilder im Theme-Store laden wieder, in der App und im Browser: Die CSP lässt keine
+  Bilder fremder Hosts zu, deshalb holt sie der Server über
+  `GET /api/themes/store/preview?repoId=…&id=…` beim Store ab (höchstens 5 MiB; PNG, JPEG, WebP,
+  GIF und AVIF).
 
 ## 0.1.2 – 2026-11-11
 

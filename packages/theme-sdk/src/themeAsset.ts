@@ -29,12 +29,25 @@ export interface ThemeAssetState {
 const IDLE: ThemeAssetState = { status: 'idle', url: null, error: null };
 const LOADING: ThemeAssetState = { status: 'loading', url: null, error: null };
 
-/** Lokale Proxy-URL einer fremden Ressource, z. B. für `url(...)` in CSS; prüft nichts */
+// Adresse und Start-Token des Servers, die die Desktop-App ins Fenster legt (`window.__NEXUS__`).
+// Ihre Oberfläche kommt aus den Dateien der App, hat also eine andere Herkunft als der Server.
+function appServer(): { base: string; token: string } | undefined {
+  const values = typeof window === 'undefined' ? undefined : (window as { __NEXUS__?: { base?: string; token?: string } }).__NEXUS__;
+  return values?.base && values.token ? { base: values.base, token: values.token } : undefined;
+}
+
+/**
+ * Lokale Proxy-URL einer fremden Ressource, z. B. für `url(...)` in CSS; prüft nichts.
+ * In der Desktop-App zeigt sie auf den lokalen Server und trägt dessen Start-Token, damit auch
+ * ein eigenes `fetch` des Themes durchkommt.
+ */
 export function themeAssetUrl(themeId: string, url: string, opts: Omit<ThemeAssetOptions, 'themeId'> = {}): string {
   const query = new URLSearchParams({ url });
   if (opts.sha256) query.set('sha256', opts.sha256);
   if (opts.entry) query.set('entry', opts.entry);
-  return `/api/themes/${encodeURIComponent(themeId)}/fetch?${query}`;
+  const app = appServer();
+  if (app) query.set('token', app.token);
+  return `${app?.base ?? ''}/api/themes/${encodeURIComponent(themeId)}/fetch?${query}`;
 }
 
 // Fehler aus der Antwort des Proxys lesen (`{ code, message }`), sonst `http_<status>`

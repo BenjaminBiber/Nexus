@@ -44,6 +44,35 @@ describe('themeAssetUrl', () => {
   });
 });
 
+describe('themeAssetUrl in der Desktop-App', () => {
+  // Die App legt Adresse und Start-Token des Servers ins Fenster; ihre Oberfläche hat eine andere Herkunft als der Server
+  beforeEach(() => {
+    Object.assign(window, { __NEXUS__: { base: 'http://127.0.0.1:4810', token: 'geheim' } });
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('bytes', { status: 200 })));
+  });
+  afterEach(() => {
+    delete (window as { __NEXUS__?: unknown }).__NEXUS__;
+  });
+
+  it('zeigt auf den lokalen Server und weist sich mit dem Start-Token aus', () => {
+    expect(themeAssetUrl('minecraft', 'https://a.example.com/c.jar', { sha256: 'ab12', entry: 'a/b.png' })).toBe(
+      'http://127.0.0.1:4810/api/themes/minecraft/fetch?url=https%3A%2F%2Fa.example.com%2Fc.jar&sha256=ab12&entry=a%2Fb.png&token=geheim',
+    );
+  });
+
+  it('bleibt ohne Token bei der relativen Adresse', () => {
+    Object.assign(window, { __NEXUS__: { base: 'http://127.0.0.1:4810', token: '' } });
+    expect(themeAssetUrl('minecraft', 'https://a.example.com/x.png')).toBe('/api/themes/minecraft/fetch?url=https%3A%2F%2Fa.example.com%2Fx.png');
+  });
+
+  it('useThemeAsset lädt über dieselbe Adresse und liefert sie', async () => {
+    const { result } = renderHook(() => useThemeAsset('https://a.example.com/x.png'), { wrapper: wrapper('demo-theme') });
+    const proxy = 'http://127.0.0.1:4810/api/themes/demo-theme/fetch?url=https%3A%2F%2Fa.example.com%2Fx.png&token=geheim';
+    await waitFor(() => expect(result.current).toEqual({ status: 'ready', url: proxy, error: null }));
+    expect(vi.mocked(fetch).mock.calls[0][0]).toBe(proxy);
+  });
+});
+
 describe('useThemeAsset', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
   beforeEach(() => {

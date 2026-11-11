@@ -1,7 +1,10 @@
 //! Lädt die Index-Dateien aller Store-Repos parallel, jedes mit eigenem Zeitlimit und eigenem
 //! Fehler; ein kaputtes oder langsames Repo hält die anderen nicht auf. Kein Cache: jede
-//! Anfrage lädt neu.
+//! Anfrage lädt neu. Gemerkt werden nur die Vorschau-Adressen des zuletzt geladenen Index,
+//! damit `routes::store_preview` ihn nicht für jedes Bild neu holt.
 
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use nexus_core::theme::store_index::{
@@ -47,11 +50,16 @@ pub struct StoreIndexResponse {
     pub repos: Vec<RepoStatus>,
 }
 
+/// Vorschau-Adressen der Einträge eines Repos: Theme-ID → Adresse (`None` ohne Vorschau)
+type Previews = HashMap<String, Option<String>>;
+
 /// Lädt Index-Dateien mit Zeitlimit je Repo
 #[derive(Debug, Clone)]
 pub struct StoreIndexLoader {
     client: reqwest::Client,
     timeout: Duration,
+    /// Vorschau-Adressen aus dem zuletzt geladenen Index je Repo-ID
+    previews: Arc<Mutex<HashMap<String, Previews>>>,
 }
 
 impl StoreIndexLoader {
@@ -62,7 +70,36 @@ impl StoreIndexLoader {
             .redirect(reqwest::redirect::Policy::limited(MAX_REDIRECTS))
             .build()
             .unwrap_or_default();
-        Self { client, timeout }
+        Self {
+            client,
+            timeout,
+            previews: Arc::default(),
+        }
+    }
+
+    /// Vorschau-Adresse des Eintrags `id` aus dem zuletzt geladenen Index des Repos.
+    /// Außen `None`: der Eintrag stand dort nicht oder der Index war noch nicht geladen;
+    /// innen `None`: der Eintrag hat keine Vorschau
+    pub fn remembered_preview(&self, repo_id: &str, id: &str) -> Option<Option<String>> {
+        self.previews
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(repo_id)?
+            .get(id)
+            .cloned()
+    }
+
+    /// Merkt sich die Vorschau-Adressen eines frisch geladenen Index; der alte Stand des
+    /// Repos fällt weg
+    fn remember_previews(&self, repo_id: &str, entries: &[StoreIndexEntry]) {
+        let previews = entries
+            .iter()
+            .map(|entry| (entry.id.clone(), entry.preview.clone()))
+            .collect();
+        self.previews
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .insert(repo_id.to_string(), previews);
     }
 
     /// Lädt alle Repos parallel; Reihenfolge von `repos` bleibt erhalten
@@ -83,6 +120,7 @@ impl StoreIndexLoader {
             };
             match result.and_then(|bytes| parse_index(&bytes, &sdk)) {
                 Ok(parsed) => {
+                    self.remember_previews(&repo.id, &parsed.entries);
                     status.ok = true;
                     status.entry_count = parsed.entries.len();
                     status.skipped = parsed.skipped;
@@ -113,7 +151,9 @@ impl StoreIndexLoader {
     /// Lädt und prüft die Index-Datei eines einzelnen Repos
     pub async fn load_repo(&self, repo: &StoreRepo) -> Result<ParsedIndex, HarnessError> {
         let bytes = self.load(&repo.url).await?;
-        parse_index(&bytes, &theme_sdk_version())
+        let parsed = parse_index(&bytes, &theme_sdk_version())?;
+        self.remember_previews(&repo.id, &parsed.entries);
+        Ok(parsed)
     }
 
     /// Der gemeinsame HTTP-Client (Weiterleitungen begrenzt)

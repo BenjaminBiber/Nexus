@@ -250,6 +250,11 @@ function themeAssetUrl(themeId: string, url: string, opts?: Omit<ThemeAssetOptio
 Ändert sich `url` oder eine Option, lädt der Hook neu und bricht die alte Anfrage ab; beim Entfernen
 der Komponente ebenfalls. Der Hook hält keine Bytes, das Bild lädt der Browser aus seinem HTTP-Cache.
 
+Im Browser ist die Proxy-URL ein Pfad (`/api/themes/<id>/fetch?…`). In der Desktop-App zeigt sie auf
+den lokalen Server und trägt dessen Start-Token (`http://127.0.0.1:<port>/api/themes/<id>/fetch?…&token=…`).
+Port und Token wechseln mit jedem Start der App: die URL deshalb nicht speichern, sondern bei Bedarf
+neu erzeugen.
+
 `ThemeAssetError`: `status: number | null` (HTTP-Status, bei Netzfehler `null`), `code: string`,
 `message: string`. Der `code` stammt aus der JSON-Antwort des Proxys:
 

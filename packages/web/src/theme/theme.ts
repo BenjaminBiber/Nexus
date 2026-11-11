@@ -1,3 +1,4 @@
+import { serverUrl } from '../api/nexusBridge.js';
 import { BUILTIN_THEME_IDS, type ThemeMode } from '../api/types.js';
 import { getTheme } from './registry.js';
 import { isSafeTheme } from './safeTheme.js';
@@ -43,7 +44,9 @@ export function systemPrefersDark(): boolean {
 /** Installiertes Theme, wie es applyTheme braucht (Auszug aus dem Manifest) */
 export type InstalledTheme = string | { id: string; startColor?: string | null };
 
-// URL der theme.css eines installierten Themes (vom Server unter /themes/<id>/ ausgeliefert)
+// Pfad der theme.css eines installierten Themes (vom Server unter /themes/<id>/ ausgeliefert).
+// So steht er auch im localStorage: die Adresse des Servers kommt erst beim Einbinden davor,
+// weil sein Port in der Desktop-App mit jedem Start wechselt.
 export function themeCssUrl(id: string): string {
   return `/themes/${id}/theme.css`;
 }
@@ -55,7 +58,7 @@ function setThemeLink(id: string | null): void {
     existing?.remove();
     return;
   }
-  const href = themeCssUrl(id);
+  const href = serverUrl(themeCssUrl(id));
   if (existing instanceof HTMLLinkElement && existing.getAttribute('href') === href) return;
   const link = document.createElement('link');
   link.id = THEME_LINK_ID;

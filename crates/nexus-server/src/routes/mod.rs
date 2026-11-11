@@ -28,6 +28,7 @@ pub mod speech;
 pub mod static_files;
 pub mod store_index;
 pub mod store_install;
+pub mod store_preview;
 pub mod store_repos;
 pub mod store_updates;
 pub mod telegram;
@@ -80,6 +81,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(theme_settings::routes())
         .merge(store_index::routes())
         .merge(store_install::routes())
+        .merge(store_preview::routes())
         .merge(store_repos::routes())
         .merge(store_updates::routes())
         .merge(usage::routes())

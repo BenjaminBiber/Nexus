@@ -715,6 +715,11 @@
     "pattern": "/api/themes/store/install"
   },
   {
+    "file": "crates/nexus-server/src/routes/store_preview.rs",
+    "method": "GET",
+    "pattern": "/api/themes/store/preview"
+  },
+  {
     "file": "crates/nexus-server/src/routes/store_repos.rs",
     "method": "GET",
     "pattern": "/api/themes/store/repos"

@@ -1,3 +1,5 @@
+import { serverUrl } from '../api/nexusBridge.js';
+
 /** ID des Links auf die aktiven CSS-Schnipsel des Nutzers (liegt über dem Theme, D8) */
 export const SNIPPETS_LINK_ID = 'nexus-snippets-css';
 
@@ -6,7 +8,7 @@ let counter = 0;
 
 // Bindet die aktiven Schnipsel als letztes Stylesheet ein und lädt sie mit neuem v neu
 export function applySnippets(): void {
-  const href = `/snippets/active.css?v=${Date.now()}-${++counter}`;
+  const href = serverUrl(`/snippets/active.css?v=${Date.now()}-${++counter}`);
   const existing = document.getElementById(SNIPPETS_LINK_ID);
   const link = existing instanceof HTMLLinkElement ? existing : document.createElement('link');
   link.id = SNIPPETS_LINK_ID;

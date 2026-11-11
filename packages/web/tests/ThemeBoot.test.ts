@@ -15,6 +15,7 @@ function boot(cache: Record<string, string>) {
 const link = () => document.getElementById('nexus-theme-css') as HTMLLinkElement | null;
 
 afterEach(() => {
+  delete (window as { __NEXUS__?: unknown }).__NEXUS__;
   window.localStorage.clear();
   link()?.remove();
   document.documentElement.removeAttribute('style');
@@ -30,6 +31,20 @@ describe('index.html – früher Start', () => {
     expect(link()?.parentNode).toBe(document.head);
     expect(document.documentElement.dataset.theme).toBe('ocean');
     expect(document.documentElement.style.getPropertyValue('--start-color')).toBe('#123456');
+  });
+
+  it('lädt die theme.css in der Desktop-App vom lokalen Server', () => {
+    // Die App legt Adresse und Token vor jedem Skript ins Fenster; gemerkt ist nur der Pfad, weil der Port wechselt
+    Object.assign(window, { __NEXUS__: { base: 'http://127.0.0.1:4810', token: 'geheim' } });
+    boot({ 'harness-theme-mode': 'ocean', 'harness-theme-css': '/themes/ocean/theme.css' });
+    expect(link()?.getAttribute('href')).toBe('http://127.0.0.1:4810/themes/ocean/theme.css');
+    expect(document.documentElement.dataset.theme).toBe('ocean');
+  });
+
+  it('bleibt ohne Token der App bei der relativen Adresse', () => {
+    Object.assign(window, { __NEXUS__: { base: 'http://127.0.0.1:4810', token: '' } });
+    boot({ 'harness-theme-mode': 'ocean', 'harness-theme-css': '/themes/ocean/theme.css' });
+    expect(link()?.getAttribute('href')).toBe('/themes/ocean/theme.css');
   });
 
   it('nutzt den Startfarben-Fallback im Style der Startanimation', () => {

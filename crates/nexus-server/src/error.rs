@@ -112,6 +112,8 @@ impl ErrorMapper {
             || code == "store-download-unreachable"
             || code == "store-download-http"
             || code == "store-download-url-invalid"
+            // Unter der Vorschau-Adresse eines Store-Eintrags liegt kein Bild
+            || code == "store-preview-invalid"
         {
             return StatusCode::BAD_GATEWAY;
         }

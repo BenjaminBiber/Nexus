@@ -38,7 +38,8 @@ describe('Store: Durchsuchen', () => {
     const card = (await screen.findByText('Forest')).closest('li')!;
     expect(within(card).getByText('v1.0.0')).toBeTruthy();
     expect(within(card).getByText('Grüner Wald')).toBeTruthy();
-    expect(within(card).getByAltText('Vorschau: Forest')).toBeTruthy();
+    // Die Vorschau kommt über den Server: die CSP der Oberfläche lässt keine Bilder fremder Hosts zu
+    expect(within(card).getByAltText('Vorschau: Forest').getAttribute('src')).toBe('/api/themes/store/preview?repoId=r1&id=forest&v=1.0.0');
     expect(within(card).getByText('example.com')).toBeTruthy();
     const ocean = screen.getByText('Ocean').closest('li')!;
     expect(within(ocean).queryByRole('img')).toBeNull();

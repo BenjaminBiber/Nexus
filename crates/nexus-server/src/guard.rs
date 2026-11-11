@@ -9,6 +9,8 @@
 //! * **Desktop-App** (`tauri://localhost` und `http(s)://tauri.localhost`): Die Oberfläche
 //!   kommt aus den Dateien der App und hat damit eine fremde Herkunft. Sie ist nur erlaubt,
 //!   wenn sie das Start-Token des Servers mitschickt; das Token ersetzt dort `X-Harness`.
+//!   Einzige Ausnahme: Dateien installierter Themes unter `/themes/` darf sie ohne Token
+//!   lesen, weil Schriften und Module keine Köpfe mitschicken können.
 //!   Im Entwicklungsmodus der App kommt die Oberfläche von Vite; dessen Herkunft lässt
 //!   [`RequestGuard::allow_app_origin`] unter denselben Bedingungen zu.
 
@@ -44,6 +46,10 @@ pub const TOKEN_QUERY: &str = "token";
 /// und am Pflichtkopf, nicht am Inhaltstyp: `audio/*` ist kein „einfacher“ Inhaltstyp, eine
 /// fremde Seite käme damit nicht an der Vorabfrage und der Herkunftsprüfung vorbei.
 pub const AUDIO_BODY_PATHS: [&str; 1] = ["/api/speech/test"];
+
+/// Pfad, unter dem die Dateien installierter Themes liegen (`routes::themes`); lesend braucht
+/// die App dafür kein Start-Token
+pub const THEME_FILES_PREFIX: &str = "/themes/";
 
 /// Methoden, die eine Vorabfrage der App freigibt
 const ALLOW_METHODS: &str = "GET, POST, PUT, PATCH, DELETE";
@@ -153,7 +159,7 @@ impl RequestGuard {
                         message: "Anfragen von fremden Webseiten sind nicht erlaubt.",
                     });
                 }
-                if !self.token_stimmt(method, headers, query) {
+                if !self.token_stimmt(method, headers, query) && !theme_datei_lesend(method, path) {
                     return Some(GuardDenial {
                         code: "origin-denied",
                         message: "Die App hat sich nicht ausgewiesen.",
@@ -195,6 +201,16 @@ impl RequestGuard {
             .and_then(token_aus_abfrage)
             .is_some_and(|value| token.matches(value))
     }
+}
+
+/// Liest die Anfrage eine Datei eines installierten Themes? Das darf die Oberfläche der App
+/// auch ohne Start-Token: Schriften aus der `theme.css` und `import()` der `main.js` (samt
+/// deren relativer Importe) schickt der Browser mit Herkunft, aber ohne eigene Köpfe und ohne
+/// Abfragewert. Unter [`THEME_FILES_PREFIX`] liegen nur Theme-Pakete – dieselben Dateien, die
+/// jede Seite ohnehin als Stylesheet, Skript oder Bild einbinden kann, weil solche Anfragen
+/// keine Herkunft tragen.
+fn theme_datei_lesend(method: &Method, path: &str) -> bool {
+    is_read(method) && path.starts_with(THEME_FILES_PREFIX)
 }
 
 /// Lädt die Oberfläche der Desktop-App unter dieser Herkunft?

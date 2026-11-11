@@ -117,7 +117,7 @@ async fn lasst_dateien_unter_assets_dauerhaft_zwischenspeichern_index_nie_ungepr
 }
 
 /// CSP der Tauri-App (`apps/desktop/src-tauri/tauri.conf.json`)
-const CSP: &str = "default-src 'self'; connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost; img-src 'self' data: blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self' http://127.0.0.1:*/themes/";
+const CSP: &str = "default-src 'self'; connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost; img-src 'self' data: blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline' http://127.0.0.1:*; font-src 'self' data: http://127.0.0.1:*; script-src 'self' http://127.0.0.1:*/themes/";
 
 #[tokio::test]
 async fn liefert_die_oberflache_mit_der_csp_der_app_aus() {

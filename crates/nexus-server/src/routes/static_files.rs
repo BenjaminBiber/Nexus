@@ -35,7 +35,11 @@ const HTML: &str = "text/html; charset=utf-8";
 ///
 /// `script-src` lässt Theme-Module (`main.js`, D1) nur vom Pfad `/themes/` des lokalen Servers
 /// zu (der Port ist dynamisch); kein `unsafe-eval`, kein fremder Host.
-pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost; img-src 'self' data: blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self' http://127.0.0.1:*/themes/";
+///
+/// `style-src` und `font-src` nennen den lokalen Server, weil die Oberfläche der Desktop-App
+/// aus den Dateien der App kommt: `theme.css`, Snippets und Schriften eines Themes liegen dort
+/// bei einer anderen Herkunft, `'self'` deckt sie nicht ab.
+pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost; img-src 'self' data: blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline' http://127.0.0.1:*; font-src 'self' data: http://127.0.0.1:*; script-src 'self' http://127.0.0.1:*/themes/";
 
 /// Die `script-src`-Direktive der Basis; Hashes von Inline-Skripten kommen hinter sie
 const SCRIPT_SRC: &str = "script-src 'self' http://127.0.0.1:*/themes/";
@@ -301,6 +305,25 @@ mod tests {
             ["script-src 'self' http://127.0.0.1:*/themes/"]
         );
         assert!(!CONTENT_SECURITY_POLICY.contains("unsafe-eval"));
+    }
+
+    /// In der Desktop-App hat die Oberfläche eine andere Herkunft als der Server: `'self'`
+    /// deckt dort weder die `theme.css` noch die Schriften eines Themes ab
+    #[test]
+    fn die_basis_csp_laesst_theme_css_und_schriften_vom_lokalen_server_zu() {
+        assert_eq!(
+            directives(CONTENT_SECURITY_POLICY, "style-src"),
+            ["style-src 'self' 'unsafe-inline' http://127.0.0.1:*"]
+        );
+        assert_eq!(
+            directives(CONTENT_SECURITY_POLICY, "font-src"),
+            ["font-src 'self' data: http://127.0.0.1:*"]
+        );
+        // Bilder fremder Hosts bleiben draußen; Vorschaubilder des Stores holt der Server
+        assert_eq!(
+            directives(CONTENT_SECURITY_POLICY, "img-src"),
+            ["img-src 'self' data: blob: http://127.0.0.1:*"]
+        );
     }
 
     #[test]

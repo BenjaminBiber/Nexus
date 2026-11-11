@@ -335,6 +335,97 @@ fn nimmt_das_token_bei_lesezugriffen_auch_aus_der_abfrage() {
 }
 
 #[test]
+fn laesst_die_app_theme_dateien_ohne_token_lesen() {
+    // Schriften aus der theme.css und `import()` der main.js sind Anfragen mit Herkunft, können
+    // aber weder Kopf noch Abfragewert mitschicken. Ohne diese Ausnahme lädt in der App kein
+    // Theme mit Code oder eigener Schrift.
+    let guard = guard_mit_token("geheim");
+    let host = ("host", "127.0.0.1:4710");
+    for origin in TAURI_ORIGINS {
+        for path in [
+            "/themes/ocean/manifest.json",
+            "/themes/ocean/main.js",
+            "/themes/ocean/assets/fonts/a.woff2",
+        ] {
+            for method in ["GET", "HEAD"] {
+                assert_eq!(
+                    code_auf_pfad(&guard, method, path, &[host, ("origin", origin)]),
+                    None,
+                    "{method} {path} von {origin}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn die_ausnahme_fuer_theme_dateien_gilt_nur_lesend_und_nur_unter_themes() {
+    let guard = guard_mit_token("geheim");
+    let host = ("host", "127.0.0.1:4710");
+    let app = [host, ("origin", TAURI_ORIGINS[0])];
+    // Alles außerhalb von /themes/ braucht weiter das Token – auch die Routen der Themes
+    for path in [
+        "/api/themes",
+        "/api/themes/ocean/fetch",
+        "/api/themes/ocean/settings",
+        "/themes",
+        "/themesx/ocean/main.js",
+        "/snippets/active.css",
+    ] {
+        assert_eq!(
+            code_auf_pfad(&guard, "GET", path, &app),
+            Some("origin-denied"),
+            "{path}"
+        );
+    }
+    // Schreibend gilt die Ausnahme nie
+    let mut schreibend = app.to_vec();
+    schreibend.push(("content-type", "application/json"));
+    for method in ["POST", "PUT", "PATCH", "DELETE"] {
+        assert_eq!(
+            code_auf_pfad(&guard, method, "/themes/ocean/main.js", &schreibend),
+            Some("origin-denied"),
+            "{method}"
+        );
+    }
+    // Fremde Webseiten bleiben auch bei Theme-Dateien draußen
+    assert_eq!(
+        code_auf_pfad(
+            &guard,
+            "GET",
+            "/themes/ocean/main.js",
+            &[host, ("origin", "http://evil.example")]
+        ),
+        Some("origin-denied")
+    );
+}
+
+#[tokio::test]
+async fn liefert_der_app_theme_dateien_ohne_token_mit_cors_koepfen() {
+    let server = TestServer::start();
+    let theme = server.home.themes_dir().join("ocean");
+    std::fs::create_dir_all(theme.join("assets")).unwrap();
+    std::fs::write(theme.join("main.js"), "export default {};").unwrap();
+    std::fs::write(theme.join("assets").join("a.woff2"), "wOF2").unwrap();
+    let origin = "http://tauri.localhost";
+
+    for (url, typ) in [
+        ("/themes/ocean/main.js", "text/javascript; charset=utf-8"),
+        ("/themes/ocean/assets/a.woff2", "font/woff2"),
+    ] {
+        let antwort = server.get_with(url, &[("origin", Some(origin))]).await;
+        assert_eq!(antwort.status, 200, "{url}: {}", antwort.text);
+        assert_eq!(antwort.header("content-type"), Some(typ), "{url}");
+        // Ohne diesen Kopf verwirft der Browser Modul und Schrift trotz Antwort
+        assert_eq!(
+            antwort.header("access-control-allow-origin"),
+            Some(origin),
+            "{url}"
+        );
+    }
+}
+
+#[test]
 fn verlangt_auch_von_der_app_json_bei_schreibzugriffen() {
     let guard = guard_mit_token("geheim");
     let mut text = aus_der_app(TAURI_ORIGINS[0], "geheim");

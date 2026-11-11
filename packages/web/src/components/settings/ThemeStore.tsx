@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApi } from '../../api/ApiContext.js';
 import { ApiError } from '../../api/ApiError.js';
 import type { ThemeManifest } from '../../api/generated/themes.js';
+import { serverUrl } from '../../api/nexusBridge.js';
 import type { StoreIndexEntryDto, StoreIndexRepoDto, StoreUpdateDto } from '../../api/types.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { Notice } from './Notice.js';
@@ -155,7 +156,7 @@ export function ThemeStore({ installed, onInstalled, reloadKey = 0, onManageRepo
           <li key={`${e.repoId}/${e.id}`} className="store-card">
             <div className="store-card-preview">
               {e.preview ? (
-                <img src={e.preview} alt={`Vorschau: ${e.name}`} loading="lazy" />
+                <img src={previewUrl(e)} alt={`Vorschau: ${e.name}`} loading="lazy" />
               ) : (
                 <div className="store-card-nopreview">
                   <span className="material-icons" aria-hidden="true">image</span>
@@ -210,6 +211,12 @@ export function ThemeStore({ installed, onInstalled, reloadKey = 0, onManageRepo
       )}
     </div>
   );
+}
+
+// Adresse des Vorschaubilds eines Store-Eintrags: der Server holt es beim Store ab, weil die CSP der
+// Oberfläche keine Bilder fremder Hosts zulässt. `v` lässt den Browser nach einem Update neu laden.
+function previewUrl(e: StoreIndexEntryDto): string {
+  return serverUrl(`/api/themes/store/preview?repoId=${encodeURIComponent(e.repoId)}&id=${encodeURIComponent(e.id)}&v=${encodeURIComponent(e.version)}`);
 }
 
 // Zustand der eingetragenen Stores: Kopfzeile mit Punkten und Zusammenfassung, aufgeklappt je Store eine Zeile.

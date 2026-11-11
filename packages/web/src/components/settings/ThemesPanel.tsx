@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useId, useRef, useState, type Keybo
 import { createPortal } from 'react-dom';
 import { useApi } from '../../api/ApiContext.js';
 import type { ThemeManifest } from '../../api/generated/themes.js';
+import { serverUrl } from '../../api/nexusBridge.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { unregisterTheme } from '../../theme/registry.js';
 import { applyTheme } from '../../theme/theme.js';
@@ -42,7 +43,7 @@ function fromManifest(m: ThemeManifest): ThemeEntry {
     builtin: false,
     scheme: m.colorScheme === 'dark' ? 'dark' : 'light',
     hasCode: (m.slots?.length ?? 0) > 0,
-    image: m.preview ? `/themes/${encodeURIComponent(m.id)}/${m.preview}` : undefined,
+    image: m.preview ? serverUrl(`/themes/${encodeURIComponent(m.id)}/${m.preview}`) : undefined,
     palette: m.startColor ? { ...base, bg: m.startColor, side: m.startColor } : base,
   };
 }

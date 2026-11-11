@@ -19,3 +19,10 @@ export function nexusBridge(): NexusBridge | undefined {
   const values = typeof window === 'undefined' ? undefined : window.__NEXUS__;
   return values?.base && values.token ? values : undefined;
 }
+
+// Adresse einer Datei oder Route des Servers für Stellen ohne ApiClient (Stylesheets, Bilder):
+// in der App mit der Adresse des Servers davor, im Browser unverändert (gleiche Herkunft).
+// Ohne sie landet die Anfrage bei der App, die für unbekannte Adressen ihre index.html liefert.
+export function serverUrl(path: string): string {
+  return `${nexusBridge()?.base ?? ''}${path}`;
+}

@@ -31,7 +31,9 @@
           var link = document.createElement("link");
           link.id = "nexus-theme-css";
           link.rel = "stylesheet";
-          link.href = css;
+          // In der Desktop-App liegt die theme.css beim lokalen Server, nicht bei den Dateien der App (nexusBridge.ts: serverUrl)
+          var app = window.__NEXUS__;
+          link.href = (app && app.base && app.token ? app.base : "") + css;
           document.head.appendChild(link);
           if (color && /^#[0-9a-fA-F]{3,8}$/.test(color)) root.style.setProperty("--start-color", color);
         }
