@@ -2,8 +2,10 @@ import { useGame, type Game } from '../data/GameContext.js';
 
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-// Unterzeile aus echten Daten: auf dem Board offene Aufträge und blockierte, sonst offene Tickets und Fragen
+// Unterzeile aus echten Daten: auf dem Board offene Aufträge und blockierte, sonst offene Tickets und Fragen; ohne
+// Board-Stand nur die Fragen
 function info(game: Game): string {
+  if (!game.loaded) return count(game.questions, 'Frage', 'Fragen');
   if (game.active?.id === 'board') return `${count(game.open, 'Auftrag', 'Aufträge')}, ${game.blocked} blockiert`;
   return `${game.open} offen · ${count(game.questions, 'Frage', 'Fragen')}`;
 }

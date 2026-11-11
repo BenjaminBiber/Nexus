@@ -36,6 +36,14 @@ describe('SaTitle', () => {
     expect(info()).toBe('5 offen · 1 Frage');
   });
 
+  it('ohne Board-Stand nennt die Unterzeile nur, was bekannt ist', () => {
+    renderWithGame(<SaTitle />, fakeGame({ ...onPage('docs'), loaded: false, open: 0, questions: 2 }));
+    expect(info()).toBe('2 Fragen');
+    cleanup();
+    renderWithGame(<SaTitle />, fakeGame({ ...onPage('board'), loaded: false, open: 0, blocked: 0, questions: 1 }));
+    expect(info()).toBe('1 Frage');
+  });
+
   it('der Hilfekasten erscheint nur nach einem Board-Wechsel; die Statushülle bleibt stehen', () => {
     const view = renderWithGame(<SaTitle />);
     expect(screen.getByRole('status').textContent).toBe('');

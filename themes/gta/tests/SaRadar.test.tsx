@@ -21,6 +21,11 @@ describe('SaRadar', () => {
     expect(host.navigate).toHaveBeenCalledWith('/p/p1/board');
   });
 
+  it('ohne Board-Stand nennt der Link keine Zahl', () => {
+    renderWithGame(<SaRadar />, fakeGame({ loaded: false, open: 0, blips: [] }));
+    expect(screen.getByRole('link', { name: 'Radar, zum Board' })).toBeTruthy();
+  });
+
   it('ist rund: Ring und Kreis-Ausschnitt, „N“ am Rand, Karte nur Schmuck', () => {
     renderWithGame(<SaRadar />);
     const svg = radar().querySelector('svg')!;

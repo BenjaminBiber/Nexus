@@ -1,7 +1,7 @@
 import { useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { useGame, type Game } from '../data/GameContext.js';
 import type { Blip } from '../data/derive.js';
-import { formatMoneyV, formatPercent } from '../shared/format.js';
+import { formatMoneyV, formatPercent, MONEY_UNKNOWN_V, UNKNOWN } from '../shared/format.js';
 import { useStatsDialog } from '../shared/useStatsDialog.js';
 
 type Category = 'general' | 'columns' | 'usage';
@@ -37,23 +37,26 @@ function Wanted({ game }: { game: Game }) {
   return (
     <>
       <span aria-hidden="true">{'★'.repeat(level) || '–'}</span>
-      <span className="gta-sr">Stufe {level} von 5</span> ({game.blocked} blockiert)
+      <span className="gta-sr">Stufe {level} von 5</span>
+      {game.loaded ? ` (${game.blocked} blockiert)` : null}
     </>
   );
 }
 
+// Ohne Board-Stand stehen Striche statt 0 – sonst sähe es aus wie ein leeres Board
 function General({ game }: { game: Game }) {
+  const board = (value: ReactNode) => (game.loaded ? value : UNKNOWN);
   return (
     <>
-      <Row label="Tickets gesamt" value={game.total} />
-      <Row label="Abgeschlossen" value={game.done} />
-      <Row label="Offen" value={game.open} />
-      <Row label="Blockiert" value={game.blocked} />
-      <Row label="Fortschritt des Boards" value={formatPercent(game.boardProgress ?? 0)} bar={<StatBar value={game.boardProgress ?? 0} />} />
-      <Row label="Schritte erledigt" value={`${game.stepsDone} / ${game.stepsTotal}`} />
+      <Row label="Tickets gesamt" value={board(game.total)} />
+      <Row label="Abgeschlossen" value={board(game.done)} />
+      <Row label="Offen" value={board(game.open)} />
+      <Row label="Blockiert" value={board(game.blocked)} />
+      <Row label="Fortschritt des Boards" value={board(formatPercent(game.boardProgress ?? 0))} bar={<StatBar value={game.boardProgress ?? 0} />} />
+      <Row label="Schritte erledigt" value={board(`${game.stepsDone} / ${game.stepsTotal}`)} />
       <Row label="Offene Fragen" value={game.questions} />
       <Row label="Fahndungslevel" value={<Wanted game={game} />} />
-      <Row label="Verdient insgesamt" value={formatMoneyV(game.moneyShown)} />
+      <Row label="Verdient insgesamt" value={game.loaded ? formatMoneyV(game.moneyShown) : MONEY_UNKNOWN_V} />
     </>
   );
 }
@@ -98,10 +101,8 @@ function Checklist({ game }: { game: Game }) {
   return (
     <div className="gta-v-pane gta-v-checklist">
       <div className="gta-v-pct">
-        {formatPercent(game.boardProgress ?? 0)}
-        <small>
-          {game.done} von {game.total} Tickets
-        </small>
+        {game.loaded ? formatPercent(game.boardProgress ?? 0) : UNKNOWN}
+        <small>{game.loaded ? `${game.done} von ${game.total} Tickets` : 'kein Board-Stand'}</small>
       </div>
       <StatBar value={game.boardProgress ?? 0} segments={Math.max(1, Math.min(game.total, MAX_SEGMENTS))} />
       <h3>Als Nächstes</h3>

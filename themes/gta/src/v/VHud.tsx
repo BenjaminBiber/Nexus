@@ -1,6 +1,6 @@
 import { BoardSwitcher } from '@nexus/theme-sdk';
 import { useGame } from '../data/GameContext.js';
-import { formatClockV, formatMoneyV } from '../shared/format.js';
+import { formatClockV, formatMoneyV, MONEY_UNKNOWN_V } from '../shared/format.js';
 import { useCountUp } from '../shared/useCountUp.js';
 
 const STARS = 5;
@@ -26,12 +26,12 @@ function Stars({ wanted }: { wanted: number }) {
   );
 }
 
-// Kontostand in Grün; zählt bei Änderung hoch
-function Cash({ money }: { money: number }) {
-  const { value, counting } = useCountUp(money);
+// Kontostand in Grün; zählt bei Änderung hoch, ohne Board-Stand ein Platzhalter
+function Cash({ money, loaded }: { money: number; loaded: boolean }) {
+  const { value, counting } = useCountUp(money, loaded);
   return (
     <div className="gta-v-cash" title="Spielgeld: verdient mit erledigten Schritten und Tickets" data-up={counting ? '' : undefined}>
-      {formatMoneyV(value)}
+      {loaded ? formatMoneyV(value) : MONEY_UNKNOWN_V}
     </div>
   );
 }
@@ -49,7 +49,7 @@ export function VHud() {
       </div>
       <div className="gta-v-score">
         <Stars wanted={game.wanted} />
-        <Cash money={game.moneyShown} />
+        <Cash money={game.moneyShown} loaded={game.loaded} />
       </div>
     </div>
   );
