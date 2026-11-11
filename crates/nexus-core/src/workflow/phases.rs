@@ -85,7 +85,7 @@ fn wahl(label: &str, command: &str, when: &str) -> WorkflowOption {
 const BRAINSTORMING: &str = "Einfach: erkundet Idee, Anforderungen und Entwurf im Dialog (Superpowers-Plugin) und schreibt die Spec nach docs/superpowers/specs/. Danach weiter mit /superpowers:writing-plans.";
 
 /// Hinweis des Umsetzen-Schritts und seiner ersten Alternative
-const IMPLEMENT: &str = "Wählt das nächste Ticket, legt Branch und Worktree an (harness board start), setzt es test-first um und schließt mit Review ab. Ein bestimmtes Ticket: /nexus:harness-implement ARC-0042.";
+const IMPLEMENT: &str = "Wählt das nächste Ticket, legt Branch und Worktree an (nexus board start), setzt es test-first um und schließt mit Review ab. Ein bestimmtes Ticket: /nexus:harness-implement ARC-0042.";
 
 /// Ablauf in Phasen, nur mit Befehlen für Claude Code. Die CLI ruft Claude im Hintergrund
 /// selbst auf.
@@ -115,7 +115,7 @@ pub fn workflow_phases() -> Vec<WorkflowPhase> {
                 mit_ort(
                     "Tickets anlegen",
                     "In der Session sagen: „Lege für die Tasks des Plans Tickets an“",
-                    "Claude legt je Task ein Ticket an (Titel, Abnahme, Schritte aus den Task-Schritten, Abhängigkeiten in Task-Reihenfolge) und schreibt Plan (Task-Text), Handbuch (Testbefehle, globale Vorgaben) und Diagramm mit harness board plan-json; danach stehen sie in Geplant. Plan und Handbuch stehen im Ticket – Worktrees und Agenten brauchen die Plan-Datei nicht. Kleinere Schnitte gehen auch auf der Seite „Docs“: Stelle markieren, „Zur Ticket-Auswahl“, Entwürfe prüfen, anlegen.",
+                    "Claude legt je Task ein Ticket an (Titel, Abnahme, Schritte aus den Task-Schritten, Abhängigkeiten in Task-Reihenfolge) und schreibt Plan (Task-Text), Handbuch (Testbefehle, globale Vorgaben) und Diagramm mit nexus board plan-json; danach stehen sie in Geplant. Plan und Handbuch stehen im Ticket – Worktrees und Agenten brauchen die Plan-Datei nicht. Kleinere Schnitte gehen auch auf der Seite „Docs“: Stelle markieren, „Zur Ticket-Auswahl“, Entwürfe prüfen, anlegen.",
                 ),
                 mit_ort(
                     "Für den Dispatcher vorbereiten",
@@ -146,7 +146,7 @@ pub fn workflow_phases() -> Vec<WorkflowPhase> {
                 mit_ort(
                     "Schritte pflegen",
                     "Im Board im Ticket-Panel, „+ Schritt“",
-                    "Schritte des Tickets lassen sich im Panel anlegen, bearbeiten, löschen und verschieben. Im Terminal: harness board step add|edit|rm|move.",
+                    "Schritte des Tickets lassen sich im Panel anlegen, bearbeiten, löschen und verschieben. Im Terminal: nexus board step add|edit|rm|move.",
                 ),
                 mit_ort(
                     "Kommentare schreiben",
@@ -156,7 +156,7 @@ pub fn workflow_phases() -> Vec<WorkflowPhase> {
                 mit_ort(
                     "Abschließen",
                     "In der Session sagen: „Schließe ARC-0042 ab“",
-                    "Claude setzt das Ticket mit harness board done auf Erledigt. Gemergt wird mit „Mergen“ im Ticket-Panel oder harness board merge ARC-0042; der Dispatcher mergt seine Tickets selbst.",
+                    "Claude setzt das Ticket mit nexus board done auf Erledigt. Gemergt wird mit „Mergen“ im Ticket-Panel oder nexus board merge ARC-0042; der Dispatcher mergt seine Tickets selbst.",
                 ),
             ],
         },

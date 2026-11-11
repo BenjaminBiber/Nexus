@@ -98,7 +98,7 @@
     "response": {
       "events": [
         {
-          "body": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung des Harness",
+          "body": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung von Nexus",
           "kind": "wartet",
           "tag": "attention",
           "title": "Session braucht deine Antwort",
@@ -188,7 +188,7 @@
     "response": {
       "events": [
         {
-          "body": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung des Harness",
+          "body": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung von Nexus",
           "kind": "wartet",
           "tag": "attention",
           "title": "Session braucht deine Antwort",

@@ -12,7 +12,7 @@ export function TokenPanel({ token }: { token: string }) {
 
   return (
     <SettingsPanel label="Token">
-      <SettingsSection title="Zugriffs-Token" description="Mit diesem Token melden sich deine Claude-Sitzungen beim Harness an. Gib es nicht weiter.">
+      <SettingsSection title="Zugriffs-Token" description="Mit diesem Token melden sich deine Claude-Sitzungen bei Nexus an. Gib es nicht weiter.">
         <div className="token-row">
           <span className="mono token-value">{shown ? token : '••••••••••••••••••••'}</span>
           {shown && (

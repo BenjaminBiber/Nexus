@@ -91,9 +91,9 @@ describe('App-Rahmen', () => {
     expect(await screen.findByRole('heading', { name: 'Board', level: 1 })).toBeTruthy();
   });
 
-  it('zeigt ohne angemeldete Projekte den Hinweis auf harness board', async () => {
+  it('zeigt ohne angemeldete Projekte den Hinweis auf nexus board', async () => {
     openApp('/', { getProjects: async () => [] });
     expect(await screen.findByText('Noch kein Projekt angemeldet')).toBeTruthy();
-    expect(screen.getByText('harness board')).toBeTruthy();
+    expect(screen.getByText('nexus board')).toBeTruthy();
   });
 });

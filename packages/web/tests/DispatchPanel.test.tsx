@@ -402,7 +402,7 @@ describe('DispatchPanel Prüfungen', () => {
 
   describe('Prompt-Vorlagen', () => {
     const PROMPT_INFO = [
-      { kind: 'work' as const, label: 'Umsetzung', default: 'Standard-Umsetzung {{ticketId}}', required: ['harness board done'], placeholders: [{ name: 'ticketId', description: 'Ticket-ID' }, { name: 'agentName', description: 'Name des Agenten' }] },
+      { kind: 'work' as const, label: 'Umsetzung', default: 'Standard-Umsetzung {{ticketId}}', required: ['nexus board done'], placeholders: [{ name: 'ticketId', description: 'Ticket-ID' }, { name: 'agentName', description: 'Name des Agenten' }] },
       { kind: 'plan' as const, label: 'Planung', default: 'Standard-Planung', required: [], placeholders: [] },
       { kind: 'research' as const, label: 'Recherche', default: 'Standard-Recherche', required: [], placeholders: [] },
       { kind: 'merge' as const, label: 'Merge', default: 'Standard-Merge', required: [], placeholders: [] },
@@ -463,14 +463,14 @@ describe('DispatchPanel Prüfungen', () => {
     it('zeigt eine Ablehnung des Servers am betroffenen Editor statt oben', async () => {
       const save = vi.fn(async () => {
         throw new ApiError('dispatch-prompt-invalid', 'Vorlage „work“: fehlende Pflichtteile.', 400, undefined, {
-          kind: 'work', missing: ['harness board done'], unknown: [],
+          kind: 'work', missing: ['nexus board done'], unknown: [],
         });
       });
       prompts({ saveDispatchConfig: save }, rawWith({ prompts: { work: 'eigene Vorlage' } }));
       await screen.findByLabelText('Vorlage Umsetzung');
       await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
       const alert = await within(editor('Umsetzung')).findByRole('alert');
-      expect(alert.textContent).toContain('harness board done');
+      expect(alert.textContent).toContain('nexus board done');
       expect(within(editor('Planung')).queryByRole('alert')).toBeNull();
       expect(screen.getAllByRole('alert')).toHaveLength(1);
     });
@@ -478,7 +478,7 @@ describe('DispatchPanel Prüfungen', () => {
     it('nimmt die Meldung nach erfolgreichem Speichern wieder weg', async () => {
       let fail = true;
       const save = vi.fn(async (raw: RawDispatchConfigDto) => {
-        if (fail) throw new ApiError('dispatch-prompt-invalid', 'Vorlage „work“ unvollständig.', 400, undefined, { kind: 'work', missing: ['harness board done'], unknown: [] });
+        if (fail) throw new ApiError('dispatch-prompt-invalid', 'Vorlage „work“ unvollständig.', 400, undefined, { kind: 'work', missing: ['nexus board done'], unknown: [] });
         return { ...view(raw), exists: true };
       });
       prompts({ saveDispatchConfig: save }, rawWith({ prompts: { work: 'eigene Vorlage' } }));
@@ -493,7 +493,7 @@ describe('DispatchPanel Prüfungen', () => {
 
     it('meldet eine abgelehnte Vorlage beim Auto-Speichern nur als „nicht automatisch gespeichert“', async () => {
       const save = vi.fn(async () => {
-        throw new ApiError('dispatch-prompt-invalid', 'Vorlage „work“ unvollständig.', 400, undefined, { kind: 'work', missing: ['harness board done'], unknown: [] });
+        throw new ApiError('dispatch-prompt-invalid', 'Vorlage „work“ unvollständig.', 400, undefined, { kind: 'work', missing: ['nexus board done'], unknown: [] });
       });
       prompts({ saveDispatchConfig: save });
       const area = await screen.findByLabelText('Vorlage Umsetzung');

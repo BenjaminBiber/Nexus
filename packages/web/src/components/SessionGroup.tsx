@@ -22,7 +22,7 @@ export function SessionGroup(props: { pid: string; ticket: { id: string; title: 
         ) : (
           <>
             <h2>Nicht zugeordnet</h2>
-            <span className="muted">Sessions ohne Ticket. Mit harness board claim ARC-0042 --agent claude ordnest du sie zu.</span>
+            <span className="muted">Sessions ohne Ticket. Mit nexus board claim ARC-0042 --agent claude ordnest du sie zu.</span>
           </>
         )}
       </div>

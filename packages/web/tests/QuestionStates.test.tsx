@@ -16,7 +16,7 @@ describe('Anleitung: Fragen', () => {
     const steps = screen.getByRole('list', { name: 'Fragen' });
     expect(within(steps).getByText('Entscheidung aufschieben')).toBeTruthy();
     expect(within(steps).getByText('Recherchieren lassen')).toBeTruthy();
-    expect(within(steps).getByRole('button', { name: /Befehl kopieren: harness board question add/ })).toBeTruthy();
+    expect(within(steps).getByRole('button', { name: /Befehl kopieren: nexus board question add/ })).toBeTruthy();
     expect(within(steps).getByRole('button', { name: 'Befehl kopieren: /nexus:board-question ARC-F0007' })).toBeTruthy();
   });
 

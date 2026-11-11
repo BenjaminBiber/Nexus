@@ -435,7 +435,7 @@ fn duplicate(known: &[Note], source: Option<&str>) -> HarnessError {
             None => String::new(),
         };
         lines.push(format!(
-            "Derselbe Befund: harness board note seen {}{from}",
+            "Derselbe Befund: nexus board note seen {}{from}",
             open.id
         ));
     }

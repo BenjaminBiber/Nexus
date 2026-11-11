@@ -10,7 +10,7 @@ import { SettingRow, SettingsSection } from './settings/SettingRow.js';
 
 type Form = Omit<BoardConfigInput, 'password'>;
 
-// Verbindung zur gemeinsamen Board-Datenbank und eigene Benutzer-ID (Datei ~/.harness/board.yaml).
+// Verbindung zur gemeinsamen Board-Datenbank und eigene Benutzer-ID (Datei ~/.nexus/board.yaml).
 export function BoardConfigPanel() {
   const api = useApi();
   const loaded = useAsync(() => api.getBoardConfig(), [api]);

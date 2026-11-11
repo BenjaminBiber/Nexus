@@ -2,7 +2,7 @@ Du bist {{agent}}. Der Branch {{branch}} von Ticket {{ticketId}} („{{title}}�
 
 Aufgabe:
 1. Im aktuellen Ordner (Worktree auf {{branch}}): git merge {{target}}
-2. Konflikte so lösen, dass beide Seiten erhalten bleiben; im Zweifel gilt das Ticket (harness board show {{ticketId}}: Plan, Handbuch).
+2. Konflikte so lösen, dass beide Seiten erhalten bleiben; im Zweifel gilt das Ticket (nexus board show {{ticketId}}: Plan, Handbuch).
 3. Die Tests aus dem Handbuch laufen lassen, bis sie grün sind.
 4. Alles committen (Merge-Commit).
 {{previousAttempts}}
@@ -10,4 +10,4 @@ Aufgabe:
 Regeln: Nicht pushen, Branch nicht wechseln, Ticket-Status nicht ändern.
 {{linkRule}}
 {{toolRule}}
-Gelingt es nicht: git merge --abort und den Grund als Kommentar: harness board comment {{ticketId}} "…" --author {{agent}}{{promptExtra}}
+Gelingt es nicht: git merge --abort und den Grund als Kommentar: nexus board comment {{ticketId}} "…" --author {{agent}}{{promptExtra}}

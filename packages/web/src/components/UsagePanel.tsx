@@ -45,7 +45,7 @@ export function UsagePanel() {
         {!on && (
           <div className="settings-card-body usage-consent">
             <Notice tone="warn" role="note" label="Warnung">
-              Dafür ruft das Harness mit dem Anmelde-Token aus <code>~/.claude/.credentials.json</code> einen nicht dokumentierten Anthropic-Endpunkt auf. Anthropic kann das als unzulässig werten; bei einem Firmenkonto vorher mit IT oder Rechtsabteilung klären.
+              Dafür ruft Nexus mit dem Anmelde-Token aus <code>~/.claude/.credentials.json</code> einen nicht dokumentierten Anthropic-Endpunkt auf. Anthropic kann das als unzulässig werten; bei einem Firmenkonto vorher mit IT oder Rechtsabteilung klären.
             </Notice>
             <div className="usage-consent-actions">
               <label className="option-row ack">
@@ -66,7 +66,7 @@ export function UsagePanel() {
 // Einzelheiten zum Auslesen hinter dem (i) der Zeile
 const DETAILS = (
   <ul>
-    <li>Das Harness liest das Anmelde-Token von Claude Code aus <code>~/.claude/.credentials.json</code> und ruft damit <code>api.anthropic.com/api/oauth/usage</code> auf.</li>
+    <li>Nexus liest das Anmelde-Token von Claude Code aus <code>~/.claude/.credentials.json</code> und ruft damit <code>api.anthropic.com/api/oauth/usage</code> auf.</li>
     <li>Der Endpunkt ist nicht dokumentiert. Ändert er sich oder wird er gesperrt, verschwindet der Ring.</li>
     <li>Anthropic sieht diese Anmeldung nur für Claude Code und die eigenen Apps vor und behält sich Maßnahmen ohne Vorwarnung vor.</li>
     <li>Das Token wird nur gelesen: nicht gespeichert, nicht erneuert, nicht weitergegeben. Abgefragt wird höchstens einmal pro Minute.</li>

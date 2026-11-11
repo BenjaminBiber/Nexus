@@ -1302,7 +1302,7 @@
     "response": {
       "code": 0,
       "stderr": "",
-      "stdout": "Aufruf: nexus customize [options] [command]\n\nAnpassungen des Clones (custom/) prüfen, kopieren, zurücksetzen und anwenden\n\nOptionen:\n  --clone <ordner>    Clone des Harness (Standard: Wurzel des Git-Repos im\n                      aktuellen Ordner)\n  --custom <ordner>   Ordner der Anpassungen (Standard: NEXUS_CUSTOM_DIR, sonst\n                      <clone>/custom)\n  -h, --help          Hilfe anzeigen\n\nBefehle:\n  apply [options]     Anpassungen prüfen und über ein gebautes Plugin legen\n  overview [options]  Übersicht der Anpassungen aus\n                      customizations/overview.json anzeigen\n\nWeitere Befehle:\n  check                              alle Anpassungen prüfen, ohne etwas zu schreiben\n  copy workflow|skill <name>|output-style <name> [--rebase]\n                                     Standard als Ausgangspunkt nach custom/ kopieren\n  reset workflow|skill <name>|output-style <name>\n                                     Anpassung und Basis löschen\n\nBeispiele:\n  nexus customize check\n  nexus customize copy skill harness-grill\n  nexus customize reset workflow"
+      "stdout": "Aufruf: nexus customize [options] [command]\n\nAnpassungen des Clones (custom/) prüfen, kopieren, zurücksetzen und anwenden\n\nOptionen:\n  --clone <ordner>    Clone von Nexus (Standard: Wurzel des Git-Repos im\n                      aktuellen Ordner)\n  --custom <ordner>   Ordner der Anpassungen (Standard: NEXUS_CUSTOM_DIR, sonst\n                      <clone>/custom)\n  -h, --help          Hilfe anzeigen\n\nBefehle:\n  apply [options]     Anpassungen prüfen und über ein gebautes Plugin legen\n  overview [options]  Übersicht der Anpassungen aus\n                      customizations/overview.json anzeigen\n\nWeitere Befehle:\n  check                              alle Anpassungen prüfen, ohne etwas zu schreiben\n  copy workflow|skill <name>|output-style <name> [--rebase]\n                                     Standard als Ausgangspunkt nach custom/ kopieren\n  reset workflow|skill <name>|output-style <name>\n                                     Anpassung und Basis löschen\n\nBeispiele:\n  nexus customize check\n  nexus customize copy skill harness-grill\n  nexus customize reset workflow"
     }
   },
   {
@@ -1334,7 +1334,7 @@
     "response": {
       "code": 0,
       "stderr": "",
-      "stdout": "Aufruf: nexus customize overview [options]\n\nÜbersicht der Anpassungen aus customizations/overview.json anzeigen\n\nOptionen:\n  --file <datei>  Datei der Übersicht (Standard: customizations/overview.json\n                  im Harness-Ordner)\n  -h, --help      Hilfe anzeigen"
+      "stdout": "Aufruf: nexus customize overview [options]\n\nÜbersicht der Anpassungen aus customizations/overview.json anzeigen\n\nOptionen:\n  --file <datei>  Datei der Übersicht (Standard: customizations/overview.json\n                  im Nexus-Ordner)\n  -h, --help      Hilfe anzeigen"
     }
   },
   {

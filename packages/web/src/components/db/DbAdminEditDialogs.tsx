@@ -140,7 +140,7 @@ export function BoardEditDialog({ board, busy, error, onSave, onClose }: {
             <CommentIcon name="folder" />
           </button>
         </div>
-        <span className="muted">Gilt nur für dich auf diesem Rechner (~/.harness/board-repos.yaml). Leer lassen heißt „kein Pfad“.</span>
+        <span className="muted">Gilt nur für dich auf diesem Rechner (~/.nexus/board-repos.yaml). Leer lassen heißt „kein Pfad“.</span>
         {pickError && (
           <span role="alert" className="field-error">
             {pickError}

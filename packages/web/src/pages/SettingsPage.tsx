@@ -31,7 +31,7 @@ const APPEARANCE_SECTIONS: readonly SubSection[] = [
 const GROUPS: Array<{ title: string; sections: Section[] }> = [
   { title: 'Arbeitsbereich', sections: [
     { id: 'projects', label: 'Arbeitsverzeichnisse', icon: 'folder', hint: 'Lokale Repos, in denen eine Claude-Session lief, und ob sie erreichbar sind.' },
-    { id: 'token', label: 'Zugriff', icon: 'key', hint: 'Token, mit dem sich Plugin und Terminal beim Harness anmelden.' },
+    { id: 'token', label: 'Zugriff', icon: 'key', hint: 'Token, mit dem sich Plugin und Terminal bei Nexus anmelden.' },
     { id: 'accounts', label: 'Accounts', icon: 'group' },
   ] },
   { title: 'Oberfläche', sections: [

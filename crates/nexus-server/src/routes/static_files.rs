@@ -18,7 +18,7 @@ use crate::state::AppState;
 
 /// Hinweis, solange die Oberfläche nicht gebaut ist
 const HINT: &str = concat!(
-    "<!doctype html><meta charset=\"utf-8\"><title>AI Harness</title>",
+    "<!doctype html><meta charset=\"utf-8\"><title>Nexus</title>",
     "<p>Die Oberfläche ist noch nicht gebaut. Bitte <code>npm run build</code> ausführen.</p>"
 );
 

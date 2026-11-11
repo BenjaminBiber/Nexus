@@ -103,7 +103,7 @@
             "content-type": "application/json"
           },
           "json": {
-            "message": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung des Harness",
+            "message": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung von Nexus",
             "priority": 4,
             "tags": [
               "raising_hand"
@@ -191,7 +191,7 @@
             "content-type": "application/json"
           },
           "json": {
-            "message": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung des Harness",
+            "message": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung von Nexus",
             "priority": 4,
             "tags": [
               "raising_hand"

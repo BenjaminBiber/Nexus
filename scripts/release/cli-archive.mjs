@@ -51,9 +51,9 @@ function readme(version, target) {
   return [
     `# Nexus CLI ${version} (${target})`,
     '',
-    'Enthält den Befehl `harness` als eigenständiges Programm und das Plugin für Claude Code.',
+    'Enthält den Befehl `nexus` als eigenständiges Programm und das Plugin für Claude Code.',
     '',
-    '- `bin/` – das Programm. In den Pfad legen oder von hier aufrufen: `bin/harness board list`.',
+    '- `bin/` – das Programm. In den Pfad legen oder von hier aufrufen: `bin/nexus board list`.',
     '- `plugin/` – das Plugin. In Claude Code über diesen Ordner einbinden.',
     '',
     'Das Programm bringt alles mit; Node muss nicht installiert sein. Auf macOS ist es unsigniert:',

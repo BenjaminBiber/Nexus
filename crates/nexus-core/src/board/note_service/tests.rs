@@ -198,7 +198,7 @@ async fn lehnt_denselben_befund_ab_und_nennt_offene_und_ubernommene_kandidaten()
         .unwrap_err();
     assert_eq!(error.code(), Some("note-similar"));
     assert!(error.to_string().contains(&format!(
-        "harness board note seen {} --from ARC-0001",
+        "nexus board note seen {} --from ARC-0001",
         first.id
     )));
     assert_eq!(

@@ -59,7 +59,7 @@ describe('SessionsPage', () => {
     expect(within(g42).getByText('aaaaaaaa')).toBeTruthy();
     expect(within(g43).getByText('bbbbbbbb')).toBeTruthy();
     expect(within(none).getByText('cccccccc')).toBeTruthy();
-    expect(within(none).getByText(/harness board claim/)).toBeTruthy();
+    expect(within(none).getByText(/nexus board claim/)).toBeTruthy();
     expect(within(g42).getByRole('link', { name: 'Ticket öffnen' }).getAttribute('href')).toBe('/p/p1/board/t/T-0042');
   });
 
@@ -146,12 +146,12 @@ describe('SessionsPage', () => {
     expect(within(group).getAllByRole('button')).toHaveLength(6);
   });
 
-  it('zeigt Leerzustand mit Hinweisen auf harness init und das Plugin', async () => {
+  it('zeigt Leerzustand mit Hinweisen auf nexus init und das Plugin', async () => {
     await open({ getSessions: async () => [] }, false);
     expect(await screen.findByText('Keine Sessions')).toBeTruthy();
     expect(screen.getByText('Starte ein Ticket, dann erscheint die Session hier.')).toBeTruthy();
     expect(screen.getByText('Noch keine Hook-Meldungen empfangen')).toBeTruthy();
-    expect(screen.getByText('harness init')).toBeTruthy();
+    expect(screen.getByText('nexus init')).toBeTruthy();
   });
 
   it('zeigt Lade- und Fehlerzustand', async () => {

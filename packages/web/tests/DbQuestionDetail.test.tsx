@@ -243,7 +243,7 @@ describe('DbQuestionDetailPage', () => {
     }));
     const api = open({ addDbQuestionComment });
     await screen.findByRole('heading', { name: 'Welcher Speicher?', level: 1 });
-    expect(screen.getByText('Sessions sehen Kommentare mit „harness board question show“.')).toBeTruthy();
+    expect(screen.getByText('Sessions sehen Kommentare mit „nexus board question show“.')).toBeTruthy();
     await userEvent.type(screen.getByLabelText('Neuer Kommentar'), 'Noch eine Idee');
     await userEvent.click(screen.getByRole('button', { name: 'Kommentar senden' }));
     expect(addDbQuestionComment).toHaveBeenCalledWith('ARC-F0001', 'Noch eine Idee');

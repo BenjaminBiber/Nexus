@@ -27,7 +27,7 @@ function show(ticket: DbTicketDetailDto = TICKET, mine = true, overrides: Parame
 describe('DbPlanStart', () => {
   it('startet die Planung auf eigenem Board und zeigt den laufenden Lauf', async () => {
     const { onDone, startTicketPlanning } = show();
-    expect(screen.getByText('harness board plan-start ARC-0007')).toBeTruthy();
+    expect(screen.getByText('nexus board plan-start ARC-0007')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'Planen' }));
     expect(startTicketPlanning).toHaveBeenCalledWith('ARC-0007', 1);
     expect(await screen.findByRole('status')).toHaveProperty('textContent', expect.stringContaining('ARC-0007-20261019-100000-plan.log'));

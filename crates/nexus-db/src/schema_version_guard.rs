@@ -44,7 +44,7 @@ impl SchemaVersionGuard {
             return Err(HarnessError::new(
                 "board-schema-missing",
                 if sqlite {
-                    format!("In der SQLite-Datei {database} fehlt das Board-Schema, obwohl der Harness es beim Öffnen selbst anlegt. Die Datei ist vermutlich keine Board-Datei – unter Einstellungen → Board-Datenbank einen anderen Pfad wählen.")
+                    format!("In der SQLite-Datei {database} fehlt das Board-Schema, obwohl Nexus es beim Öffnen selbst anlegt. Die Datei ist vermutlich keine Board-Datei – unter Einstellungen → Board-Datenbank einen anderen Pfad wählen.")
                 } else {
                     format!("In der Datenbank {database} fehlt das Schema „board“. Skript crates/nexus-db/sql/001_initial.sql ausführen.")
                 },
@@ -56,7 +56,7 @@ impl SchemaVersionGuard {
             return Err(HarnessError::new(
                 "board-schema-outdated",
                 if sqlite {
-                    format!("SQLite-Datei {database} hat Schema-Version {actual}, erwartet {EXPECTED_SCHEMA_VERSION}. Der Harness spielt fehlende Stufen beim Öffnen selbst ein – Befehl bzw. Server neu starten; bleibt die Meldung, ist die Datei beschädigt.")
+                    format!("SQLite-Datei {database} hat Schema-Version {actual}, erwartet {EXPECTED_SCHEMA_VERSION}. Nexus spielt fehlende Stufen beim Öffnen selbst ein – Befehl bzw. Server neu starten; bleibt die Meldung, ist die Datei beschädigt.")
                 } else {
                     format!("Datenbank {database} hat Schema-Version {actual}, erwartet {EXPECTED_SCHEMA_VERSION}. Skript crates/nexus-db/sql/{next}_….sql (und folgende) ausführen.")
                 },
@@ -67,9 +67,9 @@ impl SchemaVersionGuard {
             return Err(HarnessError::new(
                 "board-schema-newer",
                 if sqlite {
-                    format!("SQLite-Datei {database} hat Schema-Version {actual}, dieser Harness kennt nur {EXPECTED_SCHEMA_VERSION}. Im Harness-Ordner das Plugin neu bauen und „nexus install“ ausführen.")
+                    format!("SQLite-Datei {database} hat Schema-Version {actual}, diese Nexus-Version kennt nur {EXPECTED_SCHEMA_VERSION}. Im Nexus-Ordner das Plugin neu bauen und „nexus install“ ausführen.")
                 } else {
-                    format!("Datenbank {database} hat Schema-Version {actual}, dieser Harness kennt nur {EXPECTED_SCHEMA_VERSION}. Im Harness-Ordner das Plugin neu bauen und „nexus install“ ausführen.")
+                    format!("Datenbank {database} hat Schema-Version {actual}, diese Nexus-Version kennt nur {EXPECTED_SCHEMA_VERSION}. Im Nexus-Ordner das Plugin neu bauen und „nexus install“ ausführen.")
                 },
             )
             .into());
@@ -99,7 +99,7 @@ impl SchemaVersionGuard {
     /// `database` ist bei SQLite der Dateipfad.
     pub fn feature_message(feature: &str, database: &str, provider: BoardProvider) -> String {
         if provider == BoardProvider::Sqlite {
-            format!("Dafür fehlt der SQLite-Datei {database} die Erweiterung {feature}. Der Harness spielt sie beim Öffnen selbst ein – Befehl bzw. Server neu starten; bleibt die Meldung, ist die Datei beschädigt.")
+            format!("Dafür fehlt der SQLite-Datei {database} die Erweiterung {feature}. Nexus spielt sie beim Öffnen selbst ein – Befehl bzw. Server neu starten; bleibt die Meldung, ist die Datei beschädigt.")
         } else {
             format!(
                 "Dafür fehlt der Datenbank {database} die Erweiterung {feature}. Skript crates/nexus-db/sql/{} ausführen (als Administrator). Die übrigen Board-Befehle laufen weiter.",

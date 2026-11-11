@@ -53,9 +53,9 @@ Der Aufruf erwartet den Hauptordner des Repos als Arbeitsordner, weil der Standa
    Tickets über die HTTP-API. Die Tickets verteilen sich auf Backlog, Geplant, In Arbeit, Blockiert und Erledigt,
    jedes fünfte bekommt zwei Kommentare – eine Ansicht mit 500 Karten in einer Spalte misst sonst zu günstig.
 3. **Testprojekt der Hooks** (einmalig, vor den langen Messreihen, damit ein fehlender Build früh auffällt):
-   Plugin-Bündel nach `<temp>/plugin` bauen, temporäres Git-Repo anlegen, mit `harness init` einrichten, am
+   Plugin-Bündel nach `<temp>/plugin` bauen, temporäres Git-Repo anlegen, mit `nexus init` einrichten, am
    Server anmelden (`POST /api/projects`) und dem Bench-Board zuordnen (`PATCH /api/db/boards/<id>`). Danach prüft
-   ein `harness init --json`, dass das CLI im Testprojekt genau dieses Board findet – ohne Zuordnung lädt der Hook
+   ein `nexus init --json`, dass das CLI im Testprojekt genau dieses Board findet – ohne Zuordnung lädt der Hook
    keinen Board-Kontext und die Messung wäre zu günstig.
 4. **Kaltstart** (`--runs` mal): Prozess starten und alle 10 ms fragen, bis `GET /api/health` und danach
    `GET /api/db/boards/<id>/view` mit `200` antworten. Beide Zeiten zählen ab dem Start des Prozesses.

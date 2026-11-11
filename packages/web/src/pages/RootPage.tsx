@@ -12,7 +12,7 @@ export function RootPage() {
   if (state.data.length === 0) {
     return (
       <div className="page">
-        <EmptyState title="Noch kein Projekt angemeldet" command="harness board">
+        <EmptyState title="Noch kein Projekt angemeldet" command="nexus board">
           Führe im Projektordner den Befehl aus, dann erscheint das Projekt hier.
         </EmptyState>
       </div>

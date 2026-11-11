@@ -10,7 +10,7 @@ const REPO_DIR = 'Mein Projekt ä';
 // Hauptbranch der Fixture-Repos
 const MAIN = 'main';
 
-// Legt die temporären Git-Repos eines Szenarios an (Dateien, erster Commit, Arbeitsbranches, auf Wunsch `harness init`).
+// Legt die temporären Git-Repos eines Szenarios an (Dateien, erster Commit, Arbeitsbranches, auf Wunsch `nexus init`).
 export class RepoFixture {
   // `home`: HARNESS_HOME des Szenarios, `claudeConfig`: leere Claude-Code-Konfiguration,
   // `cli`: Befehl der CLI als Liste (z. B. ['node', '…/cli/dist/main.js'])

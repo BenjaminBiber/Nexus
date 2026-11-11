@@ -6,15 +6,15 @@ use crate::board::basics::TicketStatus;
 use super::phases::{workflow_phases, WorkflowPhase};
 
 /// Befehl, der das nächste bereite Ticket zeigt
-const NEXT_READY: &str = "`harness board list --status geplant --md`";
+const NEXT_READY: &str = "`nexus board list --status geplant --md`";
 
 /// Befehl, der das nächste Ticket mit Planungsbedarf holt. Er steht hier und nicht in
 /// `workflow_phases`, weil dort nur Befehle für Claude Code (Slash-Befehle) stehen.
-const NEXT_PLANNING: &str = "`harness --json board next-planning --claim claude`";
+const NEXT_PLANNING: &str = "`nexus --json board next-planning --claim claude`";
 
 /// Befehl, der Plan, Handbuch und Diagramm schreibt (setzt Geplant)
 fn plan_json(id: &str) -> String {
-    format!("`harness board plan-json {id} --file payload.json --by claude`")
+    format!("`nexus board plan-json {id} --file payload.json --by claude`")
 }
 
 /// Ausnahme vom Ablauf für schnelle Aufgaben; gilt nur nach ausdrücklicher Bestätigung
@@ -72,7 +72,7 @@ impl WorkflowHint {
             })
             .collect();
         format!(
-            "Ablauf im Harness: {}. Aus einem Superpowers-Plan legst du auf Wunsch je Task ein Ticket an und schreibst Plan, Handbuch und Diagramm mit {} (setzt Geplant; Skill board, „Tickets aus einem Superpowers-Plan“). Tickets mit Planungsbedarf (etwa aus der Ticket-Auswahl der Docs-Seite) werden vor dem Umsetzen geplant: {} holt das nächste, {} schreibt Plan, Handbuch und Diagramm. Abgeschlossen wird mit `harness board done`, gemergt wird von Hand.",
+            "Ablauf in Nexus: {}. Aus einem Superpowers-Plan legst du auf Wunsch je Task ein Ticket an und schreibst Plan, Handbuch und Diagramm mit {} (setzt Geplant; Skill board, „Tickets aus einem Superpowers-Plan“). Tickets mit Planungsbedarf (etwa aus der Ticket-Auswahl der Docs-Seite) werden vor dem Umsetzen geplant: {} holt das nächste, {} schreibt Plan, Handbuch und Diagramm. Abgeschlossen wird mit `nexus board done`, gemergt wird von Hand.",
             parts.join("; "),
             plan_json("<ID>"),
             NEXT_PLANNING,
@@ -160,7 +160,7 @@ impl WorkflowHint {
         };
         let next = match open.status {
             TicketStatus::InProgress => {
-                "nach der Umsetzung Review und Abschluss mit `harness board done` vorschlagen"
+                "nach der Umsetzung Review und Abschluss mit `nexus board done` vorschlagen"
                     .to_string()
             }
             TicketStatus::Blocked => {
@@ -203,8 +203,8 @@ mod tests {
     #[test]
     fn nennt_alle_phasen_mit_ihren_befehlen() {
         let hint = WorkflowHint::default().build(&[]);
-        assert!(hint.starts_with("Ablauf im Harness: Neue Funktion planen: /superpowers:brainstorming → /superpowers:writing-plans; Ticket umsetzen: /nexus:harness-implement."));
-        assert!(hint.contains("Stand: keinem Ticket zugeordnet. Vorschlag: eine neue Funktion mit /superpowers:brainstorming planen oder mit `harness board list --status geplant --md` das nächste bereite Ticket suchen."));
+        assert!(hint.starts_with("Ablauf in Nexus: Neue Funktion planen: /superpowers:brainstorming → /superpowers:writing-plans; Ticket umsetzen: /nexus:harness-implement."));
+        assert!(hint.contains("Stand: keinem Ticket zugeordnet. Vorschlag: eine neue Funktion mit /superpowers:brainstorming planen oder mit `nexus board list --status geplant --md` das nächste bereite Ticket suchen."));
         assert!(hint.contains("Schnelle Aufgaben und Nebenaufgaben"));
     }
 
@@ -213,7 +213,7 @@ mod tests {
         let hint = WorkflowHint::default();
         assert!(hint
             .build(&[ticket("ARC-0001", TicketStatus::Backlog)])
-            .contains("Stand: ARC-0001 ist Backlog. Vorschlag: vor dem Umsetzen planen: Plan, Handbuch und Diagramm mit `harness board plan-json ARC-0001 --file payload.json --by claude` schreiben (setzt Geplant); erst danach mit /nexus:harness-implement ARC-0001 umsetzen."));
+            .contains("Stand: ARC-0001 ist Backlog. Vorschlag: vor dem Umsetzen planen: Plan, Handbuch und Diagramm mit `nexus board plan-json ARC-0001 --file payload.json --by claude` schreiben (setzt Geplant); erst danach mit /nexus:harness-implement ARC-0001 umsetzen."));
         assert!(hint
             .build(&[ticket("ARC-0001", TicketStatus::InPlanning)])
             .contains("Stand: ARC-0001 ist In Planung. Vorschlag: den Plan mit dem Nutzer abschließen (In Planung gehört ihm), dann Plan, Handbuch und Diagramm mit"));
@@ -222,7 +222,7 @@ mod tests {
             .contains("Vorschlag: mit /nexus:harness-implement ARC-0001 umsetzen."));
         assert!(hint
             .build(&[ticket("ARC-0001", TicketStatus::InProgress)])
-            .contains("Stand: ARC-0001 ist In Arbeit. Vorschlag: nach der Umsetzung Review und Abschluss mit `harness board done` vorschlagen."));
+            .contains("Stand: ARC-0001 ist In Arbeit. Vorschlag: nach der Umsetzung Review und Abschluss mit `nexus board done` vorschlagen."));
         assert!(hint
             .build(&[ticket("ARC-0001", TicketStatus::Blocked)])
             .contains("Vorschlag: den Grund für Blockiert klären, bevor weitergearbeitet wird."));

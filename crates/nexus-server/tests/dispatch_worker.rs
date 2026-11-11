@@ -269,7 +269,7 @@ async fn schreibt_stream_json_lesbar_mit_uhrzeit_ins_protokoll() {
     );
     assert!(
         log.lines().any(|zeile| zeile
-            .contains("liest Ticket ARC-0004\t\"$ harness board show ARC-0004\"")),
+            .contains("liest Ticket ARC-0004\t\"$ nexus board show ARC-0004\"")),
         "{log}"
     );
     assert!(log.contains("] abgelehnt\t\"abgelehnt\""), "{log}");

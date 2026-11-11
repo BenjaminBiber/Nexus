@@ -376,7 +376,7 @@ impl TestServer {
         self.request("DELETE", url, Some("{}"), &[]).await
     }
 
-    /// Das Hook-Token eines Projektordners (`harness init` hat es angelegt)
+    /// Das Hook-Token eines Projektordners (`nexus init` hat es angelegt)
     pub fn token(&self, repo: &std::path::Path) -> String {
         let project = nexus_core::HarnessProject::open(repo).expect("Projekt öffnen");
         nexus_core::project::TokenStore::new(project.layout.clone())

@@ -188,7 +188,7 @@ export type Ticket = { id: string, projectId: number, boardId: number, number: n
  */
 spec: string | null, specTask: string | null, 
 /**
- * Branch und Worktree, in dem das Ticket umgesetzt wird (harness board start)
+ * Branch und Worktree, in dem das Ticket umgesetzt wird (nexus board start)
  */
 branch: string | null, worktree: string | null, 
 /**
@@ -234,7 +234,7 @@ sessions: Array<string>, id: string, projectId: number, boardId: number, number:
  */
 spec: string | null, specTask: string | null, 
 /**
- * Branch und Worktree, in dem das Ticket umgesetzt wird (harness board start)
+ * Branch und Worktree, in dem das Ticket umgesetzt wird (nexus board start)
  */
 branch: string | null, worktree: string | null, 
 /**
@@ -300,7 +300,7 @@ sessions: Array<string>, id: string, projectId: number, boardId: number, number:
  */
 spec: string | null, specTask: string | null, 
 /**
- * Branch und Worktree, in dem das Ticket umgesetzt wird (harness board start)
+ * Branch und Worktree, in dem das Ticket umgesetzt wird (nexus board start)
  */
 branch: string | null, worktree: string | null, 
 /**

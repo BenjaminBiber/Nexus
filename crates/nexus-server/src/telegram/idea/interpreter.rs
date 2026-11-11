@@ -185,7 +185,7 @@ impl IdeaInterpreter {
                             .await?,
                     );
                 }
-                // Dieselbe Erkennung, mit der `harness board note add` Dubletten findet
+                // Dieselbe Erkennung, mit der `nexus board note add` Dubletten findet
                 let similar: HashSet<i32> = NoteSimilarity::similar(&input, &open)
                     .iter()
                     .map(|note| note.id)

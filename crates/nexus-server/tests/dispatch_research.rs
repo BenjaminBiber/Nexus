@@ -231,7 +231,7 @@ async fn startet_die_recherche_im_losgelosten_worktree_des_board_repos_eingeschr
     );
     assert_eq!(record.args[allowed + 1..], RESEARCH_TOOLS.map(String::from));
     assert!(record.prompt.contains(&format!(
-        "harness board question research {id} --from research.json --author research-{id}"
+        "nexus board question research {id} --from research.json --author research-{id}"
     )));
     assert!(!f.launcher.env_of(&record.id).contains_key("HARNESS_TICKET"));
 

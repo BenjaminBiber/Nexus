@@ -126,7 +126,7 @@ impl<'a> DispatchReadiness<'a> {
         }
         let Some(repo_path) = board.repo_path.as_deref().filter(|path| !path.is_empty()) else {
             return Some(
-                "Board hat keinen Repo-Pfad (harness board boards repo <id> <pfad>)".to_string(),
+                "Board hat keinen Repo-Pfad (nexus board boards repo <id> <pfad>)".to_string(),
             );
         };
         if !repo_exists(repo_path) {
@@ -283,7 +283,7 @@ mod tests {
             readiness
                 .reason(&ready(), &ohne_pfad, ME, &|_| true)
                 .as_deref(),
-            Some("Board hat keinen Repo-Pfad (harness board boards repo <id> <pfad>)")
+            Some("Board hat keinen Repo-Pfad (nexus board boards repo <id> <pfad>)")
         );
         assert_eq!(
             readiness

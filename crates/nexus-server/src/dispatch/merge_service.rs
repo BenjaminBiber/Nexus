@@ -371,7 +371,7 @@ Grund „Merge: …“).",
             "kein Branch eingetragen, es gibt nichts zu mergen"
         } else {
             "das Board gehört einem anderen Benutzer oder hat keinen Repo-Pfad – gemergt wird \
-dort („Mergen“ bzw. harness board merge)"
+dort („Mergen“ bzw. nexus board merge)"
         };
         Ok(AcceptOutcome {
             text: format!("{} abgenommen und erledigt; {why}.", ticket.id),

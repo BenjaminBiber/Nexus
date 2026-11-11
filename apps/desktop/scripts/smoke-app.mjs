@@ -185,7 +185,7 @@ async function serverLaeuftSchon() {
     app = start(APP, [], env);
     const connected = await waitFor(() => WINDOW_LOADED.test(app.output), START_MS);
     check(connected, `${label}: die App lädt die Oberfläche`, connected ? '' : app.output.trim().slice(-300));
-    const alleine = /läuft schon ein Harness-Server/.test(app.output);
+    const alleine = /läuft schon ein Nexus-Server/.test(app.output);
     check(alleine, `${label}: die App startet keinen zweiten Server`, alleine ? '' : app.output.trim().slice(-300));
     check(info(home)?.pid === before?.pid, `${label}: server.json nennt weiter denselben Server`, JSON.stringify(info(home)));
 

@@ -45,7 +45,7 @@ export function DbPlanStart({ ticket, mine, onDone }: { ticket: DbTicketDetailDt
           {planning.error}
         </div>
       )}
-      {!planning.run && <CopyCommand command={`harness board plan-start ${ticket.id}`} compact />}
+      {!planning.run && <CopyCommand command={`nexus board plan-start ${ticket.id}`} compact />}
     </section>
   );
 }

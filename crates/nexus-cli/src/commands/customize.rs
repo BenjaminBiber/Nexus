@@ -20,7 +20,7 @@ use crate::context::CliContext;
 /// Ordner mit den mitgelieferten Skills und Output-Styles im Clone
 const MANIFEST: [&str; 3] = ["packages", "plugin", "manifest"];
 
-/// Datei, aus der die Fassung des Harness kommt: der Cargo-Workspace
+/// Datei, aus der die Fassung von Nexus kommt: der Cargo-Workspace
 const VERSION_FILE: [&str; 1] = ["Cargo.toml"];
 
 /// Gemeinsame Optionen und der Unterbefehl von `nexus customize`
@@ -29,7 +29,7 @@ pub struct CustomizeCli {
     #[arg(
         long,
         value_name = "ordner",
-        help = "Clone des Harness (Standard: Wurzel des Git-Repos im aktuellen Ordner)"
+        help = "Clone von Nexus (Standard: Wurzel des Git-Repos im aktuellen Ordner)"
     )]
     pub clone: Option<PathBuf>,
     #[arg(
@@ -69,7 +69,7 @@ pub enum CustomizeCommands {
         #[arg(
             long,
             value_name = "fassung",
-            help = "Fassung des Harness für die Übersicht (Standard: aus Cargo.toml)"
+            help = "Fassung von Nexus für die Übersicht (Standard: aus Cargo.toml)"
         )]
         version: Option<String>,
     },
@@ -84,7 +84,7 @@ pub enum CustomizeCommands {
         #[arg(
             long,
             value_name = "datei",
-            help = "Datei der Übersicht (Standard: customizations/overview.json im Harness-Ordner)"
+            help = "Datei der Übersicht (Standard: customizations/overview.json im Nexus-Ordner)"
         )]
         file: Option<PathBuf>,
     },
@@ -264,7 +264,7 @@ fn zeilen(text: &str) -> Vec<String> {
     text.split('\n').map(ToString::to_string).collect()
 }
 
-/// Clone des Harness: `--clone`, sonst die Wurzel des Git-Repos, sonst der Projektordner
+/// Clone von Nexus: `--clone`, sonst die Wurzel des Git-Repos, sonst der Projektordner
 fn clone_dir(context: &CliContext, option: Option<&Path>) -> PathBuf {
     if let Some(dir) = option {
         return dir.to_path_buf();
@@ -295,7 +295,7 @@ fn manifest_dir(clone: &Path) -> PathBuf {
         .fold(clone.to_path_buf(), |dir, teil| dir.join(teil))
 }
 
-/// Fassung des Harness aus dem Cargo-Workspace (`Cargo.toml`, erste `version = "…"`-Zeile);
+/// Fassung von Nexus aus dem Cargo-Workspace (`Cargo.toml`, erste `version = "…"`-Zeile);
 /// fehlt sie, bleibt sie leer
 fn harness_version(clone: &Path) -> String {
     let file = VERSION_FILE

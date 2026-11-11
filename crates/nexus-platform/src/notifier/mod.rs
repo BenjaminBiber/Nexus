@@ -27,9 +27,9 @@ use serde::{Deserialize, Serialize};
 pub const TOAST_APP_ID: &str = "AI.Harness";
 
 /// Anzeigename der App in Windows
-pub const TOAST_APP_NAME: &str = "AI Harness";
+pub const TOAST_APP_NAME: &str = "Nexus";
 
-/// Gruppe, in der Windows die Meldungen des Harness zusammenfasst
+/// Gruppe, in der Windows die Meldungen von Nexus zusammenfasst
 pub const TOAST_GROUP: &str = "harness";
 
 /// Kennung, unter der sich Meldungen gegenseitig ersetzen, wenn keine angegeben ist

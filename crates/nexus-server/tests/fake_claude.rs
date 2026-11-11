@@ -84,7 +84,7 @@ async fn modus_stream_liefert_ganze_ereigniszeilen_obwohl_mitten_in_der_zeile_ge
             .unwrap_or_else(|error| panic!("Zeile ist kein JSON ({error}): {zeile}"));
     }
     assert!(zeilen[0].contains("\"model\":\"fake-opus\""));
-    assert!(zeilen[1].contains("harness board show ARC-0004"));
+    assert!(zeilen[1].contains("nexus board show ARC-0004"));
     let text = ClaudeResultEnvelope::new()
         .parse(&result.output)
         .expect("Ergebnis");

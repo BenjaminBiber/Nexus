@@ -1389,16 +1389,16 @@ mod tests {
     fn work_template() -> String {
         [
             "{{agent}} setzt {{ticketId}} („{{title}}“) um.",
-            "Fertig: harness board done {{ticketId}} --by {{agent}}",
-            "Blockiert: harness board set {{ticketId}} --status blocked",
-            "Frage: harness board question add \"…\" --ticket {{ticketId}}",
+            "Fertig: nexus board done {{ticketId}} --by {{agent}}",
+            "Blockiert: nexus board set {{ticketId}} --status blocked",
+            "Frage: nexus board question add \"…\" --ticket {{ticketId}}",
         ]
         .join("\n")
     }
 
     /// Knappe eigene Vorlage für plan
     fn plan_template() -> String {
-        "{{agent}} plant {{ticketId}}: plan.json schreiben, dann harness board plan-json {{ticketId}}"
+        "{{agent}} plant {{ticketId}}: plan.json schreiben, dann nexus board plan-json {{ticketId}}"
             .to_string()
     }
 

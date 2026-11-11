@@ -110,7 +110,7 @@ fn strom(ticket: &str) {
             "type": "assistant",
             "message": { "content": [
                 { "type": "text", "text": "Ich lese das Ticket." },
-                { "type": "tool_use", "name": "Bash", "input": { "command": format!("harness board show {ticket}") } },
+                { "type": "tool_use", "name": "Bash", "input": { "command": format!("nexus board show {ticket}") } },
             ] }
         }),
         serde_json::json!({

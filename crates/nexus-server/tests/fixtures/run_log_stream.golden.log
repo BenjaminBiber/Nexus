@@ -9,7 +9,7 @@ Zeile 3
 [dispatch] Ausgabe:
 <zeit>  [start] Claude startet (fake-opus)
 <zeit>  [say] Ich lese das Ticket.
-<zeit>  [run] liest Ticket ARC-0004	"$ harness board show ARC-0004"
+<zeit>  [run] liest Ticket ARC-0004	"$ nexus board show ARC-0004"
 <zeit>  [fail] abgelehnt	"abgelehnt"
 <zeit>  [done] fertig, 3 Schritte, 1 min
 

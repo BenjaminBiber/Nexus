@@ -37,7 +37,7 @@ pub struct SessionChange {
 /// Eine neue Frage oder eine neue Recherche
 #[derive(Debug, Clone)]
 pub struct QuestionChange {
-    /// Harness-Projekt der Adresse; leer: Startseite der Oberfläche
+    /// Nexus-Projekt der Adresse; leer: Startseite der Oberfläche
     pub project_id: String,
     pub project_name: String,
     pub kind: QuestionChangeKind,
@@ -261,7 +261,7 @@ impl NotificationService {
             kind: AttentionKind::Wartet,
             project_name: "Beispielprojekt",
             ticket: Some(&ticket),
-            session_title: Some("Testmeldung des Harness"),
+            session_title: Some("Testmeldung von Nexus"),
             session_model: None,
             open_url: &self.base_url(),
         })

@@ -179,7 +179,7 @@ function DbQuestionDetail() {
             </p>
           )}
           <QuestionHistory entries={historyEntries(question)} />
-          <QuestionCommentForm busy={q.busy} error={q.commentError} onSend={q.comment} hint="Sessions sehen Kommentare mit „harness board question show“." />
+          <QuestionCommentForm busy={q.busy} error={q.commentError} onSend={q.comment} hint="Sessions sehen Kommentare mit „nexus board question show“." />
         </div>
         <DbQuestionRelations
           pid={pid}

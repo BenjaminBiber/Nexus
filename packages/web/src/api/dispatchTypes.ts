@@ -17,7 +17,7 @@ export interface DispatchRuleDto {
   accounts?: string[];
 }
 
-// Inhalt von ~/.harness/dispatch.yaml (alles optional)
+// Inhalt von ~/.nexus/dispatch.yaml (alles optional)
 export interface RawDispatchConfigDto {
   enabled?: boolean;
   boards?: Array<number | string> | null;

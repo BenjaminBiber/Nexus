@@ -108,7 +108,7 @@
     },
     "response": {
       "code": 1,
-      "stderr": "Diesen Befund gibt es vermutlich schon:\n  1  [offen] Cache der Board-Ansicht läuft nie ab\nDerselbe Befund: harness board note seen 1 --from ARC-0002\nWirklich etwas anderes: mit --force anlegen. [note-similar]",
+      "stderr": "Diesen Befund gibt es vermutlich schon:\n  1  [offen] Cache der Board-Ansicht läuft nie ab\nDerselbe Befund: nexus board note seen 1 --from ARC-0002\nWirklich etwas anderes: mit --force anlegen. [note-similar]",
       "stdout": ""
     }
   },

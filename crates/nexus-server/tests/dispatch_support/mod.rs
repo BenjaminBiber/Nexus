@@ -645,7 +645,7 @@ impl DispatchFixture {
         self.dir.path()
     }
 
-    /// Der Agent committet eine Datei im Worktree und meldet „erledigt“ wie `harness board done`
+    /// Der Agent committet eine Datei im Worktree und meldet „erledigt“ wie `nexus board done`
     pub async fn finish_as_agent(&self, ticket_id: &str, file: &str, content: &str) {
         let worktree = self
             .ticket(ticket_id)

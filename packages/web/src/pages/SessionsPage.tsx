@@ -166,9 +166,9 @@ function Empty() {
       <div className="panel note">
         <h2>Noch keine Hook-Meldungen empfangen</h2>
         <p>
-          Das Plugin ai-harness meldet Sessions automatisch, sobald das Projekt eingerichtet ist. Führe im Projekt aus:
+          Das Plugin nexus meldet Sessions automatisch, sobald das Projekt eingerichtet ist. Führe im Projekt aus:
         </p>
-        <CopyCommand command="harness init" />
+        <CopyCommand command="nexus init" />
       </div>
     </>
   );

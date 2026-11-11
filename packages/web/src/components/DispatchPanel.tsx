@@ -16,7 +16,7 @@ import { DispatchPromptEditor, type PromptProblem } from './dispatch/DispatchPro
 import { PromptPreview } from './dispatch/PromptPreview.js';
 import { applyProfiles, checkForm, moveProfile, toForm, toRaw, PROMPT_KINDS, PROMPT_KIND_LABELS, type DispatchForm, type PromptKind } from './dispatch/dispatchForm.js';
 
-// Einstellungen des Dispatchers (~/.harness/dispatch.yaml): Schalter, Boards, Grenzen, Merge, Profile, Regeln, Claude-Aufruf.
+// Einstellungen des Dispatchers (~/.nexus/dispatch.yaml): Schalter, Boards, Grenzen, Merge, Profile, Regeln, Claude-Aufruf.
 // Unterbereiche des Dispatchers; die Einstellungs-Navigation zeigt sie als Untermenü (Hash #dispatch/<id>).
 // Wartezeit nach der letzten Eingabe bis zum automatischen Speichern.
 const AUTOSAVE_DELAY_MS = 1200;
@@ -191,7 +191,7 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
               <input type="checkbox" checked={form.enabled} onChange={(e) => change({ enabled: e.target.checked })} />
             </SettingRow>
           </SettingsSection>
-          <SettingsSection title="Boards" description="Ohne Auswahl: das aktive Board." info="Zur Wahl stehen deine eigenen Boards. Ein Board ohne deinen Repo-Pfad lässt sich nicht neu wählen; zuordnen mit harness board boards repo <ID> <Pfad>.">
+          <SettingsSection title="Boards" description="Ohne Auswahl: das aktive Board." info="Zur Wahl stehen deine eigenen Boards. Ein Board ohne deinen Repo-Pfad lässt sich nicht neu wählen; zuordnen mit nexus board boards repo <ID> <Pfad>.">
             {own.length === 0 && <p className="settings-card-body muted">Keine eigenen Boards.</p>}
             {own.map((b) => (
               <SettingRow key={b.id} label={`${b.projectKey} · ${b.name}`} hint={b.repoPath ? undefined : 'Ohne eigenen Repo-Pfad'}>
@@ -358,7 +358,7 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
           <SettingsSection
             title="Prompt-Vorlagen"
             description="Die Arbeitsanweisung an Claude je Laufart. Leer: die Standardvorlage gilt."
-            info="Die Standardvorlage zieht mit neuen Versionen des Harness automatisch mit. Eine eigene Vorlage bleibt dagegen so, wie sie hier steht."
+            info="Die Standardvorlage zieht mit neuen Versionen von Nexus automatisch mit. Eine eigene Vorlage bleibt dagegen so, wie sie hier steht."
             bare
           >
             {PROMPT_KINDS.map((kind) => {

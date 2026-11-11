@@ -61,7 +61,7 @@ static GIT: LazyLock<Regex> =
 static COMMIT_MESSAGE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"-m\s+(?:"([^"\n]*)"|'([^'\n]*)')"#).expect("festes Muster"));
 static HARNESS: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^harness\s+board\s+(\S+)\s*(\S+)?(.*)$").expect("festes Muster"));
+    LazyLock::new(|| Regex::new(r"^(?:nexus|harness)\s+board\s+(\S+)\s*(\S+)?(.*)$").expect("festes Muster"));
 static LEADING_CD: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^cd\s+\S+\s*(?:&&|;)\s*").expect("festes Muster"));
 static TOKEN: LazyLock<Regex> =
@@ -71,7 +71,7 @@ static TEST_FILE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\.(?:test|spec)\.[cm]?[tj]sx?$").expect("festes Muster"));
 static TEST_DIR: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?:^|/)tests?/").expect("festes Muster"));
-/// Erste Zahl im Rest von `harness board step …`
+/// Erste Zahl im Rest von `nexus board step …`
 static STEP_NUMBER: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\s*(\d+)").expect("festes Muster"));
 
@@ -299,7 +299,7 @@ fn test_text(command: &str) -> String {
     }
 }
 
-/// Was ein `harness board …` tut
+/// Was ein `nexus board …` (auch über den Alias `harness`) tut
 fn harness_text(verb: &str, id: Option<&str>, rest: &str) -> String {
     let id = id.unwrap_or("");
     match verb {
@@ -318,7 +318,7 @@ fn harness_text(verb: &str, id: Option<&str>, rest: &str) -> String {
                 format!("meldet {id} als erledigt")
             }
         }
-        other => one_line(&format!("harness board {other} {id}{rest}"), 120),
+        other => one_line(&format!("nexus board {other} {id}{rest}"), 120),
     }
 }
 
@@ -516,20 +516,25 @@ mod tests {
     #[test]
     fn harness_befehle_nennen_schritt_kommentar_und_abschluss() {
         assert_eq!(
-            summary("harness board step ARC-0007 3").text,
+            summary("nexus board step ARC-0007 3").text,
             "hakt Schritt 3 ab"
         );
         assert_eq!(
-            summary("harness board comment ARC-0007 \"x\"").text,
+            summary("nexus board comment ARC-0007 \"x\"").text,
             "kommentiert ARC-0007"
         );
         assert_eq!(
-            summary("harness board done ARC-0007").text,
+            summary("nexus board done ARC-0007").text,
             "meldet ARC-0007 als erledigt"
         );
         assert_eq!(
+            summary("nexus board note list").text,
+            "nexus board note list"
+        );
+        // Der alte Alias `harness` wird weiter erkannt und als `nexus` angezeigt
+        assert_eq!(
             summary("harness board note list").text,
-            "harness board note list"
+            "nexus board note list"
         );
     }
 

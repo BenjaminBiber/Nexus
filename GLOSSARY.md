@@ -1,4 +1,4 @@
-# AI Harness
+# Nexus
 
 Ein Werkzeug, das die parallele Arbeit mehrerer Claude-Sessions an Tickets koordiniert und sichtbar macht.
 
@@ -21,7 +21,7 @@ Eine Spec-Kit-Funktionsbeschreibung (z. B. `001-feature`) mit eigener Aufgabenli
 _Avoid_: Feature, Epic
 
 **Zielbranch**:
-Der am Ticket hinterlegte Branch, in den der Dispatcher den Ticket-Branch mergt; gibt es ihn noch nicht, legt der Harness ihn an. Ist keiner hinterlegt, wird in den im Hauptordner ausgecheckten Branch gemergt.
+Der am Ticket hinterlegte Branch, in den der Dispatcher den Ticket-Branch mergt; gibt es ihn noch nicht, legt Nexus ihn an. Ist keiner hinterlegt, wird in den im Hauptordner ausgecheckten Branch gemergt.
 _Avoid_: Merge-Branch, Basisbranch
 
 **Kommentar**:
@@ -29,7 +29,7 @@ Eine datierte Wortmeldung an einem Ticket von einem Menschen, einer Session oder
 _Avoid_: Notiz, Anmerkung
 
 **Kommentar (Docs)**:
-Eine Anmerkung zu einer markierten Textstelle in einer Spec-Datei, im Glossar oder in einem ADR; ein Agent arbeitet sie ein und markiert sie mit `harness spec resolve` als erledigt. Im Unterschied zum Kommentar am Ticket gehört sie zum Dokument.
+Eine Anmerkung zu einer markierten Textstelle in einer Spec-Datei, im Glossar oder in einem ADR; ein Agent arbeitet sie ein und markiert sie mit `nexus spec resolve` als erledigt. Im Unterschied zum Kommentar am Ticket gehört sie zum Dokument.
 _Avoid_: Notiz
 
 **Verlauf**:
@@ -65,15 +65,15 @@ Die von einem Menschen getroffene Antwort auf eine Frage: gewählte Option oder 
 _Avoid_: Antwort des Agenten
 
 **Anpassung**:
-Eine Änderung eines Devs am Standard des Harness, die außerhalb der ausgelieferten Dateien liegt und deshalb Updates des Harness ohne Merge übersteht.
+Eine Änderung eines Devs am Standard von Nexus, die außerhalb der ausgelieferten Dateien liegt und deshalb Updates von Nexus ohne Merge übersteht.
 _Avoid_: Customizing, Individualisierung, Override, Patch
 
 **Erweiterungspunkt**:
-Eine Stelle des Harness, an der Anpassungen erlaubt sind (z. B. der Workflow oder die Skills).
+Eine Stelle von Nexus, an der Anpassungen erlaubt sind (z. B. der Workflow oder die Skills).
 _Avoid_: Hook, Plugin-Punkt
 
 **Leitplanke**:
-Eine Vorgabe des Harness, die sich nicht ersetzen, höchstens erweitern lässt.
+Eine Vorgabe von Nexus, die sich nicht ersetzen, höchstens erweitern lässt.
 _Avoid_: Regel, Policy
 
 **Account**:

@@ -128,7 +128,7 @@
             }
           ]
         },
-        "message": "Diesen Befund gibt es vermutlich schon:\n  1  [offen] Dispatcher legt den Worktree-Branch doppelt an\nDerselbe Befund: harness board note seen 1\nWirklich etwas anderes: mit --force anlegen."
+        "message": "Diesen Befund gibt es vermutlich schon:\n  1  [offen] Dispatcher legt den Worktree-Branch doppelt an\nDerselbe Befund: nexus board note seen 1\nWirklich etwas anderes: mit --force anlegen."
       },
       "status": 422
     }

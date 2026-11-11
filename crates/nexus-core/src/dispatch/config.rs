@@ -2,7 +2,7 @@
 //! portiert aus `packages/core/src/dispatch/DispatchConfig.ts`.
 //!
 //! Die Tool-Listen, Marker und Gründe sind Vertrag zwischen Dispatcher und Agent und stehen
-//! deshalb wortgleich zu TypeScript hier – auch die Befehle `harness board …`.
+//! deshalb wortgleich zu TypeScript hier – auch die Befehle `nexus board …`.
 
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};

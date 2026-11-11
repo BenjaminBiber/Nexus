@@ -3,7 +3,7 @@ import type { UserSettingsDto } from '../../api/types.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useSaveStatus } from './SettingsPanel.js';
 
-// Persönliche Einstellungen (~/.harness/settings.json) mit Speicherstand: save übernimmt den gespeicherten Stand
+// Persönliche Einstellungen (~/.nexus/settings.json) mit Speicherstand: save übernimmt den gespeicherten Stand
 export function useUserSettings() {
   const api = useApi();
   const loaded = useAsync(() => api.getUserSettings(), [api]);
