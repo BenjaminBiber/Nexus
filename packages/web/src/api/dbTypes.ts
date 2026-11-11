@@ -65,6 +65,8 @@ export interface DbTicketDto {
 export interface DbCardDto extends Omit<DbTicketDto, 'description' | 'acceptance' | 'plan' | 'handbook' | 'diagram'> {
   commentCount: number;
   hasDescription: boolean; hasAcceptance: boolean; hasPlan: boolean; hasHandbook: boolean; hasDiagram: boolean;
+  /** Wann das Ticket zuletzt auf Erledigt ging; nur bei erledigten Karten gesetzt */
+  doneAt?: string | null;
 }
 
 export interface DbColumnDto { id: DbColumnId; title: string; tickets: DbCardDto[] }
