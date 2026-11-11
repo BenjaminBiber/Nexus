@@ -6,6 +6,7 @@ import type { DbStatus } from '../api/dbTypes.js';
 import { DbAddFab } from '../components/db/DbAddFab.js';
 import { DbAcceptanceDialog } from '../components/db/DbAcceptanceDialog.js';
 import { DbColumn, WAITING_HINT } from '../components/db/DbColumn.js';
+import { DbDoneSections } from '../components/db/DbDoneSections.js';
 import { DbGraphDialog, type GraphScopeOption } from '../components/db/DbGraphDialog.js';
 import { DbSpecsDialog } from '../components/db/DbSpecsDialog.js';
 import { DbImportDialog, importSources } from '../components/db/DbImportDialog.js';
@@ -18,6 +19,7 @@ import { DbUnavailable } from '../components/db/DbUnavailable.js';
 import { ErrorState } from '../components/ErrorState.js';
 import { LoadingState } from '../components/LoadingState.js';
 import { SearchIcon } from '../components/NavIcons.js';
+import { buildDoneLayout } from '../dbboard/doneSections.js';
 import { filterDbCards } from '../dbboard/filterDbCards.js';
 import { moveDbCard } from '../dbboard/moveDbCard.js';
 import { useBoardProjectSelection } from '../dbboard/boardProject.js';
@@ -105,6 +107,9 @@ export function DbBoardPage() {
   const settings = userSettings.state.status === 'ready' ? userSettings.state.data : null;
   const hidden = (id: string) => (id === 'not_needed' && settings?.hideNotNeeded) || (id === 'in_planning' && settings?.hideInPlanning);
   const shownColumns = view?.columns.filter((c) => !hidden(c.id)) ?? [];
+  // Die Spalte „Erledigt“ zeigt Zeilen in Abschnitten; bei aktiver Suche sind alle Abschnitte offen und archivierte Treffer sichtbar
+  const searching = query.trim() !== '';
+  const now = new Date();
   // Boards desselben Projekts, von denen sich Tickets holen lassen
   const sources = active?.board ? importSources(active.board, boards) : [];
   // Gehört das Board dem angemeldeten Benutzer? (für „Mergen“ im Panel)
@@ -272,20 +277,30 @@ export function DbBoardPage() {
       {board.view.state.status === 'error' && <ErrorState message={board.view.state.message} onRetry={board.view.retry} />}
       {view && showsActive && (
         <div className="columns db-columns" style={{ '--db-column-count': shownColumns.length } as CSSProperties}>
-          {shownColumns.map((column) => (
-            <DbColumn
-              key={column.id}
-              column={column}
-              cards={filterDbCards(column.tickets, query)}
-              onMove={(id, status) => void move(id, status)}
-              onOpen={openTicket}
-              onLockedDrop={() => setMessage({ kind: 'info', text: WAITING_HINT })}
-              agentPrefix={dispatch.status?.agentPrefix}
-              compact={compactCards}
-              merges={merges}
-              activeRuns={activeRuns}
-            />
-          ))}
+          {shownColumns.map((column) => {
+            const shown = filterDbCards(column.tickets, query);
+            const done =
+              column.id === 'done'
+                ? buildDoneLayout(shown, { grouping: settings?.doneGrouping ?? 'time', archiveDays: settings?.doneArchiveDays ?? 0, showArchived: false, searching, now })
+                : null;
+            return (
+              <DbColumn
+                key={column.id}
+                column={column}
+                cards={shown}
+                count={done?.shown}
+                onMove={(id, status) => void move(id, status)}
+                onOpen={openTicket}
+                onLockedDrop={() => setMessage({ kind: 'info', text: WAITING_HINT })}
+                agentPrefix={dispatch.status?.agentPrefix}
+                compact={compactCards}
+                merges={merges}
+                activeRuns={activeRuns}
+              >
+                {done && <DbDoneSections layout={done} expandAll={searching} onOpen={openTicket} merges={merges} now={now} />}
+              </DbColumn>
+            );
+          })}
         </div>
       )}
       <DbAddFab disabled={!view} importDisabled={!showsActive || sources.length === 0} onNew={() => setDialog('new')} onImport={() => setDialog('import')} />
