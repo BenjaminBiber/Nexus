@@ -1245,6 +1245,198 @@
   font-weight: 600;
 }
 
+/* Symbole (Slots NavIcon und Icon) */
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-icon.gta-v-empty {
+  width: 120px;
+  height: 80px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Fortschritt (Slot Progress): Segmentbalken und Beschriftung wie auf den Karten der Preview */
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-progress-bar {
+  display: flex;
+  gap: 2px;
+  height: 5px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-progress-bar i {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-progress-bar i[data-on] {
+  background: var(--gta-accent);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-progress-bar[data-beam] {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-progress-bar[data-beam] i {
+  flex: none;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-progress-text {
+  color: var(--gta-text-dim);
+  font: 500 12px/1 var(--gta-font-title);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Ladebildschirm (Slot StartAnimation): zwei schräg geteilte Bildflächen, die rechte kühl eingefärbt, mit Rasterpunkten */
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-panel {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-a {
+  clip-path: polygon(0 0, 57% 0, 45% 100%, 0 100%);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-b {
+  clip-path: polygon(58.3% 0, 100% 0, 100% 100%, 46.3% 100%);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-scene {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: gta-v-kb 7s linear both;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-b .gta-v-boot-scene {
+  filter: grayscale(1) contrast(1.25) brightness(1.7);
+  animation-name: gta-v-kb2;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-b::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#6ff0f0, #4f8df0 50%, #3a2f9a);
+  mix-blend-mode: multiply;
+}
+
+@keyframes gta-v-kb {
+  from {
+    transform: scale(1.25) translateX(4%);
+  }
+  to {
+    transform: scale(1.25) translateX(-3%);
+  }
+}
+
+@keyframes gta-v-kb2 {
+  from {
+    transform: scale(1.5) translate(-8%, 6%);
+  }
+  to {
+    transform: scale(1.5) translate(-2%, 6%);
+  }
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.42) 1px, transparent 1.5px);
+  background-size: 5px 5px;
+  mix-blend-mode: multiply;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-fade {
+  position: absolute;
+  inset: auto 0 0;
+  height: 46%;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.92));
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-logo {
+  position: absolute;
+  left: var(--v-gx);
+  bottom: 42px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-logo .gta-wordmark {
+  height: clamp(70px, 11vw, 130px);
+  color: #fff;
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.6));
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-logo em {
+  position: absolute;
+  right: -18px;
+  bottom: -16px;
+  color: var(--gta-warn);
+  font: 400 clamp(24px, 3.2vw, 40px)/1 var(--gta-font-script);
+  text-shadow: var(--v-outline);
+  transform: rotate(-6deg);
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-tip {
+  position: absolute;
+  right: var(--v-gx);
+  bottom: 92px;
+  max-width: 400px;
+  font: 400 16px/1.4 var(--gta-font-ui);
+  text-align: right;
+  text-shadow: 0 1px 3px #000;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-tip b {
+  display: block;
+  color: var(--gta-warn);
+  font: 700 15px/1.3 var(--gta-font-title);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-tip p {
+  margin: 0;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-spin {
+  position: absolute;
+  right: var(--v-gx);
+  bottom: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 16px/1 var(--gta-font-title);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-boot-spin i {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: gta-v-spin 0.8s linear infinite;
+}
+
+@keyframes gta-v-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ==== San Andreas ==== */
 
 /* Werte aus der Preview „San Andreas“: Arimo im Fließtext, Michroma für Menü und Knöpfe, Passion One im HUD, Pirata One

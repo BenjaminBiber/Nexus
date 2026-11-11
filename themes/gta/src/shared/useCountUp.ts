@@ -1,18 +1,10 @@
 // Zahl, die bei Änderung in kleinen Schritten zum neuen Wert läuft (Kontostand im HUD); bei reduzierter Bewegung springt sie.
 import { useEffect, useRef, useState } from 'react';
+import { reducedMotion } from './motion.js';
 
 /** Dauer des Hochzählens (ms) */
 export const COUNT_MS = 1200;
 const STEP_MS = 40;
-
-/** true, wenn das System reduzierte Bewegung wünscht */
-export function reducedMotion(): boolean {
-  try {
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  } catch {
-    return false;
-  }
-}
 
 /** Angezeigter Wert und ob gerade gezählt wird */
 export function useCountUp(target: number): { value: number; counting: boolean } {

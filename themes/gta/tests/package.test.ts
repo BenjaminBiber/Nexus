@@ -121,7 +121,7 @@ describe('GTA-Theme-Paket', () => {
     expect(manifest.settingsSchema).toEqual(GTA_SETTINGS);
     expect(theme.settingsSchema).toEqual(GTA_SETTINGS);
     expect(theme.id).toBe('gta');
-    expect(manifest.slots).toEqual(['Shell']);
+    expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Icon', 'Progress', 'StartAnimation']);
     expect(Object.keys(theme.slots)).toEqual(manifest.slots);
   });
 
