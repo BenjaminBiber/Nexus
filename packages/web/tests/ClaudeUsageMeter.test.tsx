@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ApiProvider } from '../src/api/ApiContext.js';
 import { ClaudeUsageMeter, RETRY_MS, USAGE_SETTING_EVENT, initials, resetDetail, resetLabel } from '../src/components/ClaudeUsageMeter.js';
@@ -33,6 +33,9 @@ const mount = (getUsageOverview: () => Promise<UsageOverviewDto>, variant: 'comp
   );
 const show = (value: UsageOverviewDto | Error, variant: 'compact' | 'full' = 'full') => mount(async () => { if (value instanceof Error) throw value; return value; }, variant);
 const region = () => screen.queryByRole('region', { name: 'Claude-Nutzungslimits' });
+// Stellt die Fake-Uhr vor und wartet in act() ab, bis React fertig gerendert hat. Fake-Timer steuern nur die Uhr: React
+// rendert danach über seinen eigenen Scheduler (echtes setImmediate), und ohne act() prüft der Test gelegentlich den alten Stand
+const advance = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
 
 describe('ClaudeUsageMeter', () => {
   it('zeigt mit Text je aktivem Account Ring, Name und Werte; über der Grenze orange, ab 85 % rot', async () => {
@@ -129,18 +132,18 @@ describe('ClaudeUsageMeter verschwindet nicht', () => {
       let value: UsageOverviewDto = three;
       let calls = 0;
       const { container } = mount(async () => { calls++; return value; });
-      await vi.advanceTimersByTimeAsync(10);
+      await advance(10);
       expect(region()).toBeTruthy();
       value = overview(entry('Support', usage({ available: false, reason: 'request-failed' }), { limitFiveHour: 90, limitWeek: 75 }));
       window.dispatchEvent(new Event(USAGE_SETTING_EVENT));
-      await vi.advanceTimersByTimeAsync(10);
+      await advance(10);
       expect(screen.getByRole('group', { name: 'Support' }).textContent).toBe('SUSupport92/90 %W 58/75 %');
       expect(container.querySelector('.usage-acc.stale')).toBeTruthy();
       // die schnelle Wiederholung holt frische Werte
       value = three;
-      await vi.advanceTimersByTimeAsync(RETRY_MS + 10);
+      await advance(RETRY_MS + 10);
       expect(calls).toBe(3);
-      await vi.advanceTimersByTimeAsync(100);
+      await advance(100);
       expect(container.querySelector('.usage-acc.stale')).toBeNull();
     } finally {
       vi.useRealTimers();
@@ -152,10 +155,10 @@ describe('ClaudeUsageMeter verschwindet nicht', () => {
     try {
       let value: UsageOverviewDto | Error = three;
       mount(async () => { if (value instanceof Error) throw value; return value; });
-      await vi.advanceTimersByTimeAsync(10);
+      await advance(10);
       value = new Error('weg');
       document.dispatchEvent(new Event('visibilitychange'));
-      await vi.advanceTimersByTimeAsync(RETRY_MS * 3);
+      await advance(RETRY_MS * 3);
       expect(region()).toBeTruthy();
       expect(screen.getAllByRole('group')).toHaveLength(3);
     } finally {
@@ -169,10 +172,10 @@ describe('ClaudeUsageMeter verschwindet nicht', () => {
       const past = new Date(Date.now() + 60_000).toISOString();
       let value = overview(entry('a', usage({ fiveHour: { percent: 92, resetsAt: past }, sevenDay: { percent: 10, resetsAt: null } })));
       mount(async () => value);
-      await vi.advanceTimersByTimeAsync(10);
+      await advance(10);
       value = overview(entry('a', usage({ available: false, reason: 'token-expired' })));
-      await vi.advanceTimersByTimeAsync(120_000 + 10);
-      await vi.advanceTimersByTimeAsync(100);
+      await advance(120_000 + 10);
+      await advance(100);
       expect(screen.getByRole('group', { name: 'a' }).textContent).toBe('Aa0 %W 10 %');
     } finally {
       vi.useRealTimers();
@@ -184,10 +187,10 @@ describe('ClaudeUsageMeter verschwindet nicht', () => {
     try {
       let value: UsageOverviewDto | Error = new Error('kaputt');
       mount(async () => { if (value instanceof Error) throw value; return value; });
-      await vi.advanceTimersByTimeAsync(10);
+      await advance(10);
       expect(region()).toBeNull();
       value = three;
-      await vi.advanceTimersByTimeAsync(RETRY_MS + 10);
+      await advance(RETRY_MS + 10);
       expect(region()).toBeTruthy();
     } finally {
       vi.useRealTimers();
