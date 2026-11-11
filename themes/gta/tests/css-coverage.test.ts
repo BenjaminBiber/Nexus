@@ -113,6 +113,86 @@ const HOST: Record<string, Record<string, string>> = {
     Review: '.db-review',
     'Diff im Review': '.db-review-patch',
   },
+  'meine-aufgaben': {
+    Seitentitel: '.questions-head > h1',
+    Liste: '.inbox-list',
+    Eintrag: '.inbox-row',
+    'Eintrag beim Überfahren': '.inbox-row:is(:hover, :focus-within)',
+    'Eintrag zum Ziehen': ".inbox-row[draggable='true']",
+    'Ablage beim Ziehen': '.inbox-row.drop-target',
+    'Marke der Art': '.badge.inbox-badge',
+    Titel: '.inbox-title',
+    Nummer: '.inbox-id',
+    Detail: '.inbox-detail',
+    'Zähler im Filter': '.tab-count',
+  },
+  dashboard: {
+    Dashboard: '.page.dashboard',
+    Seitentitel: '.dash-title > h1',
+    Kopf: '.dash-head',
+    Kennzahl: '.kpi',
+    'Name der Kennzahl': '.kpi-label',
+    'Wert der Kennzahl': '.kpi-value',
+    Kachel: '.dash-card',
+    'Titel der Kachel': '.dash-card h2',
+    Säulendiagramm: '.runs-plot',
+    Säule: '.runs-seg',
+    Legende: '.chart-legend .dot',
+    Leiter: '.ladder-bar',
+    Abbruchgrund: '.reason-track',
+    Hindernis: '.obstacle-count',
+    Aufgabengruppe: '.todo-group',
+    'Kopf der Gruppe': '.todo-head',
+    'Zähler der Gruppe': '.todo-count',
+    Aufgabe: '.todo-row',
+    'Knopf der Aufgabe': '.todo-action',
+    'Hinweis des Dashboards': '.dashboard-note',
+    'Notiz als Seitenblatt': '.note-slide',
+  },
+  sessions: {
+    Gruppe: '.card.group',
+    'Kopf der Gruppe': '.group-head',
+    Session: '.session-row',
+    'wartende Session': '.session-row.waiting',
+    Zustandspunkt: '.state-dot',
+    'laufende Session': '.state-dot.running',
+    Titel: '.session-title',
+    Subagent: '.subagents li',
+    Detailansicht: '.sheet.session-panel',
+    'Kopf der Detailansicht': '.sp-head',
+    'Titel der Session': '.sheet-head.sp-head h2',
+    Eingabe: '.tx-bubble',
+    Werkzeugaufruf: '.tx-tool',
+    'Kopf des Werkzeugaufrufs': '.tx-tool-head',
+    Ausgabe: '.tx-code',
+    Befehl: '.tx-command',
+    Nachdenken: '.tx-thinking-head',
+    Systemmeldung: '.tx-system',
+    'läuft noch': '.tx-live-dot',
+    Dateiliste: '.fc-list',
+    'Kennzahl des Laufs': '.ri-stat',
+    'Werte des Laufs': '.ri-list',
+  },
+  fragen: {
+    Liste: '.question-list',
+    Tabellenkopf: '.question-head',
+    Frage: '.question-row',
+    'neue Frage': '.question-row.fresh',
+    Titel: '.question-title',
+    'Verweis auf ein Ticket': '.qlink',
+    'Marke bereit': '.badge.q-ready',
+    'Titel der Detailseite': '.question-detail-head h1',
+    'wartende Tickets': '.db-question-relations h2',
+    Lösungsoption: '.option-card',
+    'empfohlene Option': '.option-card.recommended',
+    'gewählte Option': '.option-card.picked',
+    'Titel der Option': '.option-title',
+    Vorteil: '.option-list .pro',
+    Entscheidung: '.decision-form',
+    'gewählte Antwort': '.decision-choice',
+    'getroffene Entscheidung': '.decision-box',
+    'frühere Recherche': '.research-earlier',
+  },
 };
 
 const ROOT = ":root[data-theme='gta']";
@@ -187,7 +267,25 @@ function styleSelectors(text: string, style: keyof typeof STYLE_PREFIX): string[
 }
 
 // Board und Ticket-Panel bekommen in jedem Stil einen eigenen Look, nicht nur die gemeinsame Form
-const PER_STYLE = ['.db-column .column-head', '.column-head .count', '.db-card', '.db-card:is(:hover, :focus-within)', '.card-id', '.card-title', '.card-steps-bar', '.card-waiting', '.db-fab-dot', '.db-title', ".db-tablist [role='tab'].active"];
+const PER_STYLE = ['.db-column .column-head', '.column-head .count', '.db-card', '.db-card:is(:hover, :focus-within)', '.card-id', '.card-title', '.card-steps-bar', '.card-waiting', '.db-fab-dot', '.db-title', ".db-tablist [role='tab'].active",
+  // Meine Aufgaben, Dashboard, Sessions und Fragen
+  '.inbox-row', '.badge.inbox-badge', '.kpi-value', '.dash-card', '.todo-head', '.session-row', '.tx-tool', '.question-row', '.option-card', '.option-card.picked'];
+
+// Arten der Einträge unter „Meine Aufgaben“ (aus dem Kern) und die Farbe, die theme.css je Art setzt
+const inboxKinds = [...readFileSync(join(web, 'api', 'inboxTypes.ts'), 'utf8').match(/INBOX_KINDS = \[([^\]]*)\]/)![1]!.matchAll(/'([\w-]+)'/g)].map((m) => m[1]!);
+function kindColor(text: string, kind: string, prefix = ''): string | undefined {
+  const rule = stripComments(text).match(new RegExp(`${escape(prefix)}\\s*\\.inbox-row\\.kind-${kind}(?![\\w-])[^{]*\\{([^}]*)\\}`));
+  return rule?.[1]!.match(/--inbox-color:\s*([^;]+)/)?.[1]!.trim();
+}
+
+// Farbe einer Art im Stil: Regel des Stils vor der gemeinsamen, Tokens aus dem ersten Block des Stils aufgelöst
+function kindValue(text: string, kind: string, style: keyof typeof STYLE_PREFIX): string | undefined {
+  const prefix = STYLE_PREFIX[style];
+  const tokens = stripComments(text).match(new RegExp(`${escape(prefix)}\\s*\\{([^}]*)\\}`))![1]!;
+  const color = kindColor(text, kind, prefix) ?? kindColor(text, kind);
+  const name = color?.match(/^var\((--gta-[\w-]+)\)$/)?.[1];
+  return name ? tokens.match(new RegExp(`${name}:\\s*([^;]+);`))?.[1]!.trim().toLowerCase() : color;
+}
 
 const rules = selectors(readFileSync(join(root, 'theme.css'), 'utf8'));
 const code = sources(web);
@@ -216,6 +314,17 @@ describe('Abdeckung der Host-Selektoren in theme.css', () => {
 
   it.each((['v', 'sa'] as const).flatMap((style) => PER_STYLE.map((selector) => ({ style, selector }))))('Stil $style gestaltet $selector', ({ style, selector }) => {
     expect(covered(styleSelectors(readFileSync(join(root, 'theme.css'), 'utf8'), style), selector)).toBe(true);
+  });
+
+  it('jede Art unter „Meine Aufgaben“ hat eine Kennfarbe, die sich in jedem Stil von den anderen unterscheidet', () => {
+    const css = readFileSync(join(root, 'theme.css'), 'utf8');
+    expect(inboxKinds).toEqual(expect.arrayContaining(['question', 'accept', 'merge', 'blocked', 'planning', 'note']));
+    for (const kind of inboxKinds) expect(kindColor(css, kind), kind).toMatch(/^var\(--gta-/);
+    for (const style of ['v', 'sa'] as const) {
+      const colors = inboxKinds.map((kind) => kindValue(css, kind, style));
+      for (const color of colors) expect(color, style).toMatch(/^#[0-9a-f]{6}$/);
+      expect(new Set(colors).size, `${style}: ${colors.join(', ')}`).toBe(inboxKinds.length);
+    }
   });
 
   it('die Abschnitte der Stile werden getrennt gelesen', () => {
