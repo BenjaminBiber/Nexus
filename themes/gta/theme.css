@@ -4894,11 +4894,12 @@
   color: #fff;
 }
 
-/* Board-Auswahl des Kerns als Board-Name in der gotischen Schrift unter der Wortmarke, leicht schräg */
+/* Board-Auswahl des Kerns als Board-Name in der gotischen Schrift unter der Wortmarke, leicht schräg. Gedreht wird nur
+   die Zeile mit dem Auslöser: Popup und Dialog „Projekte und Boards verwalten“ sind ihre Geschwister und bleiben so im
+   Fenster statt im gedrehten Kasten. */
 :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-board {
   position: relative;
   margin-top: -0.5em;
-  transform: rotate(-3deg);
 }
 
 :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-board .proj {
@@ -4906,6 +4907,7 @@
 }
 
 :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-board .bp-field {
+  transform: rotate(-3deg);
   justify-content: flex-end;
   height: auto;
   border: 0;
