@@ -360,7 +360,7 @@
 }
 
 /* Kleine Beschriftungen über Feldern und Gruppen */
-:root[data-theme='gta'] :is(.field > span:first-child, .draft-field > span, .lbl, .side-label, .search-group-title, .bp-col-title, .toc-title) {
+:root[data-theme='gta'] :is(.field > span:first-child, .draft-field > span, .side-label, .search-group-title, .bp-col-title) {
   color: var(--gta-label-color);
   font: var(--gta-label-font);
   letter-spacing: var(--gta-label-track);
@@ -437,7 +437,7 @@
 }
 
 :root[data-theme='gta'] .btn:disabled,
-:root[data-theme='gta'] button:disabled {
+:root[data-theme='gta'] :is(.icon-btn, .link-btn, .tab, .fchip, .doc-comment-action):disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
@@ -448,12 +448,12 @@
 }
 
 /* Knöpfe nur mit Icon: eckig, Überfahren wie ein Reiter */
-:root[data-theme='gta'] :is(.icon-btn, .icon-link, .doc-open-btn, .info-tip, .star, .doc-comment-action, .search-clear, .doc-job-close) {
+:root[data-theme='gta'] :is(.icon-btn, .doc-open-btn, .info-tip, .star, .doc-comment-action, .search-clear, .doc-job-close) {
   border-radius: 0;
   color: var(--gta-text-dim);
 }
 
-:root[data-theme='gta'] :is(.icon-btn, .icon-link, .doc-open-btn, .info-tip, .star, .doc-comment-action, .search-clear):is(:hover, [aria-expanded='true']):not(:disabled) {
+:root[data-theme='gta'] :is(.icon-btn, .doc-open-btn, .info-tip, .star, .doc-comment-action, .search-clear):is(:hover, [aria-expanded='true']):not(:disabled) {
   background: var(--gta-hover-bg);
   color: var(--gta-hover-fg);
 }
@@ -498,26 +498,27 @@
   outline-offset: 0;
 }
 
-/* Suchfelder mit Symbol: Rahmen und Linie gehören dem Wrapper, das Eingabefeld darin bleibt flach */
-:root[data-theme='gta'] :is(.db-search, .theme-search) {
+/* Felder in einem Kasten (Suchfelder mit Symbol, Kommentar-Eingabe, Schnellerfassung): Rahmen und Linie gehören dem
+   Kasten, das Feld darin bleibt flach */
+:root[data-theme='gta'] :is(.db-search, .theme-search, .db-composer-box, .quick-capture) {
   border: var(--gta-field-border);
   border-radius: 0;
   background: var(--gta-field-bg);
   box-shadow: var(--gta-field-ring);
 }
 
-:root[data-theme='gta'] :is(.db-search, .theme-search):hover:not(:focus-within) {
+:root[data-theme='gta'] :is(.db-search, .theme-search, .db-composer-box, .quick-capture):hover:not(:focus-within) {
   box-shadow: var(--gta-field-ring-hover);
 }
 
-:root[data-theme='gta'] :is(.db-search, .theme-search):focus-within {
+:root[data-theme='gta'] :is(.db-search, .theme-search, .db-composer-box, .quick-capture):focus-within {
   border: var(--gta-field-border);
   box-shadow: var(--gta-field-ring-focus);
   outline: 2px solid var(--gta-accent);
   outline-offset: 0;
 }
 
-:root[data-theme='gta'] :is(.db-search, .theme-search) input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):is(*, :hover, :focus) {
+:root[data-theme='gta'] :is(.db-search, .theme-search, .db-composer-box, .quick-field) :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']), textarea):is(*, :hover, :focus) {
   border: 0;
   background: none;
   box-shadow: none;
@@ -591,6 +592,7 @@
 
 :root[data-theme='gta'] :is(.setting-control > input[type='checkbox'], input.switch):checked {
   background: var(--gta-accent);
+  box-shadow: var(--gta-switch-edge);
 }
 
 :root[data-theme='gta'] :is(.setting-control > input[type='checkbox'], input.switch):checked::before {
@@ -645,7 +647,7 @@
 }
 
 /* Labels, Chips und Zähler: kleine eckige Marken; Zustandsmarken behalten die Farben des Kerns */
-:root[data-theme='gta'] :is(.tag, .badge, .badge-new, .nav-badge, .dd-state, .suggestion-claude, .doc-ticket-chip) {
+:root[data-theme='gta'] :is(.tag, .badge, .nav-badge, .dd-state, .suggestion-claude, .doc-ticket-chip) {
   border-radius: 0;
   font: var(--gta-chip-font);
   letter-spacing: var(--gta-chip-track);
@@ -669,7 +671,7 @@
   color: var(--gta-text);
 }
 
-:root[data-theme='gta'] :is(.nav-badge, .badge-new) {
+:root[data-theme='gta'] .nav-badge {
   background: var(--gta-danger);
   color: #fff;
 }
@@ -750,7 +752,7 @@
 }
 
 /* Hinweise und Fehlermeldungen: Fläche und Schrift in der Farbe des Zustands, Kante links in derselben Farbe */
-:root[data-theme='gta'] :is(.banner, .notice-ok, .notice-warn, .conflict, .warn-box, .diagram-error, .doc-comment-resolution) {
+:root[data-theme='gta'] :is(.banner, .notice-ok, .conflict, .diagram-error, .doc-comment-resolution) {
   border-radius: 0;
   box-shadow: inset 3px 0 0 currentColor;
 }
@@ -2285,7 +2287,7 @@
   --gta-primary-hover: #ffffff;
   --gta-danger-bg: rgba(0, 0, 0, 0.74);
   --gta-danger-fg: #e0575a;
-  --gta-danger-hover-bg: var(--gta-danger);
+  --gta-danger-hover-bg: #e0575a;
   --gta-danger-hover-fg: #000000;
   --gta-field-bg: rgba(0, 0, 0, 0.6);
   --gta-field-border: 2px solid #000;

@@ -92,10 +92,22 @@ function selectors(text: string): string[] {
     .map((s) => s.replace(/^:root\[data-theme='gta'\](:not\(\[data-gta-style='sa'\]\)|\[data-gta-style='sa'\])?/, '').trim());
 }
 
-// Der Selektor steht in einer Regel: als Ganzes oder in einer :is()-Liste, nicht nur als Anfang eines längeren Namens
+// Steht vor der Fundstelle ein Vorfahre (Kombinator außerhalb von Klammern)? Dann gestaltet die Regel nur einen Sonderfall
+function nested(prefix: string): boolean {
+  let depth = 0;
+  for (const ch of prefix) {
+    if (ch === '(') depth++;
+    else if (ch === ')') depth--;
+    else if (depth === 0 && /[\s>+~]/.test(ch)) return true;
+  }
+  return false;
+}
+
+// Der Selektor beginnt eine Regel (auch innerhalb einer :is()-Liste), nicht nur als Anfang eines längeren Namens und
+// nicht nur unter einem Vorfahren wie „.db-search input“ oder „.gta-v kbd“
 function covered(rules: string[], selector: string): boolean {
-  const pattern = new RegExp(`(^|[\\s,(>+~])${escape(norm(selector))}(?![\\w-])`);
-  return rules.some((rule) => pattern.test(rule));
+  const pattern = new RegExp(`(^|[\\s,(])${escape(norm(selector))}(?![\\w-])`, 'g');
+  return rules.some((rule) => [...rule.matchAll(pattern)].some((m) => !nested(rule.slice(0, m.index + m[1]!.length))));
 }
 
 // Klassen und Elemente eines Selektors (ohne Pseudoklassen und Attributwerte)
@@ -119,8 +131,9 @@ const code = sources(web);
 const entries = Object.entries(HOST).flatMap(([group, list]) => Object.entries(list).map(([name, selector]) => ({ group, name, selector })));
 
 describe('Abdeckung der Host-Selektoren in theme.css', () => {
-  it('die Liste ist nicht leer und die Regeln hängen alle am Theme', () => {
+  it('die Liste ist nicht leer, theme.css hat Regeln am Theme', () => {
     expect(entries.length).toBeGreaterThan(40);
+    expect(rules.length).toBeGreaterThan(100);
     expect(readFileSync(join(root, 'theme.css'), 'utf8')).toContain(ROOT);
   });
 
@@ -143,5 +156,8 @@ describe('Abdeckung der Host-Selektoren in theme.css', () => {
     expect(covered([':is(.tab, .fchip).on'], '.tab')).toBe(true);
     expect(covered(['.btn-group'], '.btn')).toBe(false);
     expect(covered(['.search-hit-head'], '.search-hit')).toBe(false);
+    expect(covered(['.db-search input:focus'], 'input')).toBe(false);
+    expect(covered(['.gta-v kbd'], 'kbd')).toBe(false);
+    expect(covered([':is(.a, .b) > .c', '.markdown h2'], '.markdown h2')).toBe(true);
   });
 });
