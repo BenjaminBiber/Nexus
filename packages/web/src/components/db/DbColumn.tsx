@@ -23,6 +23,8 @@ export function DbColumn(props: {
   count?: number;
   /** Eigener Inhalt statt der Karten */
   children?: ReactNode;
+  /** Zusatz rechts im Kopf nach dem Zähler (Menü der Spalte „Erledigt“) */
+  headExtra?: ReactNode;
 }) {
   const { column } = props;
   const locked = column.id === 'waiting';
@@ -51,6 +53,7 @@ export function DbColumn(props: {
         <span className="column-dot" aria-hidden="true" />
         <h2>{column.title}</h2>
         <span className="count">{props.count ?? props.cards.length}</span>
+        {props.headExtra}
       </div>
       {props.children ?? (
         <>
