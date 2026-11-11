@@ -111,14 +111,7 @@ static RULES_WORK: LazyLock<Vec<Rule>> = LazyLock::new(|| {
         Rule {
             id: "blocked",
             label: "Ausgang blockiert: nexus board set {{ticketId}} --status blocked",
-            test: cmd_or_outcomes(&[
-                CLI,
-                "board",
-                "set",
-                &ph("ticketId"),
-                "--status",
-                "blocked",
-            ]),
+            test: cmd_or_outcomes(&[CLI, "board", "set", &ph("ticketId"), "--status", "blocked"]),
         },
         Rule {
             id: "question",
@@ -164,13 +157,7 @@ static RULES_RESEARCH: LazyLock<Vec<Rule>> = LazyLock::new(|| {
         Rule {
             id: "question-research",
             label: "Speichern: nexus board question research {{questionId}}",
-            test: cmd(&[
-                CLI,
-                "board",
-                "question",
-                "research",
-                &ph("questionId"),
-            ]),
+            test: cmd(&[CLI, "board", "question", "research", &ph("questionId")]),
         },
         Rule {
             id: "research-file",

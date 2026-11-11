@@ -60,8 +60,9 @@ static GIT: LazyLock<Regex> =
 /// `git commit -m "…"` bzw. `-m '…'`; in JavaScript ein Rückverweis auf das Anführungszeichen
 static COMMIT_MESSAGE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"-m\s+(?:"([^"\n]*)"|'([^'\n]*)')"#).expect("festes Muster"));
-static HARNESS: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(?:nexus|harness)\s+board\s+(\S+)\s*(\S+)?(.*)$").expect("festes Muster"));
+static HARNESS: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^(?:nexus|harness)\s+board\s+(\S+)\s*(\S+)?(.*)$").expect("festes Muster")
+});
 static LEADING_CD: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^cd\s+\S+\s*(?:&&|;)\s*").expect("festes Muster"));
 static TOKEN: LazyLock<Regex> =
