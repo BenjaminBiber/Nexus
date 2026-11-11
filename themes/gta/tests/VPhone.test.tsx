@@ -10,9 +10,15 @@ afterEach(cleanup);
 const phone = () => document.querySelector('[data-gta-part="phone"]') as HTMLElement | null;
 
 describe('VPhone', () => {
-  it('ohne Anruf rendert nichts', () => {
+  it('ohne Anruf steht nur die leere Statushülle', () => {
     renderWithGame(<VPhone />);
     expect(phone()).toBeNull();
+    expect(screen.getByRole('status').childElementCount).toBe(0);
+  });
+
+  it('die Nachricht erscheint in der Statushülle, damit Screenreader sie ansagen', () => {
+    renderWithGame(<VPhone />, fakeGame({ phone: { count: 1 } }));
+    expect(screen.getByRole('status').contains(phone())).toBe(true);
   });
 
   it('meldet eine neue Frage in der Einzahl, mehrere in der Mehrzahl', () => {

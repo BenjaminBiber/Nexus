@@ -23,8 +23,8 @@ function Zone() {
 
 // Rahmen im Stil San Andreas: der Vorort bei Sonnenuntergang hinten, links die Menüspalte mit Wortmarke, Menüliste und
 // Radar, rechts oben gotischer Seitentitel und HUD-Block, darunter der Inhalt des Kerns in einem eigenen Scroll-Bereich
-// und unten Untertitel und Zone. Handy, Banner und Stats-Menü liegen darüber; bei Busted und Wasted wird der Rahmen
-// dunkel (data-dead).
+// und unten Untertitel, Zone und das Handy bei einem Anruf. Banner und Stats-Menü liegen darüber; bei Busted und Wasted
+// wird der Rahmen dunkel (data-dead).
 export function SaShell({ content }: { content: ReactNode }) {
   const game = useGame();
   const statsButton = useRef<HTMLButtonElement>(null);
@@ -45,10 +45,10 @@ export function SaShell({ content }: { content: ReactNode }) {
         <footer className="gta-sa-bottom">
           <SaSubtitle />
           <Zone />
+          <SaPhone />
         </footer>
         {game.statsOpen && <SaStats returnFocus={statsButton} />}
       </div>
-      <SaPhone />
       <SaBanner />
     </div>
   );
