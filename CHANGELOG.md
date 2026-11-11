@@ -134,7 +134,10 @@
   Spiel: Spielgeld für erledigte Tickets und Schritte, Sterne für blockierte Tickets, Balken für
   Fortschritt und Claude-Kontingent, Tickets als Punkte auf dem Radar; Banner melden Mission
   Passed, Busted und Wasted, das Handy neue Fragen, und Cheats wie HESOYAM ändern nur die Anzeige.
-  Eigene Schriften im Paket (OFL 1.1, Yellowtail Apache 2.0), kein Originalmaterial des Spiels.
+  Eigene Schriften im Paket (OFL 1.1, Yellowtail Apache 2.0) samt den Lizenztexten in
+  `assets/fonts/licenses.json`, kein Originalmaterial des Spiels.
+- Der Theme-Host füllt jetzt `NavItem.badge` mit den Zählern für Meine Aufgaben, Fragen und Docs.
+  Dadurch zeigen auch die Themes Minecraft, Synthwave und Terminal diese Zähler erstmals an.
 
 ## 0.0.3 – 2026-11-09
 

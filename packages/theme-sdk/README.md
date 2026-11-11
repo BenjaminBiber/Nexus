@@ -197,7 +197,9 @@ werfen sie einen Fehler, der Hook und Provider nennt. `ThemeHostProvider` render
 
 Typen:
 
-- `NavItem`: `id: NavIconName`, `label`, `href`, `active`, `badge?`.
+- `NavItem`: `id: NavIconName`, `label`, `href`, `active`, `badge?`. `badge` ist die Zahl offener Einträge der Seite;
+  der Host füllt sie für `inbox` (Meine Aufgaben), `questions` (eigene offene Fragen) und `docs` (neue Docs). Sie fehlt
+  bei 0 und solange die Zahl noch nicht bekannt ist.
 - `BoardsState`: `current: BoardRef | null`, `projects`, `boards`, `loading`, `choose(ref: BoardRef)`.
   `BoardRef`: `project: string`, `board: number | null`.
 - `UsageState`: `enabled`, `available`, `reason`, `fiveHour`, `sevenDay` (je `UsageWindow | null`).
