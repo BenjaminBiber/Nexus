@@ -10,6 +10,10 @@ import theme from '../src/main.js';
 import { GtaShell } from '../src/GtaShell.js';
 import { STYLE_KEY } from '../src/settings.js';
 import { GtaIcon, GtaNavIcon, GtaProgress, GtaStartAnimation, STYLE_SLOTS } from '../src/slots.js';
+import { SaBoot } from '../src/sa/SaBoot.js';
+import { SaIcon } from '../src/sa/SaIcon.js';
+import { SaNavIcon } from '../src/sa/SaNavIcon.js';
+import { SaProgress } from '../src/sa/SaProgress.js';
 import { VBoot } from '../src/v/VBoot.js';
 import { VIcon } from '../src/v/VIcon.js';
 import { VNavIcon } from '../src/v/VNavIcon.js';
@@ -40,13 +44,12 @@ describe('Slots', () => {
     });
   });
 
-  it('bis San Andreas eigene Bausteine hat, liefern beide Stile die GTA-V-Variante', () => {
-    for (const style of ['v', 'sa'] as const) {
-      expect(STYLE_SLOTS[style], style).toEqual({ NavIcon: VNavIcon, Icon: VIcon, Progress: VProgress, StartAnimation: VBoot });
-    }
+  it('jeder Stil hat eigene Bausteine', () => {
+    expect(STYLE_SLOTS.v).toEqual({ NavIcon: VNavIcon, Icon: VIcon, Progress: VProgress, StartAnimation: VBoot });
+    expect(STYLE_SLOTS.sa).toEqual({ NavIcon: SaNavIcon, Icon: SaIcon, Progress: SaProgress, StartAnimation: SaBoot });
   });
 
-  it.each(['v', 'sa'] as const)('NavIcon, Icon und Progress rendern im Stil %s', (style) => {
+  it.each(['v', 'sa'] as const)('NavIcon, Icon und Progress rendern im Stil %s dessen Variante', (style) => {
     const { container } = inStyle(
       style,
       <>
@@ -55,14 +58,16 @@ describe('Slots', () => {
         <GtaProgress done={1} total={2} label="Schritte" caption="Schritte" />
       </>,
     );
-    expect([...container.querySelectorAll('svg.gta-v-icon')].map((svg) => svg.getAttribute('data-icon'))).toEqual(['board', 'doc']);
-    expect(container.querySelector('.gta-v-progress')).not.toBeNull();
+    expect([...container.querySelectorAll(`svg.gta-${style}-icon`)].map((svg) => svg.getAttribute('data-icon'))).toEqual(['board', 'doc']);
+    expect(container.querySelector(`.gta-${style}-progress`)).not.toBeNull();
+    const other = style === 'v' ? 'sa' : 'v';
+    expect(container.querySelector(`.gta-${other}-icon, .gta-${other}-progress`)).toBeNull();
   });
 
-  it.each(['v', 'sa'])('StartAnimation läuft ohne Host (%s)', (style) => {
+  it.each(['v', 'sa'])('StartAnimation läuft ohne Host im gemerkten Stil (%s)', (style) => {
     window.localStorage.setItem(STYLE_KEY, style);
     render(<GtaStartAnimation onDone={vi.fn()} />);
-    expect(document.querySelector('[data-gta-part="boot"]')).not.toBeNull();
+    expect(document.querySelector(`[data-gta-part="boot"].gta-${style}-boot`)).not.toBeNull();
   });
 });
 

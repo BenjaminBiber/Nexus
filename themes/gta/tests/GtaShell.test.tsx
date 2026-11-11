@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-// Rahmen „GTA“ mit einem Host aus erkennbaren Bausteinen: Rahmen des Stils, Attribute auf <html>, gemerkter Stil beim Laden
+// Rahmen „GTA“ mit einem Host aus erkennbaren Bausteinen: Rahmen des Stils, Umschalten ohne Neuladen, Attribute auf
+// <html>, gemerkter Stil beim Laden
 import { createElement, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, renderHook, within } from '@testing-library/react';
@@ -48,6 +49,7 @@ function renderShell(values: Record<string, boolean | string> = {}, loading = fa
 }
 
 const attr = (name: string) => document.documentElement.getAttribute(name);
+const shellEl = () => document.querySelector('[data-gta-part="shell"]') as HTMLElement;
 
 describe('Rahmen „GTA“', () => {
   it('ist als Slot Shell angemeldet', () => {
@@ -55,20 +57,45 @@ describe('Rahmen „GTA“', () => {
     expect(theme.slots.Shell).toBe(GtaShell);
   });
 
-  it('rendert für beide Stile den Rahmen GTA V mit Wortmarke, Board-Auswahl, eigener Navigation und Inhalt', () => {
-    for (const style of ['v', 'sa']) {
+  it('rendert je Stil dessen Rahmen mit Wortmarke, Board-Auswahl, eigener Navigation und Inhalt', () => {
+    for (const style of ['v', 'sa'] as const) {
       renderShell({ style });
-      const shell = document.querySelector('[data-gta-part="shell"]') as HTMLElement;
-      expect(shell.classList.contains('gta-v'), style).toBe(true);
-      const header = shell.querySelector('header') as HTMLElement;
-      expect(within(header).getByRole('img', { name: 'Nexus' }).getAttribute('data-wordmark')).toBe('nexus');
-      expect(within(header).getByText('teil-board')).toBeTruthy();
+      const shell = shellEl();
+      expect(shell.classList.contains(`gta-${style}`), style).toBe(true);
+      expect(shell.classList.contains(style === 'v' ? 'gta-sa' : 'gta-v'), style).toBe(false);
+      expect(within(shell).getByRole('img', { name: 'Nexus' }).getAttribute('data-wordmark')).toBe('nexus');
+      expect(within(shell).getByText('teil-board')).toBeTruthy();
       // Das Fragment nav des Kerns bleibt draußen: genau eine Navigation, die des Rahmens
       expect(within(shell).getAllByRole('navigation').map((nav) => nav.getAttribute('aria-label'))).toEqual(['Hauptnavigation']);
       expect(within(shell).queryByText('nav-board')).toBeNull();
       expect(within(shell).getByRole('main').textContent).toBe('seiten-inhalt');
       cleanup();
     }
+  });
+
+  it('Umschalten des Stils in den Einstellungen wechselt den Rahmen ohne Neuladen', () => {
+    const host = fakeHost({ style: 'v' });
+    const shell = (value: ThemeHost) => (
+      <ThemeHostProvider value={value}>
+        <GtaShell pid="p1" nav={null} content={<main>seiten-inhalt</main>} parts={value.parts} />
+      </ThemeHostProvider>
+    );
+    const view = render(shell(host));
+    expect(shellEl().classList.contains('gta-v')).toBe(true);
+    view.rerender(shell({ ...host, themeSettings: { ...host.themeSettings, values: { style: 'sa' } } }));
+    expect(shellEl().classList.contains('gta-sa')).toBe(true);
+    expect(attr('data-gta-style')).toBe('sa');
+    expect(window.localStorage.getItem(STYLE_KEY)).toBe('sa');
+    expect(within(shellEl()).getByRole('main').textContent).toBe('seiten-inhalt');
+    view.rerender(shell(host));
+    expect(shellEl().classList.contains('gta-v')).toBe(true);
+    expect(attr('data-gta-style')).toBe('v');
+  });
+
+  it('während die Einstellungen laden, steht schon der Rahmen des gemerkten Stils', () => {
+    window.localStorage.setItem(STYLE_KEY, 'sa');
+    renderShell({}, true);
+    expect(shellEl().classList.contains('gta-sa')).toBe(true);
   });
 
   it('stellt dem Inhalt den GameProvider bereit', () => {

@@ -2429,3 +2429,165 @@
 :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-st:last-child b {
   color: var(--gta-money);
 }
+
+/* Symbole (Slots NavIcon und Icon): flächig mit schwarzer Kontur unter der Füllung wie die HUD-Symbole */
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-icon {
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+  overflow: visible;
+  stroke: #000;
+  stroke-width: 1.4px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-icon.gta-sa-empty {
+  width: 120px;
+  height: 96px;
+  color: rgba(225, 225, 225, 0.5);
+  stroke: none;
+}
+
+/* Fortschritt (Slot Progress): durchgehender Balken mit schwarzem Rand, darunter die Zahl */
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-progress-bar {
+  display: block;
+  height: 9px;
+  border: 2px solid #000;
+  background: linear-gradient(90deg, var(--gta-c-in_progress) var(--sa-p), #3b4652 0);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-progress[data-complete] .gta-sa-progress-bar {
+  background: var(--gta-c-done);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-progress-text {
+  color: var(--gta-text-dim);
+  font: 400 11px/1.2 var(--gta-font-ui);
+}
+
+/* Ladebildschirm (Slot StartAnimation): Szene mit langsamem Zoom, Vignette, Wortmarke unten rechts, Tipp und Ladebalken
+   unten links */
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-boot-scene {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: gta-sa-kb 5s ease-out both;
+}
+
+@keyframes gta-sa-kb {
+  from {
+    transform: scale(1.09) translateX(-1.2%);
+  }
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-boot-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(0deg, rgba(0, 0, 0, 0.82), transparent 38%),
+    radial-gradient(ellipse at 50% 42%, transparent 48%, rgba(0, 0, 0, 0.6));
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-boot-logo {
+  position: absolute;
+  right: 6vw;
+  bottom: 14vh;
+  width: min(44vw, 460px);
+  text-align: right;
+  animation: gta-sa-fade 0.8s 0.3s both;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-boot-logo .gta-wordmark {
+  width: 100%;
+  height: auto;
+  color: #fff;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-boot-logo em {
+  display: block;
+  margin-top: -0.34em;
+  color: #fff;
+  font: 400 clamp(34px, 6.2vw, 88px)/1 var(--gta-font-script);
+  font-style: normal;
+  text-shadow: var(--sa-o3);
+  transform: rotate(-3deg);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-boot-foot {
+  position: absolute;
+  left: 5vw;
+  bottom: 7vh;
+  width: min(38vw, 400px);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-boot-tip {
+  margin: 0 0 10px;
+  color: #fff;
+  font: 700 clamp(13px, 1.3vw, 16px)/1.35 var(--gta-font-ui);
+  text-shadow: var(--sa-o1);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-boot-bar {
+  height: 13px;
+  border: 2px solid #000;
+  outline: 1px solid rgba(225, 225, 225, 0.45);
+  background: rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-boot-bar i {
+  display: block;
+  height: 100%;
+  background: var(--sa-hi);
+  transform-origin: left;
+  animation: gta-sa-load 3.2s linear forwards;
+}
+
+@keyframes gta-sa-load {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Kleines Fenster (bis 1024 × 700): schmalere Menüspalte und kleineres Radar, Hilfekasten unter dem Titel; HUD und
+   Radar behalten ihren eigenen Platz und überdecken keinen Inhalt */
+@media (max-width: 1100px) {
+  :root[data-theme='gta'][data-gta-style='sa'] .gta-sa {
+    --sa-side: 150px;
+  }
+
+  :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-title {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-help-live {
+    flex: none;
+    max-width: 100%;
+    margin-left: 0;
+  }
+}
+
+@media (max-height: 760px) {
+  :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-radar {
+    width: 104px;
+  }
+
+  :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-nav {
+    margin-top: 10px;
+  }
+
+  :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-menu-item {
+    padding-block: 3px;
+  }
+}

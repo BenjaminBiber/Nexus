@@ -3,6 +3,10 @@
 import { useState, type ComponentType } from 'react';
 import type { IconName, NavIconName, ProgressProps, StartAnimationProps } from '@nexus/theme-sdk';
 import { rememberedStyle, useActiveStyle, type GtaSettings } from './settings.js';
+import { SaBoot } from './sa/SaBoot.js';
+import { SaIcon } from './sa/SaIcon.js';
+import { SaNavIcon } from './sa/SaNavIcon.js';
+import { SaProgress } from './sa/SaProgress.js';
 import { VBoot } from './v/VBoot.js';
 import { VIcon } from './v/VIcon.js';
 import { VNavIcon } from './v/VNavIcon.js';
@@ -15,10 +19,11 @@ interface StyleSlots {
   StartAnimation: ComponentType<StartAnimationProps>;
 }
 
-const V: StyleSlots = { NavIcon: VNavIcon, Icon: VIcon, Progress: VProgress, StartAnimation: VBoot };
-
-/** Bausteine je Stil; bis San Andreas eigene hat, liefern beide Stile die von GTA V */
-export const STYLE_SLOTS: Record<GtaSettings['style'], StyleSlots> = { v: V, sa: V };
+/** Bausteine je Stil */
+export const STYLE_SLOTS: Record<GtaSettings['style'], StyleSlots> = {
+  v: { NavIcon: VNavIcon, Icon: VIcon, Progress: VProgress, StartAnimation: VBoot },
+  sa: { NavIcon: SaNavIcon, Icon: SaIcon, Progress: SaProgress, StartAnimation: SaBoot },
+};
 
 export function GtaNavIcon({ name }: { name: NavIconName }) {
   const { NavIcon } = STYLE_SLOTS[useActiveStyle()];
