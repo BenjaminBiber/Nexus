@@ -140,7 +140,14 @@
    Mischung aus Text- und Grundfarbe gebildet. */
 :root[data-theme='gta'] {
   color-scheme: dark;
+  scrollbar-color: var(--gta-scroll-thumb) var(--gta-scroll-track);
   --font-sans: var(--gta-font-ui);
+  --font-mono: var(--gta-font-mono);
+  --logo-plate: var(--gta-plate);
+  --radius-control: var(--gta-radius);
+  --radius-card: var(--gta-radius);
+  --radius-panel: var(--gta-radius);
+  --control-height: var(--gta-control-h);
 
   --bg: var(--gta-bg);
   --surface: color-mix(in srgb, var(--gta-text) 7%, var(--gta-bg));
@@ -325,6 +332,651 @@
   cursor: pointer;
 }
 
+/* ---- Bausteine des Inhalts (Knöpfe, Felder, Reiter, Popups, Dialoge, Hinweise, Markdown, Suche). Alles hier arbeitet
+   mit den Tokens der Stile; Rundungen, Maße und Mono-Schrift kommen über die Variablen des Kerns. ---- */
+
+/* Überschriften: GTA V in Versalien der Titelschrift, San Andreas in Pirata One mit Kontur */
+:root[data-theme='gta'] :is(.page-title, .page > h1, .page > div > h1, .settings-head h2, .settings-nav-title) {
+  color: var(--gta-title-color);
+  font-family: var(--gta-head-family);
+  font-weight: var(--gta-head-weight);
+  letter-spacing: var(--gta-head-track);
+  text-transform: var(--gta-head-case);
+  text-shadow: var(--gta-title-shadow);
+}
+
+:root[data-theme='gta'] :is(.page-title, .page > h1, .page > div > h1, .settings-head h2) {
+  font-size: var(--gta-title-size);
+  line-height: 1.05;
+}
+
+:root[data-theme='gta'] :is(.panel > h2, .panel-head h2, .state.empty h2, .sheet-head h2, .dd-head h2) {
+  color: var(--gta-head-color);
+  font-family: var(--gta-head-family);
+  font-weight: var(--gta-head-weight);
+  letter-spacing: var(--gta-head-track);
+  text-transform: var(--gta-head-case);
+  text-shadow: var(--gta-head-shadow);
+}
+
+/* Kleine Beschriftungen über Feldern und Gruppen */
+:root[data-theme='gta'] :is(.field > span:first-child, .draft-field > span, .lbl, .side-label, .search-group-title, .bp-col-title, .toc-title) {
+  color: var(--gta-label-color);
+  font: var(--gta-label-font);
+  letter-spacing: var(--gta-label-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] .muted {
+  color: var(--gta-text-dim);
+}
+
+/* Werkzeugleisten der Seiten: Abstände wie die Leisten der Previews */
+:root[data-theme='gta'] :is(.filters, .page-head, .crumb-row) {
+  gap: 4px 8px;
+}
+
+:root[data-theme='gta'] .search svg {
+  color: var(--gta-text-dim);
+}
+
+/* Links */
+:root[data-theme='gta'] a {
+  color: var(--gta-accent);
+}
+
+:root[data-theme='gta'] a:hover {
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta'] :is(.link-btn, .link-button, .collapsible-toggle, .doc-side-actions .link-button) {
+  color: var(--gta-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+:root[data-theme='gta'] :is(.link-btn, .link-button, .collapsible-toggle):hover:not(:disabled) {
+  color: var(--gta-text);
+}
+
+/* Knöpfe: Menüzeilen der Previews. Der Rand bleibt immer 1 px (durchsichtig), damit beim Überfahren nichts springt */
+:root[data-theme='gta'] .btn {
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: var(--gta-btn-bg);
+  box-shadow: none;
+  color: var(--gta-btn-fg);
+  font: var(--gta-btn-font);
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+:root[data-theme='gta'] .btn:hover:not(:disabled),
+:root[data-theme='gta'] .btn[aria-expanded='true'] {
+  border-color: transparent;
+  background: var(--gta-sel-bg);
+  color: var(--gta-sel-fg);
+}
+
+:root[data-theme='gta'] .btn.primary {
+  border-color: transparent;
+  background: var(--gta-primary-bg);
+  color: var(--gta-primary-fg);
+}
+
+:root[data-theme='gta'] .btn.primary:hover:not(:disabled) {
+  background: var(--gta-primary-hover);
+  color: var(--gta-primary-fg);
+}
+
+:root[data-theme='gta'] .btn.danger {
+  background: var(--gta-danger-bg);
+  color: var(--gta-danger-fg);
+}
+
+:root[data-theme='gta'] .btn.danger:hover:not(:disabled) {
+  background: var(--gta-danger-hover-bg);
+  color: var(--gta-danger-hover-fg);
+}
+
+:root[data-theme='gta'] .btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+:root[data-theme='gta'] .btn:disabled,
+:root[data-theme='gta'] button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+:root[data-theme='gta'] .btn.small {
+  border-radius: 0;
+  font-size: 0.86em;
+}
+
+/* Knöpfe nur mit Icon: eckig, Überfahren wie ein Reiter */
+:root[data-theme='gta'] :is(.icon-btn, .icon-link, .doc-open-btn, .info-tip, .star, .doc-comment-action, .search-clear, .doc-job-close) {
+  border-radius: 0;
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] :is(.icon-btn, .icon-link, .doc-open-btn, .info-tip, .star, .doc-comment-action, .search-clear):is(:hover, [aria-expanded='true']):not(:disabled) {
+  background: var(--gta-hover-bg);
+  color: var(--gta-hover-fg);
+}
+
+:root[data-theme='gta'] .doc-comment-action.danger:hover:not(:disabled) {
+  background: var(--gta-danger-hover-bg);
+  color: var(--gta-danger-hover-fg);
+}
+
+/* Felder: GTA V mit Linie unten, San Andreas als Kasten mit schwarzem Rand und feiner Kontur. Die Linien sind
+   Schatten, damit Überfahren und Fokus keine Maße ändern */
+:root[data-theme='gta'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']), select, textarea) {
+  border: var(--gta-field-border);
+  border-radius: 0;
+  background-color: var(--gta-field-bg);
+  box-shadow: var(--gta-field-ring);
+  color: var(--gta-text);
+  font-family: var(--gta-font-ui);
+}
+
+:root[data-theme='gta'] textarea {
+  font-family: var(--gta-font-mono);
+}
+
+:root[data-theme='gta'] textarea.plain-text {
+  font-family: var(--gta-font-ui);
+}
+
+:root[data-theme='gta'] :is(input, textarea)::placeholder {
+  color: var(--gta-text-dim);
+  opacity: 1;
+}
+
+:root[data-theme='gta'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']), select, textarea):hover:not(:focus):not(:disabled) {
+  box-shadow: var(--gta-field-ring-hover);
+}
+
+:root[data-theme='gta'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']), select, textarea):focus {
+  border: var(--gta-field-border);
+  box-shadow: var(--gta-field-ring-focus);
+  outline: 2px solid var(--gta-accent);
+  outline-offset: 0;
+}
+
+:root[data-theme='gta'] :is(input, select, textarea):disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Auswahllisten: Pfeil in Textfarbe, Einträge der aufgeklappten Liste auf dunkler Fläche */
+:root[data-theme='gta'] select {
+  background-image: linear-gradient(45deg, transparent 50%, var(--gta-text) 50%), linear-gradient(135deg, var(--gta-text) 50%, transparent 50%);
+}
+
+:root[data-theme='gta'] :is(select option, select optgroup) {
+  background: #101012;
+  color: var(--gta-text);
+}
+
+/* Kontrollkästchen und Optionen: eckiges Kästchen, gewählt mit gefülltem Kern in der Akzentfarbe */
+:root[data-theme='gta'] input:is([type='checkbox'], [type='radio']):not(.switch) {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 2px solid var(--gta-check-edge);
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: none;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+:root[data-theme='gta'] input:is([type='checkbox'], [type='radio']):not(.switch):checked {
+  border-color: var(--gta-accent);
+  background: var(--gta-accent);
+  box-shadow: inset 0 0 0 2px #000;
+}
+
+:root[data-theme='gta'] input:is([type='checkbox'], [type='radio']):not(.switch):hover:not(:disabled) {
+  border-color: var(--gta-text);
+}
+
+/* Schalter (Einstellungen, Telegram): eckige Schiene, Riegel als Quadrat; an = Akzentfarbe */
+:root[data-theme='gta'] :is(.setting-control > input[type='checkbox'], input.switch) {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 34px;
+  height: 20px;
+  border: 0;
+  border-radius: 0;
+  background: var(--gta-switch-track);
+  box-shadow: var(--gta-switch-edge);
+}
+
+:root[data-theme='gta'] :is(.setting-control > input[type='checkbox'], input.switch)::before {
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+  background: var(--gta-text);
+  box-shadow: none;
+}
+
+:root[data-theme='gta'] :is(.setting-control > input[type='checkbox'], input.switch):checked {
+  background: var(--gta-accent);
+}
+
+:root[data-theme='gta'] :is(.setting-control > input[type='checkbox'], input.switch):checked::before {
+  background: #000;
+}
+
+:root[data-theme='gta'] :is(.setting-control > input[type='checkbox'], input.switch):hover:not(:disabled):not(:checked) {
+  background: color-mix(in srgb, var(--gta-text) 35%, transparent);
+}
+
+:root[data-theme='gta'] :is(.setting-control > input[type='checkbox'], input.switch):checked:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gta-accent) 80%, #fff);
+}
+
+/* Registerkarten und Umschalter: Reiter des Pausenmenüs bzw. Menüzeilen in Michroma; gewählt hell bzw. in der
+   Akzentfarbe. Filterchips folgen derselben Sprache */
+:root[data-theme='gta'] :is(.tabs, .segmented, .log-view-toggle, .doc-comment-tabs, .step-options, .provider-switch) {
+  gap: 2px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+:root[data-theme='gta'] .tabs {
+  border-bottom: 1px solid var(--gta-line);
+}
+
+:root[data-theme='gta'] :is(.tab, .segmented button, .log-view-toggle button, .doc-comment-tabs button, .step-option, .fchip) {
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: var(--gta-tab-bg);
+  box-shadow: none;
+  color: var(--gta-tab-fg);
+  font: var(--gta-tab-font);
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] :is(.tab, .segmented button, .log-view-toggle button, .doc-comment-tabs button, .step-option, .fchip):hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--gta-hover-bg);
+  color: var(--gta-hover-fg);
+}
+
+:root[data-theme='gta'] :is(.tab.on, .segmented button.on, .log-view-toggle button[aria-pressed='true'], .doc-comment-tabs button[aria-pressed='true'], .step-option[aria-pressed='true'], .fchip.on, .fchip[aria-pressed='true']),
+:root[data-theme='gta'] :is(.tab.on, .segmented button.on, .log-view-toggle button[aria-pressed='true'], .doc-comment-tabs button[aria-pressed='true'], .step-option[aria-pressed='true'], .fchip.on, .fchip[aria-pressed='true']):hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--gta-tab-on-bg);
+  box-shadow: var(--gta-tab-on-mark);
+  color: var(--gta-tab-on-fg);
+  font-weight: inherit;
+}
+
+/* Labels, Chips und Zähler: kleine eckige Marken; Zustandsmarken behalten die Farben des Kerns */
+:root[data-theme='gta'] :is(.tag, .badge, .badge-new, .nav-badge, .dd-state, .suggestion-claude, .doc-ticket-chip) {
+  border-radius: 0;
+  font: var(--gta-chip-font);
+  letter-spacing: var(--gta-chip-track);
+  text-transform: var(--gta-chip-case);
+}
+
+:root[data-theme='gta'] .tag:not(.add) {
+  background: var(--gta-chip-bg);
+  box-shadow: var(--gta-chip-edge);
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta'] .tag.add {
+  border-color: var(--gta-accent);
+  color: var(--gta-accent);
+}
+
+:root[data-theme='gta'] .badge:not(.blocked):not(.orphan):not(.unread):not(.running):not(.waiting) {
+  background: var(--gta-chip-bg);
+  box-shadow: var(--gta-chip-edge);
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta'] :is(.nav-badge, .badge-new) {
+  background: var(--gta-danger);
+  color: #fff;
+}
+
+/* Tasten */
+:root[data-theme='gta'] :is(kbd, .nav-kbd) {
+  display: inline-block;
+  min-width: 18px;
+  padding: var(--gta-key-pad);
+  border: 0;
+  border-radius: 3px;
+  background: var(--gta-key-bg);
+  box-shadow: var(--gta-key-edge);
+  color: var(--gta-key-fg);
+  font: var(--gta-key-font);
+  letter-spacing: 0.03em;
+  text-align: center;
+  text-shadow: none;
+  text-transform: none;
+}
+
+/* Popups, Menüs und Tooltips: fast deckende schwarze Fläche mit Rand des Stils */
+:root[data-theme='gta'] :is(.info-pop, .runs-tip, .doc-open-menu, .doc-open-error, .theme-install-menu, .branch-combo-list, .dep-menu, .db-fab-menu, .usage-pop, .comment-hover, .selection-popover, .section-editor, .bp-status .live-text, .theme-notice, .doc-job) {
+  border: var(--gta-box-border);
+  border-radius: 0;
+  background: var(--gta-pop-bg);
+  box-shadow: var(--gta-box-shadow);
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta'] .runs-tip {
+  font-family: var(--gta-font-ui);
+}
+
+:root[data-theme='gta'] :is(.doc-open-menu button, .theme-install-menu [role='menuitem'], .branch-combo-option, .dep-option, .bp-item, .toc button, .doc-open-menu [role='menuitem']) {
+  border-radius: 0;
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta'] :is(.doc-open-menu button, .theme-install-menu [role='menuitem'], .branch-combo-option, .dep-option, .bp-item, .toc button):is(:hover, :focus-visible, .active, [aria-selected='true'], [aria-current='true']):not(:disabled) {
+  background: var(--gta-sel-bg);
+  color: var(--gta-sel-fg);
+}
+
+:root[data-theme='gta'] :is(.doc-open-menu button, .theme-install-menu [role='menuitem'], .bp-item):is(:hover, :focus-visible, [aria-current='true']) :is(.material-icons, .muted, .bp-count, .bp-meta) {
+  color: inherit;
+}
+
+/* Dialoge: Kasten des Stils über abgedunkeltem Bild; Überschrift wie ein Seitenkopf */
+:root[data-theme='gta'] :is(.db-modal-backdrop, .db-dialog-backdrop, .sheet-backdrop, .diagram-viewer-backdrop) {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+:root[data-theme='gta'] :is(.db-modal, .db-dialog, .dd-modal, .diagram-viewer) {
+  border: var(--gta-box-border);
+  border-radius: 0;
+  background: var(--gta-pop-bg);
+  box-shadow: var(--gta-box-shadow);
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta'] :is(.db-modal, .db-dialog) > :is(h2, h3):first-child,
+:root[data-theme='gta'] :is(.db-modal, .db-dialog) > :first-child > :is(h2, h3):first-child {
+  color: var(--gta-head-color);
+  font-family: var(--gta-head-family);
+  font-size: 22px;
+  font-weight: var(--gta-head-weight);
+  letter-spacing: var(--gta-head-track);
+  text-transform: var(--gta-head-case);
+  text-shadow: var(--gta-head-shadow);
+}
+
+/* Paneele: durchscheinende Flächen über der Szene, ohne Rundung und Schatten */
+:root[data-theme='gta'] .panel:not(.db-modal):not(.db-dialog) {
+  border: var(--gta-panel-border);
+  background: var(--gta-panel);
+  box-shadow: none;
+}
+
+/* Hinweise und Fehlermeldungen: Fläche und Schrift in der Farbe des Zustands, Kante links in derselben Farbe */
+:root[data-theme='gta'] :is(.banner, .notice-ok, .notice-warn, .conflict, .warn-box, .diagram-error, .doc-comment-resolution) {
+  border-radius: 0;
+  box-shadow: inset 3px 0 0 currentColor;
+}
+
+:root[data-theme='gta'] .banner.connection {
+  border-color: var(--connection-line);
+}
+
+:root[data-theme='gta'] .connection-slot .banner.connection strong {
+  font-family: var(--gta-head-family);
+  font-weight: var(--gta-head-weight);
+  letter-spacing: var(--gta-head-track);
+  text-transform: var(--gta-head-case);
+}
+
+:root[data-theme='gta'] :is(.field-error, .error) {
+  color: color-mix(in srgb, var(--gta-danger) 70%, #fff);
+}
+
+/* Leere Zustände und Laden */
+:root[data-theme='gta'] .state.empty {
+  border: 1px dashed var(--gta-line);
+  border-radius: 0;
+  background: var(--gta-panel);
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] .state.empty svg {
+  color: var(--gta-text-dim);
+}
+
+:root[data-theme='gta'] .state.loading .loader-n {
+  filter: invert(1);
+}
+
+:root[data-theme='gta'] .loader-caption {
+  color: var(--gta-label-color);
+  font: var(--gta-label-font);
+  letter-spacing: var(--gta-label-track);
+  text-transform: uppercase;
+}
+
+/* Tabellen (Markdown) und Trennlinien */
+:root[data-theme='gta'] th {
+  color: var(--gta-label-color);
+  font: var(--gta-label-font);
+  letter-spacing: var(--gta-label-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] :is(th, td) {
+  border-color: var(--gta-line);
+}
+
+:root[data-theme='gta'] tbody tr:hover {
+  background: var(--gta-hover-bg);
+}
+
+:root[data-theme='gta'] hr {
+  border: 0;
+  border-top: 1px solid var(--gta-line);
+}
+
+/* Textauswahl und Scrollbalken (die Farben stehen als scrollbar-color an der Wurzel und gelten in Firefox und Chromium) */
+:root[data-theme='gta'] ::selection {
+  background: var(--gta-accent);
+  color: var(--gta-accent-ink);
+}
+
+:root[data-theme='gta'] * {
+  scrollbar-width: thin;
+}
+
+/* Markdown (Beschreibung, Plan, Handbuch, Kommentare, Dokumente) */
+:root[data-theme='gta'] .markdown {
+  line-height: 1.55;
+}
+
+:root[data-theme='gta'] .markdown :is(h1, h2, h3, h4, h5, h6) {
+  margin: 1.1em 0 0.45em;
+  color: var(--gta-head-color);
+  font-family: var(--gta-head-family);
+  font-weight: var(--gta-head-weight);
+  line-height: 1.15;
+  letter-spacing: var(--gta-head-track);
+  text-transform: var(--gta-head-case);
+  text-shadow: var(--gta-head-shadow);
+}
+
+:root[data-theme='gta'] .markdown h1 {
+  font-size: 1.75em;
+}
+
+:root[data-theme='gta'] .markdown h2 {
+  font-size: 1.4em;
+}
+
+:root[data-theme='gta'] .markdown :is(h3, h4, h5, h6) {
+  color: var(--gta-head-accent);
+  font-size: 1.15em;
+}
+
+:root[data-theme='gta'] .markdown :is(p, li) {
+  color: color-mix(in srgb, var(--gta-text) 92%, transparent);
+}
+
+:root[data-theme='gta'] .markdown a {
+  color: var(--gta-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+:root[data-theme='gta'] .markdown a:hover {
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta'] .markdown blockquote {
+  margin: 12px 0;
+  padding: 8px 14px;
+  border-left: 3px solid var(--gta-accent);
+  background: var(--gta-panel);
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta'] .markdown :not(pre) > code {
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--gta-text);
+  font-family: var(--gta-font-mono);
+}
+
+:root[data-theme='gta'] .markdown pre {
+  border: var(--gta-field-border);
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: var(--gta-field-ring);
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta'] .markdown pre code {
+  font-family: var(--gta-font-mono);
+}
+
+:root[data-theme='gta'] .markdown table {
+  background: var(--gta-panel);
+}
+
+:root[data-theme='gta'] .markdown thead th {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='gta'] .markdown :is(ul, ol) li::marker {
+  color: var(--gta-head-accent);
+}
+
+/* Suche (Strg K): Fenster wie ein Menü des Spiels, Kopf „Suche“ in der Überschriftenschrift, Tastenhinweise unten */
+:root[data-theme='gta'] .search-dialog {
+  gap: 10px;
+  padding: 18px 20px 14px;
+}
+
+:root[data-theme='gta'] .search-dialog::before {
+  content: 'Suche' / '';
+  color: var(--gta-title-color);
+  font-family: var(--gta-head-family);
+  font-size: 26px;
+  font-weight: var(--gta-head-weight);
+  line-height: 1;
+  letter-spacing: var(--gta-head-track);
+  text-transform: var(--gta-head-case);
+  text-shadow: var(--gta-title-shadow);
+}
+
+:root[data-theme='gta'] .search-dialog::after {
+  content: '↑ ↓  Wählen     Enter  Öffnen     Esc  Schließen' / '';
+  padding-top: 10px;
+  border-top: 1px solid var(--gta-line);
+  color: var(--gta-text-dim);
+  font: var(--gta-label-font);
+  letter-spacing: var(--gta-label-track);
+  text-align: right;
+  text-transform: uppercase;
+  white-space: pre;
+}
+
+:root[data-theme='gta'] .search-dialog-input input {
+  font-size: 16px;
+}
+
+:root[data-theme='gta'] .search-group + .search-group {
+  margin-top: 14px;
+}
+
+:root[data-theme='gta'] .search-group-title {
+  margin-bottom: 4px;
+  color: var(--gta-head-accent);
+}
+
+:root[data-theme='gta'] .search-hit {
+  border: 0;
+  border-radius: 0;
+  background: var(--gta-panel);
+  color: var(--gta-text);
+}
+
+:root[data-theme='gta'] .search-hit + .search-hit {
+  margin-top: 2px;
+}
+
+:root[data-theme='gta'] .search-hit:hover:not(.active) {
+  background: var(--gta-hover-bg);
+}
+
+:root[data-theme='gta'] .search-hit.active {
+  background: var(--gta-sel-bg);
+  color: var(--gta-sel-fg);
+}
+
+:root[data-theme='gta'] .search-hit.active :is(.muted, .search-hit-snippet) {
+  color: inherit;
+  opacity: 0.78;
+}
+
+:root[data-theme='gta'] .search-hit mark {
+  background: color-mix(in srgb, var(--gta-warn) 35%, transparent);
+  color: inherit;
+}
+
+:root[data-theme='gta'] .search-hit.active mark {
+  background: var(--gta-warn);
+  color: #000;
+}
+
+:root[data-theme='gta'] .global-search {
+  border-radius: 0;
+  background: var(--gta-btn-bg);
+  color: var(--gta-btn-fg);
+}
+
+:root[data-theme='gta'] .global-search:hover {
+  background: var(--gta-sel-bg);
+  color: var(--gta-sel-fg);
+}
+
 /* Reduzierte Bewegung: keine Animationen und Übergänge, auch nicht in den Stil-Abschnitten */
 @media (prefers-reduced-motion: reduce) {
   :root[data-theme='gta'] *,
@@ -364,6 +1016,70 @@
   --gta-c-blocked: #e03232;
   --gta-c-done: #ffffff;
   --gta-c-not_needed: #6b7176;
+
+  /* Bausteine des Inhalts: Pausenmenü ohne Rundungen, Auswahl als weiße Fläche, Versalien in Barlow Condensed */
+  --gta-font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --gta-radius: 0px;
+  --gta-plate: #e8e8e8;
+  --gta-control-h: 36px;
+  --gta-head-family: var(--gta-font-title);
+  --gta-head-weight: 700;
+  --gta-head-case: uppercase;
+  --gta-head-track: 0.06em;
+  --gta-head-color: var(--gta-text);
+  --gta-head-accent: var(--gta-accent);
+  --gta-head-shadow: none;
+  --gta-title-size: 34px;
+  --gta-title-color: var(--gta-text);
+  --gta-title-shadow: 0 2px 0 #000;
+  --gta-label-font: 600 13px/1.2 var(--gta-font-title);
+  --gta-label-track: 0.07em;
+  --gta-label-color: var(--gta-text-dim);
+  --gta-btn-font: 600 15px/1 var(--gta-font-title);
+  --gta-btn-track: 0.05em;
+  --gta-btn-bg: rgba(0, 0, 0, 0.8);
+  --gta-btn-fg: var(--gta-text);
+  --gta-sel-bg: #ffffff;
+  --gta-sel-fg: #000000;
+  --gta-hover-bg: rgba(255, 255, 255, 0.2);
+  --gta-hover-fg: var(--gta-text);
+  --gta-primary-bg: #ffffff;
+  --gta-primary-fg: #000000;
+  --gta-primary-hover: var(--gta-accent);
+  --gta-danger-bg: var(--gta-danger);
+  --gta-danger-fg: #ffffff;
+  --gta-danger-hover-bg: #ffffff;
+  --gta-danger-hover-fg: #c42020;
+  --gta-field-bg: rgba(0, 0, 0, 0.5);
+  --gta-field-border: 1px solid transparent;
+  --gta-field-ring: inset 0 -2px 0 rgba(255, 255, 255, 0.4);
+  --gta-field-ring-hover: inset 0 -2px 0 rgba(255, 255, 255, 0.75);
+  --gta-field-ring-focus: inset 0 -2px 0 var(--gta-accent);
+  --gta-tab-font: 600 14px/1 var(--gta-font-title);
+  --gta-tab-bg: rgba(0, 0, 0, 0.8);
+  --gta-tab-fg: var(--gta-text);
+  --gta-tab-on-bg: #ffffff;
+  --gta-tab-on-fg: #000000;
+  --gta-tab-on-mark: inset 0 3px 0 var(--gta-accent);
+  --gta-chip-font: 600 11.5px/20px var(--gta-font-title);
+  --gta-chip-case: uppercase;
+  --gta-chip-track: 0.07em;
+  --gta-chip-bg: rgba(255, 255, 255, 0.15);
+  --gta-chip-edge: none;
+  --gta-pop-bg: rgba(6, 6, 8, 0.95);
+  --gta-box-border: 1px solid var(--gta-line);
+  --gta-box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --gta-panel-border: 1px solid transparent;
+  --gta-switch-track: rgba(255, 255, 255, 0.22);
+  --gta-switch-edge: none;
+  --gta-check-edge: rgba(255, 255, 255, 0.6);
+  --gta-scroll-thumb: rgba(255, 255, 255, 0.35);
+  --gta-scroll-track: rgba(0, 0, 0, 0.3);
+  --gta-key-bg: #e8e8e8;
+  --gta-key-fg: #111111;
+  --gta-key-edge: inset 0 -2px 0 rgba(0, 0, 0, 0.28);
+  --gta-key-font: 700 13px/22px var(--gta-font-title);
+  --gta-key-pad: 0 6px;
 }
 
 /* Akzentfarben wie die drei Charakterfarben der Preview */
@@ -1518,6 +2234,71 @@
   --gta-c-blocked: #d0464a;
   --gta-c-done: #e1e1e1;
   --gta-c-not_needed: #7f93a8;
+
+  /* Bausteine des Inhalts: Kästen mit schwarzer Kontur, Überschriften in Pirata One mit Kontur, Menüzeilen in Michroma,
+     Auswahl in der Akzentfarbe */
+  --gta-font-mono: Consolas, 'Lucida Console', monospace;
+  --gta-radius: 0px;
+  --gta-plate: #e1e1e1;
+  --gta-control-h: 34px;
+  --gta-head-family: var(--gta-font-script);
+  --gta-head-weight: 400;
+  --gta-head-case: none;
+  --gta-head-track: 0.01em;
+  --gta-head-color: #ffffff;
+  --gta-head-accent: var(--gta-accent);
+  --gta-head-shadow: 1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000, 1px 1px #000, -1px -1px #000, 1px -1px #000, -1px 1px #000;
+  --gta-title-size: 44px;
+  --gta-title-color: var(--gta-accent);
+  --gta-title-shadow: 2px 0 #000, -2px 0 #000, 0 2px #000, 0 -2px #000, 2px 2px #000, -2px -2px #000, 2px -2px #000, -2px 2px #000;
+  --gta-label-font: 400 10px/1.3 var(--gta-font-title);
+  --gta-label-track: 0.05em;
+  --gta-label-color: #8fa2b6;
+  --gta-btn-font: 400 11px/1.2 var(--gta-font-title);
+  --gta-btn-track: 0.04em;
+  --gta-btn-bg: rgba(0, 0, 0, 0.74);
+  --gta-btn-fg: var(--gta-accent);
+  --gta-sel-bg: var(--gta-accent);
+  --gta-sel-fg: var(--gta-accent-ink);
+  --gta-hover-bg: color-mix(in srgb, var(--gta-accent) 14%, transparent);
+  --gta-hover-fg: #ffffff;
+  --gta-primary-bg: var(--gta-accent);
+  --gta-primary-fg: var(--gta-accent-ink);
+  --gta-primary-hover: #ffffff;
+  --gta-danger-bg: rgba(0, 0, 0, 0.74);
+  --gta-danger-fg: #e0575a;
+  --gta-danger-hover-bg: var(--gta-danger);
+  --gta-danger-hover-fg: #000000;
+  --gta-field-bg: rgba(0, 0, 0, 0.6);
+  --gta-field-border: 2px solid #000;
+  --gta-field-ring: 0 0 0 1px var(--gta-line);
+  --gta-field-ring-hover: 0 0 0 1px var(--gta-text-dim);
+  --gta-field-ring-focus: 0 0 0 1px var(--gta-accent);
+  --gta-tab-font: 400 11px/1.2 var(--gta-font-title);
+  --gta-tab-bg: transparent;
+  --gta-tab-fg: var(--gta-text-dim);
+  --gta-tab-on-bg: transparent;
+  --gta-tab-on-fg: var(--gta-accent);
+  --gta-tab-on-mark: inset 0 -2px 0 var(--gta-accent);
+  --gta-chip-font: 400 11.5px/18px var(--gta-font-ui);
+  --gta-chip-case: none;
+  --gta-chip-track: 0;
+  --gta-chip-bg: rgba(0, 0, 0, 0.6);
+  --gta-chip-edge: inset 0 0 0 1px var(--gta-line);
+  --gta-pop-bg: rgba(0, 0, 0, 0.94);
+  --gta-box-border: 2px solid #000;
+  --gta-box-shadow: 0 0 0 1px var(--gta-line), 0 12px 32px rgba(0, 0, 0, 0.6);
+  --gta-panel-border: 2px solid #000;
+  --gta-switch-track: #3b4652;
+  --gta-switch-edge: inset 0 0 0 2px #000;
+  --gta-check-edge: #aab4be;
+  --gta-scroll-thumb: #4a5a6b;
+  --gta-scroll-track: transparent;
+  --gta-key-bg: transparent;
+  --gta-key-fg: #ffffff;
+  --gta-key-edge: inset 0 0 0 1px #aab4be;
+  --gta-key-font: 700 11px/18px var(--gta-font-ui);
+  --gta-key-pad: 0 5px;
 }
 
 /* Akzentfarben aus der Palette der Preview: Grün der Revierfarben, Orange als das Gold des HUD */
@@ -1598,18 +2379,6 @@
   height: 100%;
   padding: 14px var(--sa-gx) 10px;
   transition: opacity 0.8s;
-}
-
-:root[data-theme='gta'][data-gta-style='sa'] .gta-sa kbd {
-  display: inline-block;
-  padding: 0 4px;
-  border: 1px solid #aab4be;
-  border-radius: 3px;
-  color: #fff;
-  font: 700 11px/16px var(--gta-font-ui);
-  letter-spacing: 0;
-  text-shadow: none;
-  text-transform: none;
 }
 
 /* Menüspalte: Wortmarke mit Board-Namen, Menüliste, Stats und Suche; das Radar unten */
@@ -2164,7 +2933,7 @@
 
 :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-phone-actions button:hover kbd,
 :root[data-theme='gta'][data-gta-style='sa'] .gta-sa-stats-close:hover kbd {
-  border-color: currentColor;
+  box-shadow: inset 0 0 0 1px currentColor;
   color: inherit;
 }
 
