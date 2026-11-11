@@ -14,7 +14,7 @@ members = [
 # Gemeinsame Angaben, die jedes Mitglied mit `*.workspace = true` erbt.
 [workspace.package]
 edition = "2021"
-version = "0.0.3"
+version = "0.1.0"
 rust-version = "1.99"
 
 # Gemeinsame Lints für die Nexus-Crates; die Desktop-App bleibt davon unberührt,
