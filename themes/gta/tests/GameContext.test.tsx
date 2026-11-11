@@ -7,6 +7,7 @@ import { CHEAT_MONEY, DECLINED_MS, GameProvider, MAX_WANTED, useGame, type Game 
 import { STEP_REWARD, TICKET_REWARD } from '../src/data/derive.js';
 import type { BoardView } from '../src/data/types.js';
 import { BANNER_MS } from '../src/shared/banners.js';
+import { HOLD_MS, SETTLE_MS } from '../src/shared/transient.js';
 import { fakeHost, fakeNav, fakeUsage, fakeView, NOVA_BOARD } from './helpers/fakes.js';
 
 class FakeEventSource {
@@ -171,15 +172,47 @@ describe('GameProvider: Banner', () => {
 describe('GameProvider: Anruf', () => {
   it('neue Fragen klingeln 15 s', async () => {
     const { update } = await mount();
+    tick(SETTLE_MS);
     await update(host({ nav: fakeNav('board', { questions: 3 }) }));
     expect(game.phone).toEqual({ count: 2 });
     tick(15_000);
     expect(game.phone).toBeNull();
   });
 
+  it('wie im echten Host: erst 0, dann die vorhandenen Fragen – kein Anruf; danach klingelt nur eine neue', async () => {
+    const { update } = await mount(host({ nav: fakeNav('board', {}) }));
+    await update(host({ nav: fakeNav('board', { questions: 3 }) }));
+    expect(game.phone).toBeNull();
+    tick(SETTLE_MS);
+    expect(game.phone).toBeNull();
+    await update(host({ nav: fakeNav('board', { questions: 4 }) }));
+    expect(game.phone).toEqual({ count: 1 });
+  });
+
+  it('Neuladen der Fragen (Zähler kurz weg) klingelt nicht', async () => {
+    const { update } = await mount(host({ nav: fakeNav('board', { questions: 3 }) }));
+    tick(SETTLE_MS);
+    await update(host({ nav: fakeNav('board', {}) }));
+    await update(host({ nav: fakeNav('board', { questions: 3 }) }));
+    expect(game.phone).toBeNull();
+    await update(host({ nav: fakeNav('board', {}) }));
+    await update(host({ nav: fakeNav('board', { questions: 4 }) }));
+    expect(game.phone).toEqual({ count: 1 });
+  });
+
+  it('nach der Haltezeit klingelt die erste Frage wieder', async () => {
+    const { update } = await mount(host({ nav: fakeNav('board', { questions: 3 }) }));
+    tick(SETTLE_MS);
+    await update(host({ nav: fakeNav('board', {}) }));
+    tick(HOLD_MS);
+    await update(host({ nav: fakeNav('board', { questions: 1 }) }));
+    expect(game.phone).toEqual({ count: 1 });
+  });
+
   it('annehmen führt zu den Fragen, ablehnen schließt nur', async () => {
     const value = host();
     const { update } = await mount(value);
+    tick(SETTLE_MS);
     await update(host({ navigate: value.navigate, nav: fakeNav('board', { questions: 2 }) }));
     act(() => game.answerPhone());
     expect(value.navigate).toHaveBeenCalledWith('/p/p1/questions');
@@ -193,6 +226,7 @@ describe('GameProvider: Anruf', () => {
   it('nach dem Ablehnen meldet declined kurz den abgelehnten Anruf, nach dem Annehmen nicht', async () => {
     const value = host();
     const { update } = await mount(value);
+    tick(SETTLE_MS);
     expect(game.declined).toBe(false);
     await update(host({ navigate: value.navigate, nav: fakeNav('board', { questions: 2 }) }));
     act(() => game.answerPhone());
@@ -240,6 +274,7 @@ describe('GameProvider: Tasten', () => {
   it('Stil v: Q und E wechseln die Seite, am Rand umlaufend', async () => {
     const value = host({ nav: fakeNav('board') });
     const { update } = await mount(value);
+    tick(SETTLE_MS);
     press('q');
     expect(value.navigate).toHaveBeenLastCalledWith('/p/p1/settings');
     press('e');
@@ -257,6 +292,7 @@ describe('GameProvider: Tasten', () => {
   it('Stil sa: kein Q/E; Y/N nur bei klingelndem Handy', async () => {
     const value = host({}, { style: 'sa' });
     const { update } = await mount(value);
+    tick(SETTLE_MS);
     press('qeyn');
     expect(value.navigate).not.toHaveBeenCalled();
     await update(host({ navigate: value.navigate, nav: fakeNav('board', { questions: 2 }) }, { style: 'sa' }));
