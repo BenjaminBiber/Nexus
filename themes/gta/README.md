@@ -25,8 +25,9 @@ gestaltet. Zwei Stile, umschaltbar unter **Einstellungen → Darstellung → Ein
 - **Geld** ist Spielgeld, keine echten Kosten: 40.000 je erledigtem Ticket, 2.500 je erledigtem Schritt offener
   Tickets. Nicht benötigte Tickets zählen nicht.
 - **Sterne:** Zahl der blockierten Tickets (höchstens sechs).
-- **Balken:** Fortschritt des Boards (Anteil erledigter Tickets) und der Rest des 5-Stunden- und des 7-Tage-Kontingents
-  von Claude.
+- **Balken:** in GTA V unter der Minimap der Fortschritt des Boards (Anteil erledigter Tickets) und der Rest des
+  5-Stunden- und des 7-Tage-Kontingents von Claude; in San Andreas stehen Panzerung und Gesundheit für die beiden
+  Kontingente.
 - **Radar bzw. Minimap:** ein Punkt je offenem Ticket des Boards; blockierte Tickets fallen auf.
 - **Banner:** „Mission Passed“, wenn ein Ticket erledigt ist, „Busted“, wenn eines blockiert wird (mit Grund), „Wasted“,
   wenn das 5-Stunden-Kontingent aufgebraucht ist.
