@@ -32,6 +32,15 @@ describe('useCountUp', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
+  it('der Sprung steht schon im ersten Render mit dem neuen Stand, kein Frame mit dem alten Wert', () => {
+    const seen: { value: number; counting: boolean }[] = [];
+    const { rerender } = renderHook(({ target, live }) => seen[seen.push(useCountUp(target, live)) - 1], { initialProps: { target: 0, live: false } });
+    seen.length = 0;
+    rerender({ target: 87_500, live: true });
+    expect(seen[0]).toEqual({ value: 87_500, counting: false });
+    expect(seen.every((s) => s.value === 87_500 && !s.counting)).toBe(true);
+  });
+
   it('nach einem Board-Wechsel (Stand dazwischen weg) springt der neue Stand', () => {
     const { result, rerender } = mount(87_500, true);
     rerender({ target: 0, live: false });

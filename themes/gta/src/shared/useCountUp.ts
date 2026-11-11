@@ -36,6 +36,8 @@ export function useCountUp(target: number, live = true): { value: number; counti
     return () => clearInterval(timer);
   }, [target, live]);
 
-  // Vor dem ersten Schritt schon als „zählt“ melden, damit die Farbe sofort wechselt
-  return state.value === target ? { value: target, counting: false } : { value: state.value, counting: true };
+  // Springt der Wert, steht er schon in diesem Render da (wasLive ändert erst der Effekt nach dem Zeichnen) – sonst
+  // zeigte ein Frame noch den alten Stand. Vor dem ersten Schritt schon als „zählt“ melden, damit die Farbe wechselt.
+  if (!live || !wasLive.current || state.value === target) return { value: target, counting: false };
+  return { value: state.value, counting: true };
 }

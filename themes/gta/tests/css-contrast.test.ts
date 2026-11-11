@@ -192,7 +192,6 @@ function saBar(_style: Style, accent: Accent): Rgba {
   return stack(saSceneBrightest(), parse(decl(SA_BARS, 'background'), varsOf('sa', accent)));
 }
 
-const white = () => ({ r: 255, g: 255, b: 255, a: 1 });
 const RED_MARK = `${SA} .db-card :is(.badge.blocked, .badge.prio-high, .badge.prio-urgent)`;
 const RED_MARK_ON = `${SA} .db-card:is(:hover, :focus-within) :is(.badge.blocked, .badge.prio-high, .badge.prio-urgent)`;
 
@@ -213,9 +212,18 @@ const PAIRS: Pair[] = [
   { name: 'Gefahr-Knopf: --gta-danger-fg auf --gta-danger-bg', fg: 'var(--gta-danger-fg)', bg: onToken('--gta-danger-bg'), min: 4.5, styles: ['v'] },
   { name: 'Weiß auf --gta-danger', fg: '#ffffff', bg: onToken('--gta-danger'), min: 4.5, styles: both },
   // GTA V: Fokusring auf weißen Flächen schwarz
-  ...[`${V} .gta-v-tab[aria-current='page']:focus-visible`, `${V} .gta-v-cat[aria-pressed='true']:focus-visible`, `${V} .db-card:is(:hover, :focus-within) :focus-visible`].map(
-    (sel) => ({ name: `Fokusring ${sel.slice(V.length + 1)} auf Weiß`, fg: () => decl(sel, 'outline-color'), bg: white, min: 3 as const, styles: ['v'] as Style[] }),
-  ),
+  // (die weiße Fläche wird aus der Regel des Elements gelesen)
+  ...[
+    [`${V} .gta-v-tab[aria-current='page']:focus-visible`, `${V} .gta-v-tab[aria-current='page']`],
+    [`${V} .gta-v-cat[aria-pressed='true']:focus-visible`, `${V} .gta-v-cat[aria-pressed='true']`],
+    [`${V} .db-card:is(:hover, :focus-within) :focus-visible`, `${V} .db-card:is(:hover, :focus-within)`],
+  ].map(([ring, surface]) => ({
+    name: `Fokusring ${ring!.slice(V.length + 1)} auf seiner Fläche`,
+    fg: () => decl(ring!, 'outline-color'),
+    bg: (style: Style, accent: Accent) => stack(black, parse(decl(surface!, 'background'), varsOf(style, accent))),
+    min: 3 as const,
+    styles: ['v'] as Style[],
+  })),
   { name: 'Fokusring in der Akzentfarbe auf dem Grund', fg: 'var(--gta-accent)', bg: onToken('--gta-bg'), min: 3, styles: both },
   // San Andreas: Karte und Liste „Meine Aufgaben“
   { name: '.card-id auf der Karte', fg: () => decl(`${SA} .card-id`, 'color'), bg: saCard('ruhig'), min: 4.5, styles: ['sa'] },
@@ -252,7 +260,7 @@ describe('Kontraste in beiden Stilen und allen Akzentfarben', () => {
           const vars = varsOf(style, accent);
           const fg = typeof pair.fg === 'string' ? pair.fg : pair.fg();
           const value = contrast(parse(fg, vars), pair.bg(style, accent));
-          expect(Math.round(value * 1000) / 1000).toBeGreaterThanOrEqual(pair.min);
+          expect(value).toBeGreaterThanOrEqual(pair.min);
         });
       }
     }

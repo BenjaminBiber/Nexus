@@ -9,10 +9,19 @@ import { describe, expect, it } from 'vitest';
 const css = readFileSync(join(import.meta.dirname, '..', 'theme.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 
 // Hüllen um Inhalte des Kerns: Wurzel und Rahmen der Shell, Inhaltsbereiche, Board-Auswahl samt ihrer Wurzel im Kern
-const SHELLS = [/\.gta-frame(?![\w-])/, /\.gta-(sa|v)(?![\w-])/, /\.gta-(sa|v)-frame(?![\w-])/, /\.gta-(sa|v)-main(?![\w-])/];
+// und die Vorfahren der Board-Auswahl (Menüspalte bzw. Kopf mit HUD)
+const SHELLS = [
+  /\.gta-frame(?![\w-])/,
+  /\.gta-(sa|v)(?![\w-])/,
+  /\.gta-(sa|v)-frame(?![\w-])/,
+  /\.gta-(sa|v)-main(?![\w-])/,
+  /\.gta-sa-(side|menu|logo)(?![\w-])/,
+  /\.gta-v-(top|hud|who)(?![\w-])/,
+];
 const SWITCHER = /\.gta-(sa|v)-board(?![\w-])/;
 const SWITCHER_ROOT = /\.(proj|board-picker)(?![\w-])/;
-const PROPS = /(?:^|;)\s*(transform|filter|backdrop-filter|perspective|contain|will-change)\s*:\s*([^;]+)/g;
+const PROPS =
+  /(?:^|;)\s*(transform|rotate|translate|scale|filter|backdrop-filter|perspective|contain|container-type|content-visibility|will-change)\s*:\s*([^;]+)/g;
 
 // Selektorliste an den Kommas der obersten Ebene teilen (nicht in :is(), :not(), :has())
 function splitList(list: string): string[] {
@@ -53,7 +62,8 @@ function wrapsCore(selector: string): boolean {
 function offenders(): string[] {
   const found: string[] = [];
   for (const [, list, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-    const props = [...body.matchAll(PROPS)].filter(([, , value]) => value.trim() !== 'none');
+    // Grundwerte machen nichts zum Bezugsrahmen
+    const props = [...body.matchAll(PROPS)].filter(([, , value]) => !['none', 'normal', 'visible', 'auto'].includes(value.trim()));
     if (props.length === 0) continue;
     for (const selector of splitList(list)) {
       if (selector.includes('[data-dead]') || !wrapsCore(selector)) continue;
