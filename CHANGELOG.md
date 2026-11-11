@@ -128,6 +128,13 @@
   Akzentfarben), der Fortschrittsring im Ticket-Panel mit Verlauf von Purple nach Pink; Rahmen,
   Symbole und alles andere bleiben Standard. Schrift und Statusfarben erreichen mindestens 4,5:1
   Kontrast.
+- Neues Theme „GTA“ 1.0.0 im Theme-Store (`themes/gta/`, Code-Theme) mit zwei umschaltbaren Stilen:
+  GTA V (Pausenmenü mit Reiterzeile, HUD und eckiger Minimap) und San Andreas (Menüliste,
+  gotischer Seitentitel, HUD-Block und rundes Radar). Der Rahmen zeigt den Stand des Boards als
+  Spiel: Spielgeld für erledigte Tickets und Schritte, Sterne für blockierte Tickets, Balken für
+  Fortschritt und Claude-Kontingent, Tickets als Punkte auf dem Radar; Banner melden Mission
+  Passed, Busted und Wasted, das Handy neue Fragen, und Cheats wie HESOYAM ändern nur die Anzeige.
+  Eigene Schriften im Paket (OFL 1.1, Yellowtail Apache 2.0), kein Originalmaterial des Spiels.
 
 ## 0.0.3 – 2026-11-09
 
