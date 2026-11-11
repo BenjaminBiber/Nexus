@@ -273,9 +273,18 @@ const PER_STYLE = ['.db-column .column-head', '.column-head .count', '.db-card',
 
 // Arten der Einträge unter „Meine Aufgaben“ (aus dem Kern) und die Farbe, die theme.css je Art setzt
 const inboxKinds = [...readFileSync(join(web, 'api', 'inboxTypes.ts'), 'utf8').match(/INBOX_KINDS = \[([^\]]*)\]/)![1]!.matchAll(/'([\w-]+)'/g)].map((m) => m[1]!);
-function kindColor(text: string, kind: string): string | undefined {
-  const rule = stripComments(text).match(new RegExp(`\\.inbox-row\\.kind-${kind}(?![\\w-])[^{]*\\{([^}]*)\\}`));
+function kindColor(text: string, kind: string, prefix = ''): string | undefined {
+  const rule = stripComments(text).match(new RegExp(`${escape(prefix)}\\s*\\.inbox-row\\.kind-${kind}(?![\\w-])[^{]*\\{([^}]*)\\}`));
   return rule?.[1]!.match(/--inbox-color:\s*([^;]+)/)?.[1]!.trim();
+}
+
+// Farbe einer Art im Stil: Regel des Stils vor der gemeinsamen, Tokens aus dem ersten Block des Stils aufgelöst
+function kindValue(text: string, kind: string, style: keyof typeof STYLE_PREFIX): string | undefined {
+  const prefix = STYLE_PREFIX[style];
+  const tokens = stripComments(text).match(new RegExp(`${escape(prefix)}\\s*\\{([^}]*)\\}`))![1]!;
+  const color = kindColor(text, kind, prefix) ?? kindColor(text, kind);
+  const name = color?.match(/^var\((--gta-[\w-]+)\)$/)?.[1];
+  return name ? tokens.match(new RegExp(`${name}:\\s*([^;]+);`))?.[1]!.trim().toLowerCase() : color;
 }
 
 const rules = selectors(readFileSync(join(root, 'theme.css'), 'utf8'));
@@ -307,12 +316,15 @@ describe('Abdeckung der Host-Selektoren in theme.css', () => {
     expect(covered(styleSelectors(readFileSync(join(root, 'theme.css'), 'utf8'), style), selector)).toBe(true);
   });
 
-  it('jede Art unter „Meine Aufgaben“ hat eine Kennfarbe, die sechs Arten des Plans unterscheiden sich', () => {
+  it('jede Art unter „Meine Aufgaben“ hat eine Kennfarbe, die sich in jedem Stil von den anderen unterscheidet', () => {
     const css = readFileSync(join(root, 'theme.css'), 'utf8');
     expect(inboxKinds).toEqual(expect.arrayContaining(['question', 'accept', 'merge', 'blocked', 'planning', 'note']));
     for (const kind of inboxKinds) expect(kindColor(css, kind), kind).toMatch(/^var\(--gta-/);
-    const colors = ['question', 'accept', 'merge', 'blocked', 'planning', 'note'].map((kind) => kindColor(css, kind));
-    expect(new Set(colors).size).toBe(6);
+    for (const style of ['v', 'sa'] as const) {
+      const colors = inboxKinds.map((kind) => kindValue(css, kind, style));
+      for (const color of colors) expect(color, style).toMatch(/^#[0-9a-f]{6}$/);
+      expect(new Set(colors).size, `${style}: ${colors.join(', ')}`).toBe(inboxKinds.length);
+    }
   });
 
   it('die Abschnitte der Stile werden getrennt gelesen', () => {

@@ -1386,7 +1386,8 @@
 }
 
 /* Meine Aufgaben: Einträge als Aufträge mit Kennfarbe je Art. Die Farbe liegt als --inbox-color am Eintrag (eine
-   Hilfsvariable wie --col-color); Einrichtung gescheitert teilt sich die Farbe mit der Spalte „Wartet“ */
+   Hilfsvariable wie --col-color); Einrichtung gescheitert hat die Farbe der Spalte „Wartet“ (in San Andreas gleich
+   der Frage, dort deshalb die Farbe von „Erledigt“) */
 :root[data-theme='gta'] .inbox-list {
   gap: 2px;
 }
@@ -1501,7 +1502,7 @@
   text-shadow: var(--gta-head-shadow);
 }
 
-:root[data-theme='gta'] :is(.dash-foot, .ladder-summary) {
+:root[data-theme='gta'] .ladder-summary {
   border-top-color: var(--gta-line);
 }
 
@@ -1641,7 +1642,8 @@
   box-shadow: inset 3px 0 0 var(--gta-warn);
 }
 
-:root[data-theme='gta'] .session-open {
+/* Ohne Titel bleibt grau wie im Kern */
+:root[data-theme='gta'] .session-open:not(.untitled) {
   color: inherit;
 }
 
@@ -1825,6 +1827,10 @@
 :root[data-theme='gta'] .qlink {
   border-radius: 0;
   background: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme='gta'] a.qlink:hover {
+  background: rgba(255, 255, 255, 0.24);
 }
 
 :root[data-theme='gta'] .badge:is(.q-ready, .q-waiting, .q-researched, .q-new, .q-answered, .q-discarded) {
@@ -3428,6 +3434,12 @@
   color: #b01818;
 }
 
+/* Ein überfahrener Knopf wäre auf der weißen Zeile selbst weiß; dort in der Akzentfarbe */
+:root[data-theme='gta']:not([data-gta-style='sa']) .inbox-row:is(:hover, :focus-within) .btn:hover:not(:disabled) {
+  background: var(--gta-accent);
+  color: #000000;
+}
+
 :root[data-theme='gta']:not([data-gta-style='sa']) .inbox-row :focus-visible {
   outline-color: #000000;
 }
@@ -3509,6 +3521,10 @@
   outline-offset: -2px;
 }
 
+:root[data-theme='gta']:not([data-gta-style='sa']) .todo-head:hover:focus-visible {
+  outline-color: #000000;
+}
+
 :root[data-theme='gta']:not([data-gta-style='sa']) .todo-label {
   font: 600 16px/1 var(--gta-font-title);
   letter-spacing: 0.06em;
@@ -3524,21 +3540,21 @@
   font-size: 17px;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .session-row:hover {
+:root[data-theme='gta']:not([data-gta-style='sa']) .session-row:is(:hover, :focus-within) {
   background: #ffffff;
   color: #000000;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .session-row:hover :is(.muted, .cwd, .branch, .star) {
+:root[data-theme='gta']:not([data-gta-style='sa']) .session-row:is(:hover, :focus-within) :is(.muted, .cwd, .branch, .star) {
   color: rgba(0, 0, 0, 0.68);
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .session-row:hover :is(.tag:not(.add), .badge:not(:is(.running, .waiting))) {
+:root[data-theme='gta']:not([data-gta-style='sa']) .session-row:is(:hover, :focus-within) :is(.tag:not(.add), .badge:not(:is(.running, .waiting))) {
   background: rgba(0, 0, 0, 0.13);
   color: #000000;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .session-row:hover :focus-visible {
+:root[data-theme='gta']:not([data-gta-style='sa']) .session-row:is(:hover, :focus-within) :focus-visible {
   outline-color: #000000;
 }
 
@@ -3570,21 +3586,21 @@
 
 /* Fragen: Liste wie die Fragenliste der Preview mit weißer Auswahl; Optionen als Kästen, die gewählte weiß mit
    Akzentlinie oben wie ein gewählter Reiter */
-:root[data-theme='gta']:not([data-gta-style='sa']) .question-row:hover {
+:root[data-theme='gta']:not([data-gta-style='sa']) .question-row:is(:hover, :focus-within) {
   background: #ffffff;
   color: #000000;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .question-row:hover :is(.muted, .question-origin) {
+:root[data-theme='gta']:not([data-gta-style='sa']) .question-row:is(:hover, :focus-within) :is(.muted, .question-origin) {
   color: rgba(0, 0, 0, 0.68);
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .question-row:hover :is(.tag:not(.add), .qlink, .badge:not(:is(.q-ready, .q-waiting, .q-researched, .q-new, .q-answered, .q-discarded))) {
+:root[data-theme='gta']:not([data-gta-style='sa']) .question-row:is(:hover, :focus-within) :is(.tag:not(.add), .qlink, .badge:not(:is(.q-ready, .q-waiting, .q-researched, .q-new, .q-answered, .q-discarded))) {
   background: rgba(0, 0, 0, 0.13);
   color: #000000;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .question-row:hover :focus-visible {
+:root[data-theme='gta']:not([data-gta-style='sa']) .question-row:is(:hover, :focus-within) :focus-visible {
   outline-color: #000000;
 }
 
@@ -5082,6 +5098,10 @@
   border-left: 3px solid transparent;
   background: transparent;
   color: var(--gta-text);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .inbox-row.kind-setup {
+  --inbox-color: var(--gta-c-done);
 }
 
 :root[data-theme='gta'][data-gta-style='sa'] .inbox-row:is(:hover, :focus-within) {
