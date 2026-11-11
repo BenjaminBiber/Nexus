@@ -128,6 +128,14 @@
   Akzentfarben), der Fortschrittsring im Ticket-Panel mit Verlauf von Purple nach Pink; Rahmen,
   Symbole und alles andere bleiben Standard. Schrift und Statusfarben erreichen mindestens 4,5:1
   Kontrast.
+- Die Spalte „Erledigt“ des Boards zeigt Tickets als kompakte Zeilen (Nummer, Erledigt-Datum,
+  Titel) in Abschnitten: „Heute“, „Letzte 7 Tage“ und eingeklappt „Älter“, ganz oben „Wartet auf
+  Merge“ für erledigte Tickets, deren Branch noch offen ist. Das Dreipunkt-Menü am Spaltenkopf
+  gruppiert stattdessen nach Spec und blendet archivierte Tickets ein. Unter Einstellungen ›
+  Darstellung › Oberfläche legt „Erledigte Tickets archivieren“ fest, nach wie vielen Tagen
+  gemergte Tickets vom Board verschwinden (Standard: nie); die Suche findet sie weiter. Die API
+  liefert dafür `doneAt` je Karte und in den persönlichen Einstellungen `doneGrouping` (`time`,
+  `spec`) und `doneArchiveDays` (0 bis 365).
 
 ## 0.0.3 – 2026-11-09
 
