@@ -710,6 +710,75 @@ macro_rules! board_database_contract {
 
             #[tokio::test(flavor = "multi_thread")]
             $(#[$attr])*
+            async fn liefert_je_erledigtem_ticket_eines_boards_den_jungsten_wechsel_auf_done() {
+                let (db, _guard) = setup().await;
+                let seed = seed_board(&db).await;
+                let (project_id, board_id) = (seed.project_id, seed.board_id);
+                let anderes = $crate::tx!(db, |u| {
+                    u.boards()
+                        .insert(&$crate::board::database::NewBoard {
+                            project_id,
+                            owner_id: USER_ID.into(),
+                            name: "Anderes".into(),
+                            repo_path: None,
+                            created_at: NOW.into(),
+                        })
+                        .await
+                })
+                .await
+                .unwrap();
+                let anderes_id = anderes.id;
+                $crate::tx!(db, |u| {
+                    let erledigt = |id: &str, board: i32, number: i32| Ticket {
+                        status: TicketStatus::Done,
+                        ..ticket_fixture(id, project_id, board, number)
+                    };
+                    // Zweimal erledigt, dazwischen wieder geöffnet
+                    u.tickets().insert(&erledigt("ARC-0001", board_id, 1)).await?;
+                    // Erledigt und wieder geöffnet: steht nicht mehr auf done
+                    u.tickets()
+                        .insert(&Ticket {
+                            status: TicketStatus::InProgress,
+                            ..ticket_fixture("ARC-0002", project_id, board_id, 2)
+                        })
+                        .await?;
+                    // Erledigt auf einem anderen Board
+                    u.tickets().insert(&erledigt("ARC-0003", anderes_id, 3)).await?;
+                    // Erledigt, aber ohne Verlaufseintrag
+                    u.tickets().insert(&erledigt("ARC-0004", board_id, 4)).await?;
+                    u.history()
+                        .insert(&[
+                            status_entry("ARC-0001", "2026-10-10T08:00:00.000Z", "done"),
+                            status_entry("ARC-0001", "2026-10-11T09:00:00.000Z", "in_progress"),
+                            status_entry("ARC-0001", "2026-10-12T10:00:00.000Z", "done"),
+                            // Kein Statuswechsel, obwohl der neue Wert „done“ heißt
+                            HistoryEntry {
+                                field: "title".into(),
+                                ..status_entry("ARC-0001", "2026-10-13T11:00:00.000Z", "done")
+                            },
+                            status_entry("ARC-0002", "2026-10-10T08:00:00.000Z", "done"),
+                            status_entry("ARC-0002", "2026-10-11T09:00:00.000Z", "in_progress"),
+                            status_entry("ARC-0003", "2026-10-10T08:00:00.000Z", "done"),
+                        ])
+                        .await
+                })
+                .await
+                .unwrap();
+                let erledigt = $crate::tx!(db, |u| { u.history().done_at_by_board(board_id).await })
+                    .await
+                    .unwrap();
+                assert_eq!(
+                    erledigt,
+                    BTreeMap::from([(
+                        "ARC-0001".to_string(),
+                        "2026-10-12T10:00:00.000Z".to_string()
+                    )])
+                );
+                db.close().await.unwrap();
+            }
+
+            #[tokio::test(flavor = "multi_thread")]
+            $(#[$attr])*
             async fn speichert_spec_aufgabe_branch_worktree_zielbranch_und_die_listen_am_ticket() {
                 let (db, _guard) = setup().await;
                 let seed = seed_board(&db).await;

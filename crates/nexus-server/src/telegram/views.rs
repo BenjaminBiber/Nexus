@@ -839,6 +839,7 @@ mod tests {
             created_by_id: "u".into(),
             created_by_name: "Ben".into(),
             updated_at: "2026-11-01T10:00:00.000Z".into(),
+            done_at: None,
             rev: 1,
             column: BoardColumn::Backlog,
             waiting: false,

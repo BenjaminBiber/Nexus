@@ -18,8 +18,8 @@ use nexus_core::board::config_store::BoardConfigStore;
 use nexus_core::project::TokenStore;
 use nexus_core::registry::NexusHome;
 use nexus_core::settings::{
-    known_theme, SetupPrompts, ThemeMode, UserSettings, UserSettingsStore, NOTIFICATION_MODES,
-    NTFY_TOPIC_PATTERN,
+    known_theme, SetupPrompts, ThemeMode, UserSettings, UserSettingsStore, DONE_ARCHIVE_MAX_DAYS,
+    DONE_GROUPINGS, NOTIFICATION_MODES, NTFY_TOPIC_PATTERN,
 };
 use nexus_core::{Error, HarnessError, Result};
 use nexus_db::ConnectOptions;
@@ -175,6 +175,21 @@ fn merge_user_settings(
     }
     if let Some(value) = field("hideInPlanning") {
         next.hide_in_planning = flag("hideInPlanning", value)?;
+    }
+    if let Some(value) = field("doneGrouping") {
+        next.done_grouping = DONE_GROUPINGS
+            .into_iter()
+            .find(|grouping| value.as_str() == Some(grouping.as_str()))
+            .ok_or_else(|| settings_invalid("doneGrouping muss time oder spec sein."))?;
+    }
+    if let Some(value) = field("doneArchiveDays") {
+        next.done_archive_days = value
+            .as_u64()
+            .and_then(|days| u16::try_from(days).ok())
+            .filter(|days| *days <= DONE_ARCHIVE_MAX_DAYS)
+            .ok_or_else(|| {
+                settings_invalid("doneArchiveDays muss eine ganze Zahl von 0 bis 365 sein.")
+            })?;
     }
     if let Some(value) = field("ntfy") {
         next.ntfy = flag("ntfy", value)?;

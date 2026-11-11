@@ -2,6 +2,8 @@
 //!
 //! Die Spalten `FromValue`/`ToValue` heißen im DTO `from`/`to`.
 
+use std::collections::BTreeMap;
+
 use async_trait::async_trait;
 
 use nexus_core::board::database::HistoryRepository;
@@ -52,5 +54,21 @@ impl HistoryRepository for SqliteUnitOfWork<'_> {
             )?;
         }
         Ok(())
+    }
+
+    async fn done_at_by_board(&mut self, board_id: i32) -> Result<BTreeMap<String, String>> {
+        let zeilen = self.sql.query_rows(
+            "SELECT h.TicketId, MAX(h.At) AS At FROM History h JOIN Tickets t ON t.Id = h.TicketId
+       WHERE t.BoardId = @boardId AND t.Status = 'done' AND h.Field = 'status' AND h.ToValue = 'done'
+       GROUP BY h.TicketId",
+            &sqlite_params! { "boardId": board_id },
+            |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    iso_millis(&row.get::<_, String>(1)?),
+                ))
+            },
+        )?;
+        Ok(zeilen.into_iter().collect())
     }
 }

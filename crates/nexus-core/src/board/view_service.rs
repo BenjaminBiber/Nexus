@@ -54,6 +54,9 @@ pub struct BoardCard {
     pub created_by_id: String,
     pub created_by_name: String,
     pub updated_at: String,
+    /// Wann das Ticket erledigt wurde (jüngster Wechsel auf `done`, ohne Verlauf `updated_at`);
+    /// leer (`null`), solange es nicht erledigt ist
+    pub done_at: Option<String>,
     pub rev: i32,
     pub column: BoardColumn,
     pub waiting: bool,
@@ -74,9 +77,12 @@ pub struct BoardCard {
 }
 
 impl BoardCard {
-    /// Karte aus einer Anzeigefassung; die langen Texte werden zu „vorhanden“
-    fn of(view: TicketView, comment_count: i64) -> Self {
+    /// Karte aus einer Anzeigefassung; die langen Texte werden zu „vorhanden“. `done_at` ist der
+    /// Zeitpunkt aus dem Verlauf, falls es einen gibt
+    fn of(view: TicketView, comment_count: i64, done_at: Option<&str>) -> Self {
         let has = |text: &str| !text.trim().is_empty();
+        let done_at = (view.ticket.status == TicketStatus::Done)
+            .then(|| done_at.unwrap_or(&view.ticket.updated_at).to_string());
         let TicketView {
             ticket,
             column,
@@ -125,6 +131,7 @@ impl BoardCard {
             created_by_id: ticket.created_by_id,
             created_by_name: ticket.created_by_name,
             updated_at: ticket.updated_at,
+            done_at,
             rev: ticket.rev,
             column,
             waiting,
@@ -187,11 +194,13 @@ impl<D: BoardDatabase> BoardViewService<D> {
             let mut views = ticket_service::views(u, tickets).await?;
             ticket_service::sort_views(&mut views);
             let counts = u.comments().count_by_board(board_id).await?;
+            let done_at = u.history().done_at_by_board(board_id).await?;
             let cards: Vec<BoardCard> = views
                 .into_iter()
                 .map(|view| {
                     let count = counts.get(&view.ticket.id).copied().unwrap_or(0);
-                    BoardCard::of(view, count)
+                    let done = done_at.get(&view.ticket.id).map(String::as_str);
+                    BoardCard::of(view, count, done)
                 })
                 .collect();
             Ok(BoardView {
@@ -216,10 +225,13 @@ impl<D: BoardDatabase> BoardViewService<D> {
 
 #[cfg(test)]
 mod tests {
+    use super::{BoardCard, BoardView};
     use crate::board::basics::{Priority, TicketStatus};
+    use crate::board::database::BoardDatabase;
     use crate::board::ticket_ordering::BoardColumn;
     use crate::board::types::Ticket;
-    use crate::testing::BoardFixture;
+    use crate::testing::{status_entry, BoardFixture};
+    use crate::tx;
 
     /// Die vier Tickets des TypeScript-Tests, direkt über die Repositories angelegt
     async fn seed(f: &BoardFixture) {
@@ -331,6 +343,63 @@ mod tests {
                 "{feld} gehört nicht auf die Karte"
             );
         }
+    }
+
+    /// Die Karte mit dieser ID, egal in welcher Spalte
+    fn card<'a>(view: &'a BoardView, id: &str) -> &'a BoardCard {
+        view.columns
+            .iter()
+            .flat_map(|column| column.tickets.iter())
+            .find(|card| card.id == id)
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn erledigte_karten_tragen_den_zeitpunkt_des_wechsels_auf_done() {
+        let f = BoardFixture::create().await;
+        let erledigt = |ticket: Ticket| Ticket {
+            status: TicketStatus::Done,
+            updated_at: "2026-10-20T12:00:00.000Z".into(),
+            ..ticket
+        };
+        f.insert_ticket(&erledigt(f.new_ticket(1).await)).await;
+        // Erledigt, aber ohne Verlaufseintrag (etwa aus einem Import)
+        f.insert_ticket(&erledigt(f.new_ticket(2).await)).await;
+        tx!(f.db, |u| {
+            u.history()
+                .insert(&[status_entry("ARC-0001", "2026-10-12T10:00:00.000Z", "done")])
+                .await
+        })
+        .await
+        .unwrap();
+
+        let view = f.views.get(f.board_id).await.unwrap();
+
+        assert_eq!(
+            card(&view, "ARC-0001").done_at.as_deref(),
+            Some("2026-10-12T10:00:00.000Z")
+        );
+        assert_eq!(
+            card(&view, "ARC-0002").done_at.as_deref(),
+            Some("2026-10-20T12:00:00.000Z")
+        );
+    }
+
+    #[tokio::test]
+    async fn offene_karten_haben_kein_erledigt_datum() {
+        let f = BoardFixture::create().await;
+        f.insert_ticket(&Ticket {
+            status: TicketStatus::InProgress,
+            ..f.new_ticket(1).await
+        })
+        .await;
+
+        let view = f.views.get(f.board_id).await.unwrap();
+
+        let karte = card(&view, "ARC-0001");
+        assert_eq!(karte.done_at, None);
+        let json = serde_json::to_value(karte).unwrap();
+        assert_eq!(json["doneAt"], serde_json::Value::Null);
     }
 
     #[tokio::test]
