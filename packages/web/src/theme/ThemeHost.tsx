@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeHostProvider } from '@nexus/theme-sdk';
-import type { BoardsState, ColorSchemeState, NavIconName, SettingsState, ShellParts, ThemeHost, ThemeSettings, UsageState } from '@nexus/theme-sdk';
+import type { BoardsState, ColorSchemeState, SettingsState, ShellParts, ThemeHost, ThemeSettings, UsageState } from '@nexus/theme-sdk';
 import { useApi } from '../api/ApiContext.js';
 import type { ThemeMode, UserSettingsDto } from '../api/types.js';
 import type { UsageOverviewDto } from '../api/usageTypes.js';
 import { REFRESH_MS, USAGE_SETTING_EVENT } from '../components/ClaudeUsageMeter.js';
-import { useOwnOpenQuestionsCount } from '../components/DbQuestionsNavLink.js';
-import { useNewDocsCount } from '../components/DocsNavLink.js';
-import { useInboxCount } from '../components/inbox/InboxNavLink.js';
 import { useBoardProject } from '../dbboard/boardProject.js';
 import { currentBoard, useBoardChoices } from '../dbboard/useBoardChoices.js';
+import { useNavCounts } from '../hooks/useNavCounts.js';
 import { NAV_ITEMS } from './navItems.js';
 import { applyTheme, currentTheme } from './theme.js';
 import { useDisplayedTheme } from './useDisplayedTheme.js';
@@ -43,14 +41,6 @@ function useHostUsage(): UsageState {
   }, [overview]);
 }
 
-// Zähler der Navigation wie in der Seitenleiste; 0 heißt kein Zähler
-function useNavBadges(pid: string): Partial<Record<NavIconName, number>> {
-  const inbox = useInboxCount();
-  const questions = useOwnOpenQuestionsCount();
-  const docs = useNewDocsCount(pid);
-  return useMemo(() => ({ inbox, questions, docs }), [inbox, questions, docs]);
-}
-
 // Lesbarer Ausschnitt der Nutzereinstellungen
 function pick(dto: UserSettingsDto): ThemeSettings {
   return { theme: dto.theme, claudeUsage: dto.claudeUsage, compactCards: dto.compactCards, heroImages: dto.heroImages };
@@ -80,7 +70,8 @@ function useHostSettings(): SettingsState {
 }
 
 // Stellt den Themes über die Hooks des SDK Navigation, Boards, Verbrauch, Einstellungen, Farbschema, Routenwechsel, Suche
-// und die fertigen Bausteine des Rahmens bereit; braucht BoardProjectProvider, Router und ApiProvider darüber
+// und die fertigen Bausteine des Rahmens bereit; braucht BoardProjectProvider, Router und ApiProvider darüber, für die
+// Zähler der Navigation NavCountsProvider
 export function NexusThemeHost({ pid, parts, openSearch, children }: { pid: string; parts: ShellParts; openSearch: () => void; children: ReactNode }) {
   const routerNavigate = useNavigate();
   const { pathname } = useLocation();
@@ -91,7 +82,7 @@ export function NexusThemeHost({ pid, parts, openSearch, children }: { pid: stri
   const themeId = useDisplayedTheme();
   const themeSettings = useThemeSettingsState(themeId);
 
-  const badges = useNavBadges(pid);
+  const badges = useNavCounts();
   const nav = useMemo(
     () =>
       NAV_ITEMS.map(({ id, label }) => {

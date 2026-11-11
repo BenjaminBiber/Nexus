@@ -122,14 +122,26 @@ describe('NexusThemeHost', () => {
     registerTheme({ id: 'test-host', slots: { Shell: BadgeShell } });
     document.documentElement.dataset.theme = 'test-host';
     const base = fakeApi();
+    const api = fakeApi({
+      getUserSettings: async () => ({ ...(await base.getUserSettings()), theme: 'test-host' as never }),
+      getInbox: vi.fn(base.getInbox),
+      getDbQuestions: vi.fn(async () => dbQuestionList([dbQuestion('ARC-F0001', 'Beantwortet', { state: 'answered' })])),
+      getDocs: vi.fn(base.getDocs),
+    });
     render(
-      <ApiProvider api={fakeApi({ getUserSettings: async () => ({ ...(await base.getUserSettings()), theme: 'test-host' as never }) })}>
+      <ApiProvider api={api}>
         <MemoryRouter initialEntries={['/p/p1/sessions']}>
           <App />
         </MemoryRouter>
       </ApiProvider>,
     );
-    expect(await screen.findByText('inbox:-')).toBeTruthy();
+    await waitFor(() => {
+      expect(api.getInbox).toHaveBeenCalled();
+      expect(api.getDbQuestions).toHaveBeenCalled();
+      expect(api.getDocs).toHaveBeenCalled();
+    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.getByText('inbox:-')).toBeTruthy();
     expect(screen.getByText('questions:-')).toBeTruthy();
     expect(screen.getByText('docs:-')).toBeTruthy();
   });

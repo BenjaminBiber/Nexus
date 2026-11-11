@@ -6,6 +6,7 @@ import { ApiProvider } from '../src/api/ApiContext.js';
 import { ApiError } from '../src/api/ApiError.js';
 import { DbQuestionsNavLink } from '../src/components/DbQuestionsNavLink.js';
 import { notifyDbActiveChanged } from '../src/dbquestion/activeBoard.js';
+import { NavCountsProvider } from '../src/hooks/useNavCounts.js';
 import { LiveProvider } from '../src/live/LiveProvider.js';
 import { FakeEventSource } from './helpers/FakeEventSource.js';
 import { dbActive, dbQuestion, dbQuestionList, fakeApi } from './helpers/fakeApi.js';
@@ -28,9 +29,11 @@ function open(overrides: Parameters<typeof fakeApi>[0] = {}) {
     <ApiProvider api={api}>
       <LiveProvider pid="p1">
         <MemoryRouter initialEntries={['/p/p1/board']}>
-          <nav>
-            <DbQuestionsNavLink pid="p1" />
-          </nav>
+          <NavCountsProvider pid="p1">
+            <nav>
+              <DbQuestionsNavLink pid="p1" />
+            </nav>
+          </NavCountsProvider>
         </MemoryRouter>
       </LiveProvider>
     </ApiProvider>,
