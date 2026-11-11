@@ -193,8 +193,8 @@ fn install_with_limits(
 
 /// Baut aus einem Theme-Ordner ein `.nexus`-Paket mit denselben Prüfungen wie bei der
 /// Installation. Versteckte Dateien und Ordner sowie symbolische Links werden abgelehnt,
-/// nicht übersprungen. Reihenfolge und Zeitstempel sind fest, damit derselbe Ordner
-/// byte-gleiche Pakete ergibt.
+/// nicht übersprungen. Reihenfolge, Zeitstempel und das eingetragene System sind fest, damit
+/// derselbe Ordner auf jeder Plattform byte-gleiche Pakete ergibt.
 pub fn pack_theme(dir: &Path) -> Result<PackedTheme, ThemePackageError> {
     pack_with_limits(dir, DEFAULT_LIMITS)
 }
@@ -227,9 +227,11 @@ fn pack_with_limits(dir: &Path, limits: Limits) -> Result<PackedTheme, ThemePack
     check_theme_css(css)?;
 
     let mut writer = zip::ZipWriter::new(Cursor::new(Vec::new()));
+    // Ohne `system` trägt zip das System ein, auf dem gepackt wird (Windows: DOS, sonst Unix)
     let options = zip::write::SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated)
         .last_modified_time(zip::DateTime::default())
+        .system(zip::System::Unix)
         .unix_permissions(0o644);
     let zip_error = |error: zip::result::ZipError| ThemePackageError::NotZip(error.to_string());
     for (path, data) in &files {
@@ -863,6 +865,19 @@ mod tests {
             pack_theme(dir.path()).unwrap().bytes,
             pack_theme(dir.path()).unwrap().bytes
         );
+    }
+
+    /// Ein ZIP nennt je Eintrag das System, auf dem es entstand. Ohne feste Angabe wären Pakete
+    /// von Windows und von Linux oder macOS nicht byte-gleich.
+    #[test]
+    fn paket_nennt_auf_jedem_system_unix() {
+        let dir = gueltiger_ordner();
+        let paket = pack_theme(dir.path()).unwrap();
+        let mut archiv = zip::ZipArchive::new(Cursor::new(paket.bytes)).unwrap();
+        for index in 0..archiv.len() {
+            let datei = archiv.by_index(index).unwrap();
+            assert_eq!(datei.system(), zip::System::Unix, "Eintrag {index}");
+        }
     }
 
     #[test]
