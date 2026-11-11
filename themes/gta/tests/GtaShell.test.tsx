@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Platzhalter-Rahmen „GTA“ mit einem Host aus erkennbaren Bausteinen: Attribute auf <html>, gemerkter Stil beim Laden
+// Rahmen „GTA“ mit einem Host aus erkennbaren Bausteinen: Rahmen des Stils, Attribute auf <html>, gemerkter Stil beim Laden
 import { createElement, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, renderHook, within } from '@testing-library/react';
@@ -49,26 +49,29 @@ function renderShell(values: Record<string, boolean | string> = {}, loading = fa
 
 const attr = (name: string) => document.documentElement.getAttribute(name);
 
-describe('Rahmen „GTA“ (Platzhalter)', () => {
+describe('Rahmen „GTA“', () => {
   it('ist als Slot Shell angemeldet', () => {
     expect(theme.id).toBe('gta');
     expect(theme.slots.Shell).toBe(GtaShell);
   });
 
-  it('zeigt oben Wortmarke, Board-Auswahl und Suche, darunter Navigation und Inhalt', () => {
-    renderShell();
-    const shell = document.querySelector('[data-gta-part="shell"]') as HTMLElement;
-    expect(shell.className).toBe('gta-screen');
-    const header = shell.querySelector('header') as HTMLElement;
-    expect(within(header).getByRole('img', { name: 'Nexus' }).getAttribute('data-wordmark')).toBe('nexus');
-    expect(within(header).getByText('teil-board')).toBeTruthy();
-    expect(within(header).getByRole('button', { name: 'teil-suche' })).toBeTruthy();
-    const nav = shell.querySelector('nav.gta-nav') as HTMLElement;
-    expect(within(nav).getByRole('link', { name: 'nav-board' }).getAttribute('href')).toBe('/p/p1/board');
-    expect(within(shell).getByRole('main').textContent).toBe('seiten-inhalt');
+  it('rendert für beide Stile den Rahmen GTA V mit Wortmarke, Board-Auswahl, eigener Navigation und Inhalt', () => {
+    for (const style of ['v', 'sa']) {
+      renderShell({ style });
+      const shell = document.querySelector('[data-gta-part="shell"]') as HTMLElement;
+      expect(shell.classList.contains('gta-v'), style).toBe(true);
+      const header = shell.querySelector('header') as HTMLElement;
+      expect(within(header).getByRole('img', { name: 'Nexus' }).getAttribute('data-wordmark')).toBe('nexus');
+      expect(within(header).getByText('teil-board')).toBeTruthy();
+      // Das Fragment nav des Kerns bleibt draußen: genau eine Navigation, die des Rahmens
+      expect(within(shell).getAllByRole('navigation').map((nav) => nav.getAttribute('aria-label'))).toEqual(['Hauptnavigation']);
+      expect(within(shell).queryByText('nav-board')).toBeNull();
+      expect(within(shell).getByRole('main').textContent).toBe('seiten-inhalt');
+      cleanup();
+    }
   });
 
-  it('stellt Navigation und Inhalt den GameProvider bereit', () => {
+  it('stellt dem Inhalt den GameProvider bereit', () => {
     function Probe() {
       const game = useGame();
       return <span>spiel-{game.pid}-{game.loaded ? 'geladen' : 'leer'}</span>;
@@ -76,10 +79,10 @@ describe('Rahmen „GTA“ (Platzhalter)', () => {
     const host = fakeHost();
     render(
       <ThemeHostProvider value={host}>
-        <GtaShell pid="p1" nav={<Probe />} content={<main>seiten-inhalt</main>} parts={host.parts} />
+        <GtaShell pid="p1" nav={null} content={<Probe />} parts={host.parts} />
       </ThemeHostProvider>,
     );
-    expect(document.querySelector('nav.gta-nav')?.textContent).toBe('spiel-p1-leer');
+    expect(document.querySelector('.gta-v-main')?.textContent).toBe('spiel-p1-leer');
   });
 
   it('legt Stil, Akzent und Radar als data-gta-* auf <html> und räumt sie beim Abbau weg', () => {

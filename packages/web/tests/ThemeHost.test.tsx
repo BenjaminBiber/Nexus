@@ -7,7 +7,7 @@ import { useBoards, useColorScheme, useNav, useNavigate, useSettings, useUsage }
 import { App } from '../src/App.js';
 import { ApiProvider } from '../src/api/ApiContext.js';
 import { registerTheme, unregisterTheme } from '../src/theme/registry.js';
-import { fakeApi } from './helpers/fakeApi.js';
+import { dbQuestion, dbQuestionList, fakeApi, inboxItem, inboxList } from './helpers/fakeApi.js';
 
 afterEach(() => {
   cleanup();
@@ -84,5 +84,65 @@ describe('NexusThemeHost', () => {
     );
     await userEvent.click(await screen.findByRole('button', { name: 'wählen:1' }));
     await waitFor(() => expect(activateDbBoard).toHaveBeenCalledWith(3));
+  });
+
+  it('liefert wie die Seitenleiste Zähler für Meine Aufgaben, eigene offene Fragen und neue Docs', async () => {
+    function BadgeShell() {
+      const nav = useNav();
+      return <ul aria-label="nav">{nav.map((n) => <li key={n.id}>{`${n.id}:${n.badge ?? '-'}`}</li>)}</ul>;
+    }
+    registerTheme({ id: 'test-host', slots: { Shell: BadgeShell } });
+    document.documentElement.dataset.theme = 'test-host';
+    const doc = (path: string) => ({ path, title: path, group: 'spec' as const, kind: 'spec' as const, topic: null, date: null, mtimeMs: 1, exists: true });
+    const base = fakeApi();
+    const api = fakeApi({
+      getUserSettings: async () => ({ ...(await base.getUserSettings()), theme: 'test-host' as never }),
+      getInbox: async () => inboxList([inboxItem('ticket:ARC-0001', 'merge', 'Eins'), inboxItem('note:3', 'note', 'Zwei')]),
+      getDbQuestions: async () => dbQuestionList([dbQuestion('ARC-F0001', 'Eins'), dbQuestion('ARC-F0002', 'Fremd', { mine: false })]),
+      getDocs: async () => ({ ...(await base.getDocs('p1')), docs: [doc('a.md'), doc('b.md'), doc('c.md')] }),
+    });
+    render(
+      <ApiProvider api={api}>
+        <MemoryRouter initialEntries={['/p/p1/sessions']}>
+          <App />
+        </MemoryRouter>
+      </ApiProvider>,
+    );
+    expect(await screen.findByText('inbox:2')).toBeTruthy();
+    expect(await screen.findByText('questions:1')).toBeTruthy();
+    expect(await screen.findByText('docs:3')).toBeTruthy();
+    expect(screen.getByText('board:-')).toBeTruthy();
+  });
+
+  it('lässt den Zähler ohne offene Einträge weg', async () => {
+    function BadgeShell() {
+      const nav = useNav();
+      return <ul aria-label="nav">{nav.map((n) => <li key={n.id}>{`${n.id}:${n.badge ?? '-'}`}</li>)}</ul>;
+    }
+    registerTheme({ id: 'test-host', slots: { Shell: BadgeShell } });
+    document.documentElement.dataset.theme = 'test-host';
+    const base = fakeApi();
+    const api = fakeApi({
+      getUserSettings: async () => ({ ...(await base.getUserSettings()), theme: 'test-host' as never }),
+      getInbox: vi.fn(base.getInbox),
+      getDbQuestions: vi.fn(async () => dbQuestionList([dbQuestion('ARC-F0001', 'Beantwortet', { state: 'answered' })])),
+      getDocs: vi.fn(base.getDocs),
+    });
+    render(
+      <ApiProvider api={api}>
+        <MemoryRouter initialEntries={['/p/p1/sessions']}>
+          <App />
+        </MemoryRouter>
+      </ApiProvider>,
+    );
+    await waitFor(() => {
+      expect(api.getInbox).toHaveBeenCalled();
+      expect(api.getDbQuestions).toHaveBeenCalled();
+      expect(api.getDocs).toHaveBeenCalled();
+    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.getByText('inbox:-')).toBeTruthy();
+    expect(screen.getByText('questions:-')).toBeTruthy();
+    expect(screen.getByText('docs:-')).toBeTruthy();
   });
 });

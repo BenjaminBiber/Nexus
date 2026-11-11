@@ -20,6 +20,7 @@ import { DefaultShell } from './DefaultShell.js';
 import { SlotBoundary } from '../theme/SlotBoundary.js';
 import { useSlot } from '../theme/useSlot.js';
 import { NexusThemeHost } from '../theme/ThemeHost.js';
+import { NavCountsProvider } from '../hooks/useNavCounts.js';
 import { navLabel } from '../theme/navItems.js';
 import type { ShellParts } from '@nexus/theme-sdk';
 
@@ -108,6 +109,7 @@ export function AppShell() {
   return (
     <LiveProvider pid={pid} key={pid}>
       <BoardProjectProvider>
+        <NavCountsProvider pid={pid}>
         <NexusThemeHost pid={pid} parts={parts} openSearch={openSearch}>
         <OpenSearchContext.Provider value={openSearch}>
         <SessionNotifier pid={pid} />
@@ -123,6 +125,7 @@ export function AppShell() {
         {searching && <SearchDialog pid={pid} onClose={() => setSearching(false)} />}
         </OpenSearchContext.Provider>
         </NexusThemeHost>
+        </NavCountsProvider>
       </BoardProjectProvider>
     </LiveProvider>
   );

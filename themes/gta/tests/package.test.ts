@@ -121,7 +121,7 @@ describe('GTA-Theme-Paket', () => {
     expect(manifest.settingsSchema).toEqual(GTA_SETTINGS);
     expect(theme.settingsSchema).toEqual(GTA_SETTINGS);
     expect(theme.id).toBe('gta');
-    expect(manifest.slots).toEqual(['Shell']);
+    expect(manifest.slots).toEqual(['Shell', 'NavIcon', 'Icon', 'Progress', 'StartAnimation']);
     expect(Object.keys(theme.slots)).toEqual(manifest.slots);
   });
 
@@ -215,7 +215,11 @@ describe('GTA-Theme-Paket', () => {
 
   it('@keyframes animieren nur transform, opacity, filter und clip-path', () => {
     const text = stripComments(css());
-    for (const block of text.match(/@keyframes [\w-]+\s*\{(?:[^{}]*\{[^}]*\})*\s*\}/g) ?? []) {
+    const blocks = text.match(/@keyframes [\w-]+\s*\{(?:[^{}]*\{[^}]*\})*\s*\}/g) ?? [];
+    // Jede @keyframes-Regel wird erfasst, sonst prüfte der Test nichts
+    expect(blocks.length).toBeGreaterThan(0);
+    expect(blocks).toHaveLength(text.match(/@keyframes\s/g)!.length);
+    for (const block of blocks) {
       const props = [...block.matchAll(/([\w-]+)\s*:/g)].map((m) => m[1]!);
       expect(props.filter((p) => !['transform', 'opacity', 'filter', 'clip-path'].includes(p)), block).toEqual([]);
     }
