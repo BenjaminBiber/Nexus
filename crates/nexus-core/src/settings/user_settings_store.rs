@@ -8,8 +8,9 @@ use crate::error::{Error, Result};
 use crate::locking::AtomicWriter;
 use crate::registry::HarnessHome;
 use crate::settings::user_settings::{
-    known_theme, NotificationMode, SetupPrompts, ThemeMode, UserSettings, DEFAULT_NTFY_SERVER,
-    NOTIFICATION_MODES, NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN,
+    known_theme, DoneGrouping, NotificationMode, SetupPrompts, ThemeMode, UserSettings,
+    DEFAULT_NTFY_SERVER, DONE_ARCHIVE_MAX_DAYS, DONE_GROUPINGS, NOTIFICATION_MODES,
+    NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN,
 };
 
 /// Liest und schreibt `settings.json`.
@@ -77,6 +78,8 @@ fn normalize(raw: &Value, home: &HarnessHome) -> UserSettings {
         compact_cards: is_true(raw, "compactCards"),
         hide_not_needed: is_true(raw, "hideNotNeeded"),
         hide_in_planning: is_true(raw, "hideInPlanning"),
+        done_grouping: done_grouping(raw),
+        done_archive_days: done_archive_days(raw),
         ntfy: is_true(raw, "ntfy"),
         // ntfy-Felder: Server als http(s)-Adresse, Thema nur mit erlaubten Zeichen, sonst Standard
         ntfy_server: text(raw, "ntfyServer")
@@ -88,6 +91,23 @@ fn normalize(raw: &Value, home: &HarnessHome) -> UserSettings {
         ntfy_token: text(raw, "ntfyToken").unwrap_or_default(),
         setup_prompts: setup_prompts(raw.get("setupPrompts")),
     }
+}
+
+/// Gruppierung der Spalte „Erledigt“; Unbekanntes ergibt den Standard
+fn done_grouping(raw: &Value) -> DoneGrouping {
+    DONE_GROUPINGS
+        .into_iter()
+        .find(|grouping| raw.get("doneGrouping").and_then(Value::as_str) == Some(grouping.as_str()))
+        .unwrap_or(UserSettings::default().done_grouping)
+}
+
+/// Archivdauer in Tagen; alles außer einer ganzen Zahl von 0 bis 365 ergibt den Standard
+fn done_archive_days(raw: &Value) -> u16 {
+    raw.get("doneArchiveDays")
+        .and_then(Value::as_u64)
+        .and_then(|days| u16::try_from(days).ok())
+        .filter(|days| *days <= DONE_ARCHIVE_MAX_DAYS)
+        .unwrap_or(UserSettings::default().done_archive_days)
 }
 
 /// Abgewiesene Setup-Dialoge; Unbrauchbares zählt als nicht abgewiesen
@@ -163,6 +183,8 @@ mod tests {
             compact_cards: true,
             hide_not_needed: true,
             hide_in_planning: true,
+            done_grouping: DoneGrouping::Spec,
+            done_archive_days: 30,
             ntfy: true,
             ntfy_server: "https://push.example".into(),
             ntfy_topic: "harness-x".into(),
@@ -296,6 +318,36 @@ mod tests {
         assert_eq!(settings.ntfy_server, DEFAULT_NTFY_SERVER);
         assert_eq!(settings.ntfy_topic, "");
         assert_eq!(settings.ntfy_token, "");
+    }
+
+    #[test]
+    fn liest_gruppierung_und_archiv_der_erledigt_spalte() {
+        let (dir, store) = store();
+        for (tage, erwartet) in [(0, 0), (1, 1), (365, 365)] {
+            write_raw(
+                &dir,
+                &format!(r#"{{"doneGrouping":"spec","doneArchiveDays":{tage}}}"#),
+            );
+            let settings = store.read();
+            assert_eq!(settings.done_grouping, DoneGrouping::Spec);
+            assert_eq!(settings.done_archive_days, erwartet);
+        }
+    }
+
+    #[test]
+    fn ersetzt_eine_unbrauchbare_gruppierung_und_archivdauer_durch_die_standardwerte() {
+        let (dir, store) = store();
+        for raw in [
+            r#"{"doneGrouping":"liste","doneArchiveDays":366}"#,
+            r#"{"doneGrouping":5,"doneArchiveDays":-1}"#,
+            r#"{"doneGrouping":null,"doneArchiveDays":1.5}"#,
+            r#"{"doneArchiveDays":"7"}"#,
+        ] {
+            write_raw(&dir, raw);
+            let settings = store.read();
+            assert_eq!(settings.done_grouping, DoneGrouping::Time, "{raw}");
+            assert_eq!(settings.done_archive_days, 0, "{raw}");
+        }
     }
 
     #[test]
