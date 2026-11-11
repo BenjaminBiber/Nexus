@@ -307,7 +307,7 @@ const HOST: Record<string, Record<string, string>> = {
     Merkmalchip: '.dep-graph-chip',
   },
   rest: {
-    Fehlerzustand: '.state',
+    'Fehler als ganze Seite': '.page > .state',
     'Ladebild': '.loader-n',
     'Hinweis zum Theme': '.theme-notice',
   },

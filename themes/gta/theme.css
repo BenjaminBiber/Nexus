@@ -2368,7 +2368,7 @@
 }
 
 /* Meldungen: Fläche in der Farbe des Zustands, Kante links in derselben Farbe */
-:root[data-theme='gta'] :is(.notice, .notice-warn, .warn-box) {
+:root[data-theme='gta'] .notice {
   border-radius: 0;
   box-shadow: inset 3px 0 0 currentColor;
 }
@@ -2378,7 +2378,7 @@
 }
 
 /* Auswahlkarten (Benachrichtigungen, Spracherkennung): Kasten des Stils, gewählt mit Rand in der Akzentfarbe */
-:root[data-theme='gta'] :is(.choice, .speech-service, .option-box, .suggestion-card, .token-row, .store-repo-row, .store-update-row) {
+:root[data-theme='gta'] :is(.choice, .speech-service, .suggestion-card, .token-row, .store-repo-row, .store-update-row) {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 0;
   background: var(--gta-panel-2);
@@ -2787,7 +2787,8 @@
   background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
 }
 
-:root[data-theme='gta'] .dep-graph-box {
+/* :where hält die Spezifität klein: Überfahren, Fokus, kritischer Pfad und Nachbarn färben die Linie wie im Kern */
+:root[data-theme='gta'] :where(.dep-graph-box) {
   fill: #000;
   stroke: var(--gta-line);
   rx: 0;
@@ -2808,8 +2809,10 @@
   fill: var(--gta-text);
 }
 
-/* Seiten ohne Rahmen (Start ohne Projekt, Link öffnen) und Fehler ganzer Seiten: Kasten mit roter Kante */
-:root[data-theme='gta'] .state:not(.empty):not(.loading) {
+/* Seiten ohne Rahmen (Start ohne Projekt, Link öffnen) und Fehler ganzer Seiten: Kasten mit roter Kante. Nur der
+   Fehler als ganze Seite, nicht Fehler in Paneelen */
+:root[data-theme='gta'] #root > .state:not(.empty):not(.loading),
+:root[data-theme='gta'] .page > .state:not(.empty):not(.loading) {
   margin: 24px auto;
   max-width: 560px;
   background: var(--gta-panel);
@@ -4585,7 +4588,8 @@
   box-shadow: inset 3px 0 0 var(--gta-accent);
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .doc-tree-item:focus-visible > .doc-tree-row.on {
+/* Fokus auf der weißen Zeile in Schwarz, die Akzentfarbe wäre auf Weiß zu blass */
+:root[data-theme='gta']:not([data-gta-style='sa']) .doc-tree-item:focus-visible > .doc-tree-row:is(.on, :hover) {
   box-shadow: inset 0 0 0 2px #000000;
 }
 
@@ -4633,7 +4637,10 @@
   box-shadow: inset 3px 0 0 var(--gta-accent);
 }
 
+/* Tastaturfokus: die Zeile wird weiß wie beim Überfahren, der Ring darin schwarz */
 :root[data-theme='gta']:not([data-gta-style='sa']) .settings-nav a:focus-visible {
+  background: #ffffff;
+  color: #000000;
   outline-color: #000000;
   outline-offset: -2px;
 }
@@ -4657,7 +4664,8 @@
   box-shadow: inset 0 4px 0 var(--gta-accent);
 }
 
-/* Seiten ohne Rahmen (Start ohne Projekt, Link öffnen): Abendhimmel der Szene statt Schwarz */
+/* Seiten ohne Rahmen (Start ohne Projekt, Link öffnen): Abendhimmel der Szene statt Schwarz. Dort setzt keine Shell
+   data-gta-style, deshalb gilt auf diesen Seiten immer der Grundstil GTA V */
 :root[data-theme='gta']:not([data-gta-style='sa']) body:not(:has(.gta-frame)) {
   background: linear-gradient(180deg, #120a24 0%, #2a1537 45%, #5a2a3a 80%, #07050c 100%) fixed;
 }
@@ -6307,6 +6315,10 @@
   box-shadow: inset 2px 0 0 var(--gta-accent);
 }
 
+:root[data-theme='gta'][data-gta-style='sa'] .doc-tree-item:focus-visible > .doc-tree-row {
+  box-shadow: inset 0 0 0 2px var(--gta-accent);
+}
+
 :root[data-theme='gta'][data-gta-style='sa'] .doc {
   color: #e6e6e6;
 }
@@ -6318,6 +6330,10 @@
 :root[data-theme='gta'][data-gta-style='sa'] .doc-comment-item {
   border: 2px solid #000;
   box-shadow: 0 0 0 1px var(--gta-line), inset 3px 0 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .doc-comment-item.resolved {
+  box-shadow: 0 0 0 1px var(--gta-line), inset 3px 0 0 var(--gta-text-dim);
 }
 
 :root[data-theme='gta'][data-gta-style='sa'] .draft-tile.is-active {
@@ -6419,11 +6435,6 @@
 :root[data-theme='gta'][data-gta-style='sa'] :is(.theme-card-name strong, .store-card-title h3) {
   font: 400 12px/1.3 var(--gta-font-title);
   letter-spacing: 0.04em;
-}
-
-/* Seiten ohne Rahmen (Start ohne Projekt, Link öffnen): Abendhimmel über Los Santos statt Schwarz */
-:root[data-theme='gta'][data-gta-style='sa'] body:not(:has(.gta-frame)) {
-  background: linear-gradient(180deg, #14100c 0%, #3a2614 50%, #7a4a1c 82%, #000000 100%) fixed;
 }
 
 /* Kleines Fenster (bis 1024 × 700): schmalere Menüspalte und kleineres Radar, Hilfekasten unter dem Titel; HUD und

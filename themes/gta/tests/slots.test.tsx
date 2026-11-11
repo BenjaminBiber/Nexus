@@ -113,7 +113,9 @@ describe('Wahl nach Stil', () => {
     expect(render(slots).container.textContent).toBe('sa-naviconsa-iconsa-progress');
     cleanup();
     window.localStorage.setItem(STYLE_KEY, 'v');
-    expect(render(slots).container.textContent).not.toContain('sa-');
+    const { container } = render(slots);
+    expect(container.textContent).not.toContain('sa-');
+    expect(container.querySelector('svg')).not.toBeNull();
   });
 
   it('StartAnimation nimmt den gemerkten Stil', () => {
