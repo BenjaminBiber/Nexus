@@ -10,6 +10,21 @@ interface Entry {
   event: GameEvent;
 }
 
+/**
+ * Esc schließt das stehende Banner, ohne die Taste abzufangen; ein Esc, das schon ein Dialog des Kerns verarbeitet hat
+ * (defaultPrevented), lässt es stehen.
+ */
+export function useBannerEscape(banner: GameEvent | null, dismiss: () => void): void {
+  useEffect(() => {
+    if (!banner) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.defaultPrevented) dismiss();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [banner, dismiss]);
+}
+
 export function useBanners(enabled: boolean): { current: GameEvent | null; push(events: GameEvent[]): void; dismiss(): void } {
   const [queue, setQueue] = useState<Entry[]>([]);
   const head = enabled ? queue[0] : undefined;

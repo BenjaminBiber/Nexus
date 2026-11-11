@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import { useGame } from '../data/GameContext.js';
 import type { GameEvent } from '../data/events.js';
+import { useBannerEscape } from '../shared/banners.js';
 import { formatAmountSa } from '../shared/format.js';
 import { Wordmark } from '../shared/Wordmark.js';
 
@@ -45,15 +45,7 @@ function WastedBanner() {
 // theme.css). Die Hülle mit role="status" bleibt stehen, damit Screenreader jedes Banner ansagen.
 export function SaBanner() {
   const { banner, dismissBanner } = useGame();
-
-  useEffect(() => {
-    if (!banner) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !event.defaultPrevented) dismissBanner();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [banner, dismissBanner]);
+  useBannerEscape(banner, dismissBanner);
 
   return (
     <div className="gta-sa-banner-live" role="status">

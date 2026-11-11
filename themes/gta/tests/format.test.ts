@@ -1,6 +1,6 @@
 // Anzeigeformate für Geld, Uhr und Prozent
 import { describe, expect, it } from 'vitest';
-import { formatAmountSa, formatClockSa, formatClockV, formatMoneySa, formatMoneyV, formatPercent } from '../src/shared/format.js';
+import { formatAmountSa, formatClockSa, formatClockV, formatMoneySa, formatMoneyV, formatPercent, openTickets, percentOf } from '../src/shared/format.js';
 
 describe('Geld', () => {
   it('GTA V: Dollar mit deutschen Tausenderpunkten', () => {
@@ -49,5 +49,19 @@ describe('Prozent', () => {
     expect(formatPercent(0.42)).toBe('42 %');
     expect(formatPercent(1)).toBe('100 %');
     expect(formatPercent(0.005)).toBe('1 %');
+  });
+
+  it('als Zahl für Balken: ganz und auf 0..100 begrenzt', () => {
+    expect(percentOf(0.424)).toBe(42);
+    expect(percentOf(1.7)).toBe(100);
+    expect(percentOf(-0.2)).toBe(0);
+  });
+});
+
+describe('Tickets', () => {
+  it('offene Tickets in Einzahl und Mehrzahl', () => {
+    expect(openTickets(1)).toBe('1 offenes Ticket');
+    expect(openTickets(0)).toBe('0 offene Tickets');
+    expect(openTickets(5)).toBe('5 offene Tickets');
   });
 });

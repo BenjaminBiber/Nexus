@@ -1,9 +1,10 @@
 import type { CSSProperties, ReactNode, RefObject } from 'react';
 import { useGame, type Game } from '../data/GameContext.js';
-import { formatMoneySa, formatPercent } from '../shared/format.js';
+import { formatMoneySa, formatPercent, percentOf } from '../shared/format.js';
 import { useStatsDialog } from '../shared/useStatsDialog.js';
 
-// Lage der Reviere auf der Karte der Preview (x, y, Breite, Höhe), eins je Spalte des Boards
+// Lage der Reviere auf der Karte der Preview (x, y, Breite, Höhe), eins je Spalte des Boards; das Board hat höchstens
+// acht Spalten (ohne „Nicht nötig“ sieben), jede bekommt also ein eigenes Gebiet
 const TURFS: [number, number, number, number][] = [
   [22, 34, 44, 32],
   [76, 24, 50, 42],
@@ -15,7 +16,7 @@ const TURFS: [number, number, number, number][] = [
   [196, 126, 50, 36],
 ];
 
-const share = (value: number) => `${Math.round(Math.min(1, Math.max(0, value)) * 100)}%`;
+const share = (value: number) => `${percentOf(value)}%`;
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -46,7 +47,7 @@ function Statistics({ game }: { game: Game }) {
   return (
     <Panel title="Statistik">
       <Stat name="Respekt" hint="Fortschritt des Boards" value={game.boardProgress === null ? '–' : formatPercent(game.boardProgress)} fill={game.boardProgress ?? 0} />
-      <Stat name="Ausdauer" hint="5-Stunden-Kontingent" value={free(game.quota5h)} fill={game.quota5h ?? 0} color="#b4191d" />
+      <Stat name="Ausdauer" hint="5-Stunden-Kontingent" value={free(game.quota5h)} fill={game.quota5h ?? 0} color="var(--gta-danger)" />
       <Stat name="Panzerung" hint="7-Tage-Kontingent" value={free(game.quota7d)} fill={game.quota7d ?? 0} />
       <Stat
         name="Schritte"

@@ -14,16 +14,17 @@ const onPage = (id: 'board' | 'docs') => {
 };
 
 describe('SaTitle', () => {
-  it('der Name der aktiven Seite ist die Überschrift', () => {
+  it('zeigt den Namen der aktiven Seite groß, ohne zweites h1 neben dem der Seite', () => {
     renderWithGame(<SaTitle />, fakeGame(onPage('docs')));
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Docs');
+    expect(document.querySelector('.gta-sa-title-page')?.textContent).toBe('Docs');
+    expect(screen.queryByRole('heading')).toBeNull();
   });
 
-  it('auf dem Board: Aufträge und blockierte', () => {
-    renderWithGame(<SaTitle />, fakeGame({ ...onPage('board'), total: 7, blocked: 1 }));
-    expect(info()).toBe('7 Aufträge, 1 blockiert');
+  it('auf dem Board: offene Aufträge und blockierte', () => {
+    renderWithGame(<SaTitle />, fakeGame({ ...onPage('board'), total: 7, open: 5, blocked: 1 }));
+    expect(info()).toBe('5 Aufträge, 1 blockiert');
     cleanup();
-    renderWithGame(<SaTitle />, fakeGame({ ...onPage('board'), total: 1, blocked: 0 }));
+    renderWithGame(<SaTitle />, fakeGame({ ...onPage('board'), open: 1, blocked: 0 }));
     expect(info()).toBe('1 Auftrag, 0 blockiert');
   });
 

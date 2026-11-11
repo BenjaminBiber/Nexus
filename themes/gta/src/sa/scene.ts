@@ -1,7 +1,7 @@
 // Vorort bei Sonnenuntergang im Stil San Andreas als Daten: Hochhäuser in der Ferne, Häuser mit Dächern und Fenstern,
 // Strommasten mit Leitungen, Fahrbahnmarkierung und Palmen auf einer Fläche 1440 × 900. Selbst gezeichnet nach der
 // Preview; ein fester Zufallsstartwert sorgt dafür, dass die Szene immer gleich aussieht.
-import type { Palm, Rect } from '../v/scene.js';
+import { random, type Palm, type Rect } from '../shared/scene.js';
 
 export interface SaSceneData {
   far: Rect[];
@@ -10,17 +10,6 @@ export interface SaSceneData {
   poles: { d: string; width: number }[];
   dashes: Rect[];
   palms: Palm[];
-}
-
-// mulberry32 wie in der Preview, Startwert 29
-function random(seed: number): () => number {
-  let a = seed;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }
 
 const int = (n: number) => n | 0;

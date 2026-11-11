@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { NavLink } from '@nexus/theme-sdk';
 import { useGame } from '../data/GameContext.js';
 import type { Blip } from '../data/derive.js';
+import { openTickets } from '../shared/format.js';
 
 /** Seitenlänge des Quadrats im Kreis, auf das die Blip-Positionen (0..1) fallen; passt ganz in den Kreis (r 71) */
 export const RADAR_INNER = 100;
@@ -43,8 +44,6 @@ function Blips({ blips }: { blips: Blip[] }) {
   );
 }
 
-const ticketsText = (n: number) => (n === 1 ? '1 offenes Ticket' : `${n} offene Tickets`);
-
 // Rundes Radar unten in der Menüspalte: Karte im Kreis, je offenem Ticket ein Blip in der Spaltenfarbe (blockierte
 // blinken), Spieler-Pfeil in der Mitte, schwarzer Ring mit „N“. Als Ganzes ein Link zum Board.
 export function SaRadar() {
@@ -75,7 +74,7 @@ export function SaRadar() {
                 </text>
               </g>
             </svg>
-            <span className="gta-sr">Radar: {ticketsText(open)}, zum Board</span>
+            <span className="gta-sr">Radar: {openTickets(open)}, zum Board</span>
           </>
         )}
       </NavLink>

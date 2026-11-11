@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { MAX_WANTED, useGame } from '../data/GameContext.js';
-import { formatClockSa, formatMoneySa } from '../shared/format.js';
+import { formatClockSa, formatMoneySa, percentOf } from '../shared/format.js';
 import { useCountUp } from '../shared/useCountUp.js';
 
 const STAR = 'M12 1.8l3 6.6 7.2.8-5.4 4.9 1.5 7.1L12 17.6l-6.3 3.6 1.5-7.1L1.8 9.2 9 8.4z';
@@ -35,20 +35,18 @@ function Weapon({ tasks, questions }: { tasks: number; questions: number }) {
   );
 }
 
-const percent = (value: number) => Math.round(Math.min(1, Math.max(0, value)) * 100);
-
 // HUD-Balken mit schwarzem Rand; ohne Wert leer und gedimmt
-function Meter({ kind, name, value }: { kind: 'armor' | 'health'; name: string; value: number | null }) {
-  const p = value === null ? null : percent(value);
+function Meter({ kind, name, quota, value }: { kind: 'armor' | 'health'; name: string; quota: string; value: number | null }) {
+  const p = value === null ? null : percentOf(value);
   return (
     <i
       className={`gta-sa-bar gta-sa-${kind}`}
       role="progressbar"
-      aria-label={name}
+      aria-label={`${name}: Rest des ${quota}s`}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={p ?? undefined}
-      title={p === null ? EMPTY : `${name}: ${p} % frei`}
+      title={p === null ? EMPTY : `${name} (${quota}): ${p} % frei`}
       data-empty={p === null ? '' : undefined}
       style={{ '--sa-p': `${p ?? 0}%` } as CSSProperties}
     />
@@ -77,7 +75,7 @@ function Stars({ wanted }: { wanted: number }) {
       data-blink={on >= MAX_WANTED ? '' : undefined}
     >
       {Array.from({ length: MAX_WANTED }, (_, i) => (
-        <svg key={i} className={i >= MAX_WANTED - on ? 'gta-sa-star on' : 'gta-sa-star'} viewBox="0 0 24 24" aria-hidden="true">
+        <svg key={i} className="gta-sa-star" data-on={i >= MAX_WANTED - on ? '' : undefined} viewBox="0 0 24 24" aria-hidden="true">
           <path d={STAR} />
         </svg>
       ))}
@@ -94,8 +92,8 @@ export function SaHud() {
       <Weapon tasks={game.tasks} questions={game.questions} />
       <div className="gta-sa-status">
         <span className="gta-sa-clock">{formatClockSa(game.now)}</span>
-        <Meter kind="armor" name="Panzerung: Rest des 7-Tage-Kontingents" value={game.quota7d} />
-        <Meter kind="health" name="Gesundheit: Rest des 5-Stunden-Kontingents" value={game.quota5h} />
+        <Meter kind="armor" name="Panzerung" quota="7-Tage-Kontingent" value={game.quota7d} />
+        <Meter kind="health" name="Gesundheit" quota="5-Stunden-Kontingent" value={game.quota5h} />
       </div>
       <Cash money={game.moneyShown} />
       <Stars wanted={game.wanted} />

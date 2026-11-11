@@ -1,5 +1,5 @@
 import { memo, useId } from 'react';
-import { SCENE_H, SCENE_W, type Rect } from '../v/scene.js';
+import { SCENE_H, SCENE_W, type Rect } from '../shared/scene.js';
 import { saSceneData } from './scene.js';
 
 const rects = (list: Rect[]) => list.map((r, i) => <rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} />);

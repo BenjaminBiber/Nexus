@@ -1,39 +1,14 @@
 // Abendszene im Stil GTA V als Daten: zwei Reihen Hochhäuser, Fenster und Palmen auf einer Fläche 1440 × 900.
 // Selbst gezeichnet nach der Preview; ein fester Zufallsstartwert sorgt dafür, dass die Szene immer gleich aussieht.
+import { random, SCENE_W, type Palm, type Rect } from '../shared/scene.js';
 
-export interface Rect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-export interface Palm {
-  trunk: string;
-  width: number;
-  leaves: string[];
-  crown: { x: number; y: number; r: number };
-}
+export { SCENE_H, SCENE_W, type Palm, type Rect } from '../shared/scene.js';
 
 export interface SceneData {
   far: Rect[];
   near: Rect[];
   windows: Rect[];
   palms: Palm[];
-}
-
-export const SCENE_W = 1440;
-export const SCENE_H = 900;
-
-// mulberry32: kleiner, fester Zufallsgenerator
-function random(seed: number): () => number {
-  let a = seed;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }
 
 const int = (n: number) => n | 0;

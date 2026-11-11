@@ -27,7 +27,7 @@ afterEach(() => {
 });
 
 const hud = () => document.querySelector('[data-gta-part="hud"]') as HTMLElement;
-const filled = () => [...hud().querySelectorAll('.gta-sa-star')].map((star) => star.classList.contains('on'));
+const filled = () => [...hud().querySelectorAll('.gta-sa-star')].map((star) => star.hasAttribute('data-on'));
 const bar = (name: RegExp) => screen.getByRole('progressbar', { name });
 const cash = () => hud().querySelector('.gta-sa-cash') as HTMLElement;
 const wrap = (game: Game, ui: ReactElement) => (
@@ -58,6 +58,9 @@ describe('SaHud', () => {
     expect(bar(/Gesundheit/).getAttribute('aria-valuenow')).toBe('62');
     expect(bar(/Gesundheit/).classList.contains('gta-sa-health')).toBe(true);
     expect(bar(/Panzerung/).classList.contains('gta-sa-armor')).toBe(true);
+    expect(bar(/Panzerung/).getAttribute('aria-label')).toBe('Panzerung: Rest des 7-Tage-Kontingents');
+    expect(bar(/Panzerung/).getAttribute('title')).toBe('Panzerung (7-Tage-Kontingent): 81 % frei');
+    expect(bar(/Gesundheit/).getAttribute('title')).toBe('Gesundheit (5-Stunden-Kontingent): 62 % frei');
   });
 
   it('Balken ohne Wert sind leer, gedimmt und erklären sich im title', () => {

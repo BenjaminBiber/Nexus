@@ -30,6 +30,16 @@ export function formatClockV(date: Date): string {
   return `${WEEKDAYS[date.getDay()]} ${formatClockSa(date)}`;
 }
 
+/** Anteil als ganze Prozent, auf 0..100 begrenzt: `0.424` → `42` */
+export function percentOf(fraction: number): number {
+  return Math.round(Math.min(1, Math.max(0, fraction)) * 100);
+}
+
+/** `1 offenes Ticket`, `5 offene Tickets` */
+export function openTickets(n: number): string {
+  return n === 1 ? '1 offenes Ticket' : `${n} offene Tickets`;
+}
+
 /** `0.42` → `42 %` */
 export function formatPercent(fraction: number): string {
   return `${whole(fraction * 100)} %`;

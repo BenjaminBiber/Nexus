@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import { NavLink } from '@nexus/theme-sdk';
 import { useGame } from '../data/GameContext.js';
 import type { Blip } from '../data/derive.js';
+import { openTickets, percentOf } from '../shared/format.js';
 
 const W = 188;
 const H = 106;
@@ -66,10 +67,8 @@ function Marks() {
   );
 }
 
-const percent = (value: number) => Math.round(Math.min(1, Math.max(0, value)) * 100);
-
 function Meter({ bar }: { bar: Bar }) {
-  const p = bar.value === null ? null : percent(bar.value);
+  const p = bar.value === null ? null : percentOf(bar.value);
   const style = { '--v-c': bar.color, '--v-p': `${p ?? 0}%` } as CSSProperties;
   return (
     <i
@@ -85,8 +84,6 @@ function Meter({ bar }: { bar: Bar }) {
     />
   );
 }
-
-const ticketsText = (n: number) => (n === 1 ? '1 offenes Ticket' : `${n} offene Tickets`);
 
 // Minimap unten links: eckige Karte mit den offenen Tickets als Blips (blockierte blinken), als Ganzes ein Link zum
 // Board. Darunter Fortschritt des Boards und die beiden Claude-Kontingente als Balken.
@@ -107,7 +104,7 @@ export function VMinimap() {
               <Blips blips={blips} />
               <Marks />
             </svg>
-            <span className="gta-sr">Minimap: {ticketsText(open)}, zum Board</span>
+            <span className="gta-sr">Minimap: {openTickets(open)}, zum Board</span>
           </>
         )}
       </NavLink>

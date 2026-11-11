@@ -10,11 +10,12 @@ import { SaStats } from './SaStats.js';
 import { SaSubtitle } from './SaSubtitle.js';
 import { SaTitle } from './SaTitle.js';
 
-// Name der Seite unten rechts in der gotischen Schrift; nach einem Seitenwechsel kurz eingeblendet wie ein Ortsname
+// Name der Seite unten rechts in der gotischen Schrift; nach einem Seitenwechsel kurz eingeblendet wie ein Ortsname.
+// Für Screenreader ausgeblendet: den Seitennamen nennt schon die Seite selbst.
 function Zone() {
   const { active, zone } = useGame();
   return (
-    <div className="gta-sa-zone" data-gta-part="zone" data-flash={zone ? '' : undefined}>
+    <div className="gta-sa-zone" data-gta-part="zone" data-flash={zone ? '' : undefined} aria-hidden="true">
       <span key={zone ?? ''}>{active?.label ?? ''}</span>
     </div>
   );

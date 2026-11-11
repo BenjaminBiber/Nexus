@@ -1841,7 +1841,7 @@
   min-width: 0;
 }
 
-:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-title h1 {
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-title-page {
   margin: 0;
   overflow: hidden;
   color: var(--gta-accent);
@@ -1984,11 +1984,11 @@
   stroke-linejoin: round;
 }
 
-:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-star.on {
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-star[data-on] {
   fill: var(--sa-gold);
 }
 
-:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-stars[data-blink] .gta-sa-star.on {
+:root[data-theme='gta'][data-gta-style='sa'] .gta-sa-stars[data-blink] .gta-sa-star[data-on] {
   animation: gta-sa-star 0.7s steps(2, jump-none) infinite;
 }
 
