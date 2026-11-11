@@ -1,5 +1,6 @@
 // Hält den Board-Stand aktuell: sofort laden, dann über den Ereignisstrom des Servers bei Änderungen nachladen. Ein
-// Sicherheitsnetz lädt alle 30 s, solange der Strom nicht offen ist. Fehler bleiben still; der letzte gute Stand bleibt.
+// Sicherheitsnetz lädt alle 30 s, solange der Strom nicht offen ist. Beides nur im sichtbaren Tab; wird er wieder
+// sichtbar, wird einmal nachgeladen. Fehler bleiben still; der letzte gute Stand bleibt.
 import { useEffect, useState } from 'react';
 import { eventsUrl, fetchBoardView } from './api.js';
 import type { BoardView } from './types.js';
@@ -79,16 +80,39 @@ export function useBoardFeed(pid: string, boardId: number | null): BoardFeed {
       });
     };
 
+    // Strom und Sicherheitsnetz nur im sichtbaren Tab: Über http:// erlaubt der Browser 6 Verbindungen je Herkunft, und
+    // der Kern hält je Tab schon einen eigenen Strom offen – mit unserem zweiten hingen ab drei Tabs weitere Anfragen.
+    let source: EventSource | null = null;
+    let safety: ReturnType<typeof setInterval> | undefined;
+    const connect = () => {
+      source = openStream(pid, boardId, load);
+      safety = setInterval(() => {
+        if (!source || source.readyState !== OPEN) load();
+      }, SAFETY_MS);
+    };
+    const disconnect = () => {
+      source?.close();
+      source = null;
+      clearInterval(safety);
+      safety = undefined;
+    };
+    const onVisibility = () => {
+      const visible = document.visibilityState !== 'hidden';
+      if (!visible) disconnect();
+      else if (safety === undefined) {
+        connect();
+        load();
+      }
+    };
+
     load();
-    const source = openStream(pid, boardId, load);
-    const safety = setInterval(() => {
-      if (!source || source.readyState !== OPEN) load();
-    }, SAFETY_MS);
+    if (document.visibilityState !== 'hidden') connect();
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       alive = false;
-      source?.close();
-      clearInterval(safety);
+      document.removeEventListener('visibilitychange', onVisibility);
+      disconnect();
       clearTimeout(timeout);
       running?.abort();
     };
