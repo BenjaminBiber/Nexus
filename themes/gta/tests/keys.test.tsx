@@ -162,6 +162,79 @@ describe('useGameKeys', () => {
     expect(e).toHaveBeenCalledTimes(1);
   });
 
+  it('ruht, solange ein Dialog des Kerns offen ist – auch mit Fokus auf einem Knopf oder auf body', () => {
+    const q = vi.fn();
+    const { onCheat } = setup(true, { q });
+    const dialog = document.body.appendChild(document.createElement('div'));
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    const button = dialog.appendChild(document.createElement('button'));
+    press('q', {}, button);
+    press('q');
+    press('HESOYAM', {}, button);
+    expect(q).not.toHaveBeenCalled();
+    expect(onCheat).not.toHaveBeenCalled();
+    dialog.remove();
+    act(() => vi.advanceTimersByTime(3000));
+    press('q');
+    expect(q).toHaveBeenCalledTimes(1);
+  });
+
+  it('ruht bei offenen Menüs, Auswahllisten, Seitenblättern und <dialog open>', () => {
+    const q = vi.fn();
+    setup(true, { q });
+    const overlay = (tag: string, attrs: Record<string, string>) => {
+      const el = document.createElement(tag);
+      for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, value);
+      return el;
+    };
+    const overlays = [
+      overlay('div', { role: 'menu' }),
+      overlay('div', { role: 'listbox' }),
+      overlay('aside', { role: 'dialog', 'aria-modal': 'false' }),
+      overlay('dialog', { open: '' }),
+    ];
+    for (const el of overlays) {
+      document.body.appendChild(el);
+      press('q');
+      el.remove();
+    }
+    expect(q).not.toHaveBeenCalled();
+    // Versteckte Auswahlliste und geschlossenes <dialog> zählen nicht
+    const hidden = document.body.appendChild(document.createElement('div'));
+    hidden.setAttribute('role', 'listbox');
+    hidden.hidden = true;
+    document.body.appendChild(document.createElement('dialog'));
+    press('q');
+    expect(q).toHaveBeenCalledTimes(1);
+  });
+
+  it('das eigene Stats-Menü zählt nicht als Dialog des Kerns', () => {
+    const q = vi.fn();
+    setup(true, { q });
+    const stats = document.body.appendChild(document.createElement('div'));
+    stats.setAttribute('role', 'dialog');
+    stats.setAttribute('aria-modal', 'true');
+    stats.dataset.gtaPart = 'stats';
+    const button = stats.appendChild(document.createElement('button'));
+    press('q', {}, button);
+    expect(q).toHaveBeenCalledTimes(1);
+  });
+
+  it('ruht, solange der Ladebildschirm im DOM steht', () => {
+    const q = vi.fn();
+    const { onCheat } = setup(true, { q });
+    const boot = document.body.appendChild(document.createElement('div'));
+    boot.dataset.gtaPart = 'boot';
+    press('q');
+    press('HESOYAM');
+    expect(q).not.toHaveBeenCalled();
+    expect(onCheat).not.toHaveBeenCalled();
+    boot.remove();
+    press('q');
+    expect(q).toHaveBeenCalledTimes(1);
+  });
+
   it('nimmt neue Optionen ohne neuen Lauscher an und räumt beim Abbauen auf', () => {
     const add = vi.spyOn(window, 'addEventListener');
     const remove = vi.spyOn(window, 'removeEventListener');
