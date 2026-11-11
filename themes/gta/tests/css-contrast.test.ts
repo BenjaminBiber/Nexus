@@ -186,6 +186,12 @@ function saInbox(hover: boolean) {
   };
 }
 
+// Leisten über der Szene in San Andreas: ihre Unterlage über der hellsten Stelle der Szene
+const SA_BARS = `${SA} .gta-sa-main :is(.page > .tabs, .page > .filters, .guide-nav, .dash-head .segmented, .page-head .fchip)`;
+function saBar(_style: Style, accent: Accent): Rgba {
+  return stack(saSceneBrightest(), parse(decl(SA_BARS, 'background'), varsOf('sa', accent)));
+}
+
 const white = () => ({ r: 255, g: 255, b: 255, a: 1 });
 const RED_MARK = `${SA} .db-card :is(.badge.blocked, .badge.prio-high, .badge.prio-urgent)`;
 const RED_MARK_ON = `${SA} .db-card:is(:hover, :focus-within) :is(.badge.blocked, .badge.prio-high, .badge.prio-urgent)`;
@@ -219,6 +225,9 @@ const PAIRS: Pair[] = [
   { name: 'rote Marke auf der Hover-Tönung', fg: () => decl(RED_MARK_ON, 'color'), bg: saCard('hover'), min: 4.5, styles: ['sa'] },
   { name: 'rote Marke auf der Fokus-Tönung', fg: () => decl(RED_MARK_ON, 'color'), bg: saCard('fokus'), min: 4.5, styles: ['sa'] },
   { name: '.inbox-id in der Liste', fg: () => decl(`${SA} .inbox-id`, 'color'), bg: saInbox(false), min: 4.5, styles: ['sa'] },
+  { name: 'Reiter und Filter über der Szene', fg: 'var(--gta-tab-fg)', bg: saBar, min: 4.5, styles: ['sa'] },
+  { name: 'aktiver Reiter über der Szene', fg: 'var(--gta-tab-on-fg)', bg: saBar, min: 4.5, styles: ['sa'] },
+  { name: 'Sprungmarken der Anleitung über der Szene', fg: () => decl(`${SA} .guide-nav a`, 'color'), bg: saBar, min: 4.5, styles: ['sa'] },
   { name: '.inbox-id auf der Hover-Tönung', fg: () => decl(`${SA} .inbox-row:is(:hover, :focus-within) .inbox-id`, 'color'), bg: saInbox(true), min: 4.5, styles: ['sa'] },
 ];
 
