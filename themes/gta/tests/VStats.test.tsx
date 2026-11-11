@@ -40,7 +40,7 @@ describe('VStats', () => {
       'Fortschritt des Boards': '29 %',
       'Schritte erledigt': '3 / 12',
       'Offene Fragen': '1',
-      Fahndungslevel: '★ (1 blockiert)',
+      Fahndungslevel: '★Stufe 1 von 5 (1 blockiert)',
       'Verdient insgesamt': '$87.500',
     });
   });
@@ -82,6 +82,31 @@ describe('VStats', () => {
     expect(game.setStatsOpen).toHaveBeenCalledTimes(2);
     fireEvent.click(document.querySelector('.gta-v-stats-backdrop')!);
     expect(game.setStatsOpen).toHaveBeenCalledTimes(3);
+  });
+
+  it('die Sterne sind für Screenreader die Stufe', () => {
+    open({ wanted: 2 });
+    const value = [...dialog().querySelectorAll('.gta-v-row')].find((row) => row.textContent?.startsWith('Fahndungslevel'))!;
+    expect(value.querySelector('[aria-hidden="true"]')?.textContent).toBe('★★');
+    expect(value.querySelector('.gta-sr')?.textContent).toBe('Stufe 2 von 5');
+  });
+
+  it('ein Seitenwechsel (etwa mit Q oder E) schließt das Menü', () => {
+    const game = fakeGame({ statsOpen: true });
+    const host = fakeHost();
+    const wrap = (g: Game): ReactElement => (
+      <ThemeHostProvider value={host}>
+        <GameContext.Provider value={g}>
+          <VStats />
+        </GameContext.Provider>
+      </ThemeHostProvider>
+    );
+    const view = render(wrap(game));
+    view.rerender(wrap({ ...game, now: new Date(2026, 10, 11, 9, 42) }));
+    expect(game.setStatsOpen).not.toHaveBeenCalled();
+    const docs = game.nav.find((item) => item.id === 'docs');
+    view.rerender(wrap({ ...game, active: docs }));
+    expect(game.setStatsOpen).toHaveBeenCalledWith(false);
   });
 
   it('Tab bleibt im Dialog: vom letzten zum ersten Element und zurück', () => {

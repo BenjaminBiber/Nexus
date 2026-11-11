@@ -613,7 +613,7 @@
   gap: 2px;
   margin: 12px var(--v-gx) 0;
   overflow-x: auto;
-  scrollbar-width: none;
+  scrollbar-width: thin;
 }
 
 :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-tab {
@@ -669,8 +669,16 @@
   overflow: hidden;
 }
 
+/* Der Kern stellt Inhalt und Seite unter 900 px auf Fluss ohne eigenes Scrollen um; im Rahmen scrollt die Seite immer selbst */
 :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-main > .shell-content {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-main > .shell-content > .shell-main {
+  overflow-y: auto;
 }
 
 /* Der runde Knopf „Neues Ticket“ des Boards (fest am Fensterrand) sitzt über der Fußleiste, wie in der Preview am Ende
@@ -678,6 +686,10 @@
 :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v .db-fab {
   right: calc(var(--v-gx) + 10px);
   bottom: 168px;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa'])[data-gta-radar='off'] .gta-v .db-fab {
+  bottom: 120px;
 }
 
 /* Fußleiste: Minimap, Handy, Ort, Tasten */
@@ -1455,6 +1467,25 @@
 @keyframes gta-v-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Schmales Fenster: kleinere Minimap, keine Tastenhinweise, Stats-Menü einspaltig */
+@media (max-width: 820px) {
+  :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-radar {
+    width: 140px;
+  }
+
+  :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-map {
+    height: 80px;
+  }
+
+  :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-keys {
+    display: none;
+  }
+
+  :root[data-theme='gta']:not([data-gta-style='sa']) .gta-v-stats {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

@@ -31,6 +31,23 @@ describe('VTabs', () => {
     expect(current[0]!.getAttribute('href')).toBe('/p/p1/docs');
   });
 
+  it('holt den aktiven Reiter in den sichtbaren Bereich', () => {
+    const scrolled: string[] = [];
+    const original = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = function (this: HTMLElement) {
+      scrolled.push(this.getAttribute('href') ?? '');
+    };
+    try {
+      const view = renderWithGame(<VTabs />, fakeGame(), fakeHost({ nav: fakeNav('board') }));
+      expect(scrolled).toEqual(['/p/p1/board']);
+      view.unmount();
+      renderWithGame(<VTabs />, fakeGame(), fakeHost({ nav: fakeNav('settings') }));
+      expect(scrolled).toEqual(['/p/p1/board', '/p/p1/settings']);
+    } finally {
+      HTMLElement.prototype.scrollIntoView = original;
+    }
+  });
+
   it('ein Klick wechselt über den Host die Seite', () => {
     const host = fakeHost();
     renderWithGame(<VTabs />, fakeGame(), host);

@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ReactElement } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { ThemeHostProvider } from '@nexus/theme-sdk';
 import theme from '../src/main.js';
@@ -59,8 +59,54 @@ describe('Slots', () => {
     expect(container.querySelector('.gta-v-progress')).not.toBeNull();
   });
 
-  it.each(['v', 'sa'])('StartAnimation läuft ohne Host und nimmt den gemerkten Stil (%s)', (style) => {
+  it.each(['v', 'sa'])('StartAnimation läuft ohne Host (%s)', (style) => {
     window.localStorage.setItem(STYLE_KEY, style);
+    render(<GtaStartAnimation onDone={vi.fn()} />);
+    expect(document.querySelector('[data-gta-part="boot"]')).not.toBeNull();
+  });
+});
+
+describe('Wahl nach Stil', () => {
+  // San Andreas bekommt für die Dauer eines Tests erkennbare Attrappen; so zeigt sich, welcher Stil gewählt wurde
+  const real = STYLE_SLOTS.sa;
+  beforeEach(() => {
+    STYLE_SLOTS.sa = {
+      NavIcon: () => <i>sa-navicon</i>,
+      Icon: () => <i>sa-icon</i>,
+      Progress: () => <i>sa-progress</i>,
+      StartAnimation: () => <i>sa-boot</i>,
+    };
+  });
+  afterEach(() => {
+    STYLE_SLOTS.sa = real;
+  });
+
+  const slots = (
+    <>
+      <GtaNavIcon name="board" />
+      <GtaIcon name="doc" />
+      <GtaProgress done={1} total={2} label="Schritte" caption="Schritte" />
+    </>
+  );
+
+  it('NavIcon, Icon und Progress folgen der Einstellung Stil', () => {
+    expect(inStyle('sa', slots).container.textContent).toBe('sa-naviconsa-iconsa-progress');
+    cleanup();
+    expect(inStyle('v', slots).container.textContent).not.toContain('sa-');
+  });
+
+  it('während die Einstellungen laden, gilt der gemerkte Stil', () => {
+    window.localStorage.setItem(STYLE_KEY, 'sa');
+    const host = fakeHost({ themeSettings: { values: {}, loading: true, set: vi.fn(async () => {}) } });
+    const { container } = render(<ThemeHostProvider value={host}>{slots}</ThemeHostProvider>);
+    expect(container.textContent).toBe('sa-naviconsa-iconsa-progress');
+  });
+
+  it('StartAnimation nimmt den gemerkten Stil', () => {
+    window.localStorage.setItem(STYLE_KEY, 'sa');
+    expect(render(<GtaStartAnimation onDone={vi.fn()} />).container.textContent).toBe('sa-boot');
+    cleanup();
+    window.localStorage.setItem(STYLE_KEY, 'v');
     render(<GtaStartAnimation onDone={vi.fn()} />);
     expect(document.querySelector('[data-gta-part="boot"]')).not.toBeNull();
   });

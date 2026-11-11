@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { memo, useId } from 'react';
 import { SCENE_H, SCENE_W, sceneData, type Rect } from './scene.js';
 
 const rects = (list: Rect[]) => list.map((r, i) => <rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} />);
@@ -48,12 +48,13 @@ export function SceneArt({ className }: { className?: string }) {
   );
 }
 
-// Szene fest hinter dem Rahmen, unscharf und abgedunkelt wie das Pausenmenü; rein dekorativ
-export function VScene() {
+// Szene fest hinter dem Rahmen, unscharf und abgedunkelt wie das Pausenmenü; rein dekorativ. Ohne Props und mit
+// memo: Uhr, Feed und Banner des Rahmens gleichen die vielen SVG-Elemente nicht jedes Mal neu ab.
+export const VScene = memo(function VScene() {
   return (
     <div className="gta-v-scene" aria-hidden="true">
       <SceneArt className="gta-v-world" />
       <div className="gta-v-shade" />
     </div>
   );
-}
+});

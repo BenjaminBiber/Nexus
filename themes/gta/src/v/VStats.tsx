@@ -30,8 +30,18 @@ function Row({ label, value, bar }: { label: string; value: ReactNode; bar?: Rea
   );
 }
 
+// Sterne als Zeichen; Screenreader hören die Stufe statt „schwarzer Stern“
+function Wanted({ game }: { game: Game }) {
+  const level = Math.max(0, Math.min(game.wanted, 5));
+  return (
+    <>
+      <span aria-hidden="true">{'★'.repeat(level) || '–'}</span>
+      <span className="gta-sr">Stufe {level} von 5</span> ({game.blocked} blockiert)
+    </>
+  );
+}
+
 function General({ game }: { game: Game }) {
-  const stars = '★'.repeat(Math.min(game.wanted, 5)) || '–';
   return (
     <>
       <Row label="Tickets gesamt" value={game.total} />
@@ -41,7 +51,7 @@ function General({ game }: { game: Game }) {
       <Row label="Fortschritt des Boards" value={formatPercent(game.boardProgress ?? 0)} bar={<StatBar value={game.boardProgress ?? 0} />} />
       <Row label="Schritte erledigt" value={`${game.stepsDone} / ${game.stepsTotal}`} />
       <Row label="Offene Fragen" value={game.questions} />
-      <Row label="Fahndungslevel" value={`${stars} (${game.blocked} blockiert)`} />
+      <Row label="Fahndungslevel" value={<Wanted game={game} />} />
       <Row label="Verdient insgesamt" value={formatMoneyV(game.moneyShown)} />
     </>
   );
@@ -139,6 +149,14 @@ export function VStats({ returnFocus }: { returnFocus?: RefObject<HTMLElement | 
     const back = returnFocus?.current;
     return () => back?.focus();
   }, [returnFocus]);
+
+  // Wechselt die Seite (etwa mit Q oder E), schließt das Menü, damit der Inhalt nicht unsichtbar weiterläuft
+  const { setStatsOpen } = game;
+  const page = game.active?.id;
+  const opened = useRef(page);
+  useEffect(() => {
+    if (page !== opened.current) setStatsOpen(false);
+  }, [page, setStatsOpen]);
 
   const close = () => game.setStatsOpen(false);
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {

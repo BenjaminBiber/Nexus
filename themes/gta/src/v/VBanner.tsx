@@ -53,26 +53,30 @@ function WastedBand() {
   );
 }
 
-// Banner über dem Inhalt wie in GTA V: ein dunkles Band quer über die Mitte. Klick auf das Band oder Esc schließt es;
-// außerhalb des Bands gehen Klicks durch (pointer-events in theme.css).
+// Banner über dem Inhalt wie in GTA V: ein dunkles Band quer über die Mitte. Klick auf das Band oder Esc schließt es
+// (ein Esc, das schon ein Dialog des Kerns verarbeitet hat, nicht); außerhalb des Bands gehen Klicks durch
+// (pointer-events in theme.css). Die Hülle mit role="status" bleibt stehen, damit Screenreader jedes Banner ansagen.
 export function VBanner() {
   const { banner, dismissBanner } = useGame();
 
   useEffect(() => {
     if (!banner) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') dismissBanner();
+      if (event.key === 'Escape' && !event.defaultPrevented) dismissBanner();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [banner, dismissBanner]);
 
-  if (!banner) return null;
   return (
-    <div className="gta-v-banner" data-gta-part="banner" data-kind={banner.kind} role="status">
-      <div className="gta-v-band" onClick={dismissBanner}>
-        {banner.kind === 'passed' ? <PassedBand event={banner} /> : banner.kind === 'busted' ? <BustedBand event={banner} /> : <WastedBand />}
-      </div>
+    <div className="gta-v-banner-live" role="status">
+      {banner ? (
+        <div className="gta-v-banner" data-gta-part="banner" data-kind={banner.kind}>
+          <div className="gta-v-band" onClick={dismissBanner}>
+            {banner.kind === 'passed' ? <PassedBand event={banner} /> : banner.kind === 'busted' ? <BustedBand event={banner} /> : <WastedBand />}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

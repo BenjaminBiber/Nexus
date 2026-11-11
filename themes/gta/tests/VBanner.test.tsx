@@ -15,14 +15,15 @@ const PASSED: GameEvent = { kind: 'passed', ticketId: 'NOVA-0003', title: 'Kasse
 const BUSTED: GameEvent = { kind: 'busted', ticketId: 'NOVA-0004', title: 'Zahlungsanbieter', reason: 'Zugang zur Sandbox fehlt' };
 
 describe('VBanner', () => {
-  it('ohne Banner rendert nichts', () => {
+  it('ohne Banner steht nur die leere Statushülle', () => {
     renderWithGame(<VBanner />);
     expect(banner()).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('');
   });
 
   it('Mission Passed: Wortmarke, Titel in Schreibschrift, Auftrag und Belohnung mit Haken, Medaille und Respect', () => {
     renderWithGame(<VBanner />, fakeGame({ banner: PASSED }));
-    expect(banner()!.getAttribute('role')).toBe('status');
+    expect(screen.getByRole('status').contains(banner())).toBe(true);
     expect(banner()!.getAttribute('data-kind')).toBe('passed');
     expect(wordmarks()).toEqual(['missionPassed', 'respect']);
     expect(screen.getByRole('img', { name: 'Mission Passed' })).toBeTruthy();
@@ -76,5 +77,14 @@ describe('VBanner', () => {
     window.dispatchEvent(esc);
     expect(game.dismissBanner).toHaveBeenCalledTimes(1);
     expect(esc.defaultPrevented).toBe(false);
+  });
+
+  it('ein Esc, das schon ein Dialog verarbeitet hat, lässt das Banner stehen', () => {
+    const game = fakeGame({ banner: BUSTED });
+    renderWithGame(<VBanner />, game);
+    const esc = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    esc.preventDefault();
+    window.dispatchEvent(esc);
+    expect(game.dismissBanner).not.toHaveBeenCalled();
   });
 });
