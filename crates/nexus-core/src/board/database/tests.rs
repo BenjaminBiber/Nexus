@@ -192,6 +192,9 @@ impl HistoryRepository for DummyUnitOfWork {
     async fn insert(&mut self, _entries: &[HistoryEntry]) -> Result<()> {
         Ok(())
     }
+    async fn done_at_by_board(&mut self, _board_id: i32) -> Result<BTreeMap<String, String>> {
+        Ok(BTreeMap::new())
+    }
 }
 
 #[async_trait]

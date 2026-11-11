@@ -559,6 +559,31 @@ impl HistoryRepository for InMemoryUnitOfWork<'_> {
         self.state.history.extend(entries.iter().cloned());
         Ok(())
     }
+
+    async fn done_at_by_board(&mut self, board_id: i32) -> Result<BTreeMap<String, String>> {
+        let ids: Vec<&str> = self
+            .state
+            .tickets
+            .iter()
+            .filter(|ticket| ticket.board_id == board_id && ticket.status == TicketStatus::Done)
+            .map(|ticket| ticket.id.as_str())
+            .collect();
+        let mut done_at: BTreeMap<String, String> = BTreeMap::new();
+        for entry in &self.state.history {
+            let wechsel = entry.field == "status" && entry.to.as_deref() == Some("done");
+            if !wechsel || !ids.contains(&entry.ticket_id.as_str()) {
+                continue;
+            }
+            // Zeitpunkte sind ISO-Text in UTC mit Millisekunden; als Text verglichen = zeitlich
+            let neuer = done_at
+                .get(&entry.ticket_id)
+                .is_none_or(|bisher| entry.at > *bisher);
+            if neuer {
+                done_at.insert(entry.ticket_id.clone(), entry.at.clone());
+            }
+        }
+        Ok(done_at)
+    }
 }
 
 // ---------------------------------------------------------------------------------------------

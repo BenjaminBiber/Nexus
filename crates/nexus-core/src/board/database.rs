@@ -290,6 +290,9 @@ pub trait TicketSessionRepository: Send {
 pub trait HistoryRepository: Send {
     async fn list(&mut self, ticket_id: &str) -> Result<Vec<HistoryEntry>>;
     async fn insert(&mut self, entries: &[HistoryEntry]) -> Result<()>;
+    /// Zeitpunkt des jüngsten Wechsels auf `done` je Ticket eines Boards, das aktuell erledigt
+    /// ist (Format wie [`HistoryEntry::at`]); Tickets ohne solchen Eintrag fehlen
+    async fn done_at_by_board(&mut self, board_id: i32) -> Result<BTreeMap<String, String>>;
 }
 
 /// Notizen eines Boards

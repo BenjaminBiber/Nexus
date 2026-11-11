@@ -14,7 +14,12 @@ export type BoardActor = { userId: string, name: string, };
 /**
  * Eine Karte des Boards: ein Ticket ohne seine langen Texte, mit Kommentarzahl
  */
-export type BoardCard = { id: string, projectId: number, boardId: number, number: number, title: string, status: TicketStatus, priority: Priority, labels: Array<string>, dependsOn: Array<string>, sortOrder: number, assignee: string | null, needsPlanning: boolean, spec: string | null, specTask: string | null, branch: string | null, worktree: string | null, targetBranch: string | null, touches: Array<string>, consumes: Array<string>, produces: Array<string>, blockedReason: string | null, plannedAt: string | null, plannedBy: string | null, planningClaimBy: string | null, planningClaimAt: string | null, createdAt: string, createdById: string, createdByName: string, updatedAt: string, rev: number, column: BoardColumn, waiting: boolean, dependsOpen: Array<string>, dependsUnmerged: Array<string>, dependents: Array<string>, unlocks: Array<string>, waitingOnQuestions: Array<BoardOpenQuestion>, stepsDone: number, stepsTotal: number, sessions: Array<string>, commentCount: number, hasDescription: boolean, hasAcceptance: boolean, hasPlan: boolean, hasHandbook: boolean, hasDiagram: boolean, };
+export type BoardCard = { id: string, projectId: number, boardId: number, number: number, title: string, status: TicketStatus, priority: Priority, labels: Array<string>, dependsOn: Array<string>, sortOrder: number, assignee: string | null, needsPlanning: boolean, spec: string | null, specTask: string | null, branch: string | null, worktree: string | null, targetBranch: string | null, touches: Array<string>, consumes: Array<string>, produces: Array<string>, blockedReason: string | null, plannedAt: string | null, plannedBy: string | null, planningClaimBy: string | null, planningClaimAt: string | null, createdAt: string, createdById: string, createdByName: string, updatedAt: string, 
+/**
+ * Wann das Ticket erledigt wurde (jüngster Wechsel auf `done`, ohne Verlauf `updated_at`);
+ * leer (`null`), solange es nicht erledigt ist
+ */
+doneAt: string | null, rev: number, column: BoardColumn, waiting: boolean, dependsOpen: Array<string>, dependsUnmerged: Array<string>, dependents: Array<string>, unlocks: Array<string>, waitingOnQuestions: Array<BoardOpenQuestion>, stepsDone: number, stepsTotal: number, sessions: Array<string>, commentCount: number, hasDescription: boolean, hasAcceptance: boolean, hasPlan: boolean, hasHandbook: boolean, hasDiagram: boolean, };
 
 /**
  * Spalte des Boards: ein Status oder die abgeleitete Spalte „Wartet“
