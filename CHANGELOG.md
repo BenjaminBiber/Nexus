@@ -23,6 +23,10 @@
   Eigene Schriften im Paket (OFL 1.1, Yellowtail Apache 2.0) samt den Lizenztexten in
   `assets/fonts/licenses.json`, kein Originalmaterial des Spiels.
 - Der Theme-Host füllt jetzt `NavItem.badge` mit den Zählern für Meine Aufgaben, Fragen und Docs.
+- Der Abhängigkeitsgraph zeigt je Ticket, wie viele Schritte erledigt sind (`3/7` und Balken wie
+  auf der Board-Karte), und lädt bei Änderungen am beobachteten Board leise nach; Zoom und
+  Ausschnitt bleiben dabei stehen. `GET /api/db/graph` liefert dafür je Knoten `stepsDone` und
+  `stepsTotal`.
   Dadurch zeigen auch die Themes Minecraft, Synthwave und Terminal diese Zähler erstmals an.
 
 ## 0.1.3 – 2026-11-11

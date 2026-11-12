@@ -502,6 +502,12 @@
 .dep-graph-node:hover .dep-graph-box, .dep-graph-node:focus-visible .dep-graph-box { stroke: var(--accent); stroke-width: 2.5; }
 .dep-graph-id { fill: var(--muted); font-family: var(--font-mono); font-size: 11.5px; }
 .dep-graph-title { fill: var(--text); font-size: 14px; font-weight: 600; }
+/* Schritte wie auf der Karte (.card-steps): Zahl in der ID-Zeile, Balken am unteren Rand */
+.dep-graph-steps-text { fill: var(--muted); font-family: var(--font-mono); font-size: 11.5px; font-weight: 500; }
+.dep-graph-steps-track { fill: var(--line-soft); }
+.dep-graph-steps-fill { fill: var(--primary); }
+.dep-graph-steps.is-complete .dep-graph-steps-fill { fill: var(--ok); }
+.dep-graph-steps.is-complete .dep-graph-steps-text { fill: var(--ok); }
 .dep-graph-open { margin-top: 6px; }
 .spec-progress { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .spec-progress-bar { display: flex; width: 200px; height: 8px; border-radius: 4px; background: var(--line-soft); overflow: hidden; flex: none; }
