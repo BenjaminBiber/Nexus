@@ -529,6 +529,10 @@ mod tests {
             "meldet ARC-0007 als erledigt"
         );
         assert_eq!(
+            summary("nexus board show AIH-0043 2>&1 | head -200").text,
+            "liest Ticket AIH-0043"
+        );
+        assert_eq!(
             summary("nexus board note list").text,
             "nexus board note list"
         );

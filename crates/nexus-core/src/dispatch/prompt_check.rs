@@ -272,13 +272,13 @@ mod tests {
             "questionId" => r"\{\{questionId\}\}",
             "branch" => r"\{\{branch\}\}",
             "target" => r"\{\{target\}\}",
-            "done" => r"nexus board done \{\{ticketId\}\}",
-            "blocked" => r"nexus board set \{\{ticketId\}\} --status blocked",
-            "question" => r"nexus board question add[\s\S]*?--ticket \{\{ticketId\}\}",
+            "done" => r"(?:nexus|harness) board done \{\{ticketId\}\}",
+            "blocked" => r"(?:nexus|harness) board set \{\{ticketId\}\} --status blocked",
+            "question" => r"(?:nexus|harness) board question add[\s\S]*?--ticket \{\{ticketId\}\}",
             "by-agent" => r"--by \{\{agent\}\}",
-            "plan-json" => r"nexus board plan-json \{\{ticketId\}\}",
+            "plan-json" => r"(?:nexus|harness) board plan-json \{\{ticketId\}\}",
             "plan-file" => r"plan\.json",
-            "question-research" => r"nexus board question research \{\{questionId\}\}",
+            "question-research" => r"(?:nexus|harness) board question research \{\{questionId\}\}",
             "research-file" => r"research\.json",
             "merge-abort" => r"git merge --abort",
             other => panic!("Testlücke: kein Entferner für Pflichtteil {other}"),
@@ -380,5 +380,14 @@ mod tests {
         let flags = sample(PromptKind::Plan)
             .replace("plan-json {{ticketId}}", "plan-json --quiet {{ticketId}}");
         assert_eq!(check.missing(PromptKind::Plan, &flags), vec![]);
+    }
+
+    #[test]
+    fn eigene_vorlagen_mit_dem_alten_namen_harness_bleiben_vollstandig() {
+        let check = PromptTemplateCheck::new();
+        for kind in PromptTemplateCheck::KINDS {
+            let alt = sample(kind).replace("nexus board", "harness board");
+            assert_eq!(check.missing(kind, &alt), vec![], "{kind}");
+        }
     }
 }
