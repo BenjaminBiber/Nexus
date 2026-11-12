@@ -1,1 +1,29 @@
 /* Kopf eines Agent-Laufs im Ticket: Marke mit Ergebnis, Titel, Dauer, Modell, Abbruchgrund */
+
+/* Marke mit dem Ergebnis; „neutral“ behält die Farben der Marke, „läuft“ nutzt .badge.running */
+.badge.outcome-ok {
+  background: var(--answered-bg);
+  color: var(--running-fg);
+}
+.badge.outcome-warn {
+  background: var(--waiting-bg);
+  color: var(--waiting-fg);
+}
+.badge.outcome-error {
+  background: var(--blocked-bg);
+  color: var(--blocked-fg);
+}
+
+.run-facts {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.run-abort-reason {
+  margin: 0 0 8px;
+  color: var(--blocked-fg);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
