@@ -7,6 +7,9 @@
 //! Zeichen in zwei Blöcken), `entkommt` (eigene Prozessgruppe, der Abbruch des Baums greift
 //! nicht) und `cwd` (schreibt den Arbeitsordner).
 //!
+//! Der Modus `bild` schreibt einen Strom mit Session-ID und einem Tool-Ergebnis, das ein Bild
+//! enthält (ein PNG mit einem Pixel): damit prüfen Tests, was der Worker neben dem Protokoll ablegt.
+//!
 //! Der Modus `antwort` liefert, was in `FAKE_CLAUDE_REPLY` steht: so geben Tests dem Ersatz
 //! eine fertige Antwort mit, ohne die Umgebung des Testprozesses zu ändern. Zeigt
 //! `FAKE_CLAUDE_REPLY_FILE` auf eine Datei, gilt deren Inhalt – damit ein Test die Antwort
@@ -33,6 +36,7 @@ fn main() {
             std::process::exit(3);
         }
         "stream" => strom(&ticket),
+        "bild" => bild(),
         // Eine überlange erste Zeile, danach das Ergebnis: der Leser darf nur ganze Zeilen behalten
         "riesig" => {
             let mut stdout = std::io::stdout();
@@ -137,5 +141,40 @@ fn strom(ticket: &str) {
     let _ = stdout.flush();
     std::thread::sleep(std::time::Duration::from_millis(100));
     let _ = stdout.write_all(&text.as_bytes()[haelfte..]);
+    let _ = stdout.flush();
+}
+
+/// Ein PNG mit einem Pixel, Base64-kodiert
+const BILD_PNG: &str = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+
+/// Ein Strom mit Session-ID und einem Screenshot im Ergebnis eines Tool-Aufrufs
+fn bild() {
+    let ereignisse = [
+        serde_json::json!({ "type": "system", "subtype": "init", "model": "fake-opus", "session_id": "sitzung-1" }),
+        serde_json::json!({
+            "type": "assistant", "session_id": "sitzung-1",
+            "message": { "content": [
+                { "type": "tool_use", "id": "toolu_bild", "name": "mcp__browser__screenshot", "input": {} },
+            ] }
+        }),
+        serde_json::json!({
+            "type": "user", "session_id": "sitzung-1",
+            "message": { "content": [{
+                "type": "tool_result", "tool_use_id": "toolu_bild",
+                "content": [
+                    { "type": "text", "text": "Screenshot aufgenommen" },
+                    { "type": "image", "source": { "type": "base64", "media_type": "image/png", "data": BILD_PNG } },
+                ]
+            }] }
+        }),
+        serde_json::json!({
+            "type": "result", "subtype": "success", "is_error": false, "num_turns": 2,
+            "duration_ms": 1000, "result": "erledigt", "session_id": "sitzung-1"
+        }),
+    ];
+    let mut stdout = std::io::stdout();
+    for ereignis in &ereignisse {
+        let _ = stdout.write_all(format!("{ereignis}\n").as_bytes());
+    }
     let _ = stdout.flush();
 }
