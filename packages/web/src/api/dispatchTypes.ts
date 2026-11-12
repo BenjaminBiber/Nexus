@@ -130,6 +130,28 @@ export interface DispatchRunLogDto {
   started: string | null;
   /** Lauf noch nicht beendet */
   running: boolean;
+  /** Ergebnis des Laufs aus der Board-Datenbank (`done`, `abort`, `review`, …); fehlt bei laufenden und unbekannten Läufen */
+  outcome?: string | null;
+  /** Grund eines Abbruchs */
+  abortReason?: string | null;
+  /** Ende des Laufs (ISO) */
+  endedAt?: string | null;
+  /** Dauer in Millisekunden */
+  durationMs?: number | null;
+  /** Modell des Laufs, z. B. `claude-opus-5-5` */
+  model?: string | null;
+}
+
+/** Ein Screenshot, den der Agent in einem Lauf gemacht hat */
+export interface DispatchRunShotDto {
+  /** Dateiname in der Ablage des Laufs, z. B. `001.png` */
+  file: string;
+  /** ID des Tool-Aufrufs, zu dem das Bild gehört */
+  toolUseId: string;
+  /** Zeitpunkt der Ablage (ISO) */
+  at: string;
+  mediaType: string;
+  bytes: number;
 }
 
 /** Lauf-Protokoll (Ende der Datei), zerlegt in Kopf, Arbeitsanweisung und Ausgabe */
