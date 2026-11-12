@@ -14,6 +14,18 @@
 
 ### Sonstiges
 
+## 0.1.4 – 2026-11-12
+
+### Vertrag
+
+- Keine Änderungen.
+
+### Angekündigt
+
+- Keine.
+
+### Sonstiges
+
 - Neues Theme „GTA“ 1.0.0 im Theme-Store (`themes/gta/`, Code-Theme) mit zwei umschaltbaren Stilen:
   GTA V (Pausenmenü mit Reiterzeile, HUD und eckiger Minimap) und San Andreas (Menüliste,
   gotischer Seitentitel, HUD-Block und rundes Radar). Der Rahmen zeigt den Stand des Boards als
