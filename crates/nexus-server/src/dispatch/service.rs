@@ -17,14 +17,18 @@ use nexus_core::board::basics::TicketStatus;
 use nexus_core::board::config_store::BoardConfigStore;
 use nexus_core::board::question_ids::QuestionIds;
 use nexus_core::board::repo_board_resolver::RepoBoardOwner;
+use nexus_core::board::ticket_ordering::BoardColumn;
 use nexus_core::board::ticket_service::{TicketListFilter, TicketView};
 use nexus_core::board::types::Board;
 use nexus_core::clock::{iso, parse_millis, Clock};
+use nexus_core::dispatch::autopilot::autopilot_for;
 use nexus_core::dispatch::{
-    DispatchConfig, DispatchConfigNormalizer, DispatchConfigStore, DispatchLog, DispatchPrompt,
-    DispatchStateStore, MergeEntry, ProfileTicket, PromptKind, ReadinessBoard, ReadinessTicket,
-    ReviewStore, RunEnd, RunKind, RunLogSplitter, RunRecord, RunResult, RunStore, TimeWindowCheck,
+    markers, DispatchConfig, DispatchConfigNormalizer, DispatchConfigStore, DispatchLog,
+    DispatchPrompt, DispatchStateStore, MergeEntry, ProfileTicket, PromptKind, ReadinessBoard,
+    ReadinessTicket, ReviewStore, RunEnd, RunKind, RunLogSplitter, RunRecord, RunResult, RunStore,
+    TimeWindowCheck,
 };
+use nexus_core::git::runner::{GitCommands, GitRunner};
 use nexus_core::{HarnessError, HarnessHome, Result};
 use serde::{Deserialize, Serialize};
 use tokio::sync::watch;
@@ -892,6 +896,7 @@ impl DispatchService {
                     .await?;
                 self.remove_research_orphans(&ctx).await?;
                 self.release_stale(&ctx, &results, report).await?;
+                self.catch_up_merges(&ctx, report).await?;
                 let merged = self.deps.merge.process_all(&ctx).await?;
                 report.merged.extend(merged.merged);
                 report.errors.extend(merged.errors);
@@ -1219,6 +1224,113 @@ impl DispatchService {
                         report.errors.push(format!("{}: {error}", view.ticket.id));
                     }
                 }
+            }
+        }
+        Ok(())
+    }
+
+    /// Autopilot: erledigte Dispatcher-Tickets mit Branch, aber ohne Merge-Auftrag (z. B. von
+    /// Hand abgenommen) zum Merge vormerken. Von Hand abgeschlossene Tickets (Zuständiger kein
+    /// Agent) und Branches, die es im Repo nicht gibt, bleiben still liegen.
+    async fn catch_up_merges(
+        &self,
+        ctx: &DispatchContext,
+        report: &mut DispatchReport,
+    ) -> Result<()> {
+        if !ctx.cfg.autopilot.enabled {
+            return Ok(());
+        }
+        let active: HashSet<String> = self
+            .stores
+            .runs
+            .list()?
+            .into_iter()
+            .map(|run| run.ticket_id)
+            .collect();
+        let git = GitRunner::new();
+        for board in self.own_boards(ctx).await? {
+            let Some(repo_path) = board
+                .repo_path
+                .clone()
+                .filter(|path| Path::new(path).exists())
+            else {
+                continue;
+            };
+            let views = match ctx
+                .services()
+                .tickets
+                .list(&TicketListFilter {
+                    board_ids: vec![board.id],
+                    columns: Some(vec![BoardColumn::Done]),
+                    without_texts: true,
+                    ..TicketListFilter::default()
+                })
+                .await
+            {
+                Ok(views) => views,
+                Err(error) => {
+                    if BoardRuntimeHolder::is_connection_error(&error) {
+                        return Err(error);
+                    }
+                    report.errors.push(format!("Board {}: {error}", board.id));
+                    continue;
+                }
+            };
+            for view in views {
+                let ticket = &view.ticket;
+                let branch = ticket.branch.as_deref().unwrap_or_default().trim();
+                if ticket.status != TicketStatus::Done
+                    || branch.is_empty()
+                    || !ctx.is_agent(ticket.assignee.as_deref())
+                    || !autopilot_for(&ctx.cfg, &ticket.labels)
+                    || active.contains(&ticket.id)
+                {
+                    continue;
+                }
+                let merges = ctx.stores.state.read()?.merges;
+                if merges.contains_key(&ticket.id)
+                    || merges.values().any(|entry| entry.branch == branch)
+                {
+                    continue;
+                }
+                let exists = git
+                    .try_run(
+                        Path::new(&repo_path),
+                        &[
+                            "rev-parse",
+                            "--verify",
+                            "--quiet",
+                            &format!("refs/heads/{branch}"),
+                        ],
+                    )
+                    .ok;
+                if !exists {
+                    continue;
+                }
+                let id = ticket.id.clone();
+                let entry = MergeEntry::pending(id.clone(), branch.to_string(), ctx.now_iso());
+                ctx.stores
+                    .state
+                    .update(|state| {
+                        state.merges.insert(id.clone(), entry);
+                    })
+                    .await?;
+                if let Err(error) = ctx
+                    .comment(
+                        &id,
+                        &format!(
+                            "{}: Autopilot holt den Merge nach (erledigt ohne Merge-Auftrag).",
+                            markers::MERGE
+                        ),
+                    )
+                    .await
+                {
+                    if BoardRuntimeHolder::is_connection_error(&error) {
+                        return Err(error);
+                    }
+                    report.errors.push(format!("{id}: {error}"));
+                }
+                ctx.log(&format!("Autopilot {id}: Merge nachgeholt"));
             }
         }
         Ok(())

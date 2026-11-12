@@ -200,3 +200,165 @@ async fn mit_ausnahme_label_wartet_das_ticket_auf_freigabe() {
         Some(REVIEW_REASON)
     );
 }
+
+/// Vorsilbe des Kommentars, mit dem der Autopilot einen Merge nachholt
+const CATCH_UP: &str = "[dispatch] Merge: Autopilot holt den Merge nach";
+
+/// Der Agent blockiert mit Human Interaction, ein Mensch nimmt das Ticket ohne Merge-Auftrag ab
+/// (wie vor dem Autopilot); das Ticket steht auf Erledigt und trägt noch seinen Branch
+async fn accepted_by_human(f: &DispatchFixture, title: &str, patch: TicketPatch) -> String {
+    let id = block_as_agent(f, title, patch).await;
+    f.tick().await;
+    f.backend
+        .services
+        .tickets
+        .accept(&id, &f.actor(), &WriteOptions::default())
+        .await
+        .expect("von Hand abnehmen");
+    let ticket = f.ticket(&id).await;
+    assert_eq!(ticket.status, TicketStatus::Done);
+    assert!(ticket.branch.is_some());
+    id
+}
+
+/// Zahl der Nachhol-Kommentare am Ticket
+async fn catch_up_comments(f: &DispatchFixture, id: &str) -> usize {
+    f.comments(id)
+        .await
+        .iter()
+        .filter(|body| body.starts_with(CATCH_UP))
+        .count()
+}
+
+#[tokio::test]
+async fn autopilot_holt_den_merge_eines_abgenommenen_dispatcher_tickets_nach() {
+    let f = DispatchFixture::create(json!({ "reviewBeforeMerge": false })).await;
+    let id = accepted_by_human(&f, "Abgenommen", TicketPatch::default()).await;
+    f.write_config(autopilot(false));
+
+    let report = f.tick().await;
+
+    assert_eq!(report.merged, vec![id.clone()]);
+    let ticket = f.ticket(&id).await;
+    assert!(ticket.branch.unwrap_or_default().is_empty());
+    assert_eq!(catch_up_comments(&f, &id).await, 1);
+}
+
+#[tokio::test]
+async fn ohne_autopilot_bleibt_das_erledigte_ticket_liegen() {
+    let f = DispatchFixture::create(json!({ "reviewBeforeMerge": false })).await;
+    let id = accepted_by_human(&f, "Liegt", TicketPatch::default()).await;
+
+    let report = f.tick().await;
+
+    assert!(report.merged.is_empty());
+    assert!(f.ticket(&id).await.branch.is_some());
+    assert_eq!(catch_up_comments(&f, &id).await, 0);
+}
+
+#[tokio::test]
+async fn mit_ausnahme_label_wird_nichts_nachgeholt() {
+    let f = DispatchFixture::create(json!({ "reviewBeforeMerge": false })).await;
+    let id = accepted_by_human(&f, "Manuell", manual()).await;
+    f.write_config(autopilot(false));
+
+    let report = f.tick().await;
+
+    assert!(report.merged.is_empty());
+    assert!(f.ticket(&id).await.branch.is_some());
+    assert_eq!(catch_up_comments(&f, &id).await, 0);
+}
+
+#[tokio::test]
+async fn von_hand_abgeschlossene_tickets_holt_der_autopilot_nicht_nach() {
+    let f = DispatchFixture::create(json!({ "reviewBeforeMerge": false })).await;
+    let id = f.ready("Von Hand", TicketPatch::default()).await;
+    let repo = f.repo.path().to_string_lossy().to_string();
+    f.repo
+        .run_git(&["-C", &repo, "branch", "ticket/von-hand", "HEAD"]);
+    f.backend
+        .services
+        .tickets
+        .update(
+            &id,
+            &TicketPatch {
+                status: Some(TicketStatus::Done),
+                branch: Some(Some("ticket/von-hand".into())),
+                assignee: Some(Some("claude".into())),
+                acceptance: Some("von Hand geprüft".into()),
+                ..TicketPatch::default()
+            },
+            &f.actor(),
+            &WriteOptions::default(),
+        )
+        .await
+        .expect("von Hand abschließen");
+    f.write_config(autopilot(false));
+
+    let report = f.tick().await;
+
+    assert!(report.merged.is_empty());
+    assert!(f.ticket(&id).await.branch.is_some());
+    assert_eq!(catch_up_comments(&f, &id).await, 0);
+}
+
+#[tokio::test]
+async fn branch_den_es_im_repo_nicht_gibt_bleibt_still() {
+    let f = DispatchFixture::create(json!({ "reviewBeforeMerge": false })).await;
+    let id = accepted_by_human(&f, "Fremder Branch", TicketPatch::default()).await;
+    f.backend
+        .services
+        .tickets
+        .update(
+            &id,
+            &TicketPatch {
+                branch: Some(Some("ticket/gibt-es-nicht".into())),
+                ..TicketPatch::default()
+            },
+            &f.actor(),
+            &WriteOptions::default(),
+        )
+        .await
+        .expect("Branch umsetzen");
+    f.write_config(autopilot(false));
+
+    let first = f.tick().await;
+    let second = f.tick().await;
+
+    assert!(first.merged.is_empty() && second.merged.is_empty());
+    assert_eq!(catch_up_comments(&f, &id).await, 0);
+    assert_eq!(f.ticket(&id).await.status, TicketStatus::Done);
+    assert!(f
+        .ctx
+        .stores
+        .state
+        .read()
+        .expect("Zustand")
+        .merges
+        .is_empty());
+}
+
+#[tokio::test]
+async fn wartender_merge_wird_nicht_doppelt_vorgemerkt() {
+    let f = DispatchFixture::create(json!({ "reviewBeforeMerge": false })).await;
+    let id = accepted_by_human(&f, "Wartet", TicketPatch::default()).await;
+    let repo = f.repo.path().to_string_lossy().to_string();
+    std::fs::write(f.repo.path().join("vorgemerkt.txt"), "x").expect("Datei");
+    f.repo.run_git(&["-C", &repo, "add", "vorgemerkt.txt"]);
+    f.write_config(autopilot(false));
+
+    let first = f.tick().await;
+    let second = f.tick().await;
+
+    assert!(first.merged.is_empty() && second.merged.is_empty());
+    assert_eq!(catch_up_comments(&f, &id).await, 1);
+    assert!(f
+        .ctx
+        .stores
+        .state
+        .read()
+        .expect("Zustand")
+        .merges
+        .contains_key(&id));
+    assert_eq!(f.ticket(&id).await.status, TicketStatus::Done);
+}
