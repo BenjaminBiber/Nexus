@@ -948,6 +948,72 @@ async fn listet_und_liest_protokolle_nur_mit_erlaubten_namen() {
 }
 
 #[tokio::test]
+async fn nennt_ergebnis_dauer_und_modell_eines_aufgezeichneten_laufs() {
+    use chrono::TimeZone;
+    use nexus_core::board::dispatch_run_types::{DispatchRun, DispatchRunOutcome};
+    use nexus_core::clock::iso;
+    use nexus_core::testing::run_fixture;
+
+    let (server, backend) = server().await;
+    let actor = actor(&backend);
+    let project = backend
+        .services
+        .projects
+        .create("ARC", "Arches", &actor)
+        .await
+        .expect("Projekt");
+    fs::create_dir_all(server.home.dispatch_logs_dir()).unwrap();
+    for name in [
+        "ARC-0001-20261015-090000.log",
+        "ARC-0001-20261016-101500.log",
+    ] {
+        fs::write(server.home.dispatch_logs_dir().join(name), "x").unwrap();
+    }
+    // Der Name trägt die Startzeit in Ortszeit; aufgezeichnet wird sie in UTC
+    let started = chrono::Local
+        .with_ymd_and_hms(2026, 10, 16, 10, 15, 0)
+        .single()
+        .expect("Startzeit")
+        .with_timezone(&chrono::Utc);
+    let lauf = DispatchRun {
+        started_at: iso(started),
+        ended_at: Some(iso(started + chrono::Duration::minutes(12))),
+        duration_ms: Some(720_000),
+        outcome: DispatchRunOutcome::Abort,
+        abort_reason: Some("Zeitlimit".into()),
+        ..run_fixture("ARC-0001-20261016-101500", "ARC-0001", project.id)
+    };
+    backend
+        .services
+        .dispatch_runs
+        .record(&lauf)
+        .await
+        .expect("Lauf aufgezeichnet");
+
+    let runs = body(&server.get("/api/dispatch/runs?ticket=ARC-0001").await);
+
+    // Neueste zuerst: der aufgezeichnete Lauf steht vorn
+    assert_eq!(runs[0]["name"], "ARC-0001-20261016-101500.log");
+    assert_eq!(runs[0]["outcome"], lauf.outcome.as_str());
+    assert_eq!(runs[0]["abortReason"], "Zeitlimit");
+    assert_eq!(
+        runs[0]["endedAt"],
+        iso(started + chrono::Duration::minutes(12))
+    );
+    assert_eq!(runs[0]["durationMs"], 720_000);
+    assert_eq!(runs[0]["model"], "claude-opus-5-5");
+    // Ein Lauf ohne Aufzeichnung bleibt, wie er war: die Felder fehlen ganz
+    assert_eq!(runs[1]["name"], "ARC-0001-20261015-090000.log");
+    for feld in ["outcome", "abortReason", "endedAt", "durationMs", "model"] {
+        assert!(
+            runs[1].get(feld).is_none(),
+            "{feld} gehört nicht in {}",
+            runs[1]
+        );
+    }
+}
+
+#[tokio::test]
 async fn listet_die_laeufe_eines_tickets_neueste_zuerst() {
     let (server, _backend) = server().await;
     fs::create_dir_all(server.home.dispatch_logs_dir()).unwrap();

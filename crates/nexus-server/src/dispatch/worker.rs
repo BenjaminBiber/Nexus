@@ -12,8 +12,11 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use base64::Engine as _;
 use chrono::Local;
 use nexus_core::clock::{iso, Clock};
+use nexus_core::dispatch::output::{RunArtifact, RunArtifactScanner};
+use nexus_core::dispatch::state::{RunFiles, RunSession};
 use nexus_core::dispatch::{
     DispatchLog, RunEnd, RunKind, RunRecord, RunResult, RunStore, StreamEventFormatter,
     RUN_LOG_OUTPUT_MARKER, RUN_LOG_PROMPT_MARKER,
@@ -249,6 +252,8 @@ impl DispatchWorker {
         // (Teilzeilen bleiben getrennt). Ausgewertet wird die rohe Ausgabe im Ergebnis
         let stdout = Formatierer::new(&record.cwd, log, &self.clock);
         let stderr = Formatierer::new(&record.cwd, log, &self.clock);
+        // Neben dem Protokoll bleiben Session und Screenshots des Laufs (Ordner `<Lauf-ID>.files`)
+        let artefakte = Artefakte::new(Path::new(&record.log_file), &record.cwd, &self.clock);
         let input = ClaudeRunInput {
             command: record.command.clone(),
             args: record.args.clone(),
@@ -263,16 +268,21 @@ impl DispatchWorker {
                 let log = log.clone();
                 let stdout = stdout.clone();
                 let stderr = stderr.clone();
+                let artefakte = artefakte.clone();
                 move |chunk, source| match source {
                     // Meldungen des Dispatchers stehen unverändert im Protokoll
                     OutputSource::Dispatch => log.write(chunk),
-                    OutputSource::Stdout => stdout.push(chunk),
+                    OutputSource::Stdout => {
+                        stdout.push(chunk);
+                        artefakte.push(chunk);
+                    }
                     OutputSource::Stderr => stderr.push(chunk),
                 }
             })
             .await;
         stdout.flush();
         stderr.flush();
+        artefakte.flush();
         log.write(&format!(
             "\n[dispatch] {} Ende: Exit-Code {}{}\n",
             self.jetzt_iso(),
@@ -412,6 +422,76 @@ impl Formatierer {
         let jetzt = self.clock.now().with_timezone(&Local).naive_local();
         for zeile in zeilen {
             self.log.write(&StreamEventFormatter::stamped(zeile, jetzt));
+        }
+    }
+}
+
+/// Hält fest, was über das Protokoll hinaus vom Lauf bleibt: die Session von Claude Code und
+/// die Bilder aus Tool-Ergebnissen. Fehler beim Ablegen beenden den Lauf nie.
+#[derive(Clone)]
+struct Artefakte {
+    scanner: Arc<Mutex<RunArtifactScanner>>,
+    files: RunFiles,
+    cwd: String,
+    clock: Clock,
+}
+
+impl Artefakte {
+    /// Ablage neben dem Protokoll `log_file`; `cwd` ist der Arbeitsordner des Laufs
+    fn new(log_file: &Path, cwd: &str, clock: &Clock) -> Self {
+        Self {
+            scanner: Arc::new(Mutex::new(RunArtifactScanner::new())),
+            files: RunFiles::beside(log_file),
+            cwd: cwd.to_string(),
+            clock: clock.clone(),
+        }
+    }
+
+    /// Nimmt ein Stück Ausgabe und legt ab, was in den vollständigen Zeilen steckt
+    fn push(&self, chunk: &str) {
+        let Ok(mut scanner) = self.scanner.lock() else {
+            return;
+        };
+        let funde = scanner.push(chunk.as_bytes());
+        drop(scanner);
+        self.lege_ab(funde);
+    }
+
+    /// Wertet den Rest ohne Zeilenende aus (am Ende des Laufs)
+    fn flush(&self) {
+        let Ok(mut scanner) = self.scanner.lock() else {
+            return;
+        };
+        let funde = scanner.flush();
+        drop(scanner);
+        self.lege_ab(funde);
+    }
+
+    /// Schreibt die Funde in die Ablage; was sich nicht schreiben oder dekodieren lässt, entfällt
+    fn lege_ab(&self, funde: Vec<RunArtifact>) {
+        for fund in funde {
+            match fund {
+                RunArtifact::Session { session_id } => {
+                    let _ = self.files.write_session(&RunSession {
+                        session_id,
+                        cwd: self.cwd.clone(),
+                    });
+                }
+                RunArtifact::Image {
+                    tool_use_id,
+                    media_type,
+                    data,
+                } => {
+                    let Ok(bytes) =
+                        base64::engine::general_purpose::STANDARD.decode(data.as_bytes())
+                    else {
+                        continue;
+                    };
+                    let _ =
+                        self.files
+                            .add_shot(&tool_use_id, &media_type, &bytes, self.clock.now());
+                }
+            }
         }
     }
 }

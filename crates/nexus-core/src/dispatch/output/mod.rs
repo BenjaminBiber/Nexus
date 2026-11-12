@@ -9,6 +9,7 @@
 //! Abbruchgründe.
 
 pub mod abort_category;
+pub mod run_artifacts;
 pub mod run_output;
 pub mod shell_summary;
 pub mod stream_formatter;
@@ -16,6 +17,7 @@ pub mod test_runs;
 pub(crate) mod text;
 
 pub use abort_category::{AbortCategory, AbortReasonClassifier, ABORT_CATEGORIES};
+pub use run_artifacts::{RunArtifact, RunArtifactScanner};
 pub use run_output::{ModelUsage, OutputSummary, RunOutputReader, RunUsage};
 pub use shell_summary::{ShellCommandSummary, ShellKind, ShellSummary};
 pub use stream_formatter::{RunLogLine, RunLogLineKind, StreamEventFormatter};

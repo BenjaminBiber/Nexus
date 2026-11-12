@@ -27,7 +27,7 @@ use crate::sessions::SessionDto;
 use crate::state::AppState;
 
 /// Höchstzahl der Einträge eines Abschnitts
-const MAX_PAGE_LIMIT: usize = 2_000;
+pub(crate) const MAX_PAGE_LIMIT: usize = 2_000;
 
 /// Meldet die vier Routen an; andere Methoden fallen in den Rückfall
 pub fn routes() -> Router<Arc<AppState>> {
@@ -187,7 +187,7 @@ async fn transcript_path(state: &Arc<AppState>, view: &SessionView) -> Option<Pa
 }
 
 /// Eine nicht negative ganze Zahl der Abfrage; anderes → `input-invalid`
-fn number(value: Option<&str>, name: &str) -> ApiResult<Option<u64>> {
+pub(crate) fn number(value: Option<&str>, name: &str) -> ApiResult<Option<u64>> {
     let Some(value) = value.map(str::trim).filter(|value| !value.is_empty()) else {
         return Ok(None);
     };
@@ -201,7 +201,7 @@ fn number(value: Option<&str>, name: &str) -> ApiResult<Option<u64>> {
 }
 
 /// 400 mit dem Fehler im Format der übrigen Fehler (`input-invalid` gilt sonst als 422)
-fn bad_request(error: nexus_core::Error) -> Response {
+pub(crate) fn bad_request(error: nexus_core::Error) -> Response {
     let body = match &error {
         nexus_core::Error::Harness(harness) => serde_json::to_value(harness)
             .unwrap_or_else(|_| crate::error::ErrorMapper::internal_body()),

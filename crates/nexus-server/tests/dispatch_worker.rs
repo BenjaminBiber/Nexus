@@ -592,3 +592,69 @@ async fn raeumt_im_hauptordner_nichts_ab() {
     nexus_core::process::terminate(waise);
     assert!(lebt, "die Waise im Hauptordner wurde beendet");
 }
+
+#[tokio::test]
+async fn haelt_session_und_screenshots_neben_dem_protokoll_fest() {
+    let u = Umgebung::neu();
+    let log_file = u.pfad("bild.log");
+    let record = lauf("ARC-0009-x", u.dir.path(), &log_file);
+    u.runs().create(&record).expect("Lauf angelegt");
+
+    u.worker()
+        .run("ARC-0009-x", env(&[("FAKE_CLAUDE_MODE", "bild")]))
+        .await
+        .expect("Lauf ausgeführt");
+
+    let ablage = log_file.with_extension("files");
+    let session: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(ablage.join("session.json")).expect("session.json vorhanden"),
+    )
+    .expect("session.json ist JSON");
+    assert_eq!(session["sessionId"], "sitzung-1");
+    assert_eq!(session["cwd"], record.cwd);
+
+    let index = std::fs::read_to_string(ablage.join("shots.jsonl")).expect("shots.jsonl vorhanden");
+    let zeilen: Vec<&str> = index
+        .lines()
+        .filter(|zeile| !zeile.trim().is_empty())
+        .collect();
+    assert_eq!(zeilen.len(), 1, "genau ein Screenshot: {index}");
+    let shot: serde_json::Value = serde_json::from_str(zeilen[0]).expect("Indexzeile ist JSON");
+    assert_eq!(shot["file"], "001.png");
+    assert_eq!(shot["toolUseId"], "toolu_bild");
+    assert_eq!(shot["mediaType"], "image/png");
+
+    let bild = std::fs::read(ablage.join("001.png")).expect("Bild vorhanden");
+    assert!(bild.starts_with(b"\x89PNG\r\n\x1a\n"), "PNG-Signatur");
+    assert_eq!(shot["bytes"], bild.len() as u64);
+
+    // Das Protokoll bleibt lesbar: keine Bilddaten, der Lauf endet wie immer
+    let log = u.protokoll(&log_file);
+    assert!(!log.contains("iVBORw0KGgo"), "keine Bilddaten im Protokoll");
+    assert!(log.contains("Ende: Exit-Code 0"), "{log}");
+}
+
+#[tokio::test]
+async fn legt_ohne_session_und_bilder_keine_ablage_an() {
+    let u = Umgebung::neu();
+    let log_file = u.pfad("ohne.log");
+    let record = lauf("ARC-0010-x", u.dir.path(), &log_file);
+    u.runs().create(&record).expect("Lauf angelegt");
+
+    u.worker()
+        .run(
+            "ARC-0010-x",
+            env(&[
+                ("FAKE_CLAUDE_MODE", "stream"),
+                ("HARNESS_TICKET", "ARC-0010"),
+            ]),
+        )
+        .await
+        .expect("Lauf ausgeführt");
+
+    assert!(log_file.exists(), "das Protokoll gibt es");
+    assert!(
+        !log_file.with_extension("files").exists(),
+        "ohne Funde kein Ordner"
+    );
+}

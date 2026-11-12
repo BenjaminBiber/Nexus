@@ -1,6 +1,6 @@
 import { ApiError } from './ApiError.js';
 import type {
-  DispatchConfigViewDto, DispatchMergeResultDto, DispatchPromptKindDto, DispatchPromptPreviewDto, DispatchResearchStartDto, DispatchReviewDto, DispatchReviewPatchDto, DispatchRunLogDto, DispatchRunLogPartsDto, DispatchStatusDto, QuestionResearchStatusDto, RawDispatchConfigDto, TicketPlanningStatusDto,
+  DispatchConfigViewDto, DispatchMergeResultDto, DispatchPromptKindDto, DispatchPromptPreviewDto, DispatchResearchStartDto, DispatchReviewDto, DispatchReviewPatchDto, DispatchRunLogDto, DispatchRunLogPartsDto, DispatchRunShotDto, DispatchStatusDto, QuestionResearchStatusDto, RawDispatchConfigDto, TicketPlanningStatusDto,
   SuggestionApplyDto, SuggestionListDto,
 } from './dispatchTypes.js';
 import type {
@@ -839,6 +839,26 @@ export class ApiClient {
   // Lauf-Protokoll zerlegt in Kopf, Arbeitsanweisung und Ausgabe
   getDispatchRunLog(name: string): Promise<DispatchRunLogPartsDto> {
     return this.request('GET', `/api/dispatch/runs/${encodeURIComponent(name)}`);
+  }
+
+  // Verlauf eines Dispatcher-Laufs aus dem Transcript von Claude Code, seitenweise ab `after`
+  getDispatchRunTranscript(name: string, after?: string | null, limit?: number): Promise<TranscriptPage> {
+    const query = new URLSearchParams();
+    if (after) query.set('after', after);
+    if (limit !== undefined) query.set('limit', String(limit));
+    const qs = query.toString();
+    return this.request('GET', `/api/dispatch/runs/${encodeURIComponent(name)}/transcript${qs ? `?${qs}` : ''}`);
+  }
+
+  // Screenshots, die der Agent in diesem Lauf gemacht hat (älteste zuerst)
+  getDispatchRunShots(name: string): Promise<DispatchRunShotDto[]> {
+    return this.request('GET', `/api/dispatch/runs/${encodeURIComponent(name)}/shots`);
+  }
+
+  // Adresse eines Screenshots für `<img src>`; in der Desktop-App hängt das Start-Token als `?token=` an
+  dispatchRunShotUrl(name: string, file: string): string {
+    const url = `${this.base}/api/dispatch/runs/${encodeURIComponent(name)}/shots/${encodeURIComponent(file)}`;
+    return this.token ? `${url}?token=${encodeURIComponent(this.token)}` : url;
   }
 
   // Protokolldateien (dispatch.log zuerst, dann neueste Läufe)

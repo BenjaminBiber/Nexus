@@ -8,6 +8,7 @@ pub mod db_boards;
 pub mod db_misc;
 pub mod db_tickets;
 pub mod dispatch;
+pub mod dispatch_runs;
 pub mod dispatch_suggestions;
 pub mod doc_comments;
 pub mod docs;
@@ -89,6 +90,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(notifications::routes())
         .merge(workflow::routes())
         .merge(dispatch::routes())
+        .merge(dispatch_runs::routes())
         .merge(dispatch_suggestions::routes())
         .merge(speech::routes())
         .merge(telegram::routes())
