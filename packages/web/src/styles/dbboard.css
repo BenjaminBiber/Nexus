@@ -30,15 +30,11 @@
 .card-agent-logo svg { width: 100%; height: 100%; }
 /* Kürzel des Claude-Accounts links neben dem Logo */
 .card-agent-account { color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
-/* Agent-Lauf aktiv: Logo bzw. orangener Schritt-Punkt pulsieren */
+/* Agent-Lauf aktiv: das Logo pulsiert */
 .card-agent-logo.active { animation: agent-pulse 1.6s ease-in-out infinite; }
 @keyframes agent-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.45; transform: scale(0.82); }
-}
-@keyframes run-dot-pulse {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--warn) 60%, transparent); }
-  70%, 100% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--warn) 0%, transparent); }
 }
 @media (prefers-reduced-motion: reduce) {
   .card-agent-logo.active { animation: none; }
@@ -359,28 +355,6 @@
 .agent-run .dispatch-log { max-height: 50vh; }
 .agent-run-head { margin: 0 0 8px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); white-space: pre-wrap; }
 .agent-run-head.compact { font-family: inherit; font-size: 12px; }
-.log-view-toggle { display: inline-flex; margin-left: auto; gap: 2px; padding: 3px; border-radius: var(--radius-control); background: var(--line-soft); }
-.log-view-toggle button { min-height: 28px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; }
-.log-view-toggle button:hover { color: var(--text); }
-.log-view-toggle button[aria-pressed=true] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px var(--shadow-tab); }
-.run-steps { list-style: none; font-family: inherit; font-size: 13px; white-space: normal; display: flex; flex-direction: column; gap: 3px; }
-.run-steps > li { display: grid; grid-template-columns: 58px 10px 1fr; column-gap: 8px; align-items: baseline; }
-.run-time { color: var(--muted); font-size: 11px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-.run-text { grid-column: 3; min-width: 0; overflow-wrap: anywhere; }
-.run-dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; align-self: start; background: var(--line-strong); }
-.run-dot.ok { background: var(--ok); }
-.run-dot.error { background: var(--danger); }
-.run-dot.running { background: var(--warn); animation: run-dot-pulse 1.6s ease-out infinite; }
-@media (prefers-reduced-motion: reduce) {
-  .run-dot.running { animation: none; }
-}
-.run-say { margin-top: 6px; }
-.run-say .run-text { font-weight: 500; }
-.run-line .run-text { color: var(--muted); }
-.run-note { color: var(--muted); }
-.run-error { display: block; max-height: 12em; overflow: auto; margin-top: 3px; padding: 3px 8px; border: 1px solid var(--connection-line); border-radius: 6px; background: var(--error-bg); color: var(--blocked-fg); font-family: var(--font-mono); font-size: 11px; white-space: pre-wrap; }
-.run-steps > li.run-output { grid-template-columns: 1fr; }
-.run-output pre { margin: 4px 0 0; font-family: var(--font-mono); font-size: 11px; white-space: pre-wrap; color: var(--muted); }
 .agent-prompt { margin-top: 8px; }
 .agent-prompt > summary { cursor: pointer; font-size: 12px; }
 .db-merge-retry { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--blocked-fg); border-radius: var(--radius-card); }
