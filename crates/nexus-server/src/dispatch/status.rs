@@ -58,6 +58,21 @@ pub struct DispatchRunLog {
     pub started: Option<String>,
     /// Der Worker läuft noch: der Lauf ist eingetragen und hat noch keine Ergebnisdatei
     pub running: bool,
+    /// Ergebnis aus der Board-Datenbank (`done`, `abort`, …); fehlt ohne aufgezeichneten Lauf
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub outcome: Option<String>,
+    /// Grund eines Abbruchs
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub abort_reason: Option<String>,
+    /// Ende des Laufs (ISO)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ended_at: Option<String>,
+    /// Dauer in Millisekunden
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub duration_ms: Option<i64>,
+    /// Modell des Laufs
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
 }
 
 impl DispatchRunLog {
@@ -68,6 +83,11 @@ impl DispatchRunLog {
             kind: entry.kind,
             started: entry.started,
             running,
+            outcome: None,
+            abort_reason: None,
+            ended_at: None,
+            duration_ms: None,
+            model: None,
         }
     }
 }
