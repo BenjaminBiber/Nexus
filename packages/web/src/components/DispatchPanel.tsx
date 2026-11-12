@@ -16,7 +16,7 @@ import { DispatchPromptEditor, type PromptProblem } from './dispatch/DispatchPro
 import { PromptPreview } from './dispatch/PromptPreview.js';
 import { applyProfiles, checkForm, moveProfile, toForm, toRaw, PROMPT_KINDS, PROMPT_KIND_LABELS, type DispatchForm, type PromptKind } from './dispatch/dispatchForm.js';
 
-// Einstellungen des Dispatchers (~/.harness/dispatch.yaml): Schalter, Boards, Grenzen, Merge, Profile, Regeln, Claude-Aufruf.
+// Einstellungen des Dispatchers (~/.nexus/dispatch.yaml): Schalter, Boards, Grenzen, Merge, Profile, Regeln, Claude-Aufruf.
 // Unterbereiche des Dispatchers; die Einstellungs-Navigation zeigt sie als Untermenü (Hash #dispatch/<id>).
 // Wartezeit nach der letzten Eingabe bis zum automatischen Speichern.
 const AUTOSAVE_DELAY_MS = 1200;
@@ -168,6 +168,21 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
       {form && <>
         {show('general') && <>
           <SettingsSection
+            title="Autopilot"
+            description="Tickets laufen ohne Freigaben durch."
+            info="Ob ein Ticket im Autopilot läuft, entscheidet der Dispatcher beim Start: eingeschaltet und ohne Ausnahme-Label."
+          >
+            <SettingRow label="Autopilot einschalten" hint="Keine Freigaben und Abnahmen; Fragen der Agents entscheidet die Recherche; Merge-Konflikte bekommen mehrere Merge-Sessions. Du wirst nur bei echten Sackgassen benachrichtigt.">
+              <input type="checkbox" checked={form.autopilot} onChange={(e) => change({ autopilot: e.target.checked })} />
+            </SettingRow>
+            <SettingRow label="Ausnahme-Label" hint="Tickets mit diesem Label laufen wie bisher mit Freigaben und Fragen.">
+              <input value={form.autopilotExceptLabel} placeholder="leer = keine Ausnahme" onChange={(e) => change({ autopilotExceptLabel: e.target.value })} />
+            </SettingRow>
+            <SettingRow label="Merge-Sessions je Konflikt (1–5)">
+              <input className="short" inputMode="numeric" value={form.autopilotMaxMergeSessions} onChange={(e) => change({ autopilotMaxMergeSessions: e.target.value })} />
+            </SettingRow>
+          </SettingsSection>
+          <SettingsSection
             title="Betrieb"
             description={`Gespeichert nur auf diesem Rechner${data ? ` (${data.view.file})` : ''}.`}
             info="Der Dispatcher übernimmt bereite Tickets aus „Geplant“ deiner Boards und lässt sie von Claude im eigenen Worktree umsetzen; erledigte Tickets werden in den ausgecheckten Branch des Repos gemergt."
@@ -176,7 +191,7 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
               <input type="checkbox" checked={form.enabled} onChange={(e) => change({ enabled: e.target.checked })} />
             </SettingRow>
           </SettingsSection>
-          <SettingsSection title="Boards" description="Ohne Auswahl: das aktive Board." info="Zur Wahl stehen deine eigenen Boards. Ein Board ohne deinen Repo-Pfad lässt sich nicht neu wählen; zuordnen mit harness board boards repo <ID> <Pfad>.">
+          <SettingsSection title="Boards" description="Ohne Auswahl: das aktive Board." info="Zur Wahl stehen deine eigenen Boards. Ein Board ohne deinen Repo-Pfad lässt sich nicht neu wählen; zuordnen mit nexus board boards repo <ID> <Pfad>.">
             {own.length === 0 && <p className="settings-card-body muted">Keine eigenen Boards.</p>}
             {own.map((b) => (
               <SettingRow key={b.id} label={`${b.projectKey} · ${b.name}`} hint={b.repoPath ? undefined : 'Ohne eigenen Repo-Pfad'}>
@@ -218,8 +233,13 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
                 <option value="squash">Squash (ein Commit je Ticket)</option>
               </select>
             </SettingRow>
-            <SettingRow label="Vor dem Merge auf Freigabe warten" hint="Erledigte Tickets warten in Blockiert, bis du sie abnimmst.">
-              <input type="checkbox" checked={form.reviewBeforeMerge} onChange={(e) => change({ reviewBeforeMerge: e.target.checked })} />
+            <SettingRow
+              label="Vor dem Merge auf Freigabe warten"
+              hint={form.autopilot
+                ? `Autopilot hat Vorrang${form.autopilotExceptLabel.trim() ? ` (außer Tickets mit Label ${form.autopilotExceptLabel.trim()})` : ''}.`
+                : 'Erledigte Tickets warten in Blockiert, bis du sie abnimmst.'}
+            >
+              <input type="checkbox" disabled={form.autopilot} checked={form.reviewBeforeMerge} onChange={(e) => change({ reviewBeforeMerge: e.target.checked })} />
             </SettingRow>
             <SettingRow label="Worktrees" info="Standard: Jedes Ticket bekommt einen eigenen Branch und Worktree und wird einzeln gemergt. „Bündeln“ ist das alte Verhalten: Tickets einer Spec teilen sich einen Worktree.">
               <select value={form.joinWorktrees} onChange={(e) => change({ joinWorktrees: e.target.value === 'sameSpec' ? 'sameSpec' : 'none' })}>
@@ -265,6 +285,15 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
             </SettingRow>
             <SettingRow label="Account voll ab (%)" hint="Ab dieser Auslastung (5 Stunden oder Woche) nimmt er den Account nicht mehr.">
               <input className="short" inputMode="numeric" value={form.accountLimit} onChange={(e) => change({ accountLimit: e.target.value })} />
+            </SettingRow>
+            <SettingRow label="Reserve 5 Stunden (%)" hint="So viel Prozentpunkte plant er für einen Lauf ein, solange es zu wenige frühere Läufe für eine Schätzung gibt.">
+              <input className="short" inputMode="numeric" value={form.accountReserveFiveHour} onChange={(e) => change({ accountReserveFiveHour: e.target.value })} />
+            </SettingRow>
+            <SettingRow label="Reserve Woche (%)" hint="So viel Prozentpunkte plant er für einen Lauf in der Woche ein, solange es zu wenige frühere Läufe für eine Schätzung gibt.">
+              <input className="short" inputMode="numeric" value={form.accountReserveWeek} onChange={(e) => change({ accountReserveWeek: e.target.value })} />
+            </SettingRow>
+            <SettingRow label="Ohne Reserve, wenn 5 h zurücksetzt in (min)" hint="Setzt sich das 5-Stunden-Fenster so bald zurück, startet er trotz knapper Auslastung.">
+              <input className="short" inputMode="numeric" value={form.accountResetGrace} onChange={(e) => change({ accountResetGrace: e.target.value })} />
             </SettingRow>
           </SettingsSection>
           <SettingsSection title="Regeln" description="Die erste passende Regel bestimmt das Profil." info="Alle ausgefüllten Bedingungen einer Regel müssen zutreffen. „ab Dateien“ zählt die Zeilen der Tabelle unter „## Integration“ im Plan, „ab Zeichen Plan“ die Länge des Plans.">
@@ -329,7 +358,7 @@ export function DispatchPanel({ sub }: { sub?: DispatchSection } = {}) {
           <SettingsSection
             title="Prompt-Vorlagen"
             description="Die Arbeitsanweisung an Claude je Laufart. Leer: die Standardvorlage gilt."
-            info="Die Standardvorlage zieht mit neuen Versionen des Harness automatisch mit. Eine eigene Vorlage bleibt dagegen so, wie sie hier steht."
+            info="Die Standardvorlage zieht mit neuen Versionen von Nexus automatisch mit. Eine eigene Vorlage bleibt dagegen so, wie sie hier steht."
             bare
           >
             {PROMPT_KINDS.map((kind) => {

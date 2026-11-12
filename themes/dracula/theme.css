@@ -1,0 +1,148 @@
+/* „Dracula“: dunkles Schema in der Dracula-Palette (draculatheme.com, MIT-Lizenz). Background als Fläche, die dunkleren
+   Stufen der Dracula-Editoren für Hintergrund und Seitenleiste, Purple als Akzent, Pink für Hauptknöpfe; die Statusfarben
+   kommen aus Green, Yellow, Red, Cyan und Orange. Getönte Flächen sind die jeweilige Palettenfarbe, anteilig über Background
+   gemischt. Setzt wie das dunkle Schema jede Farbvariable. --dracula-* sind die Palettenwerte für die Mermaid-Diagramme
+   (main.js liest sie beim Zeichnen). Das helle Gegenstück ist das Theme „Alucard“. */
+:root[data-theme='dracula'] {
+  color-scheme: dark;
+  --dracula-bg: #282a36;
+  --dracula-bg-deep: #21222c;
+  --dracula-node: #343746;
+  --dracula-note: #404340;
+  --dracula-current: #44475a;
+  --dracula-fg: #f8f8f2;
+  --dracula-comment: #6272a4;
+  --dracula-cyan: #8be9fd;
+  --dracula-green: #50fa7b;
+  --dracula-orange: #ffb86c;
+  --dracula-pink: #ff79c6;
+  --dracula-purple: #bd93f9;
+  --dracula-red: #ff5555;
+  --dracula-yellow: #f1fa8c;
+  --bg: #21222c;
+  --surface: #282a36;
+  --surface-alt: #252631;
+  --sidebar-bg: #1e1f29;
+  --nav-active-bg: #44475a;
+  --line: #44475a;
+  --line-input: #4d5066;
+  --line-soft: #343746;
+  --line-strong: #6272a4;
+  --line-dashed: #4d5066;
+  --column-bg: #252631;
+  --column-locked-a: #252631;
+  --column-locked-b: #282a36;
+  --text: #f8f8f2;
+  --text-soft: #e2e2dc;
+  --muted: #a4acd4;
+  --accent: #bd93f9;
+  --accent-hover: #cfaefb;
+  --accent-soft: #463f5d;
+  --accent-soft-hover: #52476d;
+  --on-accent: #21222c;
+  --primary: #ff79c6;
+  --primary-hover: #ff94d2;
+  --on-primary: #21222c;
+  --chip-on-bg: #bd93f9;
+  --chip-on-fg: #21222c;
+  --code-bg: #191a21;
+  --code-fg: #f8f8f2;
+  --code-muted: #8a95c6;
+  --code-btn-bg: #21222c;
+  --code-btn-line: #44475a;
+  --status-bg: #463f5d;
+  --status-fg: #d6bcfa;
+  --running-fg: #50fa7b;
+  --running-bg: #2e4940;
+  --waiting-fg: #f1fa8c;
+  --waiting-bg: #404340;
+  --waiting-line: #6e7354;
+  --idle-fg: #e2e2dc;
+  --idle-bg: #44475a;
+  --blocked-fg: #ff8080;
+  --blocked-bg: #48303b;
+  --orphan-fg: #d6bcfa;
+  --orphan-bg: #3b384f;
+  --unread-fg: #8be9fd;
+  --unread-bg: #374754;
+  --unread-row-bg: #2d3442;
+  --note-bg: #404340;
+  --note-line: #6e7354;
+  --note-fg: #f1fa8c;
+  --ok: #50fa7b;
+  --ok-fg: #50fa7b;
+  --ok-ring: #2e4940;
+  --danger: #ff5555;
+  --warn: #ffb86c;
+  --usage-ok: #8be9fd;
+  --usage-warn: #f1fa8c;
+  --usage-crit: #ff79c6;
+  --usage-over: #ffb86c;
+  --row-waiting-bg: #30323a;
+  --quote-line: #bd93f9;
+  --mark: #6e7354;
+  --mark-comment: #4d4467;
+  --mark-comment-hover: #5a4f7a;
+  --tag-add-line: #6272a4;
+  --connection-line: #69373f;
+  --connection-fg: #ff6e6e;
+  --error-bg: #392d39;
+  --answered-bg: #2e4940;
+  --answered-line: #36734e;
+  --research-bg: #34414e;
+  --research-fg: #8be9fd;
+  --diff-add-bg: #1f3a2a;
+  --diff-add-fg: #50fa7b;
+  --diff-del-bg: #3a1f26;
+  --diff-del-fg: #ff6e6e;
+  --diff-hunk-fg: #bd93f9;
+  --test-ok: #50fa7b;
+  --test-fail: #ff5555;
+  --status-backlog: #6272a4;
+  --status-waiting: #f1fa8c;
+  --status-in-planning: #bd93f9;
+  --status-planned: #8be9fd;
+  --status-in-progress: #ff79c6;
+  --status-blocked: #ff5555;
+  --status-done: #50fa7b;
+  --status-not-needed: #565a73;
+  --graph-edge: #6272a4;
+  --graph-critical: #ff5555;
+  --graph-upstream: #8be9fd;
+  --graph-downstream: #bd93f9;
+  --chart-done: #50fa7b;
+  --chart-fail: #ff5555;
+  --chart-bar: #bd93f9;
+  --chart-track: #44475a;
+  --chart-grid: #44475a;
+  --chart-axis: #a4acd4;
+  --chart-other: #565a73;
+  --chart-escalated: #ffb86c;
+  --reason-max-turns: #ff5555;
+  --reason-timeout: #ffb86c;
+  --reason-context: #ff79c6;
+  --reason-exit-code: #bd93f9;
+  --reason-claude-error: #8be9fd;
+  --reason-no-outcome: #50fa7b;
+  --reason-rest: #6272a4;
+  --urgent-row-bg: #392d39;
+  --shadow-faint: rgba(25, 26, 33, 0.3);
+  --shadow-mid: rgba(25, 26, 33, 0.4);
+  --shadow-soft: rgba(25, 26, 33, 0.35);
+  --shadow-tab: rgba(25, 26, 33, 0.5);
+  --shadow-strong: rgba(25, 26, 33, 0.55);
+  --backdrop: rgba(25, 26, 33, 0.6);
+  --sheet-shadow: rgba(25, 26, 33, 0.5);
+  --picker-shadow: rgba(25, 26, 33, 0.45);
+  --logo-plate: #ffffff;
+}
+
+/* Markierter Text wie im Editor: Current Line */
+:root[data-theme='dracula'] ::selection { background: #44475a; color: #f8f8f2; }
+
+/* Dokumentbaum: Symbole in Cyan (Dokument) und Purple (Glossar) */
+:root[data-theme='dracula'] .doc-tree-icon.is-doc { color: #8be9fd; }
+:root[data-theme='dracula'] .doc-tree-icon.is-glossary { color: #bd93f9; }
+
+/* Startanimation: dunkles Logo auf dunklem Grund umkehren wie im dunklen Schema */
+:root[data-theme='dracula'] .loader-n { filter: invert(1); }

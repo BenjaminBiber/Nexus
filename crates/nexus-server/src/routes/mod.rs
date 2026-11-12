@@ -18,11 +18,24 @@ pub mod health;
 pub mod hook;
 pub mod notifications;
 pub mod questions;
+pub mod session_detail;
 pub mod sessions;
 pub mod settings;
 pub mod setup;
+pub mod snippets;
 pub mod spec;
+pub mod speech;
 pub mod static_files;
+pub mod store_index;
+pub mod store_install;
+pub mod store_preview;
+pub mod store_repos;
+pub mod store_updates;
+pub mod telegram;
+pub mod theme_fetch;
+pub mod theme_packages;
+pub mod theme_settings;
+pub mod themes;
 pub mod usage;
 pub mod workflow;
 
@@ -62,13 +75,26 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(docs_claude::routes())
         .merge(hook::routes())
         .merge(sessions::routes())
+        .merge(session_detail::routes())
         .merge(favorites::routes())
+        .merge(snippets::routes())
+        .merge(theme_settings::routes())
+        .merge(store_index::routes())
+        .merge(store_install::routes())
+        .merge(store_preview::routes())
+        .merge(store_repos::routes())
+        .merge(store_updates::routes())
         .merge(usage::routes())
         .merge(accounts::routes())
         .merge(notifications::routes())
         .merge(workflow::routes())
         .merge(dispatch::routes())
         .merge(dispatch_suggestions::routes())
+        .merge(speech::routes())
+        .merge(telegram::routes())
+        .merge(themes::routes())
+        .merge(theme_packages::routes())
+        .merge(theme_fetch::routes())
         .fallback(static_or_not_found)
         .layer(middleware::from_fn_with_state(
             state.clone(),

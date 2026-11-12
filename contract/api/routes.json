@@ -46,6 +46,16 @@
   },
   {
     "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "DELETE",
+    "pattern": "/api/accounts/:id/run-token"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
+    "method": "PUT",
+    "pattern": "/api/accounts/:id/run-token"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/accounts.rs",
     "method": "POST",
     "pattern": "/api/accounts/login"
   },
@@ -580,6 +590,26 @@
     "pattern": "/api/db/questions/:id/tickets"
   },
   {
+    "file": "crates/nexus-server/src/routes/session_detail.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/sessions/:sid/changes"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/session_detail.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/sessions/:sid/changes/file"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/session_detail.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/sessions/:sid/detail"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/session_detail.rs",
+    "method": "GET",
+    "pattern": "/api/projects/:pid/sessions/:sid/transcript"
+  },
+  {
     "file": "crates/nexus-server/src/routes/sessions.rs",
     "method": "GET",
     "pattern": "/api/projects/:pid/sessions"
@@ -650,9 +680,154 @@
     "pattern": "/api/setup/plugin"
   },
   {
+    "file": "crates/nexus-server/src/routes/snippets.rs",
+    "method": "GET",
+    "pattern": "/api/snippets"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/snippets.rs",
+    "method": "DELETE",
+    "pattern": "/api/snippets/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/snippets.rs",
+    "method": "PATCH",
+    "pattern": "/api/snippets/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/snippets.rs",
+    "method": "PUT",
+    "pattern": "/api/snippets/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/snippets.rs",
+    "method": "GET",
+    "pattern": "/snippets/active.css"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/store_index.rs",
+    "method": "GET",
+    "pattern": "/api/themes/store/index"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/store_install.rs",
+    "method": "POST",
+    "pattern": "/api/themes/store/install"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/store_preview.rs",
+    "method": "GET",
+    "pattern": "/api/themes/store/preview"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/store_repos.rs",
+    "method": "GET",
+    "pattern": "/api/themes/store/repos"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/store_repos.rs",
+    "method": "POST",
+    "pattern": "/api/themes/store/repos"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/store_repos.rs",
+    "method": "DELETE",
+    "pattern": "/api/themes/store/repos/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/store_updates.rs",
+    "method": "GET",
+    "pattern": "/api/themes/store/updates"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/store_updates.rs",
+    "method": "POST",
+    "pattern": "/api/themes/store/update"
+  },
+  {
     "file": "crates/nexus-server/src/routes/spec.rs",
     "method": "GET",
     "pattern": "/api/projects/:pid/spec-progress"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/speech.rs",
+    "method": "GET",
+    "pattern": "/api/speech/status"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/speech.rs",
+    "method": "POST",
+    "pattern": "/api/speech/test"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "DELETE",
+    "pattern": "/api/telegram/chats/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "GET",
+    "pattern": "/api/telegram/config"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "PUT",
+    "pattern": "/api/telegram/config"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "POST",
+    "pattern": "/api/telegram/pair"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "POST",
+    "pattern": "/api/telegram/profile"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "GET",
+    "pattern": "/api/telegram/status"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/telegram.rs",
+    "method": "POST",
+    "pattern": "/api/telegram/test"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/theme_fetch.rs",
+    "method": "GET",
+    "pattern": "/api/themes/:id/fetch"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/theme_packages.rs",
+    "method": "GET",
+    "pattern": "/api/themes"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/theme_packages.rs",
+    "method": "DELETE",
+    "pattern": "/api/themes/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/theme_packages.rs",
+    "method": "POST",
+    "pattern": "/api/themes/install"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/themes.rs",
+    "method": "GET",
+    "pattern": "/themes/:id"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/themes.rs",
+    "method": "GET",
+    "pattern": "/themes/:id/"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/themes.rs",
+    "method": "GET",
+    "pattern": "/themes/:id/:*path"
   },
   {
     "file": "crates/nexus-server/src/routes/usage.rs",

@@ -2,17 +2,15 @@
 // aktiviertem Updater (`bundle.createUpdaterArtifacts` in tauri.conf.json, P6-7) die Dateien, die tauri-action
 // dafür zusätzlich anhängt. Die Tauri-Konfig kommt als Parameter, damit sich das ohne echte Datei testen lässt.
 
-// Grundliste: dmg (aarch64, x64), NSIS-Installer, AppImage, deb, rpm, CLI-Archive je Ziel
+// Grundliste: dmg (nur Apple Silicon, Intel-Macs werden nicht gebaut), NSIS-Installer, AppImage, deb, rpm, CLI-Archive je Ziel
 export function baseAssetNames(version) {
   return [
     `Nexus_${version}_aarch64.dmg`,
-    `Nexus_${version}_x64.dmg`,
     `Nexus_${version}_x64-setup.exe`,
     `Nexus_${version}_amd64.AppImage`,
     `Nexus_${version}_amd64.deb`,
     `Nexus-${version}-1.x86_64.rpm`,
     `nexus-cli-${version}-aarch64-apple-darwin.tar.gz`,
-    `nexus-cli-${version}-x86_64-apple-darwin.tar.gz`,
     `nexus-cli-${version}-x86_64-pc-windows-msvc.zip`,
     `nexus-cli-${version}-x86_64-unknown-linux-gnu.tar.gz`,
   ];
@@ -25,8 +23,6 @@ export function updaterAssetNames(version) {
     'latest.json',
     'Nexus_aarch64.app.tar.gz',
     'Nexus_aarch64.app.tar.gz.sig',
-    'Nexus_x64.app.tar.gz',
-    'Nexus_x64.app.tar.gz.sig',
     `Nexus_${version}_x64-setup.exe.sig`,
     `Nexus_${version}_amd64.AppImage.sig`,
   ];
@@ -40,9 +36,16 @@ export function updaterEnabled(...tauriConfs) {
   return tauriConfs.some((conf) => conf?.bundle?.createUpdaterArtifacts === true);
 }
 
-// Alle erwarteten Dateinamen: Grundliste, bei aktiviertem Updater zusätzlich dessen Dateien
-export function assetNames(version, { updater = false } = {}) {
-  return updater ? [...baseAssetNames(version), ...updaterAssetNames(version)] : baseAssetNames(version);
+// Dateien des Theme-Stores (theme-index.mjs): `nexus-themes.json` und je mitgeliefertem Theme `<id>-<version>.nexus`.
+// `themes` sind die Manifeste aus themes/*/manifest.json
+export function themeAssetNames(themes) {
+  return themes.length === 0 ? [] : ['nexus-themes.json', ...themes.map((t) => `${t.id}-${t.version}.nexus`)];
+}
+
+// Alle erwarteten Dateinamen: Grundliste, bei aktiviertem Updater zusätzlich dessen Dateien, dazu die Theme-Pakete
+export function assetNames(version, { updater = false, themes = [] } = {}) {
+  const names = updater ? [...baseAssetNames(version), ...updaterAssetNames(version)] : baseAssetNames(version);
+  return [...names, ...themeAssetNames(themes)];
 }
 
 // Namen aus `expected`, die nicht in `actual` stehen (Reihenfolge wie `expected`)

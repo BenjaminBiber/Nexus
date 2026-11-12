@@ -9,6 +9,8 @@
 //! * **Desktop-App** (`tauri://localhost` und `http(s)://tauri.localhost`): Die Oberfläche
 //!   kommt aus den Dateien der App und hat damit eine fremde Herkunft. Sie ist nur erlaubt,
 //!   wenn sie das Start-Token des Servers mitschickt; das Token ersetzt dort `X-Harness`.
+//!   Einzige Ausnahme: Dateien installierter Themes unter `/themes/` darf sie ohne Token
+//!   lesen, weil Schriften und Module keine Köpfe mitschicken können.
 //!   Im Entwicklungsmodus der App kommt die Oberfläche von Vite; dessen Herkunft lässt
 //!   [`RequestGuard::allow_app_origin`] unter denselben Bedingungen zu.
 
@@ -39,6 +41,15 @@ pub const TOKEN_HEADER: &str = "x-nexus-token";
 /// Abfragewert mit dem Start-Token; nur für `GET`/`HEAD`, weil `EventSource` und der
 /// Abruf eines Protokolls keine Köpfe setzen können
 pub const TOKEN_QUERY: &str = "token";
+
+/// Pfade, die statt JSON eine Aufnahme als Körper annehmen. Der Schutz hängt an der Herkunft
+/// und am Pflichtkopf, nicht am Inhaltstyp: `audio/*` ist kein „einfacher“ Inhaltstyp, eine
+/// fremde Seite käme damit nicht an der Vorabfrage und der Herkunftsprüfung vorbei.
+pub const AUDIO_BODY_PATHS: [&str; 1] = ["/api/speech/test"];
+
+/// Pfad, unter dem die Dateien installierter Themes liegen (`routes::themes`); lesend braucht
+/// die App dafür kein Start-Token
+pub const THEME_FILES_PREFIX: &str = "/themes/";
 
 /// Methoden, die eine Vorabfrage der App freigibt
 const ALLOW_METHODS: &str = "GET, POST, PUT, PATCH, DELETE";
@@ -120,11 +131,13 @@ impl RequestGuard {
     }
 
     /// Prüft eine Anfrage; `None`, wenn sie zulässig ist, sonst der Ablehnungsgrund.
-    /// `query` ist der Abfrageteil der Adresse ohne `?`; daraus kommt bei `GET`/`HEAD` das
-    /// Token der App.
+    /// `path` ist der Pfad der Adresse (nur die Routen aus [`AUDIO_BODY_PATHS`] dürfen eine
+    /// Aufnahme statt JSON schicken), `query` ihr Abfrageteil ohne `?`; daraus kommt bei
+    /// `GET`/`HEAD` das Token der App.
     pub fn check(
         &self,
         method: &Method,
+        path: &str,
         headers: &HeaderMap,
         query: Option<&str>,
     ) -> Option<GuardDenial> {
@@ -146,7 +159,7 @@ impl RequestGuard {
                         message: "Anfragen von fremden Webseiten sind nicht erlaubt.",
                     });
                 }
-                if !self.token_stimmt(method, headers, query) {
+                if !self.token_stimmt(method, headers, query) && !theme_datei_lesend(method, path) {
                     return Some(GuardDenial {
                         code: "origin-denied",
                         message: "Die App hat sich nicht ausgewiesen.",
@@ -155,7 +168,7 @@ impl RequestGuard {
                 aus_der_app = true;
             }
         }
-        if !is_read(method) && !json_content(headers) {
+        if !is_read(method) && !json_content(headers) && !audio_body(path, headers) {
             return Some(match aus_der_app {
                 true => GuardDenial {
                     code: "header-missing",
@@ -188,6 +201,16 @@ impl RequestGuard {
             .and_then(token_aus_abfrage)
             .is_some_and(|value| token.matches(value))
     }
+}
+
+/// Liest die Anfrage eine Datei eines installierten Themes? Das darf die Oberfläche der App
+/// auch ohne Start-Token: Schriften aus der `theme.css` und `import()` der `main.js` (samt
+/// deren relativer Importe) schickt der Browser mit Herkunft, aber ohne eigene Köpfe und ohne
+/// Abfragewert. Unter [`THEME_FILES_PREFIX`] liegen nur Theme-Pakete – dieselben Dateien, die
+/// jede Seite ohnehin als Stylesheet, Skript oder Bild einbinden kann, weil solche Anfragen
+/// keine Herkunft tragen.
+fn theme_datei_lesend(method: &Method, path: &str) -> bool {
+    is_read(method) && path.starts_with(THEME_FILES_PREFIX)
 }
 
 /// Lädt die Oberfläche der Desktop-App unter dieser Herkunft?
@@ -223,6 +246,18 @@ fn json_content(headers: &HeaderMap) -> bool {
         .is_some_and(|value| value.to_lowercase().starts_with("application/json"))
 }
 
+/// Eine Aufnahme als Körper – nur auf den Pfaden aus [`AUDIO_BODY_PATHS`] und nur mit einem
+/// Inhaltstyp, der Audio meint
+fn audio_body(path: &str, headers: &HeaderMap) -> bool {
+    if !AUDIO_BODY_PATHS.contains(&path) {
+        return false;
+    }
+    single(headers, "content-type").is_some_and(|value| {
+        let value = value.to_lowercase();
+        value.starts_with("audio/") || value.starts_with("application/octet-stream")
+    })
+}
+
 /// Köpfe können mehrfach vorkommen; wie in Node zählt der erste Wert. Köpfe, die sich nicht
 /// als Text lesen lassen, gelten als nicht vorhanden.
 fn single<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
@@ -245,9 +280,12 @@ pub async fn guard_middleware(
             return vorabfrage(origin);
         }
     }
-    let denial = state
-        .guard
-        .check(request.method(), request.headers(), request.uri().query());
+    let denial = state.guard.check(
+        request.method(),
+        request.uri().path(),
+        request.headers(),
+        request.uri().query(),
+    );
     let mut response = match denial {
         Some(denial) => (StatusCode::FORBIDDEN, crate::error::json(&denial)).into_response(),
         None => next.run(request).await,

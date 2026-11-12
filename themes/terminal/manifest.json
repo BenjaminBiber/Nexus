@@ -1,0 +1,148 @@
+{
+  "id": "terminal",
+  "name": "Terminal",
+  "version": "2.1.0",
+  "author": "Nexus",
+  "sdkVersion": "^1.2",
+  "colorScheme": "dark",
+  "startColor": "#0d1117",
+  "preview": "assets/preview.png",
+  "slots": [
+    "Shell",
+    "NavIcon",
+    "Icon",
+    "Progress",
+    "StartAnimation"
+  ],
+  "permissions": {
+    "network": []
+  },
+  "settingsSchema": {
+    "font": {
+      "type": "select",
+      "label": "Schriftart",
+      "options": [
+        {
+          "value": "jetbrains",
+          "label": "JetBrains Mono"
+        },
+        {
+          "value": "plex",
+          "label": "IBM Plex Mono"
+        },
+        {
+          "value": "geist",
+          "label": "Geist Mono"
+        }
+      ],
+      "default": "jetbrains"
+    },
+    "ligatures": {
+      "type": "boolean",
+      "label": "Ligaturen",
+      "hint": "Zeichenfolgen wie => oder != als ein Zeichen (nur JetBrains Mono und Geist Mono)",
+      "default": false
+    },
+    "fontSize": {
+      "type": "select",
+      "label": "Schriftgröße",
+      "options": [
+        {
+          "value": "12",
+          "label": "12 px"
+        },
+        {
+          "value": "13",
+          "label": "13 px"
+        },
+        {
+          "value": "14",
+          "label": "14 px"
+        }
+      ],
+      "default": "13"
+    },
+    "icons": {
+      "type": "select",
+      "label": "Symbole",
+      "hint": "Symbole in Navigation und Docs-Baum",
+      "options": [
+        {
+          "value": "nerd",
+          "label": "Nerd Font"
+        },
+        {
+          "value": "unicode",
+          "label": "Unicode"
+        },
+        {
+          "value": "off",
+          "label": "Keine"
+        }
+      ],
+      "default": "nerd"
+    },
+    "palette": {
+      "type": "select",
+      "label": "Farbschema",
+      "options": [
+        {
+          "value": "github",
+          "label": "GitHub Dark"
+        },
+        {
+          "value": "dracula",
+          "label": "Dracula"
+        },
+        {
+          "value": "gruvbox",
+          "label": "Gruvbox"
+        },
+        {
+          "value": "tokyonight",
+          "label": "Tokyo Night"
+        },
+        {
+          "value": "solarized",
+          "label": "Solarized Dark"
+        },
+        {
+          "value": "nord",
+          "label": "Nord"
+        },
+        {
+          "value": "green",
+          "label": "Phosphor grün"
+        },
+        {
+          "value": "amber",
+          "label": "Phosphor bernstein"
+        }
+      ],
+      "default": "github"
+    },
+    "crt": {
+      "type": "boolean",
+      "label": "Röhrenmonitor",
+      "hint": "Scanlines, leichtes Glühen und dunkle Ränder",
+      "default": false
+    },
+    "cursorBlink": {
+      "type": "boolean",
+      "label": "Cursor blinkt",
+      "default": true
+    },
+    "typeOutput": {
+      "type": "boolean",
+      "label": "Ausgabe tippen",
+      "hint": "Ausgaben der Prompt-Zeile erscheinen Zeichen für Zeichen",
+      "default": false
+    },
+    "boot": {
+      "type": "boolean",
+      "label": "Startanimation",
+      "hint": "Boot-Meldungen beim Laden der Oberfläche",
+      "default": true
+    }
+  }
+}

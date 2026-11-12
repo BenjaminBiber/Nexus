@@ -1,25 +1,39 @@
+import type { ReactNode } from 'react';
+import { SlotBoundary } from '../theme/SlotBoundary.js';
+import type { NavIconName } from '@nexus/theme-sdk';
 import { useDisplayedTheme } from '../theme/useDisplayedTheme.js';
-import { Win95Icon, type Win95IconName } from './win95/Win95Icons.js';
+import { useSlot } from '../theme/useSlot.js';
 
-// Linien-Symbole der Seitenleiste (24er-Raster, Farbe aus currentColor); im Schema „Windows 95“ das Pixel-Symbol `w95`
-function Icon({ d, w95 }: { d: string; w95?: Win95IconName }) {
-  const theme = useDisplayedTheme();
-  if (w95 && theme === 'win95') return <Win95Icon name={w95} />;
+// Linien-Symbol im 24er-Raster, Farbe aus currentColor
+function LineIcon({ children }: { children: ReactNode }) {
   return (
     <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d={d} />
+      {children}
     </svg>
   );
 }
 
-export const BoardIcon = () => <Icon d="M4 4h6v16H4zM14 4h6v10h-6z" w95="folder" />;
-export const DashboardIcon = () => <Icon d="M4 20V10M10 20V4M16 20v-7M21 20H3" w95="chart" />;
-export const InboxIcon = () => <Icon d="M4 13l2.5-8h11L20 13v6H4zM4 13h5l1 2h4l1-2h5" w95="inbox" />;
-export const SessionsIcon = () => <Icon d="M4 5h16v14H4zM8 10l3 2-3 2M13 14h3" w95="prompt" />;
-export const QuestionsIcon = () => <Icon d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01" w95="question" />;
-export const DocsIcon = () => <Icon d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6" w95="document" />;
-export const SearchIcon = () => <Icon d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4" w95="magnifier" />;
-export const GuideIcon = () => <Icon d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM9 7h6" w95="help" />;
+// Symbol der Navigation; mit `name` darf der Slot „NavIcon“ des Themes es ersetzen
+function Icon({ name, children }: { name?: NavIconName; children: ReactNode }) {
+  const theme = useDisplayedTheme();
+  const Custom = useSlot('NavIcon');
+  const standard = <LineIcon>{children}</LineIcon>;
+  if (!name || !Custom) return standard;
+  return (
+    <SlotBoundary fallback={standard} resetKey={theme}>
+      <Custom name={name} />
+    </SlotBoundary>
+  );
+}
+
+export const BoardIcon = () => <Icon name="board"><path d="M4 4h6v16H4zM14 4h6v10h-6z" /></Icon>;
+export const DashboardIcon = () => <Icon name="dashboard"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3" /></Icon>;
+export const InboxIcon = () => <Icon name="inbox"><path d="M4 13l2.5-8h11L20 13v6H4zM4 13h5l1 2h4l1-2h5" /></Icon>;
+export const SessionsIcon = () => <Icon name="sessions"><path d="M4 5h16v14H4zM8 10l3 2-3 2M13 14h3" /></Icon>;
+export const QuestionsIcon = () => <Icon name="questions"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01" /></Icon>;
+export const DocsIcon = () => <Icon name="docs"><path d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6" /></Icon>;
+export const SearchIcon = () => <Icon name="search"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4" /></Icon>;
+export const GuideIcon = () => <Icon name="guide"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM9 7h6" /></Icon>;
 
 // Offizielles Claude-Logo als Ersatz für die Pille „Agent“ auf der kompakten Ticket-Kachel
 export function ClaudeIcon() {
@@ -33,15 +47,13 @@ export function ClaudeIcon() {
   );
 }
 
-// Zahnrad für den Link zu den Einstellungen (unter Windows 95 die Systemsteuerung als Rechner)
+// Zahnrad für den Link zu den Einstellungen; der Slot „NavIcon“ darf es als `settings` ersetzen
 export function CogIcon() {
-  const theme = useDisplayedTheme();
-  if (theme === 'win95') return <Win95Icon name="computer" />;
   return (
-    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <Icon name="settings">
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
-    </svg>
+    </Icon>
   );
 }
 
@@ -54,6 +66,8 @@ const SETTINGS_ICONS: Record<string, string> = {
   notifications: 'M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 21h4',
   donut_large: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   tune: 'M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4',
+  brush: 'M19.5 3.5a2.1 2.1 0 0 1 3 3L13 16l-3-3zM10 13.5c-2.2 0-4 1.6-4 3.8 0 1.4-1 2.4-3 2.7 1.2.7 2.6 1 4 1a5 5 0 0 0 5-5',
+  view_quilt: 'M4 4h16v16H4zM10 4v16M10 12h10',
   storage: 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
   send: 'M4 12l16-8-6 16-3-7zM11 13l9-9',
   power_settings_new: 'M12 3v8M7.1 6.3a7 7 0 1 0 9.8 0',
@@ -65,8 +79,10 @@ const SETTINGS_ICONS: Record<string, string> = {
   insights: 'M4 19l5-6 4 3 7-9M20 7v4M20 7h-4',
   event_note:'M4 6h16v15H4zM4 10h16M8 3v4M16 3v4M8 14h8M8 17h5',
   description: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h6',
+  chat: 'M4 5h16v11H9l-5 4zM8 9h8M8 12h5',
+  mic: 'M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3M9 21h6',
 };
-export const SettingsIcon = ({ name }: { name: string }) => <Icon d={SETTINGS_ICONS[name] ?? ''} />;
+export const SettingsIcon = ({ name }: { name: string }) => <Icon><path d={SETTINGS_ICONS[name] ?? ''} /></Icon>;
 
 // Animiertes Merge-Symbol (nach lucide-animated „git-merge“, ohne motion): Kreise und Bogen zeichnen sich gestaffelt
 // und in Schleife, solange der Dispatcher das Ticket mergt; Animation in dbboard.css

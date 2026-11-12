@@ -17,11 +17,9 @@ fn web_dir() -> (tempfile::TempDir, PathBuf) {
         .unwrap();
     let web = dir.path().to_path_buf();
     fs::create_dir_all(web.join("assets")).unwrap();
-    fs::write(
-        web.join("index.html"),
-        "<html><body>Oberfläche</body></html>",
-    )
-    .unwrap();
+    let index = "<html><head><script>window.x=1</script></head><body>Oberfläche</body></html>";
+    fs::write(web.join("index.html"), index).unwrap();
+    fs::write(web.join("index.html.gz"), gzip(index.as_bytes())).unwrap();
     fs::write(web.join("assets").join("app.js"), "console.log(1)").unwrap();
     fs::write(web.join("assets").join("big.js"), "console.log(2)").unwrap();
     fs::write(
@@ -116,6 +114,52 @@ async fn lasst_dateien_unter_assets_dauerhaft_zwischenspeichern_index_nie_ungepr
         server.get("/p/abc/board").await.header("cache-control"),
         Some("no-cache")
     );
+}
+
+/// CSP der Tauri-App (`apps/desktop/src-tauri/tauri.conf.json`)
+const CSP: &str = "default-src 'self'; connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost; img-src 'self' data: blob: http://127.0.0.1:*; style-src 'self' 'unsafe-inline' http://127.0.0.1:*; font-src 'self' data: http://127.0.0.1:*; script-src 'self' http://127.0.0.1:*/themes/";
+
+#[tokio::test]
+async fn liefert_die_oberflache_mit_der_csp_der_app_aus() {
+    let (server, _web) = server_with_web();
+    // sha256 von `window.x=1`, dem Inline-Skript der index.html
+    let page =
+        CSP.replace(
+            "script-src 'self' http://127.0.0.1:*/themes/",
+            "script-src 'self' http://127.0.0.1:*/themes/ 'sha256-hUmDl3yY/7GaaX+Zuy8aEy8IzxgpBs7xccqYHs2/7kQ='",
+        );
+    for url in ["/", "/index.html", "/p/abc/board"] {
+        let reply = server.get(url).await;
+        assert_eq!(
+            reply.header("content-security-policy"),
+            Some(page.as_str()),
+            "{url}"
+        );
+    }
+    // Auch vorkomprimiert zählt das Skript der index.html, nicht der Körper der Antwort
+    let zipped = server
+        .get_with("/", &[("accept-encoding", Some("gzip, br"))])
+        .await;
+    assert_eq!(
+        zipped.header("content-security-policy"),
+        Some(page.as_str())
+    );
+    assert_eq!(
+        server
+            .get("/assets/app.js")
+            .await
+            .header("content-security-policy"),
+        Some(CSP)
+    );
+}
+
+#[tokio::test]
+async fn api_antworten_tragen_keine_csp() {
+    let (server, _web) = server_with_web();
+    for url in ["/api/health", "/api/gibtesnicht"] {
+        let reply = server.get(url).await;
+        assert_eq!(reply.header("content-security-policy"), None, "{url}");
+    }
 }
 
 #[tokio::test]

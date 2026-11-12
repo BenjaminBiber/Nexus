@@ -1,4 +1,4 @@
-//! Zugriffs-Token für spätere Hook-Aufrufe; wird einmal bei `harness init` erzeugt.
+//! Zugriffs-Token für spätere Hook-Aufrufe; wird einmal bei `nexus init` erzeugt.
 
 use std::fs::{self, OpenOptions};
 use std::io::{self, Write};

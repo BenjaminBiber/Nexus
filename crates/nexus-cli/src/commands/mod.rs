@@ -13,3 +13,4 @@ pub mod selbsttest;
 pub mod serve;
 pub mod spec;
 pub mod stop;
+pub mod theme;

@@ -30,6 +30,7 @@ function DbDecisionBox({ question, busy, onReopen }: { question: DbQuestionDetai
       <span className="muted">{d.outcome === 'answered' ? 'Entscheidung' : 'Verworfen'}</span>
       {d.outcome === 'answered' && <strong>{answer}</strong>}
       {d.reason && <span>{d.reason}</span>}
+      {d.reason?.startsWith('Autopilot:') && <span className="badge">vom Autopilot entschieden</span>}
       <span className="muted">
         {d.byName} · {new Date(d.at).toLocaleDateString('de-DE')}
       </span>
@@ -67,7 +68,7 @@ function DbQuestionDetail() {
       </div>
     );
   }
-  if (q.state.status === 'loading') return <div className="page"><LoadingState variant="detail" text="Frage wird geladen …" /></div>;
+  if (q.state.status === 'loading') return <div className="page"><LoadingState text="Frage wird geladen …" /></div>;
   if (q.state.status === 'error') {
     return (
       <div className="page">
@@ -178,7 +179,7 @@ function DbQuestionDetail() {
             </p>
           )}
           <QuestionHistory entries={historyEntries(question)} />
-          <QuestionCommentForm busy={q.busy} error={q.commentError} onSend={q.comment} hint="Sessions sehen Kommentare mit „harness board question show“." />
+          <QuestionCommentForm busy={q.busy} error={q.commentError} onSend={q.comment} hint="Sessions sehen Kommentare mit „nexus board question show“." />
         </div>
         <DbQuestionRelations
           pid={pid}

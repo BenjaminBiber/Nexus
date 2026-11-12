@@ -62,6 +62,12 @@ export interface DispatchForm {
   accountStrategy: 'most-free' | 'order';
   /** Ab dieser Auslastung (Prozent) gilt ein Account als voll */
   accountLimit: string;
+  /** Reserve (Prozentpunkte) eines Laufs im 5-Stunden-Fenster */
+  accountReserveFiveHour: string;
+  /** Reserve (Prozentpunkte) eines Laufs in der Woche */
+  accountReserveWeek: string;
+  /** Minuten bis zur Rücksetzung des 5-Stunden-Fensters, ab denen die Reserve entfällt */
+  accountResetGrace: string;
   command: string;
   permissionMode: string;
   gitBashPath: string;
@@ -85,6 +91,12 @@ export interface DispatchForm {
   planningAcceptance: boolean;
   /** Profil der Planung („Planen“ im Ticket); leer = Profil „planning“, falls vorhanden, sonst Standardprofil */
   planningProfile: string;
+  /** Autopilot eingeschaltet */
+  autopilot: boolean;
+  /** Tickets mit diesem Label laufen ohne Autopilot; leer = keine Ausnahme */
+  autopilotExceptLabel: string;
+  /** Merge-Sessions je Konflikt (1–5) */
+  autopilotMaxMergeSessions: string;
 }
 
 const text = (v: unknown): string => (v === undefined || v === null ? '' : String(v));
@@ -119,6 +131,9 @@ export function toForm(raw: RawDispatchConfigDto): DispatchForm {
     allowFable: raw.allowFable === true,
     accountStrategy: raw.accountStrategy === 'order' ? 'order' : 'most-free',
     accountLimit: text(raw.accountLimitPercent ?? 90),
+    accountReserveFiveHour: text(raw.accountReserveFiveHour ?? 10),
+    accountReserveWeek: text(raw.accountReserveWeek ?? 2),
+    accountResetGrace: text(raw.accountResetGraceMinutes ?? 30),
     command: raw.claude?.command ?? 'claude',
     permissionMode: text(raw.claude?.permissionMode),
     gitBashPath: text(raw.claude?.gitBashPath),
@@ -133,6 +148,10 @@ export function toForm(raw: RawDispatchConfigDto): DispatchForm {
     planningWip: text(raw.planning?.wip ?? 1),
     planningAcceptance: raw.planning?.acceptance !== false,
     planningProfile: text(raw.planning?.profile),
+    autopilot: raw.autopilot?.enabled === true,
+    // Vorgabe des Servers „interaktiv“; ein ausdrückliches null heißt „keine Ausnahme“
+    autopilotExceptLabel: raw.autopilot?.exceptLabel === undefined ? 'interaktiv' : text(raw.autopilot.exceptLabel),
+    autopilotMaxMergeSessions: text(raw.autopilot?.maxMergeSessions ?? 3),
   };
 }
 
@@ -151,9 +170,13 @@ export function checkForm(form: DispatchForm): string | null {
     numberError('Versuche', form.maxAttempts, 1),
     numberError('Pause nach Limit (min)', form.pause, 1),
     numberError('Account voll ab (%)', form.accountLimit, 50, 100),
+    numberError('Reserve 5 Stunden (%)', form.accountReserveFiveHour, 0, 50),
+    numberError('Reserve Woche (%)', form.accountReserveWeek, 0, 50),
+    numberError('Ohne Reserve, wenn 5 h zurücksetzt in (min)', form.accountResetGrace, 0, 300),
     numberError('Gleichzeitige Recherchen', form.researchWip, 1, 5),
     numberError('Automatische Recherchen je Tag', form.researchMaxPerDay, 1),
     numberError('Gleichzeitige Planungen', form.planningWip, 1, 5),
+    numberError('Merge-Sessions je Konflikt', form.autopilotMaxMergeSessions, 1, 5),
   ];
   const seen = new Set<string>();
   form.profiles.forEach((p, i) => {
@@ -223,6 +246,14 @@ function planning(form: DispatchForm, base: RawDispatchConfigDto): Pick<RawDispa
   return { planning: { ...rest, auto: form.planningAuto, wip: num(form.planningWip), ...acceptance, profile } };
 }
 
+// Abschnitt autopilot der Einstellung; fehlt er in `base` und weicht das Formular nicht von den Vorgaben ab, bleibt er weg.
+function autopilot(form: DispatchForm, base: RawDispatchConfigDto): Pick<RawDispatchConfigDto, 'autopilot'> {
+  const exceptLabel = form.autopilotExceptLabel.trim() || null;
+  const changed = form.autopilot || exceptLabel !== 'interaktiv' || form.autopilotMaxMergeSessions.trim() !== '3';
+  if (!base.autopilot && !changed) return {};
+  return { autopilot: { ...base.autopilot, enabled: form.autopilot, exceptLabel, maxMergeSessions: num(form.autopilotMaxMergeSessions) } };
+}
+
 // Abschnitt prompts der Einstellung; ohne eigene Vorlage und ohne Abschnitt in der Datei bleibt er weg.
 // Nur auf „leer“ geprüft: Einrückungen und Leerzeilen der Vorlage müssen zeichengleich erhalten bleiben.
 function prompts(form: DispatchForm, base: RawDispatchConfigDto): Pick<RawDispatchConfigDto, 'prompts'> {
@@ -284,10 +315,14 @@ export function toRaw(form: DispatchForm, base: RawDispatchConfigDto): RawDispat
     // Ohne Eintrag in der Datei und ohne Abweichung von den Vorgaben kommen keine Felder dazu
     ...(form.accountStrategy !== 'most-free' || base.accountStrategy !== undefined ? { accountStrategy: form.accountStrategy } : {}),
     ...(form.accountLimit.trim() !== '90' || base.accountLimitPercent !== undefined ? { accountLimitPercent: num(form.accountLimit) } : {}),
+    ...(form.accountReserveFiveHour.trim() !== '10' || base.accountReserveFiveHour !== undefined ? { accountReserveFiveHour: num(form.accountReserveFiveHour) } : {}),
+    ...(form.accountReserveWeek.trim() !== '2' || base.accountReserveWeek !== undefined ? { accountReserveWeek: num(form.accountReserveWeek) } : {}),
+    ...(form.accountResetGrace.trim() !== '30' || base.accountResetGraceMinutes !== undefined ? { accountResetGraceMinutes: num(form.accountResetGrace) } : {}),
     promptExtra: form.promptExtra,
     ...prompts(form, base),
     ...research(form, base),
     ...planning(form, base),
+    ...autopilot(form, base),
     claude: { ...base.claude, command: form.command.trim() || 'claude', permissionMode: form.permissionMode.trim() || null, allowedTools: list(form.allowedTools, /\n/),
       ...(form.gitBashPath.trim() ? { gitBashPath: form.gitBashPath.trim() } : 'gitBashPath' in (base.claude ?? {}) ? { gitBashPath: null } : {}),
     },

@@ -56,6 +56,8 @@
       "json": {
         "claudeUsage": false,
         "compactCards": false,
+        "doneArchiveDays": 0,
+        "doneGrouping": "time",
         "heroImages": false,
         "hideInPlanning": false,
         "hideNotNeeded": false,
@@ -103,7 +105,7 @@
             "content-type": "application/json"
           },
           "json": {
-            "message": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung des Harness",
+            "message": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung von Nexus",
             "priority": 4,
             "tags": [
               "raising_hand"
@@ -144,6 +146,8 @@
       "json": {
         "claudeUsage": false,
         "compactCards": false,
+        "doneArchiveDays": 0,
+        "doneGrouping": "time",
         "heroImages": false,
         "hideInPlanning": false,
         "hideNotNeeded": false,
@@ -191,7 +195,7 @@
             "content-type": "application/json"
           },
           "json": {
-            "message": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung des Harness",
+            "message": "Beispielprojekt · ARC-0042 Favoriten\nTestmeldung von Nexus",
             "priority": 4,
             "tags": [
               "raising_hand"
@@ -219,6 +223,8 @@
       "json": {
         "claudeUsage": false,
         "compactCards": false,
+        "doneArchiveDays": 0,
+        "doneGrouping": "time",
         "heroImages": false,
         "hideInPlanning": false,
         "hideNotNeeded": false,
@@ -266,6 +272,8 @@
       "json": {
         "claudeUsage": false,
         "compactCards": false,
+        "doneArchiveDays": 0,
+        "doneGrouping": "time",
         "heroImages": false,
         "hideInPlanning": false,
         "hideNotNeeded": false,

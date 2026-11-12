@@ -4,10 +4,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach } from 'vitest';
 
-// Eigene Harness-Umgebung für jeden Testlauf: Kein Test (und kein Kindprozess, der die Umgebung erbt) darf den echten
+// Eigene Nexus-Umgebung für jeden Testlauf: Kein Test (und kein Kindprozess, der die Umgebung erbt) darf den echten
 // `~/.harness` oder einen laufenden Server auf dem Standardport erreichen. Tests, die eigene Werte brauchen, setzen sie
 // danach selbst (diese Datei läuft vor jeder Testdatei).
-// Dazu eine eigene, leere Konfiguration von Claude Code (CLAUDE_CONFIG_DIR), damit `harness init` und der Start eines
+// Dazu eine eigene, leere Konfiguration von Claude Code (CLAUDE_CONFIG_DIR), damit `nexus init` und der Start eines
 // Worktrees in Tests nie die echte ~/.claude.json des Rechners ändern. Gestartete CLI-Prozesse erben die Variablen.
 
 const DEFAULT_PORT = 4710; // DEFAULT_SERVER_PORT; bewusst nicht importiert, damit die Einrichtung nichts vom Quellcode lädt
@@ -53,5 +53,5 @@ globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: RequestIni
 afterEach(() => {
   if (!blocked.length) return;
   const urls = blocked.splice(0);
-  throw new Error(`Test hat den echten Harness-Server auf Port ${DEFAULT_PORT} angesprochen: ${urls.join(', ')}`);
+  throw new Error(`Test hat den echten Nexus-Server auf Port ${DEFAULT_PORT} angesprochen: ${urls.join(', ')}`);
 });

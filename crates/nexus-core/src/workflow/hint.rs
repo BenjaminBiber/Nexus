@@ -72,7 +72,7 @@ impl WorkflowHint {
             })
             .collect();
         format!(
-            "Ablauf im Harness: {}. Aus einem Superpowers-Plan legst du auf Wunsch je Task ein Ticket an und schreibst Plan, Handbuch und Diagramm mit {} (setzt Geplant; Skill board, „Tickets aus einem Superpowers-Plan“). Tickets mit Planungsbedarf (etwa aus der Ticket-Auswahl der Docs-Seite) werden vor dem Umsetzen geplant: {} holt das nächste, {} schreibt Plan, Handbuch und Diagramm. Abgeschlossen wird mit `nexus board done`, gemergt wird von Hand.",
+            "Ablauf in Nexus: {}. Aus einem Superpowers-Plan legst du auf Wunsch je Task ein Ticket an und schreibst Plan, Handbuch und Diagramm mit {} (setzt Geplant; Skill board, „Tickets aus einem Superpowers-Plan“). Tickets mit Planungsbedarf (etwa aus der Ticket-Auswahl der Docs-Seite) werden vor dem Umsetzen geplant: {} holt das nächste, {} schreibt Plan, Handbuch und Diagramm. Abgeschlossen wird mit `nexus board done`, gemergt wird von Hand.",
             parts.join("; "),
             plan_json("<ID>"),
             NEXT_PLANNING,
@@ -203,7 +203,7 @@ mod tests {
     #[test]
     fn nennt_alle_phasen_mit_ihren_befehlen() {
         let hint = WorkflowHint::default().build(&[]);
-        assert!(hint.starts_with("Ablauf im Harness: Neue Funktion planen: /superpowers:brainstorming → /superpowers:writing-plans; Ticket umsetzen: /nexus:harness-implement."));
+        assert!(hint.starts_with("Ablauf in Nexus: Neue Funktion planen: /superpowers:brainstorming → /superpowers:writing-plans; Ticket umsetzen: /nexus:harness-implement."));
         assert!(hint.contains("Stand: keinem Ticket zugeordnet. Vorschlag: eine neue Funktion mit /superpowers:brainstorming planen oder mit `nexus board list --status geplant --md` das nächste bereite Ticket suchen."));
         assert!(hint.contains("Schnelle Aufgaben und Nebenaufgaben"));
     }

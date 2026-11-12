@@ -37,6 +37,6 @@ describe('CustomizationsPanel', () => {
   });
   it('weist auf setup hin, wenn die Übersicht fehlt', async () => {
     open({ state: 'unknown' });
-    expect(await screen.findByText('Noch keine Übersicht. Führe im Harness-Ordner einmal npm run build:plugin und nexus install aus.')).toBeTruthy();
+    expect(await screen.findByText('Noch keine Übersicht. Führe im Nexus-Ordner einmal npm run build:plugin und nexus install aus.')).toBeTruthy();
   });
 });

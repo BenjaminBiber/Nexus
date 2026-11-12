@@ -46,7 +46,7 @@ export interface DbTicketDto {
   blockedReason: string | null; plannedAt: string | null; plannedBy: string | null;
   planningClaimBy: string | null; planningClaimAt: string | null;
   createdAt: string; createdById: string; createdByName: string; updatedAt: string; rev: number;
-  /** Herkunft aus der Spec, Branch und Worktree (harness board start), Bereiche und Schnittstellen */
+  /** Herkunft aus der Spec, Branch und Worktree (nexus board start), Bereiche und Schnittstellen */
   spec: string | null; specTask: string | null; branch: string | null; worktree: string | null;
   /** Zielbranch, in den das Ticket gemergt wird (leer: der im Hauptordner ausgecheckte Branch); nach dem Start nicht mehr änderbar */
   targetBranch: string | null;
@@ -65,6 +65,8 @@ export interface DbTicketDto {
 export interface DbCardDto extends Omit<DbTicketDto, 'description' | 'acceptance' | 'plan' | 'handbook' | 'diagram'> {
   commentCount: number;
   hasDescription: boolean; hasAcceptance: boolean; hasPlan: boolean; hasHandbook: boolean; hasDiagram: boolean;
+  /** Wann das Ticket zuletzt auf Erledigt ging; nur bei erledigten Karten gesetzt */
+  doneAt?: string | null;
 }
 
 export interface DbColumnDto { id: DbColumnId; title: string; tickets: DbCardDto[] }
@@ -87,6 +89,8 @@ export interface DbGraphNodeDto {
   id: string; title: string; status: DbStatus; column: DbColumnId; boardId: number; boardName: string; spec: string | null;
   /** Direkter Nachbar außerhalb des Umfangs (andere Spec oder anderes Board) */
   external: boolean;
+  /** Erledigte und alle Schritte (0/0 ohne Schritte) */
+  stepsDone: number; stepsTotal: number;
 }
 
 /** Kante „to setzt from voraus“ */

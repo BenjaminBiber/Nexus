@@ -53,9 +53,9 @@ describe('SettingsPage', () => {
     for (const name of ['Arbeitsverzeichnisse', 'Zugriff', 'Darstellung', 'Benachrichtigungen', 'Anpassungen', 'Board-Datenbank', 'Dispatcher']) {
       expect(within(nav).getByRole('link', { name: new RegExp(name) }), name).toBeTruthy();
     }
-    expect(screen.queryByRole('region', { name: 'Darstellung' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Themes' })).toBeNull();
     await userEvent.click(within(nav).getByRole('link', { name: /Darstellung/ }));
-    expect(screen.getByRole('region', { name: 'Darstellung' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Themes' })).toBeTruthy();
     expect(screen.queryByRole('region', { name: 'Arbeitsverzeichnisse' })).toBeNull();
   });
 
@@ -132,7 +132,7 @@ describe('GuidePage', () => {
     await userEvent.click(within(list).getByRole('button', { name: 'Ganzer Plan' }));
     expect(within(list).getByRole('button', { name: 'Befehl kopieren: /superpowers:subagent-driven-development' })).toBeTruthy();
     expect(within(list).getByText(/Abschnitt „Dispatcher“ der Anleitung/)).toBeTruthy();
-    expect(within(list).getByText(/mit harness board done auf Erledigt/)).toBeTruthy();
+    expect(within(list).getByText(/mit nexus board done auf Erledigt/)).toBeTruthy();
   });
 
   it('erklärt im Abschnitt Dispatcher Bereitschaft, Ausgänge, Einrichten und Befehle', () => {
@@ -141,9 +141,9 @@ describe('GuidePage', () => {
     expect(within(section).getByRole('heading', { name: 'Bereit ist ein Ticket, wenn' })).toBeTruthy();
     expect(within(section).getByText(/Plan, Handbuch und Abnahme sind ausgefüllt/)).toBeTruthy();
     for (const outcome of ['Erledigt', 'Frage', 'Abbruch', 'Merge blockiert', 'Nutzungslimit']) expect(within(section).getByText(outcome), outcome).toBeTruthy();
-    expect(within(section).getByText(/~\/\.harness\/dispatch\.yaml/)).toBeTruthy();
-    const commands = ['harness board boards repo 7 C:\\Projekte\\Demo', 'harness board dispatch status', 'harness board dispatch run', 'harness board dispatch pause --minutes 30',
-      'harness board dispatch resume', 'harness board dispatch enable', 'harness board merge ARC-0042'];
+    expect(within(section).getByText(/~\/\.nexus\/dispatch\.yaml/)).toBeTruthy();
+    const commands = ['nexus board boards repo 7 C:\\Projekte\\Demo', 'nexus board dispatch status', 'nexus board dispatch run', 'nexus board dispatch pause --minutes 30',
+      'nexus board dispatch resume', 'nexus board dispatch enable', 'nexus board merge ARC-0042'];
     for (const command of commands) expect(within(section).getByRole('button', { name: `Befehl kopieren: ${command}` }), command).toBeTruthy();
     // Kein doppelter Schritt in „Nebenbei“
     expect(within(screen.getByRole('list', { name: 'Nebenbei' })).queryByText('Automatisch umsetzen lassen')).toBeNull();
@@ -165,23 +165,23 @@ describe('GuidePage', () => {
     open();
     await screen.findByRole('list', { name: 'Ticket umsetzen' });
     const list = screen.getByRole('list', { name: 'Terminal' });
-    for (const command of ['harness board', 'harness board list', 'harness spec comments spec-docs-rework']) {
+    for (const command of ['nexus board', 'nexus board list', 'nexus spec comments spec-docs-rework']) {
       expect(within(list).getByText(command), command).toBeTruthy();
     }
     expect(within(list).queryByText(/harness (ticket|export|spec (new|import))/)).toBeNull();
     expect(within(screen.getByRole('list', { name: 'Ticket umsetzen' })).queryByText(/^harness /)).toBeNull();
   });
 
-  it('beschreibt Board-Einrichtung, Update mit harness init und neue Terminal-Befehle', () => {
+  it('beschreibt Board-Einrichtung, Update mit nexus init und neue Terminal-Befehle', () => {
     open();
     const setup = screen.getByRole('heading', { name: 'Einrichten' }).closest('section')!;
     expect(within(setup).getByText(/Doku- und Board-Regel/)).toBeTruthy();
-    expect(within(setup).getByRole('button', { name: /Befehl kopieren: harness board boards create ARC/ })).toBeTruthy();
+    expect(within(setup).getByRole('button', { name: /Befehl kopieren: nexus board boards create ARC/ })).toBeTruthy();
     const update = screen.getByRole('heading', { name: 'Aktualisieren' }).closest('section')!;
     expect(within(update).queryByText(/nichts zu tun/)).toBeNull();
-    expect(within(update).getByRole('button', { name: 'Befehl kopieren: harness init' })).toBeTruthy();
+    expect(within(update).getByRole('button', { name: 'Befehl kopieren: nexus init' })).toBeTruthy();
     const list = screen.getByRole('list', { name: 'Terminal' });
-    for (const command of ['harness init', 'harness board merge ARC-0042', 'harness board step add ARC-0042 "Text"', 'harness board question research-start ARC-F0007']) {
+    for (const command of ['nexus init', 'nexus board merge ARC-0042', 'nexus board step add ARC-0042 "Text"', 'nexus board question research-start ARC-F0007']) {
       expect(within(list).getByText(command), command).toBeTruthy();
     }
   });
@@ -216,7 +216,7 @@ describe('SessionsPage', () => {
     expect(await screen.findByText('Keine Sessions')).toBeTruthy();
     expect(screen.getByText('Starte ein Ticket, dann erscheint die Session hier.')).toBeTruthy();
     expect(screen.getByText('Noch keine Hook-Meldungen empfangen')).toBeTruthy();
-    expect(screen.getByText('harness init')).toBeTruthy();
+    expect(screen.getByText('nexus init')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: /^Favoriten/ }));
     expect(screen.getByText('Noch keine Favoriten')).toBeTruthy();
     expect(screen.queryByText(/Etappe 5/)).toBeNull();

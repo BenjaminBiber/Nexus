@@ -31,9 +31,9 @@ const OTHER_USER_ID: &str = "22222222-2222-2222-2222-222222222222";
 /// Knappe eigene work-Vorlage, die alle Pflichtteile erfüllt
 const WORK: &str = concat!(
     "{{agent}} setzt {{ticketId}} („{{title}}“) um.\n",
-    "Fertig: harness board done {{ticketId}} --by {{agent}}\n",
-    "Blockiert: harness board set {{ticketId}} --status blocked\n",
-    "Frage: harness board question add \"…\" --ticket {{ticketId}}",
+    "Fertig: nexus board done {{ticketId}} --by {{agent}}\n",
+    "Blockiert: nexus board set {{ticketId}} --status blocked\n",
+    "Frage: nexus board question add \"…\" --ticket {{ticketId}}",
 );
 
 /// Testserver mit Board im Speicher, auf dem Rust dispatcht
@@ -1263,7 +1263,7 @@ async fn rendert_die_vorschau_mit_den_echten_werten() {
 #[tokio::test]
 async fn rendert_die_eigene_vorlage_prueft_sie_und_speichert_nichts() {
     let (server, _backend) = server().await;
-    let own = "Plane {{ticketId}} („{{title}}“) als {{agent}}: harness board plan-json {{ticketId}} --file plan.json";
+    let own = "Plane {{ticketId}} („{{title}}“) als {{agent}}: nexus board plan-json {{ticketId}} --file plan.json";
     let good = server
         .post(
             "/api/dispatch/prompts/preview",

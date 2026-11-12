@@ -70,17 +70,24 @@ struct Rule {
     test: Regex,
 }
 
+/// Programmname der Board-Befehle: `nexus`, in älteren eigenen Vorlagen noch der Alias `harness`
+const CLI: &str = "(?:nexus|harness)";
+
 /// Platzhalter in der Vorlage, nicht das fertige Ergebnis
 fn ph(name: &str) -> String {
     format!(r"\{{\{{{name}\}}\}}")
 }
 
 /// Toleriert mehr Leerraum und zusätzliche Flags zwischen den Wörtern eines Befehls
-/// Programmname im Pflichtteil: `nexus` oder der alte Name `harness` (ältere eigene Vorlagen)
-const CLI: &str = "(?:nexus|harness)";
-
 fn cmd(words: &[&str]) -> Regex {
     Regex::new(&words.join(r"\s+(?:--?\S+\s+)*")).unwrap()
+}
+
+/// Wie [`cmd`], erkennt aber auch den Platzhalter `{{outcomes}}`: der setzt die Ausgänge des
+/// Laufs mit allen Board-Befehlen ein
+fn cmd_or_outcomes(words: &[&str]) -> Regex {
+    let command = words.join(r"\s+(?:--?\S+\s+)*");
+    Regex::new(&format!("(?:{command})|{}", ph("outcomes"))).unwrap()
 }
 
 /// Ein Pflichtteil, der nur auf einen Platzhalter prüft
@@ -99,24 +106,17 @@ static RULES_WORK: LazyLock<Vec<Rule>> = LazyLock::new(|| {
         Rule {
             id: "done",
             label: "Ausgang erledigt: nexus board done {{ticketId}}",
-            test: cmd(&[CLI, "board", "done", &ph("ticketId")]),
+            test: cmd_or_outcomes(&[CLI, "board", "done", &ph("ticketId")]),
         },
         Rule {
             id: "blocked",
             label: "Ausgang blockiert: nexus board set {{ticketId}} --status blocked",
-            test: cmd(&[
-                CLI,
-                "board",
-                "set",
-                &ph("ticketId"),
-                "--status",
-                "blocked",
-            ]),
+            test: cmd_or_outcomes(&[CLI, "board", "set", &ph("ticketId"), "--status", "blocked"]),
         },
         Rule {
             id: "question",
             label: "Ausgang Frage: nexus board question add … --ticket {{ticketId}}",
-            test: cmd(&[
+            test: cmd_or_outcomes(&[
                 CLI,
                 "board",
                 "question",
@@ -128,7 +128,7 @@ static RULES_WORK: LazyLock<Vec<Rule>> = LazyLock::new(|| {
         Rule {
             id: "by-agent",
             label: "Kennzeichnung --by {{agent}}",
-            test: cmd(&["--by", &ph("agent")]),
+            test: cmd_or_outcomes(&["--by", &ph("agent")]),
         },
     ]
 });
@@ -157,13 +157,7 @@ static RULES_RESEARCH: LazyLock<Vec<Rule>> = LazyLock::new(|| {
         Rule {
             id: "question-research",
             label: "Speichern: nexus board question research {{questionId}}",
-            test: cmd(&[
-                CLI,
-                "board",
-                "question",
-                "research",
-                &ph("questionId"),
-            ]),
+            test: cmd(&[CLI, "board", "question", "research", &ph("questionId")]),
         },
         Rule {
             id: "research-file",
@@ -353,11 +347,34 @@ mod tests {
     }
 
     #[test]
-    fn akzeptiert_zusatzlichen_leerraum_und_weitere_flags() {
+    fn die_standardvorlagen_bestehen_die_prufung() {
+        let check = PromptTemplateCheck::new();
+        for kind in PromptTemplateCheck::KINDS {
+            let template = crate::dispatch::prompt_defaults::default_template(kind);
+            assert_eq!(check.missing(kind, template), vec![], "{kind}");
+        }
+    }
+
+    #[test]
+    fn der_platzhalter_ausgange_erfullt_die_ausgang_pflichtteile() {
+        let check = PromptTemplateCheck::new();
+        let template = "Du bist {{agent}}, Ticket {{ticketId}}.\n{{outcomes}}";
+        assert_eq!(check.missing(PromptKind::Work, template), vec![]);
+        // Ohne Platzhalter und ohne Befehle fehlen sie weiterhin
+        let missing: Vec<String> = check
+            .missing(PromptKind::Work, "Du bist {{agent}}, Ticket {{ticketId}}.")
+            .into_iter()
+            .map(|part| part.id)
+            .collect();
+        assert_eq!(missing, ["done", "blocked", "question", "by-agent"]);
+    }
+
+    #[test]
+    fn akzeptiert_zusatzlichen_leerraum_weitere_flags_und_den_alias_harness() {
         let check = PromptTemplateCheck::new();
         let tolerant = sample(PromptKind::Work).replace(
             "nexus board done {{ticketId}}",
-            "nexus   board\tdone   {{ticketId}}",
+            "harness   board\tdone   {{ticketId}}",
         );
         assert_eq!(check.missing(PromptKind::Work, &tolerant), vec![]);
         let flags = sample(PromptKind::Plan)

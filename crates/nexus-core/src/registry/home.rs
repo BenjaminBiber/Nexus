@@ -162,6 +162,11 @@ impl NexusHome {
         self.dir.join("accounts")
     }
 
+    /// Installierte Theme-Pakete (`<id>/`)
+    pub fn themes_dir(&self) -> PathBuf {
+        self.dir.join("themes")
+    }
+
     /// Sicherungen
     pub fn backups_dir(&self) -> PathBuf {
         self.dir.join("backups")
@@ -182,6 +187,26 @@ impl NexusHome {
         self.dir.join("dispatch.yaml")
     }
 
+    /// Einstellung des Telegram-Bots (mit Geheimnissen, deshalb nur für den Benutzer)
+    pub fn telegram_config_file(&self) -> PathBuf {
+        self.dir.join("telegram.yaml")
+    }
+
+    /// Ordner des Telegram-Bots
+    pub fn telegram_dir(&self) -> PathBuf {
+        self.dir.join("telegram")
+    }
+
+    /// Laufzeit-Zustand des Telegram-Bots (abgeholte Updates); keine Geheimnisse
+    pub fn telegram_state_file(&self) -> PathBuf {
+        self.telegram_dir().join("state.json")
+    }
+
+    /// Offene Ideen-Entwürfe des Telegram-Bots je Chat; keine Geheimnisse
+    pub fn telegram_drafts_file(&self) -> PathBuf {
+        self.telegram_dir().join("drafts.json")
+    }
+
     /// Ausblendungen und letzte Claude-Analyse der Optimierungs-Vorschläge
     pub fn dispatch_suggestions_file(&self) -> PathBuf {
         self.dir.join("dispatch-suggestions.json")
@@ -195,6 +220,21 @@ impl NexusHome {
     /// Eigene Reihenfolge von „Meine Aufgaben“ (je Benutzer lokal)
     pub fn inbox_order_file(&self) -> PathBuf {
         self.dir.join("inbox-order.json")
+    }
+
+    /// CSS-Schnipsel des Nutzers (`<id>.css` und `snippets.json`)
+    pub fn snippets_dir(&self) -> PathBuf {
+        self.dir.join("snippets")
+    }
+
+    /// Einstellungen der Themes je Theme-ID (`theme-settings.json`)
+    pub fn theme_settings_file(&self) -> PathBuf {
+        self.dir.join("theme-settings.json")
+    }
+
+    /// Theme-Store des Nutzers (`repos.json`)
+    pub fn store_dir(&self) -> PathBuf {
+        self.dir.join("store")
     }
 
     /// Ordner des Dispatchers
@@ -299,6 +339,12 @@ mod tests {
     }
 
     #[test]
+    fn themes_dir_liegt_unter_nexus_home() {
+        let home = NexusHome::new(&env(&[("NEXUS_HOME", "/x/n")]));
+        assert_eq!(home.themes_dir(), Path::new("/x/n").join("themes"));
+    }
+
+    #[test]
     fn ohne_nexus_home_gilt_harness_home_als_veralteter_rueckfall() {
         let home = NexusHome::new(&env(&[("HARNESS_HOME", "/x/h")]));
         assert_eq!(home.dir(), Path::new("/x/h"));
@@ -399,6 +445,10 @@ mod tests {
         assert_eq!(home.sessions_file(), Path::new("h").join("sessions.json"));
         assert_eq!(home.favorites_file(), Path::new("h").join("favorites.json"));
         assert_eq!(home.settings_file(), Path::new("h").join("settings.json"));
+        assert_eq!(
+            home.theme_settings_file(),
+            Path::new("h").join("theme-settings.json")
+        );
         assert_eq!(home.accounts_file(), Path::new("h").join("accounts.json"));
         assert_eq!(home.accounts_dir(), Path::new("h").join("accounts"));
         assert_eq!(home.backups_dir(), Path::new("h").join("backups"));
@@ -406,6 +456,15 @@ mod tests {
         assert_eq!(
             home.dispatch_config_file(),
             Path::new("h").join("dispatch.yaml")
+        );
+        assert_eq!(
+            home.telegram_config_file(),
+            Path::new("h").join("telegram.yaml")
+        );
+        assert_eq!(home.telegram_dir(), Path::new("h").join("telegram"));
+        assert_eq!(
+            home.telegram_state_file(),
+            Path::new("h").join("telegram").join("state.json")
         );
         assert_eq!(
             home.dispatch_suggestions_file(),

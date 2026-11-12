@@ -10,6 +10,7 @@ use crate::board::basics::TicketStatus;
 use crate::board::ticket_service::{NewTicketInput, TicketPatch};
 use crate::dispatch::git::{BranchMerger, MergeOutcome};
 use crate::dispatch::merge_strategy::MergeStrategy;
+use crate::test_support::link_dir;
 use crate::worktrees::manager::{ResumeResult, StartOptions, StartResult};
 
 /// Beitritt nur innerhalb derselben Spec (Dispatcher)
@@ -19,14 +20,6 @@ fn dispatch_join() -> StartOptions {
         join_only_same_spec: true,
         ..StartOptions::default()
     }
-}
-
-/// Legt einen Link auf einen Ordner an (unter Windows als Junction wie der Agent selbst)
-fn link_dir(target: &Path, link: &Path) {
-    #[cfg(windows)]
-    std::os::windows::fs::symlink_dir(target, link).unwrap();
-    #[cfg(not(windows))]
-    std::os::unix::fs::symlink(target, link).unwrap();
 }
 
 #[tokio::test]

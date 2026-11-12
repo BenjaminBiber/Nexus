@@ -245,7 +245,7 @@
 .db-rel-add input { flex: 1; min-width: 0; }
 .badge.question { background: var(--waiting-bg); color: var(--waiting-fg); }
 .badge.session { background: var(--running-bg); color: var(--running-fg); }
-.db-ticket-questions { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.db-ticket-questions { display: flex; flex-direction: column; gap: 6px; }
 .db-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 /* Umsetzung und Schritte im Ticket-Panel */
 .db-work-list { display: grid; gap: 4px 12px; margin: 0; }
@@ -502,6 +502,12 @@
 .dep-graph-node:hover .dep-graph-box, .dep-graph-node:focus-visible .dep-graph-box { stroke: var(--accent); stroke-width: 2.5; }
 .dep-graph-id { fill: var(--muted); font-family: var(--font-mono); font-size: 11.5px; }
 .dep-graph-title { fill: var(--text); font-size: 14px; font-weight: 600; }
+/* Schritte wie auf der Karte (.card-steps): Zahl in der ID-Zeile, Balken am unteren Rand */
+.dep-graph-steps-text { fill: var(--muted); font-family: var(--font-mono); font-size: 11.5px; font-weight: 500; }
+.dep-graph-steps-track { fill: var(--line-soft); }
+.dep-graph-steps-fill { fill: var(--primary); }
+.dep-graph-steps.is-complete .dep-graph-steps-fill { fill: var(--ok); }
+.dep-graph-steps.is-complete .dep-graph-steps-text { fill: var(--ok); }
 .dep-graph-open { margin-top: 6px; }
 .spec-progress { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .spec-progress-bar { display: flex; width: 200px; height: 8px; border-radius: 4px; background: var(--line-soft); overflow: hidden; flex: none; }
@@ -612,3 +618,31 @@
 .branch-combo.with-action > input { padding-right: 32px; }
 .branch-combo-action { position: absolute; top: 50%; right: 4px; transform: translateY(-50%); display: inline-flex; align-items: center; justify-content: center; }
 .branch-combo-action .material-icons { font-size: 18px; }
+
+/* Spalte „Erledigt“: Abschnitte mit einklappbarem Kopf, je Ticket eine kompakte Zeile (oben ID und Datum, darunter der Titel) */
+.db-done-section { display: flex; flex-direction: column; gap: 4px; }
+.db-done-section-head { display: flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 4px; border: 0; background: transparent; color: var(--text-soft); font: inherit; font-size: 12px; font-weight: 600; text-align: left; cursor: pointer; }
+.db-done-section-head:hover { color: var(--text); }
+.db-done-section-head .material-icons { font-size: 18px; transition: transform 0.12s; }
+.db-done-section-head[aria-expanded='false'] .material-icons { transform: rotate(-90deg); }
+.db-done-section-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.db-done-section-count { margin-left: auto; font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--muted); }
+.db-card.db-done-row { padding: 7px 10px; gap: 0; }
+.db-card-open.db-done-open { gap: 2px; }
+.db-done-meta { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.db-done-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
+.db-done-date { flex: none; margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.db-done-archived { margin: 4px 0 0; padding: 0 4px; font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .db-done-section-head .material-icons { transition: none; } }
+
+/* Dreipunkt-Menü am Kopf der Spalte „Erledigt“; die Liste hängt am Spaltenkopf (sticky) und nimmt dessen Breite */
+.db-column-menu { flex: none; display: flex; margin: -3px -6px -3px 0; }
+.db-column-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; color: var(--muted); cursor: pointer; }
+.db-column-menu-btn:hover, .db-column-menu-btn[aria-expanded='true'] { border-color: var(--line); background: var(--surface-alt); color: var(--text); }
+.db-column-menu-btn .material-icons { font-size: 18px; }
+.db-column-menu-list { position: absolute; top: 100%; left: 8px; right: 8px; z-index: 30; display: flex; flex-direction: column; padding: 4px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); box-shadow: 0 12px 32px var(--shadow-strong); }
+.db-column-menu-heading { padding: 6px 10px 2px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.db-column-menu-sep { height: 1px; margin: 4px 6px; background: var(--line); }
+.db-column-menu-list button { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.db-column-menu-list button:hover, .db-column-menu-list button:focus-visible { background: var(--surface-alt); }
+.db-column-menu-list .material-icons { flex: none; width: 18px; font-size: 18px; color: var(--text-soft); }

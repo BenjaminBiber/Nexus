@@ -6,7 +6,9 @@
 
 use crate::dispatch::config::DispatchConfig;
 use crate::dispatch::prompt_check::PromptKind;
-use crate::dispatch::prompt_defaults::{default_template, ACCEPTANCE_RULE, LINK_RULE, TOOL_RULE};
+use crate::dispatch::prompt_defaults::{
+    default_template, ACCEPTANCE_RULE, LINK_RULE, OUTCOMES, OUTCOMES_AUTOPILOT, TOOL_RULE,
+};
 use crate::dispatch::prompt_template::{PromptTemplate, PromptValue, PromptValues};
 
 /// Entschiedene Frage zum Ticket, die der nächste Lauf kennen muss
@@ -28,6 +30,9 @@ pub struct WorkPromptInput<'a> {
     pub answers: &'a [AnsweredQuestion],
     /// Rückmeldungen aus dem Review („Zurück an den Agenten“) seit dem letzten Start
     pub feedback: &'a [String],
+    /// Gilt der Autopilot für das Ticket? Dann bietet die Anweisung keinen Ausgang
+    /// „Human Interaction“ an (Entscheidung nur über `autopilot_for`).
+    pub autopilot: bool,
     pub cfg: &'a DispatchConfig,
 }
 
@@ -39,6 +44,9 @@ pub struct MergePromptInput<'a> {
     pub agent: &'a str,
     pub branch: &'a str,
     pub target: &'a str,
+    /// Bericht der gescheiterten früheren Merge-Session(s) (ab der zweiten); `None` lässt den
+    /// Platzhalter leer
+    pub previous_attempts: Option<&'a str>,
     pub cfg: &'a DispatchConfig,
 }
 
@@ -86,22 +94,21 @@ impl DispatchPrompt {
                 steps.join("; ")
             )
         };
-        self.render(
-            PromptKind::Work,
-            cfg,
-            values(&[
-                ("ticketId", input.ticket_id.to_string()),
-                ("title", input.title.to_string()),
-                ("agent", input.agent.to_string()),
-                ("branch", input.branch.to_string()),
-                ("worktreeSetup", worktree_setup),
-                ("linkRule", LINK_RULE.to_string()),
-                ("toolRule", TOOL_RULE.to_string()),
-                ("answers", answers_block(input.answers)),
-                ("feedback", feedback_block(input.feedback)),
-                ("promptExtra", prompt_extra(cfg)),
-            ]),
-        )
+        let mut values = values(&[
+            ("ticketId", input.ticket_id.to_string()),
+            ("title", input.title.to_string()),
+            ("agent", input.agent.to_string()),
+            ("branch", input.branch.to_string()),
+            ("worktreeSetup", worktree_setup),
+            ("linkRule", LINK_RULE.to_string()),
+            ("toolRule", TOOL_RULE.to_string()),
+            ("answers", answers_block(input.answers)),
+            ("feedback", feedback_block(input.feedback)),
+            ("promptExtra", prompt_extra(cfg)),
+        ]);
+        let outcomes = outcomes_block(input.autopilot, &values);
+        values.insert("outcomes".to_string(), PromptValue::Text(outcomes));
+        self.render(PromptKind::Work, cfg, values)
     }
 
     /// Anweisung für einen Recherche-Lauf zu einer offenen Frage (losgelöster Worktree, nur lesend)
@@ -149,6 +156,10 @@ impl DispatchPrompt {
                 ("agent", input.agent.to_string()),
                 ("branch", input.branch.to_string()),
                 ("target", input.target.to_string()),
+                (
+                    "previousAttempts",
+                    previous_attempts_block(input.previous_attempts),
+                ),
                 ("linkRule", LINK_RULE.to_string()),
                 ("toolRule", TOOL_RULE.to_string()),
                 ("promptExtra", prompt_extra(input.cfg)),
@@ -178,6 +189,19 @@ fn values(pairs: &[(&str, String)]) -> PromptValues {
         .iter()
         .map(|(name, value)| ((*name).to_string(), PromptValue::Text(value.clone())))
         .collect()
+}
+
+/// Die Ausgänge eines Umsetzungslaufs mit eingesetzter Ticket-ID und eingesetztem Agent; im
+/// Autopilot ohne den Ausgang „Human Interaction“
+fn outcomes_block(autopilot: bool, values: &PromptValues) -> String {
+    let template = if autopilot {
+        OUTCOMES_AUTOPILOT
+    } else {
+        OUTCOMES
+    };
+    PromptTemplate::new()
+        .render(template, values)
+        .expect("die Ausgänge kennen nur bekannte Platzhalter")
 }
 
 /// Die entschiedenen Fragen als Block; die trennende Leerzeile gehört zum Wert, damit die
@@ -215,6 +239,14 @@ fn feedback_block(feedback: &[String]) -> String {
         "Ein Mensch hat deine Umsetzung angesehen und zurückgegeben. Setze die Rückmeldung im selben Branch um, dann wieder „erledigt“.".to_string(),
     );
     lines.join("\n")
+}
+
+/// Der Bericht früherer Merge-Sessions samt trennender Leerzeile; leer ohne frühere Session
+fn previous_attempts_block(previous: Option<&str>) -> String {
+    match previous.map(str::trim) {
+        Some(text) if !text.is_empty() => format!("\n{text}"),
+        _ => String::new(),
+    }
 }
 
 /// Die Zusatz-Anweisung aus der Einstellung samt trennender Leerzeile; leer, wenn keine
@@ -255,6 +287,16 @@ mod tests {
 
     /// Der Umsetzungs-Prompt des Beispiel-Tickets
     fn work(cfg: &DispatchConfig, answers: &[AnsweredQuestion], feedback: &[String]) -> String {
+        work_mit_autopilot(cfg, answers, feedback, false)
+    }
+
+    /// Der Umsetzungs-Prompt des Beispiel-Tickets, mit oder ohne Autopilot
+    fn work_mit_autopilot(
+        cfg: &DispatchConfig,
+        answers: &[AnsweredQuestion],
+        feedback: &[String],
+        autopilot: bool,
+    ) -> String {
         DispatchPrompt::new().work(&WorkPromptInput {
             ticket_id: "ARC-0009",
             title: "Rabatte",
@@ -262,6 +304,7 @@ mod tests {
             branch: "ticket/ARC-0009-rabatte",
             answers,
             feedback,
+            autopilot,
             cfg,
         })
     }
@@ -274,6 +317,7 @@ mod tests {
             agent: "junior-ARC-0009",
             branch: "ticket/ARC-0009-rabatte",
             target: "main",
+            previous_attempts: None,
             cfg,
         })
     }
@@ -442,6 +486,35 @@ mod tests {
     }
 
     #[test]
+    fn merge_session_nennt_den_bericht_der_vorigen_session() {
+        let cfg = cfg();
+        let ohne = merge(&cfg);
+        let mit = DispatchPrompt::new().merge(&MergePromptInput {
+            ticket_id: "ARC-0009",
+            title: "Rabatte",
+            agent: "junior-ARC-0009",
+            branch: "ticket/ARC-0009-rabatte",
+            target: "main",
+            previous_attempts: Some(
+                "Frühere Merge-Session(s) sind gescheitert. Letzter Bericht: zu groß",
+            ),
+            cfg: &cfg,
+        });
+        assert!(!ohne.contains("Frühere Merge-Session"));
+        // Nach dem Aufgaben-Block, durch eine Leerzeile getrennt
+        assert!(mit.contains(
+            "4. Alles committen (Merge-Commit).\n\nFrühere Merge-Session(s) sind gescheitert. Letzter Bericht: zu groß\n\nRegeln:"
+        ));
+        assert_eq!(
+            mit.replace(
+                "\nFrühere Merge-Session(s) sind gescheitert. Letzter Bericht: zu groß\n",
+                ""
+            ),
+            ohne
+        );
+    }
+
+    #[test]
     fn beschreibt_die_recherche_einer_frage() {
         let cfg = cfg();
         let text = research(&cfg);
@@ -505,9 +578,9 @@ mod tests {
     fn rendert_die_eigene_vorlage_des_arbeitslaufs() {
         let template = [
             "Kurzfassung für {{agent}} an {{ticketId}} („{{title}}“), Branch {{branch}}.",
-            "Fertig: harness board done {{ticketId}} --by {{agent}}",
-            "Blockiert: harness board set {{ticketId}} --status blocked",
-            "Frage: harness board question add \"…\" --ticket {{ticketId}}{{promptExtra}}",
+            "Fertig: nexus board done {{ticketId}} --by {{agent}}",
+            "Blockiert: nexus board set {{ticketId}} --status blocked",
+            "Frage: nexus board question add \"…\" --ticket {{ticketId}}{{promptExtra}}",
         ]
         .join("\n");
         let cfg = with_prompt("work", &template);
@@ -523,16 +596,16 @@ mod tests {
     fn rendert_eigene_vorlagen_fur_planung_recherche_und_merge() {
         let plan_cfg = with_prompt(
             "plan",
-            "Plane {{ticketId}} als {{agent}}: plan.json, harness board plan-json {{ticketId}}",
+            "Plane {{ticketId}} als {{agent}}: plan.json, nexus board plan-json {{ticketId}}",
         );
         assert_eq!(
             plan(&plan_cfg, "planner"),
-            "Plane ARC-0007 als planner: plan.json, harness board plan-json ARC-0007"
+            "Plane ARC-0007 als planner: plan.json, nexus board plan-json ARC-0007"
         );
 
         let research_cfg = with_prompt(
             "research",
-            "Recherche {{questionId}} von {{agent}}: research.json, harness board question research {{questionId}}",
+            "Recherche {{questionId}} von {{agent}}: research.json, nexus board question research {{questionId}}",
         );
         assert_eq!(
             DispatchPrompt::new().research(&ResearchPromptInput {
@@ -541,7 +614,7 @@ mod tests {
                 agent: "scout",
                 cfg: &research_cfg,
             }),
-            "Recherche ARC-F0001 von scout: research.json, harness board question research ARC-F0001"
+            "Recherche ARC-F0001 von scout: research.json, nexus board question research ARC-F0001"
         );
 
         let merge_cfg = with_prompt(
@@ -555,10 +628,82 @@ mod tests {
                 agent: "merger",
                 branch: "ticket/ARC-0009",
                 target: "main",
+                previous_attempts: None,
                 cfg: &merge_cfg,
             }),
             "Merge ticket/ARC-0009 nach main für ARC-0009 als merger; Rückzug mit git merge --abort"
         );
+    }
+
+    #[test]
+    fn autopilot_bietet_keinen_ausgang_human_interaction_an() {
+        let cfg = cfg();
+        let text = work_mit_autopilot(&cfg, &[], &[], true);
+        contains_all(
+            &text,
+            &[
+                "Es gibt keine Abnahme durch einen Menschen",
+                "Am Ende genau einer der drei Ausgänge, immer mit --by junior-ARC-0009:",
+                "nexus board done ARC-0009 --acceptance",
+                "nexus board question add",
+                "--ticket ARC-0009",
+                "blockiert mit Grund",
+                "nexus board set ARC-0009 --status blocked --blocked-reason \"<Grund>\"",
+            ],
+        );
+        assert!(!text.contains("--blocked-reason \"Human Interaction"));
+        assert!(!text.contains("vier Ausgänge"));
+        // „Human Interaction“ steht nur im Verbotssatz
+        assert_eq!(text.matches("Human Interaction").count(), 1);
+        assert!(text.contains("Human Interaction gibt es nicht."));
+        assert!(!text.contains("{{"));
+    }
+
+    #[test]
+    fn ohne_autopilot_bleibt_human_interaction_ein_ausgang() {
+        let cfg = cfg();
+        let text = work(&cfg, &[], &[]);
+        contains_all(
+            &text,
+            &[
+                "Am Ende genau einer der vier Ausgänge",
+                "--blocked-reason \"Human Interaction: <was>\"",
+            ],
+        );
+        assert!(!text.contains("Es gibt keine Abnahme durch einen Menschen"));
+    }
+
+    #[test]
+    fn eigene_vorlage_darf_die_ausgange_als_platzhalter_einsetzen() {
+        let vorlage = "Du bist {{agent}}, Ticket {{ticketId}}.\n{{outcomes}}";
+        let cfg = with_prompt("work", vorlage);
+        let normal = work(&cfg, &[], &[]);
+        let autopilot = work_mit_autopilot(&cfg, &[], &[], true);
+        assert!(normal.contains("--blocked-reason \"Human Interaction: <was>\""));
+        assert!(normal.contains("nexus board done ARC-0009"));
+        assert!(!autopilot.contains("--blocked-reason \"Human Interaction"));
+        assert!(autopilot.contains("nexus board done ARC-0009"));
+    }
+
+    #[test]
+    fn eigene_vorlage_ohne_ausgange_bleibt_unverandert() {
+        let vorlage = [
+            "Du bist {{agent}}, Ticket {{ticketId}}.",
+            "nexus board done {{ticketId}} --by {{agent}}",
+            "nexus board set {{ticketId}} --status blocked --by {{agent}}",
+            "nexus board question add \"F\" --ticket {{ticketId}} --by {{agent}}",
+        ]
+        .join("\n");
+        let cfg = with_prompt("work", &vorlage);
+        let erwartet = [
+            "Du bist junior-ARC-0009, Ticket ARC-0009.",
+            "nexus board done ARC-0009 --by junior-ARC-0009",
+            "nexus board set ARC-0009 --status blocked --by junior-ARC-0009",
+            "nexus board question add \"F\" --ticket ARC-0009 --by junior-ARC-0009",
+        ]
+        .join("\n");
+        assert_eq!(work(&cfg, &[], &[]), erwartet);
+        assert_eq!(work_mit_autopilot(&cfg, &[], &[], true), erwartet);
     }
 
     #[test]

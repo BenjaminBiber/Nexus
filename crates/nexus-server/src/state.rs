@@ -8,6 +8,8 @@ use std::sync::Arc;
 
 use nexus_core::docs::SuperpowersDocScanner;
 use nexus_core::settings::UserSettingsStore;
+use nexus_core::theme::{SnippetStore, StoreRepoStore};
+use nexus_core::themes::ThemeSettingsStore;
 use nexus_core::HarnessHome;
 use nexus_platform::Platform;
 use tokio_util::sync::CancellationToken;
@@ -37,8 +39,12 @@ use crate::notifications::{
     DbQuestionWatch, NotificationService, NotificationSetup, NtfySender, Query,
 };
 use crate::projects::ProjectService;
-use crate::sessions::{SessionService, TicketInfoLookup, TicketSummaries};
+use crate::sessions::{
+    SessionDetails, SessionService, TicketInfoLookup, TicketSummaries, TranscriptWatch,
+};
+use crate::telegram::TelegramBot;
 use nexus_core::accounts::{AccountPaths, AccountStore, AccountTokenStore};
+use nexus_core::dispatch::UsageHistory;
 
 /// Alles, was die Routen des Servers teilen
 pub struct AppState {
@@ -73,8 +79,24 @@ pub struct AppState {
     pub claude: ClaudeRunners,
     /// Die Sessions des Servers: Hook-Ereignisse, Liste und `sessions.json`
     pub sessions: SessionService,
+    /// Zwischenspeicher der Transcripts für die Detailansicht
+    pub session_details: Arc<SessionDetails>,
+    /// Beobachtet die Transcripts offener Detailansichten
+    pub transcript_watch: Arc<TranscriptWatch>,
     /// Die gemerkten Sessions des Servers (`favorites.json`)
     pub favorites: FavoriteService,
+    /// Die CSS-Schnipsel des Nutzers (`snippets/`)
+    pub snippets: SnippetStore,
+    /// Eigene Einstellungen der Themes (`theme-settings.json`)
+    pub theme_settings: ThemeSettingsStore,
+    /// Die Store-Repos des Nutzers (`store/repos.json`)
+    pub store_repos: StoreRepoStore,
+    /// Lädt die Index-Dateien der Store-Repos (`/api/themes/store/index`)
+    pub store_index: crate::store_index::StoreIndexLoader,
+    /// Lädt Theme-Pakete aus dem Store (`/api/themes/store/install`)
+    pub store_download: crate::store_install::StoreDownloader,
+    /// Asset-Proxy der Themes (`/api/themes/{id}/fetch`)
+    pub theme_proxy: crate::theme_proxy::ThemeProxy,
     /// Titel und Status von Tickets für Sessions, Favoriten und Meldungen (mit Zeitlimit)
     pub ticket_info: TicketInfoLookup,
     /// Die Claude-Accounts: Limits, Anmeldung, Plugin und die Wahl des Dispatchers
@@ -95,6 +117,16 @@ pub struct AppState {
     pub notifications: Arc<NotificationService>,
     /// Beobachtet die offenen eigenen Fragen der Board-Datenbank
     pub db_questions: Arc<DbQuestionWatch>,
+    /// Der Telegram-Bot: Poller, Kopplung und Stand. [`crate::serve`] startet ihn, das
+    /// Herunterfahren hält ihn an
+    pub telegram: Arc<TelegramBot>,
+    /// Versteht die Ideen aus dem Bot; der Dienst gehört in den Zustand, weil er je Chat nur
+    /// einen Lauf zulässt
+    pub idea: Arc<crate::telegram::IdeaInterpreter>,
+    /// Die offenen Ideen-Entwürfe je Chat (`<home>/telegram/drafts.json`)
+    pub idea_drafts: Arc<crate::telegram::IdeaDraftStore>,
+    /// Letzte erfolgreiche Erkennung und letzter Fehler der Spracherkennung (nur im Speicher)
+    pub speech_activity: Arc<crate::speech::SpeechActivity>,
     /// Wird beim Beenden ausgelöst; eigene und durchgeleitete Ereignisströme enden daran
     pub shutdown: CancellationToken,
     /// Prozessnummer, wie `GET /api/health` sie meldet
@@ -172,6 +204,13 @@ impl AppState {
             // Der Vertrag prüft ntfy gegen eine Attrappe im eigenen Netz; der Abruf bleibt
             // deshalb auch dort der echte
             ntfy: NtfySender::default(),
+            // Der dritte Weg: die gekoppelten Chats des Bots. Er liest `telegram.yaml` selbst,
+            // kommt also ohne den Bot aus (der entsteht erst mit dem Zustand)
+            telegram: Some(Arc::new(crate::telegram::TelegramNotifier::new(
+                config.home.clone(),
+                config.clock.clone(),
+                config.telegram_api.clone(),
+            ))),
         }));
         // Der Verteiler entsteht vor dem Zustand: die Sessions melden über ihn, und die
         // Ereignisströme nehmen denselben
@@ -227,7 +266,8 @@ impl AppState {
                         account_usage.clone(),
                         paths.clone(),
                     )
-                    .with_tokens(AccountTokenStore::new(config.home.clone())),
+                    .with_tokens(AccountTokenStore::new(config.home.clone()))
+                    .with_history(UsageHistory::new(config.home.clone())),
                 )),
             };
         // Die Watcher fragen über den Zustand ab, in dem sie selbst liegen; sie halten ihn
@@ -272,6 +312,11 @@ impl AppState {
             config.home.clone(),
             config.clock.clone(),
         ));
+        let store_index = crate::store_index::StoreIndexLoader::new(config.store_index_timeout);
+        let store_download = crate::store_install::StoreDownloader::new(
+            store_index.client().clone(),
+            config.store_download_timeout,
+        );
         Ok(Arc::new_cyclic(|weak: &std::sync::Weak<AppState>| Self {
             home: config.home.clone(),
             guard: RequestGuard::new(config.port),
@@ -289,7 +334,17 @@ impl AppState {
             doc_revisions: DocRevisionService::new(config.home.clone()),
             claude,
             sessions,
+            session_details: SessionDetails::new(),
+            transcript_watch: TranscriptWatch::new(events.clone()),
             favorites,
+            snippets: SnippetStore::with_clock(config.home.clone(), config.clock.clone()),
+            theme_settings: ThemeSettingsStore::new(config.home.clone()),
+            store_repos: StoreRepoStore::with_clock(config.home.clone(), config.clock.clone())
+                .with_defaults(&config.default_store_repos),
+            store_index,
+            store_download,
+            theme_proxy: crate::theme_proxy::ThemeProxy::new(config.theme_fetch_max_bytes)
+                .with_archive_limit(config.theme_fetch_max_archive_bytes),
             ticket_info: TicketInfoLookup::new(ticket_summaries(weak)),
             accounts: AccountServices {
                 usage: account_usage.clone(),
@@ -351,6 +406,22 @@ impl AppState {
                 notifications.clone(),
                 config.db_question_poll_ms,
             ),
+            // Der Bot pollt erst, wenn `telegram.yaml` ihn einschaltet und ein Token nennt;
+            // der Vertrag zeigt über `apiBase` auf seine eigene Attrappe
+            telegram: Arc::new(TelegramBot::with_optional_api(
+                config.home.clone(),
+                config.clock.clone(),
+                config.telegram_api.clone(),
+                bot_router(weak, config.clock.clone()),
+            )),
+            idea: config.idea_interpreter.clone().unwrap_or_else(|| {
+                Arc::new(crate::telegram::IdeaInterpreter::new(config.home.clone()))
+            }),
+            idea_drafts: Arc::new(crate::telegram::IdeaDraftStore::new(
+                config.home.clone(),
+                config.clock.clone(),
+            )),
+            speech_activity: Arc::new(crate::speech::SpeechActivity::new()),
             notifications,
             notice_tabs,
             shutdown: CancellationToken::new(),
@@ -369,7 +440,19 @@ impl AppState {
         self.question_changes.close();
         self.spec_docs.close();
         self.notice_tabs.close();
+        self.transcript_watch.close();
     }
+}
+
+/// Der Router des Bots mit den angemeldeten Befehlen; die Handler halten den Zustand nur
+/// schwach, weil der Router im Bot und der Bot im Zustand liegt
+fn bot_router(
+    weak: &std::sync::Weak<AppState>,
+    clock: nexus_core::clock::Clock,
+) -> crate::telegram::UpdateRouter {
+    let mut router = crate::telegram::UpdateRouter::with_clock(clock.clone());
+    crate::telegram::commands::register(&mut router, weak, clock);
+    router
 }
 
 /// Die Kurzangaben der Tickets aus der Board-Datenbank; hält den Zustand nur schwach

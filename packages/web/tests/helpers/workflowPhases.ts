@@ -39,7 +39,7 @@ export const TEST_WORKFLOW_PHASES: WorkflowPhase[] = [
         ],
       },
       { step: 'Automatisch umsetzen lassen', place: 'Einstellungen → Dispatcher', when: 'Was er prüft, steht im Abschnitt „Dispatcher“ der Anleitung.' },
-      { step: 'Abschließen', place: 'In der Session sagen: „Schließe ARC-0042 ab“', when: 'Claude setzt das Ticket mit harness board done auf Erledigt.' },
+      { step: 'Abschließen', place: 'In der Session sagen: „Schließe ARC-0042 ab“', when: 'Claude setzt das Ticket mit nexus board done auf Erledigt.' },
     ],
   },
 ];

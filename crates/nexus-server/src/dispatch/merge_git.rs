@@ -33,6 +33,9 @@ pub trait MergeGit: std::fmt::Debug + Send + Sync {
     /// Ist `ancestor` in `branch` enthalten?
     fn contains(&self, root: &Path, ancestor: &str, branch: &str) -> Result<bool>;
 
+    /// Commit-Kennung einer Referenz
+    fn head(&self, root: &Path, reference: &str) -> Result<String>;
+
     /// Den Branch gibt es nicht mehr, aber `target` enthält schon seinen Merge; liefert dessen
     /// Kurzkennung
     fn merged_earlier(&self, root: &Path, branch: &str, target: &str) -> Option<String>;
@@ -96,6 +99,10 @@ impl MergeGit for RealMergeGit {
 
     fn contains(&self, root: &Path, ancestor: &str, branch: &str) -> Result<bool> {
         Ok(self.merger.contains(root, ancestor, branch))
+    }
+
+    fn head(&self, root: &Path, reference: &str) -> Result<String> {
+        self.merger.head(root, reference)
     }
 
     fn merged_earlier(&self, root: &Path, branch: &str, target: &str) -> Option<String> {

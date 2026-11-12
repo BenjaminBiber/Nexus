@@ -62,7 +62,7 @@ async fn backlog_on(f: &DispatchFixture, board_id: i32, title: &str) -> String {
         .id
 }
 
-/// Speichert einen Plan, als hätte der Planungs-Agent `harness board plan-json` aufgerufen
+/// Speichert einen Plan, als hätte der Planungs-Agent `nexus board plan-json` aufgerufen
 async fn plan_as_agent(f: &DispatchFixture, id: &str) {
     f.backend
         .services
@@ -706,6 +706,64 @@ async fn fehler_des_tickets_merken_es_als_erledigt_die_ubrigen_werden_weiter_bed
         .expect("zweite Runde")
         .started
         .is_empty());
+}
+
+#[tokio::test]
+async fn board_mit_repo_pfad_ohne_git_halt_die_ubrigen_boards_nicht_auf() {
+    let f = DispatchFixture::create(json!({
+        "enabled": false,
+        "planning": { "wip": 5 },
+    }))
+    .await;
+    let empty = tempfile::Builder::new()
+        .prefix("nexus-ohne-git-")
+        .tempdir()
+        .expect("Ordner");
+    let broken_board = f
+        .backend
+        .services
+        .boards
+        .create("ARC", "Ohne Git", &f.actor())
+        .await
+        .expect("Board ohne Git")
+        .board;
+    f.backend
+        .services
+        .boards
+        .set_repo_path(broken_board.id, Some(&empty.path().to_string_lossy()))
+        .await
+        .expect("Repo-Pfad");
+    auto_on(&f).await;
+    // Kleinere Nummer: steht in der Reihenfolge vor dem sauberen Ticket
+    let stuck = backlog_on(&f, broken_board.id, "Im kaputten Repo").await;
+    let fine = backlog(&f, "Sauber").await;
+
+    let runner = PlanRunner::new(&f.ctx);
+    let first = runner.start_auto(5).await.expect("erster Tick");
+    assert_eq!(first.started, vec![fine]);
+    assert_eq!(first.errors.len(), 1, "{:?}", first.errors);
+    assert!(
+        first.errors[0].contains("Ohne Git") && first.errors[0].contains("kein Git-Projekt"),
+        "{}",
+        first.errors[0]
+    );
+    let state = f.ctx.stores.state.read().expect("Zustand");
+    // Nicht gemerkt: ist das Repo repariert, kommt das Ticket noch dran
+    assert!(!state.planning.contains_key(&stuck));
+    // Keine Pause für alle Boards
+    assert_eq!(state.planning_auto.retry_at, None);
+    assert!(state
+        .planning_auto
+        .last_error
+        .as_deref()
+        .is_some_and(|error| error.contains("Ohne Git")));
+
+    // Derselbe Fehler wird nicht jede Minute erneut gemeldet
+    let again = runner.start_auto(5).await.expect("zweiter Tick");
+    assert!(
+        again.started.is_empty() && again.errors.is_empty(),
+        "{again:?}"
+    );
 }
 
 #[tokio::test]

@@ -1,0 +1,12 @@
+{
+  "id": "alucard",
+  "name": "Alucard",
+  "version": "1.0.0",
+  "author": "Nexus",
+  "sdkVersion": "^1.2",
+  "colorScheme": "light",
+  "startColor": "#f7f5fc",
+  "preview": "assets/preview.png",
+  "slots": ["Progress"],
+  "permissions": { "network": [] }
+}

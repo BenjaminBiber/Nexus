@@ -19,13 +19,7 @@ Wichtig:
 - Was auffällt und nicht zu diesem Ticket gehört, wird eine Notiz, kein Kommentar. Erst nexus board note list --md lesen:
   steht der Befund schon da, nexus board note seen <nr> --from {{ticketId}}; sonst nexus board note add "<ein Satz, was kaputt ist – ohne Ticket-ID>" --details "<wo, woran man es sieht, Ursache, Vorschlag>" --from {{ticketId}} --author {{agent}}.
   Schreib für jemanden, der dieses Ticket nicht kennt; kein „unabhängig von …“ oder „nicht durch mich verursacht“.
-- Am Ende genau einer der vier Ausgänge, immer mit --by {{agent}}:
-  erledigt – alles committet, Nachweis als Kommentar, dann: nexus board done {{ticketId}} --acceptance "<woran man es sieht>" --by {{agent}};
-  Human Interaction – fertig, ein Mensch muss es noch ansehen: nexus board set {{ticketId}} --status blocked --blocked-reason "Human Interaction: <was>" --by {{agent}};
-  Frage – du brauchst eine Entscheidung, bevor es sinnvoll weitergeht:
-    nexus board question add "<Frage>" --description "<Beschreibung>" --ticket {{ticketId}} --author {{agent}}
-    Titel und Beschreibung nach den Schreibregeln unten. Danach den Lauf beenden, nicht warten – der Dispatcher macht weiter, sobald entschieden ist;
-  blockiert mit Grund – es fehlt etwas, das keine Entscheidung ist (Zugang, Umgebung): nexus board set {{ticketId}} --status blocked --blocked-reason "<Grund>" --by {{agent}}.
+{{outcomes}}
 - Ohne einen dieser Ausgänge gilt der Lauf als abgebrochen und das Ticket geht zurück.
 
 Schreibregeln für eine Frage. Der Leser ist ein Außenstehender: Er kennt weder Ticket noch Code und soll trotzdem in zwei Minuten entscheiden können.

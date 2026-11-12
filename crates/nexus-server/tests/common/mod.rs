@@ -125,6 +125,22 @@ pub struct TestServerOptions {
     pub plugin_bundle: Option<PathBuf>,
     /// Umgebung der Einrichtung; ohne Angabe ohne Claude und mit Claude-Ordner im Temp-Home
     pub setup: Option<nexus_server::setup::SetupContext>,
+    /// Zugriff auf die Bot-API von Telegram; ohne Angabe über reqwest (den Tests nie auslösen,
+    /// weil der Bot ohne Token und ohne Schalter ruht)
+    pub telegram_api: Option<nexus_server::telegram::TelegramApiFactory>,
+    /// Der Dienst, der die Ideen des Bots versteht; ohne Angabe einer mit der Umgebung des
+    /// Testprozesses (den Tests nie auslösen, weil der freie Text einen Chat braucht)
+    pub idea_interpreter: Option<Arc<nexus_server::telegram::IdeaInterpreter>>,
+    /// Größenlimit des Asset-Proxys für Themes; ohne Angabe der Standard
+    pub theme_fetch_max_bytes: Option<u64>,
+    /// Größenlimit eines Archivs beim Abruf einer Einzeldatei; ohne Angabe der Standard
+    pub theme_fetch_max_archive_bytes: Option<u64>,
+    /// Zeitlimit je Store-Repo; ohne Angabe der Standard
+    pub store_index_timeout: Option<std::time::Duration>,
+    /// Zeitlimit beim Download eines Store-Pakets; ohne Angabe der Standard
+    pub store_download_timeout: Option<std::time::Duration>,
+    /// Ordner der mitgelieferten Theme-Pakete; ohne Angabe keiner
+    pub bundled_themes_dir: Option<PathBuf>,
 }
 
 /// Startet nichts und liefert keine Prozessnummer; so startet in Tests nie ein echter Worker
@@ -165,6 +181,7 @@ impl TestServer {
         config.version = "test".into();
         config.web_dir = options.web_dir;
         config.plugin_bundle = options.plugin_bundle;
+        config.bundled_themes_dir = options.bundled_themes_dir;
         // Nie den echten Claude-Ordner des Rechners anfassen
         config.setup = options.setup.unwrap_or_else(|| {
             nexus_server::setup::SetupContext::new(
@@ -182,6 +199,20 @@ impl TestServer {
         }
         if let Some(clock) = options.clock {
             config.clock = clock;
+        }
+        config.telegram_api = options.telegram_api;
+        config.idea_interpreter = options.idea_interpreter;
+        if let Some(max) = options.theme_fetch_max_archive_bytes {
+            config.theme_fetch_max_archive_bytes = max;
+        }
+        if let Some(timeout) = options.store_download_timeout {
+            config.store_download_timeout = timeout;
+        }
+        if let Some(timeout) = options.store_index_timeout {
+            config.store_index_timeout = timeout;
+        }
+        if let Some(max) = options.theme_fetch_max_bytes {
+            config.theme_fetch_max_bytes = max;
         }
         config.account_usage = options.account_usage;
         config.account_login_spawner = options.account_login_spawner;
@@ -303,6 +334,33 @@ impl TestServer {
         self.request("POST", url, Some(body), &[]).await
     }
 
+    /// `POST` mit rohem Körper und eigenem Inhaltstyp (Aufnahmen der Spracherkennung)
+    pub async fn post_bytes(&self, url: &str, content_type: &str, body: &[u8]) -> Reply {
+        let request = Request::builder()
+            .method("POST")
+            .uri(url)
+            .header("host", format!("127.0.0.1:{PORT}"))
+            .header("content-type", content_type)
+            .header("x-harness", "1")
+            .body(Body::from(body.to_vec()))
+            .expect("Anfrage");
+        let response = self
+            .router
+            .clone()
+            .oneshot(request)
+            .await
+            .expect("Antwort des Servers");
+        let (parts, body) = response.into_parts();
+        let bytes = axum::body::to_bytes(body, 8 * 1024 * 1024)
+            .await
+            .expect("Körper der Antwort");
+        Reply {
+            status: parts.status,
+            headers: parts.headers,
+            text: String::from_utf8_lossy(&bytes).into_owned(),
+        }
+    }
+
     /// `PUT` mit JSON-Körper
     pub async fn put(&self, url: &str, body: &str) -> Reply {
         self.request("PUT", url, Some(body), &[]).await
@@ -318,7 +376,7 @@ impl TestServer {
         self.request("DELETE", url, Some("{}"), &[]).await
     }
 
-    /// Das Hook-Token eines Projektordners (`harness init` hat es angelegt)
+    /// Das Hook-Token eines Projektordners (`nexus init` hat es angelegt)
     pub fn token(&self, repo: &std::path::Path) -> String {
         let project = nexus_core::HarnessProject::open(repo).expect("Projekt öffnen");
         nexus_core::project::TokenStore::new(project.layout.clone())
@@ -944,6 +1002,7 @@ pub fn fake_runners(fake: Arc<FakeClaude>) -> ClaudeRunners {
     ClaudeRunners {
         ticket_draft: fake.clone(),
         revise: fake.clone(),
-        suggestion: fake,
+        suggestion: fake.clone(),
+        idea: fake,
     }
 }

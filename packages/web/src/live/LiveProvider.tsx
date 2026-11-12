@@ -27,8 +27,16 @@ export function LiveProvider({ pid, children, releaseDelayMs = 1000 }: { pid: st
   const releaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const releaseDelay = useRef(releaseDelayMs);
   releaseDelay.current = releaseDelayMs;
-  useEffect(() => () => {
-    if (releaseTimer.current) clearTimeout(releaseTimer.current);
+  // Beim Aushängen räumt React erst diesen Anbieter ab und dann die Beobachter. Deren Abmeldung darf danach
+  // keinen Timer mehr starten: er liefe ins Leere und setzte Zustand in einem abgebauten Baum
+  const unmounted = useRef(false);
+  useEffect(() => {
+    unmounted.current = false;
+    return () => {
+      unmounted.current = true;
+      if (releaseTimer.current) clearTimeout(releaseTimer.current);
+      releaseTimer.current = null;
+    };
   }, []);
 
   // Die Erlaubnis kommt von der Plattform und damit erst später; ein Wechsel verbindet den Strom neu.
@@ -52,7 +60,7 @@ export function LiveProvider({ pid, children, releaseDelayMs = 1000 }: { pid: st
       ? api.openEvents(pid, dbBoard, dbProject, true)
       : dbProject === null ? api.openEvents(pid, dbBoard) : api.openEvents(pid, dbBoard, dbProject);
     source.onmessage = (event) => {
-      const message = JSON.parse(event.data) as { type: string; boardId?: number; projectId?: number };
+      const message = JSON.parse(event.data) as { type: string; boardId?: number; projectId?: number; sessionId?: string };
       if (message.type === 'notice') return handlers.current.forEach((h) => h.onNotice?.(message as unknown as TabNotice));
       setLastSync(new Date());
       if (message.type === 'hello') {
@@ -61,6 +69,8 @@ export function LiveProvider({ pid, children, releaseDelayMs = 1000 }: { pid: st
         wasDown = false;
       } else if (message.type === 'sessions') {
         handlers.current.forEach((h) => h.onSessions?.());
+      } else if (message.type === 'session-activity' && typeof message.sessionId === 'string') {
+        handlers.current.forEach((h) => h.onSessionActivity?.(message.sessionId!));
       } else if (message.type === 'dbboard' && typeof message.boardId === 'number') {
         handlers.current.forEach((h) => h.onDbBoard?.(message.boardId!));
       } else if (message.type === 'dbquestions' && typeof message.projectId === 'number') {
@@ -93,7 +103,7 @@ export function LiveProvider({ pid, children, releaseDelayMs = 1000 }: { pid: st
       releaseTimer.current = null;
       const last = projectWatchers.current.at(-1);
       if (last) setDbProject(last.projectId);
-      else releaseTimer.current = setTimeout(() => {
+      else if (!unmounted.current) releaseTimer.current = setTimeout(() => {
         releaseTimer.current = null;
         if (!projectWatchers.current.length) setDbProject(null);
       }, releaseDelay.current);

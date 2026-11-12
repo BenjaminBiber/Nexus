@@ -4,7 +4,8 @@ use crate::clock::Clock;
 use crate::error::{HarnessError, Result};
 
 use super::session::{
-    DisplayState, HookKind, Session, SessionState, SessionView, Subagent, SubagentState,
+    DisplayState, HookKind, Session, SessionClient, SessionState, SessionView, Subagent,
+    SubagentState,
 };
 
 /// Ohne Meldung gilt eine Session nach einer halben Stunde als veraltet
@@ -57,6 +58,9 @@ impl SessionStore {
                     title: None,
                     model: None,
                     subagents: Vec::new(),
+                    transcript_path: None,
+                    client: None,
+                    run_name: None,
                 });
                 self.sessions.len() - 1
             }
@@ -77,8 +81,12 @@ impl SessionStore {
                 session.tickets.push(ticket.clone());
             }
         }
+        take_origin(session, event);
         transition(session, event, &at);
-        let session = session.clone();
+        // Die zuletzt gemeldete Session ans Ende: so ordnet `list` Sessions mit gleichem Zeitpunkt
+        // (Meldungen in derselben Millisekunde) nach der Reihenfolge der Meldungen
+        let session = self.sessions.remove(index);
+        self.sessions.push(session.clone());
         self.prune();
         session
     }
@@ -108,9 +116,12 @@ impl SessionStore {
 
     /// Ansichten, neueste Aktivität zuerst; ohne Projekt alle
     pub fn list(&self, project_id: Option<&str>) -> Vec<SessionView> {
+        // Rückwärts, weil `apply` die zuletzt gemeldete Session ans Ende hängt: bei gleichem Zeitpunkt
+        // steht sie so vorn (`sort_by` ist stabil)
         let mut views: Vec<SessionView> = self
             .sessions
             .iter()
+            .rev()
             .filter(|s| project_id.is_none_or(|id| s.project_id == id))
             .map(|s| self.view(s))
             .collect();
@@ -166,6 +177,26 @@ impl SessionStore {
             ),
             runtime_ms: (end - millis(&session.started_at)).max(0),
         }
+    }
+}
+
+/// Übernimmt Transcript, Lauf und Quelle; leere Angaben überschreiben nichts, und eine Session
+/// des Dispatchers (`nexus`) bleibt es
+fn take_origin(session: &mut Session, event: &super::session::HookEvent) {
+    let given = |value: &Option<String>| value.clone().filter(|text| !text.trim().is_empty());
+    if let Some(path) = given(&event.transcript_path) {
+        session.transcript_path = Some(path);
+    }
+    if let Some(run) = given(&event.run) {
+        session.run_name = Some(run);
+        session.client = Some(SessionClient::Nexus);
+    }
+    match event.client {
+        Some(SessionClient::Unknown) | None => {}
+        Some(client) if session.client != Some(SessionClient::Nexus) => {
+            session.client = Some(client);
+        }
+        Some(_) => {}
     }
 }
 
@@ -612,6 +643,18 @@ mod tests {
         assert_eq!(ids(&c.store.list(Some(P))), ["neu", "alt"]);
     }
 
+    /// Meldungen in derselben Millisekunde (schneller Rechner): die zuletzt gemeldete steht vorn
+    #[test]
+    fn ordnet_bei_gleicher_zeit_die_zuletzt_gemeldete_session_zuerst() {
+        let mut c = clock();
+        c.store.apply(P, &ev_id(HookKind::SessionStart, "alt"));
+        c.store.apply(P, &ev_id(HookKind::SessionStart, "neu"));
+        assert_eq!(ids(&c.store.list(Some(P))), ["neu", "alt"]);
+
+        c.store.apply(P, &ev_id(HookKind::UserPrompt, "alt"));
+        assert_eq!(ids(&c.store.list(Some(P))), ["alt", "neu"]);
+    }
+
     #[test]
     fn liefert_sessions_zu_einem_ticket() {
         let mut c = clock();
@@ -698,6 +741,56 @@ mod tests {
             c.store.claim(P, "s1", "T-0042").unwrap().tickets,
             ["T-0042"]
         );
+    }
+
+    #[test]
+    fn ubernimmt_transcript_und_quelle_und_uberschreibt_nicht_mit_leerem() {
+        let mut c = clock();
+        let s = c.store.apply(
+            P,
+            &HookEvent {
+                transcript_path: Some("C:/t/s1.jsonl".into()),
+                client: Some(SessionClient::ClaudeDesktop),
+                ..ev(HookKind::SessionStart)
+            },
+        );
+        assert_eq!(s.transcript_path.as_deref(), Some("C:/t/s1.jsonl"));
+        assert_eq!(s.client, Some(SessionClient::ClaudeDesktop));
+        assert_eq!(s.run_name, None);
+        let s = c.store.apply(
+            P,
+            &HookEvent {
+                transcript_path: Some("  ".into()),
+                client: Some(SessionClient::Unknown),
+                ..ev(HookKind::Stop)
+            },
+        );
+        assert_eq!(s.transcript_path.as_deref(), Some("C:/t/s1.jsonl"));
+        assert_eq!(s.client, Some(SessionClient::ClaudeDesktop));
+    }
+
+    #[test]
+    fn eine_session_mit_lauf_bleibt_eine_session_von_nexus() {
+        let mut c = clock();
+        let s = c.store.apply(
+            P,
+            &HookEvent {
+                run: Some("ARC-0001-20261104-091500.log".into()),
+                client: Some(SessionClient::ClaudeCode),
+                ..ev(HookKind::SessionStart)
+            },
+        );
+        assert_eq!(s.client, Some(SessionClient::Nexus));
+        assert_eq!(s.run_name.as_deref(), Some("ARC-0001-20261104-091500.log"));
+        let s = c.store.apply(
+            P,
+            &HookEvent {
+                client: Some(SessionClient::ClaudeDesktop),
+                ..ev(HookKind::UserPrompt)
+            },
+        );
+        assert_eq!(s.client, Some(SessionClient::Nexus));
+        assert_eq!(s.run_name.as_deref(), Some("ARC-0001-20261104-091500.log"));
     }
 
     #[test]

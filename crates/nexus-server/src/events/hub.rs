@@ -33,6 +33,9 @@ pub enum LiveEvent {
     /// Die Superpowers-Dokumente dieses Projekts haben sich geändert
     #[serde(rename = "docs-changed", rename_all = "camelCase")]
     DocsChanged { project_id: String },
+    /// In einer Session hat sich etwas getan (Hook oder wachsendes Transcript)
+    #[serde(rename = "session-activity", rename_all = "camelCase")]
+    SessionActivity { session_id: String },
     /// Meldung für einen Tab mit `notify=1`
     #[serde(rename = "notice")]
     Notice(BrowserNotice),
@@ -184,6 +187,13 @@ mod tests {
             })
             .unwrap(),
             r#"{"type":"docs-changed","projectId":"p1"}"#
+        );
+        assert_eq!(
+            serde_json::to_string(&LiveEvent::SessionActivity {
+                session_id: "s1".into()
+            })
+            .unwrap(),
+            r#"{"type":"session-activity","sessionId":"s1"}"#
         );
     }
 

@@ -24,7 +24,12 @@ pub mod projects;
 pub mod routes;
 pub mod sessions;
 pub mod setup;
+pub mod speech;
 pub mod state;
+pub mod store_index;
+pub mod store_install;
+pub mod telegram;
+pub mod theme_proxy;
 pub mod timeline;
 pub mod usage;
 
@@ -47,6 +52,7 @@ use tokio::net::TcpListener;
 use crate::board_db::{ServerBoardDatabase, ServerBoardServices};
 use crate::board_runtime::{BoardBackendFactory, BoardBackendFuture};
 use crate::config::ServerConfig;
+use crate::dispatch::scheduler::TickGate;
 use crate::state::AppState;
 
 /// Ein laufender Server
@@ -67,6 +73,7 @@ impl ServerHandle {
         self.state.shutdown.cancel();
         // Vor dem Abbau der Board-Laufzeit anhalten, damit kein Durchlauf sie neu aufbaut
         self.state.dispatch_scheduler.stop().await;
+        self.state.telegram.stop().await;
         self.state.db_questions.stop();
         // Ausstehende Änderungen der Sessions landen noch in `sessions.json`
         self.state.sessions.close().await;
@@ -133,6 +140,49 @@ fn bind_error(port: u16, error: &std::io::Error) -> HarnessError {
     HarnessError::new(if busy { "port-busy" } else { "start-failed" }, message)
 }
 
+/// Installiert die mitgelieferten Themes aus `bundled_themes_dir` und schreibt je Paket eine
+/// Zeile ins Server-Log. Fehler werden nur geloggt; der Start scheitert nie daran.
+pub async fn install_bundled_themes(state: &Arc<AppState>) {
+    let Some(dir) = state.config.bundled_themes_dir.clone() else {
+        return;
+    };
+    let home = state.home.clone();
+    let results = match tokio::task::spawn_blocking(move || {
+        nexus_core::themes::install_bundled_themes(&home, &dir)
+    })
+    .await
+    {
+        Ok(results) => results,
+        Err(error) => {
+            state
+                .log
+                .write(&format!("Mitgelieferte Themes nicht installiert: {error}"));
+            return;
+        }
+    };
+    use nexus_core::themes::BundledOutcome;
+    for result in results {
+        let line = match result.outcome {
+            Ok(BundledOutcome::Installed { id, version }) => {
+                format!("Theme {id} {version} mitgeliefert installiert")
+            }
+            Ok(BundledOutcome::Updated { id, from, to }) => {
+                format!("Theme {id} {to} mitgeliefert installiert (vorher {from})")
+            }
+            Ok(BundledOutcome::Kept {
+                id,
+                installed,
+                bundled,
+            }) => format!("Theme {id} bleibt {installed} (mitgeliefert {bundled})"),
+            Err(error) => format!(
+                "Mitgeliefertes Theme {} nicht installiert: {error}",
+                result.file.display()
+            ),
+        };
+        state.log.write(&line);
+    }
+}
+
 /// Der gemeinsame Teil von [`serve`] und [`serve_on`]: `server.json` schreiben, Routen bauen,
 /// Anfragen beantworten
 async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<ServerHandle> {
@@ -174,7 +224,15 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
         "Dispatcher: Takt {} ms",
         state.config.dispatch_tick_ms
     ));
-    state.dispatch_scheduler.start().await;
+    state
+        .dispatch_scheduler
+        .start_with(dispatch_gate(info.clone(), state.pid))
+        .await;
+    // Der Telegram-Bot pollt nur, wenn `telegram.yaml` ihn einschaltet; sonst ruht er, bis
+    // die Einstellung gespeichert wird
+    state.telegram.start(state.shutdown.clone()).await;
+
+    install_bundled_themes(&state).await;
 
     let router = routes::build_router(state.clone());
     let shutdown = state.shutdown.clone();
@@ -191,6 +249,13 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
         task,
         info,
     })
+}
+
+/// Freigabe des Dispatcher-Takts: nur der Server, der in `server.json` steht, stößt Durchläufe
+/// an. Zwei Server auf demselben Benutzerordner mergten und starteten sonst doppelt; ein
+/// zweiter Server übernimmt die Datei auch nicht, wenn der erste endet
+fn dispatch_gate(info: ServerInfoFile, pid: u32) -> TickGate {
+    Arc::new(move || info.owned_by(pid))
 }
 
 /// Wartet auf Strg+C bzw. SIGTERM; danach wird der Server geordnet beendet

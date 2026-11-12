@@ -14,7 +14,12 @@ export type BoardActor = { userId: string, name: string, };
 /**
  * Eine Karte des Boards: ein Ticket ohne seine langen Texte, mit Kommentarzahl
  */
-export type BoardCard = { id: string, projectId: number, boardId: number, number: number, title: string, status: TicketStatus, priority: Priority, labels: Array<string>, dependsOn: Array<string>, sortOrder: number, assignee: string | null, needsPlanning: boolean, spec: string | null, specTask: string | null, branch: string | null, worktree: string | null, targetBranch: string | null, touches: Array<string>, consumes: Array<string>, produces: Array<string>, blockedReason: string | null, plannedAt: string | null, plannedBy: string | null, planningClaimBy: string | null, planningClaimAt: string | null, createdAt: string, createdById: string, createdByName: string, updatedAt: string, rev: number, column: BoardColumn, waiting: boolean, dependsOpen: Array<string>, dependsUnmerged: Array<string>, dependents: Array<string>, unlocks: Array<string>, waitingOnQuestions: Array<BoardOpenQuestion>, stepsDone: number, stepsTotal: number, sessions: Array<string>, commentCount: number, hasDescription: boolean, hasAcceptance: boolean, hasPlan: boolean, hasHandbook: boolean, hasDiagram: boolean, };
+export type BoardCard = { id: string, projectId: number, boardId: number, number: number, title: string, status: TicketStatus, priority: Priority, labels: Array<string>, dependsOn: Array<string>, sortOrder: number, assignee: string | null, needsPlanning: boolean, spec: string | null, specTask: string | null, branch: string | null, worktree: string | null, targetBranch: string | null, touches: Array<string>, consumes: Array<string>, produces: Array<string>, blockedReason: string | null, plannedAt: string | null, plannedBy: string | null, planningClaimBy: string | null, planningClaimAt: string | null, createdAt: string, createdById: string, createdByName: string, updatedAt: string, 
+/**
+ * Wann das Ticket erledigt wurde (jüngster Wechsel auf `done`, ohne Verlauf `updated_at`);
+ * leer (`null`), solange es nicht erledigt ist
+ */
+doneAt: string | null, rev: number, column: BoardColumn, waiting: boolean, dependsOpen: Array<string>, dependsUnmerged: Array<string>, dependents: Array<string>, unlocks: Array<string>, waitingOnQuestions: Array<BoardOpenQuestion>, stepsDone: number, stepsTotal: number, sessions: Array<string>, commentCount: number, hasDescription: boolean, hasAcceptance: boolean, hasPlan: boolean, hasHandbook: boolean, hasDiagram: boolean, };
 
 /**
  * Spalte des Boards: ein Status oder die abgeleitete Spalte „Wartet“
@@ -114,9 +119,13 @@ export type GraphNode = { id: string, title: string, status: TicketStatus, colum
 external: boolean, };
 
 /**
- * Ein Knoten mit dem Namen seines Boards
+ * Ein Knoten mit dem Namen seines Boards und dem Fortschritt seiner Schritte
  */
-export type GraphNodeView = { boardName: string, id: string, title: string, status: TicketStatus, column: BoardColumn, boardId: number, spec: string | null, 
+export type GraphNodeView = { boardName: string, 
+/**
+ * Erledigte und alle Schritte (0/0 ohne Schritte), wie auf der Board-Karte
+ */
+stepsDone: number, stepsTotal: number, id: string, title: string, status: TicketStatus, column: BoardColumn, boardId: number, spec: string | null, 
 /**
  * Direkter Nachbar außerhalb des Umfangs (andere Spec oder anderes Board)
  */
@@ -188,7 +197,7 @@ export type Ticket = { id: string, projectId: number, boardId: number, number: n
  */
 spec: string | null, specTask: string | null, 
 /**
- * Branch und Worktree, in dem das Ticket umgesetzt wird (harness board start)
+ * Branch und Worktree, in dem das Ticket umgesetzt wird (nexus board start)
  */
 branch: string | null, worktree: string | null, 
 /**
@@ -234,7 +243,7 @@ sessions: Array<string>, id: string, projectId: number, boardId: number, number:
  */
 spec: string | null, specTask: string | null, 
 /**
- * Branch und Worktree, in dem das Ticket umgesetzt wird (harness board start)
+ * Branch und Worktree, in dem das Ticket umgesetzt wird (nexus board start)
  */
 branch: string | null, worktree: string | null, 
 /**
@@ -300,7 +309,7 @@ sessions: Array<string>, id: string, projectId: number, boardId: number, number:
  */
 spec: string | null, specTask: string | null, 
 /**
- * Branch und Worktree, in dem das Ticket umgesetzt wird (harness board start)
+ * Branch und Worktree, in dem das Ticket umgesetzt wird (nexus board start)
  */
 branch: string | null, worktree: string | null, 
 /**

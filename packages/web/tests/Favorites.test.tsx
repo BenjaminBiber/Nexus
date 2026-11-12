@@ -15,6 +15,7 @@ const session: SessionDto = {
   id: 'aaaaaaaa-1', projectId: 'p1', tickets: ['T-0042'], ticketInfo: [{ id: 'T-0042', title: 'Login bauen', status: 'In Progress' }],
   cwd: 'D:/wt/T-0042', state: 'running', displayState: 'running', listening: true, startedAt: '2026-10-10T10:00:00.000Z',
   lastEventAt: new Date().toISOString(), endedAt: null, runtimeMs: 1000, title: null, model: null, subagents: [],
+  client: 'claude-code', runName: null,
 };
 
 const favorite: FavoriteDto = {

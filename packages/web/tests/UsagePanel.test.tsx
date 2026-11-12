@@ -11,7 +11,7 @@ import { fakeApi } from './helpers/fakeApi.js';
 afterEach(cleanup);
 
 function open(initial: boolean) {
-  let current: UserSettingsDto = { notifications: 'off', heroImages: false, theme: 'system', claudeUsage: initial, compactCards: false, hideNotNeeded: false, hideInPlanning: false, ntfy: false, ntfyServer: 'https://ntfy.sh', ntfyTopic: '', ntfyToken: '', setupPrompts: { pluginDismissed: false, migrationDismissed: [] } };
+  let current: UserSettingsDto = { notifications: 'off', heroImages: false, theme: 'system', claudeUsage: initial, compactCards: false, hideNotNeeded: false, hideInPlanning: false, doneGrouping: 'time', doneArchiveDays: 0, ntfy: false, ntfyServer: 'https://ntfy.sh', ntfyTopic: '', ntfyToken: '', setupPrompts: { pluginDismissed: false, migrationDismissed: [] } };
   const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => (current = { ...current, ...patch }));
   render(<ApiProvider api={fakeApi({ getUserSettings: async () => current, saveUserSettings })}><UsagePanel /></ApiProvider>);
   return { saveUserSettings };

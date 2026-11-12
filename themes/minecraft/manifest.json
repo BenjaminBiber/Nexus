@@ -1,0 +1,22 @@
+{
+  "id": "minecraft",
+  "name": "Minecraft",
+  "version": "0.2.0",
+  "author": "Nexus",
+  "sdkVersion": "^1.1",
+  "colorScheme": "dark",
+  "startColor": "#3b2a1a",
+  "slots": ["Shell", "NavIcon"],
+  "permissions": {
+    "network": [
+      "piston-meta.mojang.com",
+      "piston-data.mojang.com",
+      "launchermeta.mojang.com",
+      "launcher.mojang.com",
+      "resources.download.minecraft.net"
+    ]
+  },
+  "settingsSchema": {
+    "sounds": { "type": "boolean", "label": "Sounds", "hint": "Klick- und Menü-Töne aus Minecraft", "default": true }
+  }
+}

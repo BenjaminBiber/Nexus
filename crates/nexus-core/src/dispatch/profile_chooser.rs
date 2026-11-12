@@ -261,6 +261,7 @@ impl<'a> ProfileChooser<'a> {
             accounts_from: None,
             account: None,
             account_why: None,
+            usage_at_start: None,
         };
         if let Some(model) = &labels.model {
             if normalizer
@@ -325,6 +326,45 @@ impl<'a> ProfileChooser<'a> {
         self.run_of(profile, why, reason)
     }
 
+    /// Einstellungen der Autopilot-Recherche `attempt` (ab 1): Versuch 1 wie [`research`], jeder
+    /// weitere eine Stufe höher auf der Leiter (oberste Stufe wiederholt sich). Steht das
+    /// Recherche-Profil nicht auf der Leiter, zählt die Stufe des Standardprofils
+    ///
+    /// [`research`]: ProfileChooser::research
+    pub fn research_attempt(&self, attempt: u32) -> RunSettings {
+        let base = self.research();
+        let ladder = &self.cfg.ladder;
+        if attempt <= 1 || ladder.is_empty() {
+            return base;
+        }
+        let from = ladder
+            .iter()
+            .position(|entry| *entry == base.profile)
+            .or_else(|| {
+                ladder
+                    .iter()
+                    .position(|entry| *entry == self.cfg.default_profile)
+            })
+            .unwrap_or(0);
+        let index = (from + attempt as usize - 1).min(ladder.len() - 1);
+        let target = ladder[index].clone();
+        if target == base.profile || !self.cfg.profiles.contains_key(&target) {
+            return RunSettings {
+                why: format!("{}, Autopilot-Versuch {attempt}", base.why),
+                ..base
+            };
+        }
+        let why = format!(
+            "{}, Autopilot-Versuch {attempt}: eskaliert auf {target}",
+            base.why
+        );
+        let reason = base.reason.unwrap_or(DispatchProfileReason::Default);
+        RunSettings {
+            escalated_from: Some(base.profile),
+            ..self.run_of(target, why, reason)
+        }
+    }
+
     /// Einstellungen eines Planungslaufs: `planning.profile`, sonst Profil „planning“,
     /// sonst Standardprofil
     pub fn planning(&self) -> RunSettings {
@@ -366,6 +406,7 @@ impl<'a> ProfileChooser<'a> {
             accounts_from: None,
             account: None,
             account_why: None,
+            usage_at_start: None,
         };
         let from = format!("Profil {}", run.profile);
         allow(&mut run, base.accounts.as_deref(), &from);
@@ -709,6 +750,43 @@ mod tests {
         assert_eq!(run.profile, "klein");
         assert_eq!(run.why, "Einstellung research.profile: klein");
         assert_eq!(run.reason, Some(DispatchProfileReason::Setting));
+    }
+
+    #[test]
+    fn autopilot_recherche_steigt_je_versuch_eine_stufe_der_leiter() {
+        let normalizer = DispatchConfigNormalizer::new();
+        let cfg = example();
+        let chooser = ProfileChooser::new(&cfg);
+        assert_eq!(chooser.research_attempt(1), chooser.research());
+        let second = chooser.research_attempt(2);
+        assert_eq!(second.profile, "schwer");
+        assert_eq!(second.escalated_from.as_deref(), Some("standard"));
+        assert_eq!(
+            second.why,
+            "Standardprofil standard, Autopilot-Versuch 2: eskaliert auf schwer"
+        );
+        // Oben auf der Leiter bleibt es bei der obersten Stufe
+        assert_eq!(chooser.research_attempt(3).profile, "schwer");
+
+        // Ein Recherche-Profil außerhalb der Leiter steigt von der Stufe des Standardprofils
+        let mut raw = normalizer.example();
+        raw["profiles"]["research"] = json!({ "model": "sonnet", "effort": "medium" });
+        raw["escalation"] = json!(["klein", "standard", "schwer"]);
+        let mit_profil = normalizer.normalize(&raw).unwrap();
+        let run = ProfileChooser::new(&mit_profil).research_attempt(2);
+        assert_eq!(run.profile, "schwer");
+        assert_eq!(run.escalated_from.as_deref(), Some("research"));
+
+        let mut raw = normalizer.example();
+        raw["research"] = json!({ "profile": "schwer" });
+        let oben = normalizer.normalize(&raw).unwrap();
+        let run = ProfileChooser::new(&oben).research_attempt(2);
+        assert_eq!(run.profile, "schwer");
+        assert_eq!(run.escalated_from, None);
+        assert_eq!(
+            run.why,
+            "Einstellung research.profile: schwer, Autopilot-Versuch 2"
+        );
     }
 
     #[test]

@@ -91,7 +91,7 @@ impl<D: BoardDatabase> ContextBuilder<D> {
     }
 
     /// `SessionStart`: Leitfaden, Kommentare und offene Fragen; `UserPrompt`: Kommentare und
-    /// neue oder geänderte Fragen. Mit `session_id` merkt sich der Harness die Einspeisung der
+    /// neue oder geänderte Fragen. Mit `session_id` merkt sich Nexus die Einspeisung der
     /// Fragen. Text `None`, wenn es nichts gibt.
     /// DB-Fehler (außer fehlenden Tickets) werden weitergereicht; der Aufrufer speist dann
     /// keinen Kontext ein.
@@ -431,7 +431,7 @@ mod tests {
             "nexus board show ARC-0001",
             "nexus board step ARC-0001",
             "nexus board done ARC-0001",
-            "Ablauf im Harness",
+            "Ablauf in Nexus",
         ] {
             assert!(out.contains(part), "{part}");
         }
@@ -525,7 +525,7 @@ mod tests {
         assert!(first.contains("Neue Kommentare zu ARC-0001:"));
         assert!(first.contains("Florian: Bitte prüfen"));
         assert!(!first.contains("Eigener Stand"));
-        assert!(!first.contains("Ablauf im Harness"));
+        assert!(!first.contains("Ablauf in Nexus"));
         assert_eq!(
             u.text(ContextKind::UserPrompt, &["ARC-0001"], None).await,
             None

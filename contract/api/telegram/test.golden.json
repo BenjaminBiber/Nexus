@@ -1,0 +1,209 @@
+[
+  {
+    "name": "Testnachricht ohne eingeschalteten Bot",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/telegram/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "telegram-not-running",
+        "message": "Der Bot läuft nicht – erst einschalten und ein Bot-Token eintragen."
+      },
+      "status": 409
+    }
+  },
+  {
+    "name": "Attrappe der Bot-API starten",
+    "request": {
+      "action": "start",
+      "body": {
+        "ok": true,
+        "result": true
+      },
+      "routes": [
+        "getMe",
+        "getUpdates",
+        "sendMessage"
+      ],
+      "status": 200,
+      "stub": "TELEGRAM"
+    },
+    "response": {
+      "json": {
+        "url": "<var:tgUrl>"
+      }
+    }
+  },
+  {
+    "name": "Bot auf die Attrappe einschalten",
+    "request": {
+      "body": {
+        "apiBase": "<var:tgUrl>",
+        "enabled": true
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "<var:tgUrl>",
+        "botToken": "123456:…Dsaw",
+        "chats": [
+          4242,
+          77
+        ],
+        "enabled": true,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": null
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "warten, bis der Bot sich angemeldet hat",
+    "request": {
+      "action": "await",
+      "call": "getUpdates",
+      "count": 1,
+      "stub": "TELEGRAM"
+    },
+    "response": {
+      "json": {
+        "ok": true
+      }
+    }
+  },
+  {
+    "name": "Testnachricht an beide Chats",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/telegram/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "errors": [
+          {
+            "chatId": 77,
+            "error": "Telegram antwortete mit Fehler 403: Forbidden: bot was blocked by the user"
+          }
+        ],
+        "sent": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "die geschickten Nachrichten an der Attrappe",
+    "request": {
+      "action": "await",
+      "call": "sendMessage",
+      "count": 2,
+      "stub": "TELEGRAM"
+    },
+    "response": {
+      "json": {
+        "ok": true
+      }
+    }
+  },
+  {
+    "name": "Testnachricht ohne gekoppelte Chats",
+    "request": {
+      "body": {},
+      "method": "POST",
+      "path": "/api/telegram/test"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "errors": [],
+        "sent": 0
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Bot wieder abschalten",
+    "request": {
+      "body": {
+        "enabled": false
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "https://api.telegram.org",
+        "botToken": "123456:…Dsaw",
+        "chats": [],
+        "enabled": false,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": {
+            "botId": 7012345678,
+            "photo": "31bd7f7de04f11dfe8c1a1093279495c16fcff82",
+            "texts": "7e0cbdddcb507d501c1b690e69d575621ac2e3d9"
+          }
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  }
+]

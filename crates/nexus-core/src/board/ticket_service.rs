@@ -807,7 +807,7 @@ impl<D: BoardDatabase> TicketService<D> {
         .await
     }
 
-    /// Prüft, ob das Ticket nach In Arbeit dürfte (für `harness board start`, bevor ein Worktree
+    /// Prüft, ob das Ticket nach In Arbeit dürfte (für `nexus board start`, bevor ein Worktree
     /// entsteht)
     pub async fn check_start(&self, id: &str, force: bool) -> Result<TicketView> {
         let id = id.to_string();

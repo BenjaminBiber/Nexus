@@ -635,6 +635,13 @@ impl HistoryRepository for RacingUnit<'_> {
     async fn insert(&mut self, entries: &[HistoryEntry]) -> Result<()> {
         self.inner.history().insert(entries).await
     }
+
+    async fn done_at_by_board(
+        &mut self,
+        board_id: i32,
+    ) -> Result<std::collections::BTreeMap<String, String>> {
+        self.inner.history().done_at_by_board(board_id).await
+    }
 }
 
 #[async_trait]

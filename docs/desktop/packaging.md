@@ -30,7 +30,7 @@ Ergebnis unter `target/release/bundle/`: `macos/Nexus.app` und `dmg/Nexus_<versi
 `check-bundle.mjs` prüft Hauptprogramm, Sidecar, die drei Ressourcenordner und das Symbol im `.app` und gibt
 die Größe des Installers aus; bei einem Fehlbefund endet es mit Code 1.
 
-Für Intel-Macs zusätzlich (einmalig `rustup target add x86_64-apple-darwin`, dazu ein Node von nodejs.org
+Für Intel-Macs (das Release baut sie nicht, lokal geht es weiterhin) zusätzlich (einmalig `rustup target add x86_64-apple-darwin`, dazu ein Node von nodejs.org
 für dasselbe Ziel):
 
 ```bash
@@ -91,7 +91,6 @@ Diese Namen erwartet der Release-Workflow:
 | Plattform | Datei |
 |---|---|
 | macOS (Apple Silicon) | `Nexus_<version>_aarch64.dmg` |
-| macOS (Intel) | `Nexus_<version>_x64.dmg` |
 | Windows | `Nexus_<version>_x64-setup.exe` |
 | Linux AppImage | `Nexus_<version>_amd64.AppImage` |
 | Linux deb | `Nexus_<version>_amd64.deb` |

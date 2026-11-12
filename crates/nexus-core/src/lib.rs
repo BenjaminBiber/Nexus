@@ -24,10 +24,13 @@ pub mod questions;
 pub mod registry;
 pub mod sessions;
 pub mod settings;
+pub mod telegram;
+pub mod themes;
 // Auch in den eigenen Tests gebraucht: die Dienste des Boards prüfen gegen `BoardFixture`
 #[cfg(any(test, feature = "testing"))]
 pub mod testing;
 pub mod text;
+pub mod theme;
 pub mod workflow;
 pub mod worktrees;
 

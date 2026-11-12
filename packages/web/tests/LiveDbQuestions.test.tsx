@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { ApiProvider } from '../src/api/ApiContext.js';
@@ -43,6 +44,44 @@ describe('Live-Meldungen der Fragen auf der Board-Datenbank', () => {
       </ApiProvider>,
     );
     expect(openEvents).toHaveBeenLastCalledWith('p1', null);
+  });
+
+  it('lässt nach dem Aushängen keinen Timer zurück', () => {
+    // React räumt beim Aushängen erst den Anbieter ab, dann die Beobachter: deren Abmeldung darf keinen
+    // Timer mehr starten, sonst setzt er später Zustand in einem abgebauten Baum
+    vi.useFakeTimers();
+    try {
+      const { unmount } = render(
+        <ApiProvider api={fakeApi({ openEvents: vi.fn(() => new FakeEventSource()) })}>
+          <LiveProvider pid="p1">
+            <Watcher projectId={3} onDbQuestions={() => undefined} />
+          </LiveProvider>
+        </ApiProvider>,
+      );
+      unmount();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('gibt das Projekt auch unter StrictMode nach der Verzögerung frei', async () => {
+    // Der Effekt-Probelauf von StrictMode hängt den Anbieter zum Schein aus und wieder ein
+    const openEvents = vi.fn((_pid: string, _board?: number | null, _project?: number | null) => new FakeEventSource());
+    const api = fakeApi({ openEvents });
+    const tree = (shown: boolean) => (
+      <StrictMode>
+        <ApiProvider api={api}>
+          <LiveProvider pid="p1" releaseDelayMs={20}>
+            {shown && <Watcher projectId={3} onDbQuestions={() => undefined} />}
+          </LiveProvider>
+        </ApiProvider>
+      </StrictMode>
+    );
+    const { rerender } = render(tree(true));
+    expect(openEvents).toHaveBeenLastCalledWith('p1', null, 3);
+    rerender(tree(false));
+    await waitFor(() => expect(openEvents).toHaveBeenLastCalledWith('p1', null));
   });
 
   // Zwei Beobachter, die sich einzeln ausblenden lassen

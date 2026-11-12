@@ -34,6 +34,7 @@ fn einstellungen(timeout_minutes: i64) -> RunSettings {
         accounts_from: None,
         account: None,
         account_why: None,
+        usage_at_start: None,
     }
 }
 
@@ -267,8 +268,8 @@ async fn schreibt_stream_json_lesbar_mit_uhrzeit_ins_protokoll() {
         "{log}"
     );
     assert!(
-        log.lines().any(|zeile| zeile
-            .contains("liest Ticket ARC-0004\t\"$ harness board show ARC-0004\"")),
+        log.lines()
+            .any(|zeile| zeile.contains("liest Ticket ARC-0004\t\"$ nexus board show ARC-0004\"")),
         "{log}"
     );
     assert!(log.contains("] abgelehnt\t\"abgelehnt\""), "{log}");

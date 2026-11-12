@@ -8,6 +8,17 @@ export class Variables {
     this.values = { ...values };
   }
 
+  // Ergänzt zu den genannten Werten (Pfade) je `NAME_JSON`: der Text escaped für das Innere eines JSON-Texts.
+  // Für Dateien, die selbst JSON enthalten (Transcripts als JSON Lines), in denen ein Windows-Pfad sonst
+  // ungültige Escapes ergäbe
+  static withJsonForms(values, names) {
+    const out = { ...values };
+    for (const name of names) {
+      if (typeof values[name] === 'string') out[`${name}_JSON`] = JSON.stringify(values[name]).slice(1, -1);
+    }
+    return out;
+  }
+
   // Legt einen Wert ab (aus `save` eines Schritts)
   set(name, value) {
     this.values[name] = value;

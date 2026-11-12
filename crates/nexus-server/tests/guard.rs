@@ -21,9 +21,25 @@ fn headers(entries: &[(&str, &str)]) -> HeaderMap {
     map
 }
 
+/// Pfad, der wie jede gewöhnliche Route nur JSON annimmt
+const PFAD: &str = "/api/db/boards";
+
 /// Der Code der Ablehnung, `None` wenn die Anfrage zulässig ist
 fn code(guard: &RequestGuard, method: &str, entries: &[(&str, &str)]) -> Option<&'static str> {
     code_mit_abfrage(guard, method, entries, None)
+}
+
+/// Wie [`code`], aber auf einem bestimmten Pfad (nur dort zählt eine Aufnahme als Körper)
+fn code_auf_pfad(
+    guard: &RequestGuard,
+    method: &str,
+    path: &str,
+    entries: &[(&str, &str)],
+) -> Option<&'static str> {
+    let method = Method::from_bytes(method.as_bytes()).unwrap();
+    guard
+        .check(&method, path, &headers(entries), None)
+        .map(|denial| denial.code)
 }
 
 /// Wie [`code`], aber mit einem Abfrageteil (dort steht das Token von `EventSource`)
@@ -35,7 +51,7 @@ fn code_mit_abfrage(
 ) -> Option<&'static str> {
     let method = Method::from_bytes(method.as_bytes()).unwrap();
     guard
-        .check(&method, &headers(entries), query)
+        .check(&method, PFAD, &headers(entries), query)
         .map(|denial| denial.code)
 }
 
@@ -43,7 +59,7 @@ fn code_mit_abfrage(
 fn meldung(guard: &RequestGuard, method: &str, entries: &[(&str, &str)]) -> Option<&'static str> {
     let method = Method::from_bytes(method.as_bytes()).unwrap();
     guard
-        .check(&method, &headers(entries), None)
+        .check(&method, PFAD, &headers(entries), None)
         .map(|denial| denial.message)
 }
 
@@ -135,6 +151,57 @@ fn verlangt_bei_schreibzugriffen_den_pflichtkopf_und_json() {
             ]
         ),
         None
+    );
+}
+
+#[test]
+fn nimmt_eine_aufnahme_nur_auf_der_testroute_der_spracherkennung() {
+    let guard = RequestGuard::new(4710);
+    let host = ("host", "127.0.0.1:4710");
+    let audio = [host, ("x-harness", "1"), ("content-type", "audio/ogg")];
+
+    // Auf der Testroute ist eine Aufnahme statt JSON erlaubt
+    assert_eq!(
+        code_auf_pfad(&guard, "POST", "/api/speech/test", &audio),
+        None
+    );
+    assert_eq!(
+        code_auf_pfad(
+            &guard,
+            "POST",
+            "/api/speech/test",
+            &[
+                host,
+                ("x-harness", "1"),
+                ("content-type", "application/octet-stream")
+            ]
+        ),
+        None
+    );
+    // Auf jedem anderen Pfad bleibt JSON Pflicht
+    assert_eq!(
+        code_auf_pfad(&guard, "POST", "/api/db/boards", &audio),
+        Some("header-missing")
+    );
+    // Der Pflichtkopf gilt auch mit Aufnahme
+    assert_eq!(
+        code_auf_pfad(
+            &guard,
+            "POST",
+            "/api/speech/test",
+            &[host, ("content-type", "audio/ogg")]
+        ),
+        Some("header-missing")
+    );
+    // Ein anderer Inhaltstyp bleibt auch auf der Testroute abgelehnt
+    assert_eq!(
+        code_auf_pfad(
+            &guard,
+            "POST",
+            "/api/speech/test",
+            &[host, ("x-harness", "1"), ("content-type", "text/plain")]
+        ),
+        Some("header-missing")
     );
 }
 
@@ -265,6 +332,97 @@ fn nimmt_das_token_bei_lesezugriffen_auch_aus_der_abfrage() {
         code_mit_abfrage(&guard, "POST", &schreibend, Some("token=geheim")),
         Some("origin-denied")
     );
+}
+
+#[test]
+fn laesst_die_app_theme_dateien_ohne_token_lesen() {
+    // Schriften aus der theme.css und `import()` der main.js sind Anfragen mit Herkunft, können
+    // aber weder Kopf noch Abfragewert mitschicken. Ohne diese Ausnahme lädt in der App kein
+    // Theme mit Code oder eigener Schrift.
+    let guard = guard_mit_token("geheim");
+    let host = ("host", "127.0.0.1:4710");
+    for origin in TAURI_ORIGINS {
+        for path in [
+            "/themes/ocean/manifest.json",
+            "/themes/ocean/main.js",
+            "/themes/ocean/assets/fonts/a.woff2",
+        ] {
+            for method in ["GET", "HEAD"] {
+                assert_eq!(
+                    code_auf_pfad(&guard, method, path, &[host, ("origin", origin)]),
+                    None,
+                    "{method} {path} von {origin}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn die_ausnahme_fuer_theme_dateien_gilt_nur_lesend_und_nur_unter_themes() {
+    let guard = guard_mit_token("geheim");
+    let host = ("host", "127.0.0.1:4710");
+    let app = [host, ("origin", TAURI_ORIGINS[0])];
+    // Alles außerhalb von /themes/ braucht weiter das Token – auch die Routen der Themes
+    for path in [
+        "/api/themes",
+        "/api/themes/ocean/fetch",
+        "/api/themes/ocean/settings",
+        "/themes",
+        "/themesx/ocean/main.js",
+        "/snippets/active.css",
+    ] {
+        assert_eq!(
+            code_auf_pfad(&guard, "GET", path, &app),
+            Some("origin-denied"),
+            "{path}"
+        );
+    }
+    // Schreibend gilt die Ausnahme nie
+    let mut schreibend = app.to_vec();
+    schreibend.push(("content-type", "application/json"));
+    for method in ["POST", "PUT", "PATCH", "DELETE"] {
+        assert_eq!(
+            code_auf_pfad(&guard, method, "/themes/ocean/main.js", &schreibend),
+            Some("origin-denied"),
+            "{method}"
+        );
+    }
+    // Fremde Webseiten bleiben auch bei Theme-Dateien draußen
+    assert_eq!(
+        code_auf_pfad(
+            &guard,
+            "GET",
+            "/themes/ocean/main.js",
+            &[host, ("origin", "http://evil.example")]
+        ),
+        Some("origin-denied")
+    );
+}
+
+#[tokio::test]
+async fn liefert_der_app_theme_dateien_ohne_token_mit_cors_koepfen() {
+    let server = TestServer::start();
+    let theme = server.home.themes_dir().join("ocean");
+    std::fs::create_dir_all(theme.join("assets")).unwrap();
+    std::fs::write(theme.join("main.js"), "export default {};").unwrap();
+    std::fs::write(theme.join("assets").join("a.woff2"), "wOF2").unwrap();
+    let origin = "http://tauri.localhost";
+
+    for (url, typ) in [
+        ("/themes/ocean/main.js", "text/javascript; charset=utf-8"),
+        ("/themes/ocean/assets/a.woff2", "font/woff2"),
+    ] {
+        let antwort = server.get_with(url, &[("origin", Some(origin))]).await;
+        assert_eq!(antwort.status, 200, "{url}: {}", antwort.text);
+        assert_eq!(antwort.header("content-type"), Some(typ), "{url}");
+        // Ohne diesen Kopf verwirft der Browser Modul und Schrift trotz Antwort
+        assert_eq!(
+            antwort.header("access-control-allow-origin"),
+            Some(origin),
+            "{url}"
+        );
+    }
 }
 
 #[test]

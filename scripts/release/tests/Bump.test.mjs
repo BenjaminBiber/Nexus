@@ -1,10 +1,13 @@
 import { execFileSync, spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { parseArgs, today } from '../bump.mjs';
 import { RepoCopy } from './RepoCopy.mjs';
 
 const SCRIPT = fileURLToPath(new URL('../bump.mjs', import.meta.url));
+// Wurzel des Repos, in dem dieser Test liegt (scripts/release/tests → drei Ebenen hoch)
+const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 
 describe('bump.mjs', () => {
   let repo;
@@ -52,8 +55,9 @@ describe('bump.mjs', () => {
       expect(() => parseArgs(['--root'])).toThrow(/braucht einen Wert/);
     });
 
+    // Nicht am Ordnernamen festmachen: act_runner checkt auf dem Mac etwa nach ~/.cache/act/<hash>/hostexecutor aus
     it('nimmt ohne --root das Repo dieses Skripts', () => {
-      expect(parseArgs(['check']).root).toMatch(/Nexus/);
+      expect(resolve(parseArgs(['check']).root)).toBe(resolve(REPO_ROOT));
     });
   });
 

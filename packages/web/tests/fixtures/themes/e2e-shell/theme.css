@@ -1,0 +1,15 @@
+:root[data-theme='e2e-shell'] {
+  color-scheme: dark;
+  --bg: #14232e;
+  --surface: #1b2f3d;
+  --text: #e6f1f7;
+  --accent: #3fb8af;
+}
+
+[data-theme='e2e-shell'] .e2e-shell-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 2px solid var(--accent);
+}

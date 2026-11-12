@@ -186,6 +186,9 @@ den Inhalten von `homeFiles` eingesetzt, auch verschachtelt. Bekannt sind:
 
 - die Repo-Namen der Fixtures (`{{REPO1}}` → Pfad des Repos),
 - `{{HOME}}` (das `HARNESS_HOME` des Laufs) und `{{PORT}}`,
+- zu jedem dieser Pfade die JSON-Form `{{REPO1_JSON}}`, `{{HOME_JSON}}`: der Pfad escaped für das Innere eines
+  JSON-Texts – für Dateien, die selbst JSON enthalten (Transcripts als JSON Lines in `homeFiles`), in denen ein
+  Windows-Pfad sonst ungültige Escapes ergäbe,
 - `{{NOW}}` (ISO-Zeit beim Start des Szenarios; für Daten, die in einem Zeitfenster liegen müssen, etwa
   Läufe in der Auswertung der Vorschläge – der Normalisierer macht daraus `<TIME>`),
 - alle mit `save` gemerkten Werte.
@@ -203,7 +206,7 @@ Texte durch, die selbst Platzhalter enthalten – etwa die Vorlagen der Prompts 
 ### Schritte
 
 Jeder Schritt hat einen eindeutigen `name`. `kind` wählt die Art (Standard `http`); bekannt sind `http`,
-`cli`, `httpStub`, `sseOpen`, `sseExpect`, `sseClose`, `commit` und `homeFile`, eine unbekannte Art ist ein
+`cli`, `httpStub`, `sseOpen`, `sseExpect`, `sseClose`, `commit`, `homeFile` und `wait`, eine unbekannte Art ist ein
 Fehler. Diese Felder gelten für jede Art:
 
 | Feld | Bedeutung |
@@ -277,14 +280,19 @@ wo das Szenario Variablen nennt; die des Rahmens stehen hier im README und nicht
 ### Schritt-Art `httpStub`: Attrappe eines fremden Dienstes
 
 Manche Routen rufen einen Dienst außerhalb des Rechners auf – `POST /api/user-settings/test-ntfy` schickt eine
-Push-Meldung an einen ntfy-Server. Diese Art startet dafür einen Mini-HTTP-Server auf einem freien Port, der
-jede Anfrage mit einem festen Status beantwortet und aufzeichnet, was ankam.
+Push-Meldung an einen ntfy-Server, `POST /api/speech/test` eine Aufnahme an die Spracherkennung. Diese Art
+startet dafür einen Mini-HTTP-Server auf einem freien Port, der jede Anfrage mit einem festen Status und einem
+festen Körper beantwortet und aufzeichnet, was ankam.
 
 | Feld | Bedeutung |
 | --- | --- |
 | `stub` | Name der Attrappe in Großbuchstaben (`NTFY`), Pflicht. |
-| `action` | `start` (Standard) startet sie, `requests` zeichnet die empfangenen Anfragen auf. |
+| `action` | `start` (Standard) startet sie, `await` wartet auf Anfragen, `requests` zeichnet die empfangenen Anfragen auf. |
 | `status` | Antwortstatus der Attrappe, Standard `200` (nur bei `start`). |
+| `body` | Antwortkörper der Attrappe (nur bei `start`): fehlt er, bleibt die Antwort leer; ein Text geht als `text/plain`, jeder andere JSON-Wert als `application/json`. |
+| `routes` | Eigene Antworten je Aufruf (nur bei `start`), siehe unten. |
+| `call` | Name des Aufrufs, auf den `await` wartet; ohne Angabe jede Anfrage. |
+| `count` | So viele Anfragen erwartet `await`, Standard `1`. |
 
 ```json
 { "name": "Attrappe starten", "kind": "httpStub", "stub": "NTFY", "save": { "ntfyUrl": "json.url" } },
@@ -299,6 +307,39 @@ jede Anfrage mit einem festen Status beantwortet und aufzeichnet, was ankam.
 - `requests` liefert je Anfrage Methode, Pfad, die Köpfe `content-type` und `authorization` und den Körper als
   `json` oder `text`. Andere Köpfe hängen am HTTP-Client und gehören nicht zum Vertrag.
 - Die Attrappen leben nur in ihrem Szenario; der Runner beendet sie danach.
+- Ein Multipart-Körper (die Aufnahme der Spracherkennung) trägt je Lauf eine andere Grenze: dort gehören
+  `headers.content-type` und `text` der Anfrage in `ignore`, sonst passt die Golden-Datei nie zweimal.
+- In jeder Adresse der Bot-API von Telegram steht das Bot-Token (`/bot123456:AA…/getMe`). Im aufgezeichneten
+  Pfad wird es zu `/bot<TOKEN>`, damit kein Geheimnis in eine Golden-Datei kommt.
+
+#### Antworten je Aufruf (`routes`) und Warten (`await`)
+
+Ein Dienst mit mehreren Aufrufen braucht je Aufruf eine eigene Antwort: Die Bot-API von Telegram beantwortet
+`getMe` mit dem Bot, `getUpdates` mit einer Liste und `sendMessage` mit der geschickten Nachricht. Schlüssel in
+`routes` ist das letzte Stück des Pfades, Wert ein Objekt mit `status`, `body` oder `bodies` (Antworten in ihrer
+Reihenfolge, die letzte wiederholt sich) und `delayMs` (so lange wartet die Attrappe – für das Long Polling von
+`getUpdates`, damit der Server sie nicht ohne Pause fragt). Ein Aufruf ohne eigenen Eintrag bekommt `status`
+und `body` der Attrappe. In `body`, `bodies` und `status` werden Variablen eingesetzt.
+
+`await` wartet, bis die Attrappe die erwarteten Anfragen gesehen hat. Damit hängt ein Szenario nicht am Takt
+einer Hintergrundaufgabe: Nach dem Einschalten des Bots steht erst mit dem ersten Aufruf von `getUpdates` fest, dass
+der Poller läuft, `GET /api/telegram/status` ihn als `running` meldet und der Bot sein Profil eingerichtet und in
+`telegram.yaml` gemerkt hat. `setMyCommands` reicht dafür nicht: das Merken kommt erst nach der Antwort darauf.
+Aufgezeichnet wird nur `{ "ok": true }` – wie viele Anfragen wirklich ankamen, ist in jedem Lauf anders.
+
+```json
+{ "name": "Attrappe der Bot-API starten", "kind": "httpStub", "stub": "TELEGRAM",
+  "body": { "ok": true, "result": true },
+  "routes": {
+    "getMe": { "body": { "ok": true, "result": { "id": 7012345678, "username": "nexus_vertrag_bot", "first_name": "Nexus" } } },
+    "getUpdates": { "body": { "ok": true, "result": [] }, "delayMs": 1000 }
+  },
+  "save": { "tgUrl": "json.url" } },
+{ "name": "Bot einschalten", "method": "PUT", "path": "/api/telegram/config",
+  "body": { "enabled": true, "apiBase": "{{tgUrl}}" } },
+{ "name": "warten, bis der Bot sich angemeldet hat", "kind": "httpStub", "action": "await",
+  "stub": "TELEGRAM", "call": "setMyCommands" }
+```
 
 ### Schritt-Art `commit`: Arbeit im Repo
 
@@ -342,6 +383,28 @@ die Zustände nach einem beendeten Lauf (Freigabe vor dem Merge, Merge, Abbruch)
 { "name": "Ergebnis des Workers", "kind": "homeFile", "path": "dispatch/runs/{{lauf}}.result.json",
   "content": { "code": 0, "timedOut": false, "endedAt": "2020-03-02T08:45:00.000Z", "output": "…" } }
 ```
+
+### Schritt-Art `wait`: Zeitstempel trennen
+
+Der Server schreibt Zeitstempel auf die Millisekunde genau. Auf einem schnellen Rechner landen zwei Anfragen
+direkt hintereinander in derselben Millisekunde. Ereignisse aus verschiedenen Quellen stehen dann in der
+Reihenfolge, in der der Server sie sammelt, nicht in der, in der sie geschahen. Die Zeitleiste eines Tickets
+zum Beispiel nimmt bei gleicher Zeit den Verlauf vor die Kommentare. Ein Szenario, das so eine Reihenfolge
+aufzeichnet, setzt ein kurzes `wait` zwischen die beiden Anfragen.
+
+| Feld | Bedeutung |
+| --- | --- |
+| `ms` | Wartezeit in Millisekunden, ganze Zahl von 1 bis 1000; Pflicht. |
+
+```json
+{ "name": "erster Kommentar", "method": "POST", "path": "/api/db/tickets/VTR-0001/comments",
+  "body": { "body": "Erster Blick" }, "record": false },
+{ "name": "Zeitstempel von Kommentar und Verschieben trennen", "kind": "wait", "ms": 5, "record": false },
+{ "name": "in Planung", "method": "POST", "path": "/api/db/tickets/VTR-0001/move", "body": { "status": "in_planning" },
+  "record": false }
+```
+
+Auf Ereignisse des Servers wartet `sseExpect` oder `httpStub` mit `await`, nicht `wait`.
 
 ## Ereignisstrom (`sseOpen`, `sseExpect`, `sseClose`)
 
@@ -654,6 +717,7 @@ contract/
 │  ├─ SseEvents.mjs           # Herzschläge, Zusammenfassen, until als Teilobjekt
 │  ├─ CommitStep.mjs          # Schritt-Art „commit“
 │  ├─ HomeFileStep.mjs        # Schritt-Art „homeFile“
+│  ├─ WaitStep.mjs            # Schritt-Art „wait“
 │  ├─ ServerHandle.mjs        # Server starten/beenden oder --base nutzen
 │  ├─ Normalizer.mjs          # ersetzt die wechselnden Werte
 │  ├─ GoldenStore.mjs         # lesen, schreiben, vergleichen

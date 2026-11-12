@@ -10,8 +10,10 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
+use nexus_core::clock::Clock;
 use nexus_core::sessions::session::{DisplayState, Session, SessionState, SessionView};
 use nexus_core::settings::{UserSettings, UserSettingsStore};
+use nexus_core::telegram::{TelegramConfig, TelegramConfigStore};
 use nexus_core::HarnessHome;
 use nexus_platform::{FakeNotifier, Notifier};
 use nexus_server::log::ServerLog;
@@ -19,6 +21,9 @@ use nexus_server::notices::BrowserNoticeHub;
 use nexus_server::notifications::model::{ToastKind, ToastModel};
 use nexus_server::notifications::ntfy::{NtfyFetch, NtfyResponse, NtfySender};
 use nexus_server::notifications::{NotificationService, NotificationSetup};
+use nexus_server::telegram::api::TelegramApi;
+use nexus_server::telegram::fake::FakeTelegram;
+use nexus_server::telegram::TelegramNotifier;
 
 /// Host und Port der Links in den Meldungen der Tests
 pub const HOST: &str = "127.0.0.1";
@@ -33,6 +38,10 @@ pub struct ServiceParts {
     pub tabs: Arc<BrowserNoticeHub>,
     pub notifier: Arc<FakeNotifier>,
     pub ntfy: Arc<FakeNtfy>,
+    /// Die Attrappe der Bot-API; sie zeichnet auf, was nach Telegram ginge
+    pub telegram: Arc<FakeTelegram>,
+    /// Der Benutzerordner des Dienstes (dort liegt auch `telegram.yaml`)
+    pub home: HarnessHome,
     /// Benutzerordner mit der `settings.json`; er muss den Dienst überleben
     _dir: tempfile::TempDir,
 }
@@ -48,8 +57,19 @@ impl ServiceParts {
     }
 }
 
-/// Ein Dienst mit diesen Einstellungen; Systemmeldungen und ntfy laufen in Attrappen
+/// Ein Dienst mit diesen Einstellungen; Systemmeldungen, ntfy und Telegram laufen in
+/// Attrappen
 pub fn service(settings: UserSettings) -> ServiceParts {
+    service_at(settings, Clock::fixed(now()))
+}
+
+/// Der Zeitpunkt der Tests; die Nachtruhe rechnet nach der Ortszeit dieses Zeitpunkts
+pub fn now() -> chrono::DateTime<chrono::Utc> {
+    "2026-11-03T12:00:00Z".parse().expect("Zeitpunkt")
+}
+
+/// Wie [`service`], mit eigener Uhr (die Nachtruhe von Telegram geht nach ihr)
+pub fn service_at(settings: UserSettings, clock: Clock) -> ServiceParts {
     let dir = tempfile::Builder::new()
         .prefix("nexus-notify-")
         .tempdir()
@@ -61,6 +81,8 @@ pub fn service(settings: UserSettings) -> ServiceParts {
     let notifier = Arc::new(FakeNotifier::new());
     let tabs = BrowserNoticeHub::new();
     let ntfy = FakeNtfy::new();
+    let telegram = Arc::new(FakeTelegram::new());
+    let api = telegram.clone();
     let service = Arc::new(NotificationService::new(NotificationSetup {
         settings: UserSettingsStore::new(home.clone()),
         notifier: notifier.clone() as Arc<dyn Notifier>,
@@ -70,14 +92,30 @@ pub fn service(settings: UserSettings) -> ServiceParts {
         log: ServerLog::new(&home),
         tabs: Some(tabs.clone()),
         ntfy: NtfySender::new(Box::new(SharedNtfy(ntfy.clone()))),
+        telegram: Some(Arc::new(TelegramNotifier::new(
+            home.clone(),
+            clock,
+            Some(Arc::new(move |_config: &TelegramConfig| {
+                api.clone() as Arc<dyn TelegramApi>
+            })),
+        ))),
     }));
     ServiceParts {
         service,
         tabs,
         notifier,
         ntfy,
+        telegram,
+        home,
         _dir: dir,
     }
+}
+
+/// Schreibt `telegram.yaml` des Dienstes
+pub fn write_telegram(home: &HarnessHome, config: &TelegramConfig) {
+    TelegramConfigStore::new(home.clone())
+        .write(config)
+        .expect("Telegram-Einstellung schreiben");
 }
 
 /// Eine Session des Projekts `p1` mit Titel und Modell, wie `view(...)` in TypeScript
@@ -95,6 +133,9 @@ pub fn view(id: &str, display_state: DisplayState) -> SessionView {
             title: Some("Favoriten als Seitenfenster".to_string()),
             model: Some("Sonnet 5.5".to_string()),
             subagents: Vec::new(),
+            transcript_path: None,
+            client: None,
+            run_name: None,
         },
         display_state,
         listening: false,

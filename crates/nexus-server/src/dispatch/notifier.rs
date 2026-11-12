@@ -18,6 +18,8 @@ pub enum DispatchNoticeKind {
     Question,
     Paused,
     Review,
+    /// Ein Autopilot-Ticket steckt in einer Sackgasse fest (statt `Blocked`)
+    Stuck,
 }
 
 impl DispatchNoticeKind {
@@ -29,6 +31,7 @@ impl DispatchNoticeKind {
             Self::Question => "question",
             Self::Paused => "paused",
             Self::Review => "review",
+            Self::Stuck => "stuck",
         }
     }
 }
@@ -43,6 +46,33 @@ pub struct DispatchNotice {
     pub text: String,
     /// Repo-Pfad des Boards (für die Adresse in der Meldung)
     pub repo_path: Option<String>,
+}
+
+impl DispatchNotice {
+    /// Meldung zu einem blockierten Ticket: im Autopilot „Autopilot steckt fest: <ID> – <Grund>“
+    /// (`Stuck`), sonst der Grund unverändert (`Blocked`)
+    pub fn blocked(
+        autopilot: bool,
+        ticket_id: &str,
+        title: &str,
+        reason: &str,
+        repo_path: Option<String>,
+    ) -> Self {
+        let (kind, text) = match autopilot {
+            true => (
+                DispatchNoticeKind::Stuck,
+                format!("Autopilot steckt fest: {ticket_id} – {reason}"),
+            ),
+            false => (DispatchNoticeKind::Blocked, reason.to_string()),
+        };
+        Self {
+            kind,
+            ticket_id: Some(ticket_id.to_string()),
+            title: title.to_string(),
+            text,
+            repo_path,
+        }
+    }
 }
 
 /// Nimmt Meldungen des Dispatchers an; Tests merken sie sich, der Betrieb schickt sie weiter.
@@ -122,5 +152,31 @@ impl DispatchNotify for ServerDispatchNotify {
             .unwrap_or_default();
         self.notifications.on_dispatch(project_id, notice).await;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn stuck_heisst_im_json_und_in_der_kennung_stuck() {
+        assert_eq!(DispatchNoticeKind::Stuck.as_str(), "stuck");
+        assert_eq!(
+            serde_json::to_string(&DispatchNoticeKind::Stuck).expect("serialisieren"),
+            "\"stuck\""
+        );
+    }
+
+    #[test]
+    fn blockiert_meldet_im_autopilot_stuck_sonst_blocked() {
+        let stuck = DispatchNotice::blocked(true, "AIH-1", "Titel", "Zugang fehlt", None);
+        assert_eq!(stuck.kind, DispatchNoticeKind::Stuck);
+        assert_eq!(stuck.text, "Autopilot steckt fest: AIH-1 – Zugang fehlt");
+        assert_eq!(stuck.ticket_id.as_deref(), Some("AIH-1"));
+
+        let blocked = DispatchNotice::blocked(false, "AIH-1", "Titel", "Zugang fehlt", None);
+        assert_eq!(blocked.kind, DispatchNoticeKind::Blocked);
+        assert_eq!(blocked.text, "Zugang fehlt");
     }
 }

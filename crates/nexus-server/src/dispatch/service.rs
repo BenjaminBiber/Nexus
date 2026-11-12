@@ -1271,6 +1271,12 @@ impl DispatchService {
             self.start_tickets(ctx, results, report).await?;
         }
         let blocked = paused.is_some() || !in_window;
+        // Autopilot-Fragen haben Vorrang vor der Recherche-Automatik und laufen auch ohne sie
+        if ctx.cfg.autopilot.enabled && !blocked {
+            let auto = research.start_autopilot().await?;
+            report.research.extend(auto.started);
+            report.errors.extend(auto.errors);
+        }
         if ctx.cfg.research.auto && !blocked {
             let auto = research.start_auto().await?;
             report.research.extend(auto.started);

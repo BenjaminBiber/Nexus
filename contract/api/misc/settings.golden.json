@@ -57,6 +57,8 @@
       "json": {
         "claudeUsage": false,
         "compactCards": false,
+        "doneArchiveDays": 0,
+        "doneGrouping": "time",
         "heroImages": false,
         "hideInPlanning": false,
         "hideNotNeeded": false,
@@ -98,6 +100,8 @@
       "json": {
         "claudeUsage": true,
         "compactCards": true,
+        "doneArchiveDays": 0,
+        "doneGrouping": "time",
         "heroImages": true,
         "hideInPlanning": true,
         "hideNotNeeded": true,
@@ -126,6 +130,8 @@
       "json": {
         "claudeUsage": true,
         "compactCards": true,
+        "doneArchiveDays": 0,
+        "doneGrouping": "time",
         "heroImages": true,
         "hideInPlanning": true,
         "hideNotNeeded": true,
@@ -147,7 +153,7 @@
     "name": "nur ein Feld ändern",
     "request": {
       "body": {
-        "theme": "win95"
+        "theme": "light"
       },
       "method": "PUT",
       "path": "/api/user-settings"
@@ -157,6 +163,8 @@
       "json": {
         "claudeUsage": true,
         "compactCards": true,
+        "doneArchiveDays": 0,
+        "doneGrouping": "time",
         "heroImages": true,
         "hideInPlanning": true,
         "hideNotNeeded": true,
@@ -169,7 +177,7 @@
           "migrationDismissed": [],
           "pluginDismissed": false
         },
-        "theme": "win95"
+        "theme": "light"
       },
       "status": 200
     }
@@ -186,6 +194,8 @@
       "json": {
         "claudeUsage": true,
         "compactCards": true,
+        "doneArchiveDays": 0,
+        "doneGrouping": "time",
         "heroImages": true,
         "hideInPlanning": true,
         "hideNotNeeded": true,
@@ -198,7 +208,7 @@
           "migrationDismissed": [],
           "pluginDismissed": false
         },
-        "theme": "win95"
+        "theme": "light"
       },
       "status": 200
     }
@@ -217,6 +227,8 @@
       "json": {
         "claudeUsage": true,
         "compactCards": true,
+        "doneArchiveDays": 0,
+        "doneGrouping": "time",
         "heroImages": true,
         "hideInPlanning": true,
         "hideNotNeeded": true,
@@ -229,7 +241,41 @@
           "migrationDismissed": [],
           "pluginDismissed": false
         },
-        "theme": "win95"
+        "theme": "light"
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Gruppierung und Archiv der Erledigt-Spalte setzen",
+    "request": {
+      "body": {
+        "doneArchiveDays": 14,
+        "doneGrouping": "spec"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "claudeUsage": true,
+        "compactCards": true,
+        "doneArchiveDays": 14,
+        "doneGrouping": "spec",
+        "heroImages": true,
+        "hideInPlanning": true,
+        "hideNotNeeded": true,
+        "notifications": "windows",
+        "ntfy": true,
+        "ntfyServer": "https://push.example",
+        "ntfyToken": "tk_vertrag",
+        "ntfyTopic": "",
+        "setupPrompts": {
+          "migrationDismissed": [],
+          "pluginDismissed": false
+        },
+        "theme": "light"
       },
       "status": 200
     }
@@ -265,7 +311,7 @@
       "contentType": "application/json",
       "json": {
         "code": "settings-invalid",
-        "message": "theme muss system, light, dark, signal, pastel oder win95 sein."
+        "message": "theme muss ein eingebautes (system, light, dark) oder installiertes Theme sein."
       },
       "status": 422
     }
@@ -433,6 +479,42 @@
     }
   },
   {
+    "name": "unbekannte Gruppierung der Erledigt-Spalte",
+    "request": {
+      "body": {
+        "doneGrouping": "liste"
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "doneGrouping muss time oder spec sein."
+      },
+      "status": 422
+    }
+  },
+  {
+    "name": "Archiv-Tage außerhalb von 0 bis 365",
+    "request": {
+      "body": {
+        "doneArchiveDays": 366
+      },
+      "method": "PUT",
+      "path": "/api/user-settings"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "settings-invalid",
+        "message": "doneArchiveDays muss eine ganze Zahl von 0 bis 365 sein."
+      },
+      "status": 422
+    }
+  },
+  {
     "name": "nach den Fehlern unverändert",
     "request": {
       "method": "GET",
@@ -443,6 +525,8 @@
       "json": {
         "claudeUsage": true,
         "compactCards": true,
+        "doneArchiveDays": 14,
+        "doneGrouping": "spec",
         "heroImages": true,
         "hideInPlanning": true,
         "hideNotNeeded": true,
@@ -455,7 +539,7 @@
           "migrationDismissed": [],
           "pluginDismissed": false
         },
-        "theme": "win95"
+        "theme": "light"
       },
       "status": 200
     }

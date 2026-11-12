@@ -627,8 +627,8 @@ describe('DbBoardPage – Abhängigkeitsgraph und Fortschritt je Spec', () => {
   const graph = {
     scope: { kind: 'board' as const, boardId: 1 },
     nodes: [
-      { id: 'ARC-0001', title: 'Login bauen', status: 'backlog' as const, column: 'backlog' as const, boardId: 1, boardName: 'Sprint', spec: null, external: false },
-      { id: 'ARC-0003', title: 'Wartet hier', status: 'backlog' as const, column: 'waiting' as const, boardId: 1, boardName: 'Sprint', spec: null, external: false },
+      { id: 'ARC-0001', title: 'Login bauen', status: 'backlog' as const, column: 'backlog' as const, boardId: 1, boardName: 'Sprint', spec: null, external: false, stepsDone: 0, stepsTotal: 0 },
+      { id: 'ARC-0003', title: 'Wartet hier', status: 'backlog' as const, column: 'waiting' as const, boardId: 1, boardName: 'Sprint', spec: null, external: false, stepsDone: 0, stepsTotal: 0 },
     ],
     edges: [{ from: 'ARC-0001', to: 'ARC-0003' }],
     criticalPath: ['ARC-0001', 'ARC-0003'],

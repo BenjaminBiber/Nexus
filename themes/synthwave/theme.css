@@ -1,0 +1,2920 @@
+/* „Synthwave“: Neon der 80er (Outrun) auf dunklem Violett, Akzent in Cyan, Fokus in Magenta, Sonne von Gelb nach Pink.
+   Jedes Farbschema setzt nur die 14 Grundwerte (--synth-bg … --synth-danger); alle Variablen des Kerns leiten sich daraus ab,
+   getönte Flächen als Mischung der Farbe mit dem Hintergrund. --synth-glow ist der Faktor für Leuchteffekte an Überschriften,
+   Rahmen und Zustandsanzeigen, nie an Fließtext. --synth-* gilt nur in diesem Theme.
+
+   Attribute, die die Shell auf <html> setzt (aus den Einstellungen):
+   data-synth-palette – Farbschema: outrun (Grundwerte im Hauptblock), miami, nightcall
+   data-synth-glow    – Stärke des Leuchtens: normal, low, high (setzt --synth-glow)
+   data-synth-horizon – Neon-Gitter am unteren Rand: animated, still, off
+   data-synth-sky     – aufgelöste Himmelsphase: dawn, day, dusk, night
+   data-synth-vhs     – on, wenn die VHS-Effekte (Scanlines, Ränder, Bildstörung) an sind
+   data-synth-tracking – kurz gesetzt beim Seitenwechsel mit VHS-Effekten, löst die Bildstörung aus
+   data-synth-side    – Seite der Kassette: a, b (Seite B ist die Nachtfahrt, der Himmel bleibt Nacht)
+   data-synth-overdrive – kurz gesetzt nach dem Konami-Code: Gitter rast, ein Wagen fährt über die Deck-Leiste
+
+   Schriften (assets/fonts, nur latin-Untermengen):
+   Orbitron (600, 800) – Copyright 2018 The Orbitron Project Authors (github.com/theleagueof/orbitron), aus @fontsource/orbitron 5.3.0
+   Exo 2 (400, 600) – Copyright 2013 The Exo 2 Project Authors (github.com/googlefonts/Exo-2.0), aus @fontsource/exo-2 5.3.0
+   Mr Dafoe (400) – Copyright (c) 2004 Alejandro Paul, Reserved Font Name „Mr Dafoe“, aus @fontsource/mr-dafoe 5.3.0
+   Alle drei stehen unter der SIL Open Font License 1.1 (openfontlicense.org). */
+
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('assets/fonts/orbitron-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 800;
+  src: url('assets/fonts/orbitron-latin-800-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Exo 2';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('assets/fonts/exo-2-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Exo 2';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('assets/fonts/exo-2-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Mr Dafoe';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('assets/fonts/mr-dafoe-latin-400-normal.woff2') format('woff2');
+}
+
+:root[data-theme='synthwave'] {
+  color-scheme: dark;
+  --font-sans: 'Exo 2', system-ui, sans-serif;
+  --synth-font-display: 'Orbitron', var(--font-sans);
+  --synth-font-script: 'Mr Dafoe', cursive;
+  --synth-bg: #120a24;
+  --synth-bg-deep: #0a0514;
+  --synth-surface: #261a4b;
+  --synth-fg: #f3eaff;
+  --synth-muted: #b5a6db;
+  --synth-line: #4d3b8c;
+  --synth-magenta: #ff2bd6;
+  --synth-cyan: #22e6ff;
+  --synth-violet: #8b5cff;
+  --synth-sun-top: #ffd23f;
+  --synth-sun-bottom: #ff3d81;
+  --synth-ok: #3dffa8;
+  --synth-warn: #ffb347;
+  --synth-danger: #ff4d6d;
+  --synth-glow: 1;
+  --synth-glow-magenta: 0 0 calc(10px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 70%, transparent);
+  --synth-glow-cyan: 0 0 calc(10px * var(--synth-glow)) color-mix(in srgb, var(--synth-cyan) 70%, transparent);
+
+  --bg: var(--synth-bg);
+  --surface: var(--synth-surface);
+  --surface-alt: color-mix(in srgb, var(--synth-surface) 60%, var(--synth-bg));
+  --sidebar-bg: color-mix(in srgb, var(--synth-bg-deep) 45%, var(--synth-bg));
+  --nav-active-bg: var(--synth-surface);
+  --line: var(--synth-line);
+  --line-input: var(--synth-line);
+  --line-soft: color-mix(in srgb, var(--synth-line) 60%, var(--synth-bg));
+  --line-strong: color-mix(in srgb, var(--synth-violet) 60%, var(--synth-line));
+  --line-dashed: var(--synth-line);
+  --column-bg: var(--synth-bg-deep);
+  --column-locked-a: var(--synth-bg-deep);
+  --column-locked-b: var(--synth-bg);
+  --text: var(--synth-fg);
+  --text-soft: color-mix(in srgb, var(--synth-fg) 75%, var(--synth-muted));
+  --muted: var(--synth-muted);
+  --accent: var(--synth-cyan);
+  --accent-hover: color-mix(in srgb, var(--synth-cyan) 80%, var(--synth-fg));
+  --accent-soft: color-mix(in srgb, var(--synth-cyan) 14%, var(--synth-bg));
+  --accent-soft-hover: color-mix(in srgb, var(--synth-cyan) 22%, var(--synth-bg));
+  --on-accent: var(--synth-bg-deep);
+  --primary: var(--synth-magenta);
+  --primary-hover: color-mix(in srgb, var(--synth-magenta) 80%, var(--synth-fg));
+  --on-primary: var(--synth-bg-deep);
+  --chip-on-bg: var(--synth-fg);
+  --chip-on-fg: var(--synth-bg);
+  --code-bg: var(--synth-bg-deep);
+  --code-fg: var(--synth-fg);
+  --code-muted: var(--synth-muted);
+  --code-btn-bg: var(--synth-surface);
+  --code-btn-line: var(--synth-line);
+  --status-bg: color-mix(in srgb, var(--synth-violet) 14%, var(--synth-bg));
+  --status-fg: var(--synth-violet);
+  --running-fg: var(--synth-ok);
+  --running-bg: color-mix(in srgb, var(--synth-ok) 14%, var(--synth-bg));
+  --waiting-fg: var(--synth-warn);
+  --waiting-bg: color-mix(in srgb, var(--synth-warn) 14%, var(--synth-bg));
+  --waiting-line: color-mix(in srgb, var(--synth-warn) 40%, var(--synth-bg));
+  --idle-fg: var(--synth-muted);
+  --idle-bg: color-mix(in srgb, var(--synth-line) 50%, var(--synth-bg));
+  --blocked-fg: var(--synth-danger);
+  --blocked-bg: color-mix(in srgb, var(--synth-danger) 14%, var(--synth-bg));
+  --orphan-fg: var(--synth-magenta);
+  --orphan-bg: color-mix(in srgb, var(--synth-magenta) 14%, var(--synth-bg));
+  --unread-fg: var(--synth-cyan);
+  --unread-bg: color-mix(in srgb, var(--synth-cyan) 14%, var(--synth-bg));
+  --unread-row-bg: color-mix(in srgb, var(--synth-cyan) 7%, var(--synth-bg));
+  --note-bg: color-mix(in srgb, var(--synth-sun-top) 14%, var(--synth-bg));
+  --note-line: color-mix(in srgb, var(--synth-sun-top) 40%, var(--synth-bg));
+  --note-fg: var(--synth-sun-top);
+  --ok: var(--synth-ok);
+  --ok-fg: var(--synth-ok);
+  --ok-ring: color-mix(in srgb, var(--synth-ok) 14%, var(--synth-bg));
+  --danger: var(--synth-danger);
+  --warn: var(--synth-warn);
+  --usage-ok: var(--synth-cyan);
+  --usage-warn: var(--synth-warn);
+  --usage-crit: var(--synth-magenta);
+  --usage-over: var(--synth-sun-bottom);
+  --row-waiting-bg: color-mix(in srgb, var(--synth-warn) 6%, var(--synth-bg));
+  --quote-line: var(--synth-violet);
+  --mark: color-mix(in srgb, var(--synth-magenta) 35%, var(--synth-bg));
+  --mark-comment: color-mix(in srgb, var(--synth-violet) 18%, var(--synth-bg));
+  --mark-comment-hover: color-mix(in srgb, var(--synth-violet) 28%, var(--synth-bg));
+  --tag-add-line: var(--synth-violet);
+  --connection-line: color-mix(in srgb, var(--synth-danger) 40%, var(--synth-bg));
+  --connection-fg: var(--synth-danger);
+  --error-bg: color-mix(in srgb, var(--synth-danger) 8%, var(--synth-bg));
+  --answered-bg: color-mix(in srgb, var(--synth-ok) 14%, var(--synth-bg));
+  --answered-line: color-mix(in srgb, var(--synth-ok) 35%, var(--synth-bg));
+  --research-bg: color-mix(in srgb, var(--synth-cyan) 14%, var(--synth-bg));
+  --research-fg: var(--synth-cyan);
+  --diff-add-bg: color-mix(in srgb, var(--synth-ok) 14%, var(--synth-bg-deep));
+  --diff-add-fg: var(--synth-ok);
+  --diff-del-bg: color-mix(in srgb, var(--synth-danger) 14%, var(--synth-bg-deep));
+  --diff-del-fg: var(--synth-danger);
+  --diff-hunk-fg: var(--synth-violet);
+  --test-ok: var(--synth-ok);
+  --test-fail: var(--synth-danger);
+  --status-backlog: var(--synth-muted);
+  --status-waiting: var(--synth-warn);
+  --status-in-planning: var(--synth-violet);
+  --status-planned: var(--synth-cyan);
+  --status-in-progress: var(--synth-magenta);
+  --status-blocked: var(--synth-danger);
+  --status-done: var(--synth-ok);
+  --status-not-needed: var(--synth-line);
+  --graph-edge: var(--synth-line);
+  --graph-critical: var(--synth-magenta);
+  --graph-upstream: var(--synth-cyan);
+  --graph-downstream: var(--synth-violet);
+  --chart-done: var(--synth-ok);
+  --chart-fail: var(--synth-danger);
+  --chart-bar: var(--synth-cyan);
+  --chart-track: color-mix(in srgb, var(--synth-line) 60%, var(--synth-bg));
+  --chart-grid: color-mix(in srgb, var(--synth-line) 60%, var(--synth-bg));
+  --chart-axis: var(--synth-muted);
+  --chart-other: var(--synth-line);
+  --chart-escalated: var(--synth-sun-bottom);
+  --reason-max-turns: var(--synth-danger);
+  --reason-timeout: var(--synth-warn);
+  --reason-context: var(--synth-magenta);
+  --reason-exit-code: var(--synth-violet);
+  --reason-claude-error: var(--synth-cyan);
+  --reason-no-outcome: var(--synth-sun-top);
+  --reason-rest: var(--synth-muted);
+  --urgent-row-bg: color-mix(in srgb, var(--synth-danger) 8%, var(--synth-bg));
+  --shadow-faint: rgba(0, 0, 0, 0.2);
+  --shadow-mid: rgba(0, 0, 0, 0.3);
+  --shadow-soft: rgba(0, 0, 0, 0.25);
+  --shadow-tab: rgba(0, 0, 0, 0.35);
+  --shadow-strong: rgba(0, 0, 0, 0.4);
+  --backdrop: color-mix(in srgb, var(--synth-bg-deep) 70%, transparent);
+  --sheet-shadow: rgba(0, 0, 0, 0.5);
+  --picker-shadow: rgba(0, 0, 0, 0.4);
+}
+
+/* Farbschema „Miami“: Nachtblau, Pink und Türkis (auch für die Startanimation, die vor der Shell läuft) */
+:root[data-theme='synthwave'] .synth-sunrise[data-synth-palette='miami'],
+:root[data-theme='synthwave'][data-synth-palette='miami'] {
+  --synth-bg: #101a2b;
+  --synth-bg-deep: #0a111d;
+  --synth-surface: #1f3453;
+  --synth-fg: #f4fbff;
+  --synth-muted: #afc5d8;
+  --synth-line: #3b6085;
+  --synth-magenta: #ff5fa2;
+  --synth-cyan: #2ee6c8;
+  --synth-violet: #7f8cff;
+  --synth-sun-top: #ffe066;
+  --synth-sun-bottom: #ff7a45;
+  --synth-ok: #52f2a0;
+  --synth-warn: #ffb347;
+  --synth-danger: #ff5470;
+}
+
+/* Farbschema „Nightcall“: tiefes Blau, Violett und kühles Neon */
+:root[data-theme='synthwave'] .synth-sunrise[data-synth-palette='nightcall'],
+:root[data-theme='synthwave'][data-synth-palette='nightcall'] {
+  --synth-bg: #070b1e;
+  --synth-bg-deep: #03050f;
+  --synth-surface: #182249;
+  --synth-fg: #e6ecff;
+  --synth-muted: #a0acd8;
+  --synth-line: #34438d;
+  --synth-magenta: #c44dff;
+  --synth-cyan: #3d8bff;
+  --synth-violet: #5a4dff;
+  --synth-sun-top: #ff9de1;
+  --synth-sun-bottom: #7a3dff;
+  --synth-ok: #45e0b0;
+  --synth-warn: #ffc266;
+  --synth-danger: #ff4d7a;
+}
+
+/* Glow-Stufen: Faktor für alle Leuchteffekte (normal = 1 im Grundblock) */
+:root[data-theme='synthwave'][data-synth-glow='low'] {
+  --synth-glow: 0.45;
+}
+
+:root[data-theme='synthwave'][data-synth-glow='high'] {
+  --synth-glow: 1.7;
+}
+
+/* Überschriften: Orbitron in Versalien im Chrom-Verlauf, Leuchten über drop-shadow; ohne background-clip einfarbig Cyan */
+:root[data-theme='synthwave'] :is(.page-title, .page-head h1, .dash-title h1, .questions-head h1, .docs-explorer-title h1, .page.narrow > div:first-child > h1, .settings-head h2, .settings-nav-title, .column-head h2, .settings-section-title h3) {
+  font-family: var(--synth-font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--synth-cyan);
+}
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  :root[data-theme='synthwave'] :is(.page-title, .page-head h1, .dash-title h1, .questions-head h1, .docs-explorer-title h1, .page.narrow > div:first-child > h1, .settings-head h2, .settings-nav-title, .column-head h2, .settings-section-title h3) {
+    background: linear-gradient(to bottom, #fff 0%, var(--synth-cyan) 45%, var(--synth-violet) 50%, var(--synth-magenta) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(var(--synth-glow-magenta));
+  }
+}
+
+:root[data-theme='synthwave'] :is(.column-head h2, .settings-section-title h3) {
+  font-weight: 600;
+}
+
+/* Neon-Schreibschrift für Schriftzug und Akzente der Shell */
+:root[data-theme='synthwave'] .synth-script {
+  font-family: var(--synth-font-script);
+  font-weight: 400;
+  color: var(--synth-magenta);
+  text-shadow:
+    0 0 calc(4px * var(--synth-glow)) color-mix(in srgb, #fff 60%, var(--synth-magenta)),
+    0 0 calc(14px * var(--synth-glow)) var(--synth-magenta);
+}
+
+/* Karten-Titel bleiben im Fließtext (Exo 2, 600), ohne Verlauf und Glow */
+:root[data-theme='synthwave'] .card-title {
+  font-weight: 600;
+}
+
+/* Fokusring in Magenta: immer ein Rahmen, Leuchten kommt höchstens dazu */
+:root[data-theme='synthwave'] :focus-visible,
+:root[data-theme='synthwave'] :is(button, a, summary, [tabindex]:not([tabindex='-1']), input, select, textarea):focus-visible {
+  outline: 2px solid var(--synth-magenta);
+  outline-offset: 2px;
+}
+
+/* Knöpfe und Links leuchten beim Fokus zusätzlich; Einträge in Navigationslisten bekommen den Ring nach innen,
+   damit der scrollende Rand der Liste ihn nicht abschneidet */
+:root[data-theme='synthwave'] :is(.btn, .icon-btn, .global-search, .board-picker-trigger, .bp-edit, .tab):focus-visible {
+  box-shadow: 0 0 calc(10px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 55%, transparent);
+}
+
+:root[data-theme='synthwave'] :is(.synth-tracks.nav a, .settings-nav a, .board-picker-trigger, .bp-edit):focus-visible {
+  outline-offset: -2px;
+}
+
+/* ---------- Rahmen: Kassettendeck mit Display, Titelliste und Deck-Leiste ---------- */
+:root[data-theme='synthwave'] #root:has(.synth-screen) {
+  display: block;
+  height: 100vh;
+  height: 100dvh;
+}
+
+:root[data-theme='synthwave'] .synth-screen {
+  --synth-display-h: 56px;
+  --synth-deck-h: 36px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100%;
+  background: var(--bg);
+}
+
+/* Seitenpanels (Ticket, Notiz, Blatt) liegen über Display und Deck-Leiste auf voller Höhe, Dialoge und ihre Abdunklung
+   (Abhängigkeiten, Diagramm-Vollbild, Modale) darüber. Das Display hat z-index 30, daher hier die Stufen 40 und 50. */
+:root[data-theme='synthwave'] .synth-screen .sheet-backdrop {
+  z-index: 39;
+}
+
+:root[data-theme='synthwave'] .synth-screen :is(.db-panel, .sheet, .note-slide) {
+  z-index: 40;
+}
+
+:root[data-theme='synthwave'] :is(.db-dialog-backdrop, .db-modal-backdrop, .diagram-viewer-backdrop) {
+  z-index: 50;
+}
+
+/* Display oben: Fläche in der Farbe der Karten, unten mit Abendrot-Schein, abgeschlossen von einer Neonlinie im
+   Sonnenverlauf (Gelb → Magenta → Cyan). Hell genug, dass das Display nicht im Schwarz versinkt, aber ohne flächiges
+   Violett, auf dem der Schriftzug absäuft. */
+:root[data-theme='synthwave'] .synth-display {
+  position: relative;
+  z-index: 30;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: var(--synth-display-h);
+  padding: 6px 20px;
+  background:
+    radial-gradient(90% 160% at 50% 170%, color-mix(in srgb, var(--synth-magenta) 26%, transparent), transparent 70%),
+    linear-gradient(to bottom, color-mix(in srgb, var(--synth-surface) 75%, var(--synth-bg)), var(--synth-surface));
+  border-bottom: 0;
+  box-shadow: 0 2px calc(14px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 35%, transparent);
+}
+
+:root[data-theme='synthwave'] .synth-display::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--synth-sun-top), var(--synth-magenta) 40%, var(--synth-violet) 70%, var(--synth-cyan));
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 70%, transparent);
+  pointer-events: none;
+}
+
+/* Schriftzug als Neonröhre: heller Kern, enger Schein in Magenta. Der Schein wächst mit der Glow-Stufe nur bis 1,2,
+   bei „Voll“ verschwämme die dünne Schreibschrift sonst im eigenen Leuchten. */
+:root[data-theme='synthwave'] .synth-logo.synth-script {
+  --synth-logo-glow: min(var(--synth-glow), 1.2);
+  color: color-mix(in srgb, #fff 55%, var(--synth-magenta));
+  text-shadow:
+    0 0 1px #fff,
+    0 0 calc(3px * var(--synth-logo-glow)) var(--synth-magenta),
+    0 0 calc(8px * var(--synth-logo-glow)) var(--synth-magenta),
+    0 0 calc(16px * var(--synth-logo-glow)) color-mix(in srgb, var(--synth-magenta) 50%, transparent);
+}
+
+/* Felder im Display: tief dunkle Flächen mit Cyan-Rand, damit sie sich klar vom Display abheben */
+:root[data-theme='synthwave'] .synth-display .bp-field {
+  border-color: color-mix(in srgb, var(--synth-cyan) 40%, var(--synth-line));
+  background: var(--synth-bg-deep);
+}
+
+/* Suche als Display eines Kassettendecks (VFD): volle Breite, tiefes Glas mit feinen Zeilen, Rahmen im Neonverlauf,
+   Schrift in Cyan wie Leuchtziffern und ein blinkender Block-Cursor. Taste rechts als erhabene Gerätetaste. */
+:root[data-theme='synthwave'] .synth-display .global-search {
+  position: relative;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 6px 0 12px;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(to bottom, rgb(255 255 255 / 0.04) 0 1px, transparent 1px 3px) padding-box,
+    linear-gradient(to bottom, var(--synth-bg-deep), color-mix(in srgb, var(--synth-violet) 22%, var(--synth-bg-deep)))
+      padding-box,
+    linear-gradient(90deg, var(--synth-magenta), var(--synth-violet) 50%, var(--synth-cyan)) border-box;
+  box-shadow:
+    inset 0 2px 10px rgb(0 0 0 / 0.55),
+    0 0 calc(10px * var(--synth-glow)) -3px color-mix(in srgb, var(--synth-magenta) 60%, transparent);
+  color: var(--synth-cyan);
+  font-family: var(--synth-font-display);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+:root[data-theme='synthwave'] .synth-display .global-search svg {
+  flex: none;
+  color: var(--synth-magenta);
+  filter: drop-shadow(0 0 calc(4px * var(--synth-glow)) var(--synth-magenta));
+}
+
+:root[data-theme='synthwave'] .synth-display .global-search-label {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+  text-shadow: 0 0 calc(6px * var(--synth-glow)) color-mix(in srgb, var(--synth-cyan) 70%, transparent);
+}
+
+:root[data-theme='synthwave'] .synth-display .global-search-label::after {
+  content: '';
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 0.35em;
+  background: var(--synth-magenta);
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-magenta);
+  animation: synth-cursor 1.1s steps(1, end) infinite;
+}
+
+@keyframes synth-cursor {
+  50% {
+    opacity: 0;
+  }
+}
+
+:root[data-theme='synthwave'] .synth-display .global-search .nav-kbd {
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--synth-fg) 30%, var(--synth-line));
+  border-bottom-width: 3px;
+  border-radius: 5px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--synth-fg) 10%, var(--synth-surface)), var(--synth-surface));
+  color: var(--synth-fg);
+  font-family: var(--synth-font-display);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-shadow: none;
+}
+
+:root[data-theme='synthwave'] .synth-display .global-search:hover {
+  border-color: transparent;
+  background:
+    repeating-linear-gradient(to bottom, rgb(255 255 255 / 0.05) 0 1px, transparent 1px 3px) padding-box,
+    linear-gradient(to bottom, var(--synth-bg-deep), color-mix(in srgb, var(--synth-cyan) 16%, var(--synth-bg-deep)))
+      padding-box,
+    linear-gradient(90deg, var(--synth-magenta), var(--synth-violet) 50%, var(--synth-cyan)) border-box;
+  color: var(--synth-cyan);
+  box-shadow:
+    inset 0 2px 10px rgb(0 0 0 / 0.55),
+    0 0 calc(14px * var(--synth-glow)) -2px color-mix(in srgb, var(--synth-cyan) 60%, transparent);
+}
+
+:root[data-theme='synthwave'] .synth-logo {
+  flex: none;
+  font-size: 32px;
+  line-height: 1;
+  padding-right: 8px;
+}
+
+:root[data-theme='synthwave'] .synth-board {
+  flex: 0 1 300px;
+  min-width: 0;
+}
+
+:root[data-theme='synthwave'] .synth-board .bp-field {
+  width: 100%;
+}
+
+:root[data-theme='synthwave'] .synth-search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Körper: Titelliste links, Seite rechts; nur die Seite scrollt */
+:root[data-theme='synthwave'] .synth-body {
+  display: grid;
+  grid-template-columns: 15rem 1fr;
+  min-height: 0;
+  position: relative;
+}
+
+/* Inhalt liegt vor dem Horizont (später im Baum, gleiche Ebene); Karten behalten ihren deckenden Hintergrund. Ohne
+   eigenen z-index, sonst bliebe alles Feste darin (Panels, Dialoge) unter Display und Deck-Leiste gefangen. */
+:root[data-theme='synthwave'] .synth-body > :not(.synth-horizon) {
+  position: relative;
+}
+
+/* Horizont: Sterne, Mond, Sonne und Gitter am unteren Rand hinter dem Inhalt. Der Himmel bleibt durchscheinend, der Boden
+   unter der Horizontlinie (62 %) ist dunkel, damit das Gitter darauf klar steht.
+   Phase über data-synth-sky (dawn, day, dusk, night), Bewegung über data-synth-horizon (animated, still; off rendert nichts). */
+:root[data-theme='synthwave'] .synth-horizon {
+  --synth-sun-y: 35%;
+  --synth-sky-top: var(--synth-violet);
+  --synth-sky-bottom: var(--synth-magenta);
+  --synth-grid-line: var(--synth-magenta);
+  --synth-grid-opacity: 1;
+  --synth-stars-opacity: 0.4;
+  --synth-moon-opacity: 0;
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 38%;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.85;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--synth-sky-top) 22%, transparent) 40%,
+    color-mix(in srgb, var(--synth-sky-bottom) 38%, transparent) 62%,
+    color-mix(in srgb, var(--synth-grid-line) 14%, var(--synth-bg-deep)) 62%,
+    var(--synth-bg-deep)
+  );
+}
+
+/* Horizontlinie: schmaler Leuchtstreifen zwischen Himmel und Boden */
+:root[data-theme='synthwave'] .synth-horizon::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 62%;
+  height: 2px;
+  margin-top: -1px;
+  background: linear-gradient(to right, transparent, var(--synth-grid-line) 15% 85%, transparent);
+  box-shadow: 0 0 calc(12px * var(--synth-glow)) var(--synth-grid-line);
+  opacity: var(--synth-grid-opacity);
+  transition: opacity 2s ease;
+}
+
+:root[data-theme='synthwave'] .synth-stars {
+  position: absolute;
+  inset: 0 0 38% 0;
+  opacity: var(--synth-stars-opacity);
+  background:
+    radial-gradient(1.5px 1.5px at 8% 30%, var(--synth-fg), transparent),
+    radial-gradient(1px 1px at 19% 62%, var(--synth-fg), transparent),
+    radial-gradient(1.5px 1.5px at 33% 18%, var(--synth-cyan), transparent),
+    radial-gradient(1px 1px at 47% 48%, var(--synth-fg), transparent),
+    radial-gradient(1.5px 1.5px at 61% 24%, var(--synth-fg), transparent),
+    radial-gradient(1px 1px at 72% 70%, var(--synth-cyan), transparent),
+    radial-gradient(1.5px 1.5px at 84% 38%, var(--synth-fg), transparent),
+    radial-gradient(1px 1px at 93% 14%, var(--synth-fg), transparent);
+  transition: opacity 2s ease;
+}
+
+/* Sonne: Halbkreis auf der Horizontlinie, Streifen nach unten breiter */
+:root[data-theme='synthwave'] .synth-sun {
+  position: absolute;
+  left: 50%;
+  bottom: 38%;
+  width: min(220px, 40%);
+  aspect-ratio: 2 / 1;
+  margin-left: calc(min(220px, 40%) / -2);
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(to bottom, var(--synth-sun-top), var(--synth-sun-bottom));
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0 52%,
+    transparent 52% 56%,
+    #000 56% 66%,
+    transparent 66% 72%,
+    #000 72% 80%,
+    transparent 80% 88%,
+    #000 88% 94%,
+    transparent 94%
+  );
+  /* was unter der Horizontlinie liegt, schneidet clip-path ab: die Sonne versinkt hinter dem Boden */
+  clip-path: inset(0 0 var(--synth-sun-y) 0);
+  transform: translateY(var(--synth-sun-y));
+  transition:
+    transform 2s ease,
+    clip-path 2s ease,
+    opacity 2s ease;
+}
+
+/* Mond (nur nachts): Sichel in kühlem Weiß mit Cyan-Schein oben rechts am Himmel. Die Scheibe liegt auf ::before und
+   bekommt die Aussparung per Maske; das Leuchten sitzt auf dem Element selbst, sonst schnitte die Maske es mit ab. */
+:root[data-theme='synthwave'] .synth-moon {
+  position: absolute;
+  top: 10%;
+  right: 16%;
+  width: clamp(34px, 4vw, 60px);
+  aspect-ratio: 1;
+  filter: drop-shadow(0 0 calc(6px * var(--synth-glow)) color-mix(in srgb, var(--synth-cyan) 75%, transparent))
+    drop-shadow(0 0 calc(16px * var(--synth-glow)) color-mix(in srgb, var(--synth-violet) 70%, transparent));
+  opacity: var(--synth-moon-opacity);
+  transform: translateY(calc((1 - var(--synth-moon-opacity)) * 40%));
+  transition:
+    opacity 2s ease,
+    transform 2s ease;
+}
+
+:root[data-theme='synthwave'] .synth-moon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 45%,
+    #fff 0,
+    color-mix(in srgb, var(--synth-fg) 85%, var(--synth-cyan)) 50%,
+    color-mix(in srgb, var(--synth-fg) 55%, var(--synth-violet)) 100%
+  );
+  mask-image: radial-gradient(circle at 76% 30%, transparent 0 46%, #000 47%);
+}
+
+/* Boden unter der Horizontlinie: Bühne für das gekippte Gitter. Der Fluchtpunkt (perspective-origin minus
+   320px · cot 62° ≈ 170px) liegt knapp über der Linie, so reicht das Gitter bei jeder Fensterhöhe bis an den Horizont;
+   was darüber hinausragt, schneidet overflow ab. */
+:root[data-theme='synthwave'] .synth-ground {
+  position: absolute;
+  inset: 62% 0 0 0;
+  overflow: hidden;
+  perspective: 320px;
+  perspective-origin: 50% 120px;
+}
+
+/* Gitter: waagerechte und senkrechte Linien, nach hinten gekippt; zum Horizont hin blasser, aber nie ganz weg */
+:root[data-theme='synthwave'] .synth-grid {
+  position: absolute;
+  inset: auto -50% 0 -50%;
+  height: 600%;
+  opacity: var(--synth-grid-opacity);
+  background-image:
+    repeating-linear-gradient(to bottom, var(--synth-grid-line) 0 2px, transparent 2px 48px),
+    repeating-linear-gradient(to right, var(--synth-grid-line) 0 2px, transparent 2px 64px);
+  mask-image: linear-gradient(to top, #000 0 3%, rgb(0 0 0 / 0.5) 20%, rgb(0 0 0 / 0.15) 60%);
+  transform: rotateX(62deg);
+  transform-origin: bottom;
+  transition: opacity 2s ease;
+}
+
+:root[data-theme='synthwave'][data-synth-horizon='animated'] .synth-grid {
+  animation: synth-drive 2.4s linear infinite;
+}
+
+@keyframes synth-drive {
+  to {
+    background-position:
+      0 48px,
+      0 0;
+  }
+}
+
+/* Phasen: Morgenrot – Sonne tief, Violett nach warmem Rosa */
+:root[data-theme='synthwave'][data-synth-sky='dawn'] .synth-horizon {
+  --synth-sun-y: 60%;
+  --synth-sky-bottom: color-mix(in srgb, var(--synth-sun-bottom) 60%, var(--synth-sun-top));
+  --synth-stars-opacity: 0;
+}
+
+/* Tag – Sonne hoch, Gitter blass, keine Sterne */
+:root[data-theme='synthwave'][data-synth-sky='day'] .synth-horizon {
+  --synth-sun-y: -20%;
+  --synth-sky-top: var(--synth-cyan);
+  --synth-sky-bottom: var(--synth-violet);
+  --synth-grid-opacity: 0.55;
+  --synth-stars-opacity: 0;
+}
+
+/* Dämmerung – Sonne halb versunken, kräftigste Farben (Standardbild) */
+:root[data-theme='synthwave'][data-synth-sky='dusk'] .synth-horizon {
+  --synth-sun-y: 35%;
+  --synth-stars-opacity: 0.4;
+}
+
+/* Nacht – keine Sonne, dafür Mond und Sterne, Gitter in Cyan */
+:root[data-theme='synthwave'][data-synth-sky='night'] .synth-horizon {
+  --synth-sun-y: 100%;
+  --synth-sky-top: var(--synth-bg-deep);
+  --synth-sky-bottom: var(--synth-violet);
+  --synth-grid-line: var(--synth-cyan);
+  --synth-stars-opacity: 1;
+  --synth-moon-opacity: 1;
+}
+
+:root[data-theme='synthwave'][data-synth-sky='night'] .synth-sun {
+  opacity: 0;
+}
+
+:root[data-theme='synthwave'] .synth-body .shell-content {
+  min-width: 0;
+  min-height: 0;
+}
+
+:root[data-theme='synthwave'] .synth-body .connection-slot:empty {
+  display: none;
+}
+
+/* Einstellungen: der Kern macht die Navigation 100vh hoch und klebt sie oben fest. Im Rahmen ist die Seite um Display
+   und Deck-Leiste kürzer, die Navigation rutschte am Ende also um deren Höhe mit. Display und Leiste haben hier eine feste
+   Höhe, die Navigation genau die Resthöhe: sie steht, nur die Seite rechts scrollt. */
+@media (min-width: 901px) {
+  :root[data-theme='synthwave'] .synth-display {
+    height: var(--synth-display-h);
+  }
+
+  :root[data-theme='synthwave'] .synth-deck {
+    height: var(--synth-deck-h);
+  }
+
+  :root[data-theme='synthwave'] .synth-body .settings-nav {
+    height: calc(100vh - var(--synth-display-h) - var(--synth-deck-h));
+    height: calc(100dvh - var(--synth-display-h) - var(--synth-deck-h));
+  }
+}
+
+/* Titelliste der A-Seite */
+:root[data-theme='synthwave'] .synth-tracks.nav {
+  gap: 2px;
+  padding: 16px 10px;
+  border-right: 1px solid var(--synth-line);
+  background: color-mix(in srgb, var(--synth-bg-deep) 70%, var(--synth-bg));
+  overflow-y: auto;
+}
+
+:root[data-theme='synthwave'] .synth-side {
+  padding: 0 10px 10px;
+  font-family: var(--synth-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a {
+  position: relative;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 4px;
+  background: none;
+  box-shadow: none;
+  color: var(--text-soft);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a .nav-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:root[data-theme='synthwave'] .synth-track-no {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 2.6em;
+  font-family: var(--synth-font-display);
+  font-size: 12px;
+  color: var(--synth-muted);
+}
+
+/* Platz für das Wiedergabe-Zeichen, damit die Nummern bündig stehen */
+:root[data-theme='synthwave'] .synth-track-no::before {
+  content: '';
+  display: inline-block;
+  width: 0.8em;
+}
+
+/* Einträge der Titelliste und der Einstellungen: immer mit 1 px Rahmen (anfangs unsichtbar), damit nichts springt.
+   Überfahren: Cyan-Tönung mit feinem Cyan-Rahmen. Aktiv: „eingelegte Kassette“ – tiefes Fenster mit Rahmen im
+   Sonnenverlauf und den drei Etikettstreifen (Gelb, Orange, Magenta) unten; keine Kante links. */
+:root[data-theme='synthwave'] :is(.synth-tracks.nav, .settings-nav) a {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+:root[data-theme='synthwave'] :is(.synth-tracks.nav, .settings-nav) a:hover:not(.active) {
+  border-color: color-mix(in srgb, var(--synth-cyan) 45%, transparent);
+  background: color-mix(in srgb, var(--synth-cyan) 10%, transparent);
+  color: var(--synth-cyan);
+  box-shadow: none;
+}
+
+:root[data-theme='synthwave'] :is(.synth-tracks.nav, .settings-nav) a.active {
+  border-color: transparent;
+  background:
+    linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--synth-magenta) 16%, var(--synth-bg-deep)),
+        color-mix(in srgb, var(--synth-violet) 14%, var(--synth-bg-deep))
+      )
+      padding-box,
+    linear-gradient(90deg, var(--synth-sun-top), var(--synth-sun-bottom) 35%, var(--synth-magenta) 65%, var(--synth-cyan))
+      border-box;
+  color: var(--synth-fg);
+  box-shadow: 0 0 calc(12px * var(--synth-glow)) -2px color-mix(in srgb, var(--synth-magenta) 55%, transparent);
+}
+
+/* Etikettstreifen: drei feine Linien im Sonnenverlauf, an den Enden ausgeblendet */
+:root[data-theme='synthwave'] :is(.synth-tracks.nav, .settings-nav) a.active::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 3px;
+  height: 5px;
+  background: linear-gradient(
+    to bottom,
+    var(--synth-sun-top) 0 1px,
+    transparent 1px 2px,
+    var(--synth-sun-bottom) 2px 3px,
+    transparent 3px 4px,
+    var(--synth-magenta) 4px 5px
+  );
+  mask-image: linear-gradient(to right, transparent, #000 15% 85%, transparent);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+/* Navigation der Einstellungen im selben Stil wie die Titelliste */
+:root[data-theme='synthwave'] .settings-nav {
+  border-right-color: var(--synth-line);
+}
+
+:root[data-theme='synthwave'] .settings-nav .side-label {
+  font-family: var(--synth-font-display);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--synth-cyan);
+  opacity: 0.85;
+}
+
+:root[data-theme='synthwave'] .settings-nav a:hover:not(.active) .nav-icon {
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] .settings-nav a.active .nav-icon {
+  color: var(--synth-magenta);
+  filter: drop-shadow(0 0 calc(4px * var(--synth-glow)) var(--synth-magenta));
+}
+
+/* Board-Auswahl, Suche und Reiter: Überfahren in Cyan */
+:root[data-theme='synthwave'] .bp-field {
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+:root[data-theme='synthwave'] .bp-field:hover {
+  border-color: color-mix(in srgb, var(--synth-cyan) 60%, var(--synth-line));
+}
+
+:root[data-theme='synthwave'] .bp-field:has(.board-picker-trigger[aria-expanded='true']) {
+  border-color: var(--synth-magenta);
+  box-shadow: var(--synth-glow-magenta);
+}
+
+:root[data-theme='synthwave'] :is(.board-picker-trigger, .bp-edit):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--synth-cyan) 12%, transparent);
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] .bp-edit {
+  border-left-color: color-mix(in srgb, var(--synth-cyan) 30%, var(--synth-line));
+}
+
+:root[data-theme='synthwave'] .tab:hover:not(.on) {
+  color: var(--synth-cyan);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--synth-cyan) 50%, transparent);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a.active .synth-track-no {
+  color: var(--synth-magenta);
+  text-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a.active .synth-track-no::before {
+  content: '▶';
+  font-size: 0.8em;
+}
+
+/* Neon-Symbole: Linien in Textfarbe mit Leuchten nach Glow-Stufe */
+:root[data-theme='synthwave'] .synth-icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  filter: drop-shadow(0 0 calc(3px * var(--synth-glow)) currentColor);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a .synth-icon {
+  color: var(--synth-muted);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a:hover .synth-icon {
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] .synth-tracks.nav a.active .synth-icon {
+  color: var(--synth-magenta);
+}
+
+/* Leerzustand: Palme vor der Sonne, „NO SIGNAL“ flimmert leise */
+:root[data-theme='synthwave'] .synth-icon.synth-empty {
+  width: 120px;
+  height: 80px;
+  color: var(--synth-muted);
+  animation: synth-hum 4s ease-in-out infinite;
+}
+
+:root[data-theme='synthwave'] .synth-empty-sun-top {
+  stop-color: var(--synth-sun-top);
+}
+
+:root[data-theme='synthwave'] .synth-empty-sun-bottom {
+  stop-color: var(--synth-sun-bottom);
+}
+
+:root[data-theme='synthwave'] .synth-empty-stripes {
+  stroke: var(--synth-bg-deep);
+  stroke-width: 2.5;
+}
+
+:root[data-theme='synthwave'] .synth-empty-palm {
+  stroke: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] .synth-empty-ground {
+  stroke: var(--synth-magenta);
+}
+
+@keyframes synth-hum {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  48% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  52% {
+    opacity: 0.9;
+  }
+}
+
+/* Zähler als kleine Neon-Pille */
+:root[data-theme='synthwave'] .synth-tracks .nav-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--synth-magenta);
+  background: color-mix(in srgb, var(--synth-magenta) 18%, transparent);
+  color: var(--synth-fg);
+  font-size: 11px;
+  box-shadow: var(--synth-glow-magenta);
+}
+
+/* Equalizer am laufenden Titel: drei Balken, die von unten wachsen */
+:root[data-theme='synthwave'] .synth-eq {
+  flex: none;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+
+:root[data-theme='synthwave'] .synth-eq i {
+  display: block;
+  width: 3px;
+  height: 100%;
+  background: var(--synth-magenta);
+  transform-origin: bottom;
+  animation: synth-eq 0.9s ease-in-out infinite alternate;
+}
+
+:root[data-theme='synthwave'] .synth-eq i:nth-child(2) {
+  animation-duration: 1.2s;
+}
+
+:root[data-theme='synthwave'] .synth-eq i:nth-child(3) {
+  animation-duration: 0.7s;
+}
+
+@keyframes synth-eq {
+  from {
+    transform: scaleY(0.25);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Deck-Leiste unten: gebürstete Gerätefront in Kartenfarbe mit Neonlinie oben, Gegenstück zum Display */
+:root[data-theme='synthwave'] .synth-deck {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: var(--synth-deck-h);
+  padding: 0 20px;
+  background:
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 4px),
+    radial-gradient(80% 180% at 50% -80%, color-mix(in srgb, var(--synth-cyan) 18%, transparent), transparent 70%),
+    linear-gradient(to bottom, var(--synth-surface), color-mix(in srgb, var(--synth-surface) 70%, var(--synth-bg)));
+  border-top: 0;
+}
+
+:root[data-theme='synthwave'] .synth-deck::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--synth-cyan), var(--synth-violet) 30%, var(--synth-magenta) 60%, var(--synth-sun-top));
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-cyan) 60%, transparent);
+  pointer-events: none;
+}
+
+/* Bandetikett: cremefarbener Aufkleber mit Schreibschrift, leicht schief aufgeklebt */
+:root[data-theme='synthwave'] .synth-tape-label {
+  font-family: var(--synth-font-script);
+  font-size: 18px;
+  line-height: 1.2;
+  padding: 1px 12px;
+  color: #2a1a3a;
+  background: #f4ead2;
+  border-radius: 2px;
+  transform: rotate(-1deg);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+  white-space: nowrap;
+}
+
+:root[data-theme='synthwave'] .synth-tape-label:empty {
+  display: none;
+}
+
+:root[data-theme='synthwave'] .synth-spacer {
+  flex: 1;
+}
+
+/* VU-Meter: 12 Segmente, grün bis 8, dann Warnung und Spitze; aus = 15 % Deckkraft */
+:root[data-theme='synthwave'] .synth-vu-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+:root[data-theme='synthwave'] .synth-vu {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--synth-font-display);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--synth-muted);
+}
+
+:root[data-theme='synthwave'] .synth-vu-tag {
+  width: 2.2em;
+}
+
+:root[data-theme='synthwave'] .synth-vu-value {
+  min-width: 3.5em;
+  color: var(--synth-fg);
+}
+
+:root[data-theme='synthwave'] .synth-vu-bar {
+  display: flex;
+  gap: 2px;
+}
+
+:root[data-theme='synthwave'] .synth-vu i {
+  --synth-seg: var(--synth-ok);
+  display: block;
+  width: 8px;
+  height: 10px;
+  border-radius: 1px;
+  background: var(--synth-seg);
+  opacity: 0.15;
+}
+
+:root[data-theme='synthwave'] .synth-vu[data-slim] i {
+  height: 4px;
+}
+
+:root[data-theme='synthwave'] .synth-vu i[data-zone='warn'] {
+  --synth-seg: var(--synth-warn);
+}
+
+:root[data-theme='synthwave'] .synth-vu i[data-zone='peak'] {
+  --synth-seg: var(--synth-danger);
+}
+
+:root[data-theme='synthwave'] .synth-vu i[data-on] {
+  opacity: 1;
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-seg);
+}
+
+:root[data-theme='synthwave'] .synth-vu i[data-on][data-top][data-zone='peak'] {
+  animation: synth-vu-peak 1.6s ease-in-out infinite alternate;
+}
+
+:root[data-theme='synthwave'] .synth-vu-off {
+  font-family: var(--synth-font-display);
+  font-size: 10px;
+  color: var(--synth-muted);
+  opacity: 0.6;
+}
+
+@keyframes synth-vu-peak {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.55;
+  }
+}
+
+/* Schild „ON AIR“: leuchtet bei bestehender Verbindung; der Punkt des Hosts ist nur optisch versteckt */
+:root[data-theme='synthwave'] .synth-onair {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+:root[data-theme='synthwave'] .synth-onair > :not(.synth-onair-text, .synth-offair-text) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+:root[data-theme='synthwave'] .synth-onair-text {
+  font-family: var(--synth-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  padding: 2px 8px;
+  color: var(--synth-danger);
+  border: 1px solid var(--synth-danger);
+  border-radius: 3px;
+  text-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-danger);
+  box-shadow:
+    0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-danger) 60%, transparent),
+    inset 0 0 calc(6px * var(--synth-glow)) color-mix(in srgb, var(--synth-danger) 40%, transparent);
+}
+
+:root[data-theme='synthwave'] .synth-onair:not(:has(.live:not(.off))) .synth-onair-text {
+  color: color-mix(in srgb, var(--synth-danger) 55%, var(--synth-muted));
+  border-color: color-mix(in srgb, var(--synth-danger) 45%, var(--synth-line));
+  text-shadow: none;
+  box-shadow: none;
+  animation: synth-onair-off 0.5s steps(1, end) 1;
+}
+
+@keyframes synth-onair-off {
+  0% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Schmale Fenster (Breakpoint der Standard-Shell): Titelliste wird zur Leiste oben, ohne Nummern */
+@media (max-width: 900px) {
+  :root[data-theme='synthwave'] #root:has(.synth-screen) {
+    height: auto;
+  }
+
+  :root[data-theme='synthwave'] .synth-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  :root[data-theme='synthwave'] .synth-display {
+    flex-wrap: wrap;
+  }
+
+  :root[data-theme='synthwave'] .synth-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  :root[data-theme='synthwave'] .synth-tracks.nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 6px 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--synth-line);
+    overflow: visible;
+  }
+
+  :root[data-theme='synthwave'] :is(.synth-side, .synth-track-no) {
+    display: none;
+  }
+
+  :root[data-theme='synthwave'] .synth-body .shell-content {
+    display: block;
+  }
+
+  :root[data-theme='synthwave'] .synth-tape-label {
+    display: none;
+  }
+}
+
+/* Startanimation „Sunrise Drive“ (1800 ms): Gitter fährt ab 0 ms, Sonne steigt ab 300 ms, Schriftzug ab 900 ms mit
+   Lichtreflex, die letzten 250 ms blenden die Szene aus, damit der Rahmen mit seinem Horizont darunter erscheint */
+:root[data-theme='synthwave'] .synth-sunrise {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  background: var(--synth-bg-deep);
+  animation: synth-sunrise-out 1800ms linear forwards;
+}
+
+:root[data-theme='synthwave'] .synth-sunrise-sky {
+  position: absolute;
+  inset: 0 0 45% 0;
+  background: linear-gradient(
+    to bottom,
+    var(--synth-bg-deep) 0%,
+    color-mix(in srgb, var(--synth-violet) 35%, var(--synth-bg-deep)) 70%,
+    color-mix(in srgb, var(--synth-magenta) 45%, var(--synth-bg-deep)) 100%
+  );
+}
+
+:root[data-theme='synthwave'] .synth-sunrise-sun {
+  position: absolute;
+  left: 50%;
+  bottom: 45%;
+  width: min(360px, 60vw);
+  aspect-ratio: 2 / 1;
+  margin-left: calc(min(360px, 60vw) / -2);
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(to bottom, var(--synth-sun-top), var(--synth-sun-bottom));
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0 52%,
+    transparent 52% 56%,
+    #000 56% 66%,
+    transparent 66% 72%,
+    #000 72% 80%,
+    transparent 80% 88%,
+    #000 88% 94%,
+    transparent 94%
+  );
+  transform: translateY(60%);
+  opacity: 0;
+  animation: synth-sunrise-sun 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 300ms forwards;
+}
+
+:root[data-theme='synthwave'] .synth-sunrise-grid {
+  position: absolute;
+  inset: 55% -50% 0 -50%;
+  background-color: var(--synth-bg-deep);
+  background-image:
+    repeating-linear-gradient(to bottom, var(--synth-magenta) 0 2px, transparent 2px 48px),
+    repeating-linear-gradient(to right, var(--synth-magenta) 0 2px, transparent 2px 64px);
+  transform: perspective(320px) rotateX(62deg);
+  transform-origin: top;
+  animation: synth-drive 0.6s linear 3;
+}
+
+:root[data-theme='synthwave'] .synth-sunrise-title {
+  position: absolute;
+  inset: 22% 0 auto 0;
+  display: flex;
+  justify-content: center;
+}
+
+:root[data-theme='synthwave'] .synth-sunrise-word {
+  position: relative;
+  overflow: hidden;
+  font-family: var(--synth-font-display);
+  font-weight: 800;
+  font-size: clamp(48px, 12vw, 120px);
+  letter-spacing: 0.12em;
+  color: var(--synth-cyan);
+  opacity: 0;
+  transform: scale(1.15);
+  animation: synth-sunrise-word 400ms ease-out 900ms forwards;
+}
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  :root[data-theme='synthwave'] .synth-sunrise-word {
+    background: linear-gradient(to bottom, #fff 0%, var(--synth-cyan) 45%, var(--synth-violet) 50%, var(--synth-magenta) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(var(--synth-glow-magenta));
+  }
+}
+
+/* Lichtreflex: schräger weißer Streifen, der einmal über das Wort läuft */
+:root[data-theme='synthwave'] .synth-sunrise-word::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.85) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: synth-sunrise-glint 450ms ease-in-out 1250ms forwards;
+}
+
+:root[data-theme='synthwave'] .synth-sunrise-skip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6%;
+  text-align: center;
+  font-family: var(--synth-font-display);
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: var(--synth-muted);
+  animation: synth-sunrise-blink 1s steps(1) 1.8;
+}
+
+@keyframes synth-sunrise-sun {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes synth-sunrise-word {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes synth-sunrise-glint {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes synth-sunrise-blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes synth-sunrise-out {
+  86% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---------- Bedienelemente im ganzen Schema ---------- */
+
+/* Knöpfe: transparent mit Cyan-Rand, Versalien in Exo 2; der Sweep liegt auf ::after */
+:root[data-theme='synthwave'] .btn {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--synth-cyan);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--synth-cyan);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: none;
+}
+
+:root[data-theme='synthwave'] .btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--synth-fg) 35%, transparent), transparent);
+  transform: translateX(-130%) skewX(-20deg);
+  pointer-events: none;
+}
+
+:root[data-theme='synthwave'] .btn:hover:not(:disabled) {
+  box-shadow: var(--synth-glow-cyan);
+}
+
+:root[data-theme='synthwave'] .btn:hover:not(:disabled)::after {
+  animation: synth-sweep 450ms ease-out 1;
+}
+
+:root[data-theme='synthwave'] .btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 0 calc(4px * var(--synth-glow)) color-mix(in srgb, var(--synth-cyan) 50%, transparent);
+}
+
+:root[data-theme='synthwave'] .btn.primary {
+  border-color: var(--synth-magenta);
+  background: linear-gradient(135deg, var(--synth-magenta), var(--synth-violet));
+  color: var(--synth-bg-deep);
+}
+
+:root[data-theme='synthwave'] .btn.primary:hover:not(:disabled) {
+  box-shadow: var(--synth-glow-magenta);
+}
+
+:root[data-theme='synthwave'] .btn.danger {
+  border-color: var(--synth-danger);
+  color: var(--synth-danger);
+}
+
+:root[data-theme='synthwave'] .btn.danger:hover:not(:disabled) {
+  box-shadow: 0 0 calc(10px * var(--synth-glow)) color-mix(in srgb, var(--synth-danger) 60%, transparent);
+}
+
+:root[data-theme='synthwave'] .btn.ghost {
+  border-color: transparent;
+}
+
+:root[data-theme='synthwave'] .btn.ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--synth-cyan) 12%, transparent);
+  box-shadow: none;
+}
+
+:root[data-theme='synthwave'] :is(.btn, button):disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: default;
+}
+
+:root[data-theme='synthwave'] :is(.btn, button):disabled::after {
+  animation: none;
+}
+
+/* Icon-Knöpfe und kleine Knöpfe behalten ihre Maße, bekommen nur Farbe */
+:root[data-theme='synthwave'] .icon-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--synth-cyan) 12%, transparent);
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] :is(.fchip.on, .fchip[aria-pressed='true'], .segmented button.on, .theme-filter button[aria-pressed='true']) {
+  border-color: var(--synth-magenta);
+  background: color-mix(in srgb, var(--synth-magenta) 18%, transparent);
+  color: var(--synth-fg);
+  box-shadow: inset 0 -2px 0 var(--synth-magenta);
+}
+
+/* Felder: tiefe Fläche; Überfahren hellt den Rand in Cyan auf, Fokus macht ihn zu einem Magenta-Rahmen aus Rand und
+   Ring (2 px) mit Leuchten. Kein zusätzlicher Outline mit Abstand, der sähe neben dem Rand wie ein Doppelrahmen aus;
+   die transparente Outline bleibt für den Kontrastmodus von Windows. */
+:root[data-theme='synthwave'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea, label.db-search, .theme-search) {
+  border: 1px solid var(--synth-line);
+  background: var(--synth-bg-deep);
+  color: var(--synth-fg);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+:root[data-theme='synthwave'] :is(input, textarea)::placeholder {
+  color: var(--synth-muted);
+}
+
+:root[data-theme='synthwave'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea, label.db-search, .theme-search):hover:not(:focus-within):not(:disabled) {
+  border-color: color-mix(in srgb, var(--synth-cyan) 55%, var(--synth-line));
+}
+
+:root[data-theme='synthwave'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea):is(:focus, :focus-visible),
+:root[data-theme='synthwave'] :is(label.db-search, .theme-search):focus-within {
+  border-color: var(--synth-magenta);
+  outline: 2px solid transparent;
+  outline-offset: 0;
+  box-shadow:
+    0 0 0 1px var(--synth-magenta),
+    0 0 calc(10px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 45%, transparent);
+}
+
+/* Suchfelder mit Symbol: der Rahmen gehört dem Wrapper, das Eingabefeld darin bleibt flach */
+:root[data-theme='synthwave'] :is(label.db-search, .theme-search) input:not([type='checkbox']):not([type='radio']):not([type='range']):is(*, :hover, :focus, :focus-visible) {
+  border: 0;
+  background: none;
+  outline: 0;
+  box-shadow: none;
+}
+
+:root[data-theme='synthwave'] :is(label.db-search, .theme-search):focus-within svg {
+  color: var(--synth-magenta);
+}
+
+/* Kontrollkästchen und Schalter: an = Magenta mit Leuchten */
+:root[data-theme='synthwave'] input:is([type='checkbox'], [type='radio']) {
+  accent-color: var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] input:is([type='checkbox'], [type='radio']):checked:not(:disabled) {
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 60%, transparent);
+}
+
+:root[data-theme='synthwave'] .setting-control > input[type='checkbox']:checked:not(:disabled) {
+  background: var(--synth-magenta);
+}
+
+/* Dialoge: deckende Fläche, Neonrahmen in Cyan; Hintergrund abgedunkelt, ohne Weichzeichner */
+:root[data-theme='synthwave'] :is(.db-modal, .db-dialog, [data-slot='Dialog']) {
+  border: 1px solid var(--synth-cyan);
+  border-radius: 4px;
+  background: var(--synth-surface);
+  box-shadow: var(--synth-glow-cyan);
+}
+
+:root[data-theme='synthwave'] :is(.db-modal, .db-dialog, [data-slot='Dialog']) > :is(h2, h3):first-child,
+:root[data-theme='synthwave'] :is(.db-modal, .db-dialog, [data-slot='Dialog']) > :first-child > :is(h2, h3):first-child {
+  font-family: var(--synth-font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--synth-cyan);
+  filter: drop-shadow(0 0 calc(4px * var(--synth-glow)) var(--synth-magenta));
+}
+
+:root[data-theme='synthwave'] :is(.db-modal-backdrop, .db-dialog-backdrop, .sheet-backdrop) {
+  background: color-mix(in srgb, var(--synth-bg-deep) 70%, transparent);
+}
+
+/* Plus-Knopf (Board): Neon-Kugel im Verlauf Magenta → Violett mit Leuchten statt dunklem Schatten, Symbole weiß */
+/* Der Schatten des Kerns (drop-shadow mit --shadow-strong) wird hier zum Magenta-Schein */
+:root[data-theme='synthwave'] .db-fab-goo {
+  --shadow-strong: color-mix(in srgb, var(--synth-magenta) 55%, transparent);
+}
+
+:root[data-theme='synthwave'] .db-fab-dot {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--synth-magenta) 80%, var(--synth-sun-top)), var(--synth-violet));
+}
+
+:root[data-theme='synthwave'] .db-fab:has(.db-fab-btn:hover:not(:disabled)) .db-fab-dot-main {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--synth-magenta) 60%, var(--synth-sun-top)), var(--synth-magenta));
+}
+
+:root[data-theme='synthwave'] :is(.db-fab-btn, .db-fab-item) {
+  color: #fff;
+}
+
+:root[data-theme='synthwave'] .db-fab-btn > svg {
+  filter: drop-shadow(0 0 3px rgb(255 255 255 / 0.7));
+}
+
+:root[data-theme='synthwave'] .db-fab-item:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.18);
+}
+
+:root[data-theme='synthwave'] :is(.db-fab-btn, .db-fab-item):focus-visible {
+  outline-color: #fff;
+}
+
+/* Popover, Menüs, Tooltips, Suche: gleiche Fläche, dünner Rand in Violett; Auswahl getönt mit feinem Magenta-Rahmen */
+:root[data-theme='synthwave'] :is(.board-picker-pop, .doc-open-menu, .selection-popover, .search-dialog, .dd-modal, .usage-pop, .theme-install-menu, .info-pop, .runs-tip, .info-tip) {
+  border: 1px solid var(--synth-violet);
+  background: var(--synth-surface);
+  color: var(--synth-fg);
+}
+
+:root[data-theme='synthwave'] :is(.bp-item, .branch-combo-option, .search-hit, .theme-install-menu [role='menuitem']):is(:hover, :focus-visible, .active, [aria-selected='true']) {
+  background: color-mix(in srgb, var(--synth-magenta) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--synth-magenta) 70%, transparent);
+  border-radius: 4px;
+}
+
+/* Tabellen: Kopf in Orbitron klein und gedämpft, Zeilen getönt beim Überfahren */
+:root[data-theme='synthwave'] th {
+  font-family: var(--synth-font-display);
+  font-size: 0.72em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--synth-muted);
+}
+
+:root[data-theme='synthwave'] :is(th, td) {
+  border-color: var(--synth-line);
+}
+
+:root[data-theme='synthwave'] tbody tr:hover {
+  background: color-mix(in srgb, var(--synth-cyan) 8%, transparent);
+}
+
+/* Registerkarten: aktiver Reiter mit leuchtender Unterkante in Magenta */
+:root[data-theme='synthwave'] .tab.on {
+  color: var(--synth-fg);
+  box-shadow: inset 0 -2px 0 var(--synth-magenta), 0 4px calc(8px * var(--synth-glow)) -4px var(--synth-magenta);
+}
+
+/* Code, Tasten, Auswahl, Scrollbalken */
+:root[data-theme='synthwave'] :is(code, kbd) {
+  background: var(--synth-bg-deep);
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] ::selection {
+  background: var(--synth-magenta);
+  color: var(--synth-bg-deep);
+}
+
+:root[data-theme='synthwave'] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+:root[data-theme='synthwave'] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:root[data-theme='synthwave'] ::-webkit-scrollbar-thumb {
+  background: var(--synth-line);
+}
+
+:root[data-theme='synthwave'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--synth-violet);
+}
+
+/* Flächen außerhalb des Boards */
+:root[data-theme='synthwave'] :is([data-slot='Panel'], [data-slot='Card'], .settings-card) {
+  border-color: var(--synth-line);
+  background: var(--synth-surface);
+}
+
+/* Einstellungen › Darstellung und Theme-Store: Kacheln mit Neonrand, gewählt in Magenta */
+:root[data-theme='synthwave'] :is(.choice, .theme-card) {
+  border: 1px solid color-mix(in srgb, var(--synth-cyan) 45%, var(--synth-line));
+  background: var(--synth-surface);
+}
+
+:root[data-theme='synthwave'] :is(.choice, .theme-card):hover {
+  border-color: var(--synth-cyan);
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-cyan) 40%, transparent);
+}
+
+:root[data-theme='synthwave'] :is(.choice.selected, .theme-card.active) {
+  border-color: var(--synth-magenta);
+  box-shadow: var(--synth-glow-magenta);
+}
+
+:root[data-theme='synthwave'] .theme-preview {
+  filter: none;
+}
+
+:root[data-theme='synthwave'] .theme-badge.current {
+  background: var(--synth-magenta);
+  color: var(--synth-bg-deep);
+}
+
+@keyframes synth-sweep {
+  from {
+    transform: translateX(-130%) skewX(-20deg);
+  }
+  to {
+    transform: translateX(130%) skewX(-20deg);
+  }
+}
+
+/* Board: Spalten und Karten leuchten in der Farbe ihres Status. Jede Spalte setzt --synth-status und
+   --synth-status-glow (Stärke 0–1); Kopf und Karte lesen nur diese beiden. Graph und Fortschrittsbalken
+   folgen über die --status-*-Variablen oben. */
+:root[data-theme='synthwave'] .db-column[data-status='backlog'] {
+  --synth-status: var(--synth-muted);
+  --synth-status-glow: 0;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='waiting'] {
+  --synth-status: var(--synth-warn);
+  --synth-status-glow: 0.35;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='in_planning'] {
+  --synth-status: var(--synth-violet);
+  --synth-status-glow: 0.4;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='planned'] {
+  --synth-status: var(--synth-cyan);
+  --synth-status-glow: 0.8;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='in_progress'] {
+  --synth-status: var(--synth-magenta);
+  --synth-status-glow: 1;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='blocked'] {
+  --synth-status: var(--synth-danger);
+  --synth-status-glow: 1;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='done'] {
+  --synth-status: var(--synth-ok);
+  --synth-status-glow: 0.6;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='not_needed'] {
+  --synth-status: var(--synth-line);
+  --synth-status-glow: 0;
+}
+
+/* Spalten ohne eigene Fläche: die Karten schweben vor Himmel und Gitter, getrennt nur durch die Leuchtlinie unter dem
+   Kopf. Die gesperrte Spalte „Wartet“ verliert ihre Schraffur und trägt stattdessen eine gestrichelte Linie (siehe unten);
+   beim Ziehen bleibt der gestrichelte Rahmen des Kerns. */
+:root[data-theme='synthwave'] .db-column,
+:root[data-theme='synthwave'] .db-column.locked {
+  background: transparent;
+}
+
+/* Kopf bleibt beim Scrollen stehen: dunkler Streifen, der nach unten ausläuft, damit darunter durchlaufende Karten den
+   Titel nicht stören (ohne backdrop-filter, siehe Paket-Test) */
+:root[data-theme='synthwave'] .db-column .column-head {
+  position: sticky;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--synth-bg-deep) 92%, transparent) 75%,
+    color-mix(in srgb, var(--synth-bg-deep) 0%, transparent)
+  );
+  border-radius: 6px 6px 0 0;
+}
+
+:root[data-theme='synthwave'] .db-column .column-head h2 {
+  font-family: var(--synth-font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--synth-status);
+}
+
+:root[data-theme='synthwave'] .db-column .column-dot {
+  background: var(--synth-status);
+}
+
+:root[data-theme='synthwave'] .db-column .column-head::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  bottom: 2px;
+  left: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--synth-status);
+  box-shadow: 0 0 calc(8px * var(--synth-glow) * var(--synth-status-glow)) var(--synth-status);
+  pointer-events: none;
+}
+
+/* gesperrt (Wartet): Linie unter dem Kopf gestrichelt statt durchgehend */
+:root[data-theme='synthwave'] .db-column.locked .column-head::after {
+  background: repeating-linear-gradient(90deg, var(--synth-status) 0 8px, transparent 8px 13px);
+}
+
+:root[data-theme='synthwave'] .db-column .db-card {
+  border-color: color-mix(in srgb, var(--synth-status) 55%, var(--synth-line));
+  border-left: 3px solid var(--synth-status);
+  background: var(--synth-surface);
+  box-shadow: 0 0 calc(6px * var(--synth-glow) * var(--synth-status-glow)) color-mix(in srgb, var(--synth-status) 35%, transparent);
+}
+
+:root[data-theme='synthwave'] .db-column .db-card:is(:hover, :focus-within) {
+  border-color: var(--synth-status);
+  box-shadow: 0 0 calc(12px * var(--synth-glow) * max(var(--synth-status-glow), 0.4)) color-mix(in srgb, var(--synth-status) 60%, transparent);
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='not_needed'] .db-card {
+  opacity: 0.65;
+}
+
+/* Puls und Flackern liegen auf einem Pseudo-Element, animiert wird nur dessen opacity */
+:root[data-theme='synthwave'] .db-column:is([data-status='in_progress'], [data-status='blocked']) .db-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 calc(14px * var(--synth-glow)) color-mix(in srgb, var(--synth-status) 70%, transparent);
+  pointer-events: none;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='in_progress'] .db-card::after {
+  animation: synth-pulse 2.6s ease-in-out infinite alternate;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='blocked'] .db-card::after {
+  animation: synth-flicker 4.7s steps(1) infinite;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='blocked'] .db-card:nth-child(odd)::after {
+  animation-delay: -1.3s;
+}
+
+:root[data-theme='synthwave'] .db-column[data-status='blocked'] .db-card:nth-child(3n)::after {
+  animation-delay: -2.9s;
+}
+
+@keyframes synth-pulse {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes synth-flicker {
+  0%,
+  40% {
+    opacity: 1;
+  }
+  41% {
+    opacity: 0;
+  }
+  43%,
+  70% {
+    opacity: 1;
+  }
+  71% {
+    opacity: 0.5;
+  }
+  73%,
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- Fortschritt als Laserbalken (Slot Progress) ---------- */
+:root[data-theme='synthwave'] .synth-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+:root[data-theme='synthwave'] .synth-laser {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 3px;
+  min-width: 48px;
+}
+
+/* Segmente: flache Balken, aus = Linienfarbe, an = Cyan mit Leuchten */
+:root[data-theme='synthwave'] .synth-laser > i {
+  flex: 1 1 0;
+  min-width: 4px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--synth-line);
+}
+
+:root[data-theme='synthwave'] .synth-laser > i[data-on] {
+  background: var(--synth-cyan);
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) color-mix(in srgb, var(--synth-cyan) 80%, transparent);
+}
+
+/* Strahlspitze: das letzte leuchtende Segment in Magenta */
+:root[data-theme='synthwave'] .synth-laser:not(.synth-laser-beam) > i[data-on]:not(:has(+ i[data-on])) {
+  background: var(--synth-magenta);
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 85%, transparent);
+}
+
+/* Durchgehender Balken ab 13 Schritten: Verlauf Cyan → Magenta, Spitze mit hellem Punkt */
+:root[data-theme='synthwave'] .synth-laser-beam {
+  display: block;
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--synth-line);
+}
+
+:root[data-theme='synthwave'] .synth-laser-beam > i {
+  display: block;
+  position: relative;
+  flex: none;
+  height: 100%;
+  max-width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--synth-cyan), var(--synth-magenta));
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 60%, transparent);
+}
+
+:root[data-theme='synthwave'] .synth-laser-beam > i::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--synth-fg) 90%, white);
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] .synth-progress-text {
+  flex: none;
+  color: var(--synth-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Voll: alles in Grün, der Balken blitzt einmal auf */
+:root[data-theme='synthwave'] .synth-progress[data-complete] .synth-laser > i {
+  background: var(--synth-ok);
+  box-shadow: 0 0 calc(8px * var(--synth-glow)) color-mix(in srgb, var(--synth-ok) 80%, transparent);
+}
+
+:root[data-theme='synthwave'] .synth-progress[data-complete] .synth-laser-beam > i::after {
+  background: var(--synth-ok);
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-ok);
+}
+
+:root[data-theme='synthwave'] .synth-progress[data-complete] .synth-laser {
+  animation: synth-flash 600ms ease-out 1;
+}
+
+@keyframes synth-flash {
+  0%,
+  to {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  35% {
+    opacity: 0.3;
+    filter: brightness(2.2);
+  }
+}
+
+/* VHS: Scanlines und leicht abgedunkelte Ecken als Ebene über allem (ohne Klicks abzufangen), leichtes Flimmern. Die
+   Vignette bleibt schwach: Display, Deck-Leiste und der Plus-Knopf liegen am Rand und sollen nicht absaufen. */
+:root[data-theme='synthwave'][data-synth-vhs='on'] .synth-screen::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 2px, color-mix(in srgb, var(--synth-bg-deep) 9%, transparent) 2px 3px),
+    radial-gradient(ellipse at center, transparent 72%, color-mix(in srgb, var(--synth-bg-deep) 28%, transparent) 100%);
+  animation: synth-vhs-flicker 7s steps(1) infinite;
+}
+
+@keyframes synth-vhs-flicker {
+  0%,
+  96%,
+  100% {
+    opacity: 1;
+  }
+  97% {
+    opacity: 0.84;
+  }
+  98% {
+    opacity: 0.94;
+  }
+}
+
+/* Bildstörung beim Bereichswechsel: Zeilensprung, ein helles Band läuft durch, Farbversatz nur auf Überschriften */
+:root[data-theme='synthwave'][data-synth-tracking] .synth-body {
+  animation: synth-tracking 160ms steps(1) both;
+}
+
+:root[data-theme='synthwave'][data-synth-tracking] .synth-body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto;
+  height: 14px;
+  z-index: 2147482999;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--synth-fg) 22%, transparent);
+  animation: synth-tracking-band 160ms linear both;
+}
+
+:root[data-theme='synthwave'][data-synth-tracking] .synth-body :is(h1, h2, h3) {
+  text-shadow: -2px 0 var(--synth-cyan), 2px 0 var(--synth-magenta);
+}
+
+@keyframes synth-tracking {
+  0% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(2px);
+  }
+  80% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes synth-tracking-band {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100vh);
+  }
+}
+
+/* Einblendung im Display: Bandzähler bzw. Uhrzeit rechts */
+:root[data-theme='synthwave'] :is(.synth-osd, .synth-clock) {
+  margin-left: auto;
+  font-family: 'Orbitron', sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+:root[data-theme='synthwave'] .synth-osd {
+  color: var(--synth-cyan);
+  text-shadow: var(--synth-glow-cyan);
+}
+
+:root[data-theme='synthwave'] .synth-clock {
+  color: var(--synth-muted);
+}
+
+/* ====================================================================================================================
+   Welt des Kassettendecks: Teile, die das Schema über Neonfarbe hinaus zu einem Gerät der 80er machen, und die
+   versteckten Details (Seite B, Auto-Reverse, Neonröhre, Sternschnuppen, Overdrive, OFF AIR, STAGE CLEAR).
+   ==================================================================================================================== */
+
+/* Unterzeile der Einstellungsüberschrift („/ Themes“) bleibt gedämpft statt im Chrom */
+:root[data-theme='synthwave'] .settings-head-sub {
+  -webkit-text-fill-color: var(--synth-muted);
+  color: var(--synth-muted);
+  font-weight: 600;
+}
+
+:root[data-theme='synthwave'] .settings-nav-title {
+  font-size: 15px;
+  letter-spacing: 0.14em;
+}
+
+/* --- Schriftzug als alte Neonröhre: ein Buchstabe setzt ab und zu aus und springt stotternd wieder an --- */
+:root[data-theme='synthwave'] .synth-logo-letter {
+  display: inline;
+}
+
+:root[data-theme='synthwave'] .synth-logo-letter[data-flicker] {
+  animation: synth-tube 0.9s steps(1, end) 1;
+}
+
+@keyframes synth-tube {
+  0% {
+    opacity: 1;
+  }
+  10% {
+    opacity: 0.15;
+  }
+  18% {
+    opacity: 0.9;
+  }
+  26% {
+    opacity: 0.1;
+  }
+  44% {
+    opacity: 0.25;
+  }
+  52% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.35;
+  }
+  70%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* --- Kassette umdrehen: „SIDE A/B“ ist ein Knopf wie die Taste am Deck; beim Wechsel dreht sich die Beschriftung --- */
+:root[data-theme='synthwave'] button.synth-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 4px 10px 8px;
+  border: 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--synth-cyan) 30%, transparent);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+/* kleines Kassettensymbol vor der Seite: zwei Spulen im Fenster */
+:root[data-theme='synthwave'] button.synth-side::before {
+  content: '';
+  flex: none;
+  width: 22px;
+  height: 13px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  background:
+    radial-gradient(circle at 30% 50%, currentColor 0 2px, transparent 2.5px),
+    radial-gradient(circle at 70% 50%, currentColor 0 2px, transparent 2.5px);
+  filter: drop-shadow(0 0 calc(3px * var(--synth-glow)) currentColor);
+}
+
+:root[data-theme='synthwave'] button.synth-side:hover {
+  color: var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] .synth-tracks[data-flipping] {
+  animation: synth-flip 0.5s ease-out 1;
+}
+
+:root[data-theme='synthwave'] .synth-tracks[data-side='B'] button.synth-side {
+  color: var(--synth-magenta);
+}
+
+@keyframes synth-flip {
+  0% {
+    transform: perspective(600px) rotateY(0);
+  }
+  45% {
+    transform: perspective(600px) rotateY(80deg);
+    opacity: 0.4;
+  }
+  55% {
+    transform: perspective(600px) rotateY(-80deg);
+    opacity: 0.4;
+  }
+  100% {
+    transform: perspective(600px) rotateY(0);
+  }
+}
+
+/* Auto-Reverse: das Display blinkt die Meldung in Magenta */
+:root[data-theme='synthwave'] .synth-osd[data-reversing] {
+  color: var(--synth-magenta);
+  text-shadow: var(--synth-glow-magenta);
+  animation: synth-blink 0.6s steps(1, end) 4;
+}
+
+@keyframes synth-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* --- Sternschnuppe: ein Lichtstrich, der schräg nach unten zieht und verglüht --- */
+:root[data-theme='synthwave'] .synth-shooting-star {
+  position: absolute;
+  width: 140px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to right, transparent, color-mix(in srgb, #fff 80%, var(--synth-cyan)));
+  filter: drop-shadow(0 0 4px var(--synth-cyan));
+  opacity: 0;
+  transform: rotate(-24deg) translateX(0);
+  transform-origin: right center;
+  animation: synth-shoot 1.3s ease-out 1 forwards;
+  pointer-events: none;
+}
+
+@keyframes synth-shoot {
+  0% {
+    opacity: 0;
+    transform: rotate(-24deg) translateX(0) scaleX(0.2);
+  }
+  15% {
+    opacity: var(--synth-stars-opacity);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(-24deg) translateX(-260px) scaleX(1);
+  }
+}
+
+/* --- Overdrive (Konami-Code): Gitter rast, Sterne ziehen, Wagen fährt durch die Deck-Leiste --- */
+:root[data-theme='synthwave'][data-synth-overdrive] .synth-grid {
+  animation: synth-drive 0.35s linear infinite;
+}
+
+:root[data-theme='synthwave'][data-synth-overdrive] .synth-stars {
+  animation: synth-warp 0.5s linear infinite;
+}
+
+:root[data-theme='synthwave'][data-synth-overdrive] .synth-sun {
+  animation: synth-blink 0.4s steps(1, end) infinite;
+}
+
+@keyframes synth-warp {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.12);
+    opacity: 0.4;
+  }
+}
+
+:root[data-theme='synthwave'] .synth-overdrive-osd {
+  flex: none;
+  padding: 2px 10px;
+  border: 1px solid var(--synth-sun-top);
+  border-radius: 3px;
+  font-family: var(--synth-font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--synth-sun-top);
+  text-shadow: 0 0 calc(8px * var(--synth-glow)) var(--synth-sun-bottom);
+  box-shadow: 0 0 calc(10px * var(--synth-glow)) color-mix(in srgb, var(--synth-sun-bottom) 60%, transparent);
+  animation: synth-blink 0.5s steps(1, end) infinite;
+}
+
+/* fest über der Oberkante der Deck-Leiste: die Räder rollen auf der Neonlinie, der Wagen liegt über dem Inhalt */
+:root[data-theme='synthwave'] .synth-car {
+  position: fixed;
+  left: 0;
+  bottom: calc(var(--synth-deck-h) - 7px);
+  z-index: 60;
+  display: block;
+  width: 124px;
+  height: 36px;
+  transform: translateX(-160px);
+  animation: synth-car-drive 3.2s cubic-bezier(0.55, 0, 0.35, 1) 0.4s 1 forwards;
+  pointer-events: none;
+}
+
+:root[data-theme='synthwave'] .synth-car svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+:root[data-theme='synthwave'] .synth-car-stop-a {
+  stop-color: var(--synth-violet);
+}
+
+:root[data-theme='synthwave'] .synth-car-stop-b {
+  stop-color: var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] .synth-car-body {
+  stroke: var(--synth-cyan);
+  stroke-width: 1;
+  filter: drop-shadow(0 0 calc(6px * var(--synth-glow)) var(--synth-magenta));
+}
+
+:root[data-theme='synthwave'] .synth-car-glass {
+  fill: var(--synth-bg-deep);
+  stroke: var(--synth-cyan);
+  stroke-width: 0.8;
+}
+
+:root[data-theme='synthwave'] .synth-car-line {
+  stroke: var(--synth-sun-top);
+  stroke-width: 0.8;
+  opacity: 0.8;
+}
+
+:root[data-theme='synthwave'] .synth-car-tail {
+  fill: var(--synth-danger);
+  filter: drop-shadow(0 0 4px var(--synth-danger));
+}
+
+:root[data-theme='synthwave'] .synth-car-head {
+  fill: #fff;
+  filter: drop-shadow(0 0 5px var(--synth-sun-top));
+}
+
+:root[data-theme='synthwave'] .synth-car-wheel circle {
+  fill: var(--synth-bg-deep);
+  stroke: var(--synth-cyan);
+  stroke-width: 1.4;
+}
+
+:root[data-theme='synthwave'] .synth-car-wheel path {
+  fill: none;
+  stroke: var(--synth-cyan);
+  stroke-width: 0.8;
+}
+
+/* Lichtstreifen hinter dem Wagen: Rücklicht und Neon ziehen nach */
+:root[data-theme='synthwave'] .synth-car-trail {
+  position: absolute;
+  right: calc(100% - 6px);
+  top: 50%;
+  width: 220px;
+  height: 6px;
+  background:
+    linear-gradient(to left, var(--synth-danger), transparent) 0 0 / 100% 2px no-repeat,
+    linear-gradient(to left, var(--synth-magenta), transparent) 0 4px / 100% 2px no-repeat;
+  filter: drop-shadow(0 0 4px var(--synth-magenta));
+}
+
+@keyframes synth-car-drive {
+  to {
+    transform: translateX(calc(100vw + 260px));
+  }
+}
+
+/* --- ON AIR / OFF AIR: getrennt leuchtet das Schild nicht mehr, darauf steht dann „OFF AIR“ --- */
+:root[data-theme='synthwave'] .synth-offair-text {
+  display: none;
+  font-family: var(--synth-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--synth-danger) 45%, var(--synth-line));
+  border-radius: 3px;
+  color: color-mix(in srgb, var(--synth-danger) 55%, var(--synth-muted));
+  animation: synth-onair-off 0.5s steps(1, end) 1;
+}
+
+:root[data-theme='synthwave'] .synth-onair:not(:has(.live:not(.off))) .synth-onair-text {
+  display: none;
+}
+
+:root[data-theme='synthwave'] .synth-onair:not(:has(.live:not(.off))) .synth-offair-text {
+  display: inline-block;
+}
+
+/* --- STAGE CLEAR: Spielhallen-Schild neben dem vollen Laserbalken --- */
+:root[data-theme='synthwave'] .synth-clear {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--synth-ok);
+  border-radius: 2px;
+  font-family: var(--synth-font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: var(--synth-ok);
+  text-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-ok);
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) color-mix(in srgb, var(--synth-ok) 45%, transparent);
+  animation: synth-blink 0.4s steps(1, end) 3;
+}
+
+/* --- Filter wie Tasten am Tapedeck: erhabene Taste mit LED; gedrückt sitzt sie tiefer und die LED leuchtet --- */
+:root[data-theme='synthwave'] :is(.fchip, .segmented button, .theme-filter button) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid color-mix(in srgb, var(--synth-fg) 18%, var(--synth-line));
+  border-bottom-width: 3px;
+  border-radius: 4px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--synth-fg) 9%, var(--synth-surface)), var(--synth-surface));
+  color: var(--text-soft);
+  font-family: var(--synth-font-display);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.35);
+  transition:
+    transform 0.08s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+:root[data-theme='synthwave'] :is(.fchip, .segmented button, .theme-filter button)::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--synth-danger) 25%, var(--synth-bg-deep));
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.6);
+}
+
+:root[data-theme='synthwave'] :is(.fchip, .segmented button, .theme-filter button):hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--synth-cyan) 55%, var(--synth-line));
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] :is(.fchip.on, .fchip[aria-pressed='true'], .segmented button.on, .theme-filter button[aria-pressed='true']) {
+  transform: translateY(2px);
+  border-color: color-mix(in srgb, var(--synth-magenta) 70%, var(--synth-line));
+  border-bottom-width: 1px;
+  margin-bottom: 2px;
+  background: linear-gradient(to bottom, var(--synth-bg-deep), color-mix(in srgb, var(--synth-magenta) 14%, var(--synth-bg-deep)));
+  color: var(--synth-fg);
+  box-shadow: inset 0 2px 5px rgb(0 0 0 / 0.6);
+}
+
+:root[data-theme='synthwave'] :is(.fchip.on, .fchip[aria-pressed='true'], .segmented button.on, .theme-filter button[aria-pressed='true'])::before {
+  background: var(--synth-magenta);
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-magenta), 0 0 2px #fff;
+}
+
+/* Favoriten-Knopf: LED in Gelb */
+:root[data-theme='synthwave'] .fchip.fav-toggle::before {
+  display: none;
+}
+
+:root[data-theme='synthwave'] .segmented {
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--synth-line);
+  border-radius: 6px;
+  background: var(--synth-bg-deep);
+}
+
+/* --- Kontrollkästchen als LED-Schalter: aus = dunkles Glas, an = Magenta leuchtend --- */
+:root[data-theme='synthwave'] input[type='checkbox']:not(.setting-control > input) {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--synth-fg) 30%, var(--synth-line));
+  border-radius: 3px;
+  background: var(--synth-bg-deep);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.7);
+  cursor: pointer;
+}
+
+:root[data-theme='synthwave'] input[type='checkbox']:not(.setting-control > input)::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--synth-magenta) 18%, transparent);
+}
+
+:root[data-theme='synthwave'] input[type='checkbox']:not(.setting-control > input):checked {
+  border-color: var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] input[type='checkbox']:not(.setting-control > input):checked::after {
+  background: var(--synth-magenta);
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-magenta), 0 0 2px #fff;
+}
+
+:root[data-theme='synthwave'] input[type='checkbox']:not(.setting-control > input):disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* --- Registerkarten wie Wahltasten am Display: kleine Orbitron-Versalien --- */
+:root[data-theme='synthwave'] :is(.tab, .db-tablist [role='tab']) {
+  font-family: var(--synth-font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* --- Kennzahlen im Dashboard als Leuchtziffern-Anzeigen: tiefes Glas, Zeilenraster, Ziffern in Orbitron mit Schein --- */
+:root[data-theme='synthwave'] .kpi {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--synth-cyan) 30%, var(--synth-line));
+  background:
+    repeating-linear-gradient(to bottom, rgb(255 255 255 / 0.03) 0 1px, transparent 1px 3px),
+    linear-gradient(to bottom, var(--synth-bg-deep), color-mix(in srgb, var(--synth-violet) 14%, var(--synth-bg-deep)));
+  box-shadow: inset 0 2px 8px rgb(0 0 0 / 0.5);
+}
+
+:root[data-theme='synthwave'] .kpi-label {
+  font-family: var(--synth-font-display);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  color: var(--synth-muted);
+}
+
+:root[data-theme='synthwave'] .kpi-value {
+  font-family: var(--synth-font-display);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--synth-cyan);
+  text-shadow: 0 0 calc(8px * var(--synth-glow)) currentColor;
+}
+
+/* Balken im Läufe-Diagramm leuchten in ihrer Farbe, Achsen in Orbitron */
+:root[data-theme='synthwave'] .runs-seg {
+  box-shadow: 0 0 calc(6px * var(--synth-glow)) color-mix(in srgb, currentColor 60%, transparent);
+}
+
+:root[data-theme='synthwave'] .runs-seg.done {
+  color: var(--synth-ok);
+}
+
+:root[data-theme='synthwave'] .runs-seg.fail {
+  color: var(--synth-danger);
+}
+
+:root[data-theme='synthwave'] .runs-seg.other {
+  color: var(--synth-line);
+}
+
+:root[data-theme='synthwave'] :is(.runs-axis, .runs-labels) {
+  font-family: var(--synth-font-display);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
+:root[data-theme='synthwave'] :is(.dash-card-head, .dash-card) > :is(h2, h3) {
+  font-family: var(--synth-font-display);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--synth-cyan);
+}
+
+/* --- Code-Zeilen wie ein Terminal am Synthesizer: Prompt in Magenta, Text in Cyan, feines Zeilenraster --- */
+:root[data-theme='synthwave'] .code {
+  border: 1px solid color-mix(in srgb, var(--synth-cyan) 25%, var(--synth-line));
+  background:
+    repeating-linear-gradient(to bottom, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 3px),
+    var(--synth-bg-deep);
+  color: var(--synth-cyan);
+  text-shadow: 0 0 calc(4px * var(--synth-glow)) color-mix(in srgb, var(--synth-cyan) 50%, transparent);
+}
+
+:root[data-theme='synthwave'] pre {
+  border: 1px solid color-mix(in srgb, var(--synth-cyan) 20%, var(--synth-line));
+  background:
+    repeating-linear-gradient(to bottom, rgb(255 255 255 / 0.02) 0 1px, transparent 1px 3px),
+    var(--synth-bg-deep);
+}
+
+/* Tasten wie Gerätetasten: erhabene Kappe */
+:root[data-theme='synthwave'] kbd {
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--synth-fg) 25%, var(--synth-line));
+  border-bottom-width: 3px;
+  border-radius: 4px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--synth-fg) 10%, var(--synth-surface)), var(--synth-surface));
+  color: var(--synth-fg);
+  font-family: var(--synth-font-display);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+/* Links im Text: Neon-Unterstrich im Sonnenverlauf beim Überfahren */
+:root[data-theme='synthwave'] .markdown a:not(.btn) {
+  background: linear-gradient(90deg, var(--synth-sun-top), var(--synth-magenta), var(--synth-cyan)) left bottom / 0 1px no-repeat;
+  transition: background-size 0.2s ease;
+}
+
+:root[data-theme='synthwave'] .markdown a:not(.btn):hover {
+  background-size: 100% 1px;
+}
+
+/* --- Suche (Strg+K) als Bandsuchlauf: Kopfzeile „◀◀ SEARCH ▶▶“, Treffer wie Titel mit Leuchtmarkierung --- */
+:root[data-theme='synthwave'] .search-dialog {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background:
+    linear-gradient(var(--synth-surface), var(--synth-surface)) padding-box,
+    linear-gradient(90deg, var(--synth-magenta), var(--synth-violet), var(--synth-cyan)) border-box;
+  box-shadow: 0 0 calc(24px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 35%, transparent);
+}
+
+:root[data-theme='synthwave'] .search-dialog::before {
+  content: '◀◀  SEARCH  ▶▶';
+  display: block;
+  font-family: var(--synth-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-align: center;
+  color: var(--synth-cyan);
+  text-shadow: var(--synth-glow-cyan);
+}
+
+:root[data-theme='synthwave'] .search-group-title {
+  font-family: var(--synth-font-display);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] :is(.search-dialog, .search-hit) mark {
+  background: none;
+  color: var(--synth-magenta);
+  text-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-magenta);
+  box-shadow: inset 0 -1px 0 var(--synth-magenta);
+}
+
+/* --- Ticket-Panel wie eine Kassettenhülle (J-Card): oben die drei Etikettstreifen über die ganze Breite --- */
+:root[data-theme='synthwave'] .db-panel {
+  border-left: 1px solid color-mix(in srgb, var(--synth-cyan) 45%, var(--synth-line));
+  box-shadow: -8px 0 calc(24px * var(--synth-glow)) color-mix(in srgb, var(--synth-magenta) 18%, transparent);
+}
+
+:root[data-theme='synthwave'] .db-panel::before {
+  content: '';
+  flex: none;
+  display: block;
+  height: 7px;
+  background: linear-gradient(
+    to bottom,
+    var(--synth-sun-top) 0 2px,
+    transparent 2px 3px,
+    var(--synth-sun-bottom) 3px 5px,
+    transparent 5px 6px,
+    var(--synth-magenta) 6px 7px
+  );
+}
+
+/* --- Diagramme auf Neon-Millimeterpapier: tiefes Feld mit feinem Raster, Rahmen wie ein Monitor --- */
+:root[data-theme='synthwave'] .diagram {
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--synth-cyan) 25%, var(--synth-line));
+  border-radius: 6px;
+  background:
+    linear-gradient(color-mix(in srgb, var(--synth-violet) 14%, transparent) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, color-mix(in srgb, var(--synth-violet) 14%, transparent) 1px, transparent 1px) 0 0 / 24px 24px,
+    var(--synth-bg-deep);
+  box-shadow: inset 0 0 24px rgb(0 0 0 / 0.55);
+}
+
+:root[data-theme='synthwave'] .diagram-viewer-stage {
+  background:
+    linear-gradient(color-mix(in srgb, var(--synth-violet) 14%, transparent) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, color-mix(in srgb, var(--synth-violet) 14%, transparent) 1px, transparent 1px) 0 0 / 32px 32px,
+    var(--synth-bg-deep);
+}
+
+:root[data-theme='synthwave'] .diagram-viewer-bar strong {
+  font-family: var(--synth-font-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--synth-cyan);
+}
+
+/* Vollbild-Knopf rechtsbündig über dem Rahmen des Diagramms: .btn ist im Theme position: relative (für den
+   Lichtstreifen), schweben über dem Diagramm würde er breite Diagramme verdecken */
+:root[data-theme='synthwave'] .diagram-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+:root[data-theme='synthwave'] .diagram-expand {
+  top: auto;
+  right: auto;
+  align-self: flex-end;
+  margin: 0 0 6px;
+}
+
+/* --- Abhängigkeiten im Stil der Diagramme: Tickets als Leuchtschilder auf Neon-Millimeterpapier, auf den Kanten läuft
+   ein Signal zum abhängigen Ticket, der kritische Pfad leuchtet in Magenta --- */
+:root[data-theme='synthwave'] .dep-graph-head {
+  background:
+    radial-gradient(90% 200% at 50% 200%, color-mix(in srgb, var(--synth-magenta) 18%, transparent), transparent 70%),
+    var(--synth-surface);
+  border-bottom: 1px solid color-mix(in srgb, var(--synth-cyan) 35%, var(--synth-line));
+}
+
+:root[data-theme='synthwave'] .dep-graph-name h2 {
+  font-family: var(--synth-font-display);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--synth-cyan);
+  text-shadow: var(--synth-glow-cyan);
+}
+
+:root[data-theme='synthwave'] .dep-graph-logo {
+  border: 1px solid var(--synth-cyan);
+  border-radius: 4px;
+  background: var(--synth-bg-deep);
+  color: var(--synth-cyan);
+  filter: drop-shadow(0 0 calc(4px * var(--synth-glow)) var(--synth-cyan));
+}
+
+:root[data-theme='synthwave'] .dep-graph-chip {
+  border: 1px solid var(--synth-line);
+  border-radius: 3px;
+  background: var(--synth-bg-deep);
+  font-family: var(--synth-font-display);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+:root[data-theme='synthwave'] .dep-graph-chip.is-critical {
+  border-color: var(--synth-magenta);
+  background: color-mix(in srgb, var(--synth-magenta) 14%, var(--synth-bg-deep));
+  color: var(--synth-magenta);
+  text-shadow: 0 0 calc(6px * var(--synth-glow)) var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] .dep-graph-legend {
+  background: var(--synth-bg-deep);
+  border-bottom-color: color-mix(in srgb, var(--synth-cyan) 25%, var(--synth-line));
+}
+
+:root[data-theme='synthwave'] .dep-graph-legend-title {
+  font-family: var(--synth-font-display);
+  letter-spacing: 0.18em;
+  color: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] .dep-graph-legend :is(.legend-critical, .legend-upstream, .legend-downstream)::before {
+  box-shadow: 0 0 calc(5px * var(--synth-glow)) currentColor;
+}
+
+:root[data-theme='synthwave'] .dep-graph-legend li[data-status] .column-dot {
+  box-shadow: 0 0 calc(5px * var(--synth-glow)) var(--node-status);
+}
+
+:root[data-theme='synthwave'] .dep-graph-edge {
+  stroke: var(--synth-cyan);
+  stroke-width: 1.6;
+  stroke-dasharray: 10 4;
+  filter: drop-shadow(0 0 calc(3px * var(--synth-glow)) var(--synth-cyan));
+  animation: synth-signal 1.2s linear infinite;
+}
+
+:root[data-theme='synthwave'] .dep-graph-edge.is-critical {
+  stroke: var(--synth-magenta);
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 calc(5px * var(--synth-glow)) var(--synth-magenta));
+}
+
+:root[data-theme='synthwave'] .dep-graph-edge.is-cycle {
+  stroke: var(--synth-danger);
+  stroke-dasharray: 4 4;
+  filter: drop-shadow(0 0 calc(5px * var(--synth-glow)) var(--synth-danger));
+}
+
+:root[data-theme='synthwave'] .dep-graph-edge.is-upstream {
+  stroke: var(--synth-cyan);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 calc(6px * var(--synth-glow)) var(--synth-cyan));
+}
+
+:root[data-theme='synthwave'] .dep-graph-edge.is-downstream {
+  stroke: var(--synth-violet);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 calc(6px * var(--synth-glow)) var(--synth-violet));
+}
+
+@keyframes synth-signal {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+
+:root[data-theme='synthwave'] .dep-graph-arrow {
+  fill: var(--synth-magenta);
+}
+
+:root[data-theme='synthwave'] .dep-graph-arrow.is-upstream {
+  fill: var(--synth-cyan);
+}
+
+:root[data-theme='synthwave'] .dep-graph-arrow.is-downstream {
+  fill: var(--synth-violet);
+}
+
+:root[data-theme='synthwave'] .dep-graph-box {
+  fill: var(--synth-surface);
+  stroke: var(--synth-cyan);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 2px var(--synth-cyan)) drop-shadow(0 0 calc(7px * var(--synth-glow)) var(--synth-magenta));
+}
+
+:root[data-theme='synthwave'] .dep-graph-stripe {
+  filter: drop-shadow(0 0 4px var(--node-status));
+}
+
+:root[data-theme='synthwave'] .dep-graph-node.is-critical .dep-graph-box {
+  stroke: var(--synth-magenta);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 3px var(--synth-magenta)) drop-shadow(0 0 calc(9px * var(--synth-glow)) var(--synth-magenta));
+}
+
+/* das Ticket, aus dem der Graph geöffnet wurde: Schild mit magentafarbenem Schimmer im Feld */
+:root[data-theme='synthwave'] .dep-graph-node.is-current .dep-graph-box {
+  fill: color-mix(in srgb, var(--synth-magenta) 16%, var(--synth-surface));
+}
+
+:root[data-theme='synthwave'] .dep-graph-node.is-external .dep-graph-box {
+  fill: var(--synth-bg-deep);
+  stroke: var(--synth-violet);
+  stroke-dasharray: 5 3;
+  filter: drop-shadow(0 0 calc(4px * var(--synth-glow)) var(--synth-violet));
+}
+
+:root[data-theme='synthwave'] .dep-graph-node.is-neighbor .dep-graph-box {
+  stroke: var(--synth-violet);
+  stroke-width: 2;
+}
+
+:root[data-theme='synthwave'] :is(.dep-graph-node:hover, .dep-graph-node:focus-visible, .dep-graph-node.is-hovered) .dep-graph-box {
+  stroke: var(--synth-sun-top);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 3px var(--synth-sun-top)) drop-shadow(0 0 calc(10px * var(--synth-glow)) var(--synth-sun-bottom));
+}
+
+:root[data-theme='synthwave'] .dep-graph-id {
+  fill: var(--synth-cyan);
+  font-family: var(--synth-font-display);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+:root[data-theme='synthwave'] .dep-graph-title {
+  fill: var(--synth-fg);
+  font-family: var(--font-sans);
+}
+
+/* --- Symbole des Kerns (Einstellungen, Knöpfe) als Neonlinien: Farbe des Textes mit leichtem Schein --- */
+:root[data-theme='synthwave'] :is(.settings-nav a, .btn, .icon-btn, .fchip) > svg:not(.synth-icon) {
+  filter: drop-shadow(0 0 calc(3px * var(--synth-glow)) color-mix(in srgb, currentColor 70%, transparent));
+}
+
+/* --- Scrollbalken wie ein Schieberegler am Mischpult: Rille dunkel, Knopf im Neonverlauf --- */
+:root[data-theme='synthwave'] ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: linear-gradient(to bottom, var(--synth-magenta), var(--synth-violet)) padding-box;
+}
+
+:root[data-theme='synthwave'] ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, var(--synth-sun-top), var(--synth-magenta)) padding-box;
+}
+
+/* Schreibmarke in Magenta */
+:root[data-theme='synthwave'] :is(input, textarea, [contenteditable='true']) {
+  caret-color: var(--synth-magenta);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* synth-vhs-flicker und synth-tracking: die ruhende Ebene bleibt, sie flimmert und springt nicht */
+  :root[data-theme='synthwave'] .synth-screen::after {
+    animation: none;
+  }
+
+  :root[data-theme='synthwave'][data-synth-tracking] .synth-body,
+  :root[data-theme='synthwave'][data-synth-tracking] .synth-body::before {
+    animation: none;
+  }
+
+  /* synth-flash: der volle Balken bleibt grün, er blitzt nicht */
+  :root[data-theme='synthwave'] .synth-progress[data-complete] .synth-laser {
+    animation: none;
+  }
+
+  :root[data-theme='synthwave'] .synth-icon.synth-empty {
+    animation: none;
+  }
+
+  :root[data-theme='synthwave'] .synth-eq i {
+    animation: none;
+  }
+
+  /* synth-cursor: der Block-Cursor der Suche steht, er blinkt nicht */
+  :root[data-theme='synthwave'] .synth-display .global-search-label::after {
+    animation: none;
+  }
+
+  :root[data-theme='synthwave'] :is(.synth-vu i, .synth-onair-text) {
+    animation: none;
+  }
+
+  :root[data-theme='synthwave'][data-synth-horizon] :is(.synth-grid, .synth-sun, .synth-stars, .synth-moon),
+  :root[data-theme='synthwave'][data-synth-horizon] .synth-horizon::after {
+    animation: none;
+    transition: none;
+  }
+
+  :root[data-theme='synthwave'] :is(.synth-sunrise, .synth-sunrise-sun, .synth-sunrise-grid, .synth-sunrise-word, .synth-sunrise-word::after, .synth-sunrise-skip) {
+    animation: none;
+  }
+
+  /* synth-sweep: Knöpfe leuchten beim Überfahren, der Streifen bleibt weg */
+  :root[data-theme='synthwave'] .btn:hover:not(:disabled)::after {
+    animation: none;
+  }
+
+  /* synth-pulse und synth-flicker: das Leuchten bleibt, es bewegt sich nur nicht */
+  :root[data-theme='synthwave'] .db-column[data-status='in_progress'] .db-card::after {
+    animation: none;
+  }
+
+  :root[data-theme='synthwave'] .db-column[data-status='blocked'] .db-card::after {
+    animation: none;
+  }
+
+  /* synth-tube, synth-flip, synth-blink, synth-shoot: Röhre, Kassette und Meldungen stehen still */
+  :root[data-theme='synthwave'] :is(.synth-logo-letter, .synth-tracks, .synth-osd, .synth-clear, .synth-offair-text, .synth-overdrive-osd) {
+    animation: none;
+  }
+
+  /* synth-signal: Kanten der Abhängigkeiten bleiben gestrichelt, das Signal läuft nicht */
+  :root[data-theme='synthwave'] .dep-graph-edge {
+    animation: none;
+  }
+
+  :root[data-theme='synthwave'] :is(.synth-shooting-star, .synth-car) {
+    display: none;
+  }
+}

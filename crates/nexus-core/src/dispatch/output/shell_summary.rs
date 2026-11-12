@@ -60,8 +60,9 @@ static GIT: LazyLock<Regex> =
 /// `git commit -m "…"` bzw. `-m '…'`; in JavaScript ein Rückverweis auf das Anführungszeichen
 static COMMIT_MESSAGE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"-m\s+(?:"([^"\n]*)"|'([^'\n]*)')"#).expect("festes Muster"));
-static HARNESS: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(?:nexus|harness)\s+board\s+(\S+)\s*(\S+)?(.*)$").expect("festes Muster"));
+static HARNESS: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^(?:nexus|harness)\s+board\s+(\S+)\s*(\S+)?(.*)$").expect("festes Muster")
+});
 static LEADING_CD: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^cd\s+\S+\s*(?:&&|;)\s*").expect("festes Muster"));
 static TOKEN: LazyLock<Regex> =
@@ -299,7 +300,7 @@ fn test_text(command: &str) -> String {
     }
 }
 
-/// Was ein `nexus board …` (oder `harness board …`) tut
+/// Was ein `nexus board …` (auch über den Alias `harness`) tut
 fn harness_text(verb: &str, id: Option<&str>, rest: &str) -> String {
     let id = id.unwrap_or("");
     match verb {
@@ -516,15 +517,15 @@ mod tests {
     #[test]
     fn harness_befehle_nennen_schritt_kommentar_und_abschluss() {
         assert_eq!(
-            summary("harness board step ARC-0007 3").text,
+            summary("nexus board step ARC-0007 3").text,
             "hakt Schritt 3 ab"
         );
         assert_eq!(
-            summary("harness board comment ARC-0007 \"x\"").text,
+            summary("nexus board comment ARC-0007 \"x\"").text,
             "kommentiert ARC-0007"
         );
         assert_eq!(
-            summary("harness board done ARC-0007").text,
+            summary("nexus board done ARC-0007").text,
             "meldet ARC-0007 als erledigt"
         );
         assert_eq!(
@@ -532,9 +533,10 @@ mod tests {
             "liest Ticket AIH-0043"
         );
         assert_eq!(
-            summary("nexus board done ARC-0007").text,
-            "meldet ARC-0007 als erledigt"
+            summary("nexus board note list").text,
+            "nexus board note list"
         );
+        // Der alte Alias `harness` wird weiter erkannt und als `nexus` angezeigt
         assert_eq!(
             summary("harness board note list").text,
             "nexus board note list"

@@ -183,6 +183,7 @@ async fn liefert_system_als_standard_und_speichert_das_theme() {
         Some(json!({
             "notifications": "off", "heroImages": false, "theme": "dark", "claudeUsage": false,
             "compactCards": false, "hideNotNeeded": false, "hideInPlanning": false,
+            "doneGrouping": "time", "doneArchiveDays": 0,
             "ntfy": false, "ntfyServer": "https://ntfy.sh", "ntfyTopic": "", "ntfyToken": "",
             "setupPrompts": { "pluginDismissed": false, "migrationDismissed": [] },
         }))
@@ -202,7 +203,7 @@ async fn lehnt_ein_unbekanntes_theme_ab() {
     assert_eq!(reply.status, 422);
     assert_eq!(
         reply.json().expect("JSON")["message"],
-        "theme muss system, light, dark, signal, pastel oder win95 sein."
+        "theme muss ein eingebautes (system, light, dark) oder installiertes Theme sein."
     );
 }
 
@@ -234,6 +235,86 @@ async fn lehnt_compact_cards_ohne_wahrheitswert_ab() {
     assert_eq!(
         reply.json().expect("JSON")["message"],
         "compactCards muss true oder false sein."
+    );
+}
+
+#[tokio::test]
+async fn gruppiert_die_erledigt_spalte_standardmassig_nach_zeit_ohne_archiv() {
+    let server = TestServer::start();
+    let body = server.get("/api/user-settings").await.json().expect("JSON");
+    assert_eq!(body["doneGrouping"], "time");
+    assert_eq!(body["doneArchiveDays"], 0);
+}
+
+#[tokio::test]
+async fn speichert_gruppierung_und_archiv_der_erledigt_spalte() {
+    let server = TestServer::start();
+    let saved = server
+        .put(
+            "/api/user-settings",
+            r#"{"doneGrouping":"spec","doneArchiveDays":365}"#,
+        )
+        .await;
+    assert_eq!(saved.status, 200);
+    let body = saved.json().expect("JSON");
+    assert_eq!(body["doneGrouping"], "spec");
+    assert_eq!(body["doneArchiveDays"], 365);
+
+    let read = server.get("/api/user-settings").await.json().expect("JSON");
+    assert_eq!(read["doneGrouping"], "spec");
+    assert_eq!(read["doneArchiveDays"], 365);
+
+    let reset = server
+        .put(
+            "/api/user-settings",
+            r#"{"doneGrouping":"time","doneArchiveDays":0}"#,
+        )
+        .await
+        .json()
+        .expect("JSON");
+    assert_eq!(reset["doneGrouping"], "time");
+    assert_eq!(reset["doneArchiveDays"], 0);
+}
+
+#[tokio::test]
+async fn lehnt_eine_unbekannte_gruppierung_der_erledigt_spalte_ab() {
+    let server = TestServer::start();
+    for value in [json!("liste"), json!(null), json!(1)] {
+        let reply = server
+            .put(
+                "/api/user-settings",
+                &json!({ "doneGrouping": value }).to_string(),
+            )
+            .await;
+        assert_eq!(reply.status, 422, "{value}");
+        assert_eq!(
+            reply.json().expect("JSON")["message"],
+            "doneGrouping muss time oder spec sein.",
+            "{value}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn lehnt_eine_archivdauer_ausserhalb_von_0_bis_365_tagen_ab() {
+    let server = TestServer::start();
+    for value in [json!(366), json!(-1), json!(1.5), json!("7"), json!(null)] {
+        let reply = server
+            .put(
+                "/api/user-settings",
+                &json!({ "doneArchiveDays": value }).to_string(),
+            )
+            .await;
+        assert_eq!(reply.status, 422, "{value}");
+        assert_eq!(
+            reply.json().expect("JSON")["message"],
+            "doneArchiveDays muss eine ganze Zahl von 0 bis 365 sein.",
+            "{value}"
+        );
+    }
+    assert_eq!(
+        server.get("/api/user-settings").await.json().expect("JSON")["doneArchiveDays"],
+        0
     );
 }
 

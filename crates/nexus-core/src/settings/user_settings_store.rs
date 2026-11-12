@@ -8,8 +8,9 @@ use crate::error::{Error, Result};
 use crate::locking::AtomicWriter;
 use crate::registry::HarnessHome;
 use crate::settings::user_settings::{
-    NotificationMode, SetupPrompts, ThemeMode, UserSettings, DEFAULT_NTFY_SERVER,
-    NOTIFICATION_MODES, NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN, THEME_MODES,
+    known_theme, DoneGrouping, NotificationMode, SetupPrompts, ThemeMode, UserSettings,
+    DEFAULT_NTFY_SERVER, DONE_ARCHIVE_MAX_DAYS, DONE_GROUPINGS, NOTIFICATION_MODES,
+    NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN,
 };
 
 /// Liest und schreibt `settings.json`.
@@ -38,7 +39,7 @@ impl UserSettingsStore {
             .ok()
             .and_then(|text| serde_json::from_str::<Value>(&text).ok())
         {
-            Some(raw) => normalize(&raw),
+            Some(raw) => normalize(&raw, &self.home),
             None => UserSettings::default(),
         }
     }
@@ -53,7 +54,7 @@ impl UserSettingsStore {
 }
 
 /// Übernimmt nur gültige Werte; der frühere Schalter `notifyOnWaiting` wird zu „browser“
-fn normalize(raw: &Value) -> UserSettings {
+fn normalize(raw: &Value, home: &HarnessHome) -> UserSettings {
     let legacy = if is_true(raw, "notifyOnWaiting") {
         NotificationMode::Browser
     } else {
@@ -63,10 +64,12 @@ fn normalize(raw: &Value) -> UserSettings {
         .into_iter()
         .find(|mode| raw.get("notifications").and_then(Value::as_str) == Some(mode.as_str()))
         .unwrap_or(legacy);
-    let theme = THEME_MODES
-        .into_iter()
-        .find(|theme| raw.get("theme").and_then(Value::as_str) == Some(theme.as_str()))
-        .unwrap_or(ThemeMode::System);
+    // Eingebaut oder installiert; unbekannte oder entfernte Themes ergeben „system“
+    let theme = raw
+        .get("theme")
+        .and_then(Value::as_str)
+        .filter(|id| known_theme(home, id))
+        .map_or_else(ThemeMode::system, ThemeMode::from);
     UserSettings {
         notifications,
         hero_images: is_true(raw, "heroImages"),
@@ -75,6 +78,8 @@ fn normalize(raw: &Value) -> UserSettings {
         compact_cards: is_true(raw, "compactCards"),
         hide_not_needed: is_true(raw, "hideNotNeeded"),
         hide_in_planning: is_true(raw, "hideInPlanning"),
+        done_grouping: done_grouping(raw),
+        done_archive_days: done_archive_days(raw),
         ntfy: is_true(raw, "ntfy"),
         // ntfy-Felder: Server als http(s)-Adresse, Thema nur mit erlaubten Zeichen, sonst Standard
         ntfy_server: text(raw, "ntfyServer")
@@ -86,6 +91,23 @@ fn normalize(raw: &Value) -> UserSettings {
         ntfy_token: text(raw, "ntfyToken").unwrap_or_default(),
         setup_prompts: setup_prompts(raw.get("setupPrompts")),
     }
+}
+
+/// Gruppierung der Spalte „Erledigt“; Unbekanntes ergibt den Standard
+fn done_grouping(raw: &Value) -> DoneGrouping {
+    DONE_GROUPINGS
+        .into_iter()
+        .find(|grouping| raw.get("doneGrouping").and_then(Value::as_str) == Some(grouping.as_str()))
+        .unwrap_or(UserSettings::default().done_grouping)
+}
+
+/// Archivdauer in Tagen; alles außer einer ganzen Zahl von 0 bis 365 ergibt den Standard
+fn done_archive_days(raw: &Value) -> u16 {
+    raw.get("doneArchiveDays")
+        .and_then(Value::as_u64)
+        .and_then(|days| u16::try_from(days).ok())
+        .filter(|days| *days <= DONE_ARCHIVE_MAX_DAYS)
+        .unwrap_or(UserSettings::default().done_archive_days)
 }
 
 /// Abgewiesene Setup-Dialoge; Unbrauchbares zählt als nicht abgewiesen
@@ -127,6 +149,7 @@ fn text(raw: &Value, key: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::settings::BUILTIN_THEME_IDS;
 
     /// Benutzerordner und Einstellungen darin
     fn store() -> (tempfile::TempDir, UserSettingsStore) {
@@ -155,11 +178,13 @@ mod tests {
         let settings = UserSettings {
             notifications: NotificationMode::Windows,
             hero_images: true,
-            theme: ThemeMode::Dark,
+            theme: ThemeMode::from("dark"),
             claude_usage: true,
             compact_cards: true,
             hide_not_needed: true,
             hide_in_planning: true,
+            done_grouping: DoneGrouping::Spec,
+            done_archive_days: 30,
             ntfy: true,
             ntfy_server: "https://push.example".into(),
             ntfy_topic: "harness-x".into(),
@@ -221,7 +246,62 @@ mod tests {
             r#"{"notifications":"off","heroImages":false,"theme":"lila"}"#,
         );
 
-        assert_eq!(store.read().theme, ThemeMode::System);
+        assert_eq!(store.read().theme, ThemeMode::system());
+    }
+
+    #[test]
+    fn liest_die_eingebauten_themes_unverandert() {
+        let (dir, store) = store();
+        for id in BUILTIN_THEME_IDS {
+            write_raw(&dir, &format!(r#"{{"theme":"{id}"}}"#));
+            assert_eq!(store.read().theme.as_str(), id);
+        }
+    }
+
+    #[test]
+    fn ersetzt_ein_theme_ohne_text_durch_system() {
+        let (dir, store) = store();
+        write_raw(&dir, r#"{"theme":5}"#);
+
+        assert_eq!(store.read().theme, ThemeMode::system());
+    }
+
+    #[test]
+    fn behalt_ein_installiertes_theme() {
+        let (dir, store) = store();
+        let theme_dir = dir.path().join("themes").join("ocean");
+        fs::create_dir_all(&theme_dir).unwrap();
+        fs::write(theme_dir.join("manifest.json"), r#"{"id":"ocean"}"#).unwrap();
+        write_raw(&dir, r#"{"theme":"ocean"}"#);
+
+        assert_eq!(store.read().theme, ThemeMode::from("ocean"));
+    }
+
+    #[test]
+    fn signal_pastel_und_win95_gelten_nur_als_installiertes_paket() {
+        for id in ["signal", "pastel", "win95"] {
+            let (dir, store) = store();
+            write_raw(&dir, &format!(r#"{{"theme":"{id}"}}"#));
+            assert_eq!(store.read().theme, ThemeMode::system(), "{id}");
+
+            let theme_dir = dir.path().join("themes").join(id);
+            fs::create_dir_all(&theme_dir).unwrap();
+            fs::write(
+                theme_dir.join("manifest.json"),
+                format!(r#"{{"id":"{id}"}}"#),
+            )
+            .unwrap();
+            assert_eq!(store.read().theme, ThemeMode::from(id), "{id}");
+        }
+    }
+
+    #[test]
+    fn ersetzt_ein_ungultiges_theme_trotz_ordner_durch_system() {
+        let (dir, store) = store();
+        fs::create_dir_all(dir.path().join("themes").join("X")).unwrap();
+        write_raw(&dir, r#"{"theme":"../X"}"#);
+
+        assert_eq!(store.read().theme, ThemeMode::system());
     }
 
     #[test]
@@ -238,6 +318,36 @@ mod tests {
         assert_eq!(settings.ntfy_server, DEFAULT_NTFY_SERVER);
         assert_eq!(settings.ntfy_topic, "");
         assert_eq!(settings.ntfy_token, "");
+    }
+
+    #[test]
+    fn liest_gruppierung_und_archiv_der_erledigt_spalte() {
+        let (dir, store) = store();
+        for (tage, erwartet) in [(0, 0), (1, 1), (365, 365)] {
+            write_raw(
+                &dir,
+                &format!(r#"{{"doneGrouping":"spec","doneArchiveDays":{tage}}}"#),
+            );
+            let settings = store.read();
+            assert_eq!(settings.done_grouping, DoneGrouping::Spec);
+            assert_eq!(settings.done_archive_days, erwartet);
+        }
+    }
+
+    #[test]
+    fn ersetzt_eine_unbrauchbare_gruppierung_und_archivdauer_durch_die_standardwerte() {
+        let (dir, store) = store();
+        for raw in [
+            r#"{"doneGrouping":"liste","doneArchiveDays":366}"#,
+            r#"{"doneGrouping":5,"doneArchiveDays":-1}"#,
+            r#"{"doneGrouping":null,"doneArchiveDays":1.5}"#,
+            r#"{"doneArchiveDays":"7"}"#,
+        ] {
+            write_raw(&dir, raw);
+            let settings = store.read();
+            assert_eq!(settings.done_grouping, DoneGrouping::Time, "{raw}");
+            assert_eq!(settings.done_archive_days, 0, "{raw}");
+        }
     }
 
     #[test]

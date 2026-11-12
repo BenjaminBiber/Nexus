@@ -1,0 +1,606 @@
+/* „Paper Notes“ ersetzt Pastell unter demselben Schlüssel „pastel“, damit gespeicherte Einstellungen gelten.
+   Fineliner-Tinte auf warmem Punktpapier, Markerfarben statt glatter Flächen, Handschrift (Patrick Hand) und
+   Überschriften in Caveat. Übernimmt die hellen Werte und ändert nur Abweichungen; --paper-* gilt nur für diesen Stil.
+   Nur dekorative Ebenen werden maskiert; Inhalte, Fokus und Popovers bleiben unbeschnitten.
+
+   Schriften (assets/fonts, nur latin-Untermengen aus @fontsource/patrick-hand und @fontsource/caveat 5.3.0):
+   Patrick Hand – Copyright (c) 2010-2012 Patrick Wagesreiter
+   Caveat – Copyright 2014 The Caveat Project Authors (github.com/googlefonts/caveat)
+   Beide stehen unter der SIL Open Font License 1.1 (openfontlicense.org); Lizenzangaben auch in den Metadaten der Dateien. */
+
+@font-face {
+  font-family: 'Patrick Hand';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('assets/fonts/patrick-hand-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('assets/fonts/caveat-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('assets/fonts/caveat-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Palette: Fineliner-Tinte, warmes Punktpapier und Markerfarben */
+:root[data-theme='pastel'] {
+  --font-sans: 'Patrick Hand', cursive;
+  --bg: #faf8f0;
+  --surface: #fffdf5;
+  --surface-alt: #f5f0df;
+  --sidebar-bg: #faf8f0;
+  --nav-active-bg: #fff09b;
+  --line: #525467;
+  --line-input: #525467;
+  --line-soft: #e7e3d7;
+  --line-strong: #303448;
+  --line-dashed: #8c8b92;
+  --column-bg: transparent;
+  --column-locked-a: #f3eee3;
+  --column-locked-b: #eae5d9;
+  --text: #292e43;
+  --text-soft: #414557;
+  --muted: #676777;
+  --accent: #55518c;
+  --accent-hover: #38345f;
+  --accent-soft: #e8e0fc;
+  --accent-soft-hover: #dcd1f5;
+  --primary: #ffeb85;
+  --primary-hover: #ffe269;
+  --on-primary: #292e43;
+  --chip-on-bg: #fff09b;
+  --chip-on-fg: #292e43;
+  --code-bg: #f0ede3;
+  --code-fg: #292e43;
+  --code-muted: #676777;
+  --code-btn-bg: #fffdf5;
+  --code-btn-line: #aaa6a0;
+  --status-bg: #efe7f6;
+  --status-fg: #5d4787;
+  --running-fg: #24513b;
+  --running-bg: #c3f3d4;
+  --waiting-fg: #654a17;
+  --waiting-bg: #fff1a8;
+  --waiting-line: #bda767;
+  --idle-fg: #414557;
+  --idle-bg: #eee9df;
+  --blocked-fg: #813148;
+  --blocked-bg: #ffd0df;
+  --orphan-fg: #6a4f93;
+  --orphan-bg: #f1eaf7;
+  --unread-fg: #5d4787;
+  --unread-bg: #efe7f6;
+  --unread-row-bg: #f8f2fa;
+  --note-bg: #fff4bf;
+  --note-line: #bda767;
+  --note-fg: #654a17;
+  --ok: #6ebd90;
+  --ok-fg: #24513b;
+  --ok-ring: #c3f3d4;
+  --danger: #a43b58;
+  --warn: #966a20;
+  --usage-ok: #4c9970;
+  --usage-warn: #966a20;
+  --usage-crit: #a43b58;
+  --row-waiting-bg: #fcf5e8;
+  --quote-line: #c4a7e7;
+  --mark: #fff09b;
+  --mark-comment: #e8e0fc;
+  --mark-comment-hover: #dcd1f5;
+  --tag-add-line: #c4a7e7;
+  --connection-line: #f0c9cf;
+  --connection-fg: #8c3d52;
+  --error-bg: #fdf3f1;
+  --answered-bg: #e8f2e4;
+  --answered-line: #bcd9b5;
+  --research-bg: #e6f0f2;
+  --research-fg: #286983;
+  --test-ok: #6d9f71;
+  --test-fail: #b4637a;
+  --status-backlog: #a38eae;
+  --status-waiting: #b89b46;
+  --status-in-planning: #a48aca;
+  --status-planned: #9b8ec8;
+  --status-in-progress: #b4a040;
+  --status-blocked: #c56a8a;
+  --status-done: #6ebd90;
+  --status-not-needed: #aaa6a0;
+  --graph-edge: #9893a5;
+  --graph-critical: #b4637a;
+  --graph-upstream: #6c8ebf;
+  --graph-downstream: #907aa9;
+  --chart-done: #6d9f71;
+  --chart-fail: #b4637a;
+  --chart-bar: #7b5ea7;
+  --chart-track: #f2e9e1;
+  --chart-grid: #ebe0d6;
+  --chart-axis: #6e6a86;
+  --chart-other: #cecacd;
+  --chart-escalated: #d7827e;
+  --reason-max-turns: #b4637a;
+  --reason-timeout: #d7827e;
+  --reason-context: #c26d9a;
+  --reason-exit-code: #907aa9;
+  --reason-claude-error: #6c8ebf;
+  --reason-no-outcome: #56949f;
+  --reason-rest: #b5aeb8;
+  --urgent-row-bg: #fbeceb;
+  --shadow-faint: rgba(87, 82, 121, 0.05);
+  --shadow-mid: rgba(87, 82, 121, 0.1);
+  --shadow-soft: rgba(87, 82, 121, 0.08);
+  --shadow-tab: rgba(87, 82, 121, 0.12);
+  --shadow-strong: rgba(87, 82, 121, 0.14);
+  --backdrop: rgba(87, 82, 121, 0.3);
+  --sheet-shadow: rgba(87, 82, 121, 0.18);
+  --picker-shadow: rgba(87, 82, 121, 0.14);
+  --radius-control: 5px 8px 4px 7px / 7px 4px 8px 5px;
+  --radius-card: 5px 9px 4px 7px / 8px 4px 7px 5px;
+  --radius-panel: 6px 10px 5px 8px / 9px 5px 8px 6px;
+  /* Nur im Paper-Notes-Stil: Schrift der Überschriften, Tinte, Punktraster, Rand und Markerfarben */
+  --paper-font-display: 'Caveat', 'Patrick Hand', cursive;
+  --paper-ink: #303448;
+  --paper-dot: #c9c5bc;
+  --paper-margin: #d9989f;
+  --paper-yellow: #fff09b;
+  --paper-pink: #ffd0df;
+  --paper-mint: #c3f3d4;
+  --paper-lavender: #e0d5fa;
+  --paper-blue: #d6ebf5;
+  --paper-sticky: #fff2ab;
+  --paper-sticky-fold: #c6ac50;
+  --paper-sticky-shadow: rgba(93, 75, 27, .18);
+  --paper-clipboard: #d3b38a;
+  --paper-clipboard-edge: #a5825c;
+  --paper-clipboard-sheet: #fffdf6;
+  --paper-clip-metal: #d6d8d3;
+  --paper-clip-highlight: #f1f1e9;
+}
+
+/* Formen als Bilder: Punktraster, gezeichnete Rahmen (Masken mit gleichbleibender Strichstärke), Markerkante,
+   Ringkontur für den Fortschritt und der Tintenfilter für Symbolkonturen (deterministisches Rauschen, als data:-SVG). */
+:root[data-theme='pastel'] {
+  --paper-grid: radial-gradient(circle, var(--paper-dot) .7px, transparent .85px);
+  --paper-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180' viewBox='0 0 320 180' preserveAspectRatio='none'%3E%3Cpath d='M5 4 Q147 1 314 5 Q318 70 315 174 Q160 178 5 175 Q1 90 5 4Z M7 6 Q160 4 310 6 M313 10 Q316 90 313 170' fill='none' stroke='black' stroke-width='1.2' vector-effect='non-scaling-stroke' stroke-linecap='round'/%3E%3C/svg%3E");
+  --paper-frame-alt: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180' viewBox='0 0 320 180' preserveAspectRatio='none'%3E%3Cpath d='M6 5 Q170 2 314 4 Q317 94 314 175 Q153 172 5 176 Q3 87 6 5Z M8 173 Q150 175 310 173 M7 8 Q4 80 7 167' fill='none' stroke='black' stroke-width='1.2' vector-effect='non-scaling-stroke' stroke-linecap='round'/%3E%3C/svg%3E");
+  --paper-marker: polygon(1% 12%, 17% 5%, 37% 9%, 59% 2%, 80% 7%, 98% 4%, 100% 32%, 98% 52%, 100% 81%, 82% 94%, 63% 89%, 40% 97%, 20% 91%, 1% 96%, 2% 67%, 0 43%);
+  --paper-field-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='44' viewBox='0 0 320 44' preserveAspectRatio='none'%3E%3Cpath d='M9 3Q151 1 310 3Q317 3 317 10L316 34Q317 40 309 40Q152 42 10 40Q3 41 4 34L3 11Q2 3 9 3Z M12 42Q161 43 306 41' fill='none' stroke='black' stroke-width='1.1' vector-effect='non-scaling-stroke' stroke-linecap='round'/%3E%3C/svg%3E");
+  --paper-ring: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84' viewBox='0 0 84 84'%3E%3Cpath d='M42 4C65 5 81 21 80 43C79 65 61 81 40 80C18 79 3 62 4 40C5 19 22 3 42 4 M43 12C60 10 72 25 72 42C73 59 58 72 41 72C25 73 11 58 12 42C11 25 26 11 43 12' fill='none' stroke='black' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E");
+  /* Nur Symbolkonturen bekommen die Stift-Unregelmäßigkeit; Text, Trefferflächen und Diagramme bleiben unverzerrt.
+     Kennt eine Engine keine Filter aus data:-URLs, bleibt das Symbol einfach glatt. */
+  --paper-ink-filter: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paper-ink' x='-15%25' y='-15%25' width='130%25' height='130%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.13' numOctaves='2' seed='8' result='grain'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='grain' scale='.7' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/svg%3E#paper-ink");
+}
+
+[data-theme='pastel'] body {
+  background: var(--paper-grid) 8px 8px / 22px 22px, var(--bg);
+  font-size: 16px;
+}
+[data-theme='pastel'] :is(h1, h2, h3, .page-title, .settings-nav-title, .card-title, .choice-label, .title-input) {
+  font-family: var(--paper-font-display);
+  letter-spacing: 0;
+  font-weight: 700;
+}
+[data-theme='pastel'] h1 { font-size: 38px; }
+[data-theme='pastel'] :is(.page-title, .page-head h1, .settings-head h1) {
+  width: fit-content;
+  background: linear-gradient(transparent 52%, var(--paper-yellow) 52% 91%, transparent 91%);
+  padding-inline: 4px;
+}
+[data-theme='pastel'] :is(.card-id, .card-steps, .card-waiting, .count, .nav-kbd, .bp-key) {
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+/* Quellcode, Logs und Prompt-Editoren behalten ihre Monospace-Schrift. */
+[data-theme='pastel'] :is(.btn, .nav a, .settings-nav a, input, select, textarea.plain-text, .db-search, .global-search, .bp-field, .tab, .fchip) { font-size: 16px; }
+[data-theme='pastel'] :is(.btn.small, .setting-label, .setting-title label, .field, .setting-hint, .choice-hint) { font-size: 15px; }
+[data-theme='pastel'] :is(.badge, .tag) { font-size: 14px; line-height: 22px; }
+[data-theme='pastel'] .card-title { font-size: 22px; line-height: 1.15; }
+[data-theme='pastel'] .db-card.compact .card-title { font-size: 20px; }
+[data-theme='pastel'] :is(.dash-card h2, .panel h3, .settings-section-title h3) { font-size: 23px; }
+[data-theme='pastel'] .kpi-label { text-transform: none; letter-spacing: 0; font-size: 15px; }
+[data-theme='pastel'] .kpi-value { font-family: var(--paper-font-display); font-size: 30px; }
+
+/* Notizbuchrand statt gerissener Tonpapier-Seitenleiste. */
+[data-theme='pastel'] :is(.shell-sidebar, .settings-nav) {
+  background: var(--paper-grid) 8px 8px / 22px 22px, var(--sidebar-bg);
+  border-right: 1px solid var(--paper-margin);
+  box-shadow: inset -5px 0 0 var(--bg), inset -6px 0 0 var(--paper-margin);
+}
+[data-theme='pastel'] .usage-dock { background: transparent; }
+[data-theme='pastel'] :is(.nav a, .settings-nav a) { position: relative; isolation: isolate; }
+[data-theme='pastel'] :is(.nav a.active, .settings-nav a.active, .nav a:hover, .settings-nav a:hover) {
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+}
+[data-theme='pastel'] :is(.nav a, .settings-nav a)::before {
+  content: ''; position: absolute; inset: 5px 0; z-index: -1;
+  background: var(--paper-yellow); clip-path: var(--paper-marker); transform: rotate(-.7deg); opacity: 0;
+  transition: opacity 100ms ease;
+}
+[data-theme='pastel'] :is(.nav a.active, .settings-nav a.active)::before { opacity: 1; }
+[data-theme='pastel'] :is(.nav a:hover, .settings-nav a:hover):not(.active) { background: transparent; }
+[data-theme='pastel'] :is(.nav a:hover, .settings-nav a:hover):not(.active)::before { background: var(--paper-mint); opacity: .7; }
+/* Der flüssige Navigationsblob gehört zu den glatten Themes. */
+[data-theme='pastel'] .goo-nav-blob { display: none; }
+[data-theme='pastel'] :is(.nav-icon, .choice-icon, .icon-btn svg, .btn svg, .db-search svg, .global-search svg, .bp-edit svg, .db-fab-btn svg, .db-fab-item svg) {
+  filter: var(--paper-ink-filter); stroke-linecap: round; stroke-linejoin: round;
+}
+[data-theme='pastel'] .nav-icon { width: 20px; height: 20px; stroke-width: 1.5; transform: rotate(-2deg); }
+[data-theme='pastel'] .nav a:nth-child(even) .nav-icon { transform: rotate(2deg); }
+
+/* Gezeichnete Bedienelemente: organische Ecken, zweite feine Tintenlinie bei Fokus. */
+[data-theme='pastel'] :is(.btn, input, select, textarea, .db-search, .global-search, .bp-field, .fchip, .segmented) {
+  border-color: var(--paper-ink); border-radius: var(--radius-control); box-shadow: none;
+}
+[data-theme='pastel'] :is(.btn, .fchip) { border-width: 1.3px; }
+[data-theme='pastel'] .btn.primary { background: var(--paper-yellow); color: var(--text); border-color: var(--paper-ink); }
+[data-theme='pastel'] .btn.primary:hover:not(:disabled) { background: var(--primary-hover); }
+[data-theme='pastel'] .btn.danger { background: var(--paper-pink); color: var(--blocked-fg); border-color: var(--blocked-fg); }
+[data-theme='pastel'] :is(.btn, .fchip):hover:not(:disabled) { box-shadow: 1px 1px 0 var(--paper-ink); }
+[data-theme='pastel'] .btn:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
+[data-theme='pastel'] :is(.btn, .db-search, .global-search) { position: relative; border-color: transparent; }
+[data-theme='pastel'] :is(.btn, .db-search, .global-search)::before {
+  content: ''; position: absolute; inset: -2px; pointer-events: none;
+  background: var(--paper-ink); mask: var(--paper-frame-alt) center / 100% 100% no-repeat;
+}
+[data-theme='pastel'] .btn.danger::before { background: var(--blocked-fg); }
+[data-theme='pastel'] .global-search { background-color: var(--surface); }
+[data-theme='pastel'] :is(.db-search, .global-search)::before { mask-image: var(--paper-field-frame); }
+[data-theme='pastel'] :is(input, select, textarea):focus-visible,
+[data-theme='pastel'] :is(.db-search, .bp-field):focus-within {
+  outline: none; border-color: var(--accent); box-shadow: 0 3px 0 var(--paper-yellow);
+}
+[data-theme='pastel'] :is(.db-search, .global-search):is(:focus-within, :focus-visible) { outline: none; border-color: transparent; box-shadow: none; }
+[data-theme='pastel'] :is(.db-search, .global-search):is(:focus-within, :focus-visible)::before { background: var(--accent); }
+[data-theme='pastel'] :is(.db-search, .global-search)::after {
+  content: ''; position: absolute; bottom: -4px; left: 8px; right: 8px; height: 6px;
+  background: var(--paper-yellow); clip-path: var(--paper-marker); pointer-events: none; opacity: 0;
+}
+[data-theme='pastel'] :is(.db-search, .global-search):is(:focus-within, :focus-visible)::after { opacity: 1; }
+[data-theme='pastel'] .db-search input,
+[data-theme='pastel'] .db-search input:is(:focus, :focus-visible) { border: 0; outline: none; box-shadow: none; background: transparent; }
+[data-theme='pastel'] [aria-invalid='true'] { border-color: var(--blocked-fg); background-color: var(--error-bg); }
+[data-theme='pastel'] :is(input[type='checkbox'], input[type='radio']) { accent-color: var(--ok-fg); }
+[data-theme='pastel'] .setting-control > input[type='checkbox'] { border: 1px solid var(--paper-ink); background: var(--surface-alt); border-radius: 13px 11px 12px 10px; }
+[data-theme='pastel'] .setting-control > input[type='checkbox']:checked { background: var(--paper-mint); }
+[data-theme='pastel'] .setting-control > input[type='checkbox']::before { border: 1px solid var(--paper-ink); box-shadow: none; top: 1px; left: 1px; }
+[data-theme='pastel'] .setting-control > input[type='checkbox']:checked:hover:not(:disabled) { background: var(--ok-ring); }
+[data-theme='pastel'] .fchip.on { border-color: var(--paper-ink); }
+[data-theme='pastel'] .tab.on { box-shadow: inset 0 -4px 0 var(--paper-yellow); }
+
+/* Kartenkontur als skalierbares SVG mit gleichbleibender Strichstärke.
+   Kein Filter am Inhalt: Schrift bleibt scharf, Drag & Drop und Fokus bleiben nativ. */
+[data-theme='pastel'] .card {
+  position: relative; isolation: isolate; border: 1px solid transparent;
+  background: var(--paper-grid) 8px 8px / 22px 22px, var(--surface);
+  border-radius: var(--radius-card); box-shadow: none; padding: 15px;
+  --paper-card-ink: var(--paper-ink);
+}
+[data-theme='pastel'] .card::before {
+  content: ''; position: absolute; inset: -1px; pointer-events: none; z-index: -1;
+  background: var(--paper-card-ink); mask: var(--paper-frame) center / 100% 100% no-repeat;
+}
+[data-theme='pastel'] .card:nth-child(even)::before { mask-image: var(--paper-frame-alt); }
+[data-theme='pastel'] .card:hover { box-shadow: none; border-color: transparent; background-color: var(--surface-alt); }
+[data-theme='pastel'] .card:hover::before { inset: -2px; }
+[data-theme='pastel'] .card:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* Der Status steht an der Spalte (data-status), nicht an der Karte */
+[data-theme='pastel'] .db-column[data-status='blocked'] .card { --paper-card-ink: var(--blocked-fg); }
+[data-theme='pastel'] .db-column[data-status='done'] .card { --paper-card-ink: var(--ok-fg); }
+[data-theme='pastel'] .card.is-waiting { border: 1px dashed var(--waiting-line); }
+[data-theme='pastel'] .card.is-waiting::before { opacity: .45; }
+[data-theme='pastel'] .card-waiting { border-style: dashed; border-radius: var(--radius-control); }
+
+/* Statusfarbe sitzt am Marker im Kopf, die Spalte bleibt ruhiges Notizpapier. */
+[data-theme='pastel'] .column { background: transparent; border-radius: 0; border-right: 1px solid var(--line-soft); }
+[data-theme='pastel'] .db-column.locked { background: repeating-linear-gradient(135deg, transparent 0 10px, var(--line-soft) 10px 11px); }
+[data-theme='pastel'] .column-head { border-radius: 0; border-bottom: 1px solid var(--line); background: var(--paper-grid) 8px 8px / 22px 22px, var(--bg); padding-bottom: 12px; margin-bottom: 6px; }
+[data-theme='pastel'] :is(body, .column-head, .shell-sidebar, .settings-nav, .card) { background-attachment: fixed; }
+[data-theme='pastel'] .column-head h2 {
+  font-size: 23px; position: relative; isolation: isolate;
+}
+[data-theme='pastel'] .column-head h2::before {
+  content: ''; position: absolute; inset: 4px -5px 0; z-index: -1;
+  background: color-mix(in srgb, var(--node-status, var(--status-backlog)) 38%, var(--bg));
+  clip-path: var(--paper-marker); transform: rotate(-1deg);
+}
+[data-theme='pastel'] .column-dot { border: 1px solid var(--paper-ink); border-radius: 45% 55% 48% 52%; }
+[data-theme='pastel'] .column-empty { border-radius: var(--radius-control); font-size: 15px; }
+
+/* Marker statt glatter Pillen. Die bestehende Statussemantik bleibt erhalten. */
+[data-theme='pastel'] :is(.badge, .tag) {
+  border-radius: 4px 8px 3px 7px / 6px 3px 7px 4px;
+  background-image: linear-gradient(178deg, var(--surface) 0 5%, transparent 9% 91%, var(--surface) 96%);
+  box-shadow: none; color: var(--text);
+}
+[data-theme='pastel'] .tag { background-color: var(--paper-pink); }
+[data-theme='pastel'] .tag:nth-child(even) { background-color: var(--paper-lavender); }
+[data-theme='pastel'] .badge.session { background-color: var(--paper-lavender); }
+[data-theme='pastel'] .badge.running { background-color: var(--paper-mint); }
+[data-theme='pastel'] .badge.prio-urgent { color: var(--surface); }
+[data-theme='pastel'] :is(.card-steps-bar, .progress-bar, .spec-progress-bar) {
+  position: relative; isolation: isolate; height: 10px; padding: 2px; border: 0;
+  border-radius: 4px 6px 3px 5px; background: var(--surface-alt); overflow: hidden;
+}
+[data-theme='pastel'] :is(.card-steps-bar, .progress-bar, .spec-progress-bar)::after {
+  content: ''; position: absolute; inset: 0; background: var(--paper-ink);
+  mask: var(--paper-field-frame) center / 100% 100% no-repeat; pointer-events: none;
+}
+/* Einfache Füllungen als Markerstrich; die Statussegmente der Spec-Balken bleiben gerade aneinander. */
+[data-theme='pastel'] :is(.card-steps-fill, .progress-bar > span) {
+  border-radius: 2px 4px 3px 1px; clip-path: var(--paper-marker);
+  background-image: repeating-linear-gradient(100deg, transparent 0 4px, color-mix(in srgb, var(--paper-ink) 12%, transparent) 4px 5px);
+}
+[data-theme='pastel'] .card-steps-fill { background-color: var(--paper-mint); }
+[data-theme='pastel'] .card-steps-count { background: linear-gradient(transparent 66%, var(--paper-mint) 66% 92%, transparent 92%); padding-inline: 3px; }
+/* Fortschrittsring: Markerspur mit zwei gezeichneten Tintenkreisen darüber */
+[data-theme='pastel'] .progress-ring-track { stroke: var(--paper-yellow); stroke-width: 7; }
+[data-theme='pastel'] .progress-ring-value { stroke: var(--ok); stroke-width: 7; opacity: .85; }
+[data-theme='pastel'] .progress-ring-chart::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: var(--paper-ink); mask: var(--paper-ring) center / 100% 100% no-repeat;
+}
+[data-theme='pastel'] :is(.progress-ring-percent, .progress-ring-count) { font-family: var(--paper-font-display); font-size: 27px; }
+
+/* Dieselbe Formensprache für Dashboard, Einstellungen, Popover und Dialoge. */
+[data-theme='pastel'] :is(.panel, .dash-card, .kpi, .settings-card, .choice, .board-picker-pop, .info-pop, .db-modal, .search-dialog) {
+  border-color: var(--paper-ink); border-radius: var(--radius-panel);
+  background-color: var(--surface); box-shadow: 1px 2px 0 var(--shadow-mid);
+}
+[data-theme='pastel'] :is(.choice.selected, .segmented button.on) { background-color: var(--note-bg); box-shadow: none; }
+[data-theme='pastel'] .segmented button { font-size: 15px; }
+[data-theme='pastel'] .sheet { background: var(--paper-grid) 8px 8px / 22px 22px, var(--bg); border-left: 1px solid var(--paper-ink); }
+[data-theme='pastel'] :is(.notice, .banner, .empty) { border-radius: var(--radius-control); }
+
+/* Ticketdetails: Aufgabenblatt auf einem Klemmbrett. Das Panel scrollt als Ganzes; die Klammer sitzt am klebenden
+   Kopf und bleibt so beim Scrollen oben. */
+[data-theme='pastel'] .db-panel {
+  background: var(--paper-clipboard-sheet);
+  border-left: 10px solid var(--paper-clipboard);
+  border-radius: 18px 0 0 14px / 15px 0 0 19px;
+  box-shadow: inset 1px 0 0 var(--paper-clipboard-edge), -6px 0 16px var(--shadow-soft);
+  scrollbar-width: thin; scrollbar-color: var(--paper-clipboard-edge) transparent;
+  animation: paper-ticket-in 220ms cubic-bezier(.23, 1, .32, 1);
+}
+[data-theme='pastel'] .db-panel-head {
+  background: var(--paper-clipboard-sheet);
+  border-bottom: 1px dashed var(--line-dashed); padding-top: 44px; padding-bottom: 18px;
+}
+[data-theme='pastel'] .db-panel-head::before {
+  content: ''; position: absolute; z-index: 1; top: 10px; left: calc(50% - 64px);
+  width: 128px; height: 26px; border: 1.5px solid var(--paper-ink);
+  border-radius: 9px 12px 5px 7px / 8px 9px 5px 6px;
+  background: radial-gradient(circle at 12px 13px, var(--paper-ink) 1.5px, transparent 2px),
+    radial-gradient(circle at 113px 13px, var(--paper-ink) 1.5px, transparent 2px),
+    linear-gradient(var(--paper-clip-highlight) 0 4px, var(--paper-clip-metal) 5px 20px, var(--paper-clip-highlight) 21px);
+  box-shadow: 1px 3px 0 var(--shadow-mid); transform: rotate(-.7deg); pointer-events: none;
+}
+[data-theme='pastel'] .db-panel-head::after {
+  content: ''; position: absolute; z-index: 2; top: 2px; left: calc(50% - 20px);
+  width: 40px; height: 16px; border: 2px solid var(--paper-ink);
+  border-radius: 11px 9px 4px 3px; background: var(--paper-clipboard);
+  box-shadow: inset 0 0 0 3px var(--paper-clip-metal); transform: rotate(-.7deg); pointer-events: none;
+}
+[data-theme='pastel'] input.db-title {
+  font-family: var(--paper-font-display); font-size: 30px; font-weight: 700; letter-spacing: 0;
+  border: 1px solid transparent; background: linear-gradient(transparent 67%, var(--paper-yellow) 67% 91%, transparent 91%);
+}
+[data-theme='pastel'] input.db-title:focus { border-color: var(--accent); }
+[data-theme='pastel'] .db-panel-main { gap: 24px; }
+[data-theme='pastel'] .db-fields { gap: 18px 16px; }
+[data-theme='pastel'] .db-fields :is(input:not([type='checkbox']), select) {
+  background-color: transparent; border: 0; border-bottom: 1px dashed var(--line-dashed); border-radius: 0;
+}
+[data-theme='pastel'] .db-fields :is(input:not([type='checkbox']), select):focus {
+  border-bottom: 1px solid var(--accent); box-shadow: 0 3px 0 var(--paper-yellow); background-color: var(--surface);
+}
+[data-theme='pastel'] .db-fields textarea {
+  border: 1px dashed var(--line-dashed); border-radius: var(--radius-card); line-height: 28px;
+  background: repeating-linear-gradient(transparent 0 27px, var(--line-soft) 27px 28px), var(--surface);
+}
+[data-theme='pastel'] .db-field-check { border: 0; background: transparent; position: relative; isolation: isolate; }
+[data-theme='pastel'] .db-field-check::before {
+  content: ''; position: absolute; inset: 5px 0; background: var(--paper-yellow); clip-path: var(--paper-marker); z-index: -1;
+}
+[data-theme='pastel'] .db-panel-side { background: transparent; border-left: 1px dashed var(--line-soft); gap: 24px; }
+[data-theme='pastel'] .db-side-section {
+  position: relative; isolation: isolate; background: var(--note-bg); padding: 16px; border-radius: var(--radius-card);
+}
+[data-theme='pastel'] .db-side-section::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; background: var(--line-dashed);
+  mask: var(--paper-frame) center / 100% 100% no-repeat; pointer-events: none;
+}
+[data-theme='pastel'] .db-side-title { font-size: 22px; letter-spacing: 0; text-transform: none; color: var(--text); }
+[data-theme='pastel'] .db-tablist { border-bottom: 1px dashed var(--line-dashed); gap: 6px; }
+[data-theme='pastel'] .db-tablist [role='tab'] { position: relative; isolation: isolate; font-size: 16px; box-shadow: none; }
+[data-theme='pastel'] .db-tablist [role='tab'].active { box-shadow: none; }
+[data-theme='pastel'] .db-tablist [role='tab'].active::before {
+  content: ''; position: absolute; inset: 8px 0 5px; background: var(--paper-yellow); clip-path: var(--paper-marker); z-index: -1;
+}
+
+/* Board-Auswahl: ein gelber Haftzettel auf dem Punktpapier, ohne flüssiges Morphen. Die Morph-Ebene des Kerns bleibt
+   unsichtbar und meldet nur ihr Animationsende, damit der Kern den Zettel wie gewohnt öffnet und schließt. */
+[data-theme='pastel'] .goo-morph-shape { display: none; }
+[data-theme='pastel'] .goo-morph { animation: goo-morph-out 1ms linear forwards; }
+[data-theme='pastel'] .goo-morph.is-closing { animation: goo-morph-out 140ms ease-out forwards; }
+[data-theme='pastel'] .board-picker-pop {
+  isolation: isolate; padding: 20px 16px 14px; border: 1px solid transparent;
+  background: linear-gradient(var(--paper-yellow), transparent 48px), var(--paper-sticky);
+  border-radius: 3px 5px 18px 4px / 4px 3px 10px 5px;
+  box-shadow: 2px 8px 14px var(--paper-sticky-shadow); transform-origin: top left;
+  overflow-x: hidden; scrollbar-width: none;
+  transform: translate3d(0, 0, 0); backface-visibility: hidden;
+  animation: paper-uncrumple 280ms cubic-bezier(.23, 1, .32, 1) both;
+}
+[data-theme='pastel'] .board-picker-pop::before {
+  content: ''; position: absolute; inset: 2px; z-index: -1; pointer-events: none; background: var(--paper-sticky-fold); opacity: .55;
+  mask: var(--paper-frame-alt) center / 100% 100% no-repeat;
+}
+[data-theme='pastel'] .board-picker-pop::after {
+  content: ''; position: absolute; inset: 4px; pointer-events: none; z-index: -1;
+  background: linear-gradient(122deg, transparent 39%, var(--paper-sticky-fold) 39.4%, transparent 40%),
+    linear-gradient(36deg, transparent 63%, var(--paper-sticky-fold) 63.4%, transparent 64%);
+  opacity: .07; animation: paper-crease-settle 280ms ease-out;
+}
+[data-theme='pastel'] .board-picker-pop .bp-list { scrollbar-width: none; }
+[data-theme='pastel'] :is(.board-picker-pop, .board-picker-pop .bp-list)::-webkit-scrollbar { display: none; width: 0; height: 0; }
+[data-theme='pastel'] :is(.board-picker-pop, .board-picker-pop.is-closing) > * { animation: none; }
+[data-theme='pastel'] .board-picker-pop.is-closing { animation: paper-pop-out 140ms ease-out forwards; }
+[data-theme='pastel'] .bp-search { border: 0; border-bottom: 1px dashed var(--line-dashed); background: transparent; border-radius: 0; }
+[data-theme='pastel'] .bp-col + .bp-col { border-left-style: dashed; border-left-color: var(--line-dashed); }
+[data-theme='pastel'] .bp-col-title { font-family: var(--paper-font-display); text-transform: none; letter-spacing: 0; font-size: 22px; color: var(--text); }
+[data-theme='pastel'] .bp-item { position: relative; isolation: isolate; font-size: 16px; }
+[data-theme='pastel'] .bp-item:is(:hover, :focus-visible, [aria-current='true']) { background: transparent; }
+[data-theme='pastel'] .bp-item:is(:hover, :focus-visible, [aria-current='true'])::before {
+  content: ''; position: absolute; inset: 4px 0; background: var(--paper-mint); clip-path: var(--paper-marker); z-index: -1;
+}
+
+/* Add-Menü als kleine beschriftete Zettel; Treffflächen bleiben unverändert bedienbar. */
+[data-theme='pastel'] .db-fab-goo { display: none; }
+[data-theme='pastel'] .db-fab-btn {
+  isolation: isolate; background: var(--paper-yellow); color: var(--paper-ink);
+  border-radius: 44% 51% 46% 53% / 50% 45% 53% 46%; box-shadow: 2px 3px 0 var(--shadow-mid);
+  transform: rotate(-5deg); transition: transform 150ms cubic-bezier(.23, 1, .32, 1);
+}
+[data-theme='pastel'] .db-fab-btn::before {
+  content: ''; position: absolute; inset: 3px; border: 1.5px solid var(--paper-ink);
+  border-radius: 47% 52% 43% 54% / 49% 42% 55% 46%; pointer-events: none;
+}
+[data-theme='pastel'] .db-fab-btn:hover:not(:disabled) { transform: rotate(2deg) translateY(-2px); }
+[data-theme='pastel'] .db-fab-btn.open { transform: rotate(-5deg); }
+[data-theme='pastel'] .db-fab-btn svg { transition: transform 150ms ease-out; }
+[data-theme='pastel'] .db-fab-btn.open svg { transform: rotate(45deg); }
+[data-theme='pastel'] .db-fab-btn:disabled { opacity: .5; }
+[data-theme='pastel'] .db-fab-btn:focus-visible,
+[data-theme='pastel'] .db-fab-item:focus-visible { outline: 2px dashed var(--accent); outline-offset: 4px; }
+[data-theme='pastel'] .db-fab-menu {
+  inset: auto 0 70px auto; width: max-content; display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+}
+[data-theme='pastel'] .db-fab-item {
+  position: relative; right: auto; bottom: auto; width: auto; height: auto; min-height: 42px;
+  padding: 9px 14px; gap: 10px; border-radius: var(--radius-card);
+  background: var(--surface); color: var(--text); box-shadow: 2px 3px 0 var(--shadow-mid);
+  transform-origin: bottom right; transform: translate3d(0, 0, 0); backface-visibility: hidden;
+  animation: paper-uncrumple 280ms cubic-bezier(.23, 1, .32, 1) both;
+}
+[data-theme='pastel'] .db-fab-item::before {
+  content: ''; position: absolute; inset: -1px; pointer-events: none; background: var(--paper-ink);
+  mask: var(--paper-field-frame) center / 100% 100% no-repeat;
+}
+[data-theme='pastel'] .db-fab-item::after {
+  content: ''; position: absolute; inset: 3px; pointer-events: none;
+  background: linear-gradient(115deg, transparent 47%, var(--paper-sticky-fold) 48%, transparent 49%);
+  opacity: .07; animation: paper-crease-settle 280ms ease-out;
+}
+[data-theme='pastel'] .db-fab-item:hover:not(:disabled) { background: var(--note-bg); }
+[data-theme='pastel'] .db-fab-item:disabled { opacity: .5; }
+[data-theme='pastel'] .db-fab-item > svg { animation: none; flex: none; }
+[data-theme='pastel'] .db-fab:has(.db-fab-btn:focus-visible) .db-fab-item,
+[data-theme='pastel'] .db-fab:has(.db-fab-btn:focus-visible) .db-fab-item::after { animation: none; }
+[data-theme='pastel'] .db-fab-label {
+  position: static; transform: none; background: transparent; border: 0; border-radius: 0;
+  padding: 0; box-shadow: none; font-size: 16px; animation: none;
+}
+[data-theme='pastel'] .diagram-viewer-stage { background: var(--paper-grid) 8px 8px / 22px 22px, var(--bg); }
+
+/* Abhängigkeiten als gezeichnete Zettel und Stiftpfeile, mit unveränderten
+   Status-, Fokus- und Nachbarschaftsmarkierungen sowie nativen SVG-Treffflächen. */
+[data-theme='pastel'] .dep-graph-dialog {
+  border: 1px solid var(--paper-ink); border-radius: var(--radius-panel); overflow: hidden;
+  background: var(--bg); box-shadow: 3px 5px 0 var(--shadow-mid);
+}
+[data-theme='pastel'] .dep-graph-dialog .diagram-viewer-bar { background: var(--surface); border-bottom: 1px dashed var(--line-dashed); }
+[data-theme='pastel'] .dep-graph-dialog .diagram-viewer-bar > strong { font-family: var(--paper-font-display); font-size: 26px; }
+[data-theme='pastel'] .dep-graph-legend { font-size: 14px; }
+[data-theme='pastel'] .dep-graph-legend li[data-status] {
+  background: color-mix(in srgb, var(--node-status) 30%, var(--surface));
+  border-radius: var(--radius-control); padding: 1px 5px;
+}
+[data-theme='pastel'] .dep-graph-box { fill: var(--note-bg); stroke: var(--paper-ink); stroke-width: 1.2; filter: none; }
+[data-theme='pastel'] .dep-graph-stripe { fill: color-mix(in srgb, var(--node-status) 38%, var(--surface)); }
+[data-theme='pastel'] .dep-graph-node.is-current .dep-graph-box { fill: var(--paper-yellow); }
+[data-theme='pastel'] .dep-graph-node.is-external .dep-graph-box { fill: var(--surface-alt); stroke-dasharray: 5 3; }
+[data-theme='pastel'] .dep-graph-node.is-critical .dep-graph-box { stroke: var(--graph-critical); stroke-width: 2; }
+[data-theme='pastel'] .dep-graph-node:is(:hover, :focus-visible, .is-hovered) .dep-graph-box { stroke: var(--accent); stroke-width: 2.5; }
+[data-theme='pastel'] .dep-graph-node.is-neighbor .dep-graph-box { stroke: var(--line-strong); stroke-width: 2; }
+[data-theme='pastel'] .dep-graph-id { font-family: var(--font-sans); font-size: 13px; fill: var(--text); }
+[data-theme='pastel'] .dep-graph-title { font-family: var(--paper-font-display); font-size: 17px; font-weight: 600; }
+/* Kein SVG-Filter: exakt horizontale Kanten haben eine Bounding-Box ohne Höhe
+   und werden von prozentualen Filterregionen vollständig abgeschnitten. */
+[data-theme='pastel'] .dep-graph-edge { filter: none; stroke-linecap: round; }
+[data-theme='pastel'] .dep-graph-arrow { fill: none; stroke: var(--graph-edge); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+[data-theme='pastel'] .dep-graph-arrow.is-upstream { stroke: var(--graph-upstream); }
+[data-theme='pastel'] .dep-graph-arrow.is-downstream { stroke: var(--graph-downstream); }
+
+/* Gemeinsame Dialogflächen (direkt im Hintergrund der Dialoge): Haftzettel, vom Mittelpunkt aus aufgeknüllt.
+   Nur das Öffnen ist animiert; der Kern entfernt Dialoge beim Schließen sofort. */
+[data-theme='pastel'] .db-modal-backdrop { align-items: center; }
+[data-theme='pastel'] :is(.db-modal-backdrop, .db-dialog-backdrop) > [role] {
+  position: relative; isolation: isolate; border: 1px solid transparent; border-radius: 4px 6px 16px 5px;
+  background: linear-gradient(var(--paper-yellow), transparent 48px), var(--paper-sticky);
+  box-shadow: 3px 8px 18px var(--paper-sticky-shadow); transform-origin: center;
+  transform: translate3d(0, 0, 0); backface-visibility: hidden;
+  animation: paper-uncrumple 280ms cubic-bezier(.23, 1, .32, 1) both;
+}
+[data-theme='pastel'] :is(.db-modal-backdrop, .db-dialog-backdrop) > [role]::before {
+  content: ''; position: absolute; inset: 2px; pointer-events: none; z-index: -1;
+  background: var(--paper-sticky-fold); opacity: .6; mask: var(--paper-frame-alt) center / 100% 100% no-repeat;
+}
+[data-theme='pastel'] :is(.db-modal-backdrop, .db-dialog-backdrop) > [role]::after {
+  content: ''; position: absolute; inset: 4px; pointer-events: none; z-index: -1;
+  background: linear-gradient(122deg, transparent 39%, var(--paper-sticky-fold) 39.4%, transparent 40%),
+    linear-gradient(36deg, transparent 63%, var(--paper-sticky-fold) 63.4%, transparent 64%);
+  opacity: .07; animation: paper-crease-settle 280ms ease-out;
+}
+[data-theme='pastel'] :is(.db-modal-backdrop, .db-dialog-backdrop) > [role] > h2,
+[data-theme='pastel'] :is(.db-modal-backdrop, .db-dialog-backdrop) > [role] .panel-head h2,
+[data-theme='pastel'] :is(.db-modal-backdrop, .db-dialog-backdrop) > [role] > strong[id] { font-family: var(--paper-font-display); font-size: 26px; }
+/* Specs: ein Thema pro Zeile, durch gestrichelte Falzlinien getrennt. */
+[data-theme='pastel'] .db-specs-dialog { width: min(680px, calc(100vw - 32px)); gap: 18px; padding: 24px; }
+[data-theme='pastel'] .db-specs-dialog .panel-head { align-items: flex-start; }
+[data-theme='pastel'] .db-spec-list { gap: 0; }
+[data-theme='pastel'] .db-spec-list li { gap: 9px 12px; padding: 14px 0; border-top: 1px dashed var(--paper-sticky-fold); }
+[data-theme='pastel'] .db-spec-name { color: var(--text); font-family: var(--paper-font-display); font-size: 24px; line-height: 1.2; overflow-wrap: anywhere; }
+[data-theme='pastel'] .db-specs-dialog .progress-text { font-size: 14px; color: var(--text-soft); }
+
+@keyframes paper-ticket-in { from { opacity: 0; transform: translateX(36px) rotate(.3deg); } to { opacity: 1; transform: none; } }
+@keyframes paper-pop-out { to { opacity: 0; transform: translateY(3px) rotate(-1deg) scale(.98); } }
+/* Knüllen ohne wechselnde 3D-Projektion oder animierte Schnittmaske:
+   Die Oberfläche bleibt auf derselben Ebene, Faltenschatten flachen separat ab. */
+@keyframes paper-uncrumple {
+  0% { opacity: 0; transform: translate3d(0, 8px, 0) rotate(-8deg) scale(.3, .25); }
+  40% { opacity: 1; transform: translate3d(0, 2px, 0) rotate(3deg) scale(.82, .74); }
+  75% { transform: translate3d(0, 0, 0) rotate(-.5deg) scale(1.01, .99); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes paper-crease-settle { 0% { opacity: .5; } 55% { opacity: .24; } 100% { opacity: .07; } }
+
+@media (max-width: 900px) {
+  [data-theme='pastel'] .shell-sidebar { border-right: 0; border-bottom: 1px solid var(--paper-margin); box-shadow: none; }
+  [data-theme='pastel'] .db-panel-side { border-left: 0; border-top: 1px dashed var(--paper-margin); }
+}
+@media (max-width: 600px) {
+  [data-theme='pastel'] .db-panel { border-left-width: 6px; }
+  [data-theme='pastel'] :is(.db-panel-main, .db-panel-side) { padding-inline: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='pastel'] .btn:active:not(:disabled) { transform: none; }
+  [data-theme='pastel'] :is(.board-picker-pop, .board-picker-pop.is-closing, .db-panel, .db-fab-item),
+  [data-theme='pastel'] :is(.board-picker-pop, .db-fab-item)::after { animation: none; }
+  [data-theme='pastel'] :is(.nav a, .settings-nav a)::before { transition: none; }
+  [data-theme='pastel'] :is(.db-fab-btn, .db-fab-btn svg, .progress-ring-value) { transition: none; }
+  [data-theme='pastel'] .db-fab-btn:hover:not(:disabled) { transform: rotate(-5deg); }
+  [data-theme='pastel'] :is(.db-modal-backdrop, .db-dialog-backdrop) > [role],
+  [data-theme='pastel'] :is(.db-modal-backdrop, .db-dialog-backdrop) > [role]::after { animation: none; }
+}

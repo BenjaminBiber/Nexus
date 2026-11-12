@@ -4,6 +4,8 @@ import {
   type DbCardDto, type DbColumnId, type DbPriority, type DbStatus, type DbTicketDetailDto,
 } from '../../api/dbTypes.js';
 import { useApi } from '../../api/ApiContext.js';
+import type { RawDispatchConfigDto } from '../../api/dispatchTypes.js';
+import { isAutopilot } from '../../dbboard/autopilot.js';
 import { canEditDependencies } from '../../dbboard/dependencyPicker.js';
 import { useDbTicket, type DbChange } from '../../dbboard/useDbTicket.js';
 import { useRestoreFocus } from '../../hooks/useRestoreFocus.js';
@@ -52,15 +54,14 @@ interface Drafts {
   assignee: string;
   labels: string;
   targetBranch: string;
-  acceptance: string;
   blockedReason: string;
 }
 
-const DRAFT_KEYS: Array<keyof Drafts> = ['title', 'assignee', 'labels', 'targetBranch', 'acceptance', 'blockedReason'];
+const DRAFT_KEYS: Array<keyof Drafts> = ['title', 'assignee', 'labels', 'targetBranch', 'blockedReason'];
 
 // Entwürfe aus dem geladenen Ticket
 function draftsOf(ticket: DbTicketDetailDto): Drafts {
-  return { title: ticket.title, assignee: ticket.assignee ?? '', labels: ticket.labels.join(', '), targetBranch: ticket.targetBranch ?? '', acceptance: ticket.acceptance, blockedReason: ticket.blockedReason ?? '' };
+  return { title: ticket.title, assignee: ticket.assignee ?? '', labels: ticket.labels.join(', '), targetBranch: ticket.targetBranch ?? '', blockedReason: ticket.blockedReason ?? '' };
 }
 
 // Wert, wie ihn der Server speichert (getrimmt, Labels als „a, b“); Grundlage für Vergleiche
@@ -116,6 +117,16 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
     );
     return () => { cancelled = true; };
   }, [api, branchBoardId]);
+  // Autopilot-Einstellung des Dispatchers für das Abzeichen; ohne Einstellung (Fehler) kein Abzeichen
+  const [autopilot, setAutopilot] = useState<RawDispatchConfigDto['autopilot']>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void api.getDispatchConfig().then(
+      (view) => { if (!cancelled) setAutopilot(view.raw.autopilot ?? null); },
+      () => { if (!cancelled) setAutopilot(null); },
+    );
+    return () => { cancelled = true; };
+  }, [api]);
   const [form, setForm] = useState<Form | null>(null);
   const drafts = form?.drafts ?? null;
   const [tabsDirty, setTabsDirty] = useState(false);
@@ -322,6 +333,12 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
                   Version {ticket.rev} · angelegt von {ticket.createdByName}
                 </span>
               )}
+              {ticket && isAutopilot(autopilot, ticket.labels) && (
+                <span className="badge" title="Läuft ohne Freigaben und Fragen durch den Dispatcher">
+                  <span className="material-icons" aria-hidden="true">flight</span>
+                  <span>Autopilot</span>
+                </span>
+              )}
             </div>
             {ticket && drafts && (
               <input className="db-title" aria-label="Titel" value={drafts.title} onChange={(e) => edit('title', e.target.value)} onBlur={() => commit('title')} onKeyDown={blurOnEnter} />
@@ -349,7 +366,7 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
             </div>
           </div>
         )}
-        {t.state.status === 'loading' && <LoadingState variant="detail" text="Ticket wird geladen …" />}
+        {t.state.status === 'loading' && <LoadingState text="Ticket wird geladen …" />}
         {t.state.status === 'error' && <ErrorState message={t.state.message} onRetry={t.retry} />}
         {ticket && drafts && (
           <div className="db-panel-body">
@@ -390,15 +407,15 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
                   <input type="checkbox" checked={ticket.needsPlanning} disabled={t.busy} onChange={(e) => void t.save({ needsPlanning: e.target.checked })} />
                   <span>Braucht Planung</span>
                 </label>
-                <label className="field half">
+                <label className="field">
                   <span>Zuständig</span>
                   <input value={drafts.assignee} placeholder="Niemand zugewiesen" onChange={(e) => edit('assignee', e.target.value)} onBlur={() => commit('assignee')} onKeyDown={blurOnEnter} />
                 </label>
-                <label className="field half">
+                <label className="field">
                   <span>Labels</span>
                   <input value={drafts.labels} placeholder="kommagetrennt" onChange={(e) => edit('labels', e.target.value)} onBlur={() => commit('labels')} onKeyDown={blurOnEnter} />
                 </label>
-                <label className="field half">
+                <label className="field">
                   <span>Zielbranch</span>
                   <BranchCombo
                     value={drafts.targetBranch}
@@ -415,16 +432,11 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
                   <span>Blockiert-Grund</span>
                   <input value={drafts.blockedReason} placeholder="Nicht blockiert" onChange={(e) => edit('blockedReason', e.target.value)} onBlur={() => commit('blockedReason')} onKeyDown={blurOnEnter} />
                 </label>
-                <label className="field wide">
-                  <span>Abnahme</span>
-                  <textarea className="plain-text" rows={3} value={drafts.acceptance} onChange={(e) => edit('acceptance', e.target.value)} onBlur={() => commit('acceptance')} />
-                </label>
               </div>
               <DbMergeRetry ticket={ticket} mine={props.isOwnBoard?.(ticket.boardId) ?? false} onDone={() => { void reload(); props.onChanged(); }} />
               {showsReview(ticket, props.isOwnBoard?.(ticket.boardId) ?? false) && (
                 <DbReview ticket={ticket} onDone={() => { void reload(); props.onChanged(); }} />
               )}
-              <DbTicketQuestions ticket={ticket} onAsk={() => setAsking(true)} />
               <DbTicketTabs
                 ticket={ticket}
                 busy={t.busy}
@@ -434,6 +446,7 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
                 agentPrefix={props.agentPrefix}
                 userName={props.userName}
                 onDirtyChange={setTabsDirty}
+                questions={<DbTicketQuestions ticket={ticket} onAsk={() => setAsking(true)} />}
                 steps={
                   <DbTicketSteps
                     ticket={ticket}

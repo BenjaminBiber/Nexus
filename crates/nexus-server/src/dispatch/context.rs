@@ -439,14 +439,32 @@ impl DispatchContext {
             .account_pauses
             .into_iter()
             .collect();
+        // Nur Umsetzungsläufe, die noch laufen (ohne Ergebnis des Workers), haben Reserve offen
+        let mut running = Vec::new();
+        for record in self.stores.runs.list()? {
+            if record.kind == RunKind::Work && self.stores.runs.result(&record.id)?.is_none() {
+                running.push(record);
+            }
+        }
         let choice = accounts
-            .pick(&RunAccounts::from(&run), &self.cfg, self.now(), &pauses)
+            .pick(
+                &RunAccounts::from(&run),
+                &self.cfg,
+                self.now(),
+                &pauses,
+                &running,
+            )
             .await;
         Ok(match choice {
             AccountChoice::Waiting { reason, .. } => ChosenAccount::Waiting(reason),
-            AccountChoice::Picked { account, why } => ChosenAccount::Run(Box::new(RunSettings {
+            AccountChoice::Picked {
+                account,
+                why,
+                snapshot,
+            } => ChosenAccount::Run(Box::new(RunSettings {
                 account: Some(account.id),
                 account_why: Some(why),
+                usage_at_start: Some(snapshot),
                 ..run
             })),
         })
@@ -616,6 +634,8 @@ impl DispatchContext {
         );
         self.invocation
             .apply_oauth_token(&mut env, &self.cfg, oauth_token.as_deref());
+        // Name des Lauf-Protokolls (wie `log_file`): der Hook meldet ihn an die Session
+        self.invocation.apply_run(&mut env, &format!("{id}.log"));
         let pid = match self.launcher.launch(&id, &env) {
             Ok(pid) => pid.map(i64::from),
             Err(error) => {

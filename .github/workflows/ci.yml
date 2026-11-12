@@ -1,32 +1,58 @@
 # Baut die Oberfläche und führt Typcheck und Tests auf macOS, Windows und Linux aus.
-# Name und Dateiname sind fest: der Release-Workflow prüft über sie, ob die CI für den Release-Commit grün ist.
-# Läuft nur für Versions-Tags „v*“ und von Hand (workflow_dispatch). Vor einem Release die CI darum
-# auf „main“ von Hand starten, sonst findet check-ci.sh keinen Lauf für den Commit.
+# Läuft von Hand (workflow_dispatch) und als Teil des Release-Workflows (workflow_call, Job „ci“), dort
+# parallel zu den Builds; ein Release wird erst veröffentlicht, wenn sie grün ist. Für Tags läuft sie nicht
+# mehr eigens: das wäre derselbe Stand ein zweites Mal.
 name: CI
 on:
-  push:
-    tags: ['v*']
   workflow_dispatch:
+  workflow_call:
+# Aus dem Release heraus ist github.workflow „Release“: so verdrängen sich ein Lauf von Hand und der
+# des Releases auf demselben Branch nicht gegenseitig
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 permissions:
   contents: read
 jobs:
+  # Eigene Runner (self-hosted) für macOS und Windows, wenn einer online ist, sonst die von GitHub.
+  # Die Runner-Liste darf nur ein Token mit „Administration: read“ lesen (RUNNER_TOKEN, ersatzweise
+  # RELEASE_TOKEN); ohne beide gelten die gehosteten. Linux läuft immer gehostet.
+  # Logik und Labels: scripts/ci/pick-runners.mjs
+  runners:
+    name: Runner wählen
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      windows: ${{ steps.pick.outputs.windows }}
+      macos: ${{ steps.pick.outputs.macos }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/ci
+      - id: pick
+        env:
+          RUNNER_TOKEN: ${{ secrets.RUNNER_TOKEN || secrets.RELEASE_TOKEN }}
+        run: node scripts/ci/pick-runners.mjs
+
   test:
     name: test (${{ matrix.os }})
+    needs: runners
     strategy:
       # Jede Plattform läuft zu Ende, damit ein Fehler auf einer die anderen nicht verdeckt
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-14, windows-latest]
-    runs-on: ${{ matrix.os }}
+        os: [ubuntu-22.04, macos-26, windows-latest]
+    # macOS und Windows nach der Wahl von „runners“; die Matrix-Werte bleiben die gehosteten Namen
+    runs-on: ${{ fromJSON(matrix.os == 'windows-latest' && needs.runners.outputs.windows || matrix.os == 'macos-26' && needs.runners.outputs.macos || format('"{0}"', matrix.os)) }}
     timeout-minutes: 45
     steps:
-      # Vor dem Checkout: die Tests legen eigene Git-Projekte an, und autocrlf false hält Golden-Dateien unter Windows bei \n
+      # Vor dem Checkout: die Tests legen eigene Git-Projekte an, und autocrlf false hält Golden-Dateien unter Windows bei \n.
+      # GIT_CONFIG_GLOBAL lenkt „--global“ in eine Datei des Laufs: ein eigener Runner behält so seine Git-Konfiguration
       - name: Git für Tests einrichten
         shell: bash
         run: |
+          export GIT_CONFIG_GLOBAL="$RUNNER_TEMP/ci.gitconfig"
+          echo "GIT_CONFIG_GLOBAL=$GIT_CONFIG_GLOBAL" >> "$GITHUB_ENV"
           git config --global user.name "CI"
           git config --global user.email "ci@example.invalid"
           git config --global init.defaultBranch main
@@ -42,12 +68,24 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: '1.99.1'
+      # Cargo.toml übersetzt fremde Crates im dev-Profil mit opt-level 2 (schnelleres `tauri dev`).
+      # In der CI kostet das je Lauf viele Minuten Kompilierzeit und brachte den Windows-Rust-Job
+      # über sein Zeitlimit; Tests brauchen die Optimierung nicht. Die Cargo-Konfiguration geht vor.
+      - name: Fremde Crates in der CI unoptimiert übersetzen
+        shell: bash
+        run: printf '\n[profile.dev.package."*"]\nopt-level = 0\n' >> .cargo/config.toml
       - uses: Swatinem/rust-cache@v2
       - run: npm ci
       # Die Plugin-Tests bauen das Plugin und brauchen dafür die gebaute Oberfläche
       - run: npm run build
       - run: npm run typecheck
       - run: cargo build -p nexus-cli --bin nexus
+      # Trockenlauf der Theme-Pakete fürs Release: kaputte Manifeste fallen schon hier auf
+      - name: Theme-Pakete und Store-Index (Trockenlauf)
+        shell: bash
+        run: |
+          NEXUS_BIN="$PWD/target/debug/nexus" npm run build:themes
+          node scripts/release/theme-index.mjs dist/themes "https://github.com/${{ github.repository }}/releases/download/v0.0.0" dist/release-themes
       # Der Plugin-Build (build-plugin.mjs) braucht das Release-Binary; vorab gebaut, damit die
       # Plugin-Tests nicht selbst minutenlang kompilieren und dabei in ihr Zeitlimit laufen
       - run: cargo build --release -p nexus-cli --bin nexus
@@ -59,6 +97,8 @@ jobs:
 
   # Misst Server, Hooks und Ereignisstrom auf jedem Runner und vergleicht mit dessen Ausgangswerten.
   # Scheitert, sobald eine Messgröße mehr als 10 % schlechter ist als in contract/baseline-ci-<os>.json.
+  # Bleibt bewusst auf den Runnern von GitHub: die Ausgangswerte gelten für deren Hardware, auf einem
+  # eigenen Rechner wäre der Vergleich bedeutungslos
   bench:
     name: bench (${{ matrix.os }})
     strategy:
@@ -68,7 +108,7 @@ jobs:
         include:
           - os: ubuntu-22.04
             baseline: linux
-          - os: macos-14
+          - os: macos-26
             baseline: macos
           - os: windows-latest
             baseline: windows
@@ -119,12 +159,14 @@ jobs:
   # Formatiert, lintet und testet den Cargo-Workspace (nexus-core, nexus-db, Desktop-App).
   rust:
     name: rust (${{ matrix.os }})
+    needs: runners
     strategy:
       # Jede Plattform läuft zu Ende, damit ein Fehler auf einer die anderen nicht verdeckt
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+        os: [ubuntu-latest, macos-26, windows-latest]
+    # Wie im test-Job: macOS und Windows nach der Wahl von „runners“
+    runs-on: ${{ fromJSON(matrix.os == 'windows-latest' && needs.runners.outputs.windows || matrix.os == 'macos-26' && needs.runners.outputs.macos || format('"{0}"', matrix.os)) }}
     timeout-minutes: 45
     # Ohne Debug-Info: die Testbinaries des ganzen Workspace samt Tauri füllen sonst die Platte
     # des Linux-Runners, und der Linker bricht mit „Bus error“ ab
@@ -133,10 +175,12 @@ jobs:
       CARGO_PROFILE_TEST_DEBUG: '0'
     steps:
       # Wie im test-Job vor dem Checkout: die Tests legen eigene Git-Projekte an, und autocrlf
-      # false hält Vergleichsdateien wie tests/fixtures unter Windows bei \n
+      # false hält Vergleichsdateien wie tests/fixtures unter Windows bei \n; GIT_CONFIG_GLOBAL wie dort
       - name: Git für Tests einrichten
         shell: bash
         run: |
+          export GIT_CONFIG_GLOBAL="$RUNNER_TEMP/ci.gitconfig"
+          echo "GIT_CONFIG_GLOBAL=$GIT_CONFIG_GLOBAL" >> "$GITHUB_ENV"
           git config --global user.name "CI"
           git config --global user.email "ci@example.invalid"
           git config --global init.defaultBranch main
@@ -148,6 +192,10 @@ jobs:
         with:
           toolchain: '1.99.1'
           components: rustfmt, clippy
+      # Wie im test-Job: fremde Crates ohne das opt-level 2 aus Cargo.toml übersetzen
+      - name: Fremde Crates in der CI unoptimiert übersetzen
+        shell: bash
+        run: printf '\n[profile.dev.package."*"]\nopt-level = 0\n' >> .cargo/config.toml
       - uses: Swatinem/rust-cache@v2
       # Nur Linux braucht die Systembibliotheken von Tauri; Windows hat WebView2 ab Werk
       - name: Systempakete für Tauri installieren

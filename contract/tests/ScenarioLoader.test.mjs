@@ -201,7 +201,7 @@ describe('ScenarioLoader', () => {
     });
 
     it('meldet eine unbekannte Schritt-Art', () => {
-      const alle = /steps\[0\]\.kind muss eine bekannte Art sein \(cli, commit, homeFile, http, httpStub, sseClose, sseExpect, sseOpen\)/;
+      const alle = /steps\[0\]\.kind muss eine bekannte Art sein \(cli, commit, homeFile, http, httpStub, sseClose, sseExpect, sseOpen, wait\)/;
       failsWith({ title: 'T', steps: [{ name: 'a', kind: 'sse' }] }, alle);
       failsWith({ title: 'T', steps: [{ name: 'a', kind: 'sseWarten', stream: 's1' }] }, alle);
     });

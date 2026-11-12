@@ -1,4 +1,5 @@
 // Typen der Dispatcher-Routen (/api/dispatch), wie sie der Server liefert.
+import type { AutopilotSettings } from './generated/dispatch.js';
 
 export interface DispatchProfileDto {
   model?: string | null;
@@ -16,7 +17,7 @@ export interface DispatchRuleDto {
   accounts?: string[];
 }
 
-// Inhalt von ~/.harness/dispatch.yaml (alles optional)
+// Inhalt von ~/.nexus/dispatch.yaml (alles optional)
 export interface RawDispatchConfigDto {
   enabled?: boolean;
   boards?: Array<number | string> | null;
@@ -55,8 +56,16 @@ export interface RawDispatchConfigDto {
   accountStrategy?: 'most-free' | 'order';
   /** Ab dieser Auslastung (Prozent) gilt ein Account als voll */
   accountLimitPercent?: number;
+  /** Erwarteter Verbrauch eines Laufs im 5-Stunden-Fenster (Prozentpunkte), solange Schätzdaten fehlen */
+  accountReserveFiveHour?: number;
+  /** Erwarteter Verbrauch eines Laufs in der Woche (Prozentpunkte), solange Schätzdaten fehlen */
+  accountReserveWeek?: number;
+  /** Setzt sich das 5-Stunden-Fenster in so vielen Minuten zurück, entfällt dessen Reserve */
+  accountResetGraceMinutes?: number;
   research?: { auto?: boolean; wip?: number; maxPerDay?: number; profile?: string | null } | null;
   planning?: { auto?: boolean; wip?: number; acceptance?: boolean; profile?: string | null } | null;
+  /** Autopilot: keine Freigaben, Fragen entscheidet die Recherche, Merge-Konflikte mehrfach */
+  autopilot?: Partial<AutopilotSettings> | null;
 }
 
 export type DispatchPromptKindDto = 'work' | 'plan' | 'research' | 'merge';

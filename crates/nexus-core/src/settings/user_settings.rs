@@ -5,6 +5,9 @@ use std::sync::LazyLock;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
+use crate::registry::NexusHome;
+use crate::themes::is_valid_theme_id;
+
 /// Art der Meldung, wenn eine Session bereit ist oder auf Eingabe wartet
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -35,45 +38,74 @@ impl NotificationMode {
 /// Alle Arten der Meldung in der Reihenfolge von TypeScript
 pub const NOTIFICATION_MODES: [NotificationMode; 3] = NotificationMode::ALL;
 
-/// Farbschema der Oberfläche; „system“ folgt dem Betriebssystem, „signal“ und „pastel“ sind
-/// farbigere helle Schemata, „win95“ ist Windows 95 samt Desktop, Fenster und Taskleiste
+/// Gruppierung der Spalte „Erledigt“ auf dem Board
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum ThemeMode {
-    System,
-    Light,
-    Dark,
-    Signal,
-    Pastel,
-    Win95,
+pub enum DoneGrouping {
+    /// Nach Zeitabschnitten des Erledigt-Datums
+    Time,
+    /// Nach Spec
+    Spec,
 }
 
-impl ThemeMode {
-    /// Alle Farbschemata in der Reihenfolge von TypeScript (`THEME_MODES`)
-    pub const ALL: [ThemeMode; 6] = [
-        ThemeMode::System,
-        ThemeMode::Light,
-        ThemeMode::Dark,
-        ThemeMode::Signal,
-        ThemeMode::Pastel,
-        ThemeMode::Win95,
-    ];
+impl DoneGrouping {
+    /// Alle Gruppierungen in der Reihenfolge der Oberfläche
+    pub const ALL: [DoneGrouping; 2] = [DoneGrouping::Time, DoneGrouping::Spec];
 
     /// Schreibweise in `settings.json`
     pub fn as_str(&self) -> &'static str {
         match self {
-            ThemeMode::System => "system",
-            ThemeMode::Light => "light",
-            ThemeMode::Dark => "dark",
-            ThemeMode::Signal => "signal",
-            ThemeMode::Pastel => "pastel",
-            ThemeMode::Win95 => "win95",
+            DoneGrouping::Time => "time",
+            DoneGrouping::Spec => "spec",
         }
     }
 }
 
-/// Alle Farbschemata in der Reihenfolge von TypeScript
-pub const THEME_MODES: [ThemeMode; 6] = ThemeMode::ALL;
+/// Alle Gruppierungen der Spalte „Erledigt“
+pub const DONE_GROUPINGS: [DoneGrouping; 2] = DoneGrouping::ALL;
+
+/// Höchstes Alter erledigter Tickets in Tagen, ab dem sie ins Archiv wandern
+pub const DONE_ARCHIVE_MAX_DAYS: u16 = 365;
+
+/// Eingebaute Themes in der Reihenfolge von TypeScript (`BUILTIN_THEME_IDS`); „system“ folgt
+/// dem Betriebssystem. Alle anderen Themes sind Pakete (auch die mitgelieferten unter `themes/`).
+pub const BUILTIN_THEME_IDS: [&str; 3] = ["system", "light", "dark"];
+
+/// Gewähltes Theme als ID: eingebaut (`BUILTIN_THEME_IDS`) oder ein installiertes Theme
+/// unter `~/.nexus/themes/<id>/`
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct ThemeMode(String);
+
+impl ThemeMode {
+    /// Theme mit der angegebenen ID (ohne Prüfung)
+    pub fn new(id: impl Into<String>) -> Self {
+        Self(id.into())
+    }
+
+    /// Folgt dem Betriebssystem; Rückfall für unbekannte IDs
+    pub fn system() -> Self {
+        Self::new("system")
+    }
+
+    /// Schreibweise in `settings.json`
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl From<&str> for ThemeMode {
+    fn from(id: &str) -> Self {
+        Self::new(id)
+    }
+}
+
+/// Ob `id` ein eingebautes oder installiertes Theme ist; installiert heißt: gültige ID und
+/// `<home>/themes/<id>/manifest.json` existiert (ohne volle Manifestprüfung, billig bei jedem Lesen)
+pub fn known_theme(home: &NexusHome, id: &str) -> bool {
+    BUILTIN_THEME_IDS.contains(&id)
+        || (is_valid_theme_id(id) && home.themes_dir().join(id).join("manifest.json").is_file())
+}
 
 /// Standardadresse des ntfy-Servers
 pub const DEFAULT_NTFY_SERVER: &str = "https://ntfy.sh";
@@ -115,6 +147,11 @@ pub struct UserSettings {
     pub hide_not_needed: bool,
     /// Spalte „In Planung“ auf dem Board ausblenden
     pub hide_in_planning: bool,
+    /// Gruppierung der Spalte „Erledigt“: nach Zeitabschnitten oder nach Spec
+    pub done_grouping: DoneGrouping,
+    /// Erledigte Tickets, die älter als so viele Tage sind, wandern ins Archiv der Spalte
+    /// „Erledigt“ (0 bis 365; 0 = nie)
+    pub done_archive_days: u16,
     /// Meldungen zusätzlich als Push über ntfy schicken (unabhängig von `notifications`)
     pub ntfy: bool,
     /// Adresse des ntfy-Servers, z. B. https://ntfy.sh
@@ -133,11 +170,13 @@ impl Default for UserSettings {
         Self {
             notifications: NotificationMode::Off,
             hero_images: false,
-            theme: ThemeMode::System,
+            theme: ThemeMode::system(),
             claude_usage: false,
             compact_cards: false,
             hide_not_needed: false,
             hide_in_planning: false,
+            done_grouping: DoneGrouping::Time,
+            done_archive_days: 0,
             ntfy: false,
             ntfy_server: DEFAULT_NTFY_SERVER.to_string(),
             ntfy_topic: String::new(),
@@ -164,6 +203,8 @@ mod tests {
                 "compactCards": false,
                 "hideNotNeeded": false,
                 "hideInPlanning": false,
+                "doneGrouping": "time",
+                "doneArchiveDays": 0,
                 "ntfy": false,
                 "ntfyServer": "https://ntfy.sh",
                 "ntfyTopic": "",
@@ -179,9 +220,10 @@ mod tests {
             NOTIFICATION_MODES.map(|mode| mode.as_str()),
             ["off", "browser", "windows"]
         );
+        assert_eq!(BUILTIN_THEME_IDS, ["system", "light", "dark"]);
         assert_eq!(
-            THEME_MODES.map(|theme| theme.as_str()),
-            ["system", "light", "dark", "signal", "pastel", "win95"]
+            DONE_GROUPINGS.map(|grouping| grouping.as_str()),
+            ["time", "spec"]
         );
     }
 

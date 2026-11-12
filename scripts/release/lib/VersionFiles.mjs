@@ -17,6 +17,10 @@ const MARKETPLACE = join('.claude-plugin', 'marketplace.json');
 const DEFAULT_PLUGIN = 'ai-harness';
 // npm-Workspaces, falls die Wurzel-`package.json` keine nennt
 const DEFAULT_WORKSPACES = ['packages/*', 'apps/*'];
+// npm-Pakete mit eigener Versionslinie (Ordner mit `/`): ihre Version und exakte Pins darauf gehören nicht zum
+// Repo und bleiben beim Setzen stehen. Das Theme-SDK zählt eigenes semver, und `SDK_VERSION` muss dort der
+// `package.json` gleichen (packages/theme-sdk/README.md, „Versionierung“)
+const OWN_VERSION = ['packages/theme-sdk'];
 // Abhängigkeiten, in denen Geschwisterpakete exakt gepinnt sein können
 const DEP_GROUPS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'];
 // Eine exakt gepinnte Version (`0.1.0`). `^0.1.0`, `~0.1.0`, `*` und `workspace:*` bleiben unberührt
@@ -260,11 +264,14 @@ export class VersionFiles {
       const file = join(dir, 'package.json');
       return { file, dir: this.label(dir), json: new JsonText(read(file)) };
     });
-    const names = new Set(packages.map((entry) => entry.json.data.name).filter((name) => typeof name === 'string'));
+    const own = (entry) => OWN_VERSION.includes(entry.dir);
+    // Nur Pakete, die der Version des Repos folgen: ein Pin auf ein Paket mit eigener Versionslinie bleibt stehen
+    const names = new Set(packages.filter((entry) => !own(entry))
+      .map((entry) => entry.json.data.name).filter((name) => typeof name === 'string'));
 
     for (const entry of packages) {
       // Ein Paket ohne `version` bekommt keine (etwa ein rein privates Paket)
-      if (entry.json.has(['version'])) {
+      if (!own(entry) && entry.json.has(['version'])) {
         places.push(this.place(entry.file, 'version', entry.json.value(['version']), 'json',
           (doc, version) => doc.setString(['version'], version)));
       }
@@ -284,7 +291,7 @@ export class VersionFiles {
       const base = ['packages', entry.dir];
       if (!lock.has(base)) continue;
       // `packages[""]` ist die Wurzel und hat keine Version
-      if (entry.dir !== '' && lock.has([...base, 'version'])) {
+      if (entry.dir !== '' && !own(entry) && lock.has([...base, 'version'])) {
         places.push(this.place(lockFile, `packages["${entry.dir}"] → version`, lock.value([...base, 'version']), 'json',
           (doc, version) => doc.setString([...base, 'version'], version)));
       }

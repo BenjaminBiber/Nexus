@@ -35,6 +35,9 @@ pub struct ServerConfig {
     pub web_dir: Option<PathBuf>,
     /// Ordner mit den Bildern der Systemmeldung (`logo-app.png` …)
     pub toast_dir: PathBuf,
+    /// Ordner mit mitgelieferten Theme-Paketen (`*.nexus`), die beim Start installiert
+    /// werden, wenn sie fehlen oder älter sind; `None` = keine
+    pub bundled_themes_dir: Option<PathBuf>,
     /// Version in `GET /api/health`
     pub version: String,
     /// Abstand der Herzschlag-Meldungen in Millisekunden
@@ -75,6 +78,23 @@ pub struct ServerConfig {
     /// Ordner der MCACC-Profile für die Vorschläge in `GET /api/accounts`; ohne Angabe
     /// `~/.mcacc/profiles`
     pub mcacc_dir: Option<PathBuf>,
+    /// Zugriff auf die Bot-API von Telegram; ohne Angabe über reqwest (Tests setzen hier eine
+    /// Attrappe ein, damit nie wirklich bei Telegram angefragt wird)
+    pub telegram_api: Option<crate::telegram::TelegramApiFactory>,
+    /// Der Dienst, der die Ideen des Bots versteht; ohne Angabe einer mit der Umgebung des
+    /// Servers (Tests geben ihm die Umgebung ihres Claude-Ersatzes mit)
+    pub idea_interpreter: Option<std::sync::Arc<crate::telegram::IdeaInterpreter>>,
+    /// Größenlimit je Antwort des Asset-Proxys für Themes
+    pub theme_fetch_max_bytes: u64,
+    /// Größenlimit eines Archivs, aus dem der Asset-Proxy eine Einzeldatei liefert
+    pub theme_fetch_max_archive_bytes: u64,
+    /// Zeitlimit je Store-Repo beim Laden der Index-Dateien
+    pub store_index_timeout: std::time::Duration,
+    /// Zeitlimit beim Download eines Theme-Pakets aus dem Store
+    pub store_download_timeout: std::time::Duration,
+    /// Vorbelegte Store-Repos, solange der Nutzer seine Liste nie geändert hat; `serve` belegt
+    /// das Nexus-Repo vor, Tests und der Vertragsmodus keines
+    pub default_store_repos: Vec<String>,
 }
 
 /// Woher der Dispatcher seine Claude-Accounts nimmt
@@ -131,6 +151,7 @@ impl ServerConfig {
             home,
             web_dir: None,
             toast_dir: default_toast_dir(),
+            bundled_themes_dir: None,
             version: default_version(),
             heartbeat_ms: DEFAULT_HEARTBEAT_MS,
             db_poll_ms: DEFAULT_DB_POLL_MS,
@@ -148,6 +169,13 @@ impl ServerConfig {
             account_plugins: None,
             dispatch_accounts: DispatchAccounts::default(),
             mcacc_dir: None,
+            telegram_api: None,
+            idea_interpreter: None,
+            theme_fetch_max_bytes: crate::theme_proxy::DEFAULT_MAX_BYTES,
+            theme_fetch_max_archive_bytes: crate::theme_proxy::DEFAULT_MAX_ARCHIVE_BYTES,
+            store_index_timeout: crate::store_index::DEFAULT_TIMEOUT,
+            store_download_timeout: crate::store_install::DEFAULT_TIMEOUT,
+            default_store_repos: Vec::new(),
         }
     }
 }
@@ -198,9 +226,14 @@ impl ServerConfigLoader {
         let toast_dir = value(env, &["NEXUS_TOAST_DIR", "HARNESS_TOAST_DIR"])
             .filter(|dir| !dir.is_empty())
             .map(PathBuf::from);
+        let bundled_themes_dir = argument(args, "--bundled-themes-dir")
+            .or_else(|| value(env, &["NEXUS_BUNDLED_THEMES_DIR"]))
+            .filter(|dir| !dir.is_empty())
+            .map(PathBuf::from);
         let mut config = ServerConfig {
             port: port(args, env)?,
             web_dir,
+            bundled_themes_dir,
             version: value(env, &["NEXUS_SERVER_VERSION", "HARNESS_BUNDLED_VERSION"])
                 .filter(|version| !version.is_empty())
                 .unwrap_or_else(default_version),
@@ -218,6 +251,7 @@ impl ServerConfigLoader {
                 &["NEXUS_DB_QUESTION_POLL_MS", "HARNESS_DB_QUESTION_POLL_MS"],
                 DEFAULT_DB_QUESTION_POLL_MS,
             ),
+            default_store_repos: vec![nexus_core::theme::NEXUS_STORE_REPO.to_string()],
             ..ServerConfig::new(0, home)
         };
         if let Some(dir) = toast_dir {
@@ -228,6 +262,8 @@ impl ServerConfigLoader {
         if config.is_contract() {
             config.db_question_poll_ms = 0;
             config.dispatch_tick_ms = 0;
+            // Die Szenarien beginnen mit leerer Liste und rufen nie das echte Repo ab
+            config.default_store_repos.clear();
         }
         Ok(config)
     }
@@ -459,6 +495,40 @@ mod tests {
             "{}",
             ohne.toast_dir.display()
         );
+    }
+
+    #[test]
+    fn nimmt_den_ordner_der_mitgelieferten_themes_aus_argument_vor_umgebung() {
+        let args = ["--bundled-themes-dir", "/a/themes"];
+        assert_eq!(
+            load(&args, &[("NEXUS_BUNDLED_THEMES_DIR", "/e/themes")])
+                .unwrap()
+                .bundled_themes_dir,
+            Some(PathBuf::from("/a/themes"))
+        );
+        assert_eq!(
+            load(&[], &[("NEXUS_BUNDLED_THEMES_DIR", "/e/themes")])
+                .unwrap()
+                .bundled_themes_dir,
+            Some(PathBuf::from("/e/themes"))
+        );
+        // Ohne Angabe keiner: Nexus liefert außer Hell, Dunkel und System keine Themes mit
+        assert_eq!(load(&[], &[]).unwrap().bundled_themes_dir, None);
+    }
+
+    #[test]
+    fn belegt_das_nexus_repo_vor_ausser_im_vertragsmodus() {
+        assert_eq!(
+            load(&[], &[]).unwrap().default_store_repos,
+            vec![nexus_core::theme::NEXUS_STORE_REPO.to_string()]
+        );
+        assert!(load(&[], &[("NEXUS_SERVER_VERSION", "contract")])
+            .unwrap()
+            .default_store_repos
+            .is_empty());
+        assert!(ServerConfig::new(0, HarnessHome::at("/x"))
+            .default_store_repos
+            .is_empty());
     }
 
     #[test]

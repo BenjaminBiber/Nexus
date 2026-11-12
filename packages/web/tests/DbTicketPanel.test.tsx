@@ -22,9 +22,28 @@ describe('DbTicketPanel', () => {
     expect((screen.getByLabelText('Priorität') as HTMLSelectElement).value).toBe('normal');
     expect((screen.getByLabelText('Zuständig') as HTMLInputElement).value).toBe('claude');
     expect((screen.getByLabelText('Labels') as HTMLInputElement).value).toBe('ui');
-    expect((screen.getByLabelText('Abnahme') as HTMLTextAreaElement).value).toBe('Login geht');
+    await userEvent.click(screen.getByRole('tab', { name: /Abnahme/ }));
+    expect(screen.getByText('Login geht')).toBeTruthy();
     expect((screen.getByLabelText('Braucht Planung') as HTMLInputElement).checked).toBe(true);
     expect(screen.getByText(/Version 3/)).toBeTruthy();
+  });
+
+  it('zeigt das Abzeichen Autopilot nur ohne Ausnahme-Label', async () => {
+    const config = async () => ({ file: 'd.yaml', exists: true, raw: { autopilot: { enabled: true, exceptLabel: 'interaktiv' } }, config: null, error: null });
+    openPanel({ getDispatchConfig: config });
+    expect(await screen.findByText('Autopilot')).toBeTruthy();
+    cleanup();
+    openPanel({ getDispatchConfig: config }, { ...DETAIL, labels: ['ui', 'Interaktiv'] });
+    await screen.findByLabelText('Titel');
+    await act(async () => {});
+    expect(screen.queryByText('Autopilot')).toBeNull();
+  });
+
+  it('zeigt kein Abzeichen, solange der Autopilot aus ist', async () => {
+    openPanel();
+    await screen.findByLabelText('Titel');
+    await act(async () => {});
+    expect(screen.queryByText('Autopilot')).toBeNull();
   });
 
   it('speichert den Titel mit Enter und Felder beim Verlassen, jeweils mit der gelesenen Version', async () => {
@@ -160,16 +179,16 @@ describe('DbTicketPanel – Speicherreihenfolge', () => {
     const title = (await screen.findByLabelText('Titel')) as HTMLInputElement;
     fireEvent.change(title, { target: { value: 'Login bauen v2' } });
     fireEvent.blur(title);
-    const acceptance = screen.getByLabelText('Abnahme') as HTMLTextAreaElement;
-    fireEvent.change(acceptance, { target: { value: 'Login geht schnell' } });
-    fireEvent.blur(acceptance);
+    const blocked = screen.getByLabelText('Blockiert-Grund') as HTMLInputElement;
+    fireEvent.change(blocked, { target: { value: 'wartet auf API' } });
+    fireEvent.blur(blocked);
     await waitFor(() => expect(patchDbTicket).toHaveBeenCalledTimes(1));
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(patchDbTicket).toHaveBeenCalledTimes(1);
     release();
     await waitFor(() => expect(patchDbTicket).toHaveBeenCalledTimes(2));
     expect(patchDbTicket.mock.calls[0][1]).toEqual({ title: 'Login bauen v2', rev: 3 });
-    expect(patchDbTicket.mock.calls[1][1]).toEqual({ acceptance: 'Login geht schnell', rev: 4 });
+    expect(patchDbTicket.mock.calls[1][1]).toEqual({ blockedReason: 'wartet auf API', rev: 4 });
     expect(await screen.findByText(/Version 5/)).toBeTruthy();
     expect(screen.queryByRole('alertdialog', { name: /zwischenzeitlich geändert/ })).toBeNull();
     expect(screen.queryByText('veraltet')).toBeNull();
@@ -199,9 +218,9 @@ describe('DbTicketPanel – Eingaben bleiben erhalten', () => {
     const title = (await screen.findByLabelText('Titel')) as HTMLInputElement;
     fireEvent.change(title, { target: { value: 'Login bauen v2' } });
     fireEvent.blur(title);
-    const acceptance = screen.getByLabelText('Abnahme') as HTMLTextAreaElement;
-    fireEvent.change(acceptance, { target: { value: 'Login geht schnell' } });
-    fireEvent.blur(acceptance);
+    const blocked = screen.getByLabelText('Blockiert-Grund') as HTMLInputElement;
+    fireEvent.change(blocked, { target: { value: 'wartet auf API' } });
+    fireEvent.blur(blocked);
     await waitFor(() => expect(patchDbTicket).toHaveBeenCalledTimes(1));
     release();
     expect(await screen.findByRole('alertdialog', { name: /zwischenzeitlich geändert/ })).toBeTruthy();
@@ -209,7 +228,7 @@ describe('DbTicketPanel – Eingaben bleiben erhalten', () => {
     expect(patchDbTicket).toHaveBeenCalledTimes(1);
     await userEvent.click(screen.getByRole('button', { name: 'Aktuellen Stand laden' }));
     await waitFor(() => expect(title.value).toBe('Von jemand anderem'));
-    expect(acceptance.value).toBe('Login geht schnell');
+    expect(blocked.value).toBe('wartet auf API');
     expect(screen.getByText(/Version 4/)).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'Schließen' }));
     expect(await screen.findByRole('alertdialog', { name: 'Ungespeicherte Änderungen' })).toBeTruthy();

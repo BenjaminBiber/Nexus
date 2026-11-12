@@ -1,0 +1,237 @@
+[
+  {
+    "name": "Einrichten ohne eingeschalteten Bot",
+    "request": {
+      "method": "POST",
+      "path": "/api/telegram/profile"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "telegram-not-running",
+        "message": "Der Bot läuft nicht – erst einschalten und ein Bot-Token eintragen."
+      },
+      "status": 409
+    }
+  },
+  {
+    "name": "Attrappe der Bot-API starten",
+    "request": {
+      "action": "start",
+      "body": {
+        "ok": true,
+        "result": true
+      },
+      "routes": [
+        "getMe",
+        "getUpdates"
+      ],
+      "status": 200,
+      "stub": "TELEGRAM"
+    },
+    "response": {
+      "json": {
+        "url": "<var:tgUrl>"
+      }
+    }
+  },
+  {
+    "name": "Bot auf die Attrappe einschalten",
+    "request": {
+      "body": {
+        "apiBase": "<var:tgUrl>",
+        "enabled": true
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "<var:tgUrl>",
+        "botToken": "123456:…Dsaw",
+        "chats": [
+          4242
+        ],
+        "enabled": true,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": null
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "warten, bis der Bot sein Profil eingerichtet hat",
+    "request": {
+      "action": "await",
+      "call": "getUpdates",
+      "count": 1,
+      "stub": "TELEGRAM"
+    },
+    "response": {
+      "json": {
+        "ok": true
+      }
+    }
+  },
+  {
+    "name": "die Einstellung merkt sich das eingerichtete Profil",
+    "request": {
+      "method": "GET",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "<var:tgUrl>",
+        "botToken": "123456:…Dsaw",
+        "chats": [
+          4242
+        ],
+        "enabled": true,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": {
+            "botId": 7012345678,
+            "photo": "31bd7f7de04f11dfe8c1a1093279495c16fcff82",
+            "texts": "7e0cbdddcb507d501c1b690e69d575621ac2e3d9"
+          }
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Profil erzwungen neu einrichten",
+    "request": {
+      "method": "POST",
+      "path": "/api/telegram/profile"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "applied": true,
+        "error": null
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "das Profilbild ging dabei ein zweites Mal hinaus",
+    "request": {
+      "action": "await",
+      "call": "setMyProfilePhoto",
+      "count": 2,
+      "stub": "TELEGRAM"
+    },
+    "response": {
+      "json": {
+        "ok": true
+      }
+    }
+  },
+  {
+    "name": "Bot wieder abschalten",
+    "request": {
+      "body": {
+        "enabled": false
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "https://api.telegram.org",
+        "botToken": "123456:…Dsaw",
+        "chats": [
+          4242
+        ],
+        "enabled": false,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": {
+            "botId": 7012345678,
+            "photo": "31bd7f7de04f11dfe8c1a1093279495c16fcff82",
+            "texts": "7e0cbdddcb507d501c1b690e69d575621ac2e3d9"
+          }
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  }
+]

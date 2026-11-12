@@ -34,6 +34,7 @@
       "contentType": "application/json",
       "json": [
         {
+          "client": "claude-code",
           "cwd": "<REPO1>",
           "displayState": "running",
           "endedAt": null,
@@ -42,6 +43,7 @@
           "listening": true,
           "model": null,
           "projectId": "<var:pid>",
+          "runName": null,
           "runtimeMs": 0,
           "startedAt": "<TIME>",
           "state": "running",
@@ -105,6 +107,7 @@
       "contentType": "application/json",
       "json": [
         {
+          "client": "claude-code",
           "cwd": "<REPO1>",
           "displayState": "running",
           "endedAt": null,
@@ -113,6 +116,7 @@
           "listening": true,
           "model": null,
           "projectId": "<var:pid>",
+          "runName": null,
           "runtimeMs": 0,
           "startedAt": "<TIME>",
           "state": "running",

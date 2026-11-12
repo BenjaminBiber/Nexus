@@ -24,6 +24,7 @@
       "record": false
     },
     { "name": "erster Kommentar", "method": "POST", "path": "/api/db/tickets/VTR-0001/comments", "body": { "body": "Erster Blick" }, "record": false },
+    { "name": "Zeitstempel von Kommentar und Verschieben trennen", "kind": "wait", "ms": 5, "record": false },
     { "name": "in Planung", "method": "POST", "path": "/api/db/tickets/VTR-0001/move", "body": { "status": "in_planning" }, "record": false },
     { "name": "Schritt anlegen", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps", "body": { "text": "Test schreiben" }, "record": false },
     { "name": "Schritt abhaken", "method": "POST", "path": "/api/db/tickets/VTR-0001/steps/1", "body": { "done": true }, "record": false },

@@ -1,0 +1,188 @@
+[
+  {
+    "name": "Stand ohne eingeschalteten Bot",
+    "request": {
+      "method": "GET",
+      "path": "/api/telegram/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "bot": {
+          "botId": null,
+          "botName": null,
+          "lastError": null,
+          "lastUpdateAt": null,
+          "profileError": null,
+          "state": "off"
+        },
+        "openCodes": 0,
+        "pairedChats": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Attrappe der Bot-API starten",
+    "request": {
+      "action": "start",
+      "body": {
+        "ok": true,
+        "result": true
+      },
+      "routes": [
+        "getMe",
+        "getUpdates"
+      ],
+      "status": 200,
+      "stub": "TELEGRAM"
+    },
+    "response": {
+      "json": {
+        "url": "<var:tgUrl>"
+      }
+    }
+  },
+  {
+    "name": "Bot auf die Attrappe einschalten",
+    "request": {
+      "body": {
+        "apiBase": "<var:tgUrl>",
+        "enabled": true
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "<var:tgUrl>",
+        "botToken": "123456:…Dsaw",
+        "chats": [
+          4242
+        ],
+        "enabled": true,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": null
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "warten, bis der Bot sich angemeldet hat",
+    "request": {
+      "action": "await",
+      "call": "getUpdates",
+      "count": 1,
+      "stub": "TELEGRAM"
+    },
+    "response": {
+      "json": {
+        "ok": true
+      }
+    }
+  },
+  {
+    "name": "Stand des laufenden Bots",
+    "request": {
+      "method": "GET",
+      "path": "/api/telegram/status"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "bot": {
+          "botId": 7012345678,
+          "botName": "nexus_vertrag_bot",
+          "lastError": null,
+          "lastUpdateAt": null,
+          "profileError": null,
+          "state": "running"
+        },
+        "openCodes": 0,
+        "pairedChats": 1
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Bot wieder abschalten",
+    "request": {
+      "body": {
+        "enabled": false
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "https://api.telegram.org",
+        "botToken": "123456:…Dsaw",
+        "chats": [
+          4242
+        ],
+        "enabled": false,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": {
+            "botId": 7012345678,
+            "photo": "31bd7f7de04f11dfe8c1a1093279495c16fcff82",
+            "texts": "7e0cbdddcb507d501c1b690e69d575621ac2e3d9"
+          }
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  }
+]

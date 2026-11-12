@@ -24,6 +24,7 @@ nexus-platform = { workspace = true }
 nexus-server = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+tempfile = { workspace = true }
 tokio = { workspace = true }
 
 [dev-dependencies]
@@ -32,6 +33,8 @@ assert_cmd = { workspace = true }
 nexus-core = { workspace = true, features = ["testing"] }
 predicates = { workspace = true }
 tempfile = { workspace = true }
+# Kaputte Pakete (ohne theme.css) für `tests/theme_manage.rs`
+zip = { workspace = true }
 
 [lints]
 workspace = true

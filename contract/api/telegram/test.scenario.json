@@ -1,0 +1,50 @@
+{
+  "title": "Testnachricht an die gekoppelten Chats, auch wenn Telegram sie ablehnt",
+  "fixtures": {
+    "homeFiles": {
+      "telegram.yaml": "enabled: false\nbotToken: \"123456:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw\"\napiBase: https://api.telegram.org\nchats: [4242, 77]\n"
+    }
+  },
+  "steps": [
+    { "name": "Testnachricht ohne eingeschalteten Bot", "method": "POST", "path": "/api/telegram/test", "body": {} },
+
+    {
+      "name": "Attrappe der Bot-API starten",
+      "kind": "httpStub",
+      "stub": "TELEGRAM",
+      "body": { "ok": true, "result": true },
+      "routes": {
+        "getMe": { "body": { "ok": true, "result": { "id": 7012345678, "username": "nexus_vertrag_bot", "first_name": "Nexus" } } },
+        "getUpdates": { "body": { "ok": true, "result": [] }, "delayMs": 1000 },
+        "sendMessage": {
+          "bodies": [
+            { "ok": true, "result": { "message_id": 11 } },
+            { "ok": false, "error_code": 403, "description": "Forbidden: bot was blocked by the user" }
+          ]
+        }
+      },
+      "save": { "tgUrl": "json.url" }
+    },
+    {
+      "name": "Bot auf die Attrappe einschalten",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "enabled": true, "apiBase": "{{tgUrl}}" }
+    },
+    { "name": "warten, bis der Bot sich angemeldet hat", "kind": "httpStub", "action": "await", "stub": "TELEGRAM", "call": "getUpdates" },
+
+    { "name": "Testnachricht an beide Chats", "method": "POST", "path": "/api/telegram/test", "body": {} },
+    { "name": "die geschickten Nachrichten an der Attrappe", "kind": "httpStub", "action": "await", "stub": "TELEGRAM", "call": "sendMessage", "count": 2 },
+
+    { "name": "beide Chats entkoppeln", "method": "DELETE", "path": "/api/telegram/chats/4242", "record": false },
+    { "name": "zweiten Chat entkoppeln", "method": "DELETE", "path": "/api/telegram/chats/77", "record": false },
+    { "name": "Testnachricht ohne gekoppelte Chats", "method": "POST", "path": "/api/telegram/test", "body": {} },
+
+    {
+      "name": "Bot wieder abschalten",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "enabled": false }
+    }
+  ]
+}

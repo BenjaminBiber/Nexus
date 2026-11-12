@@ -7,6 +7,7 @@ pub mod abort_reason;
 pub mod account_chooser;
 pub mod account_references;
 pub mod attempts;
+pub mod autopilot;
 pub mod comments;
 pub mod config;
 pub mod config_normalizer;
@@ -31,9 +32,12 @@ pub mod run_backfill;
 pub mod state;
 pub mod time_window;
 pub mod types;
+pub mod usage_estimate;
 
 pub use abort_reason::{AbortCategory, AbortReasonClassifier, ABORT_CATEGORIES};
-pub use account_chooser::{hhmm, AccountChoice, AccountChoiceInput, AccountChooser, AccountState};
+pub use account_chooser::{
+    hhmm, AccountChoice, AccountChoiceInput, AccountChooser, AccountReserve, AccountState,
+};
 pub use account_references::AccountReferences;
 pub use attempts::{limit_account, AttemptCounter};
 pub use comments::CommentLike;
@@ -79,3 +83,6 @@ pub use state::{
 };
 pub use time_window::TimeWindowCheck;
 pub use types::{RunResult, SetupFailure, TestRun};
+pub use usage_estimate::{
+    estimate_reserve, EstimatedReserve, ReserveFor, MAX_SAMPLES, MIN_SAMPLES,
+};

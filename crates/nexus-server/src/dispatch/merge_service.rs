@@ -17,11 +17,12 @@ use nexus_core::board::basics::{
 };
 use nexus_core::board::ticket_service::{MoveOptions, TicketDetail, TicketPatch, WriteOptions};
 use nexus_core::board::types::Board;
+use nexus_core::dispatch::autopilot::autopilot_for;
 use nexus_core::dispatch::config::MERGE_SESSION_TOOLS;
 use nexus_core::dispatch::git::MergeOutcome;
 use nexus_core::dispatch::{
-    markers, DispatchState, MergeEntry, MergePhase, MergeStrategy, RunEnd, RunKind, RunRecord,
-    RunSettings, TimeWindowCheck, MERGE_REASON_PREFIX,
+    markers, CommentLike, DispatchState, MergeEntry, MergePhase, MergeStrategy, RunEnd, RunKind,
+    RunRecord, RunSettings, TimeWindowCheck, MERGE_REASON_PREFIX,
 };
 use nexus_core::git::PathKey;
 use nexus_core::worktrees::manager::RepoBoard;
@@ -36,6 +37,10 @@ use crate::dispatch::result_handler::MergeSessionEnd;
 
 /// Bezeichnung des Hauptordners in Meldungen
 const MAIN_LABEL: &str = "Hauptordner";
+
+/// Schluss des Kommentars, wenn der Autopilot nach einer gescheiterten Merge-Session die nächste
+/// vormerkt; der Prompt der nächsten Session liest den Kommentar daran wieder
+const NEXT_SESSION: &str = ", nächster Versuch.";
 
 /// Offene Aufträge eines Branches mit ihren noch erledigten Tickets
 struct BranchJob {
@@ -270,8 +275,10 @@ Grund „Merge: …“).",
             branch: branch.clone(),
             phase: MergePhase::Pending,
             session_used: false,
+            sessions: 0,
             wait_noted: false,
             target: None,
+            target_head: None,
             conflict_seen: Some(false),
             held_by: None,
             since,
@@ -285,7 +292,9 @@ Grund „Merge: …“).",
                     }
                     entry.phase = MergePhase::Pending;
                     entry.session_used = false;
+                    entry.sessions = 0;
                     entry.target = None;
+                    entry.target_head = None;
                     entry.conflict_seen = Some(false);
                     entry.held_by = Some(None);
                 }
@@ -362,7 +371,7 @@ Grund „Merge: …“).",
             "kein Branch eingetragen, es gibt nichts zu mergen"
         } else {
             "das Board gehört einem anderen Benutzer oder hat keinen Repo-Pfad – gemergt wird \
-dort („Mergen“ bzw. harness board merge)"
+dort („Mergen“ bzw. nexus board merge)"
         };
         Ok(AcceptOutcome {
             text: format!("{} abgenommen und erledigt; {why}.", ticket.id),
@@ -415,8 +424,12 @@ dort („Mergen“ bzw. harness board merge)"
             .target
             .clone()
             .or_else(|| job.entries.iter().find_map(|entry| entry.target.clone()));
+        let head = job
+            .entries
+            .iter()
+            .find_map(|entry| entry.target_head.clone());
         let resolved = match (&work, &target) {
-            (Some(work), Some(target)) => self.resolved(work, target, record)?,
+            (Some(work), Some(target)) => self.resolved(work, target, head.as_deref(), record)?,
             _ => false,
         };
         if !resolved {
@@ -431,29 +444,71 @@ dort („Mergen“ bzw. harness board merge)"
                         .unwrap_or_else(|| "null".to_string())
                 )
             };
-            self.block(
+            let detail = format!("{exit}, Protokoll {}", file_name(&record.log_file));
+            self.session_failed(
                 ctx,
                 &job,
                 work.as_deref(),
-                &format!(
-                    "Die Merge-Session konnte den Konflikt nicht lösen ({exit}, Protokoll {}).",
-                    file_name(&record.log_file)
-                ),
+                &format!("Die Merge-Session konnte den Konflikt nicht lösen ({detail})."),
+                &detail,
             )
             .await?;
             return Ok(());
         }
-        self.set_phase(ctx, &record.branch, MergePhase::Pending)
-            .await
+        // Ist das Ziel während der Session weitergelaufen, darf ein neuer Konflikt mit dem
+        // nachgerückten Stand wieder eine Merge-Session bekommen – die bisherige hat ihren
+        // Stand gelöst
+        let moved = match (&work, &target, &head) {
+            (Some(work), Some(target), Some(head)) => self
+                .git
+                .head(Path::new(&work.root), &format!("refs/heads/{target}"))
+                .map(|now| now != *head)
+                .unwrap_or(false),
+            _ => false,
+        };
+        let branch = record.branch.clone();
+        ctx.stores
+            .state
+            .update(move |state| {
+                for entry in state.merges.values_mut() {
+                    if entry.branch != branch {
+                        continue;
+                    }
+                    entry.phase = MergePhase::Pending;
+                    if moved {
+                        entry.session_used = false;
+                        entry.sessions = 0;
+                        entry.target_head = None;
+                    }
+                }
+            })
+            .await?;
+        if moved {
+            ctx.log(&format!(
+                "Merge-Session {} gelöst, das Ziel ist inzwischen weitergelaufen – neuer Merge-Versuch",
+                job.ids().join(", ")
+            ));
+        }
+        Ok(())
     }
 
     /// Hat die Merge-Session das Ziel in den Branch geholt und einen sauberen Worktree ohne
-    /// laufende Git-Aktion hinterlassen? Beide als volle Branch-Referenz, damit ein
-    /// gleichnamiges Tag nicht gewinnt
-    fn resolved(&self, work: &RepoWork, target: &str, record: &RunRecord) -> Result<bool> {
+    /// laufende Git-Aktion hinterlassen? Maßstab ist der Stand des Ziels beim Start der Session
+    /// (`head`; ohne ihn die heutige Spitze), denn das Ziel darf währenddessen weiterlaufen.
+    /// Branches als volle Referenz, damit ein gleichnamiges Tag nicht gewinnt
+    fn resolved(
+        &self,
+        work: &RepoWork,
+        target: &str,
+        head: Option<&str>,
+        record: &RunRecord,
+    ) -> Result<bool> {
+        let ancestor = head
+            .map(str::to_string)
+            .unwrap_or_else(|| format!("refs/heads/{target}"));
         if !self.git.contains(
             Path::new(&work.root),
-            &format!("refs/heads/{target}"),
+            &ancestor,
             &format!("refs/heads/{}", record.branch),
         )? {
             return Ok(false);
@@ -482,7 +537,14 @@ dort („Mergen“ bzw. harness board merge)"
             &nexus_core::dispatch::ProfileTicket::from(&detail.ticket),
             attempt,
         );
-        let run = self.at_least_default(ctx, chosen);
+        let earlier = sessions_of(job);
+        let session = earlier.saturating_add(1);
+        let autopilot = autopilot_for(&ctx.cfg, &detail.ticket.labels);
+        let max = max_sessions(ctx);
+        let mut run = self.step_up(ctx, self.at_least_default(ctx, chosen), session);
+        if autopilot {
+            run.why = format!("{}, Merge-Session {session}/{max}", run.why);
+        }
         let agent = ctx.agent_name(&detail.ticket.id);
         let values = crate::dispatch::prompt_values::MergeValues {
             ticket_id: detail.ticket.id.clone(),
@@ -490,9 +552,17 @@ dort („Mergen“ bzw. harness board merge)"
             agent: agent.clone(),
             branch: job.branch.clone(),
             target: target.to_string(),
+            previous_attempts: (earlier > 0)
+                .then(|| previous_report(&detail.comments, &ctx.cfg.dispatcher_name, &agent)),
         };
         let prompt = ctx.prompts.merge(&values.input(&ctx.cfg));
         let profile = run.profile.clone();
+        // Stand des Ziels, den die Session hereinholen soll; ohne ihn gilt bei der Auswertung
+        // die dann aktuelle Spitze
+        let head = self
+            .git
+            .head(Path::new(&work.root), &format!("refs/heads/{target}"))
+            .ok();
         ctx.launch(LaunchInput {
             target: Some(target.to_string()),
             extra_tools: MERGE_SESSION_TOOLS.iter().map(|s| s.to_string()).collect(),
@@ -520,15 +590,23 @@ dort („Mergen“ bzw. harness board merge)"
                     }
                     entry.phase = MergePhase::Session;
                     entry.session_used = true;
+                    entry.sessions = session;
                     entry.target = Some(target_value.clone());
+                    entry.target_head = head.clone();
                 }
             })
             .await?;
+        // Im Autopilot nennt der Start-Kommentar die Nummer der Session
+        let started = if autopilot {
+            format!("Merge-Session {session}/{max} gestartet")
+        } else {
+            "Merge-Session gestartet".to_string()
+        };
         for detail in &job.tickets {
             ctx.comment(
                 &detail.ticket.id,
                 &format!(
-                    "{} in {} beim Merge in {target} – Merge-Session gestartet (Profil {profile}).",
+                    "{} in {} beim Merge in {target} – {started} (Profil {profile}).",
                     markers::MERGE_CONFLICT,
                     list(files)
                 ),
@@ -573,7 +651,97 @@ dort („Mergen“ bzw. harness board merge)"
             accounts_from: run.accounts_from,
             account: run.account,
             account_why: run.account_why,
+            usage_at_start: run.usage_at_start,
         }
+    }
+
+    /// Merge-Session Nummer `session` (ab 1): jede weitere eine Stufe höher auf der Profilleiter
+    /// als die erste; die oberste Stufe wiederholt sich. Mehr als eine Session gibt es nur im
+    /// Autopilot
+    fn step_up(&self, ctx: &DispatchContext, run: RunSettings, session: u8) -> RunSettings {
+        let cfg = &ctx.cfg;
+        if session <= 1 {
+            return run;
+        }
+        let Some(at) = cfg.ladder.iter().position(|entry| *entry == run.profile) else {
+            return run;
+        };
+        let index = (at + usize::from(session) - 1).min(cfg.ladder.len() - 1);
+        let name = cfg.ladder[index].clone();
+        let Some(profile) = cfg.profiles.get(&name) else {
+            return run;
+        };
+        if name == run.profile {
+            return run;
+        }
+        RunSettings {
+            model: profile.model.clone(),
+            effort: profile.effort.clone(),
+            max_turns: profile.max_turns,
+            timeout_minutes: profile.timeout_minutes,
+            why: format!("{}, eskaliert auf {name}", run.why),
+            escalated_from: run.escalated_from.clone().or(Some(run.profile.clone())),
+            profile: name,
+            ..run
+        }
+    }
+
+    /// Eine Merge-Session ist ohne Lösung geblieben (`problem` wie ohne Autopilot, `detail` kurz
+    /// für Kommentar und Grund). Im Autopilot wird bis `autopilot.maxMergeSessions` die nächste
+    /// Session vorgemerkt (der nächste Durchlauf mergt erneut); danach und ohne Autopilot wird
+    /// blockiert
+    async fn session_failed(
+        &self,
+        ctx: &DispatchContext,
+        job: &BranchJob,
+        work: Option<&RepoWork>,
+        problem: &str,
+        detail: &str,
+    ) -> Result<Vec<String>> {
+        if !autopilot_for(&ctx.cfg, &job.tickets[0].ticket.labels) {
+            return self.block(ctx, job, work, problem).await;
+        }
+        let used = sessions_of(job).max(1);
+        let max = max_sessions(ctx);
+        if used >= max {
+            return self
+                .block(
+                    ctx,
+                    job,
+                    work,
+                    &format!("Autopilot – {used} Merge-Sessions ohne Lösung ({detail})."),
+                )
+                .await;
+        }
+        let branch = job.branch.clone();
+        ctx.stores
+            .state
+            .update(move |state| {
+                for entry in state.merges.values_mut() {
+                    if entry.branch != branch {
+                        continue;
+                    }
+                    entry.phase = MergePhase::Pending;
+                    entry.session_used = false;
+                    entry.target_head = None;
+                }
+            })
+            .await?;
+        for ticket in &job.tickets {
+            ctx.comment(
+                &ticket.ticket.id,
+                &format!(
+                    "{} – Merge-Session {used}/{max} ohne Lösung ({detail}){NEXT_SESSION}",
+                    markers::MERGE_CONFLICT
+                ),
+            )
+            .await?;
+        }
+        ctx.log(&format!(
+            "Merge-Session {used}/{max} {} ohne Lösung – nächster Versuch",
+            job.ids().join(", ")
+        ));
+        Ok(Vec::new())
     }
 
     // ------------------------------------------------------------------------------------
@@ -603,7 +771,13 @@ dort („Mergen“ bzw. harness board merge)"
             .any(|entry| entry.phase == MergePhase::Session)
         {
             return self
-                .block(ctx, &job, None, "Die Merge-Session endete ohne Auswertung.")
+                .session_failed(
+                    ctx,
+                    &job,
+                    None,
+                    "Die Merge-Session endete ohne Auswertung.",
+                    "die Merge-Session endete ohne Auswertung",
+                )
                 .await;
         }
         let primary = job.tickets[0].ticket.clone();
@@ -715,7 +889,7 @@ dort („Mergen“ bzw. harness board merge)"
             MergeOutcome::Conflict { files } => {
                 if job.entries.iter().any(|entry| entry.session_used) {
                     return self
-                        .block(
+                        .session_failed(
                             ctx,
                             &job,
                             Some(&work),
@@ -723,6 +897,7 @@ dort („Mergen“ bzw. harness board merge)"
                                 "Merge-Konflikt in {} – die Merge-Session hat ihn nicht gelöst.",
                                 list(&files)
                             ),
+                            &format!("Merge-Konflikt in {} besteht weiter", list(&files)),
                         )
                         .await;
                 }
@@ -1362,13 +1537,14 @@ Worktrees fertig sind.",
                 .join(", ")
         ));
         let board = ctx.board(first.board_id).await?;
-        ctx.notify(&DispatchNotice {
-            kind: DispatchNoticeKind::Blocked,
-            ticket_id: Some(first.id.clone()),
-            title: first.title.clone(),
-            text: reason,
-            repo_path: board.and_then(|board| board.repo_path),
-        })
+        // Im Autopilot ist das eine Sackgasse: „Autopilot steckt fest“ statt „blockiert“
+        ctx.notify(&DispatchNotice::blocked(
+            autopilot_for(&ctx.cfg, &first.labels),
+            &first.id,
+            &first.title,
+            &reason,
+            board.and_then(|board| board.repo_path),
+        ))
         .await;
         Ok(Vec::new())
     }
@@ -1509,6 +1685,55 @@ fn entries_of(state: &DispatchState, branch: &str) -> Vec<MergeEntry> {
         .filter(|entry| entry.branch == branch)
         .cloned()
         .collect()
+}
+
+/// Merge-Sessions für den aktuellen Stand des Ziels (größter Zähler der Aufträge des Branches)
+fn sessions_of(job: &BranchJob) -> u8 {
+    job.entries
+        .iter()
+        .map(|entry| entry.sessions)
+        .max()
+        .unwrap_or(0)
+}
+
+/// Höchstzahl der Merge-Sessions je Konflikt im Autopilot (`autopilot.maxMergeSessions`, 1–5)
+fn max_sessions(ctx: &DispatchContext) -> u8 {
+    u8::try_from(ctx.cfg.autopilot.max_merge_sessions.clamp(1, 5)).unwrap_or(1)
+}
+
+/// Bericht der gescheiterten früheren Merge-Session für den Prompt der nächsten: der Kommentar
+/// des Dispatchers „Merge-Session n/max ohne Lösung (…, Protokoll …)“ und der neueste Kommentar
+/// des Merge-Agents seit dem Start der vorigen Session
+fn previous_report<C: CommentLike>(comments: &[C], dispatcher: &str, agent: &str) -> String {
+    let conflict = |comment: &&C| {
+        comment.author_name() == dispatcher && comment.body().starts_with(markers::MERGE_CONFLICT)
+    };
+    let outcome = comments.iter().rev().filter(conflict).find_map(|comment| {
+        comment
+            .body()
+            .strip_prefix(markers::MERGE_CONFLICT)?
+            .strip_prefix(" – ")?
+            .strip_suffix(NEXT_SESSION)
+            .map(str::to_string)
+    });
+    let started = comments
+        .iter()
+        .rposition(|comment| conflict(&comment) && comment.body().contains("gestartet"))
+        .map_or(0, |index| index + 1);
+    let report = comments[started.min(comments.len())..]
+        .iter()
+        .rev()
+        .find(|comment| comment.author_name() == agent)
+        .map(|comment| comment.body().trim().to_string());
+    let mut text = "Frühere Merge-Session(s) sind gescheitert".to_string();
+    if let Some(outcome) = outcome {
+        text.push_str(&format!(" – {outcome}"));
+    }
+    match report {
+        Some(report) => text.push_str(&format!(". Letzter Bericht des Merge-Agents: „{report}“")),
+        None => text.push_str(". Der Merge-Agent hat keinen Bericht hinterlassen."),
+    }
+    text
 }
 
 /// Ticket oder `None`, wenn es gelöscht wurde; andere Fehler (Verbindung) gehen weiter

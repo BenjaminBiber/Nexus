@@ -22,6 +22,23 @@ fn projekt_mit_board() -> (TempProject, i32) {
 }
 
 #[test]
+fn init_im_testprojekt_gibt_den_import_nur_in_der_eigenen_claude_konfiguration_frei() {
+    // Mit der `.claude.json` des Benutzers überschrieben parallele Tests einander die Freigabe
+    let projekt = TempProject::new();
+    let datei = projekt.base().join("claude").join(".claude.json");
+    std::fs::create_dir_all(datei.parent().expect("Claude-Ordner")).expect("Claude-Ordner");
+    std::fs::write(&datei, "{}").expect(".claude.json");
+
+    let wert = projekt.json(&["init"]);
+
+    assert_eq!(
+        wert["importApproval"]["file"],
+        datei.to_string_lossy().into_owned()
+    );
+    assert_eq!(wert["importApproval"]["status"], "approved");
+}
+
+#[test]
 fn meldet_ohne_board_yaml_die_fehlende_konfig() {
     let projekt = TempProject::new();
     let home = tempfile::Builder::new()

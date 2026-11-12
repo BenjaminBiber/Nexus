@@ -1,0 +1,405 @@
+[
+  {
+    "name": "Einstellung lesen",
+    "request": {
+      "method": "GET",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "https://api.telegram.org",
+        "botToken": "123456:…Dsaw",
+        "chats": [
+          4242
+        ],
+        "enabled": false,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": null
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "sk-…abcd",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "speichern mit den Masken der Geheimnisse",
+    "request": {
+      "body": {
+        "apiBase": "http://127.0.0.1:9",
+        "botToken": "123456:…Dsaw",
+        "ideas": {
+          "defaultTarget": "ticket",
+          "maxRounds": 3
+        },
+        "notify": {
+          "blocked": false,
+          "merge": true,
+          "merged": true,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "quietHours": {
+          "from": "22:00",
+          "to": "07:00"
+        },
+        "speech": {
+          "apiKey": "sk-…abcd",
+          "language": "de",
+          "model": "whisper-1"
+        }
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "http://127.0.0.1:9",
+        "botToken": "123456:…Dsaw",
+        "chats": [
+          4242
+        ],
+        "enabled": false,
+        "ideas": {
+          "defaultTarget": "ticket",
+          "maxRounds": 3
+        },
+        "notify": {
+          "blocked": false,
+          "merge": true,
+          "merged": true,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": null
+        },
+        "quietHours": {
+          "from": "22:00",
+          "to": "07:00"
+        },
+        "speech": {
+          "apiKey": "sk-…abcd",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "whisper-1",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Einstellung nach dem Speichern",
+    "request": {
+      "method": "GET",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "http://127.0.0.1:9",
+        "botToken": "123456:…Dsaw",
+        "chats": [
+          4242
+        ],
+        "enabled": false,
+        "ideas": {
+          "defaultTarget": "ticket",
+          "maxRounds": 3
+        },
+        "notify": {
+          "blocked": false,
+          "merge": true,
+          "merged": true,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": null
+        },
+        "quietHours": {
+          "from": "22:00",
+          "to": "07:00"
+        },
+        "speech": {
+          "apiKey": "sk-…abcd",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "whisper-1",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "nicht genannte Felder fallen auf die Vorgabe zurück, chats bleibt",
+    "request": {
+      "body": {
+        "chats": [
+          1,
+          2,
+          3
+        ]
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "https://api.telegram.org",
+        "botToken": "123456:…Dsaw",
+        "chats": [
+          4242
+        ],
+        "enabled": false,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": null
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "sk-…abcd",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Bot-Token ohne Muster",
+    "request": {
+      "body": {
+        "botToken": "kaputt:kurz"
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "telegram-config-invalid",
+        "message": "botToken sieht nicht wie ein Bot-Token von @BotFather aus (Zahl, Doppelpunkt, Geheimnis)."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Nachtruhe ohne Uhrzeit",
+    "request": {
+      "body": {
+        "quietHours": {
+          "from": "22:00",
+          "to": "7 Uhr"
+        }
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "telegram-config-invalid",
+        "message": "quietHours braucht from und to im Format HH:MM, z. B. from: \"22:00\", to: \"07:00\"."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Runden außerhalb von eins bis zehn",
+    "request": {
+      "body": {
+        "ideas": {
+          "maxRounds": 99
+        }
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "telegram-config-invalid",
+        "message": "ideas.maxRounds muss eine ganze Zahl von 1 bis 10 sein."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Adresse ohne http",
+    "request": {
+      "body": {
+        "apiBase": "ftp://telegram.invalid"
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "telegram-config-invalid",
+        "message": "apiBase muss eine Adresse mit http:// oder https:// sein."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Geheimnisse löschen",
+    "request": {
+      "body": {
+        "botToken": "",
+        "speech": {
+          "apiKey": ""
+        }
+      },
+      "method": "PUT",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "https://api.telegram.org",
+        "botToken": "",
+        "chats": [
+          4242
+        ],
+        "enabled": false,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": null
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  },
+  {
+    "name": "Einstellung ohne Geheimnisse",
+    "request": {
+      "method": "GET",
+      "path": "/api/telegram/config"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "apiBase": "https://api.telegram.org",
+        "botToken": "",
+        "chats": [
+          4242
+        ],
+        "enabled": false,
+        "ideas": {
+          "defaultTarget": "note",
+          "maxRounds": 5
+        },
+        "notify": {
+          "blocked": true,
+          "merge": true,
+          "merged": false,
+          "paused": false,
+          "question": true,
+          "review": true
+        },
+        "profile": {
+          "applied": null
+        },
+        "quietHours": null,
+        "speech": {
+          "apiKey": "",
+          "backend": "openai-compatible",
+          "baseUrl": "https://api.openai.com",
+          "language": "de",
+          "model": "gpt-4o-mini-transcribe",
+          "whisperCli": {
+            "binary": "whisper-cli",
+            "ffmpeg": "ffmpeg",
+            "model": ""
+          }
+        }
+      },
+      "status": 200
+    }
+  }
+]

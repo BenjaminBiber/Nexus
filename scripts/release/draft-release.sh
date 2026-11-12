@@ -7,7 +7,8 @@ set -euo pipefail
 tag="${1:?Aufruf: draft-release.sh <tag> <version>}"
 version="${2:?Aufruf: draft-release.sh <tag> <version>}"
 output="${GITHUB_OUTPUT:-/dev/stdout}"
-repo="${GITHUB_REPOSITORY:?GITHUB_REPOSITORY fehlt – das Skript läuft im Release-Workflow.}"
+# RELEASE_GITHUB_REPO geht vor: in Gitea Actions nennt GITHUB_REPOSITORY das Gitea-Repo, nicht das bei GitHub
+repo="${RELEASE_GITHUB_REPO:-${GITHUB_REPOSITORY:?GITHUB_REPOSITORY fehlt – das Skript läuft im Release-Workflow.}}"
 
 # Wie „gh release create --verify-tag“: ohne den Tag bei GitHub würde die API ihn sonst selbst anlegen
 if ! gh api "repos/$repo/git/ref/tags/$tag" --silent; then

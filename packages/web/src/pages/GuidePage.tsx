@@ -50,7 +50,7 @@ export function GuidePage() {
       <section id="dispatcher" className="panel">
         <h2>Dispatcher</h2>
         <p>
-          Der Dispatcher läuft im Harness-Server und setzt bereite Tickets ohne dich um. Jede Minute prüft er die Boards aus seiner Einstellung boards
+          Der Dispatcher läuft im Nexus-Server und setzt bereite Tickets ohne dich um. Jede Minute prüft er die Boards aus seiner Einstellung boards
           (ohne Auswahl: das aktive Board). Für ein bereites Ticket legt er Branch und Worktree an und startet claude -p als junior-&lt;ID&gt;. Das Profil
           wählt er nach Label profil:, Aufwand im Plan, Regeln und Standardprofil; die Labels model: und effort: gehen vor. Er startet höchstens so viele
           Läufe, wie die WIP-Grenze erlaubt, und nur im Zeitfenster.
@@ -88,51 +88,51 @@ export function GuidePage() {
 
       <section id="einrichten" className="panel">
         <h2>Einrichten</h2>
-        <p>Einmal pro Rechner, im Ordner des Harness-Repositories. Das baut Oberfläche und Plugin (npm run build, npm run build:plugin); der letzte Befehl installiert das Plugin und den Befehl harness im Terminal:</p>
+        <p>Einmal pro Rechner, im Ordner des Nexus-Repositorys. Das baut Oberfläche und Plugin (npm run build, npm run build:plugin); der letzte Befehl installiert das Plugin und den Befehl nexus im Terminal:</p>
         <p>
           <CopyCommand command="packages/plugin/dist/nexus/bin/nexus install" />
         </p>
-        <p>Danach ein neues Terminal öffnen. Das Plugin ist zunächst ausgeschaltet und belastet Projekte ohne Harness nicht.</p>
+        <p>Danach ein neues Terminal öffnen. Das Plugin ist zunächst ausgeschaltet und belastet Projekte ohne Nexus nicht.</p>
         <p>Einmal pro Projekt, im Projektordner. Das richtet das Projekt ein, schaltet das Plugin dafür ein und bindet Doku- und Board-Regel ein:</p>
         <p>
-          <CopyCommand command="harness init" />
+          <CopyCommand command="nexus init" />
         </p>
         <p>Danach in Claude Code /reload-plugins eingeben (oder neu starten), damit Hooks und Skills laufen. Dann das Board öffnen:</p>
         <p>
-          <CopyCommand command="harness board" />
+          <CopyCommand command="nexus board" />
         </p>
         <p>Board einrichten, einmal je Person und Projekt: Im Board unter Einstellungen → Board-Datenbank die Verbindung ausfüllen. Dann ein Projekt anlegen bzw. wählen und ein eigenes Board anlegen und aktivieren:</p>
         <p>
-          <CopyCommand command={'harness board project create ARC "Mein Projekt"'} />
+          <CopyCommand command={'nexus board project create ARC "Mein Projekt"'} />
         </p>
         <p>
-          <CopyCommand command={'harness board boards create ARC "Mein Board" --use'} />
+          <CopyCommand command={'nexus board boards create ARC "Mein Board" --use'} />
         </p>
         <p>Zuletzt das Repo dem Board zuordnen (Nummer des Boards und Pfad anpassen). Der Repo-Pfad ist je Person lokal – jeder trägt seinen eigenen Ordner ein:</p>
         <p>
-          <CopyCommand command={'harness board boards repo 7 C:\\Projekte\\Demo'} />
+          <CopyCommand command={'nexus board boards repo 7 C:\\Projekte\\Demo'} />
         </p>
       </section>
 
       <section id="aktualisieren" className="panel">
         <h2>Aktualisieren</h2>
-        <p>Im Ordner des Harness-Repositories: Änderungen holen (git pull), neu bauen (npm run build, npm run build:plugin) und Plugin, Terminal-Befehl und Server aktualisieren:</p>
+        <p>Im Ordner des Nexus-Repositorys: Änderungen holen (git pull), neu bauen (npm run build, npm run build:plugin) und Plugin, Terminal-Befehl und Server aktualisieren:</p>
         <p>
           <CopyCommand command="packages/plugin/dist/nexus/bin/nexus install" />
         </p>
-        <p>Danach in laufenden Sessions /reload-plugins eingeben und harness board starten. Bestehende Projekte brauchen danach einmal harness init, damit die Board-Regel (.claude/rules/ai-harness-board.md) ankommt:</p>
+        <p>Danach in laufenden Sessions /reload-plugins eingeben und nexus board starten. Bestehende Projekte brauchen danach einmal nexus init, damit die Board-Regel (.claude/rules/nexus-board.md) ankommt:</p>
         <p>
-          <CopyCommand command="harness init" />
+          <CopyCommand command="nexus init" />
         </p>
       </section>
 
       <section id="anpassen" className="panel">
         <h2>Anpassen</h2>
-        <p>Workflow, Skills und Output-Styles des Harness kannst du für dich ersetzen oder ergänzen. Die Anpassungen liegen im Ordner custom/ des Harness-Repositories, den Git ignoriert, und überstehen Updates ohne Merge. Am einfachsten sagst du Claude in einer beliebigen Session, was du ändern willst:</p>
+        <p>Workflow, Skills und Output-Styles von Nexus kannst du für dich ersetzen oder ergänzen. Die Anpassungen liegen im Ordner custom/ des Nexus-Repositorys, den Git ignoriert, und überstehen Updates ohne Merge. Am einfachsten sagst du Claude in einer beliebigen Session, was du ändern willst:</p>
         <p>
           <CopyCommand command="/nexus:harness-customize" />
         </p>
-        <p>Anpassungen wirken erst, nachdem du sie im Ordner des Harness-Repositories anwendest: npm run build:plugin baut das Plugin mit den Anpassungen, danach:</p>
+        <p>Anpassungen wirken erst, nachdem du sie im Ordner des Nexus-Repositorys anwendest: npm run build:plugin baut das Plugin mit den Anpassungen, danach:</p>
         <p>
           <CopyCommand command="packages/plugin/dist/nexus/bin/nexus install" />
         </p>

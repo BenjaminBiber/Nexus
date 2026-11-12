@@ -973,9 +973,17 @@
         "view": {
           "config": {
             "accountLimitPercent": 90,
+            "accountReserveFiveHour": 10,
+            "accountReserveWeek": 2,
+            "accountResetGraceMinutes": 30,
             "accountStrategy": "most-free",
             "agentPrefix": "junior-",
             "allowFable": false,
+            "autopilot": {
+              "enabled": false,
+              "exceptLabel": "interaktiv",
+              "maxMergeSessions": 3
+            },
             "boards": null,
             "claude": {
               "allowedTools": [

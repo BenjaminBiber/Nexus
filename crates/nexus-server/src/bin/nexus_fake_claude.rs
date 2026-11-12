@@ -7,6 +7,11 @@
 //! Zeichen in zwei Blöcken), `entkommt` (eigene Prozessgruppe, der Abbruch des Baums greift
 //! nicht) und `cwd` (schreibt den Arbeitsordner).
 //!
+//! Der Modus `antwort` liefert, was in `FAKE_CLAUDE_REPLY` steht: so geben Tests dem Ersatz
+//! eine fertige Antwort mit, ohne die Umgebung des Testprozesses zu ändern. Zeigt
+//! `FAKE_CLAUDE_REPLY_FILE` auf eine Datei, gilt deren Inhalt – damit ein Test die Antwort
+//! zwischen zwei Läufen wechseln kann.
+//!
 //! Das Binary wird nicht ausgeliefert; Tests finden es über
 //! `env!("CARGO_BIN_EXE_nexus-fake-claude")`.
 
@@ -68,7 +73,14 @@ fn main() {
             let _ = std::io::stdout().write_all(format!("cwd={}\n", cwd.display()).as_bytes());
         }
         _ => {
-            let text = if modus == "limit" {
+            let text = if modus == "antwort" {
+                // Steht die Antwort in einer Datei, gilt ihr Inhalt: so wechselt ein Test sie
+                // zwischen zwei Läufen, ohne den Dienst neu zu bauen
+                match std::env::var("FAKE_CLAUDE_REPLY_FILE") {
+                    Ok(pfad) => std::fs::read_to_string(pfad).unwrap_or_default(),
+                    Err(_) => std::env::var("FAKE_CLAUDE_REPLY").unwrap_or_default(),
+                }
+            } else if modus == "limit" {
                 "Claude usage limit reached".to_string()
             } else {
                 let key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_else(|_| "-".to_string());
@@ -98,7 +110,7 @@ fn strom(ticket: &str) {
             "type": "assistant",
             "message": { "content": [
                 { "type": "text", "text": "Ich lese das Ticket." },
-                { "type": "tool_use", "name": "Bash", "input": { "command": format!("harness board show {ticket}") } },
+                { "type": "tool_use", "name": "Bash", "input": { "command": format!("nexus board show {ticket}") } },
             ] }
         }),
         serde_json::json!({

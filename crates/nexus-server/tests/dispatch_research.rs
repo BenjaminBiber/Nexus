@@ -13,18 +13,22 @@ use std::path::Path;
 
 use nexus_core::actors::AuthorKind;
 use nexus_core::board::basics::BoardActor;
+use nexus_core::board::basics::TicketStatus;
 use nexus_core::board::database::BoardDatabase as _;
 use nexus_core::board::question_service::NewBoardQuestionInput;
 use nexus_core::board::question_types::{BoardQuestionActor, BoardQuestionDetail};
 use nexus_core::board::ticket_service::TicketPatch;
 use nexus_core::board::types::BoardUser;
+use nexus_core::dispatch::autopilot::is_autopilot_decision;
 use nexus_core::dispatch::config::{RESEARCH_DENIED_TOOLS, RESEARCH_TOOLS};
 use nexus_core::dispatch::git::{ResearchWorktree, ResearchWorktreeOptions, WorktreePurpose};
 use nexus_core::dispatch::{markers, RunKind, RunRecord};
+use nexus_core::questions::state::QuestionState;
 use nexus_core::questions::{ResearchInput, ResearchOptionInput};
 use nexus_core::tx;
 use nexus_server::dispatch::notifier::DispatchNoticeKind;
 use nexus_server::dispatch::research_runner::{ResearchOutcome, ResearchRunner, StartMode};
+use nexus_server::dispatch::ticket_starter::StartOutcome;
 use serde_json::json;
 
 use dispatch_support::DispatchFixture;
@@ -858,4 +862,298 @@ async fn automatik_repo_pfad_ohne_git_repo_gilt_als_umgebungsfehler_nicht_als_fe
         .expect("Zustand")
         .research
         .contains_key(&id));
+}
+
+/// Einstellung mit eingeschaltetem Autopilot; die Recherche-Automatik bleibt aus
+fn autopilot(research: serde_json::Value) -> serde_json::Value {
+    json!({
+        "enabled": false,
+        "autopilot": { "enabled": true },
+        "research": research,
+    })
+}
+
+/// Eine Recherche mit zwei Optionen; `recommended` nennt die empfohlenen (nach Titel)
+fn research_recommending(recommended: &[&str]) -> ResearchInput {
+    let option = |title: &str| ResearchOptionInput {
+        title: Some(title.into()),
+        text: Some(format!("immer {}", title.to_lowercase())),
+        recommended: Some(recommended.contains(&title)),
+        ..ResearchOptionInput::default()
+    };
+    ResearchInput {
+        context: Some("Fundstelle src/a.ts:1".into()),
+        options: Some(vec![option("Brutto"), option("Netto")]),
+    }
+}
+
+/// Speichert eine Recherche als Recherche-Agent der Frage
+async fn researched_as_agent(f: &DispatchFixture, id: &str, input: &ResearchInput) {
+    f.backend
+        .services
+        .questions
+        .add_research(id, input, &session(f, &format!("research-{id}")))
+        .await
+        .expect("Recherche speichern");
+}
+
+/// Kennung der Option mit diesem Titel in der neuesten Recherche
+async fn option_id(f: &DispatchFixture, id: &str, title: &str) -> String {
+    detail(f, id)
+        .await
+        .research
+        .last()
+        .expect("Recherche")
+        .options
+        .iter()
+        .find(|option| option.title == title)
+        .expect("Option")
+        .id
+        .clone()
+}
+
+#[tokio::test]
+async fn autopilot_frage_eines_agents_wird_recherchiert_und_mit_der_empfehlung_beantwortet() {
+    let f = DispatchFixture::create(autopilot(json!({ "wip": 2, "maxPerDay": 10 }))).await;
+    let ticket = f.ready("Rabatte", TicketPatch::default()).await;
+    let question = f.question(&ticket, "Brutto oder netto?").await;
+    assert!(matches!(
+        f.start(&ticket).await.expect("Start vor der Antwort"),
+        StartOutcome::Skipped(_)
+    ));
+
+    let runner = ResearchRunner::new(&f.ctx);
+    assert_eq!(
+        runner.start_autopilot().await.expect("Autopilot").started,
+        vec![question.clone()]
+    );
+    // Läuft schon: kein zweiter Start
+    assert!(runner
+        .start_autopilot()
+        .await
+        .expect("zweiter Durchlauf")
+        .started
+        .is_empty());
+    let record = run_of(&f, &question);
+    assert_eq!(record.run.profile, f.ctx.chooser().research().profile);
+
+    researched_as_agent(&f, &question, &research_recommending(&["Netto"])).await;
+    f.end(&question, dispatch_support::OK_OUTPUT, Some(0));
+    assert_eq!(
+        evaluate(&f, &record, None).await,
+        ResearchOutcome::Researched
+    );
+
+    let answered = detail(&f, &question).await.view.question;
+    assert_eq!(answered.state, QuestionState::Answered);
+    let decision = answered.decision.expect("Entscheidung");
+    assert_eq!(
+        decision.option,
+        Some(option_id(&f, &question, "Netto").await)
+    );
+    assert_eq!(
+        decision.reason,
+        "Autopilot: Empfehlung der Recherche übernommen"
+    );
+    assert!(is_autopilot_decision(&decision));
+    assert!(f.comments(&ticket).await.contains(&format!(
+        "Autopilot: Frage {question} mit „Netto“ entschieden"
+    )));
+    let state = f.ctx.stores.state.read().expect("Zustand");
+    assert!(!state.autopilot_research.contains_key(&question));
+
+    // Das Ticket ist wieder bereit, der nächste Arbeitslauf kennt die Antwort
+    let StartOutcome::Started(work) = f.start(&ticket).await.expect("Start nach der Antwort")
+    else {
+        panic!("Ticket startet nach der Antwort nicht");
+    };
+    assert!(work.prompt.contains(&question), "{}", work.prompt);
+    assert!(
+        work.prompt
+            .contains("Autopilot: Empfehlung der Recherche übernommen"),
+        "{}",
+        work.prompt
+    );
+}
+
+#[tokio::test]
+async fn autopilot_ohne_empfehlung_zweiter_versuch_mit_groesserem_profil_dann_blockiert() {
+    let f = DispatchFixture::create(autopilot(json!({ "wip": 2, "maxPerDay": 10 }))).await;
+    let ticket = f.ready("Rabatte", TicketPatch::default()).await;
+    let question = f.question(&ticket, "Brutto oder netto?").await;
+    let runner = ResearchRunner::new(&f.ctx);
+
+    // Versuch 1: Recherche ohne Empfehlung
+    runner.start_autopilot().await.expect("Versuch 1");
+    let first = run_of(&f, &question);
+    researched_as_agent(&f, &question, &research_recommending(&[])).await;
+    f.end(&question, dispatch_support::OK_OUTPUT, Some(0));
+    assert_eq!(
+        evaluate(&f, &first, None).await,
+        ResearchOutcome::Researched
+    );
+    assert_eq!(
+        detail(&f, &question).await.view.question.state,
+        QuestionState::Open
+    );
+    assert_eq!(
+        f.ctx
+            .stores
+            .state
+            .read()
+            .expect("Zustand")
+            .autopilot_research[&question],
+        1
+    );
+    assert_eq!(f.ticket(&ticket).await.status, TicketStatus::Planned);
+
+    // Versuch 2: nächste Stufe der Leiter, Lauf ohne Recherche (später, damit die Recherche
+    // von Versuch 1 nicht als seine zählt)
+    f.advance(10);
+    assert_eq!(
+        runner.start_autopilot().await.expect("Versuch 2").started,
+        vec![question.clone()]
+    );
+    let second = run_of(&f, &question);
+    assert_eq!(
+        second.run.profile,
+        f.ctx.chooser().research_attempt(2).profile
+    );
+    assert_ne!(second.run.profile, first.run.profile);
+    f.end(&question, dispatch_support::OK_OUTPUT, Some(0));
+    assert_eq!(evaluate(&f, &second, None).await, ResearchOutcome::Empty);
+
+    let blocked = f.ticket(&ticket).await;
+    let reason = format!("Autopilot: keine Empfehlung zu {question}");
+    assert_eq!(blocked.status, TicketStatus::Blocked);
+    assert_eq!(blocked.blocked_reason.as_deref(), Some(reason.as_str()));
+    let notice = f.notices.last().expect("Meldung");
+    assert_eq!(notice.kind, DispatchNoticeKind::Stuck);
+    assert_eq!(notice.ticket_id.as_deref(), Some(ticket.as_str()));
+    assert_eq!(
+        notice.text,
+        format!("Autopilot steckt fest: {ticket} – {reason}")
+    );
+    assert_eq!(
+        detail(&f, &question).await.view.question.state,
+        QuestionState::Open
+    );
+    // Kein dritter Versuch
+    assert!(runner
+        .start_autopilot()
+        .await
+        .expect("danach")
+        .started
+        .is_empty());
+}
+
+#[tokio::test]
+async fn fragen_von_menschen_interaktiven_sessions_und_ausnahme_tickets_bleiben_offen() {
+    let f = DispatchFixture::create(autopilot(json!({ "wip": 5, "maxPerDay": 10 }))).await;
+    let ticket = f.ready("Rabatte", TicketPatch::default()).await;
+    let except = f
+        .ready(
+            "Interaktiv",
+            TicketPatch {
+                labels: Some(vec!["auto".into(), "interaktiv".into()]),
+                ..TicketPatch::default()
+            },
+        )
+        .await;
+    let linked = std::slice::from_ref(&ticket);
+    let by_human = ask_in(&f, "ARC", "Vom Menschen", &human(&f), linked).await;
+    ask_in(
+        &f,
+        "ARC",
+        "Aus einer Claude-Session",
+        &session(&f, "claude"),
+        linked,
+    )
+    .await;
+    f.question(&except, "Zum Ausnahme-Ticket").await;
+
+    let runner = ResearchRunner::new(&f.ctx);
+    assert!(runner
+        .start_autopilot()
+        .await
+        .expect("Autopilot")
+        .started
+        .is_empty());
+
+    // Auch eine Recherche mit Empfehlung entscheidet die Frage eines Menschen nicht
+    runner
+        .start(&by_human, StartMode::Manual)
+        .await
+        .expect("von Hand");
+    let record = run_of(&f, &by_human);
+    researched_as_agent(&f, &by_human, &research_recommending(&["Netto"])).await;
+    f.end(&by_human, dispatch_support::OK_OUTPUT, Some(0));
+    assert_eq!(
+        evaluate(&f, &record, None).await,
+        ResearchOutcome::Researched
+    );
+    assert_eq!(
+        detail(&f, &by_human).await.view.question.state,
+        QuestionState::Open
+    );
+}
+
+#[tokio::test]
+async fn autopilot_frage_startet_trotz_tageslimit_aber_nur_im_wip_und_nur_mit_autopilot() {
+    let f = DispatchFixture::create(json!({
+        "autopilot": { "enabled": true },
+        "research": { "auto": false, "wip": 1, "maxPerDay": 1 },
+    }))
+    .await;
+    let today = ResearchRunner::day(f.ctx.now());
+    f.ctx
+        .stores
+        .state
+        .update(move |state| {
+            state.research_auto.day = Some(today);
+            state.research_auto.count = 1;
+        })
+        .await
+        .expect("Tageslimit erreicht");
+    let ticket = f.ready("Rabatte", TicketPatch::default()).await;
+    let question = f.question(&ticket, "Brutto oder netto?").await;
+
+    // Ohne Autopilot bleibt alles wie heute
+    let mut off = f.context_with_active_board(Some(f.board.id));
+    off.cfg.autopilot.enabled = false;
+    assert!(ResearchRunner::new(&off)
+        .start_autopilot()
+        .await
+        .expect("aus")
+        .started
+        .is_empty());
+
+    // Der Durchlauf startet sie trotz research.auto aus und erreichtem Tageslimit
+    let report = f.tick().await;
+    assert_eq!(
+        report.research,
+        vec![question.clone()],
+        "{:?}",
+        report.errors
+    );
+    assert_eq!(
+        f.ctx
+            .stores
+            .state
+            .read()
+            .expect("Zustand")
+            .research_auto
+            .count,
+        1
+    );
+
+    // research.wip gilt weiter
+    let other = f.ready("Lieferung", TicketPatch::default()).await;
+    f.question(&other, "Spedition?").await;
+    assert!(ResearchRunner::new(&f.ctx)
+        .start_autopilot()
+        .await
+        .expect("voll")
+        .started
+        .is_empty());
 }

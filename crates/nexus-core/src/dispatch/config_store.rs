@@ -124,9 +124,9 @@ mod tests {
     fn work_template() -> String {
         [
             "{{agent}} setzt {{ticketId}} („{{title}}“) um.",
-            "Fertig: harness board done {{ticketId}} --by {{agent}}",
-            "Blockiert: harness board set {{ticketId}} --status blocked",
-            "Frage: harness board question add \"…\" --ticket {{ticketId}}",
+            "Fertig: nexus board done {{ticketId}} --by {{agent}}",
+            "Blockiert: nexus board set {{ticketId}} --status blocked",
+            "Frage: nexus board question add \"…\" --ticket {{ticketId}}",
         ]
         .join("\n")
     }
@@ -182,7 +182,7 @@ mod tests {
             .unwrap();
         assert_eq!(saved.prompts.work.as_deref(), Some(template.as_str()));
         let text = fs::read_to_string(dir.path().join("dispatch.yaml")).unwrap();
-        assert!(text.contains("harness board done"), "{text}");
+        assert!(text.contains("nexus board done"), "{text}");
         let read = store.read().unwrap();
         assert_eq!(read.config.prompts.work.as_deref(), Some(template.as_str()));
         assert_eq!(read.prompt_problems, vec![]);

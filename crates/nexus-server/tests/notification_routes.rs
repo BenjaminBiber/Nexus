@@ -120,7 +120,7 @@ async fn der_push_test_schickt_die_beispielmeldung_an_den_eingetragenen_server()
     );
     assert!(request.contains("\"topic\":\"harness-test\""), "{request}");
     assert!(
-        request.contains("Beispielprojekt · ARC-0042 Favoriten\\nTestmeldung des Harness"),
+        request.contains("Beispielprojekt · ARC-0042 Favoriten\\nTestmeldung von Nexus"),
         "{request}"
     );
     // Ein Link auf den eigenen Rechner öffnet auf dem Handy nichts und fehlt deshalb

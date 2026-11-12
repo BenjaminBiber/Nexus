@@ -39,10 +39,19 @@ pub struct MergeEntry {
     pub phase: MergePhase,
     /// true, sobald für diesen Merge-Versuch eine Merge-Session gestartet wurde
     pub session_used: bool,
+    /// Merge-Sessions für den aktuellen Stand des Zielbranches; ältere Dateien kennen nur
+    /// `session_used` und laden mit 1, wenn es gesetzt ist
+    #[serde(default)]
+    pub sessions: u8,
     /// „Merge wartet auf …“ wurde schon kommentiert
     pub wait_noted: bool,
     /// Ziel-Branch der Merge-Session
     pub target: Option<String>,
+    /// Commit des Ziel-Branches beim Start der Merge-Session; gegen ihn wird die Session
+    /// ausgewertet, denn das Ziel darf währenddessen weiterlaufen (andere Tickets werden gemergt)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub target_head: Option<String>,
     /// Der letzte Merge-Versuch hatte einen Konflikt, die Merge-Session durfte aber nicht starten
     /// (aus, Pause, außerhalb); bis sie starten darf, wird nicht erneut gemergt. „Erneut mergen“
     /// setzt den Merker zurück.
@@ -135,6 +144,11 @@ pub struct DispatchState {
     #[ts(type = "Record<string, ResearchEntry>")]
     pub research: IndexMap<String, ResearchEntry>,
     pub research_auto: ResearchAutoState,
+    /// Recherchen des Autopilots ohne Empfehlung je Frage (Frage-ID → Zahl der Versuche); leer
+    /// nicht geschrieben, damit state.json ohne Autopilot wie bisher aussieht
+    #[serde(skip_serializing_if = "IndexMap::is_empty")]
+    #[ts(type = "Record<string, number>", optional)]
+    pub autopilot_research: IndexMap<String, u32>,
     #[ts(type = "Record<string, PlanningEntry>")]
     pub planning: IndexMap<String, PlanningEntry>,
     pub planning_auto: PlanningAutoState,
@@ -182,7 +196,16 @@ impl DispatchStateStore {
         };
         match serde_json::from_str::<Option<DispatchState>>(&text) {
             // `null` in der Datei zählt wie eine leere Datei (wie `raw?.…` in TypeScript)
-            Ok(state) => Ok(state.unwrap_or_default()),
+            Ok(state) => {
+                let mut state = state.unwrap_or_default();
+                // Ältere Dateien ohne Zähler: eine benutzte Merge-Session zählt als eine
+                for entry in state.merges.values_mut() {
+                    if entry.session_used && entry.sessions == 0 {
+                        entry.sessions = 1;
+                    }
+                }
+                Ok(state)
+            }
             Err(_) => {
                 let stamp = self.clock.iso().replace([':', '.'], "-");
                 let mut aside = file.clone().into_os_string();

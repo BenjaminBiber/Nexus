@@ -1,0 +1,52 @@
+{
+  "title": "Kopplung: Einmal-Code nur bei laufendem Bot, Chat wieder entkoppeln",
+  "fixtures": {
+    "homeFiles": {
+      "telegram.yaml": "enabled: false\nbotToken: \"123456:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw\"\napiBase: https://api.telegram.org\nchats: [4242]\n"
+    }
+  },
+  "steps": [
+    { "name": "Code ohne laufenden Bot", "method": "POST", "path": "/api/telegram/pair", "body": {} },
+
+    {
+      "name": "Attrappe der Bot-API starten",
+      "kind": "httpStub",
+      "stub": "TELEGRAM",
+      "body": { "ok": true, "result": true },
+      "routes": {
+        "getMe": { "body": { "ok": true, "result": { "id": 7012345678, "username": "nexus_vertrag_bot", "first_name": "Nexus" } } },
+        "getUpdates": { "body": { "ok": true, "result": [] }, "delayMs": 1000 }
+      },
+      "save": { "tgUrl": "json.url" }
+    },
+    {
+      "name": "Bot auf die Attrappe einschalten",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "enabled": true, "apiBase": "{{tgUrl}}" }
+    },
+    { "name": "warten, bis der Bot sich angemeldet hat", "kind": "httpStub", "action": "await", "stub": "TELEGRAM", "call": "getUpdates" },
+
+    {
+      "name": "Einmal-Code ausgeben",
+      "method": "POST",
+      "path": "/api/telegram/pair",
+      "body": {},
+      "ignore": ["json.code", "json.link"]
+    },
+    { "name": "Stand mit offenem Code", "method": "GET", "path": "/api/telegram/status" },
+
+    { "name": "gekoppelten Chat entkoppeln", "method": "DELETE", "path": "/api/telegram/chats/4242" },
+    { "name": "denselben Chat erneut entkoppeln", "method": "DELETE", "path": "/api/telegram/chats/4242" },
+    { "name": "Chat-ID, die keine Zahl ist", "method": "DELETE", "path": "/api/telegram/chats/abc" },
+    { "name": "unbekannte Chat-ID", "method": "DELETE", "path": "/api/telegram/chats/-1001234567890" },
+    { "name": "Stand ohne gekoppelte Chats", "method": "GET", "path": "/api/telegram/status" },
+
+    {
+      "name": "Bot wieder abschalten",
+      "method": "PUT",
+      "path": "/api/telegram/config",
+      "body": { "enabled": false }
+    }
+  ]
+}

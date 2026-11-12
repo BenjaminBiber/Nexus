@@ -2,6 +2,8 @@
 
 Lokale Werkbank für mehrere Claude-Code-Sessions gleichzeitig (früher „AI Harness“): Kanban-Board mit Tickets, Fragen und Notizen, Übersicht der Sessions, konfliktfreie Parallelarbeit mit Branches und Worktrees, ein Dispatcher, der geplante Tickets selbst umsetzen lässt, und Favoriten zum Fortsetzen von Sessions. Tickets, Fragen und Boards liegen in einer Board-Datenbank: gemeinsam im Team auf SQL Server oder als lokale SQLite-Datei für einen einzelnen Rechner.
 
+![Board-Ansicht von Nexus mit Tickets in den Spalten Backlog, Wartet, In Planung, Geplant, In Arbeit und Blockiert](assets/screenshots/board.png)
+
 Bestandteile:
 
 - CLI `nexus` (Alias `harness`, alte Befehle laufen weiter)
@@ -9,7 +11,7 @@ Bestandteile:
 - Desktop-App (Tauri), die Server und Oberfläche in einem Fenster startet
 - Claude-Code-Plugin `nexus` (Hooks, Skills, Output-Style, Doku- und Board-Regel)
 
-Inhalt: [Einrichten](#einrichten-einmal-pro-rechner) · [Aktualisieren](#aktualisieren) · [Umstieg vom AI Harness](#umstieg-vom-ai-harness) · [Verwenden](#verwenden) · [Board-Datenbank](#board-datenbank) · [Dispatcher](#dispatcher-tickets-automatisch-umsetzen-lassen) · [Anpassen](#anpassen) · [Daten und Einstellungen](#daten-und-einstellungen) · [Fehlersuche](#fehlersuche) · [Entwicklung](#entwicklung-an-nexus)
+Inhalt: [Einrichten](#einrichten-einmal-pro-rechner) · [Aktualisieren](#aktualisieren) · [Umstieg vom AI Harness](#umstieg-vom-ai-harness) · [Verwenden](#verwenden) · [Board-Datenbank](#board-datenbank) · [Dispatcher](#dispatcher-tickets-automatisch-umsetzen-lassen) · [Telegram-Bot](#telegram-bot) · [Anpassen](#anpassen) · [Daten und Einstellungen](#daten-und-einstellungen) · [Fehlersuche](#fehlersuche) · [Entwicklung](#entwicklung-an-nexus)
 
 ## Einrichten (einmal pro Rechner)
 
@@ -78,6 +80,20 @@ Danach `/reload-plugins` eingeben oder Claude Code neu starten.
 Jedes Repo gehört zu einem Board: einmal `nexus board boards repo <id> <pfad>` (Pfad = Hauptordner des Repos; `nexus board boards list` zeigt die Boards) oder „Mein Repo-Pfad“ in der Verwaltung. Der Repo-Pfad ist je Person lokal (`~/.nexus/board-repos.yaml`), nicht in der gemeinsamen Datenbank. Im eingerichteten Repo arbeiten `nexus board list`, `create` und `note` ohne `--board` auf diesem Board, sonst auf dem aktiven Board aus `~/.nexus/board.yaml`. `nexus board start` und `done` nehmen nur Tickets des Boards an, das dem Repo zugeordnet ist.
 
 Die Oberfläche hat in der Seitenleiste u. a. **Board**, **Meine Aufgaben** (alles, was gerade auf dich wartet: gescheiterte Merges, eigene Fragen, Abnahmen, Tickets in Planung, Notizen), **Dashboard** (Durchsatz, Erfolgsquote, Durchlaufzeiten und Kosten des Dispatchers), **Fragen**, **Docs**, **Sessions** und **Anleitung**; **Suchen** bzw. Strg+K (Cmd+K) durchsucht alle Boards und Projekte.
+
+Ein Klick auf eine Karte öffnet das Ticket mit Status, Zuständigem, Schritten, Plan und Kommentaren:
+
+![Ticketdetails mit Fortschritt, Abhängigkeiten und geöffnetem Tab „Plan“](assets/screenshots/ticket.png)
+
+**Meine Aufgaben** sammelt, was auf dich wartet: offene Fragen, blockierte Tickets, Tickets in Planung und Notizen, aus denen du ein Ticket machen kannst:
+
+![Meine Aufgaben mit einer offenen Frage, einem blockierten Ticket, einem Ticket in Planung und zwei Notizen](assets/screenshots/aufgaben.png)
+
+Offene Fragen entscheidest du auf ihrer eigenen Seite, mit Beschreibung, Varianten und Empfehlung:
+
+![Seite einer offenen Frage mit Beschreibung, Varianten und Empfehlung](assets/screenshots/frage.png)
+
+Die Bilder zeigen erfundene Demodaten; wie sie entstehen, steht unter [Lokal testen](#lokal-testen).
 
 **Ablauf:** Der Workflow von der Anforderung bis zum fertigen Ticket steht im Board im Tab **Anleitung**, mit allen Befehlen zum Kopieren. Zusätzlich gibt ihn ein Hook zu Beginn jeder Session an Claude: Claude kennt damit den Ablauf und den Stand der Tickets, schlägt nach jedem Schritt den nächsten vor und führt dich so durch den Workflow. Beides folgt deinem angepassten Workflow, falls es einen gibt (siehe [Anpassen](#anpassen)).
 
@@ -174,9 +190,71 @@ Unter **Einstellungen → Dispatcher → Recherchen** lässt sich einschalten, d
 
 **Planungs-Automatik:** Unter **Einstellungen → Dispatcher → Planungen** lässt sich einschalten, dass Tickets mit Planungsbedarf auf eigenen Boards selbst geplant werden – nur solange im WIP der Tickets ein Platz frei ist, je Ticket einmal, ohne Tickets mit offener Frage. Mit `acceptance: true` füllt die Planung auch die Abnahme. Profil ohne Wahl `planning`, falls vorhanden, sonst das Standardprofil. In `dispatch.yaml`: `planning: { auto: true, wip: 1, acceptance: true, profile: schwer }`.
 
-**Mehrere Claude-Accounts:** Unter **Einstellungen → Accounts** fügt „Mit Claude anmelden“ einen weiteren Account hinzu: Nexus legt dafür einen eigenen Konfigurationsordner unter `~/.nexus/accounts/<id>` an, startet dort `claude auth login` und öffnet die Anmeldeseite im Browser. Den Code, den Claude nach der Anmeldung zeigt, fügst du auf der Seite ein; danach heißt der Account (ohne eigenen Namen) wie seine E-Mail, und das Nexus-Plugin wird im Ordner eingerichtet. Einen vorhandenen Ordner (z. B. ein MCACC-Profil) übernimmt „Erweitert: vorhandenen Ordner übernehmen“. Der Account „Standard“ ist die Anmeldung des Servers. Je Account zeigt die Seite Anmeldung, Plugin, Limits (5 Stunden und Woche) und eine laufende Pause; „Neu anmelden“ erneuert eine abgelaufene Anmeldung. Im Dispatcher legt die Spalte „Accounts“ der Profile fest, welche Accounts ein Profil nutzen darf (z. B. `schwer` → `max`); ein Profil ohne Accounts darf jeden aktiven Account verwenden. Eine Regel mit Accounts überschreibt die des Profils, ein Label `account:<id>` am Ticket beide; bei der Eskalation bringt das größere Profil seine eigenen mit. Unter den erlaubten wählt der Dispatcher den Account mit der meisten freien Kapazität (oder den ersten freien, `accountStrategy: order`); ab `accountLimitPercent` (Vorgabe 90) gilt ein Account als voll. Ein Account mit dem Schalter „Nur als Fallback“ kommt erst zum Zug, wenn kein anderer erlaubter Account frei ist. Je Account lassen sich eigene Obergrenzen für das 5-Stunden-Fenster und die Woche setzen (in Prozent); darüber nimmt der Dispatcher den Account nicht mehr, leer gilt `accountLimitPercent`. Hat ein Account eine eigene Obergrenze, liest der Dispatcher seine Limits auch dann, wenn nur er aktiv ist. Ist keiner frei, wartet das Ticket in Geplant, ohne Versuch. Jeder Lauf startet mit `CLAUDE_CONFIG_DIR` des gewählten Accounts; Start-Kommentar und Dispatcher-Dialog nennen ihn. Mit nur einem aktiven Account fragt der Dispatcher keine Limits ab und arbeitet wie bisher. Hinweis: Mehrere Abo-Accounts, um die Limits eines einzelnen Abos zu umgehen, können gegen die Nutzungsbedingungen von Anthropic verstoßen.
+**Mehrere Claude-Accounts:** Unter **Einstellungen → Accounts** fügt „Mit Claude anmelden“ einen weiteren Account hinzu: Nexus legt dafür einen eigenen Konfigurationsordner unter `~/.nexus/accounts/<id>` an, startet dort `claude auth login` und öffnet die Anmeldeseite im Browser. Den Code, den Claude nach der Anmeldung zeigt, fügst du auf der Seite ein; danach heißt der Account (ohne eigenen Namen) wie seine E-Mail, und das Nexus-Plugin wird im Ordner eingerichtet. Einen vorhandenen Ordner (z. B. ein MCACC-Profil) übernimmt „Erweitert: vorhandenen Ordner übernehmen“. Der Account „Standard“ ist die Anmeldung des Servers. Je Account zeigt die Seite Anmeldung, Plugin, Limits (5 Stunden und Woche) und eine laufende Pause; „Neu anmelden“ erneuert eine abgelaufene Anmeldung. Im Dispatcher legt die Spalte „Accounts“ der Profile fest, welche Accounts ein Profil nutzen darf (z. B. `schwer` → `max`); ein Profil ohne Accounts darf jeden aktiven Account verwenden. Eine Regel mit Accounts überschreibt die des Profils, ein Label `account:<id>` am Ticket beide; bei der Eskalation bringt das größere Profil seine eigenen mit. Unter den erlaubten wählt der Dispatcher den Account mit der meisten freien Kapazität (oder den ersten freien, `accountStrategy: order`); ab `accountLimitPercent` (Vorgabe 90) gilt ein Account als voll. Ein Account mit dem Schalter „Nur als Fallback“ kommt erst zum Zug, wenn kein anderer erlaubter Account frei ist. Je Account lassen sich eigene Obergrenzen für das 5-Stunden-Fenster und die Woche setzen (in Prozent); darüber nimmt der Dispatcher den Account nicht mehr, leer gilt `accountLimitPercent`. Beim Start rechnet der Dispatcher den erwarteten Verbrauch des Laufs (aus vergangenen Läufen mit gleichem Profil, Modell und Effort geschätzt, sonst der Puffer `accountReserveFiveHour`/`accountReserveWeek`) und die noch ausstehende Reserve der Läufe, die auf dem Account laufen, zur Auslastung hinzu; passt die Summe nicht unter die Obergrenze, gilt der Account als „knapp“ und das Ticket wartet. Setzt sich das 5-Stunden-Fenster innerhalb von `accountResetGraceMinutes` zurück, zählt die Reserve dafür nicht. Hat ein Account eine eigene Obergrenze, liest der Dispatcher seine Limits auch dann, wenn nur er aktiv ist. Ist keiner frei, wartet das Ticket in Geplant, ohne Versuch. Jeder Lauf startet mit `CLAUDE_CONFIG_DIR` des gewählten Accounts; Start-Kommentar und Dispatcher-Dialog nennen ihn. Mit nur einem aktiven Account fragt der Dispatcher keine Limits ab und arbeitet wie bisher. Hinweis: Mehrere Abo-Accounts, um die Limits eines einzelnen Abos zu umgehen, können gegen die Nutzungsbedingungen von Anthropic verstoßen.
 
 Lauf-, Pause- und Merge-Zustand liegen unter `~/.nexus/dispatch/`, Protokolle unter `~/.nexus/dispatch-logs/`; ausgewertete Läufe landen zusätzlich in der Board-Datenbank (Dashboard). Die Worker laufen losgelöst weiter, wenn der Server neu startet. Erlaubte Werkzeuge stehen in der Einstellung „Erlaubte Tools“; braucht ein Projekt z. B. `dotnet test`, gehört `Bash(dotnet test:*)` dazu. Arbeitet derselbe Nutzer auf mehreren Rechnern, den Dispatcher nur auf einem davon einschalten – sonst übernehmen beide Rechner Tickets derselben Boards.
+
+### Telegram-Bot
+
+Nexus lässt sich per Telegram vom Handy aus bedienen: Status und Board abfragen, Freigaben und Fragen per Knopf entscheiden, Ideen per Sprachnachricht als Notiz, Ticket oder Kommentar anlegen. Der Bot läuft im Server selbst (auch in der Desktop-App) und holt seine Nachrichten per Long Polling ab – kein offener Port, kein eigenes Zertifikat nötig.
+
+**Einrichten:**
+
+1. Bei [@BotFather](https://t.me/BotFather) in Telegram mit `/newbot` einen Bot anlegen und das Token kopieren.
+2. **Einstellungen → Telegram** → Bereich „Bot“: Schalter „Telegram-Bot“ einschalten, Token eintragen, speichern (die „Adresse der Bot-API“ ist nur für einen selbst betriebenen `telegram-bot-api`-Server gedacht).
+3. Bereich „Kopplung“ → „Koppeln“ zeigt einen Einmal-Code (6 Zeichen, 10 Minuten gültig) und einen Link `https://t.me/<bot>?start=<code>`. Link öffnen oder `/start <code>` im Chat mit dem Bot schicken koppelt den Chat (nur private Chats, keine Gruppen); mehrere Chats derselben Person (z. B. Handy und Tablet) sind möglich, „Entkoppeln“ nimmt einen wieder heraus.
+
+**Befehle:**
+
+| Befehl | Wirkung |
+|---|---|
+| `/status` | Dispatcher, Läufe, Accounts und Aufgaben |
+| `/board [name\|id]` | Spalten des Boards; mit Name oder ID ein anderes |
+| `/ticket <ID>` | Kurzansicht eines Tickets (`/ticket NXS-0042`) |
+| `/aufgaben` | was gerade auf dich wartet |
+| `/idee <Text>` | Idee erfassen (`/idee Der Cache läuft nie ab`) |
+| `/pause [min]` | Dispatcher pausieren (`/pause 30`, Vorgabe 60 min) |
+| `/weiter` | Dispatcher fortsetzen |
+| `/abbrechen` | einen offenen Dialog beenden |
+| `/hilfe` | diese Liste (auch im Telegram-Menü über die Befehlsliste des Bots) |
+
+**Freigaben per Knopf:** Meldungen zu Review, gescheitertem Merge, Blockiert und Fragen kommen mit Knöpfen. Kritische Aktionen (Übernehmen, Mergen, eine Frage entscheiden) verlangen einen zweiten Klick auf eine Sicherheitsfrage (z. B. „NXS-0042 wirklich mergen?“ mit „Ja, mergen“/„Abbrechen“); passt der Zustand beim Klick nicht mehr zum Knopf (z. B. schon gemergt), ändert sich nichts und der Bot sagt, woran es liegt. Rückmeldung an den Agenten, Kommentare, Freitext-Entscheidungen und Begründungen beim Verwerfen lassen sich per Text oder Sprachnachricht beantworten (ein offener Dialog je Chat, läuft nach 15 Minuten ab). Aktionen über Telegram tragen in Kommentaren und Verlauf den Zusatz „(über Telegram)“.
+
+**Meldungen und Nachtruhe:** Unter **Einstellungen → Telegram** → Bereich „Meldungen“ lässt sich je Anlass ein-/ausschalten, ob der Bot von sich aus schreibt (Review, Blockiert, Frage, Merge gescheitert: an; Gemergt, Pause: aus). Eine „Nachtruhe“ (Vorgabe 22:00–07:00 Uhr, Zeiten einstellbar) unterdrückt Meldungen in diesem Fenster (Ortszeit des Servers); wer in der Zeit doch etwas erledigen will, nutzt die Oberfläche.
+
+**Ideen per Sprache:** Eine Sprachnachricht, eine Audiodatei, `/idee <Text>` oder freier Text ohne offenen Dialog startet eine Idee. Der Bot transkribiert (nur bei Audio), sammelt Kontext aus den eigenen Boards (offene Tickets, Notizen, Fragen, ähnliche Notizen) und lässt Claude (`claude -p`, ohne Werkzeuge) daraus einen **Ideen-Entwurf** machen: Zusammenfassung, Ziel (Notiz, Ticket oder Kommentar an ein Ticket), Titel, Details, Bezüge zu vorhandenen Tickets, mögliche Dubletten, ggf. Rückfragen. Der Bot schickt diesen Entwurf zur Bestätigung mit den Knöpfen **Anlegen**, **Als Notiz**/**Als Ticket**, **Anderes Board**, **Korrigieren**, **Verwerfen**. Offene Rückfragen oder „Korrigieren“ beantwortet man einfach mit der nächsten Text- oder Sprachnachricht; nach höchstens 5 Korrekturrunden (einstellbar, 1–10) bleiben nur noch Anlegen/Verwerfen. Erst **Anlegen** erzeugt etwas im Board: eine Notiz (Vorgabe), ein Ticket im Backlog mit Kommentar „Aus Telegram-Sprachnotiz“, oder – wenn Claude das vorschlägt – einen Kommentar am genannten Ticket.
+
+**Bot-Profil:** Nexus richtet von sich aus Profilbild (Nexus-Logo), Namen „Nexus“, Kurzbeschreibung, Beschreibung und Befehlsliste des Bots ein – über @BotFather ist dafür nichts nötig. Abschaltbar unter **Einstellungen → Telegram** → „Profil des Bots von Nexus einrichten“ (dann bleibt, was in @BotFather eingetragen ist); „Profil neu setzen“ erzwingt das erneute Einrichten auch ohne Änderung.
+
+**Spracherkennung:** Unter **Einstellungen → Spracherkennung** lässt sich ein Dienst mit der Schnittstelle von OpenAI für die Transkription einstellen (Adresse, Schlüssel, Modell, Sprache), mit Vorlagen:
+
+| Vorlage | Adresse | Modell | Hinweis |
+|---|---|---|---|
+| OpenAI | `https://api.openai.com` | `gpt-4o-mini-transcribe` | Schlüssel nötig; Aufnahmen gehen zu OpenAI |
+| Speaches | `http://localhost:8000` | `Systran/faster-whisper-small` | selbst gehostet per Docker, kein Schlüssel |
+| whisper.cpp-Server | `http://localhost:8080` | `whisper-1` | Server mit `--inference-path /v1/audio/transcriptions --convert` starten; das Modell wählt er selbst |
+| LocalAI | `http://localhost:8080` | `whisper-1` | selbst gehostet, Schlüssel optional |
+
+„Eigene“ nimmt jede andere Adresse mit derselben Schnittstelle (z. B. Groq oder ein Rechner im Heimnetz). „Testen“ schickt eine mitgelieferte kurze Aufnahme an den Dienst und zeigt Text, Dienst und Dauer.
+
+Speaches per Docker starten (CPU; für GPU `--gpus=all` und das Abbild `:latest-cuda`):
+
+```sh
+docker run --publish 8000:8000 \
+  --volume hf-hub-cache:/home/ubuntu/.cache/huggingface/hub \
+  --env WHISPER__MODEL=Systran/faster-whisper-small \
+  --detach ghcr.io/speaches-ai/speaches:latest-cpu
+```
+
+whisper.cpp als Server mit der Schnittstelle von OpenAI (Bau und weitere Optionen in dessen eigener Dokumentation):
+
+```sh
+./server -m models/ggml-small.bin --inference-path /v1/audio/transcriptions --convert --port 8080
+```
+
+**Datenschutz:** Bei der Vorlage OpenAI verlassen die Aufnahmen den eigenen Rechner und gehen zu OpenAI; bei selbst gehosteten Diensten (Speaches, whisper.cpp-Server, LocalAI, eigene Adresse) bleiben sie im eigenen Netz (Telegram selbst sieht die Sprachnachricht trotzdem). Nexus speichert Aufnahmen nicht dauerhaft, nur das Transkript landet im Chatverlauf und ggf. im angelegten Eintrag. Bot-Token und Schlüssel liegen nur lokal in `~/.nexus/telegram.yaml` (Dateirechte `0600`) und erscheinen in der Oberfläche und in Fehlermeldungen nie im Klartext.
+
+**Nur ein Rechner:** Wie beim Dispatcher darf der Bot (Long Polling) nur auf einem Rechner laufen. Pollen zwei Server mit demselben Token, meldet Telegram `409 Conflict`; der Bot zeigt dann „Bot läuft auf einem anderen Rechner“ und versucht es nur noch alle 5 Minuten.
 
 ## Anpassen
 
@@ -210,6 +288,7 @@ Ungültige Anpassungen fallen mit Warnung auf den Standard zurück; die Ausgabe 
 | Anbieter und Verbindung der Board-Datenbank, eigene Benutzer-ID, aktives Board | `~/.nexus/board.yaml` |
 | Einstellung des Dispatchers | `~/.nexus/dispatch.yaml` |
 | Claude-Accounts des Dispatchers | `~/.nexus/accounts.json`, Ordner neuer Accounts unter `~/.nexus/accounts/` |
+| Einstellung des Telegram-Bots und der Spracherkennung (Token, Schlüssel, gekoppelte Chats) | `~/.nexus/telegram.yaml` (Dateirechte `0600`) |
 | Läufe, Pause, Reviews und Merges des Dispatchers, Protokolle | `~/.nexus/dispatch/`, `~/.nexus/dispatch-logs/` |
 | Reihenfolge in „Meine Aufgaben“ | `~/.nexus/inbox-order.json` |
 | Programm und Aufrufe | `~/.nexus/app/`, `~/.nexus/bin/` |
@@ -297,6 +376,15 @@ cargo run -q -p nexus-cli -- board list
 Statt `cargo run …` geht nach dem Bauen auch direkt `target/debug/nexus …`. Nur den Server ohne Vite (gebaute Oberfläche, eigener Port): `cargo run -q -p nexus-cli -- serve --port 4800 --web-dir packages/web/dist`, dann http://127.0.0.1:4800.
 
 Zum Aufräumen genügt es, den Ordner aus `NEXUS_HOME` zu löschen und die Variable zu entfernen.
+
+**Screenshots neu erzeugen:** Die Bilder unter `assets/screenshots/` entstehen mit erfundenen Demodaten aus `scripts/screenshots/capture.mjs`. Das Skript legt ein eigenes `NEXUS_HOME` mit SQLite-Board an, startet einen Server auf einem freien Port und räumt am Ende alles wieder auf; dein Board unter `~/.nexus` und ein laufender Server auf Port 4710 bleiben unberührt. Nach `npm run build` und `cargo build -p nexus-cli --bin nexus`:
+
+```sh
+npm i --no-save playwright && npx playwright install chromium   # Playwright steht nicht in der package.json
+node scripts/screenshots/capture.mjs
+```
+
+Danach jedes Bild ansehen, bevor es committet wird. Ein anderes Binary lässt sich mit `NEXUS_BIN=<pfad>` angeben. Die Vorschaubilder der Themes (`themes/<id>/assets/preview.png`) entstehen genauso mit `node scripts/screenshots/theme-previews.mjs` (vorher `npm run build:themes`, siehe [themes/README.md](themes/README.md#vorschaubild)).
 
 **3. Plugin und Hooks in Claude Code testen**, ohne `nexus install`:
 

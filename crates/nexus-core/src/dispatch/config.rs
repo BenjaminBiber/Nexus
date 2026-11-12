@@ -11,6 +11,7 @@ use ts_rs::TS;
 use crate::board::DispatchProfileReason;
 use crate::dispatch::markers;
 use crate::dispatch::prompt_check::PromptKind;
+use crate::dispatch::state::UsageSnapshot;
 
 pub use crate::dispatch::merge_strategy::MergeStrategy;
 
@@ -183,6 +184,10 @@ pub struct RunSettings {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub account_why: Option<String>,
+    /// Auslastung des gewählten Accounts beim Start; fehlt bei Läufen älterer Stände
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub usage_at_start: Option<UsageSnapshot>,
 }
 
 /// Recherche-Läufe zu offenen Fragen
@@ -215,6 +220,19 @@ pub struct PlanningSettings {
     pub acceptance: bool,
     /// Profil der Planung; null = Profil „planning“, falls vorhanden, sonst defaultProfile
     pub profile: Option<String>,
+}
+
+/// Autopilot des Dispatchers (`autopilot_for` entscheidet je Ticket)
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "dispatch.ts")]
+pub struct AutopilotSettings {
+    /// true = keine Freigaben, Fragen entscheidet die Recherche, Merge-Konflikte löst Claude
+    pub enabled: bool,
+    /// Tickets mit diesem Label laufen ohne Autopilot; null = keine Ausnahme
+    pub except_label: Option<String>,
+    /// Höchstens so viele Merge-Sessions je Konflikt (1–5)
+    pub max_merge_sessions: i64,
 }
 
 /// Erlaubte Werte von mergeStrategy
@@ -353,10 +371,21 @@ pub struct DispatchConfig {
     pub allow_fable: bool,
     pub research: ResearchSettings,
     pub planning: PlanningSettings,
+    /// Autopilot: keine Freigaben, Fragen entscheidet die Recherche, Merge-Konflikte mehrfach
+    /// per Session
+    pub autopilot: AutopilotSettings,
     /// Wahl unter mehreren erlaubten Accounts
     pub account_strategy: AccountStrategy,
     /// Ab dieser Auslastung in Prozent (5 Stunden oder Woche) gilt ein Account als voll (50–100)
     pub account_limit_percent: i64,
+    /// Fester Puffer in Prozentpunkten fürs 5-Stunden-Fenster, solange es zu wenige Läufe für
+    /// eine Schätzung gibt (0–50)
+    pub account_reserve_five_hour: i64,
+    /// Fester Puffer in Prozentpunkten für die Woche (0–50)
+    pub account_reserve_week: i64,
+    /// Setzt sich das 5-Stunden-Fenster innerhalb dieser Minuten zurück, zählt die Reserve dort
+    /// nicht (0–300)
+    pub account_reset_grace_minutes: i64,
 }
 
 /// Werkzeuge, die ein Umsetzungslauf ohne Rückfrage benutzen darf
@@ -524,6 +553,9 @@ pub const SETUP_REASON_PREFIX: &str = "Einrichtung fehlgeschlagen:";
 /// Vorsilbe des Blockiert-Grunds, wenn der Merge scheiterte („Erneut mergen“ im Panel)
 pub const MERGE_REASON_PREFIX: &str = "Merge:";
 
+/// Vorsilbe von Blockiert-Gründen und Kommentaren des Autopiloten
+pub const AUTOPILOT_PREFIX: &str = "Autopilot:";
+
 /// Anfang des Kommentars bei einer Pause wegen Nutzungslimit
 pub fn limit_pause() -> String {
     format!("{}: Nutzungslimit", markers::PAUSE)
@@ -548,6 +580,7 @@ mod tests {
         assert_eq!(REVIEW_REASON, "Human Interaction: Review vor dem Merge");
         assert_eq!(SETUP_REASON_PREFIX, "Einrichtung fehlgeschlagen:");
         assert_eq!(MERGE_REASON_PREFIX, "Merge:");
+        assert_eq!(AUTOPILOT_PREFIX, "Autopilot:");
         assert_eq!(limit_pause(), "[dispatch] Pause: Nutzungslimit");
     }
 

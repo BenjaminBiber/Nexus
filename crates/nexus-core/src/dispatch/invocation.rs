@@ -161,6 +161,10 @@ impl ClaudeInvocation {
         out.remove("HARNESS_SESSION");
         out.remove("CLAUDECODE");
         out.remove("CLAUDE_CODE_ENTRYPOINT");
+        // Ein geerbter Lauf gehört nicht zu diesem Worker; den eigenen setzt `apply_run`
+        for name in crate::env::names("RUN") {
+            out.remove(&name);
+        }
         match ticket_id {
             Some(ticket_id) => {
                 out.insert("HARNESS_TICKET".to_string(), ticket_id.to_string());
@@ -189,6 +193,14 @@ impl ClaudeInvocation {
             );
         }
         out
+    }
+
+    /// Name des Lauf-Protokolls (`NEXUS_RUN`, z. B. `ARC-0001-20261104-091500.log`): der Hook
+    /// meldet ihn mit, und die Detailansicht der Session findet darüber Protokoll und Lauf
+    pub fn apply_run(&self, env: &mut BTreeMap<String, String>, run_name: &str) {
+        if !run_name.is_empty() {
+            env.insert("NEXUS_RUN".to_string(), run_name.to_string());
+        }
     }
 
     /// Langzeit-Token des gewählten Accounts (`claude setup-token`) in die Umgebung eines
@@ -241,6 +253,7 @@ mod tests {
             accounts_from: None,
             account: None,
             account_why: None,
+            usage_at_start: None,
         }
     }
 
@@ -466,6 +479,23 @@ mod tests {
             None,
         );
         assert_eq!(behalten["ANTHROPIC_API_KEY"], "k");
+    }
+
+    #[test]
+    fn setzt_den_eigenen_lauf_und_entfernt_einen_geerbten() {
+        let cfg = cfg();
+        let invocation = ClaudeInvocation::new();
+        let mut out = invocation.env(
+            &env(&[("NEXUS_RUN", "fremd.log"), ("HARNESS_RUN", "alt.log")]),
+            &cfg,
+            Some("ARC-0001"),
+            None,
+            None,
+        );
+        assert!(!out.contains_key("NEXUS_RUN"));
+        assert!(!out.contains_key("HARNESS_RUN"));
+        invocation.apply_run(&mut out, "ARC-0001-20261104-091500.log");
+        assert_eq!(out["NEXUS_RUN"], "ARC-0001-20261104-091500.log");
     }
 
     #[test]

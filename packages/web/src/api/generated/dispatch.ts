@@ -17,6 +17,23 @@ export type AccountStrategy = "most-free" | "order";
 export type AdvisorResult = { suggestions: Array<Suggestion>, insufficient: Array<InsufficientData>, };
 
 /**
+ * Autopilot des Dispatchers (`autopilot_for` entscheidet je Ticket)
+ */
+export type AutopilotSettings = { 
+/**
+ * true = keine Freigaben, Fragen entscheidet die Recherche, Merge-Konflikte löst Claude
+ */
+enabled: boolean, 
+/**
+ * Tickets mit diesem Label laufen ohne Autopilot; null = keine Ausnahme
+ */
+exceptLabel: string | null, 
+/**
+ * Höchstens so viele Merge-Sessions je Konflikt (1–5)
+ */
+maxMergeSessions: number, };
+
+/**
  * Zustand des Hauptordners vor einem Merge
  */
 export type CheckoutState = { 
@@ -144,13 +161,32 @@ profiles: Record<string, Profile>, defaultProfile: string, rules: Array<Rule>, e
  */
 ladder: Array<string>, allowFable: boolean, research: ResearchSettings, planning: PlanningSettings, 
 /**
+ * Autopilot: keine Freigaben, Fragen entscheidet die Recherche, Merge-Konflikte mehrfach
+ * per Session
+ */
+autopilot: AutopilotSettings, 
+/**
  * Wahl unter mehreren erlaubten Accounts
  */
 accountStrategy: AccountStrategy, 
 /**
  * Ab dieser Auslastung in Prozent (5 Stunden oder Woche) gilt ein Account als voll (50–100)
  */
-accountLimitPercent: number, };
+accountLimitPercent: number, 
+/**
+ * Fester Puffer in Prozentpunkten fürs 5-Stunden-Fenster, solange es zu wenige Läufe für
+ * eine Schätzung gibt (0–50)
+ */
+accountReserveFiveHour: number, 
+/**
+ * Fester Puffer in Prozentpunkten für die Woche (0–50)
+ */
+accountReserveWeek: number, 
+/**
+ * Setzt sich das 5-Stunden-Fenster innerhalb dieser Minuten zurück, zählt die Reserve dort
+ * nicht (0–300)
+ */
+accountResetGraceMinutes: number, };
 
 /**
  * Eine Fassung der Dispatcher-Einstellung (Tabelle board.DispatchConfigVersions)
@@ -295,7 +331,12 @@ export type DispatchState = { pausedUntil: string | null,
 /**
  * Pausen einzelner Claude-Accounts (Nutzungslimit): Account-ID → ISO-Zeitpunkt
  */
-accountPauses: Record<string, string>, merges: Record<string, MergeEntry>, research: Record<string, ResearchEntry>, researchAuto: ResearchAutoState, planning: Record<string, PlanningEntry>, planningAuto: PlanningAutoState, };
+accountPauses: Record<string, string>, merges: Record<string, MergeEntry>, research: Record<string, ResearchEntry>, researchAuto: ResearchAutoState, 
+/**
+ * Recherchen des Autopilots ohne Empfehlung je Frage (Frage-ID → Zahl der Versuche); leer
+ * nicht geschrieben, damit state.json ohne Autopilot wie bisher aussieht
+ */
+autopilotResearch?: Record<string, number>, planning: Record<string, PlanningEntry>, planningAuto: PlanningAutoState, };
 
 /**
  * Ergebnis der Auswertung (Läufe einer Art, Start im Zeitraum)
@@ -371,6 +412,11 @@ export type MergeEntry = { ticketId: string, branch: string, phase: MergePhase,
  */
 sessionUsed: boolean, 
 /**
+ * Merge-Sessions für den aktuellen Stand des Zielbranches; ältere Dateien kennen nur
+ * `session_used` und laden mit 1, wenn es gesetzt ist
+ */
+sessions: number, 
+/**
  * „Merge wartet auf …“ wurde schon kommentiert
  */
 waitNoted: boolean, 
@@ -378,6 +424,11 @@ waitNoted: boolean,
  * Ziel-Branch der Merge-Session
  */
 target: string | null, 
+/**
+ * Commit des Ziel-Branches beim Start der Merge-Session; gegen ihn wird die Session
+ * ausgewertet, denn das Ziel darf währenddessen weiterlaufen (andere Tickets werden gemergt)
+ */
+targetHead?: string, 
 /**
  * Der letzte Merge-Versuch hatte einen Konflikt, die Merge-Session durfte aber nicht starten
  * (aus, Pause, außerhalb); bis sie starten darf, wird nicht erneut gemergt. „Erneut mergen“
@@ -869,7 +920,11 @@ account?: string,
 /**
  * Begründung der Account-Wahl
  */
-accountWhy?: string, };
+accountWhy?: string, 
+/**
+ * Auslastung des gewählten Accounts beim Start; fehlt bei Läufen älterer Stände
+ */
+usageAtStart?: UsageSnapshot, };
 
 /**
  * Stand eines Laufs laut Ende seines Protokolls

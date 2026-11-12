@@ -1,0 +1,128 @@
+[
+  {
+    "name": "ohne Repos",
+    "request": {
+      "method": "GET",
+      "path": "/api/themes/store/repos"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  },
+  {
+    "name": "Repo eintragen",
+    "request": {
+      "body": {
+        "url": "https://raw.githubusercontent.com/a/b/main/nexus-themes.json"
+      },
+      "method": "POST",
+      "path": "/api/themes/store/repos"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "addedAt": "<TIME>",
+        "id": "1c4a533c2203",
+        "url": "https://raw.githubusercontent.com/a/b/main/nexus-themes.json"
+      },
+      "status": 201
+    }
+  },
+  {
+    "name": "Repos auflisten",
+    "request": {
+      "method": "GET",
+      "path": "/api/themes/store/repos"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [
+        {
+          "addedAt": "<TIME>",
+          "id": "1c4a533c2203",
+          "url": "https://raw.githubusercontent.com/a/b/main/nexus-themes.json"
+        }
+      ],
+      "status": 200
+    }
+  },
+  {
+    "name": "ungültige Adresse abgelehnt",
+    "request": {
+      "body": {
+        "url": "http://example.com/nexus-themes.json"
+      },
+      "method": "POST",
+      "path": "/api/themes/store/repos"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "store-repo-invalid",
+        "message": "Die Adresse muss mit https:// beginnen."
+      },
+      "status": 400
+    }
+  },
+  {
+    "name": "Dublette abgelehnt",
+    "request": {
+      "body": {
+        "url": " HTTPS://RAW.githubusercontent.com/a/b/main/nexus-themes.json"
+      },
+      "method": "POST",
+      "path": "/api/themes/store/repos"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "store-repo-exists",
+        "message": "Dieses Repo ist schon eingetragen."
+      },
+      "status": 409
+    }
+  },
+  {
+    "name": "Repo entfernen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/themes/store/repos/1c4a533c2203"
+    },
+    "response": {
+      "contentType": null,
+      "status": 204,
+      "text": ""
+    }
+  },
+  {
+    "name": "unbekanntes Repo entfernen",
+    "request": {
+      "body": {},
+      "method": "DELETE",
+      "path": "/api/themes/store/repos/1c4a533c2203"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": {
+        "code": "store-repo-not-found",
+        "message": "Dieses Repo gibt es nicht."
+      },
+      "status": 404
+    }
+  },
+  {
+    "name": "nach dem Entfernen",
+    "request": {
+      "method": "GET",
+      "path": "/api/themes/store/repos"
+    },
+    "response": {
+      "contentType": "application/json",
+      "json": [],
+      "status": 200
+    }
+  }
+]

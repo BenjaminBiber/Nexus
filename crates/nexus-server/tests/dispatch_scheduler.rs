@@ -4,13 +4,13 @@
 //! Die Zeit läuft in diesen Tests angehalten (`start_paused`): kein Test wartet auf eine echte
 //! Minute.
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use async_trait::async_trait;
 use nexus_core::{HarnessError, Result};
-use nexus_server::dispatch::scheduler::{DispatchScheduler, DispatchTick, LogLine};
+use nexus_server::dispatch::scheduler::{DispatchScheduler, DispatchTick, LogLine, TickGate};
 use tokio::sync::Mutex as AsyncMutex;
 
 /// Zählt die Durchläufe; je nach Bauart endet jeder sofort, nie oder erst auf Zuruf
@@ -192,6 +192,39 @@ async fn protokolliert_den_fehler_eines_durchlaufs_statt_abzustuerzen() {
             "Dispatcher: kaputt".to_string()
         ],
         "der Takt läuft nach einem Fehler weiter"
+    );
+}
+
+#[tokio::test(start_paused = true)]
+async fn ohne_freigabe_ruht_der_takt_und_meldet_jeden_wechsel_einmal() {
+    let (tick, calls) = CountingTick::quick();
+    let (log, lines) = collecting();
+    let allowed = Arc::new(AtomicBool::new(false));
+    let gate: TickGate = {
+        let allowed = allowed.clone();
+        Arc::new(move || allowed.load(Ordering::SeqCst))
+    };
+    let scheduler = DispatchScheduler::new(tick, Duration::from_secs(1)).with_log(log);
+    scheduler.start_with(gate).await;
+
+    tokio::time::sleep(Duration::from_millis(2_100)).await;
+    assert_eq!(
+        calls.load(Ordering::SeqCst),
+        0,
+        "ohne Freigabe kein Durchlauf"
+    );
+
+    allowed.store(true, Ordering::SeqCst);
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
+    scheduler.stop().await;
+
+    assert_eq!(
+        lines.lock().expect("Protokoll").as_slice(),
+        [
+            "Dispatcher: Takt ruht – ein anderer Server führt den Dispatcher",
+            "Dispatcher: Takt läuft wieder"
+        ]
     );
 }
 

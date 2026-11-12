@@ -22,12 +22,12 @@ export function SessionGroup(props: { pid: string; ticket: { id: string; title: 
         ) : (
           <>
             <h2>Nicht zugeordnet</h2>
-            <span className="muted">Sessions ohne Ticket. Mit harness board claim ARC-0042 --agent claude ordnest du sie zu.</span>
+            <span className="muted">Sessions ohne Ticket. Mit nexus board claim ARC-0042 --agent claude ordnest du sie zu.</span>
           </>
         )}
       </div>
       {props.sessions.map((session) => (
-        <SessionRow key={session.id} session={session} now={props.now} favorite={props.favorites?.has(session.id)} showEndedAgents={props.showEndedAgents} onToggleFavorite={props.onToggleFavorite} />
+        <SessionRow key={session.id} session={session} href={`/p/${props.pid}/sessions/${encodeURIComponent(session.id)}`} now={props.now} favorite={props.favorites?.has(session.id)} showEndedAgents={props.showEndedAgents} onToggleFavorite={props.onToggleFavorite} />
       ))}
     </section>
   );

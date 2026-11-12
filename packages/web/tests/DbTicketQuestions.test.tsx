@@ -14,6 +14,12 @@ afterEach(cleanup);
 
 const WAITING = [{ id: 'ARC-F0001', title: 'Welcher Speicher?' }];
 
+// Öffnet den Reiter „Fragen“ des Ticket-Panels und liefert seinen Inhalt
+async function openQuestions() {
+  await userEvent.click(await screen.findByRole('tab', { name: /^Fragen/ }));
+  return screen.getByRole('region', { name: 'Fragen' });
+}
+
 describe('DbCard mit offener Frage', () => {
   it('zeigt Kennzeichen und „wartet auf Frage“, das Ticket bleibt ziehbar', () => {
     render(<DbCard card={dbCard('ARC-0007', 'Export', 'planned', { waitingOnQuestions: WAITING })} onOpen={vi.fn()} onMove={vi.fn()} />);
@@ -28,10 +34,10 @@ describe('DbCard mit offener Frage', () => {
   });
 });
 
-describe('Ticket-Panel: Abschnitt „Fragen“', () => {
+describe('Ticket-Panel: Reiter „Fragen“', () => {
   it('bietet ohne offene Frage nur „Frage stellen“', async () => {
     openPanel();
-    const section = await screen.findByRole('region', { name: 'Fragen' });
+    const section = await openQuestions();
     expect(within(section).getByText(/Keine offene Frage/)).toBeTruthy();
     expect(within(section).getByRole('button', { name: 'Frage stellen' })).toBeTruthy();
   });
@@ -41,7 +47,7 @@ describe('Ticket-Panel: Abschnitt „Fragen“', () => {
     const getDbTicket = vi.fn(async () => current);
     const createDbQuestion = vi.fn(async () => dbQuestionDetail(dbQuestion('ARC-F0002', 'Neue')));
     const { onChanged } = openPanel({ getDbTicket, createDbQuestion }, current);
-    const section = await screen.findByRole('region', { name: 'Fragen' });
+    const section = await openQuestions();
     expect(within(section).getByRole('link', { name: /ARC-F0001/ }).getAttribute('href')).toContain('/questions/ARC-F0001');
     expect(within(section).getByText(/In Arbeit und Erledigt sind gesperrt/)).toBeTruthy();
     current = { ...current, rev: 4, waitingOnQuestions: [...WAITING, { id: 'ARC-F0002', title: 'Neue' }] };
@@ -51,6 +57,7 @@ describe('Ticket-Panel: Abschnitt „Fragen“', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Frage stellen' }));
     expect(createDbQuestion).toHaveBeenCalledWith('ARC', { title: 'Neue', occasion: 'Ticket ARC-0001', tags: [], ticketIds: ['ARC-0001'] });
     expect(await within(screen.getByRole('region', { name: 'Fragen' })).findByRole('link', { name: /ARC-F0002/ })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Fragen \(2\)/ })).toBeTruthy();
     expect(screen.queryByRole('dialog', { name: 'Frage zu ARC-0001 stellen' })).toBeNull();
     expect(onChanged).toHaveBeenCalled();
   });
@@ -78,14 +85,14 @@ describe('Ticket-Panel: Abschnitt „Fragen“', () => {
 
   it('nennt bei zwei offenen Fragen beide und spricht in der Mehrzahl', async () => {
     openPanel({}, dbDetail(dbCard('ARC-0001', 'Login bauen', 'backlog', { waitingOnQuestions: [...WAITING, { id: 'ARC-F0002', title: 'Welcher Port?' }] })));
-    const section = await screen.findByRole('region', { name: 'Fragen' });
+    const section = await openQuestions();
     expect(within(section).getByText('Wartet auf 2 Fragen: In Arbeit und Erledigt sind gesperrt, bis alle entschieden sind.')).toBeTruthy();
     expect(within(section).getAllByRole('link', { name: /ARC-F000/ })).toHaveLength(2);
   });
 
   it('Esc im Dialog „Frage stellen“ schließt nur den Dialog, nicht das Panel', async () => {
     const { onClose } = openPanel();
-    const section = await screen.findByRole('region', { name: 'Fragen' });
+    const section = await openQuestions();
     await userEvent.click(within(section).getByRole('button', { name: 'Frage stellen' }));
     const dialog = screen.getByRole('dialog', { name: 'Frage zu ARC-0001 stellen' });
     expect(dialog.contains(document.activeElement)).toBe(true);
@@ -104,7 +111,7 @@ describe('Ticket-Panel: Abschnitt „Fragen“', () => {
       throw new ApiError('question-ticket-other-project', 'Ticket OTH-0001 gehört zu einem anderen Projekt. Eine Frage betrifft nur Tickets ihres Projekts.', 422);
     });
     const { onClose, onChanged } = openPanel({ createDbQuestion });
-    const section = await screen.findByRole('region', { name: 'Fragen' });
+    const section = await openQuestions();
     await userEvent.click(within(section).getByRole('button', { name: 'Frage stellen' }));
     const dialog = screen.getByRole('dialog', { name: 'Frage zu ARC-0001 stellen' });
     await userEvent.type(within(dialog).getByLabelText('Titel'), 'Neue');

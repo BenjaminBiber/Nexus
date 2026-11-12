@@ -1,17 +1,17 @@
 ---
 name: harness-customize
-description: Verwaltet die Anpassungen des Harness für diesen Dev – Workflow, Skills und Output-Styles in custom/ im Harness-Clone; kopieren, neu anlegen, prüfen, zurücksetzen, anwenden. Verwenden, wenn der Benutzer den Ablauf des Harness ändern, einen Harness-Skill oder Output-Style ersetzen oder einen eigenen hinzufügen will.
+description: Verwaltet die Anpassungen von Nexus für diesen Dev – Workflow, Skills und Output-Styles in custom/ im Nexus-Clone; kopieren, neu anlegen, prüfen, zurücksetzen, anwenden. Verwenden, wenn der Benutzer den Ablauf von Nexus ändern, einen Harness-Skill oder Output-Style ersetzen oder einen eigenen hinzufügen will.
 ---
 
-# Harness anpassen
+# Nexus anpassen
 
-Anpassungen gelten für diesen Dev in allen Projekten. Sie liegen in `custom/` im Harness-Clone, den Git ignoriert, und überstehen Updates ohne Merge. Sie wirken erst nach `nexus install` und in einer neuen Session (oder nach `/reload-plugins`).
+Anpassungen gelten für diesen Dev in allen Projekten. Sie liegen in `custom/` im Nexus-Clone, den Git ignoriert, und überstehen Updates ohne Merge. Sie wirken erst nach `nexus install` und in einer neuen Session (oder nach `/reload-plugins`).
 
 ## 1. Clone finden
 
 Lies `~/.nexus/customizations/overview.json`. Ist die Umgebungsvariable `NEXUS_HOME` gesetzt, liegt die Datei stattdessen unter `$NEXUS_HOME/customizations/overview.json`. Daraus brauchst du `cloneDir` und `customDir`.
 
-Fehlt die Datei, sage: „Der Harness muss einmal im Harness-Ordner mit `nexus install` eingerichtet werden.“ Ändere dann nichts.
+Fehlt die Datei, sage: „Nexus muss einmal im Nexus-Ordner mit `nexus install` eingerichtet werden.“ Ändere dann nichts.
 
 ## 2. Vorgang wählen
 
@@ -28,7 +28,7 @@ Ist unklar, was der Benutzer will, frage nach. Alle Befehle laufen mit `nexus cu
 | Zurück zum Standard | `nexus customize --clone "<cloneDir>" reset workflow` bzw. `reset skill <name>` oder `reset output-style <name>` |
 | Anwenden | `npm --prefix "<cloneDir>" run build:plugin`, danach `<cloneDir>/packages/plugin/dist/nexus/bin/nexus install`; mit Timeout 600000 ms (10 Minuten) oder im Hintergrund (siehe Regeln) |
 
-Ersetzen beginnt immer mit `copy`: so startet die Anpassung beim aktuellen Standard, und der Harness merkt sich die Basis, um später Änderungen am Standard zu melden. Gibt es die Anpassung schon, bearbeite sie direkt; `copy` ist nur für das erste Ersetzen. `--rebase` nur nach dem Übernehmen eines geänderten Standards.
+Ersetzen beginnt immer mit `copy`: so startet die Anpassung beim aktuellen Standard, und Nexus merkt sich die Basis, um später Änderungen am Standard zu melden. Gibt es die Anpassung schon, bearbeite sie direkt; `copy` ist nur für das erste Ersetzen. `--rebase` nur nach dem Übernehmen eines geänderten Standards.
 
 ## 3. Regeln
 

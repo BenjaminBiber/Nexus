@@ -1,0 +1,93 @@
+/* „Signal“: helles Schema mit Farbe, die etwas bedeutet – dunkle Seitenleiste in Petrol, Petrol als Akzent, Board-Spalten
+   und Karten im Ton ihres Status. Übernimmt die hellen Werte und ändert nur Abweichungen; --side-* gilt nur
+   in der Seitenleiste. */
+:root[data-theme='signal'] {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --sidebar-bg: #12343d;
+  --line: #e2e8ee;
+  --line-input: #d9e0e7;
+  --line-soft: #edf1f5;
+  --line-strong: #94a3b8;
+  --line-dashed: #cbd5e1;
+  --column-bg: #edf1f5;
+  --column-locked-a: #eef2f6;
+  --column-locked-b: #e5eaf0;
+  --text: #0f172a;
+  --text-soft: #334155;
+  --muted: #64748b;
+  --accent: #0e7490;
+  --accent-hover: #155e75;
+  --accent-soft: #e0f4f8;
+  --accent-soft-hover: #cbeef5;
+  --primary: #12343d;
+  --primary-hover: #1d4f5b;
+  --chip-on-bg: #12343d;
+  --status-bg: #e0f4f8;
+  --status-fg: #155e75;
+  --idle-fg: #334155;
+  --idle-bg: #eef2f6;
+  --unread-fg: #155e75;
+  --unread-bg: #e0f4f8;
+  --unread-row-bg: #f2fafc;
+  --quote-line: #67c3d6;
+  --mark-comment: #d5f0f6;
+  --mark-comment-hover: #b4e4ee;
+  --tag-add-line: #67c3d6;
+  --chart-bar: #0e7490;
+  --chart-track: #edf1f5;
+  --chart-grid: #e2e8ee;
+  --chart-axis: #64748b;
+  --shadow-faint: rgba(15, 23, 42, 0.04);
+  --shadow-mid: rgba(15, 23, 42, 0.08);
+  --shadow-soft: rgba(15, 23, 42, 0.06);
+  --shadow-tab: rgba(15, 23, 42, 0.1);
+  --shadow-strong: rgba(15, 23, 42, 0.12);
+  --backdrop: rgba(15, 23, 42, 0.36);
+  --side-surface: #1a434d;
+  --side-active: #23535e;
+  --side-hover: #1a434d;
+  --side-line: #2a5a65;
+  --side-text: #f0f7f8;
+  --side-text-soft: #c3dade;
+  --side-muted: #8fb2b9;
+  --side-accent-soft: #23535e;
+  --side-usage-ok: #7dd3e6;
+  --side-usage-warn: #fcd34d;
+  --side-usage-crit: #f9a8d4;
+  --side-shadow: rgba(0, 0, 0, 0.25);
+}
+
+/* Farbe zeigt Information. Seitenleiste dunkel: Die Bedienelemente darin bekommen die --side-*-Werte als ihre üblichen
+   Variablen. Board-Auswahl und Dialoge, die im DOM in der Seitenleiste liegen, bleiben hell – deshalb nur die Elemente
+   selbst, nicht die ganze Leiste. */
+[data-theme='signal'] :is(.shell-sidebar, .settings-nav) { border-right-color: var(--sidebar-bg); }
+[data-theme='signal'] :is(.shell-sidebar .global-search, .shell-sidebar .bp-field, .shell-sidebar .nav, .shell-sidebar .usage-dock, .settings-nav) {
+  color-scheme: dark;
+  --surface: var(--side-surface);
+  --nav-active-bg: var(--side-active);
+  --line: var(--side-line);
+  --line-soft: var(--side-hover);
+  --text: var(--side-text);
+  --text-soft: var(--side-text-soft);
+  --muted: var(--side-muted);
+  --idle-bg: var(--side-active);
+  --accent-soft: var(--side-accent-soft);
+  --accent: var(--side-usage-ok);
+  --primary: var(--side-text-soft);
+  --usage-ok: var(--side-usage-ok);
+  --usage-warn: var(--side-usage-warn);
+  --usage-crit: var(--side-usage-crit);
+  --shadow-soft: var(--side-shadow);
+  color: var(--text);
+}
+[data-theme='signal'] .settings-nav-title { color: var(--side-text); }
+
+/* Board: jede Spalte im Ton ihres Status (Farbe aus data-status), der Kopf als kräftiger getöntes Band;
+   die Karten nehmen den Ton nur in ihrem Rahmen auf. Gesperrte Spalten behalten ihr Streifenmuster. */
+[data-theme='signal'] .db-column[data-status]:not(.locked) { background: color-mix(in srgb, var(--node-status) 7%, var(--bg)); }
+[data-theme='signal'] .db-column[data-status] .column-head { margin-bottom: 4px; background: color-mix(in srgb, var(--node-status) 18%, var(--bg)); }
+[data-theme='signal'] .db-column[data-status] .column-head h2 { color: color-mix(in srgb, var(--node-status) 45%, var(--text)); }
+[data-theme='signal'] .db-column[data-status] .db-card { border-color: color-mix(in srgb, var(--node-status) 28%, var(--line)); }
+[data-theme='signal'] .db-column[data-status] .db-card:hover { border-color: color-mix(in srgb, var(--node-status) 55%, var(--line)); }

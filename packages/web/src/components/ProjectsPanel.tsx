@@ -7,7 +7,7 @@ import { SettingsSection } from './settings/SettingRow.js';
 export function ProjectsPanel({ projects, current }: { projects: ProjectDto[]; current: string }) {
   return (
     <SettingsPanel label="Arbeitsverzeichnisse">
-      <SettingsSection info="Ein Ordner kommt dazu, sobald dort eine Claude-Session mit dem Harness-Plugin läuft. „Nicht erreichbar“ heißt: Der Pfad existiert auf diesem Rechner nicht mehr.">
+      <SettingsSection info="Ein Ordner kommt dazu, sobald dort eine Claude-Session mit dem Nexus-Plugin läuft. „Nicht erreichbar“ heißt: Der Pfad existiert auf diesem Rechner nicht mehr.">
         <ul className="plain">
           {projects.map((p) => (
             <li key={p.id} className="project-row">

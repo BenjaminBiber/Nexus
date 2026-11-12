@@ -1,4 +1,4 @@
-// Zugang zum Harness-Server: einen schon laufenden Server übernehmen oder den Server im eigenen
+// Zugang zum Nexus-Server: einen schon laufenden Server übernehmen oder den Server im eigenen
 // Prozess starten, das Hauptfenster mit der Oberfläche öffnen und den selbst gestarteten Server
 // beim Beenden wieder stoppen. Einen fremden Server lässt die App unangetastet.
 //
@@ -76,7 +76,7 @@ pub struct ServerInfo {
     pub app_token: Option<AppToken>,
 }
 
-// Findet einen laufenden Harness-Server oder startet ihn im eigenen Prozess
+// Findet einen laufenden Nexus-Server oder startet ihn im eigenen Prozess
 pub struct ServerConnector {
     home: PathBuf,
     // Gewünschter Port aus der Umgebung; ohne Wunsch nimmt der Server einen freien (Port 0)
@@ -84,7 +84,7 @@ pub struct ServerConnector {
 }
 
 impl ServerConnector {
-    // Liest Harness-Ordner und Port aus der Umgebung
+    // Liest Nexus-Ordner und Port aus der Umgebung
     pub fn from_env(env: &HashMap<String, String>) -> Result<Self, ServerError> {
         Ok(Self {
             home: harness_home(env),
@@ -202,7 +202,7 @@ fn setze_port(port: u16) {
     AKTIVER_PORT.store(port, Ordering::Relaxed);
 }
 
-// Fragt /api/health: antwortet dort der Harness-Server, hört niemand oder ein fremdes Programm?
+// Fragt /api/health: antwortet dort der Nexus-Server, hört niemand oder ein fremdes Programm?
 pub async fn probe(port: u16) -> PortState {
     match health_client() {
         Some(client) => probe_with(&client, port).await,
@@ -244,7 +244,7 @@ fn bindable(port: u16) -> bool {
     std::net::TcpListener::bind(("127.0.0.1", port)).is_ok()
 }
 
-// Prozessnummer des Harness-Servers auf dem Port; None, wenn dort niemand oder ein fremdes
+// Prozessnummer des Nexus-Servers auf dem Port; None, wenn dort niemand oder ein fremdes
 // Programm antwortet
 async fn health(client: &reqwest::Client, port: u16) -> Option<u32> {
     let url = format!("http://127.0.0.1:{port}/api/health");
@@ -388,10 +388,10 @@ struct EigenerStart {
 // Sucht den laufenden Server dieses Datenordners oder bereitet den eigenen vor
 fn vorbereiten<R: Runtime>(app: &AppHandle<R>) -> Result<Vorbereitet, ServerError> {
     let connector = ServerConnector::from_env(&std::env::vars().collect())?;
-    log::info!("Harness-Ordner {}", connector.home().display());
+    log::info!("Nexus-Ordner {}", connector.home().display());
     if let Some(info) = tauri::async_runtime::block_on(connector.vorhandener_server()) {
         log::info!(
-            "Auf Port {} läuft schon ein Harness-Server; die App nutzt ihn mit.",
+            "Auf Port {} läuft schon ein Nexus-Server; die App nutzt ihn mit.",
             info.port
         );
         // Sein Start-Token steht in server.json; ohne Token käme die Oberfläche nicht an ihn heran
@@ -1028,6 +1028,25 @@ mod tests {
         );
     }
 
+    // Außer Hell, Dunkel und System liefert die App keine Themes mit; alle anderen kommen aus
+    // dem Theme-Store (vorbelegt: das Nexus-Repo)
+    #[test]
+    fn die_app_buendelt_keine_theme_pakete() {
+        let datei: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        assert!(datei["bundle"]["resources"]
+            .as_object()
+            .unwrap()
+            .keys()
+            .all(|quelle| !quelle.contains("themes")));
+        let paket: serde_json::Value =
+            serde_json::from_str(include_str!("../../package.json")).unwrap();
+        assert!(!paket["scripts"]["prepare-binaries"]
+            .as_str()
+            .unwrap()
+            .contains("build:themes"));
+    }
+
     // Mitgeliefert wird genau ein Programm: die Kommandozeile, die im Terminal auch ohne App
     // einen Server anbietet (`nexus serve`)
     #[test]
@@ -1066,5 +1085,40 @@ mod tests {
         );
         assert!(!csp.contains("http://192.168"), "{csp}");
         assert!(!csp.contains("unsafe-eval"), "{csp}");
+    }
+
+    // Theme-Module (`main.js`) dürfen nur vom Pfad /themes/ des lokalen Servers kommen
+    #[test]
+    fn die_csp_laesst_theme_module_nur_vom_lokalen_server_zu() {
+        let datei: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let csp = datei["app"]["security"]["csp"].as_str().unwrap();
+        let script_src: Vec<&str> = csp
+            .split(';')
+            .map(str::trim)
+            .filter(|d| d.split_whitespace().next() == Some("script-src"))
+            .collect();
+        assert_eq!(
+            script_src,
+            ["script-src 'self' http://127.0.0.1:*/themes/"],
+            "{csp}"
+        );
+        assert!(!script_src[0].contains("unsafe-"), "{csp}");
+        // connect-src bleibt wie zuvor
+        assert!(
+            csp.contains("connect-src 'self' http://127.0.0.1:* ipc: http://ipc.localhost;"),
+            "{csp}"
+        );
+    }
+
+    // Der Web-Server liefert die Oberfläche mit derselben CSP aus; die Konfig bleibt die Quelle
+    #[test]
+    fn die_csp_des_web_servers_gleicht_der_der_app() {
+        let datei: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        assert_eq!(
+            datei["app"]["security"]["csp"].as_str().unwrap(),
+            nexus_server::routes::static_files::CONTENT_SECURITY_POLICY
+        );
     }
 }

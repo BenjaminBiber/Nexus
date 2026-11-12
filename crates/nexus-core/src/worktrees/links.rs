@@ -105,15 +105,7 @@ fn is_link(path: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::make_temp_dir;
-
-    /// Legt einen Link auf einen Ordner an (unter Windows als Junction wie der Agent selbst)
-    fn link_dir(target: &Path, link: &Path) {
-        #[cfg(windows)]
-        std::os::windows::fs::symlink_dir(target, link).unwrap();
-        #[cfg(not(windows))]
-        std::os::unix::fs::symlink(target, link).unwrap();
-    }
+    use crate::test_support::{link_dir, make_temp_dir};
 
     /// Ziel außerhalb des Worktrees mit Inhalt (wie node_modules des Hauptordners)
     fn target(dir: &Path) -> PathBuf {

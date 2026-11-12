@@ -91,7 +91,7 @@ pub struct Ticket {
     /// `spec_task` ist historisch und ungenutzt
     pub spec: Option<String>,
     pub spec_task: Option<String>,
-    /// Branch und Worktree, in dem das Ticket umgesetzt wird (harness board start)
+    /// Branch und Worktree, in dem das Ticket umgesetzt wird (nexus board start)
     pub branch: Option<String>,
     pub worktree: Option<String>,
     /// Branch, in den das Ticket am Ende gemergt wird; null = Standardbranch des Projekts.

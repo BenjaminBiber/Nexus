@@ -10,7 +10,7 @@ const CLI_ENTRY = join('packages', 'cli', 'dist', 'main.js');
 const PLUGIN_BUILD = join('packages', 'plugin', 'scripts', 'build-plugin.mjs');
 
 // Testprojekt für die Hook-Messung: baut das Plugin-Bündel in einen temporären Ordner, legt ein Git-Projekt an,
-// richtet es mit `harness init` ein, meldet es am gemessenen Server an und ordnet ihm das Bench-Board zu.
+// richtet es mit `nexus init` ein, meldet es am gemessenen Server an und ordnet ihm das Bench-Board zu.
 // Gemessen wird damit genau das, was Claude Code startet: `node <plugin>/lib/cli.mjs hook <ereignis>`.
 export class BenchProject {
   constructor({ cloneDir, home, hookCmd = null, log = () => {} }) {
@@ -41,7 +41,7 @@ export class BenchProject {
     }
   }
 
-  // Richtet alles ein: Plugin-Bündel, Git-Projekt, `harness init`, Projekt am Server, Board-Zuordnung
+  // Richtet alles ein: Plugin-Bündel, Git-Projekt, `nexus init`, Projekt am Server, Board-Zuordnung
   async prepare(serverUrl, boardId) {
     this.assertBuilt();
     mkdirSync(this.customDir, { recursive: true });
@@ -119,7 +119,7 @@ export class BenchProject {
     this.git(['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '--allow-empty', '-q', '-m', 'init']);
   }
 
-  // `harness init`: Harness-Ordner, Token und Zähler im Testprojekt; wiederholbar. Liefert die Ausgabe als Objekt.
+  // `nexus init`: Harness-Ordner, Token und Zähler im Testprojekt; wiederholbar. Liefert die Ausgabe als Objekt.
   init() {
     // Ohne das angehängte Ereignis: der Hook-Befehl endet auf „hook“, das Einrichten nutzt dasselbe Programm
     const ohneUnterbefehl = this.hookCmd ? splitCommand(this.hookCmd).slice(0, -1) : null;
@@ -133,12 +133,12 @@ export class BenchProject {
       windowsHide: true,
       env: this.hookEnv(null),
     });
-    if (result.error) throw new Error(`„harness init“ lässt sich nicht starten: ${result.error.message}`);
-    if (result.status !== 0) throw new Error(`„harness init“ endet mit Code ${result.status}: ${(result.stderr || result.stdout || '').slice(-500)}`);
+    if (result.error) throw new Error(`„nexus init“ lässt sich nicht starten: ${result.error.message}`);
+    if (result.status !== 0) throw new Error(`„nexus init“ endet mit Code ${result.status}: ${(result.stderr || result.stdout || '').slice(-500)}`);
     try {
       return JSON.parse(result.stdout);
     } catch (error) {
-      throw new Error(`Die Ausgabe von „harness init“ ist kein JSON (${error.message}): ${result.stdout.slice(-300)}`);
+      throw new Error(`Die Ausgabe von „nexus init“ ist kein JSON (${error.message}): ${result.stdout.slice(-300)}`);
     }
   }
 

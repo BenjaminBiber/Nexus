@@ -49,6 +49,51 @@ describe('DispatchPanel', () => {
     expect((await screen.findByRole('status')).textContent).toContain('Gespeichert in C:/h/dispatch.yaml');
   });
 
+  it('speichert den Abschnitt Autopilot unter autopilot', async () => {
+    const save = vi.fn(async (raw: RawDispatchConfigDto) => ({ ...VIEW, exists: true, raw }));
+    open({ saveDispatchConfig: save });
+    await userEvent.click(await screen.findByLabelText('Autopilot einschalten'));
+    const label = screen.getByLabelText('Ausnahme-Label') as HTMLInputElement;
+    expect(label.value).toBe('interaktiv');
+    await userEvent.clear(label);
+    await userEvent.type(label, 'handarbeit');
+    await userEvent.clear(screen.getByLabelText('Merge-Sessions je Konflikt (1–5)'));
+    await userEvent.type(screen.getByLabelText('Merge-Sessions je Konflikt (1–5)'), '5');
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ autopilot: { enabled: true, exceptLabel: 'handarbeit', maxMergeSessions: 5 } }));
+  });
+
+  it('lehnt Merge-Sessions außerhalb von 1–5 ab und speichert leeres Ausnahme-Label als null', async () => {
+    const save = vi.fn(async (raw: RawDispatchConfigDto) => ({ ...VIEW, exists: true, raw }));
+    open({ saveDispatchConfig: save });
+    await userEvent.clear(await screen.findByLabelText('Merge-Sessions je Konflikt (1–5)'));
+    await userEvent.type(screen.getByLabelText('Merge-Sessions je Konflikt (1–5)'), '6');
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(save).not.toHaveBeenCalled();
+    expect(screen.getByText(/Merge-Sessions je Konflikt muss eine ganze Zahl von 1 bis 5 sein/)).toBeTruthy();
+    await userEvent.clear(screen.getByLabelText('Merge-Sessions je Konflikt (1–5)'));
+    await userEvent.type(screen.getByLabelText('Merge-Sessions je Konflikt (1–5)'), '2');
+    await userEvent.clear(screen.getByLabelText('Ausnahme-Label'));
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ autopilot: { enabled: false, exceptLabel: null, maxMergeSessions: 2 } }));
+  });
+
+  it('ohne Autopilot in der Datei und ohne Änderung kommt kein Feld autopilot dazu', async () => {
+    const save = vi.fn(async (raw: RawDispatchConfigDto) => ({ ...VIEW, exists: true, raw }));
+    open({ saveDispatchConfig: save });
+    await userEvent.click(await screen.findByRole('button', { name: 'Speichern' }));
+    expect(save.mock.calls[0][0]).not.toHaveProperty('autopilot');
+  });
+
+  it('graut bei eingeschaltetem Autopilot die Freigabe vor dem Merge aus', async () => {
+    open();
+    const review = (await screen.findByLabelText('Vor dem Merge auf Freigabe warten')) as HTMLInputElement;
+    expect(review.disabled).toBe(false);
+    await userEvent.click(screen.getByLabelText('Autopilot einschalten'));
+    expect(review.disabled).toBe(true);
+    expect(screen.getByText('Autopilot hat Vorrang (außer Tickets mit Label interaktiv).')).toBeTruthy();
+  });
+
   it('speichert kurz nach der letzten Eingabe automatisch, unfertige Eingaben aber nicht', async () => {
     const save = vi.fn(async (raw: RawDispatchConfigDto) => ({ ...VIEW, exists: true, raw }));
     open({ saveDispatchConfig: save });
@@ -357,7 +402,7 @@ describe('DispatchPanel Prüfungen', () => {
 
   describe('Prompt-Vorlagen', () => {
     const PROMPT_INFO = [
-      { kind: 'work' as const, label: 'Umsetzung', default: 'Standard-Umsetzung {{ticketId}}', required: ['harness board done'], placeholders: [{ name: 'ticketId', description: 'Ticket-ID' }, { name: 'agentName', description: 'Name des Agenten' }] },
+      { kind: 'work' as const, label: 'Umsetzung', default: 'Standard-Umsetzung {{ticketId}}', required: ['nexus board done'], placeholders: [{ name: 'ticketId', description: 'Ticket-ID' }, { name: 'agentName', description: 'Name des Agenten' }] },
       { kind: 'plan' as const, label: 'Planung', default: 'Standard-Planung', required: [], placeholders: [] },
       { kind: 'research' as const, label: 'Recherche', default: 'Standard-Recherche', required: [], placeholders: [] },
       { kind: 'merge' as const, label: 'Merge', default: 'Standard-Merge', required: [], placeholders: [] },
@@ -418,14 +463,14 @@ describe('DispatchPanel Prüfungen', () => {
     it('zeigt eine Ablehnung des Servers am betroffenen Editor statt oben', async () => {
       const save = vi.fn(async () => {
         throw new ApiError('dispatch-prompt-invalid', 'Vorlage „work“: fehlende Pflichtteile.', 400, undefined, {
-          kind: 'work', missing: ['harness board done'], unknown: [],
+          kind: 'work', missing: ['nexus board done'], unknown: [],
         });
       });
       prompts({ saveDispatchConfig: save }, rawWith({ prompts: { work: 'eigene Vorlage' } }));
       await screen.findByLabelText('Vorlage Umsetzung');
       await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
       const alert = await within(editor('Umsetzung')).findByRole('alert');
-      expect(alert.textContent).toContain('harness board done');
+      expect(alert.textContent).toContain('nexus board done');
       expect(within(editor('Planung')).queryByRole('alert')).toBeNull();
       expect(screen.getAllByRole('alert')).toHaveLength(1);
     });
@@ -433,7 +478,7 @@ describe('DispatchPanel Prüfungen', () => {
     it('nimmt die Meldung nach erfolgreichem Speichern wieder weg', async () => {
       let fail = true;
       const save = vi.fn(async (raw: RawDispatchConfigDto) => {
-        if (fail) throw new ApiError('dispatch-prompt-invalid', 'Vorlage „work“ unvollständig.', 400, undefined, { kind: 'work', missing: ['harness board done'], unknown: [] });
+        if (fail) throw new ApiError('dispatch-prompt-invalid', 'Vorlage „work“ unvollständig.', 400, undefined, { kind: 'work', missing: ['nexus board done'], unknown: [] });
         return { ...view(raw), exists: true };
       });
       prompts({ saveDispatchConfig: save }, rawWith({ prompts: { work: 'eigene Vorlage' } }));
@@ -448,7 +493,7 @@ describe('DispatchPanel Prüfungen', () => {
 
     it('meldet eine abgelehnte Vorlage beim Auto-Speichern nur als „nicht automatisch gespeichert“', async () => {
       const save = vi.fn(async () => {
-        throw new ApiError('dispatch-prompt-invalid', 'Vorlage „work“ unvollständig.', 400, undefined, { kind: 'work', missing: ['harness board done'], unknown: [] });
+        throw new ApiError('dispatch-prompt-invalid', 'Vorlage „work“ unvollständig.', 400, undefined, { kind: 'work', missing: ['nexus board done'], unknown: [] });
       });
       prompts({ saveDispatchConfig: save });
       const area = await screen.findByLabelText('Vorlage Umsetzung');

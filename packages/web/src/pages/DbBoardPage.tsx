@@ -3,9 +3,12 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useApi } from '../api/ApiContext.js';
 import { ApiError } from '../api/ApiError.js';
 import type { DbStatus } from '../api/dbTypes.js';
+import type { DoneGrouping } from '../api/types.js';
 import { DbAddFab } from '../components/db/DbAddFab.js';
 import { DbAcceptanceDialog } from '../components/db/DbAcceptanceDialog.js';
 import { DbColumn, WAITING_HINT } from '../components/db/DbColumn.js';
+import { DbColumnMenu } from '../components/db/DbColumnMenu.js';
+import { DbDoneSections } from '../components/db/DbDoneSections.js';
 import { DbGraphDialog, type GraphScopeOption } from '../components/db/DbGraphDialog.js';
 import { DbSpecsDialog } from '../components/db/DbSpecsDialog.js';
 import { DbImportDialog, importSources } from '../components/db/DbImportDialog.js';
@@ -18,6 +21,7 @@ import { DbUnavailable } from '../components/db/DbUnavailable.js';
 import { ErrorState } from '../components/ErrorState.js';
 import { LoadingState } from '../components/LoadingState.js';
 import { SearchIcon } from '../components/NavIcons.js';
+import { buildDoneLayout } from '../dbboard/doneSections.js';
 import { filterDbCards } from '../dbboard/filterDbCards.js';
 import { moveDbCard } from '../dbboard/moveDbCard.js';
 import { useBoardProjectSelection } from '../dbboard/boardProject.js';
@@ -28,7 +32,7 @@ import { useDispatchStatus } from '../dbboard/useDispatchStatus.js';
 import { useAsync } from '../hooks/useAsync.js';
 
 // Klicks hierauf schließen das Panel nicht: Panel, Dialoge samt Hintergrund, Karten und Bedienelemente behalten ihr Verhalten
-const BOARD_CLICK_IGNORED = '.db-panel, [role="dialog"], [role="alertdialog"], .db-modal-backdrop, .diagram-viewer-backdrop, .db-card, button, select, input, textarea, a, label';
+const BOARD_CLICK_IGNORED = '.db-panel, [role="dialog"], [role="alertdialog"], .db-modal-backdrop, .diagram-viewer-backdrop, .db-card, .db-column-menu, button, select, input, textarea, a, label';
 
 export type DbDialog = 'new' | 'import' | 'notes' | 'specs' | 'dispatch' | 'graph' | null;
 
@@ -46,6 +50,10 @@ export function DbBoardPage() {
   const [query, setQuery] = useState('');
   const [message, setMessage] = useState<{ kind: 'error' | 'info'; text: string } | null>(null);
   const [dialog, setDialog] = useState<DbDialog>(null);
+  // Gruppierung der Spalte „Erledigt“: Die Wahl im Spaltenmenü gilt sofort und vor der gespeicherten Einstellung
+  const [groupingChoice, setGroupingChoice] = useState<DoneGrouping | null>(null);
+  // Archivierte Tickets in „Erledigt“ trotzdem zeigen (gilt nur für diese Ansicht, wird nicht gespeichert)
+  const [showArchived, setShowArchived] = useState(false);
   const [askAcceptance, setAskAcceptance] = useState<string | null>(null);
   // Umfänge des Abhängigkeitsgraphen (Board und ggf. eine Spec) und der zuerst gezeigte
   const [graph, setGraph] = useState<{ scopes: GraphScopeOption[]; initial: number } | null>(null);
@@ -105,6 +113,10 @@ export function DbBoardPage() {
   const settings = userSettings.state.status === 'ready' ? userSettings.state.data : null;
   const hidden = (id: string) => (id === 'not_needed' && settings?.hideNotNeeded) || (id === 'in_planning' && settings?.hideInPlanning);
   const shownColumns = view?.columns.filter((c) => !hidden(c.id)) ?? [];
+  // Die Spalte „Erledigt“ zeigt Zeilen in Abschnitten; bei aktiver Suche sind alle Abschnitte offen und archivierte Treffer sichtbar
+  const searching = query.trim() !== '';
+  const grouping = groupingChoice ?? settings?.doneGrouping ?? 'time';
+  const now = new Date();
   // Boards desselben Projekts, von denen sich Tickets holen lassen
   const sources = active?.board ? importSources(active.board, boards) : [];
   // Gehört das Board dem angemeldeten Benutzer? (für „Mergen“ im Panel)
@@ -200,6 +212,21 @@ export function DbBoardPage() {
     }
   };
 
+  // Wechselt die Gruppierung der Spalte „Erledigt“ sofort und speichert sie als Einstellung; scheitert das Speichern, gilt wieder die vorige
+  const chooseGrouping = async (next: DoneGrouping) => {
+    if (next === grouping) return;
+    const previous = groupingChoice;
+    setGroupingChoice(next);
+    setMessage(null);
+    try {
+      await api.saveUserSettings({ doneGrouping: next });
+    } catch (error) {
+      if (!mounted.current) return;
+      setGroupingChoice(previous);
+      setMessage({ kind: 'error', text: (error as Error).message });
+    }
+  };
+
   if (board.unavailable) {
     return (
       <div className="page">
@@ -268,24 +295,35 @@ export function DbBoardPage() {
           <p>Über den Stift neben der Board-Auswahl ein Board anlegen.</p>
         </div>
       )}
-      {showsActive && active?.boardId != null && board.view.state.status === 'loading' && <LoadingState variant="board" text="Board wird geladen …" />}
+      {showsActive && active?.boardId != null && board.view.state.status === 'loading' && <LoadingState text="Board wird geladen …" />}
       {board.view.state.status === 'error' && <ErrorState message={board.view.state.message} onRetry={board.view.retry} />}
       {view && showsActive && (
         <div className="columns db-columns" style={{ '--db-column-count': shownColumns.length } as CSSProperties}>
-          {shownColumns.map((column) => (
-            <DbColumn
-              key={column.id}
-              column={column}
-              cards={filterDbCards(column.tickets, query)}
-              onMove={(id, status) => void move(id, status)}
-              onOpen={openTicket}
-              onLockedDrop={() => setMessage({ kind: 'info', text: WAITING_HINT })}
-              agentPrefix={dispatch.status?.agentPrefix}
-              compact={compactCards}
-              merges={merges}
-              activeRuns={activeRuns}
-            />
-          ))}
+          {shownColumns.map((column) => {
+            const shown = filterDbCards(column.tickets, query);
+            const done =
+              column.id === 'done'
+                ? buildDoneLayout(shown, { grouping, archiveDays: settings?.doneArchiveDays ?? 0, showArchived, searching, now })
+                : null;
+            return (
+              <DbColumn
+                key={column.id}
+                column={column}
+                cards={shown}
+                count={done?.shown}
+                headExtra={done && <DbColumnMenu grouping={grouping} onGrouping={(next) => void chooseGrouping(next)} archived={done.archived} showArchived={showArchived} onShowArchived={setShowArchived} />}
+                onMove={(id, status) => void move(id, status)}
+                onOpen={openTicket}
+                onLockedDrop={() => setMessage({ kind: 'info', text: WAITING_HINT })}
+                agentPrefix={dispatch.status?.agentPrefix}
+                compact={compactCards}
+                merges={merges}
+                activeRuns={activeRuns}
+              >
+                {done && <DbDoneSections layout={done} expandAll={searching} onOpen={openTicket} merges={merges} now={now} />}
+              </DbColumn>
+            );
+          })}
         </div>
       )}
       <DbAddFab disabled={!view} importDisabled={!showsActive || sources.length === 0} onNew={() => setDialog('new')} onImport={() => setDialog('import')} />

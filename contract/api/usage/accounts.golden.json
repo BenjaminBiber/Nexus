@@ -29,6 +29,8 @@
       "json": {
         "claudeUsage": true,
         "compactCards": false,
+        "doneArchiveDays": 0,
+        "doneGrouping": "time",
         "heroImages": false,
         "hideInPlanning": false,
         "hideNotNeeded": false,

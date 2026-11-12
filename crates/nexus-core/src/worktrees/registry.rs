@@ -250,7 +250,7 @@ mod tests {
     use crate::test_support::make_temp_dir;
     use std::path::Path;
 
-    /// Verzeichnis in einem temporären Harness-Ordner (den sonst `harness init` anlegt)
+    /// Verzeichnis in einem temporären Harness-Ordner (den sonst `nexus init` anlegt)
     fn registry(dir: &Path) -> WorktreeRegistry {
         fs::create_dir_all(dir.join("harness")).unwrap();
         WorktreeRegistry::new(HarnessLayout::new(dir))

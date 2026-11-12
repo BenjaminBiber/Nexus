@@ -1,4 +1,6 @@
 import type { QuestionOptionDto } from '../api/questionTypes.js';
+import { Button } from './ui/Button.js';
+import { Card } from './ui/Card.js';
 
 // Eine Option einer Recherche: Titel, Text, Vorteile und Nachteile; wählbar nur, wenn `onPick` übergeben wird.
 export function OptionCard({
@@ -14,7 +16,7 @@ export function OptionCard({
   onPick?: () => void;
 }) {
   return (
-    <article className={`option-card${option.recommended ? ' recommended' : ''}${picked ? ' picked' : ''}`}>
+    <Card as="article" className={`option-card${option.recommended ? ' recommended' : ''}${picked ? ' picked' : ''}`}>
       <div className="option-head">
         <span className="mono muted">Option {option.id}</span>
         {option.recommended && <span className="badge q-new">empfohlen</span>}
@@ -44,10 +46,10 @@ export function OptionCard({
         </ul>
       </div>
       {onPick && (
-        <button type="button" className={`btn${picked ? ' primary' : ''}`} aria-pressed={picked} disabled={disabled && !picked} onClick={onPick}>
+        <Button variant={picked ? 'primary' : 'secondary'} aria-pressed={picked} disabled={disabled && !picked} onClick={onPick}>
           {picked ? 'Gewählt' : 'Diese Option wählen'}
-        </button>
+        </Button>
       )}
-    </article>
+    </Card>
   );
 }
