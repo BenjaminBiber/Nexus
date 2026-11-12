@@ -1,4 +1,4 @@
-/* Verlauf eines Agent-Laufs im Ticket: Gruppen gefalteter Schritte, Bildzeilen, Scrollbereich, Fuß */
+/* Verlauf eines Agent-Laufs im Ticket: Gruppen gefalteter Schritte, Vorschaubilder an Gruppe und Aufruf, Scrollbereich, Fuß */
 
 /* Der Verlauf nutzt die Breite des Ticket-Panels und steht dichter als auf der Sessions-Seite */
 .run-transcript {
@@ -10,11 +10,20 @@
 .run-group {
   list-style: none;
 }
+/* Zeile einer Gruppe: links der Knopf (restliche Breite), rechts bei Screenshots die Vorschaubilder, senkrecht mittig.
+   Ohne Screenshots steht der Knopf allein und die Zeile sieht aus wie zuvor. */
+.run-group-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .run-group-head {
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
   gap: 4px;
   width: 100%;
+  min-width: 0;
   padding: 2px 4px;
   border: 0;
   border-radius: var(--radius-control);
@@ -41,13 +50,22 @@
   gap: 8px;
 }
 
-/* Vorschaubilder unter dem Aufruf, zu dem sie gehören */
-.run-shot-row {
+/* Eintrag mit Vorschaubildern am rechten Ende (TranscriptEntryView mit `aside`): links die Karte des Aufrufs, rechts
+   die Bilder auf Höhe ihrer Kopfzeile (36 px), auch wenn die Karte aufgeklappt ist */
+.tx-entry.has-aside {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: -2px 0 0 26px;
-  list-style: none;
+  align-items: flex-start;
+  gap: 8px;
+}
+.tx-entry.has-aside > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+.tx-aside {
+  flex: none;
+  display: flex;
+  align-items: center;
+  min-height: 36px;
 }
 
 .run-empty {

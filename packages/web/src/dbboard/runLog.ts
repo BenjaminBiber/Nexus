@@ -28,16 +28,16 @@ export function tagged(line: string): Tagged | null {
   return { time: m[1]!, kind: m[2]!, ...(m[3] ? { ref: m[3] } : {}), text: m[4]!, ...(detail !== undefined ? { detail } : {}) };
 }
 
-// Kopf des Dispatchers kompakt: ohne Präfix, Zeitstempel und den langen Aufruf von Claude
+/** Zeile „<Agent> startet in <Ordner> (<Art>)“ – Agent, Ticket und Art stehen schon im Ticket und im Kopf des Laufs */
+const START_LINE = /^\S+ startet in .+ \(.+\)$/;
+
+// Kopf des Dispatchers kompakt: ohne Präfix, Zeitstempel, den langen Aufruf von Claude und die Zeile „… startet in …“
 export function compactRunHeader(header: string): string[] {
   return header
     .split('\n')
     .map((l) => l.replace(/\r$/, ''))
     .filter((l) => l.trim() && !/^\[dispatch\] \S+ (?:-p|--)/.test(l) && !/ --output-format /.test(l))
-    .map((l) => {
-      const text = l.replace(DISPATCH, (_m, _iso: string | undefined, rest: string) => rest);
-      const start = /^(\S+) startet in (.+?) \((.+)\)$/.exec(text);
-      if (start) return `${start[1]} · ${start[3]} · ${start[2]!.replace(/\\/g, '/').split('/').filter(Boolean).pop() ?? start[2]}`;
-      return text.replace(/^Profil (\S+): /, 'Profil $1 · ').replace(/, (?![^(]*\))/g, ' · ');
-    });
+    .map((l) => l.replace(DISPATCH, (_m, _iso: string | undefined, rest: string) => rest))
+    .filter((text) => !START_LINE.test(text))
+    .map((text) => text.replace(/^Profil (\S+): /, 'Profil $1 · ').replace(/, (?![^(]*\))/g, ' · '));
 }

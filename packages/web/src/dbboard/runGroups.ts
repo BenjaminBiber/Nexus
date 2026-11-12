@@ -3,8 +3,8 @@ import type { TranscriptEntry } from '../api/sessionDetailTypes.js';
 import { toolDisplayName } from '../components/sessions/toolDisplay.js';
 import type { RunItem } from './runItems.js';
 
-/** Ab so vielen unauffälligen Tool-Aufrufen in Folge wird gefaltet */
-export const GROUP_MIN_TOOLS = 3;
+/** Ab so vielen unauffälligen Tool-Aufrufen in Folge wird gefaltet: schon zwei hintereinander werden eine Zeile */
+export const GROUP_MIN_TOOLS = 2;
 /** So viele Tools nennt die Beschriftung einer Gruppe höchstens */
 const MAX_LABEL_TOOLS = 4;
 
@@ -15,10 +15,11 @@ function shotsByCall(shots: DispatchRunShotDto[]): Map<string, DispatchRunShotDt
   return byCall;
 }
 
-// Unauffällig: Nachgedacht sowie ein Aufruf mit Ergebnis, ohne Fehler und ohne Screenshot
-function quiet(entry: TranscriptEntry, byCall: Map<string, DispatchRunShotDto[]>): boolean {
+// Unauffällig: Nachgedacht sowie ein Aufruf mit Ergebnis und ohne Fehler – auch wenn Screenshots an ihm hängen (die
+// zeigt dann die Zeile der Gruppe)
+function quiet(entry: TranscriptEntry): boolean {
   if (entry.kind === 'thinking') return true;
-  return entry.kind === 'tool' && entry.result !== null && !entry.result.isError && !byCall.has(entry.id);
+  return entry.kind === 'tool' && entry.result !== null && !entry.result.isError;
 }
 
 // „7 Schritte · 4× Read · 2× Grep …“: Tools in der Reihenfolge ihres ersten Auftretens
@@ -47,8 +48,9 @@ function openLastGroup(items: RunItem[]): void {
   }
 }
 
-// Macht aus den Einträgen eines Laufs die Zeilen des Verlaufs: lange Folgen unauffälliger Schritte werden eine Gruppe,
-// alles andere bleibt eine eigene Zeile und trägt die Screenshots seines Aufrufs
+// Macht aus den Einträgen eines Laufs die Zeilen des Verlaufs: Folgen unauffälliger Schritte (ab `GROUP_MIN_TOOLS`
+// Aufrufen) werden eine Gruppe mit den Screenshots ihrer Aufrufe, alles andere bleibt eine eigene Zeile und trägt die
+// Screenshots seines Aufrufs
 export function groupRunEntries(entries: TranscriptEntry[], shots: DispatchRunShotDto[], running: boolean): RunItem[] {
   const byCall = shotsByCall(shots);
   const list = entries[0]?.kind === 'prompt' ? entries.slice(1) : entries;
@@ -61,13 +63,16 @@ export function groupRunEntries(entries: TranscriptEntry[], shots: DispatchRunSh
   // Schließt die laufende Folge ab: als Gruppe oder, wenn sie zu kurz ist, als einzelne Zeilen
   const close = () => {
     const tools = run.filter((entry) => entry.kind === 'tool').length;
-    if (tools >= GROUP_MIN_TOOLS) items.push({ type: 'group', key: `group:${run[0]!.id}`, entries: run, tools, label: groupLabel(run), open: false });
-    else run.forEach(single);
+    if (tools >= GROUP_MIN_TOOLS) {
+      const calls = new Set(run.filter((entry) => entry.kind === 'tool').map((entry) => entry.id));
+      const groupShots = shots.filter((shot) => calls.has(shot.toolUseId));
+      items.push({ type: 'group', key: `group:${run[0]!.id}`, entries: run, tools, label: groupLabel(run), open: false, shots: groupShots });
+    } else run.forEach(single);
     run = [];
   };
 
   for (const entry of list) {
-    if (quiet(entry, byCall)) {
+    if (quiet(entry)) {
       run.push(entry);
     } else {
       close();

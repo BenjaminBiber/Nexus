@@ -1,9 +1,18 @@
-/* Screenshots eines Agent-Laufs: Vorschaubild, Leiste über dem Verlauf, Großansicht */
+/* Screenshots eines Agent-Laufs: kleine Vorschaubilder am Ende einer Zeile (wie in Claude) und die dunkle Großansicht */
+
+/* Vorschaubilder einer Stelle: „+N“, dann die letzten drei Bilder */
+.run-thumbs {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
 .run-thumb {
   display: inline-flex;
+  flex: none;
   padding: 0;
   border: 1px solid var(--line);
-  border-radius: var(--radius-control);
+  border-radius: 4px;
   background: var(--surface-alt);
   cursor: pointer;
   overflow: hidden;
@@ -14,51 +23,163 @@
 }
 .run-thumb img {
   display: block;
-  width: 96px;
-  height: 64px;
+  width: 40px;
+  height: 26px;
   object-fit: cover;
 }
+.run-thumbs-more {
+  flex: none;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+}
+.run-thumbs-more:hover,
+.run-thumbs-more:focus-visible {
+  color: var(--text);
+}
 
-/* Leiste über dem Verlauf */
-.run-shots {
+/* Großansicht: dunkel über das ganze Fenster, unabhängig vom Farbschema */
+.run-viewer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(0 0 0 / 0.92);
+}
+.run-viewer {
+  position: absolute;
+  inset: 0;
+  color: rgb(255 255 255 / 0.85);
+}
+.run-viewer:focus {
+  outline: none;
+}
+.run-viewer-surface {
+  position: absolute;
+  inset: 0;
+}
+
+/* Fläche für das Bild: Rand zum Fenster seitlich 24 px, oben 56 px (Schließen), unten 64 px (Beschriftung, Blätterer).
+   Klicks gehen durch die Fläche auf die dunkle Fläche dahinter, nur das Bild fängt sie. */
+.run-viewer-stage {
+  position: absolute;
+  inset: 56px 24px 64px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 6px 0 8px;
-}
-.run-shots-strip {
-  display: flex;
-  gap: 6px;
-  min-width: 0;
-  overflow-x: auto;
-  padding-bottom: 2px;
-}
-.run-shots-strip .run-thumb {
-  flex: none;
-}
-.run-shots-count {
-  flex: none;
-  font-size: 0.85rem;
-}
-
-/* Großansicht */
-.run-shot-viewer {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  justify-content: center;
+  container-type: size;
+  pointer-events: none;
 }
 .run-shot-full {
   display: block;
   max-width: 100%;
-  max-height: 70vh;
-  margin: 0 auto;
+  max-height: 100%;
   object-fit: contain;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--surface-alt);
+  border-radius: 8px;
+  pointer-events: auto;
 }
-.run-shot-nav {
-  display: flex;
+/* Geladen: so groß wie die Fläche es im Seitenverhältnis des Bildes erlaubt, aber nie größer als das Bild selbst;
+   der Rahmen liegt genau am Bild */
+.run-shot-full.fitted {
+  width: min(100cqw, 100cqh * var(--shot-ratio), var(--shot-width));
+  height: auto;
+}
+
+/* Knöpfe der Großansicht: nur Icon, ohne Fläche */
+.run-viewer-btn {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: rgb(255 255 255 / 0.85);
+  cursor: pointer;
+}
+.run-viewer-btn:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+}
+.run-viewer-btn:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.85);
+  outline-offset: 2px;
+}
+.run-viewer-btn:disabled {
+  color: rgb(255 255 255 / 0.3);
+  cursor: default;
+}
+.run-viewer-btn .material-icons {
+  font-size: 24px;
+}
+.run-viewer-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+}
+
+/* Unten links: Tool und Zeitpunkt */
+.run-viewer-caption {
+  position: absolute;
+  left: 24px;
+  bottom: 18px;
+  display: flex;
+  align-items: baseline;
   gap: 8px;
+  max-width: calc(50% - 120px);
+  margin: 0;
+  /* Absätze haben sonst die Textfarbe des Farbschemas: im hellen Schema dunkel auf dunkel */
+  color: rgb(255 255 255 / 0.85);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.run-viewer-tool {
+  min-width: 0;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.run-viewer-time {
+  flex: none;
+  color: rgb(255 255 255 / 0.55);
+}
+
+/* Unten mittig: „‹ 2 von 5 ›“ */
+.run-viewer-nav {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transform: translateX(-50%);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.run-viewer-count {
+  min-width: 56px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Schmales Fenster: Beschriftung über dem Blätterer statt daneben */
+@media (max-width: 640px) {
+  .run-viewer-stage {
+    bottom: 96px;
+  }
+  .run-viewer-caption {
+    left: 16px;
+    right: 16px;
+    bottom: 56px;
+    max-width: none;
+    justify-content: center;
+  }
 }

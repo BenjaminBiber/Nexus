@@ -79,7 +79,7 @@ describe('Formen', () => {
     const tool: ToolEntry = { kind: 'tool', id: 'toolu_1', at: SHOT.at, name: 'Read', summary: 'a.ts', input: null, result: null };
     const items: RunItem[] = [
       { type: 'entry', key: tool.id, entry: tool, shots: [SHOT] },
-      { type: 'group', key: 'group:toolu_1', entries: [tool], tools: 1, label: '1 Schritt · 1× Read', open: false },
+      { type: 'group', key: 'group:toolu_1', entries: [tool], tools: 1, label: '1 Schritt · 1× Read', open: false, shots: [SHOT] },
     ];
     expect(run.durationMs).toBe(720000);
     expect(items.map((item) => item.type)).toEqual(['entry', 'group']);

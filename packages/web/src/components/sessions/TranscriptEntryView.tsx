@@ -1,4 +1,4 @@
-import { memo, useId, useState } from 'react';
+import { memo, useId, useState, type ReactNode } from 'react';
 import type { TranscriptEntry } from '../../api/sessionDetailTypes.js';
 import { MarkdownView } from '../../markdown/MarkdownView.js';
 import { formatClock, formatDateTime, formatNumber, formatSeconds } from '../../sessions/format.js';
@@ -139,14 +139,17 @@ function SystemEntry({ entry }: { entry: Entry<'system'> }) {
 }
 
 // Ein Eintrag des Verlaufs. Memo: beim Nachladen bleiben bekannte Einträge dieselben Objekte und rendern nicht neu.
-export const TranscriptEntryView = memo(function TranscriptEntryView({ entry }: { entry: TranscriptEntry }) {
+// `aside` steht rechts neben dem Eintrag (z. B. Screenshots eines Aufrufs im Agent-Lauf); ohne bleibt das Markup schlicht.
+export const TranscriptEntryView = memo(function TranscriptEntryView({ entry, aside }: { entry: TranscriptEntry; aside?: ReactNode }) {
+  const hasAside = aside !== undefined && aside !== null && aside !== false;
   return (
-    <li className={`tx-entry ${entry.kind}`} data-kind={entry.kind}>
+    <li className={`tx-entry ${entry.kind}${hasAside ? ' has-aside' : ''}`} data-kind={entry.kind}>
       {entry.kind === 'prompt' && <PromptEntry entry={entry} />}
       {entry.kind === 'text' && <TextEntry entry={entry} />}
       {entry.kind === 'thinking' && <ThinkingEntry entry={entry} />}
       {entry.kind === 'tool' && <ToolEntry entry={entry} />}
       {entry.kind === 'system' && <SystemEntry entry={entry} />}
+      {hasAside && <div className="tx-aside">{aside}</div>}
     </li>
   );
 });

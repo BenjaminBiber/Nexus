@@ -13,8 +13,23 @@ import { fakeApi, transcriptPage } from './helpers/fakeApi.js';
 
 vi.mock('mermaid', () => ({ default: { initialize: vi.fn(), render: vi.fn(async () => ({ svg: '<svg></svg>' })) } }));
 afterEach(cleanup);
+afterEach(() => vi.unstubAllGlobals());
 
-const NEW = 'ARC-0001-20261016-101500.log';
+// ResizeObserver-Attrappe (jsdom hat keinen): merkt sich die Rückrufe; die zurückgegebene Funktion meldet eine Größenänderung
+function stubResizeObserver(): () => void {
+  const callbacks = new Set<() => void>();
+  class FakeResizeObserver {
+    private readonly callback: () => void;
+    constructor(callback: () => void) { this.callback = callback; }
+    observe() { callbacks.add(this.callback); }
+    unobserve() {}
+    disconnect() { callbacks.delete(this.callback); }
+  }
+  vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+  return () => { for (const callback of [...callbacks]) callback(); };
+}
+
+const NEW ='ARC-0001-20261016-101500.log';
 const OLD = 'ARC-0001-20261015-090000-merge.log';
 const AT = '2026-10-16T08:16:00.000Z';
 const run = (name: string, kind: DispatchRunLogDto['kind'], running: boolean, extra: Partial<DispatchRunLogDto> = {}): DispatchRunLogDto =>
@@ -81,7 +96,8 @@ describe('AgentRuns (Live)', () => {
   it('lädt alle 3 s nach, solange ein Lauf läuft, und hört danach auf; der Zeitgeber endet beim Schließen', async () => {
     let running = true;
     let body = '09:00:01  [start] Claude startet (opus)\n';
-    const getDispatchRuns = vi.fn(async () => [run(NEW, 'work', running)]);
+    // Nach dem Ende steht das Ergebnis schon in der Liste: es gibt nichts mehr, worauf zu warten wäre
+    const getDispatchRuns = vi.fn(async () => [run(NEW, 'work', running, running ? {} : { outcome: 'done', durationMs: 600_000 })]);
     const getDispatchRunLog = vi.fn(async (name: string) => parts(name, body));
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
@@ -99,7 +115,7 @@ describe('AgentRuns (Live)', () => {
       running = false;
       body += '09:10:00  [done] fertig, 3 Schritte, 10 min\n';
       await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
-      expect(await screen.findByText('beendet')).toBeTruthy();
+      expect(await screen.findByText('erledigt')).toBeTruthy();
       expect(await screen.findByText(/fertig, 3 Schritte/)).toBeTruthy();
       const calls = getDispatchRuns.mock.calls.length;
       await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
@@ -152,6 +168,190 @@ describe('AgentRuns (Live)', () => {
       await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
       await screen.findByText('Zeile-3');
       expect(top).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('lädt nach dem Laufende weiter nach, bis Ergebnis und Dauer da sind, und zeigt sie ohne Neuladen', async () => {
+    let current = run(NEW, 'work', true);
+    const getDispatchRuns = vi.fn(async () => [current]);
+    const getDispatchRunLog = vi.fn(async (name: string) => parts(name, say('09:00:01', 'Fertig.')));
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      render(
+        <ApiProvider api={fakeApi({ getDispatchRuns, getDispatchRunLog })}>
+          <AgentRuns id="ARC-0001" />
+        </ApiProvider>,
+      );
+      expect(await screen.findByText('läuft')).toBeTruthy();
+      // Der Prozess ist beendet, der Dispatcher hat den Lauf noch nicht ausgewertet
+      current = run(NEW, 'work', false);
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+      expect(await screen.findByText('beendet')).toBeTruthy();
+      const ended = getDispatchRuns.mock.calls.length;
+      const logs = getDispatchRunLog.mock.calls.length;
+      await act(async () => { await vi.advanceTimersByTimeAsync(9000); });
+      expect(getDispatchRuns.mock.calls.length).toBeGreaterThanOrEqual(ended + 2);
+      // Solange nur gewartet wird, bleibt das Protokoll in Ruhe
+      expect(getDispatchRunLog).toHaveBeenCalledTimes(logs);
+      // Ergebnis eingetragen: Kopf zeigt es ohne Neuladen, das Protokoll des offenen Laufs lädt einmal nach
+      current = run(NEW, 'work', false, { outcome: 'done', durationMs: 600_000 });
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+      expect(await screen.findByText('erledigt')).toBeTruthy();
+      expect(screen.getByText(formatDuration(600_000))).toBeTruthy();
+      expect(getDispatchRunLog).toHaveBeenCalledTimes(logs + 1);
+      const settled = getDispatchRuns.mock.calls.length;
+      await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
+      expect(getDispatchRuns).toHaveBeenCalledTimes(settled);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('gibt das Warten auf das Ergebnis nach 90 s auf', async () => {
+    let running = true;
+    const getDispatchRuns = vi.fn(async () => [run(NEW, 'work', running)]);
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      render(
+        <ApiProvider api={fakeApi({ getDispatchRuns, getDispatchRunLog: async (name: string) => parts(name, say('09:00:01', 'Fertig.')) })}>
+          <AgentRuns id="ARC-0001" />
+        </ApiProvider>,
+      );
+      expect(await screen.findByText('läuft')).toBeTruthy();
+      running = false;
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+      expect(await screen.findByText('beendet')).toBeTruthy();
+      const ended = getDispatchRuns.mock.calls.length;
+      // Kurz vor der Obergrenze wird noch nachgeladen
+      await act(async () => { await vi.advanceTimersByTimeAsync(80_000); });
+      expect(getDispatchRuns.mock.calls.length).toBeGreaterThanOrEqual(ended + 20);
+      // Danach ist Schluss, auch ohne Ergebnis
+      await act(async () => { await vi.advanceTimersByTimeAsync(20_000); });
+      const capped = getDispatchRuns.mock.calls.length;
+      await act(async () => { await vi.advanceTimersByTimeAsync(15_000); });
+      expect(getDispatchRuns).toHaveBeenCalledTimes(capped);
+      expect(screen.getByText('beendet')).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('beendet das Warten auf das Ergebnis bei Ticketwechsel und beim Schließen', async () => {
+    let running = true;
+    // ARC-0001 endet ohne Ergebnis; ARC-0002 hat nur einen längst beendeten Lauf
+    const getDispatchRuns = vi.fn(async (id: string) => (id === 'ARC-0001' ? [run(NEW, 'work', running)] : [run(OLD, 'merge', false)]));
+    const getDispatchRunLog = async (name: string) => parts(name, say('09:00:01', 'Fertig.'));
+    const view = (id: string) => (
+      <ApiProvider api={fakeApi({ getDispatchRuns, getDispatchRunLog })}>
+        <AgentRuns id={id} />
+      </ApiProvider>
+    );
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const first = render(view('ARC-0001'));
+      expect(await screen.findByText('läuft')).toBeTruthy();
+      running = false;
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+      expect(await screen.findByText('beendet')).toBeTruthy();
+      // Anderes Ticket: einmal laden, danach Ruhe – auch für das alte Ticket
+      first.rerender(view('ARC-0002'));
+      await screen.findByText(/Merge-Agent vom/);
+      const switched = getDispatchRuns.mock.calls.length;
+      expect(getDispatchRuns.mock.calls[switched - 1]).toEqual(['ARC-0002']);
+      await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
+      expect(getDispatchRuns).toHaveBeenCalledTimes(switched);
+      first.unmount();
+
+      // Geschlossen, während auf das Ergebnis gewartet wird: kein weiteres Nachladen
+      running = true;
+      const second = render(view('ARC-0001'));
+      expect(await screen.findByText('läuft')).toBeTruthy();
+      running = false;
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+      expect(await screen.findByText('beendet')).toBeTruthy();
+      const waitingCalls = getDispatchRuns.mock.calls.length;
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+      expect(getDispatchRuns.mock.calls.length).toBeGreaterThan(waitingCalls);
+      second.unmount();
+      const closed = getDispatchRuns.mock.calls.length;
+      await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
+      expect(getDispatchRuns).toHaveBeenCalledTimes(closed);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('wartet nicht auf das Ergebnis eines Laufs, der beim Öffnen schon beendet war', async () => {
+    const getDispatchRuns = vi.fn(async () => [run(NEW, 'work', false)]);
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      render(
+        <ApiProvider api={fakeApi({ getDispatchRuns, getDispatchRunLog: async (name: string) => parts(name, say('09:00:01', 'Fertig.')) })}>
+          <AgentRuns id="ARC-0001" />
+        </ApiProvider>,
+      );
+      expect(await screen.findByText('beendet')).toBeTruthy();
+      await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
+      expect(getDispatchRuns).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('folgt dem Ende, wenn der Verlauf nach dem Zeichnen noch wächst – außer hochgescrollt oder kurz nach einem Klick', async () => {
+    const resize = stubResizeObserver();
+    render(
+      <ApiProvider api={fakeApi({
+        getDispatchRuns: async () => [run(NEW, 'work', false, { outcome: 'done' })],
+        getDispatchRunLog: async (name: string) => parts(name, say('09:00:01', 'Zeile-1')),
+      })}>
+        <AgentRuns id="ARC-0001" />
+      </ApiProvider>,
+    );
+    const scroll = (await screen.findByText('Zeile-1')).closest<HTMLElement>('.run-scroll')!;
+    // jsdom rechnet kein Layout: Höhe und Scrollstand von Hand
+    let height = 400;
+    let top = 350;
+    Object.defineProperty(scroll, 'scrollHeight', { configurable: true, get: () => height });
+    Object.defineProperty(scroll, 'clientHeight', { configurable: true, get: () => 50 });
+    Object.defineProperty(scroll, 'scrollTop', { configurable: true, get: () => top, set: (v: number) => { top = v; } });
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      // Solange der Verlauf dem Ende folgt, verschiebt der Browser den Scrollstand nicht von sich aus (Scroll-Verankerung
+      // aus) – sonst sähe das Wachsen des Inhalts aus wie Scrollen des Nutzers
+      expect(scroll.style.overflowAnchor).toBe('none');
+      // Die Einträge bekommen ihre echte Höhe erst nach dem ersten Sprung ans Ende: der Verlauf springt nach
+      height = 900;
+      act(() => resize());
+      expect(top).toBe(900);
+      // Das Scroll-Ereignis des eigenen Sprungs kommt erst an, nachdem der Inhalt weiter gewachsen ist: kein Hochscrollen
+      height = 1000;
+      fireEvent.scroll(scroll);
+      act(() => resize());
+      expect(top).toBe(1000);
+      // Hochgescrollt: die Stelle bleibt, und der Browser hält sie wieder selbst
+      top = 100;
+      fireEvent.scroll(scroll);
+      expect(scroll.style.overflowAnchor).toBe('');
+      height = 1200;
+      act(() => resize());
+      expect(top).toBe(100);
+      // Wieder am Ende, dann im Verlauf geklickt (etwas aufgeklappt): die Ansicht bleibt stehen …
+      top = 1150;
+      fireEvent.scroll(scroll);
+      expect(scroll.style.overflowAnchor).toBe('none');
+      fireEvent.click(screen.getByText('Zeile-1'));
+      height = 1500;
+      act(() => resize());
+      expect(top).toBe(1150);
+      expect(scroll.style.overflowAnchor).toBe('');
+      // … und folgt danach nicht mehr, denn das Ende liegt jetzt weiter unten
+      vi.setSystemTime(Date.now() + 1000);
+      height = 1800;
+      act(() => resize());
+      expect(top).toBe(1150);
     } finally {
       vi.useRealTimers();
     }
@@ -267,11 +467,11 @@ describe('AgentRuns (Transcript)', () => {
     expect(screen.getByText('Zeitlimit nach 60 min').className).toBe('run-abort-reason');
   });
 
-  it('zeigt Screenshots als Leiste und am Aufruf und öffnet die Großansicht', async () => {
+  it('zeigt Screenshots im Kopf des offenen Laufs und am Aufruf und öffnet die Großansicht', async () => {
     const entries = [text('x1', 'Ich sehe mir die Seite an.'), tool('t9', 'mcp__browser__screenshot', 'Startseite')];
     render(
       <ApiProvider api={fakeApi({
-        getDispatchRuns: async () => [run(NEW, 'work', false, { outcome: 'done' })],
+        getDispatchRuns: async () => [run(NEW, 'work', false, { outcome: 'done', durationMs: 60_000 })],
         getDispatchRunLog: async (name: string) => parts(name, ''),
         getDispatchRunTranscript: async () => transcriptPage(entries),
         getDispatchRunShots: async () => [SHOT],
@@ -279,16 +479,60 @@ describe('AgentRuns (Transcript)', () => {
         <AgentRuns id="ARC-0001" />
       </ApiProvider>,
     );
-    const strip = await screen.findByRole('group', { name: 'Screenshots des Laufs' });
-    expect(within(strip).getByText('1 Screenshot')).toBeTruthy();
-    const thumbs = screen.getAllByRole('button', { name: 'Screenshot 1 von 1 vergrößern' });
-    expect(thumbs).toHaveLength(2);
-    expect(thumbs.some((thumb) => thumb.closest('.run-shot-row') !== null)).toBe(true);
-    await userEvent.click(within(strip).getByRole('button', { name: 'Screenshot 1 von 1 vergrößern' }));
+    const head = await screen.findByRole('group', { name: 'Screenshots des Laufs' });
+    const details = document.querySelector<HTMLDetailsElement>('details.agent-run')!;
+    const summary = details.querySelector('summary')!;
+    // Im Kopf ganz rechts, hinter Dauer und Modell; keine Leiste über dem Verlauf
+    expect(head.closest('summary')).toBe(summary);
+    expect(head.parentElement!.classList.contains('run-head-shots')).toBe(true);
+    expect(summary.lastElementChild).toBe(head.parentElement);
+    expect(head.parentElement!.previousElementSibling!.classList.contains('run-facts')).toBe(true);
+    expect(document.querySelector('.run-shots')).toBeNull();
+    expect(document.querySelector('.run-shot-row')).toBeNull();
+    // Am Aufruf in dessen Zeile
+    const call = screen.getByRole('group', { name: 'Screenshots des Aufrufs' });
+    expect(call.closest('.tx-entry.has-aside')).not.toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Screenshot 1 von 1 vergrößern' })).toHaveLength(2);
+
+    // Ein Klick auf das Bild im Kopf öffnet die Großansicht und lässt den Lauf offen
+    await userEvent.click(within(head).getByRole('button', { name: 'Screenshot 1 von 1 vergrößern' }));
     const dialog = screen.getByRole('dialog', { name: 'Screenshot 1 von 1' });
     expect(dialog.querySelector('img.run-shot-full')!.getAttribute('src')).toBe(`/shots/${NEW}/001.png`);
+    expect(dialog.querySelector('.run-viewer-caption')!.textContent).toContain('browser · screenshot');
+    expect(details.open).toBe(true);
     await userEvent.click(within(dialog).getByRole('button', { name: 'Schließen' }));
     expect(screen.queryByRole('dialog')).toBeNull();
+    expect(details.open).toBe(true);
+
+    // Zugeklappt: keine Bilder im Kopf
+    await userEvent.click(within(summary).getByText(/Lauf vom/));
+    await waitFor(() => expect(details.open).toBe(false));
+    await waitFor(() => expect(screen.queryByRole('group', { name: 'Screenshots des Laufs' })).toBeNull());
+    expect(summary.querySelector('.run-head-shots')!.childElementCount).toBe(0);
+  });
+
+  it('lässt im Kopf des Dispatchers die Zeile „… startet in …“ weg', async () => {
+    const header = (rest: string[]) => ['[dispatch] 2026-10-21T12:12:10.282Z junior-ARC-0001 startet in C:/wt/ARC-0001 (Umsetzung)', ...rest].join('\n');
+    const log = (name: string, head: string): DispatchRunLogPartsDto => ({ name, header: head, prompt: null, body: say('09:00:01', 'Fertig.') });
+    render(
+      <ApiProvider api={fakeApi({ getDispatchRuns: async () => [run(NEW, 'work', false)], getDispatchRunLog: async (name: string) => log(name, header([])) })}>
+        <AgentRuns id="ARC-0001" />
+      </ApiProvider>,
+    );
+    await screen.findByText('Fertig.');
+    expect(document.querySelector('.agent-run-head')).toBeNull();
+    expect(screen.queryByText(/junior-ARC-0001/)).toBeNull();
+    cleanup();
+    render(
+      <ApiProvider api={fakeApi({
+        getDispatchRuns: async () => [run(NEW, 'work', false)],
+        getDispatchRunLog: async (name: string) => log(name, header(['[dispatch] Profil standard: Modell opus, Effort low'])),
+      })}>
+        <AgentRuns id="ARC-0001" />
+      </ApiProvider>,
+    );
+    await screen.findByText('Fertig.');
+    expect(document.querySelector('.agent-run-head')!.textContent).toBe('Profil standard · Modell opus · Effort low');
   });
 
   it('öffnet das unveränderte Protokoll über „Rohprotokoll“', async () => {
