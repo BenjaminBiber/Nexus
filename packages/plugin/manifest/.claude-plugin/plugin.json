@@ -1,7 +1,7 @@
 {
   "name": "nexus",
   "displayName": "Nexus",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Board, Specs, Worktrees und Session-Übersicht für parallele Claude-Sessions; speist Kommentare aus dem Board in die Session ein.",
   "author": { "name": "User" },
   "license": "MIT",

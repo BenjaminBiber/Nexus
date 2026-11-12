@@ -14,6 +14,18 @@
 
 ### Sonstiges
 
+## 0.2.0 – 2026-11-12
+
+### Vertrag
+
+- Keine Änderungen.
+
+### Angekündigt
+
+- Keine.
+
+### Sonstiges
+
 - Der Abhängigkeitsgraph zeigt je Ticket, wie viele Schritte erledigt sind (`3/7` und Balken wie
   auf der Board-Karte), und lädt bei Änderungen am beobachteten Board leise nach; Zoom und
   Ausschnitt bleiben dabei stehen. `GET /api/db/graph` liefert dafür je Knoten `stepsDone` und
