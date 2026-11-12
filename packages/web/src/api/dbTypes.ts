@@ -89,6 +89,8 @@ export interface DbGraphNodeDto {
   id: string; title: string; status: DbStatus; column: DbColumnId; boardId: number; boardName: string; spec: string | null;
   /** Direkter Nachbar außerhalb des Umfangs (andere Spec oder anderes Board) */
   external: boolean;
+  /** Erledigte und alle Schritte (0/0 ohne Schritte) */
+  stepsDone: number; stepsTotal: number;
 }
 
 /** Kante „to setzt from voraus“ */

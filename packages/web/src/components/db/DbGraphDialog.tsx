@@ -2,6 +2,7 @@ import { useId, useMemo, useState, type PointerEvent, type ReactNode } from 'rea
 import { useApi } from '../../api/ApiContext.js';
 import { DB_COLUMN_LABELS, type DbColumnId, type DbGraphScope } from '../../api/dbTypes.js';
 import { useAsync } from '../../hooks/useAsync.js';
+import { useLiveHandler } from '../../live/useLive.js';
 import { ZOOM_STEP } from '../../markdown/diagramView.js';
 import { usePanZoom } from '../../markdown/usePanZoom.js';
 import { DbGraphSvg, graphSize } from './DbGraphSvg.js';
@@ -33,6 +34,7 @@ function keyOf(scope: DbGraphScope): string {
 // Abhängigkeitsgraph im Dialog: Kopfzeile mit Kennzahlen, Umschalter zwischen Ticket, Spec und Board, Erledigte ein- und ausblenden,
 // Zoom/Verschieben und einklappbare Legende.
 // Ein Klick auf einen Knoten öffnet das Ticket über onOpenTicket.
+// Live-Meldungen des beobachteten Boards laden den Graphen leise nach; Zoom und Ausschnitt bleiben, solange sich seine Größe nicht ändert.
 export function DbGraphDialog({ scopes, initial = 0, onClose, onOpenTicket }: {
   scopes: GraphScopeOption[];
   initial?: number;
@@ -47,7 +49,11 @@ export function DbGraphDialog({ scopes, initial = 0, onClose, onOpenTicket }: {
   const key = keyOf(scope);
   const graph = useAsync(() => api.getDbGraph(scope, showDone), [api, key, showDone]);
   const data = graph.state.status === 'ready' ? graph.state.data : null;
-  const size = useMemo(() => (data ? graphSize(data) : { w: 1, h: 1 }), [data]);
+  // Schritte abgehakt, Status gewechselt: im Hintergrund nachladen und bei einem Fehler den bisherigen Graphen behalten
+  useLiveHandler({ onDbBoard: () => void graph.refresh(), onReset: () => void graph.refresh() });
+  const measured = useMemo(() => (data ? graphSize(data) : { w: 1, h: 1 }), [data]);
+  // Nur eine neue Größe passt neu ein; neue Daten gleicher Größe lassen Zoom und Ausschnitt stehen
+  const size = useMemo(() => ({ w: measured.w, h: measured.h }), [measured.w, measured.h]);
   const { stage, view, fit, zoomCentered, actualSize, onKeyDown, stageProps } = usePanZoom(size);
   const [showLegend, setShowLegend] = useState(true);
 

@@ -1,13 +1,36 @@
 import { useId, useMemo, useState, type KeyboardEvent } from 'react';
-import { DB_COLUMN_LABELS, type DbGraphDto } from '../../api/dbTypes.js';
+import { DB_COLUMN_LABELS, type DbGraphDto, type DbGraphNodeDto } from '../../api/dbTypes.js';
 import { NODE_HEIGHT, NODE_WIDTH, edgePath, layoutGraph } from '../../dbboard/graphLayout.js';
 
 /** Zeichen des Titels, die in einen Knoten passen */
 const TITLE_CHARS = 26;
+/** Innenabstand links und rechts im Knoten */
+const INSET = 16;
+/** Fortschrittsbalken der Schritte am unteren Knotenrand */
+const STEPS_BAR = { y: NODE_HEIGHT - 10, width: NODE_WIDTH - 2 * INSET, height: 3 };
 
 // Kürzt einen Titel mit Auslassungszeichen
 function short(text: string): string {
   return text.length > TITLE_CHARS ? `${text.slice(0, TITLE_CHARS - 1)}…` : text;
+}
+
+// Vorgelesener Fortschritt der Schritte, leer ohne Schritte
+function stepsLabel(n: DbGraphNodeDto): string {
+  return n.stepsTotal > 0 ? `${n.stepsDone} von ${n.stepsTotal} Schritten erledigt` : '';
+}
+
+// Erledigte Schritte als Zahl in der ID-Zeile und als Balken am unteren Rand, wie auf der Board-Karte; ohne Schritte nichts
+function StepsProgress({ done, total }: { done: number; total: number }) {
+  if (!(total > 0)) return null;
+  const complete = done >= total;
+  const fill = Math.round((STEPS_BAR.width * Math.min(done, total)) / total);
+  return (
+    <g className={`dep-graph-steps${complete ? ' is-complete' : ''}`}>
+      <text className="dep-graph-steps-text" x={NODE_WIDTH - INSET} y={25} textAnchor="end">{`${done}/${total}`}</text>
+      <rect className="dep-graph-steps-track" x={INSET} y={STEPS_BAR.y} width={STEPS_BAR.width} height={STEPS_BAR.height} rx={STEPS_BAR.height / 2} />
+      <rect className="dep-graph-steps-fill" x={INSET} y={STEPS_BAR.y} width={fill} height={STEPS_BAR.height} rx={STEPS_BAR.height / 2} />
+    </g>
+  );
 }
 
 // Layout aller Knoten über die kreisfreien Kanten (Kreis-Kanten werden nur gezeichnet); dieselbe Eingabe für Größe und Zeichnung
@@ -21,8 +44,8 @@ export function graphSize(graph: DbGraphDto): { w: number; h: number } {
   return { w: Math.max(1, l.width), h: Math.max(1, l.height) };
 }
 
-// Abhängigkeitsgraph als SVG: Knoten in der Statusfarbe des Boards (data-status = Spalte), Kanten „setzt voraus“,
-// kritischer Pfad und Kreis-Kanten hervorgehoben. Knoten sind per Tastatur erreichbar; Klick, Enter oder Leertaste öffnen das Ticket.
+// Abhängigkeitsgraph als SVG: Knoten in der Statusfarbe des Boards (data-status = Spalte) mit dem Fortschritt ihrer Schritte,
+// Kanten „setzt voraus“, kritischer Pfad und Kreis-Kanten hervorgehoben. Knoten sind per Tastatur erreichbar; Klick, Enter oder Leertaste öffnen das Ticket.
 // Hover oder Fokus auf einem Knoten markiert seine Voraussetzungs- und Abhängigen-Kanten samt Nachbarn; der Rest tritt zurück.
 export function DbGraphSvg({ graph, current, onOpen }: { graph: DbGraphDto; current?: string; onOpen: (id: string) => void }) {
   const layout = useMemo(() => layoutOf(graph), [graph]);
@@ -81,6 +104,7 @@ export function DbGraphSvg({ graph, current, onOpen }: { graph: DbGraphDto; curr
           n.id === hovered ? 'is-hovered' : hovered ? (neighbors.has(n.id) ? 'is-neighbor' : 'is-dimmed') : '']
           .filter(Boolean).join(' ');
         const where = n.external ? ` – Board ${n.boardName}` : '';
+        const steps = stepsLabel(n);
         return (
           <g
             key={n.id}
@@ -90,7 +114,7 @@ export function DbGraphSvg({ graph, current, onOpen }: { graph: DbGraphDto; curr
             transform={`translate(${box.x}, ${box.y})`}
             role="button"
             tabIndex={0}
-            aria-label={`${n.id} ${n.title} – ${DB_COLUMN_LABELS[n.column]}${critical.has(n.id) ? ', kritischer Pfad' : ''}${where}`}
+            aria-label={`${n.id} ${n.title} – ${DB_COLUMN_LABELS[n.column]}${critical.has(n.id) ? ', kritischer Pfad' : ''}${steps ? `, ${steps}` : ''}${where}`}
             onClick={() => onOpen(n.id)}
             onKeyDown={(event) => onKey(event, n.id)}
             onMouseEnter={() => setHovered(n.id)}
@@ -98,11 +122,12 @@ export function DbGraphSvg({ graph, current, onOpen }: { graph: DbGraphDto; curr
             onFocus={() => setHovered(n.id)}
             onBlur={() => setHovered((h) => (h === n.id ? null : h))}
           >
-            <title>{`${n.id} ${n.title}\n${DB_COLUMN_LABELS[n.column]} · Board ${n.boardName}${n.spec ? ` · ${n.spec}` : ''}`}</title>
+            <title>{`${n.id} ${n.title}\n${DB_COLUMN_LABELS[n.column]} · Board ${n.boardName}${n.spec ? ` · ${n.spec}` : ''}${steps ? `\n${steps}` : ''}`}</title>
             <rect className="dep-graph-box" width={NODE_WIDTH} height={NODE_HEIGHT} rx={8} />
             <rect className="dep-graph-stripe" width={4} height={NODE_HEIGHT} clipPath={`url(#${clipId})`} />
-            <text className="dep-graph-id" x={16} y={25}>{n.id}</text>
-            <text className="dep-graph-title" x={16} y={46}>{short(n.title)}</text>
+            <text className="dep-graph-id" x={INSET} y={25}>{n.id}</text>
+            <text className="dep-graph-title" x={INSET} y={46}>{short(n.title)}</text>
+            <StepsProgress done={n.stepsDone} total={n.stepsTotal} />
           </g>
         );
       })}

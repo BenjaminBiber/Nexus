@@ -37,7 +37,7 @@ pub enum GraphRequest {
     },
 }
 
-/// Ein Knoten mit dem Namen seines Boards
+/// Ein Knoten mit dem Namen seines Boards und dem Fortschritt seiner Schritte
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "board.ts")]
@@ -46,6 +46,9 @@ pub struct GraphNodeView {
     #[ts(flatten)]
     pub node: GraphNode,
     pub board_name: String,
+    /// Erledigte und alle Schritte (0/0 ohne Schritte), wie auf der Board-Karte
+    pub steps_done: i32,
+    pub steps_total: i32,
 }
 
 /// Ein Graph, wie die Oberfläche ihn bekommt
@@ -143,17 +146,24 @@ impl<D: BoardDatabase> DependencyGraphService<D> {
                     )
                 }
             };
+            let ids: Vec<String> = result.nodes.iter().map(|node| node.id.clone()).collect();
+            let progress = u.steps().progress(&ids).await?;
             Ok(DependencyGraphView {
                 scope,
                 nodes: result
                     .nodes
                     .into_iter()
-                    .map(|node| GraphNodeView {
-                        board_name: board_names
-                            .get(&node.board_id)
-                            .map_or("?", String::as_str)
-                            .to_string(),
-                        node,
+                    .map(|node| {
+                        let steps = progress.get(&node.id);
+                        GraphNodeView {
+                            board_name: board_names
+                                .get(&node.board_id)
+                                .map_or("?", String::as_str)
+                                .to_string(),
+                            steps_done: steps.map_or(0, |steps| steps.done),
+                            steps_total: steps.map_or(0, |steps| steps.total),
+                            node,
+                        }
                     })
                     .collect(),
                 edges: result.edges,
@@ -224,7 +234,7 @@ impl<D: BoardDatabase> DependencyGraphService<D> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::board::types::Ticket;
+    use crate::board::types::{Ticket, TicketStep};
     use crate::testing::BoardFixture;
 
     /// Board „Sprint“ mit A ← B, Board „Zweites“ mit C ← B; B und C gehören zur Spec 001-login.
@@ -347,6 +357,41 @@ mod tests {
                 .map(|node| node.node.id.as_str())
                 .collect::<Vec<_>>(),
             ["ARC-0001", "ARC-0002", "ARC-0003"]
+        );
+    }
+
+    #[tokio::test]
+    async fn knoten_tragen_den_fortschritt_ihrer_schritte() {
+        let (f, _second) = setup().await;
+        let step = |text: &str, done: bool| TicketStep {
+            text: text.into(),
+            done,
+            detail: None,
+        };
+        let steps = vec![step("eins", true), step("zwei", true), step("drei", false)];
+        crate::tx!(f.db, [steps], |u| {
+            u.steps().replace("ARC-0002", &steps).await
+        })
+        .await
+        .unwrap();
+
+        let g = f
+            .graph
+            .build(
+                &GraphRequest::Ticket {
+                    id: "ARC-0002".into(),
+                },
+                None,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(
+            g.nodes
+                .iter()
+                .map(|node| (node.node.id.as_str(), node.steps_done, node.steps_total))
+                .collect::<Vec<_>>(),
+            [("ARC-0001", 0, 0), ("ARC-0002", 2, 3), ("ARC-0003", 0, 0)]
         );
     }
 

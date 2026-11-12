@@ -119,9 +119,13 @@ export type GraphNode = { id: string, title: string, status: TicketStatus, colum
 external: boolean, };
 
 /**
- * Ein Knoten mit dem Namen seines Boards
+ * Ein Knoten mit dem Namen seines Boards und dem Fortschritt seiner Schritte
  */
-export type GraphNodeView = { boardName: string, id: string, title: string, status: TicketStatus, column: BoardColumn, boardId: number, spec: string | null, 
+export type GraphNodeView = { boardName: string, 
+/**
+ * Erledigte und alle Schritte (0/0 ohne Schritte), wie auf der Board-Karte
+ */
+stepsDone: number, stepsTotal: number, id: string, title: string, status: TicketStatus, column: BoardColumn, boardId: number, spec: string | null, 
 /**
  * Direkter Nachbar außerhalb des Umfangs (andere Spec oder anderes Board)
  */
