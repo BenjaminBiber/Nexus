@@ -405,7 +405,10 @@ async fn runs(State(state): State<Arc<AppState>>, query: QueryMap) -> ApiResult<
         .filter(|ticket| !ticket.is_empty())
         .ok_or_else(|| ApiError::new("input-invalid", "ticket (Ticket- oder Fragen-ID) fehlt."))?
         .to_string();
-    Ok(json(&state.dispatch.ticket_runs(&ticket).await?))
+    let runs = state.dispatch.ticket_runs(&ticket).await?;
+    Ok(json(
+        &crate::dispatch::run_facts::with_facts(&state, runs).await,
+    ))
 }
 
 /// `GET /api/dispatch/runs/{name}`: ein Lauf-Protokoll, zerlegt

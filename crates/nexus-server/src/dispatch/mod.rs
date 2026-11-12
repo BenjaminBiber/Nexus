@@ -21,6 +21,7 @@ pub mod research_runner;
 pub mod result_envelope;
 pub mod result_handler;
 pub mod review_service;
+pub mod run_facts;
 pub mod run_recorder;
 pub mod scheduler;
 pub mod service;
