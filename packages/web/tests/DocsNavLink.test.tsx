@@ -3,6 +3,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { cleanup, screen } from '@testing-library/react';
 import type { DocFileDto } from '../src/api/types.js';
 import { DocsNavLink } from '../src/components/DocsNavLink.js';
+import { NavCountsProvider } from '../src/hooks/useNavCounts.js';
 import { fakeApi } from './helpers/fakeApi.js';
 import { FakeEventSource } from './helpers/FakeEventSource.js';
 import { renderWithApp } from './helpers/renderWithApp.js';
@@ -21,7 +22,11 @@ const docs: DocFileDto[] = [
 // Rendert den Menüpunkt „Docs“ mit gefälschter API
 function open() {
   const api = fakeApi({ getDocs: async () => ({ source: { root: 'C:/repo', boardId: 1, boardName: 'Sprint', reason: null }, docs }) });
-  renderWithApp(<DocsNavLink pid="p1" />, { api, path: '/p/p1/board', route: '/p/:pid/board' });
+  renderWithApp(
+    <NavCountsProvider pid="p1">
+      <DocsNavLink pid="p1" />
+    </NavCountsProvider>,
+{ api, path: '/p/p1/board', route: '/p/:pid/board' });
 }
 
 describe('DocsNavLink', () => {

@@ -1,0 +1,39 @@
+{
+  "id": "gta",
+  "name": "GTA",
+  "version": "1.0.0",
+  "author": "Nexus",
+  "sdkVersion": "^1.2",
+  "colorScheme": "dark",
+  "startColor": "#0b0d0f",
+  "preview": "assets/preview.png",
+  "slots": ["Shell", "NavIcon", "Icon", "Progress", "StartAnimation"],
+  "permissions": { "network": [] },
+  "settingsSchema": {
+    "style": {
+      "type": "select",
+      "label": "Stil",
+      "hint": "Rahmen im Look von GTA V (Pausenmenü) oder San Andreas (Menüliste)",
+      "options": [
+        { "value": "v", "label": "GTA V" },
+        { "value": "sa", "label": "San Andreas" }
+      ],
+      "default": "v"
+    },
+    "accent": {
+      "type": "select",
+      "label": "Akzentfarbe",
+      "hint": "Farbe der Auswahl in Menü und Reitern",
+      "options": [
+        { "value": "blau", "label": "Blau" },
+        { "value": "gruen", "label": "Grün" },
+        { "value": "orange", "label": "Orange" }
+      ],
+      "default": "blau"
+    },
+    "radar": { "type": "boolean", "label": "Radar", "hint": "Minimap bzw. Radar unten links mit den Tickets des Boards", "default": true },
+    "banners": { "type": "boolean", "label": "Banner", "hint": "Mission Passed, Busted, Wasted und Handy-Meldungen zu neuen Fragen", "default": true },
+    "boot": { "type": "boolean", "label": "Ladebildschirm", "hint": "Ladebildschirm beim Öffnen der Oberfläche", "default": true },
+    "cheats": { "type": "boolean", "label": "Cheats", "hint": "Tastenfolgen wie HESOYAM; ändern nur die Anzeige", "default": true }
+  }
+}

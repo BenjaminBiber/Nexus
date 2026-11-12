@@ -14,6 +14,17 @@
 
 ### Sonstiges
 
+- Neues Theme „GTA“ 1.0.0 im Theme-Store (`themes/gta/`, Code-Theme) mit zwei umschaltbaren Stilen:
+  GTA V (Pausenmenü mit Reiterzeile, HUD und eckiger Minimap) und San Andreas (Menüliste,
+  gotischer Seitentitel, HUD-Block und rundes Radar). Der Rahmen zeigt den Stand des Boards als
+  Spiel: Spielgeld für erledigte Tickets und Schritte, Sterne für blockierte Tickets, Balken für
+  Fortschritt und Claude-Kontingent, Tickets als Punkte auf dem Radar; Banner melden Mission
+  Passed, Busted und Wasted, das Handy neue Fragen, und Cheats wie HESOYAM ändern nur die Anzeige.
+  Eigene Schriften im Paket (OFL 1.1, Yellowtail Apache 2.0) samt den Lizenztexten in
+  `assets/fonts/licenses.json`, kein Originalmaterial des Spiels.
+- Der Theme-Host füllt jetzt `NavItem.badge` mit den Zählern für Meine Aufgaben, Fragen und Docs.
+  Dadurch zeigen auch die Themes Minecraft, Synthwave und Terminal diese Zähler erstmals an.
+
 ## 0.1.3 – 2026-11-11
 
 ### Vertrag

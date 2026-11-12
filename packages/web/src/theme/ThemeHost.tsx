@@ -8,6 +8,7 @@ import type { UsageOverviewDto } from '../api/usageTypes.js';
 import { REFRESH_MS, USAGE_SETTING_EVENT } from '../components/ClaudeUsageMeter.js';
 import { useBoardProject } from '../dbboard/boardProject.js';
 import { currentBoard, useBoardChoices } from '../dbboard/useBoardChoices.js';
+import { useNavCounts } from '../hooks/useNavCounts.js';
 import { NAV_ITEMS } from './navItems.js';
 import { applyTheme, currentTheme } from './theme.js';
 import { useDisplayedTheme } from './useDisplayedTheme.js';
@@ -69,7 +70,8 @@ function useHostSettings(): SettingsState {
 }
 
 // Stellt den Themes über die Hooks des SDK Navigation, Boards, Verbrauch, Einstellungen, Farbschema, Routenwechsel, Suche
-// und die fertigen Bausteine des Rahmens bereit; braucht BoardProjectProvider, Router und ApiProvider darüber
+// und die fertigen Bausteine des Rahmens bereit; braucht BoardProjectProvider, Router und ApiProvider darüber, für die
+// Zähler der Navigation NavCountsProvider
 export function NexusThemeHost({ pid, parts, openSearch, children }: { pid: string; parts: ShellParts; openSearch: () => void; children: ReactNode }) {
   const routerNavigate = useNavigate();
   const { pathname } = useLocation();
@@ -80,13 +82,15 @@ export function NexusThemeHost({ pid, parts, openSearch, children }: { pid: stri
   const themeId = useDisplayedTheme();
   const themeSettings = useThemeSettingsState(themeId);
 
+  const badges = useNavCounts();
   const nav = useMemo(
     () =>
       NAV_ITEMS.map(({ id, label }) => {
         const href = `/p/${pid}/${id}`;
-        return { id, label, href, active: pathname === href || pathname.startsWith(`${href}/`) };
+        const badge = badges[id];
+        return { id, label, href, active: pathname === href || pathname.startsWith(`${href}/`), ...(badge ? { badge } : {}) };
       }),
-    [pid, pathname],
+    [pid, pathname, badges],
   );
   const { state, choose } = choices;
   const shown = context?.shown ?? null;
