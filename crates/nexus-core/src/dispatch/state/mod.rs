@@ -8,6 +8,7 @@ pub mod log;
 pub mod log_outcome;
 pub mod log_splitter;
 pub mod review_store;
+pub mod run_files;
 pub mod run_store;
 pub mod state_store;
 pub mod usage_history;
@@ -19,6 +20,7 @@ pub use log::{DispatchLog, RunLogEntry};
 pub use log_outcome::{RunLogOutcome, RunOutcome, RunState};
 pub use log_splitter::{RunLogParts, RunLogSplitter, RUN_LOG_OUTPUT_MARKER, RUN_LOG_PROMPT_MARKER};
 pub use review_store::{ReviewEntry, ReviewStore};
+pub use run_files::{RunFiles, RunSession, RunShot, MAX_SHOTS, MAX_SHOT_BYTES};
 pub use run_store::{RunEnd, RunRecord, RunStore};
 pub use state_store::{
     DispatchState, DispatchStateStore, MergeEntry, MergePhase, PlanningAutoState, PlanningEntry,
