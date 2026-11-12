@@ -255,6 +255,21 @@
     "pattern": "/api/db/tickets/:id/timeline"
   },
   {
+    "file": "crates/nexus-server/src/routes/dispatch_runs.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/runs/:name/shots"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch_runs.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/runs/:name/shots/:file"
+  },
+  {
+    "file": "crates/nexus-server/src/routes/dispatch_runs.rs",
+    "method": "GET",
+    "pattern": "/api/dispatch/runs/:name/transcript"
+  },
+  {
     "file": "crates/nexus-server/src/routes/dispatch_suggestions.rs",
     "method": "GET",
     "pattern": "/api/dispatch/suggestions"
