@@ -13,10 +13,10 @@ export type RunLogRow =
   | { type: 'output'; lines: string[] };
 
 const TAGGED = /^(\d\d:\d\d:\d\d) {2}\[(start|say|read|edit|search|test|run|todo|tool|ok|fail|done|abort)(?:#([^\]]+))?\] ?([^\t]*)(?:\t(".*"))?$/;
-const TIMED = /^(\d\d:\d\d:\d\d) {2}(.*)$/;
-const DISPATCH = /^\[dispatch\] (?:(\d{4}-\d\d-\d\dT[\d:.]+Z) )?(.*)$/;
+export const TIMED = /^(\d\d:\d\d:\d\d) {2}(.*)$/;
+export const DISPATCH = /^\[dispatch\] (?:(\d{4}-\d\d-\d\dT[\d:.]+Z) )?(.*)$/;
 
-interface Tagged {
+export interface Tagged {
   time: string;
   kind: string;
   ref?: string;
@@ -25,7 +25,7 @@ interface Tagged {
 }
 
 // Zerlegt eine getaggte Zeile („HH:MM:SS  [art#ref] text<TAB>"detail"“, siehe StreamEventFormatter im Core); sonst null
-function tagged(line: string): Tagged | null {
+export function tagged(line: string): Tagged | null {
   const m = TAGGED.exec(line);
   if (!m) return null;
   let detail: string | undefined;
