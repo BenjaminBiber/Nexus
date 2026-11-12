@@ -18,8 +18,7 @@ use nexus_core::clock::iso;
 use nexus_core::dispatch::autopilot::autopilot_for;
 use nexus_core::dispatch::config::AUTOPILOT_PREFIX;
 use nexus_core::dispatch::{
-    limit_pause, markers, MergeEntry, MergePhase, RunEnd, RunKind, RunRecord, SetupFailure,
-    SETUP_REASON_PREFIX,
+    limit_pause, markers, MergeEntry, RunEnd, RunKind, RunRecord, SetupFailure, SETUP_REASON_PREFIX,
 };
 use nexus_core::Result;
 
@@ -276,22 +275,9 @@ impl<'a> ResultHandler<'a> {
             ctx.stores
                 .state
                 .update(|state| {
-                    state.merges.insert(
-                        id.clone(),
-                        MergeEntry {
-                            ticket_id: id.clone(),
-                            branch,
-                            phase: MergePhase::Pending,
-                            session_used: false,
-                            sessions: 0,
-                            wait_noted: false,
-                            target: None,
-                            target_head: None,
-                            conflict_seen: None,
-                            held_by: None,
-                            since,
-                        },
-                    );
+                    state
+                        .merges
+                        .insert(id.clone(), MergeEntry::pending(id.clone(), branch, since));
                 })
                 .await?;
             ctx.log(&format!("erledigt {} – Merge vorgemerkt", detail.ticket.id));

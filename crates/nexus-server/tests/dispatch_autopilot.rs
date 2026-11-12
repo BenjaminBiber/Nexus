@@ -328,7 +328,14 @@ async fn branch_den_es_im_repo_nicht_gibt_bleibt_still() {
     assert!(first.merged.is_empty() && second.merged.is_empty());
     assert_eq!(catch_up_comments(&f, &id).await, 0);
     assert_eq!(f.ticket(&id).await.status, TicketStatus::Done);
-    assert!(f.ctx.stores.state.read().expect("Zustand").merges.is_empty());
+    assert!(f
+        .ctx
+        .stores
+        .state
+        .read()
+        .expect("Zustand")
+        .merges
+        .is_empty());
 }
 
 #[tokio::test]

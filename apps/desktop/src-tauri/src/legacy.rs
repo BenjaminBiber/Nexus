@@ -53,7 +53,10 @@ pub fn init() {
             binary.display()
         ),
         Ok(false) => {}
-        Err(err) => log::warn!("Startdateien in {} nicht umgeleitet: {err}", alt_bin.display()),
+        Err(err) => log::warn!(
+            "Startdateien in {} nicht umgeleitet: {err}",
+            alt_bin.display()
+        ),
     }
 }
 
@@ -71,10 +74,18 @@ mod tests {
     #[test]
     fn leitet_den_alten_startordner_auf_das_binary_neben_der_app_um() {
         let benutzer = Path::new("/u");
-        let auswahl = umleitung(&env(&[]), benutzer, &benutzer.join(".nexus"), Path::new("/app"));
+        let auswahl = umleitung(
+            &env(&[]),
+            benutzer,
+            &benutzer.join(".nexus"),
+            Path::new("/app"),
+        );
         assert_eq!(
             auswahl,
-            Some((benutzer.join(".harness").join("bin"), Path::new("/app").join(BINARY_NAME)))
+            Some((
+                benutzer.join(".harness").join("bin"),
+                Path::new("/app").join(BINARY_NAME)
+            ))
         );
     }
 
@@ -95,7 +106,12 @@ mod tests {
     #[test]
     fn ist_der_nexus_ordner_noch_harness_wird_nicht_umgeleitet() {
         let benutzer = Path::new("/u");
-        let auswahl = umleitung(&env(&[]), benutzer, &benutzer.join(".harness"), Path::new("/app"));
+        let auswahl = umleitung(
+            &env(&[]),
+            benutzer,
+            &benutzer.join(".harness"),
+            Path::new("/app"),
+        );
         assert_eq!(auswahl, None);
     }
 }

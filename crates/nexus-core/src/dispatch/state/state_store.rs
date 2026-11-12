@@ -72,6 +72,25 @@ pub struct MergeEntry {
     pub since: String,
 }
 
+impl MergeEntry {
+    /// Neuer, vorgemerkter Merge-Auftrag; der nächste Merge-Durchlauf nimmt ihn auf
+    pub fn pending(ticket_id: String, branch: String, since: String) -> Self {
+        Self {
+            ticket_id,
+            branch,
+            phase: MergePhase::Pending,
+            session_used: false,
+            sessions: 0,
+            wait_noted: false,
+            target: None,
+            target_head: None,
+            conflict_seen: None,
+            held_by: None,
+            since,
+        }
+    }
+}
+
 /// Recherche-Läufe einer Frage
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -228,5 +247,25 @@ impl DispatchStateStore {
         let text = serde_json::to_string_pretty(&state).map_err(Error::unexpected)?;
         self.writer.write(&file, &text)?;
         Ok(state)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pending_merkt_einen_frischen_merge_vor() {
+        let entry = MergeEntry::pending("AIH-0001".into(), "ticket/a".into(), "jetzt".into());
+        assert_eq!(entry.ticket_id, "AIH-0001");
+        assert_eq!(entry.branch, "ticket/a");
+        assert_eq!(entry.phase, MergePhase::Pending);
+        assert!(!entry.session_used && !entry.wait_noted);
+        assert_eq!(entry.sessions, 0);
+        assert_eq!(entry.target, None);
+        assert_eq!(entry.target_head, None);
+        assert_eq!(entry.conflict_seen, None);
+        assert_eq!(entry.held_by, None);
+        assert_eq!(entry.since, "jetzt");
     }
 }
