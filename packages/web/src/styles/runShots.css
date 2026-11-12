@@ -1,0 +1,20 @@
+/* Screenshots eines Agent-Laufs: Vorschaubild, Leiste über dem Verlauf, Großansicht */
+.run-thumb {
+  display: inline-flex;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-alt);
+  cursor: pointer;
+  overflow: hidden;
+}
+.run-thumb:hover,
+.run-thumb:focus-visible {
+  border-color: var(--accent);
+}
+.run-thumb img {
+  display: block;
+  width: 96px;
+  height: 64px;
+  object-fit: cover;
+}
