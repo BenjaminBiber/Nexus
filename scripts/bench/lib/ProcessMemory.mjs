@@ -1,6 +1,12 @@
 import { spawnSync } from 'node:child_process';
 
-// Speicherbedarf eines fremden Prozesses in MB (Resident Set Size). Unter Windows über PowerShell, sonst über `ps`.
+// Obergrenze je Abfrage; ein hängender Befehl ergibt null statt den Aufrufer zu blockieren
+const TIMEOUT_MS = 30000;
+
+// Kindprozess ohne Eingabe und ohne Konsolenfenster, damit im Hintergrund nichts aufblitzt
+const SPAWN_OPTIONS = { encoding: 'utf8', windowsHide: true, timeout: TIMEOUT_MS, stdio: ['ignore', 'pipe', 'ignore'] };
+
+// Speicherbedarf eines fremden Prozesses in MB (Resident Set Size). Unter Windows über `tasklist`, sonst über `ps`.
 export class ProcessMemory {
   // runner nur für Tests austauschbar; Standard ist spawnSync
   constructor(runner = spawnSync, platform = process.platform) {
@@ -22,18 +28,29 @@ export class ProcessMemory {
 
   // macOS und Linux: `ps -o rss= -p <pid>` liefert Kilobyte
   unix(pid) {
-    const result = this.runner('ps', ['-o', 'rss=', '-p', String(pid)], { encoding: 'utf8' });
+    const result = this.runner('ps', ['-o', 'rss=', '-p', String(pid)], SPAWN_OPTIONS);
     const kb = Number((result.stdout ?? '').trim());
-    if (result.status !== 0 || !Number.isFinite(kb) || kb <= 0) return null;
-    return kb * 1024;
+    return result.status === 0 ? positiveKb(kb) : null;
   }
 
-  // Windows: WorkingSet64 in Bytes; ohne Konsolenfenster, damit im Hintergrund nichts aufblitzt
+  // Windows: Arbeitsspeicher (Working Set) in KB aus `tasklist`. Kein PowerShell: dessen Kaltstart lädt .NET
+  // und braucht auf einer frischen CI-Maschine mitunter Minuten.
   windows(pid) {
-    const command = `$p = Get-Process -Id ${pid} -ErrorAction SilentlyContinue; if ($p) { $p.WorkingSet64 }`;
-    const result = this.runner('powershell', ['-NoProfile', '-Command', command], { encoding: 'utf8', windowsHide: true });
-    const bytes = Number((result.stdout ?? '').trim());
-    if (result.status !== 0 || !Number.isFinite(bytes) || bytes <= 0) return null;
-    return bytes;
+    const result = this.runner('tasklist', ['/FI', `PID eq ${pid}`, '/FO', 'CSV', '/NH'], SPAWN_OPTIONS);
+    if (result.status !== 0) return null;
+    // Zeilen wie "node.exe","123","Console","1","51.200 K"; ohne Treffer nur ein Hinweistext
+    for (const line of (result.stdout ?? '').split(/\r?\n/)) {
+      const fields = line.trim().replace(/^"|"$/g, '').split('","');
+      if (fields.length < 5 || fields[1] !== String(pid)) continue;
+      // Tausendertrenner und Einheit hängen von der Sprache ab; es zählen nur die Ziffern
+      const digits = fields[fields.length - 1].replace(/\D/g, '');
+      return digits === '' ? null : positiveKb(Number(digits));
+    }
+    return null;
   }
+}
+
+// Kilobyte als Bytes; null für alles, was kein positiver Wert ist
+function positiveKb(kb) {
+  return Number.isFinite(kb) && kb > 0 ? kb * 1024 : null;
 }
