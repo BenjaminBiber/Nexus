@@ -14,6 +14,12 @@
 
 ### Sonstiges
 
+- 0.3.0 ist nicht erschienen: Die CI des Release-Laufs war rot (Clippy auf Linux und macOS, zwei
+  wackelige Oberflächentests). 0.3.1 bringt alle Änderungen aus 0.3.0 mit, sie stehen im Changelog
+  unter 0.3.0.
+- Spracherkennung: Fehlt das Logo eines Dienstes, bleibt die Kachel mit Kürzel jetzt auch dann
+  stehen, wenn das Bild schon beim ersten Laden scheitert.
+
 ## 0.3.0 – 2026-11-16
 
 ### Vertrag
