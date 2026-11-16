@@ -45,5 +45,8 @@ async fn save(
         )
         .into());
     };
-    Ok(json(&state.theme_settings.put(&id, values)?))
+    let saved = state.theme_settings.put(&id, values)?;
+    // Das Claude-Theme des aktiven Themes übernimmt die neuen Werte
+    state.claude_theme.reconcile_if_active(&id).await;
+    Ok(json(&saved))
 }

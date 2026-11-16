@@ -14,7 +14,7 @@ function copyThemeFiles(): Plugin {
       outDir = resolve(config.root, config.build.outDir);
     },
     closeBundle() {
-      for (const name of ['manifest.json', 'theme.css', 'assets']) {
+      for (const name of ['manifest.json', 'theme.css', 'assets', 'claude']) {
         if (existsSync(join(root, name))) cpSync(join(root, name), join(outDir, name), { recursive: true });
       }
     },

@@ -142,6 +142,7 @@ export function fakeApi(overrides: Partial<Record<keyof ApiClient, unknown>> = {
     getThemeSettings: async () => ({}),
     saveThemeSettings: async (_id: string, values: Record<string, boolean | string>) => values,
     listThemes: async () => [],
+    getClaudeTheme: async () => ({ enabled: true, state: 'none' as const, path: '/home/ada/.claude/skills/nexus-theme' }),
     listSnippets: async () => [],
     listStoreRepos: async () => [],
     getStoreIndex: async () => ({ entries: [], repos: [] }),

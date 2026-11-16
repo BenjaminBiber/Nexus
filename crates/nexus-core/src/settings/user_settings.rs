@@ -138,6 +138,8 @@ pub struct UserSettings {
     pub hero_images: bool,
     /// Farbschema der Oberfläche
     pub theme: ThemeMode,
+    /// Claude Desktop übernimmt das Claude-Theme des aktiven Themes (falls es eins mitbringt)
+    pub claude_theme: bool,
     /// Claude-Nutzungslimits über das Anmelde-Token auslesen (Ring in der Seitenleiste);
     /// bewusst aus, bis es jemand einschaltet
     pub claude_usage: bool,
@@ -171,6 +173,7 @@ impl Default for UserSettings {
             notifications: NotificationMode::Off,
             hero_images: false,
             theme: ThemeMode::system(),
+            claude_theme: true,
             claude_usage: false,
             compact_cards: false,
             hide_not_needed: false,
@@ -199,6 +202,7 @@ mod tests {
                 "notifications": "off",
                 "heroImages": false,
                 "theme": "system",
+                "claudeTheme": true,
                 "claudeUsage": false,
                 "compactCards": false,
                 "hideNotNeeded": false,

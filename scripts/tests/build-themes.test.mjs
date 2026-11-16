@@ -144,7 +144,11 @@ describe('build-themes', () => {
     });
     expect(result.status, result.stderr).toBe(0);
     expect(readdirSync(out)).toContain('win95.nexus');
-    expect(zipEntries(readFileSync(join(out, 'win95.nexus')))).toEqual(['assets/preview.png', 'main.js', 'manifest.json', 'theme.css']);
+    const entries = zipEntries(readFileSync(join(out, 'win95.nexus')));
+    expect(entries.filter((entry) => !entry.startsWith('claude/'))).toEqual(['assets/preview.png', 'main.js', 'manifest.json', 'theme.css']);
+    // Das Claude-Theme kommt aus dist/claude mit ins Paket
+    expect(entries).toContain('claude/hooks/hooks.json');
+    expect(entries).toContain('claude/hooks/register.tsx');
   });
 
   it('legt ohne Themes einen leeren Ausgabeordner an', () => {

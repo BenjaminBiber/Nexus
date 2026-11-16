@@ -27,6 +27,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "claudeTheme": true,
         "claudeUsage": true,
         "compactCards": false,
         "doneArchiveDays": 0,

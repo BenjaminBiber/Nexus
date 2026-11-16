@@ -6,6 +6,7 @@
 pub mod accounts;
 pub mod board_db;
 pub mod board_runtime;
+pub mod claude_theme;
 pub mod config;
 pub mod conflict;
 pub mod dispatch;
@@ -233,6 +234,8 @@ async fn serve_listening(state: Arc<AppState>, listener: TcpListener) -> Result<
     state.telegram.start(state.shutdown.clone()).await;
 
     install_bundled_themes(&state).await;
+    // Nach den mitgelieferten Themes: das aktive könnte gerade aktualisiert worden sein
+    state.claude_theme.reconcile().await;
 
     let router = routes::build_router(state.clone());
     let shutdown = state.shutdown.clone();

@@ -65,6 +65,11 @@
     "pattern": "/api/accounts/names"
   },
   {
+    "file": "crates/nexus-server/src/routes/claude_theme.rs",
+    "method": "GET",
+    "pattern": "/api/claude-theme"
+  },
+  {
     "file": "crates/nexus-server/src/routes/db_boards.rs",
     "method": "GET",
     "pattern": "/api/db/active"

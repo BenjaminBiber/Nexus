@@ -89,6 +89,8 @@ pub struct AppState {
     pub snippets: SnippetStore,
     /// Eigene Einstellungen der Themes (`theme-settings.json`)
     pub theme_settings: ThemeSettingsStore,
+    /// Legt das Claude-Theme des aktiven Themes in `<Claude-Konfiguration>/skills/nexus-theme/`
+    pub claude_theme: crate::claude_theme::ClaudeThemeSync,
     /// Die Store-Repos des Nutzers (`store/repos.json`)
     pub store_repos: StoreRepoStore,
     /// Lädt die Index-Dateien der Store-Repos (`/api/themes/store/index`)
@@ -232,6 +234,18 @@ impl AppState {
             false => AccountPaths::from_process_env(),
         };
         let store = AccountStore::with_paths(config.home.clone(), paths.clone());
+        // Das Claude-Theme gehört in den Konfigurationsordner, den Claude Desktop liest
+        // (`CLAUDE_CONFIG_DIR`, sonst `~/.claude`); Tests biegen ihn über `setup` um, der
+        // Vertragsmodus legt ihn in den Benutzerordner des Servers
+        let claude_config_dir = match config.is_contract() {
+            true => config.home.dir().join(".claude"),
+            false => config.setup.claude_dir(),
+        };
+        let claude_theme = crate::claude_theme::ClaudeThemeSync::new(
+            config.home.clone(),
+            &claude_config_dir,
+            ServerLog::new(&config.home),
+        );
         let account_usage = config.account_usage.clone().unwrap_or_else(|| {
             Arc::new(AccountUsageService::with_options(
                 Arc::new(AccountStore::with_paths(config.home.clone(), paths.clone())),
@@ -339,6 +353,7 @@ impl AppState {
             favorites,
             snippets: SnippetStore::with_clock(config.home.clone(), config.clock.clone()),
             theme_settings: ThemeSettingsStore::new(config.home.clone()),
+            claude_theme,
             store_repos: StoreRepoStore::with_clock(config.home.clone(), config.clock.clone())
                 .with_defaults(&config.default_store_repos),
             store_index,

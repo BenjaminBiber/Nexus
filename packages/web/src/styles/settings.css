@@ -452,6 +452,9 @@
 .theme-chip svg { width: 12px; height: 12px; stroke-width: 2.2; }
 .theme-chip.official { background: var(--status-bg); color: var(--status-fg); }
 .theme-chip.with-code { background: var(--waiting-bg); color: var(--waiting-fg); }
+.theme-chip.claude { background: var(--status-bg); color: var(--status-fg); }
+.theme-chip .material-icons, .store-pill .material-icons { font-size: 13px; }
+.claude-theme-warn { color: var(--waiting-fg); }
 .theme-remove { position: relative; z-index: 2; flex: none; margin: -6px -4px -6px 0; }
 .theme-remove .material-icons { font-size: 19px; }
 .theme-remove:hover:not(:disabled) { color: var(--blocked-fg); background: var(--blocked-bg); }
@@ -530,6 +533,7 @@
 .store-pill { display: inline-flex; align-items: center; padding: 3px 9px; border: 1px solid; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .store-pill.is-ok { color: var(--ok-fg); background: var(--running-bg); border-color: var(--answered-line); }
 .store-pill.is-error { color: var(--blocked-fg); background: var(--blocked-bg); border-color: var(--connection-line); }
+.store-pill.is-claude { gap: 4px; align-self: flex-start; color: var(--status-fg); background: var(--status-bg); border-color: transparent; }
 .store-pill.is-warn { align-self: flex-start; color: var(--text-soft); background: var(--idle-bg); border-color: var(--line); }
 .store-status-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); background: var(--surface); }
 .store-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; }

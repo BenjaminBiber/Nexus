@@ -22,7 +22,7 @@ import type { AccountListDto, ClaudeUsageDto, UsageOverviewDto } from './usageTy
 import type {
   SpeechStatusDto, SpeechTestDto, TelegramConfig, TelegramConfigInput, TelegramPairingDto, TelegramProfileDto, TelegramStatusDto, TelegramTestDto,
 } from './telegramTypes.js';
-import type { ThemeManifest } from './generated/themes.js';
+import type { ClaudeThemeStatus, ThemeManifest } from './generated/themes.js';
 
 // Base64 in Stücken: String.fromCharCode mit Millionen Argumenten sprengt den Stapel
 function toBase64(bytes: Uint8Array): string {
@@ -403,6 +403,11 @@ export class ApiClient {
   async installTheme(file: Blob | ArrayBuffer): Promise<ThemeManifest> {
     const bytes = new Uint8Array(file instanceof Blob ? await file.arrayBuffer() : file);
     return this.request('POST', '/api/themes/install', { data: toBase64(bytes) });
+  }
+
+  // Zustand des Claude-Themes in Claude Desktop (Slot skills/nexus-theme)
+  getClaudeTheme(): Promise<ClaudeThemeStatus> {
+    return this.request('GET', '/api/claude-theme');
   }
 
   // Entfernt ein installiertes Theme

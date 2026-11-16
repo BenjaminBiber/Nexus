@@ -1,4 +1,4 @@
-// Paket: Vite-Build nach dist/ mit main.js (ESM, export default), manifest.json, theme.css und den Schriften; React und SDK
+// Paket: Vite-Build nach dist/ mit main.js (ESM, export default), manifest.json, theme.css, den Schriften und claude/; React und SDK
 // bleiben extern. Dazu der Aufbau von theme.css: gemeinsamer Teil, GTA V und San Andreas mit denselben Tokens.
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -94,10 +94,12 @@ describe('GTA-Theme-Paket', () => {
     expect(main).not.toContain('useSyncExternalStore');
   });
 
-  it('legt manifest.json, theme.css und die Schriften neben main.js', () => {
+  it('legt manifest.json, theme.css, die Schriften und das Claude-Theme neben main.js', () => {
     expect(JSON.parse(readFileSync(join(dist, 'manifest.json'), 'utf8')).id).toBe('gta');
     expect(readFileSync(join(dist, 'theme.css'), 'utf8')).toBe(css());
     expect(readdirSync(join(dist, 'assets', 'fonts')).sort()).toEqual(readdirSync(join(root, 'assets', 'fonts')).sort());
+    // Das Claude-Theme reist im Paket mit; mit claudeTheme verlangt Nexus claude/hooks/hooks.json
+    expect(readdirSync(join(dist, 'claude', 'hooks')).sort()).toEqual(readdirSync(join(root, 'claude', 'hooks')).sort());
     expect(existsSync(join(dist, 'src'))).toBe(false);
   });
 
@@ -106,9 +108,10 @@ describe('GTA-Theme-Paket', () => {
     expect(manifest).toMatchObject({
       id: 'gta',
       name: 'GTA',
-      version: '1.0.0',
+      version: '1.1.0',
       author: 'Nexus',
-      sdkVersion: '^1.2',
+      sdkVersion: '^1.3',
+      claudeTheme: true,
       colorScheme: 'dark',
       startColor: '#0b0d0f',
       permissions: { network: [] },
@@ -281,9 +284,10 @@ describe('GTA-Theme-Paket', () => {
     }
   });
 
-  it('vite.config.ts gleicht der Vorlage', () => {
+  it('vite.config.ts gleicht der Vorlage, nur dass claude/ (das Claude-Theme) mit nach dist/ kommt', () => {
+    const template = readFileSync(join(root, '..', '_template', 'vite.config.ts'), 'utf8');
     expect(readFileSync(join(root, 'vite.config.ts'), 'utf8')).toBe(
-      readFileSync(join(root, '..', '_template', 'vite.config.ts'), 'utf8'),
+      template.replace("['manifest.json', 'theme.css', 'assets']", "['manifest.json', 'theme.css', 'assets', 'claude']"),
     );
   });
 

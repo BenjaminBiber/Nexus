@@ -80,7 +80,7 @@ describe.each(THEMES)('Paket „$name“', ({ id, name, scheme, palette, start }
 
   it('hat ein Manifest mit Slot Progress, Vorschaubild und ohne Netz', () => {
     const manifest = JSON.parse(read(`${id}/manifest.json`));
-    expect(manifest).toMatchObject({ id, name, colorScheme: scheme, startColor: start, sdkVersion: '^1.2', preview: 'assets/preview.png' });
+    expect(manifest).toMatchObject({ id, name, colorScheme: scheme, startColor: start, sdkVersion: '^1.3', preview: 'assets/preview.png' });
     // Ohne Slot im Manifest lädt Nexus main.js nicht, und das Mermaid-Aussehen gälte nicht
     expect(manifest.slots).toEqual(['Progress']);
     expect(manifest.permissions.network).toEqual([]);

@@ -17,6 +17,8 @@ export type ThemeEntry = {
   scheme: 'light' | 'dark' | 'system';
   /** Ersetzt Teile der Oberfläche mit eigenem Code (Slots) */
   hasCode: boolean;
+  /** Bringt ein Claude-Theme für Claude Desktop mit */
+  claude?: boolean;
   /** URL eines Vorschaubilds aus dem Paket */
   image?: string;
   palette: ThemePalette;
@@ -69,6 +71,12 @@ export function ThemeCard({ theme, active, disabled, onApply, onRemove }: Props)
           <span className="theme-chip">Installiert</span>
         )}
         <span className="theme-chip">{SCHEME_LABEL[theme.scheme]}</span>
+        {theme.claude && (
+          <span className="theme-chip claude" title="Bringt ein Claude-Theme für Claude Desktop mit">
+            <span className="material-icons" aria-hidden="true">auto_awesome</span>
+            Claude
+          </span>
+        )}
         {theme.hasCode && (
           <span className="theme-chip with-code" title="Ersetzt Teile der Oberfläche mit eigenem Code">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7l-5 5 5 5" /><path d="M16 7l5 5-5 5" /></svg>

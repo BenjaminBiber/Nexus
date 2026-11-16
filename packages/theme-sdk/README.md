@@ -4,7 +4,7 @@ Das Theme-SDK beschreibt den Vertrag zwischen der Nexus-Oberfläche (Host) und e
 Stellen ein Theme ersetzen darf (Slots), welche Daten und Bausteine es vom Host bekommt (Hooks und
 Bausteine), welche CSS-Variablen es setzen kann und wie das Manifest aussieht.
 
-Aktuelle Version: `SDK_VERSION` = **1.2.0** (gleich der Paketversion in `package.json`).
+Aktuelle Version: `SDK_VERSION` = **1.3.0** (gleich der Paketversion in `package.json`).
 
 > Dieses README ist die maßgebliche Doku des SDK. `tests/readme.test.ts` prüft, dass jeder Slot,
 > jeder Export und jede CSS-Variable aus `:root` hier genannt ist.
@@ -28,8 +28,22 @@ Ein Theme ist ein ZIP mit der Endung `.nexus`:
 | `theme.css` | ja | Werte der CSS-Variablen und eigene Regeln |
 | `main.js` | nein | ESM-Modul mit der `ThemeDefinition` |
 | `assets/**` | nein | Bilder, Schriften usw. |
+| `claude/**` | nein | Claude-Theme für Claude Desktop (seit 1.3.0, siehe [Claude-Theme](#claude-theme)); nur mit `"claudeTheme": true` im Manifest |
 
 Installierte Themes liegen unter `~/.nexus/themes/<id>/`. Gepackt wird mit `nexus theme pack`.
+
+### Claude-Theme
+
+Ein Theme kann einen passenden Look für Claude Desktop mitbringen. Er liegt als Claude-Code-Mod unter
+`claude/hooks/` im Paket: `hooks.json` (`{ "modules": ["./register.tsx"] }`, Pflicht), `register.tsx`
+und weitere `.ts`/`.tsx`-Dateien. TypeScript ist nur unter `claude/` erlaubt; ein Paket mit `claude/`
+ohne `"claudeTheme": true` (oder umgekehrt ohne `claude/hooks/hooks.json`) lehnt Nexus ab.
+
+Ist das Theme aktiv und die Einstellung „Claude übernimmt das Theme“ an, schreibt Nexus den Mod in
+den Plugin-Ordner `<Claude-Konfiguration>/skills/nexus-theme/` (Claude lädt ihn als
+`nexus-theme@skills-dir`), ergänzt `.claude-plugin/plugin.json` und schreibt
+`claude/hooks/nexus-settings.ts` mit den gewählten Theme-Einstellungen. Die Vorlage und den gemeinsamen
+Ablauf (`registerLook`) liefert `themes/_claude-kit/` im Nexus-Repo; die Themes dort zeigen, wie es geht.
 
 ## Manifest
 
@@ -64,6 +78,7 @@ Installierte Themes liegen unter `~/.nexus/themes/<id>/`. Gepackt wird mit `nexu
 | `slots` | nein | Liste der Slots, die `main.js` ersetzt |
 | `permissions.network` | nein | Domains, die das Theme über den Server-Proxy laden darf |
 | `settingsSchema` | nein | Eigene Einstellungen (siehe [Theme-Einstellungen](#theme-einstellungen)) |
+| `claudeTheme` | nein | `true`, wenn das Paket unter `claude/` ein Claude-Theme mitbringt (seit 1.3.0, siehe [Claude-Theme](#claude-theme)); verlangt `"sdkVersion": "^1.3"` |
 
 ## ThemeDefinition
 
@@ -419,6 +434,7 @@ Das SDK folgt ab 1.0.0 semver. `SDK_VERSION` ist immer gleich der Version in `pa
 
 | Version | Änderung |
 |---|---|
+| 1.3.0 | neu: Manifest-Feld `claudeTheme` und Ordner `claude/**` im Paket (Claude-Theme für Claude Desktop) |
 | 1.2.0 | neu: Slot `Icon` mit `IconName`, Feld `mermaid` der `ThemeDefinition` mit `MermaidLook` |
 | 1.1.0 | neu: `useThemeAsset`, `themeAssetUrl` und die Typen `ThemeAssetOptions`, `ThemeAssetState`, `ThemeAssetError` |
 | 1.0.0 | erste stabile API |

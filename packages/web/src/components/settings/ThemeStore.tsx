@@ -174,6 +174,12 @@ export function ThemeStore({ installed, onInstalled, reloadKey = 0, onManageRepo
                 {repoLabel(e.repoUrl).name}
               </span>
               {e.description && <p className="store-card-desc">{e.description}</p>}
+              {e.claudeTheme && (
+                <span className="store-pill is-claude" title="Bringt ein Claude-Theme für Claude Desktop mit">
+                  <span className="material-icons" aria-hidden="true">auto_awesome</span>
+                  Claude
+                </span>
+              )}
               {!e.compatible && <span className="store-pill is-warn">Nicht kompatibel</span>}
               {isInstalled(e) ? (
                 <button type="button" className="store-card-btn is-installed" disabled>
@@ -192,6 +198,7 @@ export function ThemeStore({ installed, onInstalled, reloadKey = 0, onManageRepo
         <ThemeInstallDialog
           manifest={{ name: pending.entry.name, version: pending.entry.version }}
           hasCode="unknown"
+          claudeTheme={pending.entry.claudeTheme === true}
           domains={null}
           busy={busy}
           onConfirm={() => void install(pending.entry)}

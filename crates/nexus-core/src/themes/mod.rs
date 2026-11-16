@@ -1,13 +1,19 @@
 //! Theme-Pakete (`.nexus`): das Manifest eines Themes und seine Prüfung, dazu sicheres
-//! Entpacken, Installieren, Auflisten und Entfernen unter `<NEXUS_HOME>/themes/<id>/`.
+//! Entpacken, Installieren, Auflisten und Entfernen unter `<NEXUS_HOME>/themes/<id>/`, dazu der
+//! Slot des Claude-Themes in der Konfiguration von Claude Code.
 
 pub mod archive;
+pub mod claude_slot;
 pub mod manifest;
 pub mod package;
 pub mod settings_store;
 
 pub use archive::{
     check_archive_entry_path, content_type_for, extract_entry, ArchiveEntryError, MAX_ENTRY_PATH,
+};
+pub use claude_slot::{
+    resolve_settings, settings_module, ApplyOutcome, ClaudeSettings, ClaudeSlotError,
+    ClaudeThemeSlot, ClaudeThemeState, ClaudeThemeStatus, SlotState,
 };
 pub use manifest::{
     host_allowed, is_valid_theme_id, parse_manifest, validate_manifest, ColorScheme, ManifestError,

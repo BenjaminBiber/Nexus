@@ -1,5 +1,5 @@
 //! Installieren, Auflisten und Entfernen von Theme-Paketen (`.nexus` = ZIP mit `manifest.json`,
-//! `theme.css`, optional `main.js` und `assets/**`).
+//! `theme.css`, optional `main.js`, `assets/**` und `claude/**` für ein Claude-Theme).
 //!
 //! Ein Paket wird vollständig im Speicher geprüft, bevor etwas auf die Platte kommt: sichere
 //! Pfade, erlaubte Dateitypen, Größenlimits, gültiges Manifest und ein `theme.css` ohne
@@ -14,7 +14,9 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-use super::manifest::{parse_manifest, ManifestErrors, ThemeManifest, THEME_ID_PATTERN};
+use super::manifest::{
+    parse_manifest, ManifestError, ManifestErrors, ThemeManifest, THEME_ID_PATTERN,
+};
 use crate::NexusHome;
 
 /// Höchstgröße eines Pakets und Höchstsumme seiner entpackten Dateien
@@ -29,6 +31,13 @@ const ALLOWED_EXTENSIONS: &[&str] = &[
     "css", "js", "mjs", "json", "png", "jpg", "jpeg", "gif", "webp", "svg", "avif", "ico", "woff",
     "woff2", "ttf", "otf", "mp3", "ogg", "wav",
 ];
+
+/// Ordner des Claude-Themes im Paket; nur darin sind zusätzlich TypeScript-Dateien erlaubt
+pub const CLAUDE_DIR: &str = "claude";
+/// Endungen, die nur unter `claude/` erlaubt sind (der Mod für Claude Desktop)
+const CLAUDE_EXTENSIONS: &[&str] = &["ts", "tsx"];
+/// Pflichtdatei eines Claude-Themes
+const CLAUDE_HOOKS_FILE: &str = "claude/hooks/hooks.json";
 
 /// Pflichtdateien im Wurzelordner eines Pakets
 const MANIFEST_FILE: &str = "manifest.json";
@@ -155,6 +164,7 @@ fn install_with_limits(
         }
     })?;
     check_theme_css(css)?;
+    check_claude_files(&manifest, files.iter().map(|(path, _)| path.as_path()))?;
 
     let themes_dir = home.themes_dir();
     fs::create_dir_all(&themes_dir)?;
@@ -225,6 +235,14 @@ fn pack_with_limits(dir: &Path, limits: Limits) -> Result<PackedTheme, ThemePack
         }
     })?;
     check_theme_css(css)?;
+    check_claude_files(
+        &manifest,
+        files.iter().map(|(path, _)| Path::new(path.as_str())),
+    )
+    .map_err(|error| match error {
+        ThemePackageError::Manifest(errors) => ThemePackageError::ManifestFile(errors),
+        other => other,
+    })?;
 
     let mut writer = zip::ZipWriter::new(Cursor::new(Vec::new()));
     // Ohne `system` trägt zip das System ein, auf dem gepackt wird (Windows: DOS, sonst Unix)
@@ -389,11 +407,52 @@ fn check_entry_path(name: &str) -> Result<PathBuf, ThemePackageError> {
     Ok(safe)
 }
 
+/// Erlaubte Endung: überall aus [`ALLOWED_EXTENSIONS`], unter `claude/` zusätzlich `ts`/`tsx`
 fn has_allowed_extension(path: &Path) -> bool {
-    path.extension()
-        .and_then(|extension| extension.to_str())
-        .map(|extension| ALLOWED_EXTENSIONS.contains(&extension.to_ascii_lowercase().as_str()))
-        .unwrap_or(false)
+    let Some(extension) = path.extension().and_then(|extension| extension.to_str()) else {
+        return false;
+    };
+    let extension = extension.to_ascii_lowercase();
+    if ALLOWED_EXTENSIONS.contains(&extension.as_str()) {
+        return true;
+    }
+    CLAUDE_EXTENSIONS.contains(&extension.as_str()) && is_claude_path(path)
+}
+
+/// Liegt der Pfad im Ordner des Claude-Themes?
+fn is_claude_path(path: &Path) -> bool {
+    path.components()
+        .next()
+        .is_some_and(|first| first.as_os_str() == CLAUDE_DIR)
+}
+
+/// Prüft das Claude-Theme gegen das Manifest: Mit `claudeTheme` muss `claude/hooks/hooks.json`
+/// dabei sein, ohne darf nichts unter `claude/` liegen. Fehler stehen am Feld `claudeTheme`.
+fn check_claude_files<'a>(
+    manifest: &ThemeManifest,
+    paths: impl Iterator<Item = &'a Path>,
+) -> Result<(), ThemePackageError> {
+    let mut has_claude = false;
+    let mut has_hooks = false;
+    for path in paths {
+        if is_claude_path(path) {
+            has_claude = true;
+            has_hooks |= path == Path::new(CLAUDE_HOOKS_FILE);
+        }
+    }
+    let message = if manifest.claude_theme && !has_hooks {
+        format!("claudeTheme ist an, aber im Paket fehlt {CLAUDE_HOOKS_FILE}.")
+    } else if !manifest.claude_theme && has_claude {
+        format!("Das Paket enthält {CLAUDE_DIR}/, aber claudeTheme ist nicht true.")
+    } else {
+        return Ok(());
+    };
+    Err(ThemePackageError::Manifest(ManifestErrors(vec![
+        ManifestError {
+            field: "claudeTheme".to_string(),
+            message,
+        },
+    ])))
 }
 
 /// Lehnt `@import` und jede `url()` ab, die nicht relativ ist oder eine `data:`-URL
@@ -683,6 +742,122 @@ mod tests {
         ]);
         assert!(matches!(
             abgelehnt(&home, &p),
+            ThemePackageError::ForbiddenFileType { .. }
+        ));
+    }
+
+    fn claude_manifest(claude: bool) -> Vec<u8> {
+        format!(
+            r#"{{"id":"nacht","name":"Nacht","version":"1.0.0","author":"Ada","sdkVersion":"^1.3","colorScheme":"dark","claudeTheme":{claude}}}"#
+        )
+        .into_bytes()
+    }
+
+    const HOOKS: &[u8] = br#"{ "modules": ["./register.tsx"] }"#;
+
+    fn claude_fehler(fehler: ThemePackageError) -> String {
+        match fehler {
+            ThemePackageError::Manifest(errors) | ThemePackageError::ManifestFile(errors) => errors
+                .for_field("claudeTheme")
+                .map(|error| error.message.clone())
+                .unwrap_or_else(|| panic!("kein Fehler an claudeTheme: {errors}")),
+            other => panic!("unerwartet: {other}"),
+        }
+    }
+
+    #[test]
+    fn claude_theme_mit_typescript_wird_installiert() {
+        let (_tmp, home) = home();
+        let manifest = claude_manifest(true);
+        let p = paket(&[
+            ("manifest.json", &manifest),
+            ("theme.css", CSS),
+            ("claude/hooks/hooks.json", HOOKS),
+            (
+                "claude/hooks/register.tsx",
+                b"export const register = () => {}",
+            ),
+            ("claude/hooks/look.ts", b"export const look = {}"),
+        ]);
+        assert!(install_theme(&home, &p).unwrap().claude_theme);
+        let hooks = home.themes_dir().join("nacht/claude/hooks");
+        assert!(hooks.join("register.tsx").is_file());
+        assert!(hooks.join("look.ts").is_file());
+        assert!(list_themes(&home).unwrap()[0].manifest.claude_theme);
+    }
+
+    #[test]
+    fn typescript_ausserhalb_von_claude_wird_abgelehnt() {
+        for name in [
+            "main.ts",
+            "assets/x.tsx",
+            "claudex/a.ts",
+            "Claude/hooks/a.ts",
+        ] {
+            let (_tmp, home) = home();
+            let manifest = claude_manifest(true);
+            let p = paket(&[
+                ("manifest.json", &manifest),
+                ("theme.css", CSS),
+                ("claude/hooks/hooks.json", HOOKS),
+                (name, b"x"),
+            ]);
+            assert!(
+                matches!(
+                    abgelehnt(&home, &p),
+                    ThemePackageError::ForbiddenFileType { .. }
+                ),
+                "{name}"
+            );
+        }
+    }
+
+    #[test]
+    fn claude_theme_ohne_hooks_json_wird_abgelehnt() {
+        let (_tmp, home) = home();
+        let manifest = claude_manifest(true);
+        let p = paket(&[
+            ("manifest.json", &manifest),
+            ("theme.css", CSS),
+            ("claude/hooks/register.tsx", b"x"),
+        ]);
+        assert!(claude_fehler(abgelehnt(&home, &p)).contains("claude/hooks/hooks.json"));
+    }
+
+    #[test]
+    fn claude_ordner_ohne_flag_wird_abgelehnt() {
+        let (_tmp, home) = home();
+        let manifest = claude_manifest(false);
+        let p = paket(&[
+            ("manifest.json", &manifest),
+            ("theme.css", CSS),
+            ("claude/hooks/hooks.json", HOOKS),
+        ]);
+        assert!(claude_fehler(abgelehnt(&home, &p)).contains("claudeTheme ist nicht true"));
+    }
+
+    #[test]
+    fn packen_prueft_das_claude_theme() {
+        let manifest = claude_manifest(true);
+        let gut = ordner(&[
+            ("manifest.json", &manifest),
+            ("theme.css", CSS),
+            ("claude/hooks/hooks.json", HOOKS),
+            ("claude/hooks/register.tsx", b"x"),
+        ]);
+        assert_eq!(pack_theme(gut.path()).unwrap().files, 4);
+
+        let ohne_hooks = ordner(&[("manifest.json", &manifest), ("theme.css", CSS)]);
+        assert!(claude_fehler(pack_theme(ohne_hooks.path()).unwrap_err()).contains("fehlt"));
+
+        let ts_draussen = ordner(&[
+            ("manifest.json", &manifest),
+            ("theme.css", CSS),
+            ("claude/hooks/hooks.json", HOOKS),
+            ("main.ts", b"x"),
+        ]);
+        assert!(matches!(
+            pack_theme(ts_draussen.path()).unwrap_err(),
             ThemePackageError::ForbiddenFileType { .. }
         ));
     }

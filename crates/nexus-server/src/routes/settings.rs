@@ -116,8 +116,14 @@ async fn write_user_settings(
     JsonBody(body): JsonBody,
 ) -> ApiResult<Response> {
     let store = UserSettingsStore::new(state.home.clone());
-    let merged = merge_user_settings(store.read(), &body, &state.home)?;
+    let current = store.read();
+    let claude_before = (current.theme.clone(), current.claude_theme);
+    let merged = merge_user_settings(current, &body, &state.home)?;
     store.write(&merged)?;
+    // Anderes Theme oder Schalter umgelegt: Claude Desktop zieht nach
+    if claude_before != (merged.theme.clone(), merged.claude_theme) {
+        state.claude_theme.reconcile().await;
+    }
     Ok(json(&merged))
 }
 
@@ -163,6 +169,9 @@ fn merge_user_settings(
                     "theme muss ein eingebautes (system, light, dark) oder installiertes Theme sein.",
                 )
             })?;
+    }
+    if let Some(value) = field("claudeTheme") {
+        next.claude_theme = flag("claudeTheme", value)?;
     }
     if let Some(value) = field("claudeUsage") {
         next.claude_usage = flag("claudeUsage", value)?;

@@ -313,6 +313,8 @@ export interface StoreIndexEntryDto {
   preview?: string;
   description?: string;
   signature?: string;
+  /** Bringt ein Claude-Theme für Claude Desktop mit (fehlt = nein) */
+  claudeTheme?: boolean;
   compatible: boolean;
 }
 
@@ -367,6 +369,8 @@ export interface UserSettingsDto {
   notifications: NotificationMode;
   heroImages: boolean;
   theme: ThemeMode;
+  /** Claude Desktop übernimmt das Claude-Theme des aktiven Themes; fehlt es, gilt an */
+  claudeTheme?: boolean;
   claudeUsage: boolean;
   compactCards: boolean;
   hideNotNeeded: boolean;

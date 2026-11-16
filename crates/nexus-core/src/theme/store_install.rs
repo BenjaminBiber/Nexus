@@ -205,6 +205,7 @@ mod tests {
             description: None,
             signature: None,
             compatible: true,
+            claude_theme: false,
         }
     }
 

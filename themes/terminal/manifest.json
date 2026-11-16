@@ -1,12 +1,13 @@
 {
   "id": "terminal",
   "name": "Terminal",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "author": "Nexus",
-  "sdkVersion": "^1.2",
+  "sdkVersion": "^1.3",
   "colorScheme": "dark",
   "startColor": "#0d1117",
   "preview": "assets/preview.png",
+  "claudeTheme": true,
   "slots": [
     "Shell",
     "NavIcon",

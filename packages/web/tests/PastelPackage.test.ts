@@ -80,7 +80,7 @@ describe('Theme „Paper Notes“ (Schlüssel „pastel“) als Paket', () => {
     // Gespeicherte Auswahl „pastel“ bleibt gültig
     expect(manifest.id).toBe('pastel');
     expect(manifest.name).toBe('Paper Notes');
-    expect(manifest.version).toBe('2.0.0');
+    expect(manifest.version).toMatch(/^2\.\d+\.\d+$/);
     expect(manifest.colorScheme).toBe('light');
     expect(manifest.startColor).toBe('#faf8f0');
     expect(manifest.slots ?? []).toEqual([]);
@@ -91,8 +91,10 @@ describe('Theme „Paper Notes“ (Schlüssel „pastel“) als Paket', () => {
   it('enthält nur Dateien, die `nexus theme pack` annimmt', () => {
     const allowed = /\.(css|js|mjs|json|png|jpe?g|gif|webp|svg|avif|ico|woff2?|ttf|otf|mp3|ogg|wav)$/i;
     const all = files(repo(THEME)).map((path) => relative(repo(THEME), path).replaceAll('\\', '/'));
-    expect(all.filter((path) => !allowed.test(path) || path.split('/').some((part) => part.startsWith('.')))).toEqual([]);
-    expect(all.filter((path) => !['manifest.json', 'theme.css'].includes(path) && !path.startsWith('assets/'))).toEqual([]);
+    // Unter claude/ liegt das Claude-Theme; dort sind zusätzlich ts/tsx erlaubt
+    const claude = /^claude\/.*\.tsx?$/;
+    expect(all.filter((path) => !(allowed.test(path) || claude.test(path)) || path.split('/').some((part) => part.startsWith('.')))).toEqual([]);
+    expect(all.filter((path) => !['manifest.json', 'theme.css'].includes(path) && !path.startsWith('assets/') && !path.startsWith('claude/'))).toEqual([]);
   });
 
   it('gilt in theme.css nur für data-theme=pastel und ändert nur Variablen, die das helle Schema kennt', () => {
