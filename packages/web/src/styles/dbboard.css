@@ -353,8 +353,6 @@
 .agent-run > summary { cursor: pointer; font-weight: 500; gap: 8px; }
 .agent-run[open] > summary { margin-bottom: 8px; }
 .agent-run .dispatch-log { max-height: 50vh; }
-.agent-run-head { margin: 0 0 8px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); white-space: pre-wrap; }
-.agent-run-head.compact { font-family: inherit; font-size: 12px; }
 .agent-prompt { margin-top: 8px; }
 .agent-prompt > summary { cursor: pointer; font-size: 12px; }
 .db-merge-retry { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--blocked-fg); border-radius: var(--radius-card); }

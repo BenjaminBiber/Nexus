@@ -22,6 +22,7 @@ import './styles/sessions.css';
 import './styles/runTranscript.css';
 import './styles/runShots.css';
 import './styles/runHead.css';
+import './styles/runTimeline.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';

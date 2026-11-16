@@ -17,7 +17,7 @@ const tool = (id: string, name = 'Read'): TranscriptEntry => ({ kind: 'tool', id
 const text = (id: string, body: string): TranscriptEntry => ({ kind: 'text', id, at: AT, text: body });
 const shot = (file: string, toolUseId: string): DispatchRunShotDto => ({ file, toolUseId, at: AT, mediaType: 'image/png', bytes: 1 });
 const entry = (e: TranscriptEntry, shots: DispatchRunShotDto[] = []): RunItem => ({ type: 'entry', key: e.id, entry: e, shots });
-const group = (open: boolean): RunItem => ({ type: 'group', key: 'group:a', entries: [tool('a'), tool('b'), tool('c')], tools: 3, label: '3 Schritte · 3× Read', open, shots: [] });
+const group = (open: boolean): RunItem => ({ type: 'group', key: 'group:a', entries: [tool('a'), tool('b'), tool('c')], tools: 3, label: '3 Schritte · 3× Read', breakdown: '3× Read', open, shots: [] });
 const SHOTS = [shot('001.png', 'x'), shot('002.png', 's'), shot('003.png', 's')];
 // Gruppe, an deren Aufrufen „s“ und „x“ alle drei Screenshots hängen
 const shotGroup = (open: boolean): RunItem => ({
@@ -26,6 +26,7 @@ const shotGroup = (open: boolean): RunItem => ({
   entries: [tool('a'), tool('s', 'mcp__browser__screenshot'), tool('x')],
   tools: 3,
   label: '3 Schritte · 2× Read · 1× browser · screenshot',
+  breakdown: '2× Read · 1× browser · screenshot',
   open,
   shots: SHOTS,
 });
@@ -69,7 +70,7 @@ describe('RunTranscript', () => {
   });
 
   it('zeigt die Screenshots eines Aufrufs klein am Ende seiner Zeile', async () => {
-    const { container, onShot } = show([entry(tool('s', 'mcp__browser__screenshot'), [SHOTS[1]!, SHOTS[2]!]), entry(tool('d'))]);
+    const { container, onShot } = show([entry(tool('d')), entry(tool('s', 'mcp__browser__screenshot'), [SHOTS[1]!, SHOTS[2]!])]);
     expect(container.querySelector('.run-shot-row')).toBeNull();
     const rows = container.querySelectorAll('li.tx-entry.has-aside');
     expect(rows).toHaveLength(1);
@@ -83,6 +84,8 @@ describe('RunTranscript', () => {
     const plain = [...container.querySelectorAll('li.tx-entry')].find((li) => !li.classList.contains('has-aside'))!;
     expect(plain.className).toBe('tx-entry tool');
     expect(plain.querySelector('.tx-aside')).toBeNull();
+    // Der letzte Aufruf ist als letzter Schritt markiert
+    expect(rows[0]!.classList.contains('run-last')).toBe(true);
     const image = screen.getByAltText('Screenshot 2 von 3') as HTMLImageElement;
     expect(image.getAttribute('src')).toBe('/shots/run/002.png');
     expect(screen.getByAltText('Screenshot 3 von 3')).toBeTruthy();
@@ -118,6 +121,11 @@ describe('RunTranscript', () => {
     const imagesOf = (li: HTMLElement) => within(within(li).getByRole('group', { name: 'Screenshots des Aufrufs' })).getAllByRole('img').map((image) => (image as HTMLImageElement).alt);
     expect(rows.map(imagesOf)).toEqual([['Screenshot 2 von 3', 'Screenshot 3 von 3'], ['Screenshot 1 von 3']]);
     expect(container.querySelectorAll('li.tx-entry:not(.has-aside)')).toHaveLength(1);
+  });
+
+  it('markiert keinen letzten Schritt, wenn der Verlauf mit einer Gruppe endet', () => {
+    const { container } = show([entry(tool('d')), group(false)]);
+    expect(container.querySelector('.run-last')).toBeNull();
   });
 
   it('lässt die Zeile einer Gruppe ohne Screenshots ohne Vorschaubilder', () => {

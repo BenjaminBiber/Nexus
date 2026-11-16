@@ -140,10 +140,11 @@ function SystemEntry({ entry }: { entry: Entry<'system'> }) {
 
 // Ein Eintrag des Verlaufs. Memo: beim Nachladen bleiben bekannte Einträge dieselben Objekte und rendern nicht neu.
 // `aside` steht rechts neben dem Eintrag (z. B. Screenshots eines Aufrufs im Agent-Lauf); ohne bleibt das Markup schlicht.
-export const TranscriptEntryView = memo(function TranscriptEntryView({ entry, aside }: { entry: TranscriptEntry; aside?: ReactNode }) {
+// `className` ergänzt die Klassen der Zeile (z. B. den hervorgehobenen letzten Schritt eines Laufs).
+export const TranscriptEntryView = memo(function TranscriptEntryView({ entry, aside, className }: { entry: TranscriptEntry; aside?: ReactNode; className?: string }) {
   const hasAside = aside !== undefined && aside !== null && aside !== false;
   return (
-    <li className={`tx-entry ${entry.kind}${hasAside ? ' has-aside' : ''}`} data-kind={entry.kind}>
+    <li className={`tx-entry ${entry.kind}${hasAside ? ' has-aside' : ''}${className ? ` ${className}` : ''}`} data-kind={entry.kind}>
       {entry.kind === 'prompt' && <PromptEntry entry={entry} />}
       {entry.kind === 'text' && <TextEntry entry={entry} />}
       {entry.kind === 'thinking' && <ThinkingEntry entry={entry} />}
