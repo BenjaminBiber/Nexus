@@ -17,6 +17,9 @@
 - Der Autopilot holt keinen Merge mehr für Branches nach, die schon im Ziel stecken. Blieb ein
   gemergter Branch stehen (z. B. wegen ungesicherter Änderungen im Worktree), mergte er ihn
   bisher jede Minute erneut – mit Kommentar am Ticket und Benachrichtigung.
+- Die README beginnt mit Logo (hell und dunkel), Badges und Inhaltsverzeichnis, gefolgt von einem
+  Überblick der Funktionen und einer Theme-Galerie; lange Abschnitte sind in Unterabschnitte geteilt.
+  Lizenz (MIT) und Repository stehen jetzt auch in den Cargo-, npm- und Plugin-Manifesten.
 
 ## 0.2.0 – 2026-11-12
 

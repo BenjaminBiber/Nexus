@@ -1,6 +1,13 @@
 {
   "name": "ai-harness",
   "private": true,
+  "description": "Lokale Werkbank für viele Claude-Code-Sessions gleichzeitig: Board, Worktrees und Dispatcher",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BenjaminBiber/Nexus.git"
+  },
+  "homepage": "https://github.com/BenjaminBiber/Nexus#readme",
   "type": "module",
   "workspaces": [
     "packages/*",

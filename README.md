@@ -1,19 +1,79 @@
-# Nexus
+<div align="center">
 
-Lokale Werkbank für mehrere Claude-Code-Sessions gleichzeitig (früher „AI Harness“): Kanban-Board mit Tickets, Fragen und Notizen, Übersicht der Sessions, konfliktfreie Parallelarbeit mit Branches und Worktrees, ein Dispatcher, der geplante Tickets selbst umsetzen lässt, und Favoriten zum Fortsetzen von Sessions. Tickets, Fragen und Boards liegen in einer Board-Datenbank: gemeinsam im Team auf SQL Server oder als lokale SQLite-Datei für einen einzelnen Rechner.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/nexus-logo-dark.svg">
+  <img src="assets/brand/nexus-logo-light.svg" alt="Nexus" width="420">
+</picture>
+
+<h3>Die lokale Werkbank für viele Claude-Code-Sessions gleichzeitig</h3>
+
+Kanban-Board mit Tickets, Fragen und Notizen · konfliktfreie Parallelarbeit in Branches und Worktrees · ein Dispatcher, der geplante Tickets selbst umsetzen lässt
+
+[![Release](https://img.shields.io/github/v/release/BenjaminBiber/Nexus?label=Release&color=1d4ed8)](https://github.com/BenjaminBiber/Nexus/releases/latest)
+[![Lizenz: MIT](https://img.shields.io/github/license/BenjaminBiber/Nexus?label=Lizenz&color=16a34a)](LICENSE)
+![Plattformen: Windows, macOS, Linux](https://img.shields.io/badge/Plattformen-Windows%20%7C%20macOS%20%7C%20Linux-475569)
+[![Claude Code](https://img.shields.io/badge/f%C3%BCr-Claude%20Code-d97757)](https://claude.com/claude-code)
+![Rust](https://img.shields.io/badge/Rust-Server%20%26%20CLI-b7410e?logo=rust&logoColor=white)
+![Tauri 2](https://img.shields.io/badge/Tauri%202-Desktop-24c8db?logo=tauri&logoColor=white)
+![React 19](https://img.shields.io/badge/React%2019-Oberfl%C3%A4che-087ea4?logo=react&logoColor=white)
+
+[**Einrichten**](#einrichten-einmal-pro-rechner) · [**Verwenden**](#verwenden) · [**Dispatcher**](#dispatcher-tickets-automatisch-umsetzen-lassen) · [**Telegram-Bot**](#telegram-bot) · [**Entwicklung**](#entwicklung-an-nexus) · [**Releases**](https://github.com/BenjaminBiber/Nexus/releases/latest)
+
+</div>
+
+<br>
 
 ![Board-Ansicht von Nexus mit Tickets in den Spalten Backlog, Wartet, In Planung, Geplant, In Arbeit und Blockiert](assets/screenshots/board.png)
 
+## Inhalt
+
+- [Überblick](#überblick)
+- [Einrichten (einmal pro Rechner)](#einrichten-einmal-pro-rechner)
+- [Aktualisieren](#aktualisieren)
+- [Umstieg vom AI Harness](#umstieg-vom-ai-harness)
+- [Verwenden](#verwenden)
+  - [Projekt einrichten](#projekt-einrichten) · [Die Oberfläche](#die-oberfläche) · [Ablauf](#ablauf) · [Hinweise](#hinweise) · [Sicherung](#sicherung)
+- [Board-Datenbank](#board-datenbank)
+  - [SQL Server (Team)](#variante-a-sql-server-team) · [SQLite (Einzelplatz)](#variante-b-sqlite-einzelplatz)
+- [Dispatcher](#dispatcher-tickets-automatisch-umsetzen-lassen)
+  - [Einstellungen und Befehle](#einstellungen-und-befehle) · [Recherchen zu Fragen](#recherchen-zu-fragen) · [Planen am Ticket](#planen-am-ticket) · [Mehrere Claude-Accounts](#mehrere-claude-accounts) · [Zustand und Protokolle](#zustand-und-protokolle)
+- [Telegram-Bot](#telegram-bot)
+  - [Einrichten](#einrichten) · [Befehle](#befehle) · [Freigaben und Meldungen](#freigaben-und-meldungen) · [Ideen per Sprache](#ideen-per-sprache) · [Spracherkennung](#spracherkennung)
+- [Themes](#themes)
+- [Anpassen](#anpassen)
+- [Daten und Einstellungen](#daten-und-einstellungen)
+- [Fehlersuche](#fehlersuche)
+- [Entwicklung an Nexus](#entwicklung-an-nexus)
+  - [Lokal testen](#lokal-testen) · [Automatische Tests](#automatische-tests) · [Release](#release) · [Regeln und Aufbau](#regeln-und-aufbau)
+- [Lizenz](#lizenz)
+
+## Überblick
+
+Nexus (früher „AI Harness“) ist eine lokale Werkbank für mehrere Claude-Code-Sessions gleichzeitig. Tickets, Fragen und Boards liegen in einer Board-Datenbank: gemeinsam im Team auf SQL Server oder als lokale SQLite-Datei für einen einzelnen Rechner.
+
+- **Kanban-Board:** Tickets mit Schritten, Plan, Abhängigkeiten und Kommentaren, dazu Fragen und Notizen
+- **Parallelarbeit ohne Konflikte:** jedes Ticket in eigenem Branch und Worktree, Merge in den Zielbranch
+- **Dispatcher:** lässt geplante Tickets selbst von Claude Code umsetzen, mit Review vor dem Merge, Profilen und mehreren Claude-Accounts
+- **Recherchen und Planungen:** Claude untersucht offene Fragen und plant Tickets, in eigenen Sessions, die den Code nur lesen
+- **Sessions und Favoriten:** Übersicht der Claude-Code-Sessions, Favoriten zum Fortsetzen
+- **Docs:** Specs und Pläne im Board kommentieren, bearbeiten oder mit Claude ändern
+- **Dashboard:** Durchsatz, Erfolgsquote, Durchlaufzeiten und Kosten des Dispatchers
+- **Telegram-Bot:** Status, Freigaben und Ideen per Sprachnachricht vom Handy aus
+- **Themes:** weitere Themes aus dem Theme-Store
+
 Bestandteile:
 
-- CLI `nexus` (Alias `harness`, alte Befehle laufen weiter)
-- lokaler Server mit Weboberfläche (http://127.0.0.1:4710)
-- Desktop-App (Tauri), die Server und Oberfläche in einem Fenster startet
-- Claude-Code-Plugin `nexus` (Hooks, Skills, Output-Style, Doku- und Board-Regel)
-
-Inhalt: [Einrichten](#einrichten-einmal-pro-rechner) · [Aktualisieren](#aktualisieren) · [Umstieg vom AI Harness](#umstieg-vom-ai-harness) · [Verwenden](#verwenden) · [Board-Datenbank](#board-datenbank) · [Dispatcher](#dispatcher-tickets-automatisch-umsetzen-lassen) · [Telegram-Bot](#telegram-bot) · [Anpassen](#anpassen) · [Daten und Einstellungen](#daten-und-einstellungen) · [Fehlersuche](#fehlersuche) · [Entwicklung](#entwicklung-an-nexus)
+| Teil | Beschreibung |
+|---|---|
+| CLI `nexus` | Befehl für Board, Tickets, Dispatcher und Einrichtung (Alias `harness`, alte Befehle laufen weiter) |
+| Server | lokaler Server mit Weboberfläche unter http://127.0.0.1:4710 |
+| Desktop-App | Tauri-App, die Server und Oberfläche in einem Fenster startet |
+| Plugin `nexus` | Claude-Code-Plugin mit Hooks, Skills, Output-Style, Doku- und Board-Regel |
 
 ## Einrichten (einmal pro Rechner)
+
+> [!TIP]
+> Fertige Installer der Desktop-App (Windows, macOS, Linux) und CLI-Archive liegen unter [Releases](https://github.com/BenjaminBiber/Nexus/releases/latest). Die Anleitung hier baut Nexus aus dem Quellcode.
 
 Voraussetzungen:
 
@@ -50,7 +110,10 @@ nexus stop             # laufenden Server beenden, damit die neue Version starte
 packages/plugin/dist/nexus/bin/nexus install
 ```
 
-Danach in laufenden Sessions `/reload-plugins` eingeben. Bringt ein Update neue Regeln mit, je Projekt einmal `nexus init`. Steht im `CHANGELOG.md` unter „Datenbank vor dem Update“ ein SQL-Skript, muss es vorher in die SQL-Server-Datenbanken (siehe [Board-Datenbank](#board-datenbank)).
+Danach in laufenden Sessions `/reload-plugins` eingeben. Bringt ein Update neue Regeln mit, je Projekt einmal `nexus init`.
+
+> [!IMPORTANT]
+> Steht im `CHANGELOG.md` unter „Datenbank vor dem Update“ ein SQL-Skript, muss es vorher in die SQL-Server-Datenbanken (siehe [Board-Datenbank](#board-datenbank)).
 
 ## Umstieg vom AI Harness
 
@@ -68,6 +131,8 @@ nexus migrate             # kopiert nach ~/.nexus; ~/.harness bleibt unveränder
 
 ## Verwenden
 
+### Projekt einrichten
+
 Im Projektordner (Git-Repository):
 
 ```sh
@@ -79,23 +144,34 @@ Danach `/reload-plugins` eingeben oder Claude Code neu starten.
 
 Jedes Repo gehört zu einem Board: einmal `nexus board boards repo <id> <pfad>` (Pfad = Hauptordner des Repos; `nexus board boards list` zeigt die Boards) oder „Mein Repo-Pfad“ in der Verwaltung. Der Repo-Pfad ist je Person lokal (`~/.nexus/board-repos.yaml`), nicht in der gemeinsamen Datenbank. Im eingerichteten Repo arbeiten `nexus board list`, `create` und `note` ohne `--board` auf diesem Board, sonst auf dem aktiven Board aus `~/.nexus/board.yaml`. `nexus board start` und `done` nehmen nur Tickets des Boards an, das dem Repo zugeordnet ist.
 
+### Die Oberfläche
+
 Die Oberfläche hat in der Seitenleiste u. a. **Board**, **Meine Aufgaben** (alles, was gerade auf dich wartet: gescheiterte Merges, eigene Fragen, Abnahmen, Tickets in Planung, Notizen), **Dashboard** (Durchsatz, Erfolgsquote, Durchlaufzeiten und Kosten des Dispatchers), **Fragen**, **Docs**, **Sessions** und **Anleitung**; **Suchen** bzw. Strg+K (Cmd+K) durchsucht alle Boards und Projekte.
 
 Ein Klick auf eine Karte öffnet das Ticket mit Status, Zuständigem, Schritten, Plan und Kommentaren:
 
 ![Ticketdetails mit Fortschritt, Abhängigkeiten und geöffnetem Tab „Plan“](assets/screenshots/ticket.png)
 
-**Meine Aufgaben** sammelt, was auf dich wartet: offene Fragen, blockierte Tickets, Tickets in Planung und Notizen, aus denen du ein Ticket machen kannst:
-
-![Meine Aufgaben mit einer offenen Frage, einem blockierten Ticket, einem Ticket in Planung und zwei Notizen](assets/screenshots/aufgaben.png)
-
-Offene Fragen entscheidest du auf ihrer eigenen Seite, mit Beschreibung, Varianten und Empfehlung:
-
-![Seite einer offenen Frage mit Beschreibung, Varianten und Empfehlung](assets/screenshots/frage.png)
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <b>Meine Aufgaben</b> sammelt, was auf dich wartet: offene Fragen, blockierte Tickets, Tickets in Planung und Notizen, aus denen du ein Ticket machen kannst.
+      <br><br>
+      <img src="assets/screenshots/aufgaben.png" alt="Meine Aufgaben mit einer offenen Frage, einem blockierten Ticket, einem Ticket in Planung und zwei Notizen">
+    </td>
+    <td width="50%" valign="top">
+      <b>Offene Fragen</b> entscheidest du auf ihrer eigenen Seite, mit Beschreibung, Varianten und Empfehlung.
+      <br><br>
+      <img src="assets/screenshots/frage.png" alt="Seite einer offenen Frage mit Beschreibung, Varianten und Empfehlung">
+    </td>
+  </tr>
+</table>
 
 Die Bilder zeigen erfundene Demodaten; wie sie entstehen, steht unter [Lokal testen](#lokal-testen).
 
-**Ablauf:** Der Workflow von der Anforderung bis zum fertigen Ticket steht im Board im Tab **Anleitung**, mit allen Befehlen zum Kopieren. Zusätzlich gibt ihn ein Hook zu Beginn jeder Session an Claude: Claude kennt damit den Ablauf und den Stand der Tickets, schlägt nach jedem Schritt den nächsten vor und führt dich so durch den Workflow. Beides folgt deinem angepassten Workflow, falls es einen gibt (siehe [Anpassen](#anpassen)).
+### Ablauf
+
+Der Workflow von der Anforderung bis zum fertigen Ticket steht im Board im Tab **Anleitung**, mit allen Befehlen zum Kopieren. Zusätzlich gibt ihn ein Hook zu Beginn jeder Session an Claude: Claude kennt damit den Ablauf und den Stand der Tickets, schlägt nach jedem Schritt den nächsten vor und führt dich so durch den Workflow. Beides folgt deinem angepassten Workflow, falls es einen gibt (siehe [Anpassen](#anpassen)).
 
 | Schritt | Befehl |
 |---|---|
@@ -118,7 +194,7 @@ Die Bilder zeigen erfundene Demodaten; wie sie entstehen, steht unter [Lokal tes
 
 **Schnelle Aufgaben ohne Workflow:** Für kleine Aufgaben oder Nebenaufgaben kannst du ohne Spec, Ticket und Worktree arbeiten. Claude fragt dann zuerst „Ohne Workflow direkt umsetzen?“ und arbeitet erst nach deinem ausdrücklichen Ja so; ohne Bestätigung bleibt es beim Workflow. Du kannst es auch direkt sagen, z. B. „ohne Workflow“.
 
-Hinweise:
+### Hinweise
 
 - Skills (`/nexus:…`) und Hooks gibt es nur in Projekten mit `nexus init`; `nexus` im Terminal überall.
 - Claude Code im Projektstamm starten (bei Worktrees im Worktree-Ordner). `nexus board start` richtet neue Worktrees selbst ein (Plugin-Einstellung, Doku- und Board-Regel); ältere Worktrees bekommen `.claude/settings.local.json` durch Kopieren aus dem Hauptprojekt.
@@ -127,20 +203,22 @@ Hinweise:
 - Kontrolle: `claude plugin list` in einem Projekt ohne Nexus muss `nexus@nexus-local` als ausgeschaltet zeigen; sonst einmal `claude plugin disable nexus@nexus-local --scope user` (macht auch `nexus install`).
 - Doku-Regeln ändern nur in `packages/plugin/manifest/rules/docs.md`, die Board-Regel nur in `packages/plugin/manifest/rules/board.md`, danach `npm run build:plugin` und `nexus install`. Projektspezifisches gehört in die `CLAUDE.md` des Projekts.
 
-**Sicherung:** Bei SQL Server sichert der DBA die Board-Datenbank. Bei SQLite: Server mit `nexus stop` beenden, keine Session und kein Dispatcher-Lauf aktiv, dann `board.db` zusammen mit `board.db-wal` und `board.db-shm` (falls vorhanden) kopieren. Nexus legt keine eigenen Sicherungen oder Exporte an. Ordner des alten Datei-Boards unter `<git-common-dir>/harness` (z. B. `tickets/`, `questions/`) bleiben unangetastet liegen und werden **nicht** importiert.
+### Sicherung
 
-### Board-Datenbank
+Bei SQL Server sichert der DBA die Board-Datenbank. Bei SQLite: Server mit `nexus stop` beenden, keine Session und kein Dispatcher-Lauf aktiv, dann `board.db` zusammen mit `board.db-wal` und `board.db-shm` (falls vorhanden) kopieren. Nexus legt keine eigenen Sicherungen oder Exporte an. Ordner des alten Datei-Boards unter `<git-common-dir>/harness` (z. B. `tickets/`, `questions/`) bleiben unangetastet liegen und werden **nicht** importiert.
+
+## Board-Datenbank
 
 Zwei Varianten: **SQL Server** für das Team (Standard) oder **SQLite** für einen einzelnen Rechner ohne DB-Server.
 
-#### Variante A: SQL Server (Team)
+### Variante A: SQL Server (Team)
 
 1. Einmalig (Administrator): `crates/nexus-db/sql/000_create_databases.sql`, danach die Skripte `001_…` bis zum höchsten `00N_…` der Reihe nach in `AiHarness` und `AiHarness_Test` ausführen (Details in `crates/nexus-db/sql/README.md`).
 2. Pro Rechner: `nexus board` öffnen → **Einstellungen → Board-Datenbank**: Server, Benutzer, Passwort, eigenen Namen eintragen, „Verbindung testen“, „Speichern“. Die Benutzer-ID (GUID) wird vorgeschlagen und kann im Team abgestimmt werden.
 
 Schema-Änderungen kommen als neues Skript `crates/nexus-db/sql/00N_….sql` und stehen im `CHANGELOG.md`; `nexus` meldet, welches fehlt (`board-schema-outdated`). Mit DDL-Rechten spielt der Server manche Skripte selbst ein.
 
-#### Variante B: SQLite (Einzelplatz)
+### Variante B: SQLite (Einzelplatz)
 
 1. `nexus board` öffnen → **Einstellungen → Board-Datenbank** → „SQLite (lokal)“. Dateipfad übernehmen (Vorschlag `~/.nexus/board.db`) oder ändern, eigenen Namen eintragen, „Verbindung testen“, „Speichern“.
 2. Ohne Oberfläche gleichwertig: `~/.nexus/board.yaml` anlegen mit
@@ -152,11 +230,12 @@ Schema-Änderungen kommen als neues Skript `crates/nexus-db/sql/00N_….sql` und
    ```
 3. Die Datei und ihr Schema legt Nexus beim ersten Zugriff selbst an und hält es aktuell; SQL-Skripte sind nicht nötig.
 
-Grenzen: nur dieser Rechner (kein Teambetrieb), nicht auf Netzlaufwerk oder in synchronisierten Ordnern (OneDrive, Dropbox), kein Umzug von Daten zwischen SQL Server und SQLite (ein Wechsel startet mit leerem Board).
+> [!NOTE]
+> Grenzen: nur dieser Rechner (kein Teambetrieb), nicht auf Netzlaufwerk oder in synchronisierten Ordnern (OneDrive, Dropbox), kein Umzug von Daten zwischen SQL Server und SQLite (ein Wechsel startet mit leerem Board).
 
-Erstes Board (beide Varianten): `nexus board project create ARC "Arches"`, dann `nexus board boards create ARC "Mein Board" --use`.
+**Erstes Board** (beide Varianten): `nexus board project create ARC "Arches"`, dann `nexus board boards create ARC "Mein Board" --use`.
 
-### Dispatcher (Tickets automatisch umsetzen lassen)
+## Dispatcher (Tickets automatisch umsetzen lassen)
 
 Der Server prüft jede Minute die Spalte **Geplant** der eigenen Boards (Auswahl in den Einstellungen, sonst das aktive Board). Bereit ist ein Ticket mit Label `auto` (abschaltbar), Plan, Handbuch und Abnahme, ohne offene Voraussetzung oder Frage, auf einem Board mit eigenem Repo-Pfad. Der Dispatcher übernimmt es als `junior-<ID>`, legt Branch und Worktree an, führt die eingestellten Einrichtungsbefehle (z. B. `npm ci`) aus und startet `claude -p` mit deiner Claude-Anmeldung (ohne `ANTHROPIC_API_KEY`). Danach:
 
@@ -170,6 +249,8 @@ Der Server prüft jede Minute die Spalte **Geplant** der eigenen Boards (Auswahl
 
 Der Worker nutzt unter Windows die Git Bash (wird automatisch gefunden, sonst `claude.gitBashPath` in den Dispatcher-Einstellungen setzen).
 
+### Einstellungen und Befehle
+
 Einschalten und einstellen unter **Einstellungen → Dispatcher** (Datei `~/.nexus/dispatch.yaml`): WIP, Zeitfenster, Profile und Regeln, Zurückmergen, Worktrees (einer je Ticket oder gebündelt), Einrichtung neuer Worktrees, eigene Prompts je Laufart, Recherchen und Planungen. Zustand und Protokolle über den Knopf „Dispatcher: …“ in der Board-Kopfzeile, den Reiter „Agent“ im Ticket-Panel oder im Terminal:
 
 ```bash
@@ -182,29 +263,60 @@ nexus board merge ARC-0009           # Merge erneut anstoßen
 nexus board accept ARC-0009          # Review abnehmen: Erledigt, danach Merge
 ```
 
-**Recherchen zu Fragen:** Auf der Seite einer offenen Frage startet „Recherche starten“ (oder `nexus board question research-start ARC-F0007`) sofort eine Claude-Session `research-<ID>`, die die Frage nach dem Skill `nexus:board-question` recherchiert und das Ergebnis an die Frage schreibt – unabhängig davon, ob der Dispatcher für Tickets eingeschaltet ist; nur eine Pause (z. B. Nutzungslimit) verhindert den Start. Sie läuft im Repo des eigenen Boards, zu dem die Frage gehört (Board eines verknüpften Tickets, sonst das aktive Board des Projekts, sonst das eigene Board des Projekts mit Repo-Pfad und kleinster ID), in einem eigenen, losgelösten Worktree `<repo>-worktrees/research-<ID>`, der danach wieder entfernt wird (verwaiste räumt jeder Tick auf). Die Session läuft unabhängig von `claude.permissionMode` und `claude.extraArgs` mit `--permission-mode default`, darf nur lesen (Read, Glob, Grep, `git log/show/diff`) und von der Board-CLI `question show`, `question research`, `show` und `list` nutzen; Edit/Write (außer der Datei `research.json` im Recherche-Worktree), Commits, Branchwechsel, `npm`/`node` und Entscheidungen sind per `--disallowedTools` verboten (gilt auch gegen Erlaubnisse in `~/.claude/settings.json`). Das Ergebnis schreibt der Agent in `research.json` und speichert es mit `nexus board question research <ID> --from research.json`. Als Ergebnis zählt nur eine Recherche des Agents `research-<ID>` ab dem Start; sonst steht `[dispatch] Recherche ohne Ergebnis: …` an der Frage, ein Neuversuch erfolgt nicht automatisch.
+### Recherchen zu Fragen
 
-Unter **Einstellungen → Dispatcher → Recherchen** lässt sich einschalten, dass neue Fragen zu deinen Boards automatisch recherchiert werden: nur Fragen, die nach dem Einschalten entstehen (Aus- und Einschalten beginnt neu), die du (oder ein Agent unter deinem Benutzer) gestellt hast oder die mit Tickets deiner Boards verknüpft sind, je Frage einmal; Grenzen „Gleichzeitige Recherchen“ (1–5) und „Automatische Recherchen je Tag“ (Vorgabe 10); Profil wählbar (ohne Wahl das Profil `research`, falls vorhanden, sonst das Standardprofil). Fremde Fragen startest du von Hand. Umgebungsfehler (z. B. Git Bash fehlt, Repo-Pfad kein Git-Repo) setzen die Automatik 30 min aus und stehen einmal im Protokoll und in der Übersicht. In `dispatch.yaml`: `research: { auto: true, wip: 1, maxPerDay: 10, profile: klein }`.
+Auf der Seite einer offenen Frage startet „Recherche starten“ (oder `nexus board question research-start ARC-F0007`) sofort eine Claude-Session `research-<ID>`, die die Frage nach dem Skill `nexus:board-question` recherchiert und das Ergebnis an die Frage schreibt – unabhängig davon, ob der Dispatcher für Tickets eingeschaltet ist; nur eine Pause (z. B. Nutzungslimit) verhindert den Start.
 
-**Planen am Ticket:** Im Ticket-Panel startet „Planen“ (oder `nexus board plan-start ARC-0007`) sofort eine Claude-Session `planner-<ID>`, die das Ticket nach dem Skill `nexus:board` plant – wie eine Recherche unabhängig davon, ob der Dispatcher eingeschaltet ist, nur nicht während einer Pause. Das geht für Tickets eigener Boards mit Repo-Pfad in Backlog, In Planung, Geplant oder Blockiert ohne offene Frage. Die Session läuft in einem losgelösten Worktree `<repo>-worktrees/plan-<ID>` (danach entfernt), mit `--permission-mode default`, darf nur lesen, `plan.json` schreiben und von der Board-CLI `show`, `list`, `plan-json`, `comment`, `note list` sowie `question show/list/add` nutzen; Status, Labels und Zuständigkeit ändert sie nicht von Hand. Sie speichert den Plan mit `nexus board plan-json` (Ticket danach Geplant) oder legt eine Frage an, wenn eine Entscheidung fehlt. Ohne beides steht `[dispatch] Planung ohne Ergebnis: …` am Ticket. Planungen zählen nicht zum WIP der Tickets.
+- **Ort:** Sie läuft im Repo des eigenen Boards, zu dem die Frage gehört (Board eines verknüpften Tickets, sonst das aktive Board des Projekts, sonst das eigene Board des Projekts mit Repo-Pfad und kleinster ID), in einem eigenen, losgelösten Worktree `<repo>-worktrees/research-<ID>`, der danach wieder entfernt wird (verwaiste räumt jeder Tick auf).
+- **Rechte:** Die Session läuft unabhängig von `claude.permissionMode` und `claude.extraArgs` mit `--permission-mode default`, darf nur lesen (Read, Glob, Grep, `git log/show/diff`) und von der Board-CLI `question show`, `question research`, `show` und `list` nutzen; Edit/Write (außer der Datei `research.json` im Recherche-Worktree), Commits, Branchwechsel, `npm`/`node` und Entscheidungen sind per `--disallowedTools` verboten (gilt auch gegen Erlaubnisse in `~/.claude/settings.json`).
+- **Ergebnis:** Das Ergebnis schreibt der Agent in `research.json` und speichert es mit `nexus board question research <ID> --from research.json`. Als Ergebnis zählt nur eine Recherche des Agents `research-<ID>` ab dem Start; sonst steht `[dispatch] Recherche ohne Ergebnis: …` an der Frage, ein Neuversuch erfolgt nicht automatisch.
+
+**Automatisch recherchieren:** Unter **Einstellungen → Dispatcher → Recherchen** lässt sich einschalten, dass neue Fragen zu deinen Boards automatisch recherchiert werden: nur Fragen, die nach dem Einschalten entstehen (Aus- und Einschalten beginnt neu), die du (oder ein Agent unter deinem Benutzer) gestellt hast oder die mit Tickets deiner Boards verknüpft sind, je Frage einmal; Grenzen „Gleichzeitige Recherchen“ (1–5) und „Automatische Recherchen je Tag“ (Vorgabe 10); Profil wählbar (ohne Wahl das Profil `research`, falls vorhanden, sonst das Standardprofil). Fremde Fragen startest du von Hand. Umgebungsfehler (z. B. Git Bash fehlt, Repo-Pfad kein Git-Repo) setzen die Automatik 30 min aus und stehen einmal im Protokoll und in der Übersicht. In `dispatch.yaml`: `research: { auto: true, wip: 1, maxPerDay: 10, profile: klein }`.
+
+### Planen am Ticket
+
+Im Ticket-Panel startet „Planen“ (oder `nexus board plan-start ARC-0007`) sofort eine Claude-Session `planner-<ID>`, die das Ticket nach dem Skill `nexus:board` plant – wie eine Recherche unabhängig davon, ob der Dispatcher eingeschaltet ist, nur nicht während einer Pause. Das geht für Tickets eigener Boards mit Repo-Pfad in Backlog, In Planung, Geplant oder Blockiert ohne offene Frage.
+
+- **Ort und Rechte:** Die Session läuft in einem losgelösten Worktree `<repo>-worktrees/plan-<ID>` (danach entfernt), mit `--permission-mode default`, darf nur lesen, `plan.json` schreiben und von der Board-CLI `show`, `list`, `plan-json`, `comment`, `note list` sowie `question show/list/add` nutzen; Status, Labels und Zuständigkeit ändert sie nicht von Hand.
+- **Ergebnis:** Sie speichert den Plan mit `nexus board plan-json` (Ticket danach Geplant) oder legt eine Frage an, wenn eine Entscheidung fehlt. Ohne beides steht `[dispatch] Planung ohne Ergebnis: …` am Ticket. Planungen zählen nicht zum WIP der Tickets.
 
 **Planungs-Automatik:** Unter **Einstellungen → Dispatcher → Planungen** lässt sich einschalten, dass Tickets mit Planungsbedarf auf eigenen Boards selbst geplant werden – nur solange im WIP der Tickets ein Platz frei ist, je Ticket einmal, ohne Tickets mit offener Frage. Mit `acceptance: true` füllt die Planung auch die Abnahme. Profil ohne Wahl `planning`, falls vorhanden, sonst das Standardprofil. In `dispatch.yaml`: `planning: { auto: true, wip: 1, acceptance: true, profile: schwer }`.
 
-**Mehrere Claude-Accounts:** Unter **Einstellungen → Accounts** fügt „Mit Claude anmelden“ einen weiteren Account hinzu: Nexus legt dafür einen eigenen Konfigurationsordner unter `~/.nexus/accounts/<id>` an, startet dort `claude auth login` und öffnet die Anmeldeseite im Browser. Den Code, den Claude nach der Anmeldung zeigt, fügst du auf der Seite ein; danach heißt der Account (ohne eigenen Namen) wie seine E-Mail, und das Nexus-Plugin wird im Ordner eingerichtet. Einen vorhandenen Ordner (z. B. ein MCACC-Profil) übernimmt „Erweitert: vorhandenen Ordner übernehmen“. Der Account „Standard“ ist die Anmeldung des Servers. Je Account zeigt die Seite Anmeldung, Plugin, Limits (5 Stunden und Woche) und eine laufende Pause; „Neu anmelden“ erneuert eine abgelaufene Anmeldung. Im Dispatcher legt die Spalte „Accounts“ der Profile fest, welche Accounts ein Profil nutzen darf (z. B. `schwer` → `max`); ein Profil ohne Accounts darf jeden aktiven Account verwenden. Eine Regel mit Accounts überschreibt die des Profils, ein Label `account:<id>` am Ticket beide; bei der Eskalation bringt das größere Profil seine eigenen mit. Unter den erlaubten wählt der Dispatcher den Account mit der meisten freien Kapazität (oder den ersten freien, `accountStrategy: order`); ab `accountLimitPercent` (Vorgabe 90) gilt ein Account als voll. Ein Account mit dem Schalter „Nur als Fallback“ kommt erst zum Zug, wenn kein anderer erlaubter Account frei ist. Je Account lassen sich eigene Obergrenzen für das 5-Stunden-Fenster und die Woche setzen (in Prozent); darüber nimmt der Dispatcher den Account nicht mehr, leer gilt `accountLimitPercent`. Beim Start rechnet der Dispatcher den erwarteten Verbrauch des Laufs (aus vergangenen Läufen mit gleichem Profil, Modell und Effort geschätzt, sonst der Puffer `accountReserveFiveHour`/`accountReserveWeek`) und die noch ausstehende Reserve der Läufe, die auf dem Account laufen, zur Auslastung hinzu; passt die Summe nicht unter die Obergrenze, gilt der Account als „knapp“ und das Ticket wartet. Setzt sich das 5-Stunden-Fenster innerhalb von `accountResetGraceMinutes` zurück, zählt die Reserve dafür nicht. Hat ein Account eine eigene Obergrenze, liest der Dispatcher seine Limits auch dann, wenn nur er aktiv ist. Ist keiner frei, wartet das Ticket in Geplant, ohne Versuch. Jeder Lauf startet mit `CLAUDE_CONFIG_DIR` des gewählten Accounts; Start-Kommentar und Dispatcher-Dialog nennen ihn. Mit nur einem aktiven Account fragt der Dispatcher keine Limits ab und arbeitet wie bisher. Hinweis: Mehrere Abo-Accounts, um die Limits eines einzelnen Abos zu umgehen, können gegen die Nutzungsbedingungen von Anthropic verstoßen.
+### Mehrere Claude-Accounts
 
-Lauf-, Pause- und Merge-Zustand liegen unter `~/.nexus/dispatch/`, Protokolle unter `~/.nexus/dispatch-logs/`; ausgewertete Läufe landen zusätzlich in der Board-Datenbank (Dashboard). Die Worker laufen losgelöst weiter, wenn der Server neu startet. Erlaubte Werkzeuge stehen in der Einstellung „Erlaubte Tools“; braucht ein Projekt z. B. `dotnet test`, gehört `Bash(dotnet test:*)` dazu. Arbeitet derselbe Nutzer auf mehreren Rechnern, den Dispatcher nur auf einem davon einschalten – sonst übernehmen beide Rechner Tickets derselben Boards.
+- **Anmelden:** Unter **Einstellungen → Accounts** fügt „Mit Claude anmelden“ einen weiteren Account hinzu: Nexus legt dafür einen eigenen Konfigurationsordner unter `~/.nexus/accounts/<id>` an, startet dort `claude auth login` und öffnet die Anmeldeseite im Browser. Den Code, den Claude nach der Anmeldung zeigt, fügst du auf der Seite ein; danach heißt der Account (ohne eigenen Namen) wie seine E-Mail, und das Nexus-Plugin wird im Ordner eingerichtet. Einen vorhandenen Ordner (z. B. ein MCACC-Profil) übernimmt „Erweitert: vorhandenen Ordner übernehmen“. Der Account „Standard“ ist die Anmeldung des Servers.
+- **Übersicht:** Je Account zeigt die Seite Anmeldung, Plugin, Limits (5 Stunden und Woche) und eine laufende Pause; „Neu anmelden“ erneuert eine abgelaufene Anmeldung.
+- **Zuordnung:** Im Dispatcher legt die Spalte „Accounts“ der Profile fest, welche Accounts ein Profil nutzen darf (z. B. `schwer` → `max`); ein Profil ohne Accounts darf jeden aktiven Account verwenden. Eine Regel mit Accounts überschreibt die des Profils, ein Label `account:<id>` am Ticket beide; bei der Eskalation bringt das größere Profil seine eigenen mit.
+- **Auswahl:** Unter den erlaubten wählt der Dispatcher den Account mit der meisten freien Kapazität (oder den ersten freien, `accountStrategy: order`); ab `accountLimitPercent` (Vorgabe 90) gilt ein Account als voll. Ein Account mit dem Schalter „Nur als Fallback“ kommt erst zum Zug, wenn kein anderer erlaubter Account frei ist.
+- **Obergrenzen und Reserve:** Je Account lassen sich eigene Obergrenzen für das 5-Stunden-Fenster und die Woche setzen (in Prozent); darüber nimmt der Dispatcher den Account nicht mehr, leer gilt `accountLimitPercent`. Beim Start rechnet der Dispatcher den erwarteten Verbrauch des Laufs (aus vergangenen Läufen mit gleichem Profil, Modell und Effort geschätzt, sonst der Puffer `accountReserveFiveHour`/`accountReserveWeek`) und die noch ausstehende Reserve der Läufe, die auf dem Account laufen, zur Auslastung hinzu; passt die Summe nicht unter die Obergrenze, gilt der Account als „knapp“ und das Ticket wartet. Setzt sich das 5-Stunden-Fenster innerhalb von `accountResetGraceMinutes` zurück, zählt die Reserve dafür nicht. Hat ein Account eine eigene Obergrenze, liest der Dispatcher seine Limits auch dann, wenn nur er aktiv ist. Ist keiner frei, wartet das Ticket in Geplant, ohne Versuch.
+- **Lauf:** Jeder Lauf startet mit `CLAUDE_CONFIG_DIR` des gewählten Accounts; Start-Kommentar und Dispatcher-Dialog nennen ihn. Mit nur einem aktiven Account fragt der Dispatcher keine Limits ab und arbeitet wie bisher.
 
-### Telegram-Bot
+> [!WARNING]
+> Mehrere Abo-Accounts, um die Limits eines einzelnen Abos zu umgehen, können gegen die Nutzungsbedingungen von Anthropic verstoßen.
+
+### Zustand und Protokolle
+
+Lauf-, Pause- und Merge-Zustand liegen unter `~/.nexus/dispatch/`, Protokolle unter `~/.nexus/dispatch-logs/`; ausgewertete Läufe landen zusätzlich in der Board-Datenbank (Dashboard). Die Worker laufen losgelöst weiter, wenn der Server neu startet. Erlaubte Werkzeuge stehen in der Einstellung „Erlaubte Tools“; braucht ein Projekt z. B. `dotnet test`, gehört `Bash(dotnet test:*)` dazu.
+
+> [!IMPORTANT]
+> Arbeitet derselbe Nutzer auf mehreren Rechnern, den Dispatcher nur auf einem davon einschalten – sonst übernehmen beide Rechner Tickets derselben Boards.
+
+## Telegram-Bot
 
 Nexus lässt sich per Telegram vom Handy aus bedienen: Status und Board abfragen, Freigaben und Fragen per Knopf entscheiden, Ideen per Sprachnachricht als Notiz, Ticket oder Kommentar anlegen. Der Bot läuft im Server selbst (auch in der Desktop-App) und holt seine Nachrichten per Long Polling ab – kein offener Port, kein eigenes Zertifikat nötig.
 
-**Einrichten:**
+### Einrichten
 
 1. Bei [@BotFather](https://t.me/BotFather) in Telegram mit `/newbot` einen Bot anlegen und das Token kopieren.
 2. **Einstellungen → Telegram** → Bereich „Bot“: Schalter „Telegram-Bot“ einschalten, Token eintragen, speichern (die „Adresse der Bot-API“ ist nur für einen selbst betriebenen `telegram-bot-api`-Server gedacht).
 3. Bereich „Kopplung“ → „Koppeln“ zeigt einen Einmal-Code (6 Zeichen, 10 Minuten gültig) und einen Link `https://t.me/<bot>?start=<code>`. Link öffnen oder `/start <code>` im Chat mit dem Bot schicken koppelt den Chat (nur private Chats, keine Gruppen); mehrere Chats derselben Person (z. B. Handy und Tablet) sind möglich, „Entkoppeln“ nimmt einen wieder heraus.
 
-**Befehle:**
+**Bot-Profil:** Nexus richtet von sich aus Profilbild (Nexus-Logo), Namen „Nexus“, Kurzbeschreibung, Beschreibung und Befehlsliste des Bots ein – über @BotFather ist dafür nichts nötig. Abschaltbar unter **Einstellungen → Telegram** → „Profil des Bots von Nexus einrichten“ (dann bleibt, was in @BotFather eingetragen ist); „Profil neu setzen“ erzwingt das erneute Einrichten auch ohne Änderung.
+
+> [!IMPORTANT]
+> **Nur ein Rechner:** Wie beim Dispatcher darf der Bot (Long Polling) nur auf einem Rechner laufen. Pollen zwei Server mit demselben Token, meldet Telegram `409 Conflict`; der Bot zeigt dann „Bot läuft auf einem anderen Rechner“ und versucht es nur noch alle 5 Minuten.
+
+### Befehle
 
 | Befehl | Wirkung |
 |---|---|
@@ -218,15 +330,21 @@ Nexus lässt sich per Telegram vom Handy aus bedienen: Status und Board abfragen
 | `/abbrechen` | einen offenen Dialog beenden |
 | `/hilfe` | diese Liste (auch im Telegram-Menü über die Befehlsliste des Bots) |
 
+### Freigaben und Meldungen
+
 **Freigaben per Knopf:** Meldungen zu Review, gescheitertem Merge, Blockiert und Fragen kommen mit Knöpfen. Kritische Aktionen (Übernehmen, Mergen, eine Frage entscheiden) verlangen einen zweiten Klick auf eine Sicherheitsfrage (z. B. „NXS-0042 wirklich mergen?“ mit „Ja, mergen“/„Abbrechen“); passt der Zustand beim Klick nicht mehr zum Knopf (z. B. schon gemergt), ändert sich nichts und der Bot sagt, woran es liegt. Rückmeldung an den Agenten, Kommentare, Freitext-Entscheidungen und Begründungen beim Verwerfen lassen sich per Text oder Sprachnachricht beantworten (ein offener Dialog je Chat, läuft nach 15 Minuten ab). Aktionen über Telegram tragen in Kommentaren und Verlauf den Zusatz „(über Telegram)“.
 
 **Meldungen und Nachtruhe:** Unter **Einstellungen → Telegram** → Bereich „Meldungen“ lässt sich je Anlass ein-/ausschalten, ob der Bot von sich aus schreibt (Review, Blockiert, Frage, Merge gescheitert: an; Gemergt, Pause: aus). Eine „Nachtruhe“ (Vorgabe 22:00–07:00 Uhr, Zeiten einstellbar) unterdrückt Meldungen in diesem Fenster (Ortszeit des Servers); wer in der Zeit doch etwas erledigen will, nutzt die Oberfläche.
 
-**Ideen per Sprache:** Eine Sprachnachricht, eine Audiodatei, `/idee <Text>` oder freier Text ohne offenen Dialog startet eine Idee. Der Bot transkribiert (nur bei Audio), sammelt Kontext aus den eigenen Boards (offene Tickets, Notizen, Fragen, ähnliche Notizen) und lässt Claude (`claude -p`, ohne Werkzeuge) daraus einen **Ideen-Entwurf** machen: Zusammenfassung, Ziel (Notiz, Ticket oder Kommentar an ein Ticket), Titel, Details, Bezüge zu vorhandenen Tickets, mögliche Dubletten, ggf. Rückfragen. Der Bot schickt diesen Entwurf zur Bestätigung mit den Knöpfen **Anlegen**, **Als Notiz**/**Als Ticket**, **Anderes Board**, **Korrigieren**, **Verwerfen**. Offene Rückfragen oder „Korrigieren“ beantwortet man einfach mit der nächsten Text- oder Sprachnachricht; nach höchstens 5 Korrekturrunden (einstellbar, 1–10) bleiben nur noch Anlegen/Verwerfen. Erst **Anlegen** erzeugt etwas im Board: eine Notiz (Vorgabe), ein Ticket im Backlog mit Kommentar „Aus Telegram-Sprachnotiz“, oder – wenn Claude das vorschlägt – einen Kommentar am genannten Ticket.
+### Ideen per Sprache
 
-**Bot-Profil:** Nexus richtet von sich aus Profilbild (Nexus-Logo), Namen „Nexus“, Kurzbeschreibung, Beschreibung und Befehlsliste des Bots ein – über @BotFather ist dafür nichts nötig. Abschaltbar unter **Einstellungen → Telegram** → „Profil des Bots von Nexus einrichten“ (dann bleibt, was in @BotFather eingetragen ist); „Profil neu setzen“ erzwingt das erneute Einrichten auch ohne Änderung.
+Eine Sprachnachricht, eine Audiodatei, `/idee <Text>` oder freier Text ohne offenen Dialog startet eine Idee. Der Bot transkribiert (nur bei Audio), sammelt Kontext aus den eigenen Boards (offene Tickets, Notizen, Fragen, ähnliche Notizen) und lässt Claude (`claude -p`, ohne Werkzeuge) daraus einen **Ideen-Entwurf** machen: Zusammenfassung, Ziel (Notiz, Ticket oder Kommentar an ein Ticket), Titel, Details, Bezüge zu vorhandenen Tickets, mögliche Dubletten, ggf. Rückfragen.
 
-**Spracherkennung:** Unter **Einstellungen → Spracherkennung** lässt sich ein Dienst mit der Schnittstelle von OpenAI für die Transkription einstellen (Adresse, Schlüssel, Modell, Sprache), mit Vorlagen:
+Der Bot schickt diesen Entwurf zur Bestätigung mit den Knöpfen **Anlegen**, **Als Notiz**/**Als Ticket**, **Anderes Board**, **Korrigieren**, **Verwerfen**. Offene Rückfragen oder „Korrigieren“ beantwortet man einfach mit der nächsten Text- oder Sprachnachricht; nach höchstens 5 Korrekturrunden (einstellbar, 1–10) bleiben nur noch Anlegen/Verwerfen. Erst **Anlegen** erzeugt etwas im Board: eine Notiz (Vorgabe), ein Ticket im Backlog mit Kommentar „Aus Telegram-Sprachnotiz“, oder – wenn Claude das vorschlägt – einen Kommentar am genannten Ticket.
+
+### Spracherkennung
+
+Unter **Einstellungen → Spracherkennung** lässt sich ein Dienst mit der Schnittstelle von OpenAI für die Transkription einstellen (Adresse, Schlüssel, Modell, Sprache), mit Vorlagen:
 
 | Vorlage | Adresse | Modell | Hinweis |
 |---|---|---|---|
@@ -236,6 +354,11 @@ Nexus lässt sich per Telegram vom Handy aus bedienen: Status und Board abfragen
 | LocalAI | `http://localhost:8080` | `whisper-1` | selbst gehostet, Schlüssel optional |
 
 „Eigene“ nimmt jede andere Adresse mit derselben Schnittstelle (z. B. Groq oder ein Rechner im Heimnetz). „Testen“ schickt eine mitgelieferte kurze Aufnahme an den Dienst und zeigt Text, Dienst und Dauer.
+
+<details>
+<summary><b>Speaches oder whisper.cpp selbst betreiben</b></summary>
+
+<br>
 
 Speaches per Docker starten (CPU; für GPU `--gpus=all` und das Abbild `:latest-cuda`):
 
@@ -252,9 +375,27 @@ whisper.cpp als Server mit der Schnittstelle von OpenAI (Bau und weitere Optione
 ./server -m models/ggml-small.bin --inference-path /v1/audio/transcriptions --convert --port 8080
 ```
 
-**Datenschutz:** Bei der Vorlage OpenAI verlassen die Aufnahmen den eigenen Rechner und gehen zu OpenAI; bei selbst gehosteten Diensten (Speaches, whisper.cpp-Server, LocalAI, eigene Adresse) bleiben sie im eigenen Netz (Telegram selbst sieht die Sprachnachricht trotzdem). Nexus speichert Aufnahmen nicht dauerhaft, nur das Transkript landet im Chatverlauf und ggf. im angelegten Eintrag. Bot-Token und Schlüssel liegen nur lokal in `~/.nexus/telegram.yaml` (Dateirechte `0600`) und erscheinen in der Oberfläche und in Fehlermeldungen nie im Klartext.
+</details>
 
-**Nur ein Rechner:** Wie beim Dispatcher darf der Bot (Long Polling) nur auf einem Rechner laufen. Pollen zwei Server mit demselben Token, meldet Telegram `409 Conflict`; der Bot zeigt dann „Bot läuft auf einem anderen Rechner“ und versucht es nur noch alle 5 Minuten.
+> [!NOTE]
+> **Datenschutz:** Bei der Vorlage OpenAI verlassen die Aufnahmen den eigenen Rechner und gehen zu OpenAI; bei selbst gehosteten Diensten (Speaches, whisper.cpp-Server, LocalAI, eigene Adresse) bleiben sie im eigenen Netz (Telegram selbst sieht die Sprachnachricht trotzdem). Nexus speichert Aufnahmen nicht dauerhaft, nur das Transkript landet im Chatverlauf und ggf. im angelegten Eintrag. Bot-Token und Schlüssel liegen nur lokal in `~/.nexus/telegram.yaml` (Dateirechte `0600`) und erscheinen in der Oberfläche und in Fehlermeldungen nie im Klartext.
+
+## Themes
+
+Mitgeliefert sind Hell, Dunkel und System. Weitere Themes bietet Nexus über seinen Theme-Store an; installiert werden sie erst per Download. Quelle, Aufbau und Bau der Themes stehen in [themes/README.md](themes/README.md).
+
+<table>
+  <tr>
+    <td align="center"><img src="themes/catppuccin/assets/preview.png" alt="Vorschau des Themes Catppuccin" width="260"><br><sub>Catppuccin</sub></td>
+    <td align="center"><img src="themes/dracula/assets/preview.png" alt="Vorschau des Themes Dracula" width="260"><br><sub>Dracula</sub></td>
+    <td align="center"><img src="themes/synthwave/assets/preview.png" alt="Vorschau des Themes Synthwave" width="260"><br><sub>Synthwave</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="themes/terminal/assets/preview.png" alt="Vorschau des Themes Terminal" width="260"><br><sub>Terminal</sub></td>
+    <td align="center"><img src="themes/pastel/assets/preview.png" alt="Vorschau des Themes Paper Notes" width="260"><br><sub>Paper Notes</sub></td>
+    <td align="center"><img src="themes/signal/assets/preview.png" alt="Vorschau des Themes Signal" width="260"><br><sub>Signal</sub></td>
+  </tr>
+</table>
 
 ## Anpassen
 
@@ -284,7 +425,7 @@ Ungültige Anpassungen fallen mit Warnung auf den Standard zurück; die Ausgabe 
 | Projekte, Sessions, Favoriten, Einstellungen, Server-Protokoll | `~/.nexus/` |
 | Repo-Pfade der Boards (je Person) | `~/.nexus/board-repos.yaml` |
 | Tickets, Fragen, Projekte, Boards, Notizen, Dispatcher-Läufe (SQL Server) | Datenbank `AiHarness` (Schema `board`); Sicherung durch den DBA |
-| dasselbe (SQLite) | `~/.nexus/board.db` (oder `file` aus `board.yaml`) samt `-wal`/`-shm`; Sicherung siehe oben |
+| dasselbe (SQLite) | `~/.nexus/board.db` (oder `file` aus `board.yaml`) samt `-wal`/`-shm`; Sicherung siehe [oben](#sicherung) |
 | Anbieter und Verbindung der Board-Datenbank, eigene Benutzer-ID, aktives Board | `~/.nexus/board.yaml` |
 | Einstellung des Dispatchers | `~/.nexus/dispatch.yaml` |
 | Claude-Accounts des Dispatchers | `~/.nexus/accounts.json`, Ordner neuer Accounts unter `~/.nexus/accounts/` |
@@ -298,7 +439,9 @@ Ungültige Anpassungen fallen mit Warnung auf den Standard zurück; die Ausgabe 
 
 Ohne `~/.nexus` gilt während der Übergangszeit noch `~/.harness` (siehe [Umstieg](#umstieg-vom-ai-harness)).
 
-Umgebungsvariablen (die alten Namen mit `HARNESS_` statt `NEXUS_` gelten weiter, die neuen haben Vorrang):
+### Umgebungsvariablen
+
+Die alten Namen mit `HARNESS_` statt `NEXUS_` gelten weiter, die neuen haben Vorrang.
 
 | Variable | Wirkung |
 |---|---|
@@ -325,6 +468,8 @@ Umgebungsvariablen (die alten Namen mit `HARNESS_` statt `NEXUS_` gelten weiter,
 | „Kein Board ist dem Repo … zugeordnet“ oder „… gehört aber zu Board …“ | `nexus board boards list`, dann `nexus board boards repo <id> <pfad>`; oder das Ticket im Repo seines Boards bearbeiten |
 | `board-schema-outdated` (SQL Server) | Fehlendes Skript aus `crates/nexus-db/sql/` einspielen (Meldung nennt es) |
 | „Board-Datei ist nicht erreichbar“ / „lässt sich nicht öffnen“ (SQLite) | Pfad in Einstellungen → Board-Datenbank prüfen; Ordner beschreibbar? Datei nicht auf Netzlaufwerk/OneDrive; anderes Programm hält die Datei offen → schließen |
+
+### Ausschalten und deinstallieren
 
 Für ein Projekt ausschalten: `claude plugin disable nexus@nexus-local --scope local`. Deinstallieren: `nexus stop`, `claude plugin uninstall nexus@nexus-local`, dann `~/.nexus/app`, `~/.nexus/bin` und `~/.nexus/rules` löschen und `~/.nexus/bin` aus dem PATH nehmen.
 
@@ -434,7 +579,8 @@ export HARNESS_TEST_DB='{"server":"localhost","port":1433,"database":"AiHarness_
 cargo test -p nexus-db
 ```
 
-Die Tests leeren alle Tabellen; deshalb verweigern sie jede Datenbank ohne `_Test` am Ende.
+> [!CAUTION]
+> Die Tests leeren alle Tabellen; deshalb verweigern sie jede Datenbank ohne `_Test` am Ende.
 
 **Vor dem Push** dieselben Schritte wie die CI:
 
@@ -465,3 +611,7 @@ scripts/               Entwicklungsstart, Benchmarks, Release
 docs/                  ADRs, Specs und Pläne (docs/superpowers), Design-Notizen
 GLOSSARY.md            Begriffe
 ```
+
+## Lizenz
+
+Nexus steht unter der [MIT-Lizenz](LICENSE).

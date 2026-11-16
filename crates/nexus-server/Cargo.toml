@@ -4,6 +4,8 @@ description = "HTTP-API, Dispatch-Worker und Benachrichtigungen von Nexus"
 edition.workspace = true
 version.workspace = true
 rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [features]
 # Gibt Test-Attrappen (z. B. telegram::fake) auch außerhalb der Modultests frei

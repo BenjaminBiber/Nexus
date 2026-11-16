@@ -5,6 +5,8 @@ description = "Nexus Desktop"
 edition.workspace = true
 version.workspace = true
 rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
 
 # Die Bibliothek trägt den Einstieg, damit das Binary auf allen Plattformen gleich bleibt.
 # Nur rlib: staticlib und cdylib aus der Tauri-Vorlage braucht es erst für iOS/Android; unter
