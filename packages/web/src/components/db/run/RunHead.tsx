@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { DispatchRunLogDto } from '../../../api/dispatchTypes.js';
 import { formatDate } from '../../../dbboard/formatDate.js';
 import { formatDuration } from '../../../sessions/format.js';
@@ -32,8 +33,9 @@ export function runOutcome(run: DispatchRunLogDto): { label: string; tone: RunTo
   return (run.outcome ? OUTCOMES[run.outcome] : undefined) ?? { label: 'beendet', tone: 'neutral' };
 }
 
-// Kopfzeile eines Laufs (Inhalt des <summary>): Marke mit Ergebnis, Titel, gedämpft Dauer und Modell
-export function RunHead({ run }: { run: DispatchRunLogDto }) {
+// Kopfzeile eines Laufs (Inhalt des <summary>): Marke mit Ergebnis, Titel, gedämpft Dauer und Modell. `children` stehen
+// zwischen Titel und Dauer (Platz für die Einstellungen des offenen Laufs).
+export function RunHead({ run, children }: { run: DispatchRunLogDto; children?: ReactNode }) {
   const outcome = runOutcome(run);
   const facts = [
     typeof run.durationMs === 'number' ? formatDuration(run.durationMs) : null,
@@ -43,6 +45,7 @@ export function RunHead({ run }: { run: DispatchRunLogDto }) {
     <>
       <span className={outcome.tone === 'running' ? 'badge running' : `badge outcome-${outcome.tone}`}>{outcome.label}</span>
       <span className="run-title">{`${KIND_LABELS[run.kind]} vom ${run.started ? formatDate(run.started) : run.name}`}</span>
+      {children}
       {facts.length > 0 && <span className="muted run-facts">{facts.join(' · ')}</span>}
     </>
   );

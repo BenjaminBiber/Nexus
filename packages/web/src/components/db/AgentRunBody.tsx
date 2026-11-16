@@ -56,17 +56,20 @@ interface AgentRunBodyProps {
   log: DispatchRunLogPartsDto;
   /** Abstand des Nachladens, solange der Lauf läuft */
   intervalMs?: number;
-  /** Platz in der Kopfzeile des Laufs (im <summary>) für die Vorschaubilder des ganzen Laufs; null: keine */
+  /** Platz in der Kopfzeile des Laufs (im <summary>) hinter dem Titel für die Einstellungen; null: keine */
+  chipsSlot?: HTMLElement | null;
+  /** Platz ganz rechts in der Kopfzeile für die Vorschaubilder des ganzen Laufs und „Einklappen“; null: keine */
   headSlot?: HTMLElement | null;
 }
 
-// Inhalt eines aufgeklappten Laufs: Abbruchgrund, Einstellungen aus dem Kopf des Dispatchers, der Verlauf als Zeitleiste
-// (aus dem Transcript, ohne Transcript aus dem Lauf-Protokoll; einklappbar), die Antwort des Agenten als Ergebnis, das
-// Sitzungsende (Hook-Fehler, Exit-Code) und im Fuß Arbeitsanweisung und Rohprotokoll. Die Screenshots des Laufs zeichnet
-// er klein in die Kopfzeile (`headSlot`), die eines Aufrufs an dessen Zeile; ein Klick öffnet die Großansicht. Der
-// Verlauf bleibt am Ende – beim Nachladen und wenn sein Inhalt nachträglich wächst –, solange der Nutzer nicht
+// Inhalt eines aufgeklappten Laufs: Abbruchgrund, der Verlauf als Zeitleiste (aus dem Transcript, ohne Transcript aus dem
+// Lauf-Protokoll; einklappbar), die Antwort des Agenten als Ergebnis, das Sitzungsende (Hook-Fehler, Exit-Code) und im
+// Fuß Arbeitsanweisung und Rohprotokoll. In die Kopfzeile des Laufs zeichnet er die Einstellungen aus dem Kopf des
+// Dispatchers (`chipsSlot`), die Screenshots des Laufs und „Einklappen“ (`headSlot`), sodass Marke, Einstellungen und
+// Schalter in einer Zeile stehen; die Screenshots eines Aufrufs stehen an dessen Zeile, ein Klick öffnet die Großansicht.
+// Der Verlauf bleibt am Ende – beim Nachladen und wenn sein Inhalt nachträglich wächst –, solange der Nutzer nicht
 // hochgescrollt oder gerade etwas im Verlauf aufgeklappt hat.
-export function AgentRunBody({ run, log, intervalMs = 3000, headSlot = null }: AgentRunBodyProps) {
+export function AgentRunBody({ run, log, intervalMs = 3000, chipsSlot = null, headSlot = null }: AgentRunBodyProps) {
   const api = useApi();
   const tx = useRunTranscript(run.name, run.running, intervalMs);
   // Datei des Screenshots in der Großansicht; null: geschlossen
@@ -135,19 +138,36 @@ export function AgentRunBody({ run, log, intervalMs = 3000, headSlot = null }: A
 
   return (
     <div className="run-body">
-      {headSlot && createPortal(<RunThumbs shots={tx.shots} all={tx.shots} url={shotUrl} onOpen={setShot} label="Screenshots des Laufs" />, headSlot)}
+      {chipsSlot && createPortal(<RunChips chips={chips} />, chipsSlot)}
+      {headSlot &&
+        createPortal(
+          <>
+            <RunThumbs shots={tx.shots} all={tx.shots} url={shotUrl} onOpen={setShot} label="Screenshots des Laufs" />
+            {tx.status !== 'loading' && (
+              <button
+                type="button"
+                className="btn small run-collapse"
+                title={collapsed ? 'Verlauf aufklappen' : 'Verlauf einklappen'}
+                aria-expanded={!collapsed}
+                aria-controls={timelineId}
+                onClick={(event) => {
+                  // Steht im <summary>: der Lauf selbst bleibt offen
+                  event.preventDefault();
+                  setCollapsed((c) => !c);
+                }}
+              >
+                {collapsed ? 'Aufklappen' : 'Einklappen'}
+              </button>
+            )}
+          </>,
+          headSlot,
+        )}
       <RunAbortReason run={run} />
-      <RunChips chips={chips} />
       {tx.status === 'loading' ? (
         <p className="muted">Wird geladen …</p>
       ) : (
         <section className="run-timeline" aria-label="Verlauf">
-          <div className="run-section-head">
-            <h3 className="run-section-title">{`Verlauf · ${steps === 1 ? '1 Schritt' : `${steps} Schritte`}`}</h3>
-            <button type="button" className="btn small run-collapse" aria-expanded={!collapsed} aria-controls={timelineId} onClick={() => setCollapsed((c) => !c)}>
-              {collapsed ? 'Aufklappen' : 'Einklappen'}
-            </button>
-          </div>
+          <h3 className="run-section-title">{`Verlauf · ${steps === 1 ? '1 Schritt' : `${steps} Schritte`}`}</h3>
           {fallback && log.prompt === null && log.body.startsWith('…') && <p className="muted">Nur das Ende des Protokolls – es ist sehr lang.</p>}
           <div
             id={timelineId}

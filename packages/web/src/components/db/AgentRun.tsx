@@ -14,20 +14,24 @@ interface AgentRunProps {
   onToggle: (open: boolean) => void;
 }
 
-// Ein Lauf als aufklappbare Zeile: im Kopf Marke, Titel, Dauer, Modell und ganz rechts ein Platz für die Screenshots des
-// Laufs, den der offene Inhalt (AgentRunBody) füllt. Nur ein offener Lauf zeichnet seinen Inhalt; zugeklappt lädt er nichts.
+// Ein Lauf als aufklappbare Zeile: im Kopf Marke, Titel, Dauer, Modell; offen dazu die Einstellungen hinter dem Titel und
+// ganz rechts Screenshots und „Einklappen“ des Verlaufs, die der offene Inhalt (AgentRunBody) in seine Plätze zeichnet. Nur ein offener Lauf zeichnet seinen Inhalt; zugeklappt lädt er nichts.
 export function AgentRun({ run, log, open, intervalMs, onToggle }: AgentRunProps) {
-  // Platz für die Vorschaubilder im Kopf; AgentRunBody zeichnet sie per Portal hinein
+  // Plätze im Kopf für die Einstellungen (hinter dem Titel) sowie Vorschaubilder und „Einklappen“ (ganz rechts);
+  // AgentRunBody zeichnet sie per Portal hinein
+  const [chipsSlot, setChipsSlot] = useState<HTMLSpanElement | null>(null);
   const [headSlot, setHeadSlot] = useState<HTMLSpanElement | null>(null);
   return (
     <details className="agent-run" open={open} onToggle={(e) => onToggle(e.currentTarget.open)}>
       <summary>
-        <RunHead run={run} />
-        <span className="run-head-shots" ref={setHeadSlot} />
+        <RunHead run={run}>
+          <span className="run-head-chips" ref={setChipsSlot} />
+        </RunHead>
+        <span className="run-head-end" ref={setHeadSlot} />
       </summary>
       {open && !log && <p className="muted">Wird geladen …</p>}
       {open && log && 'error' in log && <p role="alert" className="field-error">{log.error}</p>}
-      {open && log && !('error' in log) && <AgentRunBody run={run} log={log} intervalMs={intervalMs} headSlot={headSlot} />}
+      {open && log && !('error' in log) && <AgentRunBody run={run} log={log} intervalMs={intervalMs} chipsSlot={chipsSlot} headSlot={headSlot} />}
     </details>
   );
 }

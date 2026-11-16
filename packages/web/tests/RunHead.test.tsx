@@ -52,6 +52,15 @@ describe('RunHead', () => {
     expect(screen.getByText(`${formatDuration(720_000)} · opus-5-5`)).toBeTruthy();
   });
 
+  it('setzt Zusätze zwischen Titel und Dauer', () => {
+    const { container } = render(
+      <RunHead run={run({ durationMs: 60_000 })}>
+        <span className="extra" />
+      </RunHead>,
+    );
+    expect(Array.from(container.children).map((el) => el.className)).toEqual(['badge outcome-neutral', 'run-title', 'extra', 'muted run-facts']);
+  });
+
   it('zeigt einen laufenden Lauf mit der Marke „läuft“ und ohne Dauer', () => {
     const { container } = render(<RunHead run={run({ running: true })} />);
     expect(screen.getByText('läuft').className).toBe('badge running');

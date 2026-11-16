@@ -21,25 +21,39 @@
   white-space: nowrap;
 }
 
-/* Platz für die Vorschaubilder des offenen Laufs ganz rechts im Kopf, hinter Dauer und Modell; leer verschiebt er nichts.
-   Die Bilder (26 px) passen in die Kopfzeile (44 px), ohne sie höher zu machen. */
-.run-head-shots {
+/* Platz für die Einstellungen des offenen Laufs hinter dem Titel: Er nimmt den freien Platz der Zeile, die Marken brechen
+   darin um, statt Marke, Titel und „Einklappen“ in eigene Zeilen zu schieben. Leer verschiebt er nichts. */
+.run-head-chips {
+  display: flex;
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.run-head-chips:empty {
+  display: none;
+}
+/* Platz ganz rechts im Kopf, hinter Dauer und Modell: Vorschaubilder des offenen Laufs und „Einklappen“; leer verschiebt
+   er nichts. Die Bilder (26 px) passen in die Kopfzeile (44 px), ohne sie höher zu machen. */
+.run-head-end {
   display: inline-flex;
   flex: none;
   align-items: center;
+  gap: 8px;
   margin-left: auto;
 }
-.run-head-shots:empty {
+.run-head-end:empty {
   display: none;
 }
-/* Der Titel nimmt den freien Platz, so stehen Dauer und Vorschaubilder nebeneinander am rechten Rand. Schmale Kopfzeile:
-   Die Vorschaubilder rücken rechtsbündig in eine zweite Zeile, statt den Titel zu zerquetschen. */
+/* Ohne Einstellungen nimmt der Titel den freien Platz, so stehen Dauer und Vorschaubilder nebeneinander am rechten Rand.
+   Schmale Kopfzeile: Einstellungen und Vorschaubilder rücken in eine zweite Zeile, statt den Titel zu zerquetschen. */
 .agent-run > summary {
   flex-wrap: wrap;
-  row-gap: 4px;
+  row-gap: 8px;
 }
 .agent-run > summary > .run-title {
   flex: 1 1 auto;
+}
+.agent-run > summary:has(.run-chips) > .run-title {
+  flex: 0 1 auto;
 }
 
 .run-abort-reason {

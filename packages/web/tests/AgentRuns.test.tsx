@@ -503,6 +503,14 @@ describe('AgentRuns (Transcript)', () => {
     const chips = await screen.findByRole('list', { name: 'Einstellungen des Laufs' });
     expect(within(chips).getAllByRole('listitem').map((li) => li.textContent))
       .toEqual(['Profil standard', 'Modell opus', 'Effort low', 'Limit 150 Schritte · 90 min', 'profil:standard']);
+    // Marke, Titel, Einstellungen und „Einklappen“ stehen in einer Zeile: im Kopf des Laufs
+    const details = document.querySelector<HTMLDetailsElement>('details.agent-run')!;
+    const summary = details.querySelector('summary')!;
+    const toggle = await within(summary).findByRole('button', { name: 'Einklappen' });
+    expect(chips.closest('summary')).toBe(summary);
+    expect(Array.from(summary.children).map((el) => el.className))
+      .toEqual(['badge outcome-neutral', 'run-title', 'run-head-chips', 'run-head-end']);
+    expect(toggle.parentElement!.className).toBe('run-head-end');
     // Start im Verlauf, die Antwort darunter als Ergebnis
     const timeline = screen.getByRole('region', { name: 'Verlauf' });
     expect(within(timeline).getByText('Claude startet (claude-opus-5-5)')).toBeTruthy();
@@ -514,15 +522,17 @@ describe('AgentRuns (Transcript)', () => {
     expect(within(end).getByText('[node hook.js] Hook cancelled')).toBeTruthy();
     expect(within(end).getByText('Exit-Code 0')).toBeTruthy();
     expect(within(timeline).queryByText(/Hook cancelled|Exit-Code/)).toBeNull();
-    // Einklappen verbirgt den Verlauf, Aufklappen zeigt ihn wieder
-    const toggle = within(timeline).getByRole('button', { name: 'Einklappen' });
+    // Einklappen verbirgt den Verlauf, Aufklappen zeigt ihn wieder; der Lauf selbst bleibt dabei offen
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(timeline.contains(document.getElementById(toggle.getAttribute('aria-controls')!))).toBe(true);
     await userEvent.click(toggle);
     expect(toggle.textContent).toBe('Aufklappen');
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(document.getElementById(toggle.getAttribute('aria-controls')!)!.hidden).toBe(true);
+    expect(details.open).toBe(true);
     await userEvent.click(toggle);
     expect(document.getElementById(toggle.getAttribute('aria-controls')!)!.hidden).toBe(false);
+    expect(details.open).toBe(true);
   });
 
   it('zeigt Screenshots im Kopf des offenen Laufs und am Aufruf und öffnet die Großansicht', async () => {
@@ -540,9 +550,10 @@ describe('AgentRuns (Transcript)', () => {
     const head = await screen.findByRole('group', { name: 'Screenshots des Laufs' });
     const details = document.querySelector<HTMLDetailsElement>('details.agent-run')!;
     const summary = details.querySelector('summary')!;
-    // Im Kopf ganz rechts, hinter Dauer und Modell; keine Leiste über dem Verlauf
+    // Im Kopf ganz rechts, hinter Dauer und Modell und vor „Einklappen“; keine Leiste über dem Verlauf
     expect(head.closest('summary')).toBe(summary);
-    expect(head.parentElement!.classList.contains('run-head-shots')).toBe(true);
+    expect(head.parentElement!.classList.contains('run-head-end')).toBe(true);
+    expect(head.nextElementSibling!.textContent).toBe('Einklappen');
     expect(summary.lastElementChild).toBe(head.parentElement);
     expect(head.parentElement!.previousElementSibling!.classList.contains('run-facts')).toBe(true);
     expect(document.querySelector('.run-shots')).toBeNull();
@@ -562,11 +573,12 @@ describe('AgentRuns (Transcript)', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(details.open).toBe(true);
 
-    // Zugeklappt: keine Bilder im Kopf
+    // Zugeklappt: keine Bilder und kein „Einklappen“ im Kopf
     await userEvent.click(within(summary).getByText(/Lauf vom/));
     await waitFor(() => expect(details.open).toBe(false));
     await waitFor(() => expect(screen.queryByRole('group', { name: 'Screenshots des Laufs' })).toBeNull());
-    expect(summary.querySelector('.run-head-shots')!.childElementCount).toBe(0);
+    expect(summary.querySelector('.run-head-end')!.childElementCount).toBe(0);
+    expect(summary.querySelector('.run-head-chips')!.childElementCount).toBe(0);
   });
 
   it('lässt im Kopf des Dispatchers die Zeile „… startet in …“ weg', async () => {
