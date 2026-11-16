@@ -14,6 +14,18 @@
 
 ### Sonstiges
 
+## 0.3.1 – 2026-11-16
+
+### Vertrag
+
+- Keine Änderungen.
+
+### Angekündigt
+
+- Keine.
+
+### Sonstiges
+
 - 0.3.0 ist nicht erschienen: Die CI des Release-Laufs war rot (Clippy auf Linux und macOS, zwei
   wackelige Oberflächentests). 0.3.1 bringt alle Änderungen aus 0.3.0 mit, sie stehen im Changelog
   unter 0.3.0.
