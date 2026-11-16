@@ -27,16 +27,17 @@ describe('groupRunEntries', () => {
     expect(items[0]).toEqual({ type: 'entry', key: 't1', entry: text('t1'), shots: [] });
   });
 
+  // Folgen am Ende rechnen mit einem laufenden Lauf: bei einem beendeten steht der letzte Aufruf für sich (eigener Test)
   it('nimmt „Nachgedacht“ in die Gruppe, zählt es aber nicht als Schritt', () => {
-    const items = groupRunEntries([thinking('n1'), tool('a'), thinking('n2'), tool('b'), tool('c')], [], false);
+    const items = groupRunEntries([thinking('n1'), tool('a'), thinking('n2'), tool('b'), tool('c')], [], true);
     expect(shape(items)).toEqual(['group(n1,a,n2,b,c)']);
     expect(items[0]).toMatchObject({ key: 'group:n1', tools: 3 });
     // Zwei Aufrufe reichen, auch mit Nachdenken dazwischen
-    const pair = groupRunEntries([tool('a'), thinking('n1'), tool('b')], [], false);
+    const pair = groupRunEntries([tool('a'), thinking('n1'), tool('b')], [], true);
     expect(shape(pair)).toEqual(['group(a,n1,b)']);
     expect(pair[0]).toMatchObject({ tools: 2, label: '2 Schritte · 2× Read' });
     // Ein Aufruf reicht nicht, auch mit Nachdenken davor und danach
-    expect(shape(groupRunEntries([thinking('n1'), tool('a'), thinking('n2')], [], false))).toEqual(['n1', 'a', 'n2']);
+    expect(shape(groupRunEntries([thinking('n1'), tool('a'), thinking('n2')], [], true))).toEqual(['n1', 'a', 'n2']);
   });
 
   it('lässt Fehler und offene Aufrufe einzeln stehen, faltet Aufrufe mit Screenshot mit', () => {
@@ -52,14 +53,14 @@ describe('groupRunEntries', () => {
   });
 
   it('faltet zwei Aufrufe ohne und einen mit Screenshot zu einer Gruppe mit dessen Screenshots', () => {
-    const items = groupRunEntries([tool('a'), tool('b'), tool('s', 'mcp__browser__screenshot')], [shot('001.png', 's')], false);
+    const items = groupRunEntries([tool('a'), tool('b'), tool('s', 'mcp__browser__screenshot')], [shot('001.png', 's')], true);
     expect(shape(items)).toEqual(['group(a,b,s)']);
     expect(items[0]).toMatchObject({ label: '3 Schritte · 2× Read · 1× browser · screenshot', shots: [shot('001.png', 's')] });
   });
 
   it('nennt die Screenshots einer Gruppe in der Reihenfolge der Ablage', () => {
     const shots = [shot('001.png', 'c'), shot('002.png', 'x'), shot('003.png', 'a'), shot('004.png', 'c')];
-    const [group] = groupRunEntries([tool('a'), tool('b'), tool('c')], shots, false);
+    const [group] = groupRunEntries([tool('a'), tool('b'), tool('c')], shots, true);
     expect(group).toMatchObject({ type: 'group', shots: [shots[0], shots[2], shots[3]] });
   });
 
@@ -73,7 +74,7 @@ describe('groupRunEntries', () => {
 
   it('faltet einen Aufruf ohne und einen mit Screenshot zu einer Gruppe mit dessen Screenshots', () => {
     const shots = [shot('001.png', 's'), shot('002.png', 's')];
-    const items = groupRunEntries([text('t1'), tool('a'), tool('s'), text('t2')], shots, false);
+    const items = groupRunEntries([text('t1'), tool('a'), tool('s'), text('t2')], shots, true);
     expect(shape(items)).toEqual(['t1', 'group(a,s)', 't2']);
     expect(items[1]).toMatchObject({ type: 'group', tools: 2, shots });
   });
@@ -87,7 +88,7 @@ describe('groupRunEntries', () => {
 
   it('beschriftet die Gruppe mit höchstens vier Tools in der Reihenfolge ihres Auftretens', () => {
     const entries = [tool('a', 'Read'), tool('b', 'Grep'), tool('c', 'Read'), tool('d', 'mcp__browser__snapshot'), tool('e', 'Bash'), tool('f', 'Glob'), tool('g', 'Read')];
-    const [group] = groupRunEntries(entries, [], false);
+    const [group] = groupRunEntries(entries, [], true);
     expect(group).toMatchObject({ label: '7 Schritte · 3× Read · 1× Grep · 1× browser · snapshot · 1× Bash · …' });
   });
 
@@ -100,8 +101,16 @@ describe('groupRunEntries', () => {
     expect(open(groupRunEntries([...entries, tool('o', 'Bash', null)], [], true))).toEqual([false, null, true, null]);
     // läuft, dahinter Text: der Agent ist weiter
     expect(open(groupRunEntries([...entries, text('t2')], [], true))).toEqual([false, null, false, null]);
-    // beendet: alles zu
-    expect(open(groupRunEntries(entries, [], false))).toEqual([false, null, false]);
+    // beendet: alles zu (der letzte Aufruf steht für sich)
+    expect(open(groupRunEntries(entries, [], false))).toEqual([false, null, false, null]);
+  });
+
+  it('lässt den letzten Aufruf eines beendeten Laufs für sich stehen', () => {
+    const entries = [tool('a'), tool('b'), tool('c'), text('t'), tool('d'), tool('e'), thinking('n')];
+    expect(shape(groupRunEntries(entries, [], false))).toEqual(['group(a,b,c)', 't', 'd', 'e', 'n']);
+    expect(shape(groupRunEntries([...entries, tool('f')], [], false))).toEqual(['group(a,b,c)', 't', 'group(d,e,n)', 'f']);
+    // Läuft der Lauf noch, bleibt die Folge am Ende eine Gruppe
+    expect(shape(groupRunEntries(entries, [], true))).toEqual(['group(a,b,c)', 't', 'group(d,e,n)']);
   });
 
   it('liefert ohne Einträge nichts', () => {

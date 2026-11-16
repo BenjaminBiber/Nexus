@@ -1,0 +1,397 @@
+/* Aufgeklappter Agent-Lauf im Ticket (Entwurf „Ausführlich, Zeitleiste aufgeklappt“): Einstellungen als Marken, der
+   Verlauf als Zeitleiste mit Linie und Punkten, die Antwort als Ergebnis-Karte, darunter das Sitzungsende.
+   Farben kommen aus den Theme-Variablen, damit helles und dunkles Schema sowie Theme-Pakete passen. */
+
+.run-body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 4px 0 2px;
+}
+
+/* Einstellungen des Laufs: Profil, Modell, Effort, Limit, Grund der Wahl */
+.run-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-soft);
+}
+.run-chips > li {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+
+/* Kopf eines Abschnitts: „VERLAUF · 27 SCHRITTE“ und rechts „Einklappen“ */
+.run-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.run-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.run-section-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.run-collapse {
+  flex: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-soft);
+}
+.run-scroll[hidden] {
+  display: none;
+}
+
+/* Zeitleiste: senkrechte Linie links, je Zeile ein Punkt auf der Linie. Die Punkte stehen innerhalb der Zeile
+   (die Einträge nutzen content-visibility und schneiden alles ab, was über ihren Rand hinausragt). */
+.run-track {
+  position: relative;
+  gap: 10px;
+}
+.run-track::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--line);
+}
+.run-track > li {
+  position: relative;
+  padding-left: 30px;
+}
+.run-track > li::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 14px;
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+/* Hohle Punkte: Start, Zwischenstände des Agenten, Nachdenken, Hinweise */
+.run-track > li.run-start::before,
+.run-track > li.tx-entry.text::before,
+.run-track > li.tx-entry.thinking::before,
+.run-track > li.tx-entry.system::before {
+  top: 9px;
+  border: 2px solid var(--line-strong);
+  background: var(--surface);
+}
+.run-track > li.tx-entry.text::before {
+  top: 10px;
+}
+.run-track > li.tx-entry.system.error::before,
+.run-track > li.tx-entry.tool:has(.tx-tool.failed)::before {
+  border-color: var(--danger);
+  background: var(--danger);
+}
+.run-track > li.tx-entry.system.error::before {
+  background: var(--surface);
+}
+.run-track > li.run-last:not(:has(.tx-tool.failed))::before {
+  background: var(--primary);
+}
+/* Folgen gleicher Aufrufe rücken auf der Sessions-Seite zusammen, in der Zeitleiste nicht */
+.run-track > .tx-entry.tool + .tx-entry.tool {
+  margin-top: 0;
+}
+
+/* Start von Claude: gedämpfte Zeile in Monospace */
+.run-start {
+  padding: 4px 2px 4px 30px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* Zwischenstand des Agenten: kursiv und gedämpft, Code darin aufrecht in Monospace ohne Hinterlegung */
+.run-track > .tx-entry.text .tx-text {
+  padding: 4px 0;
+}
+.run-track > .tx-entry.text .markdown {
+  font-size: 13.5px;
+  line-height: 1.5;
+  font-style: italic;
+  color: var(--text-soft);
+}
+.run-track > .tx-entry.text .markdown p {
+  margin: 0 0 6px;
+}
+.run-track > .tx-entry.text .markdown :not(pre) > code {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font-size: 12.5px;
+  font-style: normal;
+}
+
+/* Zeile eines Schritts: gefaltete Gruppe oder einzelner Aufruf, hinterlegt, in Monospace */
+.run-track .run-group-head,
+.run-track > .tx-entry.tool > .tx-tool > .tx-tool-head {
+  gap: 10px;
+  min-height: 38px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: var(--column-bg);
+  color: var(--text-soft);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.run-track .run-group-head:hover,
+.run-track > .tx-entry.tool > .tx-tool > .tx-tool-head:hover {
+  background: var(--line);
+  color: var(--text-soft);
+}
+.run-track .run-group-head:focus-visible,
+.run-track > .tx-entry.tool > .tx-tool > .tx-tool-head:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.run-track .run-group-head .material-icons {
+  font-size: 16px;
+  color: var(--muted);
+}
+.run-group-count {
+  flex: none;
+  font-weight: 500;
+}
+.run-group-tools {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+/* Einzelner Aufruf: ohne eigenen Rahmen, die Zeile trägt die Fläche; aufgeklappt Eingabe und Ergebnis darunter */
+.run-track > .tx-entry.tool > .tx-tool {
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+.run-track > .tx-entry.tool > .tx-tool .tx-tool-name {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  color: var(--text);
+}
+.run-track > .tx-entry.tool > .tx-tool .tx-tool-summary {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--muted);
+}
+.run-track > .tx-entry.tool > .tx-tool > .tx-tool-body {
+  margin-top: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.run-track > .tx-entry.tool > .tx-tool.open > .tx-tool-head .tx-chevron {
+  transform: rotate(180deg);
+}
+/* Gescheiterter Aufruf: rot getönt */
+.run-track > .tx-entry.tool > .tx-tool.failed > .tx-tool-head {
+  background: color-mix(in srgb, var(--danger) 9%, var(--surface));
+}
+.run-track > .tx-entry.tool > .tx-tool.failed > .tx-tool-head:hover {
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface));
+}
+/* Der letzte Schritt des Verlaufs ist hervorgehoben (dunkle Zeile wie ein Codeblock, in beiden Schemata) */
+.run-track > .run-last > .tx-tool:not(.failed) > .tx-tool-head {
+  padding-block: 10px;
+  background: var(--code-bg);
+  color: var(--code-fg);
+  /* Feiner Rand: im dunklen Schema liegt die Codefläche nah am Hintergrund */
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--code-fg) 16%, transparent);
+}
+.run-track > .run-last > .tx-tool:not(.failed) > .tx-tool-head:hover {
+  background: var(--code-btn-bg);
+}
+.run-track > .run-last > .tx-tool:not(.failed) > .tx-tool-head .material-icons,
+.run-track > .run-last > .tx-tool:not(.failed) .tx-tool-name {
+  color: var(--code-fg);
+}
+.run-track > .run-last > .tx-tool:not(.failed) .tx-tool-summary {
+  color: var(--code-muted);
+}
+
+/* Aufgeklappte Gruppe: die Aufrufe darunter, eingerückt an einer feinen Linie */
+.run-track .run-group-body {
+  margin: 8px 0 2px 12px;
+}
+
+/* Ergebnis: Trennzeile mit Haken in der Akzentfarbe, darunter die Antwort auf einer Karte */
+.run-result {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.run-result-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--accent);
+}
+.run-result-head .material-icons {
+  font-size: 17px;
+  font-weight: 700;
+}
+.run-result-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.run-result-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.run-answer {
+  padding: clamp(18px, 4.5%, 32px) clamp(18px, 5%, 36px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px var(--shadow-faint);
+  color: var(--text);
+}
+.run-answer .markdown {
+  font-size: 15px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.run-answer .markdown > div > :first-child {
+  margin-top: 0;
+}
+.run-answer .markdown > div > :last-child {
+  margin-bottom: 0;
+}
+.run-answer .markdown p {
+  margin: 0 0 14px;
+}
+.run-answer .markdown ul,
+.run-answer .markdown ol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding-left: 22px;
+}
+.run-answer .markdown h1,
+.run-answer .markdown h2,
+.run-answer .markdown h3,
+.run-answer .markdown h4 {
+  margin: 22px 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.run-answer .markdown strong {
+  font-weight: 600;
+}
+.run-answer .markdown :not(pre) > code {
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface-alt);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+/* Sitzungsende: Hook-Fehler als Hinweis, darunter Ergebnis von Claude, Schritte, Dauer und Exit-Code */
+.run-end {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.run-hook {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--waiting-line);
+  border-radius: 10px;
+  background: var(--waiting-bg);
+  color: var(--waiting-fg);
+}
+.run-hook > .material-icons {
+  flex: none;
+  margin-top: 1px;
+  font-size: 17px;
+}
+.run-hook-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.run-hook-title {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.run-hook-detail {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.run-end-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin: 0;
+  padding: 4px 2px;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+.run-end-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+.run-end-status .material-icons {
+  font-size: 15px;
+}
+.run-end-status.ok {
+  color: var(--ok-fg);
+}
+.run-end-status.error,
+.run-end-error {
+  color: var(--blocked-fg);
+}
+
+/* Abstände regelt der Inhalt des Laufs (gap); Abbruchgrund und Fuß bringen keinen eigenen mit */
+.run-body > .run-abort-reason,
+.run-body > .run-foot {
+  margin: 0;
+}

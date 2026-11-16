@@ -31,13 +31,13 @@ export function tagged(line: string): Tagged | null {
 /** Zeile „<Agent> startet in <Ordner> (<Art>)“ – Agent, Ticket und Art stehen schon im Ticket und im Kopf des Laufs */
 const START_LINE = /^\S+ startet in .+ \(.+\)$/;
 
-// Kopf des Dispatchers kompakt: ohne Präfix, Zeitstempel, den langen Aufruf von Claude und die Zeile „… startet in …“
-export function compactRunHeader(header: string): string[] {
+// Zeilen im Kopf des Dispatchers, die etwas über den Lauf sagen: ohne Präfix und Zeitstempel, ohne den langen Aufruf
+// von Claude und ohne die Zeile „… startet in …“
+export function runHeaderLines(header: string): string[] {
   return header
     .split('\n')
     .map((l) => l.replace(/\r$/, ''))
     .filter((l) => l.trim() && !/^\[dispatch\] \S+ (?:-p|--)/.test(l) && !/ --output-format /.test(l))
     .map((l) => l.replace(DISPATCH, (_m, _iso: string | undefined, rest: string) => rest))
-    .filter((text) => !START_LINE.test(text))
-    .map((text) => text.replace(/^Profil (\S+): /, 'Profil $1 · ').replace(/, (?![^(]*\))/g, ' · '));
+    .filter((text) => !START_LINE.test(text));
 }

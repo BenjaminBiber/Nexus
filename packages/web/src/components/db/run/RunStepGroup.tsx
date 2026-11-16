@@ -6,8 +6,12 @@ import { TranscriptEntryView } from '../../sessions/TranscriptEntryView.js';
 import { RunThumbs } from './RunThumbs.js';
 
 interface RunStepGroupProps {
-  /** „7 Schritte · 4× Read · 2× Grep“ */
+  /** „7 Schritte · 4× Read · 2× Grep“ (Name des Knopfs) */
   label: string;
+  /** Zahl der Aufrufe */
+  tools: number;
+  /** Nur die Tools: „4× Read · 2× Grep“ */
+  breakdown: string;
   entries: TranscriptEntry[];
   /** Screenshots der Aufrufe dieser Gruppe, in der Reihenfolge der Ablage */
   shots: DispatchRunShotDto[];
@@ -21,21 +25,22 @@ interface RunStepGroupProps {
   defaultOpen: boolean;
 }
 
-// Gefaltete Folge unauffälliger Schritte: eine Zeile mit Anzahl und Tools, aufgeklappt die Einträge selbst. Zugeklappt
+// Gefaltete Folge unauffälliger Schritte: eine Zeile der Zeitleiste mit Anzahl und Tools, aufgeklappt die Einträge selbst. Zugeklappt
 // stehen die Screenshots der Schritte klein am rechten Ende der Zeile (neben dem Knopf, nicht darin), aufgeklappt an
 // ihren Aufrufen.
-export function RunStepGroup({ label, entries, shots, all, shotUrl, onShot, defaultOpen }: RunStepGroupProps) {
+export function RunStepGroup({ label, tools, breakdown, entries, shots, all, shotUrl, onShot, defaultOpen }: RunStepGroupProps) {
   // null: der Nutzer hat nichts gewählt, es gilt die Vorgabe; danach gilt seine Wahl, auch wenn nachgeladen wird
   const [choice, setChoice] = useState<boolean | null>(null);
   const open = choice ?? defaultOpen;
   return (
     <li className="run-group">
       <div className="run-group-row">
-        <button type="button" className="run-group-head" aria-expanded={open} onClick={() => setChoice(!open)}>
+        <button type="button" className="run-group-head" aria-label={label} aria-expanded={open} onClick={() => setChoice(!open)}>
           <span className="material-icons" aria-hidden="true">
             {open ? 'expand_more' : 'chevron_right'}
           </span>
-          <span className="run-group-label">{label}</span>
+          <span className="run-group-count">{`${tools} Schritte`}</span>
+          {breakdown && <span className="run-group-tools">{breakdown}</span>}
         </button>
         {!open && <RunThumbs shots={shots} all={all} url={shotUrl} onOpen={onShot} label="Screenshots der Schritte" />}
       </div>

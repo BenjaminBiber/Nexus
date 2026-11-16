@@ -116,7 +116,10 @@ describe('AgentRuns (Live)', () => {
       body += '09:10:00  [done] fertig, 3 Schritte, 10 min\n';
       await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
       expect(await screen.findByText('erledigt')).toBeTruthy();
-      expect(await screen.findByText(/fertig, 3 Schritte/)).toBeTruthy();
+      // Ergebniszeile von Claude steht im Sitzungsende unter dem Verlauf
+      const end = await screen.findByRole('region', { name: 'Sitzungsende' });
+      expect(within(end).getByText('fertig')).toBeTruthy();
+      expect(within(end).getByText('3 Schritte')).toBeTruthy();
       const calls = getDispatchRuns.mock.calls.length;
       await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
       expect(getDispatchRuns).toHaveBeenCalledTimes(calls);
@@ -305,7 +308,10 @@ describe('AgentRuns (Live)', () => {
     render(
       <ApiProvider api={fakeApi({
         getDispatchRuns: async () => [run(NEW, 'work', false, { outcome: 'done' })],
-        getDispatchRunLog: async (name: string) => parts(name, say('09:00:01', 'Zeile-1')),
+        // Endet mit einem Aufruf: der Text bleibt im Verlauf (sonst wäre er das Ergebnis)
+        getDispatchRunLog: async (name: string) => parts(name, `${say('09:00:01', 'Zeile-1')}09:00:02  [run#t1] Tests	"$ npm test"
+09:00:03  [ok#t1] 
+`),
       })}>
         <AgentRuns id="ARC-0001" />
       </ApiProvider>,
@@ -448,13 +454,18 @@ describe('AgentRuns (Transcript)', () => {
       </ApiProvider>,
     );
     expect(await screen.findByText('Ich prüfe die Dateien.')).toBeTruthy();
-    expect(screen.getByText('Die Tests scheitern.')).toBeTruthy();
+    // Die letzte Antwort ist das Ergebnis unter dem Verlauf
+    expect(screen.getByText('Die Tests scheitern.').closest('.run-answer')).not.toBeNull();
+    expect(screen.getByText('Die Tests scheitern.').closest('.run-scroll')).toBeNull();
+    // Ohne Startzeile im Protokoll nennt die Zeitleiste das Modell des Laufs
+    expect(screen.getByText('Claude startet (claude-opus-5-5)').closest('.run-scroll')).not.toBeNull();
+    expect(screen.getByRole('heading', { name: 'Verlauf · 4 Schritte' })).toBeTruthy();
     // Das Protokoll ist nur der Rückfall, die Arbeitsanweisung steht nicht im Verlauf
     expect(screen.queryByText('Text aus dem Protokoll')).toBeNull();
     expect(document.querySelector('.run-scroll .tx-prompt')).toBeNull();
     expect(getDispatchRunTranscript).toHaveBeenCalledWith(NEW, null, TRANSCRIPT_PAGE_SIZE);
     // Drei unauffällige Aufrufe sind eine zugeklappte Zeile
-    const group = screen.getByText('3 Schritte · 2× Read · 1× Grep').closest('button')!;
+    const group = screen.getByRole('button', { name: '3 Schritte · 2× Read · 1× Grep' });
     expect(group.getAttribute('aria-expanded')).toBe('false');
     expect(screen.queryByText('a.ts')).toBeNull();
     await userEvent.click(group);
@@ -465,6 +476,53 @@ describe('AgentRuns (Transcript)', () => {
     expect(screen.getByText('Abbruch').className).toBe('badge outcome-error');
     expect(screen.getByText(`${formatDuration(720_000)} · opus-5-5`)).toBeTruthy();
     expect(screen.getByText('Zeitlimit nach 60 min').className).toBe('run-abort-reason');
+  });
+
+  it('zeigt Einstellungen, Sitzungsende mit Hook-Fehler und klappt den Verlauf ein', async () => {
+    const body = [
+      '09:00:01  [start] Claude startet (claude-opus-5-5)',
+      '09:00:02  [run#t1] Tests\t"$ npm test"',
+      '09:00:03  [ok#t1] ',
+      '09:00:04  [say] Alles erledigt.',
+      '09:00:05  [done] fertig, 1 Schritte, 1 min',
+      '09:00:06  SessionEnd hook [node hook.js] failed: Hook cancelled',
+      '[dispatch] 2026-10-16T08:16:07.000Z Ende: Exit-Code 0',
+      '',
+    ].join('\n');
+    render(
+      <ApiProvider api={fakeApi({
+        getDispatchRuns: async () => [run(NEW, 'work', false)],
+        getDispatchRunLog: async (name: string) => ({
+          ...parts(name, body),
+          header: '[dispatch] Profil standard: Modell opus, Effort low, 150 Schritte, 90 min (Label profil:standard)',
+        }),
+      })}>
+        <AgentRuns id="ARC-0001" />
+      </ApiProvider>,
+    );
+    const chips = await screen.findByRole('list', { name: 'Einstellungen des Laufs' });
+    expect(within(chips).getAllByRole('listitem').map((li) => li.textContent))
+      .toEqual(['Profil standard', 'Modell opus', 'Effort low', 'Limit 150 Schritte · 90 min', 'profil:standard']);
+    // Start im Verlauf, die Antwort darunter als Ergebnis
+    const timeline = screen.getByRole('region', { name: 'Verlauf' });
+    expect(within(timeline).getByText('Claude startet (claude-opus-5-5)')).toBeTruthy();
+    expect(within(timeline).getByRole('heading').textContent).toBe('Verlauf · 1 Schritt');
+    expect(within(screen.getByRole('region', { name: 'Ergebnis' })).getByText('Alles erledigt.')).toBeTruthy();
+    // Sitzungsende: Hook-Fehler, Ergebniszeile von Claude und Exit-Code; nichts davon im Verlauf
+    const end = screen.getByRole('region', { name: 'Sitzungsende' });
+    expect(within(end).getByText('SessionEnd-Hook fehlgeschlagen')).toBeTruthy();
+    expect(within(end).getByText('[node hook.js] Hook cancelled')).toBeTruthy();
+    expect(within(end).getByText('Exit-Code 0')).toBeTruthy();
+    expect(within(timeline).queryByText(/Hook cancelled|Exit-Code/)).toBeNull();
+    // Einklappen verbirgt den Verlauf, Aufklappen zeigt ihn wieder
+    const toggle = within(timeline).getByRole('button', { name: 'Einklappen' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    await userEvent.click(toggle);
+    expect(toggle.textContent).toBe('Aufklappen');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(document.getElementById(toggle.getAttribute('aria-controls')!)!.hidden).toBe(true);
+    await userEvent.click(toggle);
+    expect(document.getElementById(toggle.getAttribute('aria-controls')!)!.hidden).toBe(false);
   });
 
   it('zeigt Screenshots im Kopf des offenen Laufs und am Aufruf und öffnet die Großansicht', async () => {
@@ -520,7 +578,7 @@ describe('AgentRuns (Transcript)', () => {
       </ApiProvider>,
     );
     await screen.findByText('Fertig.');
-    expect(document.querySelector('.agent-run-head')).toBeNull();
+    expect(screen.queryByRole('list', { name: 'Einstellungen des Laufs' })).toBeNull();
     expect(screen.queryByText(/junior-ARC-0001/)).toBeNull();
     cleanup();
     render(
@@ -532,7 +590,8 @@ describe('AgentRuns (Transcript)', () => {
       </ApiProvider>,
     );
     await screen.findByText('Fertig.');
-    expect(document.querySelector('.agent-run-head')!.textContent).toBe('Profil standard · Modell opus · Effort low');
+    const chips = screen.getByRole('list', { name: 'Einstellungen des Laufs' });
+    expect(within(chips).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Profil standard', 'Modell opus', 'Effort low']);
   });
 
   it('öffnet das unveränderte Protokoll über „Rohprotokoll“', async () => {

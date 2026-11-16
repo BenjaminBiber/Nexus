@@ -1,14 +1,17 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type UIEvent } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type UIEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useApi } from '../../api/ApiContext.js';
 import type { DispatchRunLogDto, DispatchRunLogPartsDto, DispatchRunShotDto } from '../../api/dispatchTypes.js';
 import { groupRunEntries } from '../../dbboard/runGroups.js';
-import { compactRunHeader } from '../../dbboard/runLog.js';
 import { runLogEntries } from '../../dbboard/runLogEntries.js';
+import { isRunFrameEntry, runChips, runSessionEnd, runStartLine, splitRunResult } from '../../dbboard/runSession.js';
 import { useRunTranscript } from '../../hooks/useRunTranscript.js';
 import { toolDisplayName } from '../sessions/toolDisplay.js';
 import { DispatchLogDialog } from './DispatchLogDialog.js';
+import { RunChips } from './run/RunChips.js';
 import { RunAbortReason } from './run/RunHead.js';
+import { RunResult } from './run/RunResult.js';
+import { RunSessionEnd } from './run/RunSessionEnd.js';
 import { RunShotViewer } from './run/RunShotViewer.js';
 import { RunThumbs } from './run/RunThumbs.js';
 import { RunTranscript } from './run/RunTranscript.js';
@@ -57,26 +60,35 @@ interface AgentRunBodyProps {
   headSlot?: HTMLElement | null;
 }
 
-// Inhalt eines aufgeklappten Laufs: Abbruchgrund, Kopf des Dispatchers, der Verlauf (aus dem Transcript, ohne Transcript
-// aus dem Lauf-Protokoll) und im Fuß Arbeitsanweisung und Rohprotokoll. Die Screenshots des Laufs zeichnet er klein in
-// die Kopfzeile (`headSlot`), die eines Aufrufs an dessen Zeile; ein Klick öffnet die Großansicht. Der Verlauf bleibt
-// am Ende – beim Nachladen und wenn sein Inhalt nachträglich wächst –, solange der Nutzer nicht hochgescrollt oder
-// gerade etwas im Verlauf aufgeklappt hat.
+// Inhalt eines aufgeklappten Laufs: Abbruchgrund, Einstellungen aus dem Kopf des Dispatchers, der Verlauf als Zeitleiste
+// (aus dem Transcript, ohne Transcript aus dem Lauf-Protokoll; einklappbar), die Antwort des Agenten als Ergebnis, das
+// Sitzungsende (Hook-Fehler, Exit-Code) und im Fuß Arbeitsanweisung und Rohprotokoll. Die Screenshots des Laufs zeichnet
+// er klein in die Kopfzeile (`headSlot`), die eines Aufrufs an dessen Zeile; ein Klick öffnet die Großansicht. Der
+// Verlauf bleibt am Ende – beim Nachladen und wenn sein Inhalt nachträglich wächst –, solange der Nutzer nicht
+// hochgescrollt oder gerade etwas im Verlauf aufgeklappt hat.
 export function AgentRunBody({ run, log, intervalMs = 3000, headSlot = null }: AgentRunBodyProps) {
   const api = useApi();
   const tx = useRunTranscript(run.name, run.running, intervalMs);
   // Datei des Screenshots in der Großansicht; null: geschlossen
   const [shot, setShot] = useState<string | null>(null);
   const [raw, setRaw] = useState(false);
+  // Zeitleiste eingeklappt? Sie bleibt dabei im Dokument (nur verborgen), damit Scrollstand und Beobachter erhalten bleiben
+  const [collapsed, setCollapsed] = useState(false);
+  const timelineId = useId();
   const scroll = useRef<HTMLDivElement | null>(null);
   const follow = useRef<Follow>({ atEnd: true, jumped: -1, clicked: 0 });
 
   const fallback = !tx.available;
   const logEntries = useMemo(() => runLogEntries(log.body, run.started), [log.body, run.started]);
   const entries = fallback ? logEntries : tx.entries;
-  const items = useMemo(() => groupRunEntries(entries, tx.shots, run.running), [entries, tx.shots, run.running]);
+  // Start, Ende und Hook-Fehler am Sitzungsende stehen über bzw. unter dem Verlauf, die Antwort am Ende als Ergebnis
+  const timeline = useMemo(() => splitRunResult(entries.filter((entry) => !isRunFrameEntry(entry)), run.running), [entries, run.running]);
+  const items = useMemo(() => groupRunEntries(timeline.entries, tx.shots, run.running), [timeline.entries, tx.shots, run.running]);
+  const steps = useMemo(() => timeline.entries.filter((entry) => entry.kind === 'tool').length, [timeline.entries]);
+  const start = useMemo(() => runStartLine(log.body, run.model ?? null), [log.body, run.model]);
+  const end = useMemo(() => runSessionEnd(log.body), [log.body]);
+  const chips = useMemo(() => runChips(log.header), [log.header]);
   const shotUrl = useCallback((file: string) => api.dispatchRunShotUrl(run.name, file), [api, run.name]);
-  const head = useMemo(() => (log.header ? compactRunHeader(log.header) : []), [log.header]);
 
   // Name des Tools, das einen Screenshot erzeugt hat (Beschriftung der Großansicht); unbekannter Aufruf: leer
   const shotCaption = useCallback(
@@ -122,26 +134,35 @@ export function AgentRunBody({ run, log, intervalMs = 3000, headSlot = null }: A
   }, [shown, empty]);
 
   return (
-    <>
+    <div className="run-body">
       {headSlot && createPortal(<RunThumbs shots={tx.shots} all={tx.shots} url={shotUrl} onOpen={setShot} label="Screenshots des Laufs" />, headSlot)}
       <RunAbortReason run={run} />
-      {head.length > 0 && (
-        <div className="agent-run-head compact">
-          {head.map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
-        </div>
-      )}
+      <RunChips chips={chips} />
       {tx.status === 'loading' ? (
         <p className="muted">Wird geladen …</p>
       ) : (
-        <>
-          {fallback && log.prompt === null && log.body.startsWith('…') && <p className="muted">Nur das Ende des Protokolls – es ist sehr lang.</p>}
-          <div className="run-scroll" ref={scroll} onScroll={onScroll} onClickCapture={() => (follow.current.clicked = Date.now())}>
-            <RunTranscript items={items} shots={tx.shots} shotUrl={shotUrl} onShot={setShot} running={run.running} />
+        <section className="run-timeline" aria-label="Verlauf">
+          <div className="run-section-head">
+            <h3 className="run-section-title">{`Verlauf · ${steps === 1 ? '1 Schritt' : `${steps} Schritte`}`}</h3>
+            <button type="button" className="btn small run-collapse" aria-expanded={!collapsed} aria-controls={timelineId} onClick={() => setCollapsed((c) => !c)}>
+              {collapsed ? 'Aufklappen' : 'Einklappen'}
+            </button>
           </div>
-        </>
+          {fallback && log.prompt === null && log.body.startsWith('…') && <p className="muted">Nur das Ende des Protokolls – es ist sehr lang.</p>}
+          <div
+            id={timelineId}
+            className="run-scroll"
+            hidden={collapsed}
+            ref={scroll}
+            onScroll={onScroll}
+            onClickCapture={() => (follow.current.clicked = Date.now())}
+          >
+            <RunTranscript items={items} start={start} shots={tx.shots} shotUrl={shotUrl} onShot={setShot} running={run.running} />
+          </div>
+        </section>
       )}
+      {timeline.result !== null && tx.status !== 'loading' && <RunResult text={timeline.result} />}
+      <RunSessionEnd end={end} />
       <div className="run-foot">
         {log.prompt !== null && (
           <details className="agent-prompt">
@@ -155,6 +176,6 @@ export function AgentRunBody({ run, log, intervalMs = 3000, headSlot = null }: A
       </div>
       {raw && <DispatchLogDialog name={run.name} onClose={() => setRaw(false)} />}
       {shot !== null && <RunShotViewer shots={tx.shots} file={shot} url={shotUrl} caption={shotCaption} onChange={setShot} onClose={() => setShot(null)} />}
-    </>
+    </div>
   );
 }

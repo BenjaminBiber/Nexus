@@ -11,7 +11,14 @@ export type ToolEntry = Extract<TranscriptEntry, { kind: 'tool' }>;
  */
 export type RunItem =
   | { type: 'entry'; key: string; entry: TranscriptEntry; shots: DispatchRunShotDto[] }
-  | { type: 'group'; key: string; entries: TranscriptEntry[]; tools: number; label: string; open: boolean; shots: DispatchRunShotDto[] };
+  | {
+      type: 'group'; key: string; entries: TranscriptEntry[]; tools: number;
+      /** „7 Schritte · 4× Read · 2× Grep“ */
+      label: string;
+      /** Nur die Tools: „4× Read · 2× Grep“ */
+      breakdown: string;
+      open: boolean; shots: DispatchRunShotDto[];
+    };
 
 // Screenshots eines Eintrags aus einer Liste (z. B. denen seiner Gruppe), in deren Reihenfolge; kein Aufruf: keine
 export function entryShots(entry: TranscriptEntry, shots: DispatchRunShotDto[]): DispatchRunShotDto[] {

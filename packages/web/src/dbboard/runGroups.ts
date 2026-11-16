@@ -22,8 +22,9 @@ function quiet(entry: TranscriptEntry): boolean {
   return entry.kind === 'tool' && entry.result !== null && !entry.result.isError;
 }
 
-// „7 Schritte · 4× Read · 2× Grep …“: Tools in der Reihenfolge ihres ersten Auftretens
-function groupLabel(entries: TranscriptEntry[]): string {
+// Beschriftung einer Gruppe: „7 Schritte · 4× Read · 2× Grep …“, dazu der Teil mit den Tools allein; Tools in der
+// Reihenfolge ihres ersten Auftretens
+function groupLabel(entries: TranscriptEntry[]): { label: string; breakdown: string } {
   const counts = new Map<string, number>();
   for (const entry of entries) {
     if (entry.kind !== 'tool') continue;
@@ -33,7 +34,7 @@ function groupLabel(entries: TranscriptEntry[]): string {
   const tools = [...counts.values()].reduce((sum, count) => sum + count, 0);
   const parts = [...counts].slice(0, MAX_LABEL_TOOLS).map(([name, count]) => `${count}× ${name}`);
   if (counts.size > MAX_LABEL_TOOLS) parts.push('…');
-  return [`${tools} Schritte`, ...parts].join(' · ');
+  return { label: [`${tools} Schritte`, ...parts].join(' · '), breakdown: parts.join(' · ') };
 }
 
 // Bei einem laufenden Lauf bleibt die letzte Gruppe offen, wenn hinter ihr höchstens Aufrufe ohne Ergebnis stehen
@@ -50,7 +51,7 @@ function openLastGroup(items: RunItem[]): void {
 
 // Macht aus den Einträgen eines Laufs die Zeilen des Verlaufs: Folgen unauffälliger Schritte (ab `GROUP_MIN_TOOLS`
 // Aufrufen) werden eine Gruppe mit den Screenshots ihrer Aufrufe, alles andere bleibt eine eigene Zeile und trägt die
-// Screenshots seines Aufrufs
+// Screenshots seines Aufrufs; bei einem beendeten Lauf auch sein letzter Aufruf
 export function groupRunEntries(entries: TranscriptEntry[], shots: DispatchRunShotDto[], running: boolean): RunItem[] {
   const byCall = shotsByCall(shots);
   const list = entries[0]?.kind === 'prompt' ? entries.slice(1) : entries;
@@ -66,13 +67,17 @@ export function groupRunEntries(entries: TranscriptEntry[], shots: DispatchRunSh
     if (tools >= GROUP_MIN_TOOLS) {
       const calls = new Set(run.filter((entry) => entry.kind === 'tool').map((entry) => entry.id));
       const groupShots = shots.filter((shot) => calls.has(shot.toolUseId));
-      items.push({ type: 'group', key: `group:${run[0]!.id}`, entries: run, tools, label: groupLabel(run), open: false, shots: groupShots });
+      items.push({ type: 'group', key: `group:${run[0]!.id}`, entries: run, tools, ...groupLabel(run), open: false, shots: groupShots });
     } else run.forEach(single);
     run = [];
   };
 
-  for (const entry of list) {
-    if (quiet(entry)) {
+  // Der letzte Aufruf eines beendeten Laufs steht für sich: Die Zeitleiste hebt ihn als letzten Schritt hervor
+  let last = -1;
+  if (!running) for (let i = list.length - 1; i >= 0 && last < 0; i -= 1) if (list[i]!.kind === 'tool') last = i;
+
+  for (const [i, entry] of list.entries()) {
+    if (i !== last && quiet(entry)) {
       run.push(entry);
     } else {
       close();
