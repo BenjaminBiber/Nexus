@@ -47,6 +47,7 @@ async fn install(
     let (bytes, verification) = download_verified(&state, &repo, &entry).await?;
     let home = state.home.clone();
     let manifest = blocking(move || install_theme(&home, &bytes)).await?;
+    state.claude_theme.reconcile_if_active(&manifest.id).await;
     Ok(json(&json_value!({
         "manifest": manifest,
         "verified": verification.verified,

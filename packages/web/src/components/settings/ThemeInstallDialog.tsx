@@ -10,6 +10,8 @@ type Props = {
   manifest: ManifestInfo;
   // 'unknown': Store-Eintrag vor dem Download, ob Code dabei ist, steht noch nicht fest
   hasCode: boolean | 'unknown';
+  // Bringt ein Claude-Theme mit, das als Mod in Claude Desktop läuft, solange das Theme aktiv ist
+  claudeTheme?: boolean;
   // Abweichende Domainliste (Update: neue Domains); null = erst nach dem Download bekannt
   domains?: string[] | null;
   title?: string;
@@ -21,7 +23,7 @@ type Props = {
 // Rückfrage vor dem Installieren eines Themes (Vertrauensmodell D2) als eigener Dialog über dem Store: zeigt Herkunft,
 // Code-Hinweis und angefragte Domains. Liegt per Portal im body; Tasten bleiben in ihm, damit Esc und Tab den
 // darunterliegenden Dialog nicht erreichen.
-export function ThemeInstallDialog({ manifest, hasCode, domains: given, title = 'Theme installieren?', busy, onConfirm, onCancel }: Props) {
+export function ThemeInstallDialog({ manifest, hasCode, claudeTheme = false, domains: given, title = 'Theme installieren?', busy, onConfirm, onCancel }: Props) {
   const titleId = useId();
   const domainsId = useId();
   const domains = given === undefined ? manifest.permissions?.network ?? [] : given;
@@ -48,6 +50,12 @@ export function ThemeInstallDialog({ manifest, hasCode, domains: given, title = 
         {hasCode === 'unknown' && (
           <div className="notice warn theme-install-code">
             <p>Themes aus dem Store können Code ausführen. Installiere nur aus Repos, denen du vertraust.</p>
+          </div>
+        )}
+        {claudeTheme && (
+          <div className="notice warn theme-install-code theme-install-claude">
+            <strong>Bringt ein Claude-Theme mit</strong>
+            <p>Solange dieses Theme aktiv ist, legt Nexus einen Mod nach Claude Desktop. Er läuft dort als Code; abschalten kannst du das unter „Claude Desktop“.</p>
           </div>
         )}
         <div className="theme-install-domains">

@@ -55,6 +55,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "claudeTheme": true,
         "claudeUsage": false,
         "compactCards": false,
         "doneArchiveDays": 0,
@@ -98,6 +99,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "claudeTheme": true,
         "claudeUsage": true,
         "compactCards": true,
         "doneArchiveDays": 0,
@@ -128,6 +130,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "claudeTheme": true,
         "claudeUsage": true,
         "compactCards": true,
         "doneArchiveDays": 0,
@@ -161,6 +164,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "claudeTheme": true,
         "claudeUsage": true,
         "compactCards": true,
         "doneArchiveDays": 0,
@@ -192,6 +196,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "claudeTheme": true,
         "claudeUsage": true,
         "compactCards": true,
         "doneArchiveDays": 0,
@@ -225,6 +230,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "claudeTheme": true,
         "claudeUsage": true,
         "compactCards": true,
         "doneArchiveDays": 0,
@@ -259,6 +265,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "claudeTheme": true,
         "claudeUsage": true,
         "compactCards": true,
         "doneArchiveDays": 14,
@@ -523,6 +530,7 @@
     "response": {
       "contentType": "application/json",
       "json": {
+        "claudeTheme": true,
         "claudeUsage": true,
         "compactCards": true,
         "doneArchiveDays": 14,

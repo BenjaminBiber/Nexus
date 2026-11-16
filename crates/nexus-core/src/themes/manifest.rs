@@ -76,7 +76,15 @@ pub struct ThemeManifest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub settings_schema: Option<BTreeMap<String, ThemeSettingSpec>>,
+    /// Bringt das Paket unter `claude/` ein Claude-Theme für Claude Desktop mit (seit SDK 1.3)
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[ts(optional, as = "Option<bool>")]
+    pub claude_theme: bool,
 }
+
+/// SDK-Versionen, die Nexus vor dem Claude-Theme hatte; ein Theme mit Claude-Theme darf zu keiner
+/// passen, damit ältere Nexus-Versionen es im Store als unpassend zeigen
+const SDK_BEFORE_CLAUDE_THEME: [(u64, u64, u64); 3] = [(1, 0, 0), (1, 1, 0), (1, 2, 0)];
 
 /// Eine Einstellung eines Themes: Schalter (`boolean`) oder Auswahl (`select`)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -175,6 +183,7 @@ struct Fields<'a> {
     /// Domains mit ihrem Index in der Liste
     network: Vec<(usize, &'a str)>,
     settings_schema: Option<&'a BTreeMap<String, ThemeSettingSpec>>,
+    claude_theme: bool,
 }
 
 fn check_fields(fields: &Fields<'_>, errors: &mut Vec<ManifestError>) {
@@ -207,6 +216,8 @@ fn check_fields(fields: &Fields<'_>, errors: &mut Vec<ManifestError>) {
             "sdkVersion",
             "sdkVersion ist kein gültiger semver-Bereich (z. B. ^1.0).",
         ));
+    } else if fields.claude_theme {
+        check_claude_sdk_range(fields.sdk_version, errors);
     }
     check_slots(&fields.slots, errors);
     for &(index, domain) in &fields.network {
@@ -216,6 +227,24 @@ fn check_fields(fields: &Fields<'_>, errors: &mut Vec<ManifestError>) {
     }
     if let Some(schema) = fields.settings_schema {
         check_settings_schema(schema, errors);
+    }
+}
+
+/// Ein Theme mit Claude-Theme braucht einen SDK-Bereich ab 1.3: Ältere Nexus-Versionen kennen
+/// `.ts` im Paket nicht und sollen es im Store als unpassend zeigen, statt beim Installieren zu
+/// scheitern
+fn check_claude_sdk_range(range: Option<&str>, errors: &mut Vec<ManifestError>) {
+    let Some(req) = range.and_then(|range| semver::VersionReq::parse(range).ok()) else {
+        return;
+    };
+    let too_old = SDK_BEFORE_CLAUDE_THEME
+        .iter()
+        .any(|&(major, minor, patch)| req.matches(&semver::Version::new(major, minor, patch)));
+    if too_old {
+        errors.push(error(
+            "sdkVersion",
+            "Ein Theme mit Claude-Theme braucht sdkVersion ab 1.3 (z. B. ^1.3).",
+        ));
     }
 }
 
@@ -362,6 +391,7 @@ pub fn validate_manifest(manifest: &ThemeManifest) -> Result<(), ManifestErrors>
             .map(|(index, domain)| (index, domain.as_str()))
             .collect(),
         settings_schema: manifest.settings_schema.as_ref(),
+        claude_theme: manifest.claude_theme,
     };
     let mut errors = Vec::new();
     check_fields(&fields, &mut errors);
@@ -427,6 +457,17 @@ pub fn parse_manifest(json: &str) -> Result<ThemeManifest, ManifestErrors> {
         Some(_) => errors.push(error("permissions", "permissions muss ein Objekt sein.")),
     }
     let settings_schema = settings_schema(object.get("settingsSchema"), &mut errors);
+    let claude_theme = match object.get("claudeTheme") {
+        None | Some(Value::Null) => false,
+        Some(Value::Bool(flag)) => *flag,
+        Some(_) => {
+            errors.push(error(
+                "claudeTheme",
+                "Das Feld claudeTheme muss true oder false sein.",
+            ));
+            false
+        }
+    };
 
     check_fields(
         &Fields {
@@ -438,6 +479,7 @@ pub fn parse_manifest(json: &str) -> Result<ThemeManifest, ManifestErrors> {
             slots: slots.iter().map(|(i, s)| (*i, s.as_str())).collect(),
             network: network.iter().map(|(i, s)| (*i, s.as_str())).collect(),
             settings_schema: settings_schema.as_ref(),
+            claude_theme,
         },
         &mut errors,
     );
@@ -463,6 +505,7 @@ pub fn parse_manifest(json: &str) -> Result<ThemeManifest, ManifestErrors> {
                     network: network.into_iter().map(|(_, s)| s).collect(),
                 },
                 settings_schema,
+                claude_theme,
             })
         }
         // Fehlt ein Pflichtfeld, steht dazu schon ein Fehler in `errors`
@@ -472,7 +515,7 @@ pub fn parse_manifest(json: &str) -> Result<ThemeManifest, ManifestErrors> {
 
 /// Stellung eines Feldes in der Fehlerliste: wie im Manifest, stabil innerhalb eines Feldes
 fn field_rank(field: &str) -> usize {
-    const ORDER: [&str; 11] = [
+    const ORDER: [&str; 12] = [
         "id",
         "name",
         "version",
@@ -484,6 +527,7 @@ fn field_rank(field: &str) -> usize {
         "slots",
         "permissions",
         "settingsSchema",
+        "claudeTheme",
     ];
     let base = field.split(['[', '.']).next().unwrap_or(field);
     ORDER.iter().position(|f| *f == base).unwrap_or(0)
@@ -959,5 +1003,52 @@ mod tests {
         assert!(!host_allowed(&network, "evilcdn.net"));
         assert!(!host_allowed(&[], "example.com"));
         assert!(!host_allowed(&network, ""));
+    }
+
+    #[test]
+    fn claude_theme_fehlt_ist_aus_und_wird_nicht_geschrieben() {
+        let manifest = parse_manifest(&minimal().to_string()).unwrap();
+        assert!(!manifest.claude_theme);
+        let out = serde_json::to_value(&manifest).unwrap();
+        assert!(out.get("claudeTheme").is_none());
+        let serde: ThemeManifest = serde_json::from_value(minimal()).unwrap();
+        assert!(!serde.claude_theme);
+    }
+
+    #[test]
+    fn claude_theme_an_mit_sdk_ab_1_3() {
+        let mut json = minimal();
+        json["sdkVersion"] = json!("^1.3");
+        json["claudeTheme"] = json!(true);
+        let manifest = parse_manifest(&json.to_string()).unwrap();
+        assert!(manifest.claude_theme);
+        assert_eq!(
+            serde_json::to_value(&manifest).unwrap()["claudeTheme"],
+            true
+        );
+        assert_eq!(validate_manifest(&manifest), Ok(()));
+    }
+
+    #[test]
+    fn claude_theme_verlangt_sdk_ab_1_3() {
+        for range in ["^1.0", "^1.2", ">=1.0", "*", "1.2.0"] {
+            let mut json = minimal();
+            json["sdkVersion"] = json!(range);
+            json["claudeTheme"] = json!(true);
+            assert_eq!(felder(&json.to_string()), vec!["sdkVersion"], "{range}");
+        }
+        // Ohne Claude-Theme bleibt ^1.0 gültig
+        assert!(parse_manifest(&mit(minimal(), "sdkVersion", json!("^1.0"))).is_ok());
+        let mut manifest = parse_manifest(&minimal().to_string()).unwrap();
+        manifest.claude_theme = true;
+        assert!(validate_manifest(&manifest).is_err());
+    }
+
+    #[test]
+    fn claude_theme_muss_bool_sein() {
+        assert_eq!(
+            felder(&mit(minimal(), "claudeTheme", json!("ja"))),
+            vec!["claudeTheme"]
+        );
     }
 }

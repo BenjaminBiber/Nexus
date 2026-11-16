@@ -1,12 +1,13 @@
 {
   "id": "dracula",
   "name": "Dracula",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Nexus",
-  "sdkVersion": "^1.2",
+  "sdkVersion": "^1.3",
   "colorScheme": "dark",
   "startColor": "#21222c",
   "preview": "assets/preview.png",
+  "claudeTheme": true,
   "slots": ["Progress"],
   "permissions": { "network": [] }
 }

@@ -59,6 +59,7 @@ async fn install(State(state): State<Arc<AppState>>, body: Bytes) -> ApiResult<R
     let package = decode_package(&body)?;
     let home = state.home.clone();
     let manifest = blocking(move || install_theme(&home, &package)).await?;
+    state.claude_theme.reconcile_if_active(&manifest.id).await;
     Ok(json(&manifest))
 }
 
@@ -69,6 +70,9 @@ async fn remove(
 ) -> ApiResult<Response> {
     let home = state.home.clone();
     blocking(move || remove_theme(&home, &id)).await?;
+    // War es das aktive Theme, verschwindet auch sein Claude-Theme. Immer abgleichen: die
+    // Einstellung fällt beim Lesen schon auf system zurück, sobald das Theme fehlt
+    state.claude_theme.reconcile().await;
     Ok(StatusCode::NO_CONTENT.into_response())
 }
 

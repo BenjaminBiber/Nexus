@@ -157,6 +157,16 @@ impl WorkerLauncher for NoWorkerLauncher {
     }
 }
 
+/// Einrichtungs-Umgebung ohne echtes `claude`, Claude-Ordner unter `<Benutzerordner>/claude`:
+/// weder Einrichtung noch Claude-Theme fassen den echten Claude-Ordner des Rechners an
+pub fn isolated_setup(home: &HarnessHome) -> nexus_server::setup::SetupContext {
+    nexus_server::setup::SetupContext::new(
+        Arc::new(nexus_server::setup::NoClaude),
+        Some(home.dir().join("claude")),
+        home.dir().to_path_buf(),
+    )
+}
+
 impl TestServer {
     /// Startet einen Server mit frischem Benutzerordner
     pub fn start() -> TestServer {
@@ -183,13 +193,7 @@ impl TestServer {
         config.plugin_bundle = options.plugin_bundle;
         config.bundled_themes_dir = options.bundled_themes_dir;
         // Nie den echten Claude-Ordner des Rechners anfassen
-        config.setup = options.setup.unwrap_or_else(|| {
-            nexus_server::setup::SetupContext::new(
-                Arc::new(nexus_server::setup::NoClaude),
-                Some(home.dir().join("claude")),
-                home.dir().to_path_buf(),
-            )
-        });
+        config.setup = options.setup.unwrap_or_else(|| isolated_setup(&home));
         if let Some(heartbeat_ms) = options.heartbeat_ms {
             config.heartbeat_ms = heartbeat_ms;
         }

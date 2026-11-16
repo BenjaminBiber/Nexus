@@ -4,6 +4,7 @@
 //! beantwortet unbekannte `/api`-Pfade mit 404 als JSON und liefert sonst die Oberfläche.
 
 pub mod accounts;
+pub mod claude_theme;
 pub mod db_boards;
 pub mod db_misc;
 pub mod db_tickets;
@@ -80,6 +81,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .merge(favorites::routes())
         .merge(snippets::routes())
         .merge(theme_settings::routes())
+        .merge(claude_theme::routes())
         .merge(store_index::routes())
         .merge(store_install::routes())
         .merge(store_preview::routes())

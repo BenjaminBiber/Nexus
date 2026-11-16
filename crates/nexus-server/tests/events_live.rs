@@ -283,6 +283,8 @@ async fn beendet_offene_strome_beim_beenden_des_servers() {
     let mut config = ServerConfig::new(0, home.clone());
     config.version = "test".into();
     config.heartbeat_ms = 200;
+    // Der Start gleicht das Claude-Theme ab: nie im echten Claude-Ordner
+    config.setup = common::isolated_setup(&home);
     let server = nexus_server::serve(config, common::memory_board(), Platform::fake())
         .await
         .expect("Server startet");

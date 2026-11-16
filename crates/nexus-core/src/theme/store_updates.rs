@@ -151,6 +151,7 @@ mod tests {
             description: None,
             signature: None,
             compatible,
+            claude_theme: false,
         }
     }
 

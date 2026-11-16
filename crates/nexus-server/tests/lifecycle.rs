@@ -16,6 +16,8 @@ use nexus_server::config::ServerConfig;
 fn config(home: &HarnessHome) -> ServerConfig {
     let mut config = ServerConfig::new(0, home.clone());
     config.version = "test".into();
+    // Der Start gleicht das Claude-Theme ab: nie im echten Claude-Ordner
+    config.setup = common::isolated_setup(home);
     config
 }
 

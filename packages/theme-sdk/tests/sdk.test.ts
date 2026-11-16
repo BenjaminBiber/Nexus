@@ -9,8 +9,8 @@ describe('SDK_VERSION', () => {
     expect(SDK_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
-  it('ist 1.2.0 (neu: Slot Icon, ThemeDefinition.mermaid)', () => {
-    expect(SDK_VERSION).toBe('1.2.0');
+  it('ist 1.3.0 (neu: Claude-Theme im Paket, Manifest-Feld claudeTheme)', () => {
+    expect(SDK_VERSION).toBe('1.3.0');
   });
 
   it('stimmt mit der Version in package.json überein', () => {

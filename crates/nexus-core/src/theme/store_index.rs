@@ -13,7 +13,7 @@ use crate::error::HarnessError;
 use crate::themes::is_valid_theme_id;
 
 /// Aktuelle Version des Theme-SDK; muss zu `SDK_VERSION` in packages/theme-sdk passen
-pub const THEME_SDK_VERSION: &str = "1.2.0";
+pub const THEME_SDK_VERSION: &str = "1.3.0";
 
 /// [`THEME_SDK_VERSION`] als semver-Version
 pub fn theme_sdk_version() -> semver::Version {
@@ -62,6 +62,9 @@ pub struct StoreIndexEntry {
     pub signature: Option<String>,
     /// Ob `sdkVersion` zur aktuellen SDK-Version passt
     pub compatible: bool,
+    /// Ob das Paket ein Claude-Theme für Claude Desktop mitbringt (`claudeTheme` im Manifest)
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub claude_theme: bool,
 }
 
 /// Ein ausgelassener Eintrag
@@ -160,6 +163,11 @@ fn check_entry(item: &Value, sdk: &semver::Version) -> Result<StoreIndexEntry, S
         return Err("description ist länger als 2000 Zeichen.".into());
     }
     let signature = optional(fields, "signature")?;
+    let claude_theme = match fields.get("claudeTheme") {
+        None | Some(Value::Null) => false,
+        Some(Value::Bool(flag)) => *flag,
+        Some(_) => return Err("Das Feld claudeTheme muss true oder false sein.".into()),
+    };
     if signature.is_some_and(|text| text.len() > MAX_SIGNATURE_BYTES) {
         return Err("signature ist länger als 4 KiB.".into());
     }
@@ -174,6 +182,7 @@ fn check_entry(item: &Value, sdk: &semver::Version) -> Result<StoreIndexEntry, S
         description: description.map(str::to_string),
         signature: signature.map(str::to_string),
         compatible: range.matches(sdk),
+        claude_theme,
     })
 }
 
@@ -249,6 +258,27 @@ mod tests {
         assert_eq!(parsed.entries.len(), 2);
         assert!(parsed.entries.iter().all(|entry| entry.compatible));
         assert_eq!(parsed.entries[0].sha256, "ab".repeat(32));
+    }
+
+    #[test]
+    fn claude_theme_ist_optional() {
+        let mut mit = eintrag("ozean");
+        mit["claudeTheme"] = json!(true);
+        let mut falsch = eintrag("wald");
+        falsch["claudeTheme"] = json!("ja");
+        let parsed = parse(json!([mit, eintrag("moor"), falsch]));
+        assert!(parsed.entries[0].claude_theme);
+        assert!(!parsed.entries[1].claude_theme);
+        assert_eq!(
+            serde_json::to_value(&parsed.entries[0]).unwrap()["claudeTheme"],
+            true
+        );
+        assert!(serde_json::to_value(&parsed.entries[1])
+            .unwrap()
+            .get("claudeTheme")
+            .is_none());
+        assert_eq!(parsed.skipped.len(), 1);
+        assert!(parsed.skipped[0].message.contains("claudeTheme"));
     }
 
     #[test]

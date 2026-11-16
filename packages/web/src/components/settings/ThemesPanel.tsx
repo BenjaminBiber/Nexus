@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { useCallback, useContext, useEffect, useId, useReducer, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useApi } from '../../api/ApiContext.js';
 import type { ThemeManifest } from '../../api/generated/themes.js';
@@ -9,6 +9,7 @@ import { applyTheme } from '../../theme/theme.js';
 import { ThemeSettingsSection } from '../../theme/ThemeSettingsSection.js';
 import { inspectThemePackage, ThemePackageReadError } from '../../themes/inspectPackage.js';
 import { DbModal } from '../db/DbModal.js';
+import { ClaudeThemeSection } from './ClaudeThemeSection.js';
 import { Notice } from './Notice.js';
 import { SaveStatusSlot, SettingsPanel } from './SettingsPanel.js';
 import { StoreRepos } from './StoreRepos.js';
@@ -43,6 +44,7 @@ function fromManifest(m: ThemeManifest): ThemeEntry {
     builtin: false,
     scheme: m.colorScheme === 'dark' ? 'dark' : 'light',
     hasCode: (m.slots?.length ?? 0) > 0,
+    claude: m.claudeTheme === true,
     image: m.preview ? serverUrl(`/themes/${encodeURIComponent(m.id)}/${m.preview}`) : undefined,
     palette: m.startColor ? { ...base, bg: m.startColor, side: m.startColor } : base,
   };
@@ -62,6 +64,8 @@ export function ThemesPanel() {
   const [query, setQuery] = useState('');
   // Offener Dialog: Themes aus dem Store installieren bzw. Theme-Stores verwalten
   const [dialog, setDialog] = useState<'store' | 'repos' | null>(null);
+  // Zähler, der den Zustand des Claude-Themes neu laden lässt
+  const [claudeKey, refreshClaude] = useReducer((n: number) => n + 1, 0);
 
   const builtinIds = new Set(BUILTIN.map((t) => t.id));
   const all = [...BUILTIN, ...manifests.filter((m) => !builtinIds.has(m.id)).map(fromManifest)];
@@ -74,7 +78,27 @@ export function ThemesPanel() {
   const choose = async (id: string) => {
     const saved = await save({ theme: id });
     if (saved) applyTheme(saved.theme, manifests);
+    refreshClaude();
   };
+
+  // Schalter „Claude übernimmt das Theme“
+  const toggleClaude = async (on: boolean) => {
+    await save({ claudeTheme: on });
+    refreshClaude();
+  };
+
+  // Speichern der Theme-Einstellungen; das Claude-Theme übernimmt sie
+  const runThemeSettings = async <T,>(task: () => Promise<T>) => {
+    const result = await run(task);
+    refreshClaude();
+    return result;
+  };
+
+  // Nach Installieren oder Entfernen: Liste neu laden; ein aktualisiertes aktives Theme ändert auch Claude
+  const reloadInstalled = useCallback(async () => {
+    await installed.reload();
+    refreshClaude();
+  }, [installed.reload]);
 
   // Das entfernte Theme wird abgemeldet (seine Slots greifen nicht mehr); war es aktiv, gilt danach der Standard
   const removed = async (id: string) => {
@@ -84,7 +108,7 @@ export function ThemesPanel() {
     if (saved) applyTheme(saved.theme);
   };
 
-  const upload = useThemeUpload(installed.reload, removed);
+  const upload = useThemeUpload(reloadInstalled, removed);
   const { cancel: cancelUpload } = upload;
   // Schließen verwirft auch eine offene Rückfrage zur gewählten Datei
   const closeDialog = useCallback(() => {
@@ -155,7 +179,9 @@ export function ThemesPanel() {
 
       {upload.confirm && <RemoveDialog theme={upload.confirm} busy={upload.busy} onConfirm={() => void upload.remove(upload.confirm!.id)} onCancel={upload.cancelRemove} />}
 
-      <ThemeSettingsSection run={run} />
+      <ThemeSettingsSection run={runThemeSettings} />
+
+      <ClaudeThemeSection enabled={settings?.claudeTheme !== false} disabled={!settings} onToggle={(on) => void toggleClaude(on)} reloadKey={claudeKey} />
 
       {dialog === 'repos' && (
         <ModalFrame title="Theme-Stores" hint="Nexus sucht Themes nur in Stores, die du hier selbst einträgst." onClose={closeDialog}>
@@ -177,10 +203,10 @@ export function ThemesPanel() {
           }
         >
           {upload.pending && (
-            <ThemeInstallDialog manifest={upload.pending.manifest} hasCode={upload.pending.hasCode} busy={upload.busy} onConfirm={() => void installFile(upload.pending!.file)} onCancel={upload.cancel} />
+            <ThemeInstallDialog manifest={upload.pending.manifest} hasCode={upload.pending.hasCode} claudeTheme={upload.pending.manifest.claudeTheme === true} busy={upload.busy} onConfirm={() => void installFile(upload.pending!.file)} onCancel={upload.cancel} />
           )}
           {upload.error && <UploadError error={upload.error} />}
-          <ThemeStore installed={manifests} onInstalled={installed.reload} reloadKey={storeKey} onManageRepos={() => setDialog('repos')} />
+          <ThemeStore installed={manifests} onInstalled={reloadInstalled} reloadKey={storeKey} onManageRepos={() => setDialog('repos')} />
         </ModalFrame>
       )}
     </SettingsPanel>

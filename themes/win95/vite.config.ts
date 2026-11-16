@@ -4,7 +4,7 @@ import { defineConfig, type Plugin } from 'vite';
 
 const root = import.meta.dirname;
 
-// Legt manifest.json, theme.css und assets/ neben main.js, damit `nexus theme pack dist` ein vollständiges Paket baut
+// Legt manifest.json, theme.css, assets/ und claude/ neben main.js, damit `nexus theme pack dist` ein vollständiges Paket baut
 function copyThemeFiles(): Plugin {
   let outDir = '';
   return {
@@ -14,7 +14,7 @@ function copyThemeFiles(): Plugin {
       outDir = resolve(config.root, config.build.outDir);
     },
     closeBundle() {
-      for (const name of ['manifest.json', 'theme.css', 'assets']) {
+      for (const name of ['manifest.json', 'theme.css', 'assets', 'claude']) {
         if (existsSync(join(root, name))) cpSync(join(root, name), join(outDir, name), { recursive: true });
       }
     },

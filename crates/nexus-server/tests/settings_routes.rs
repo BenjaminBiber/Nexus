@@ -181,7 +181,7 @@ async fn liefert_system_als_standard_und_speichert_das_theme() {
     assert_eq!(
         saved.json(),
         Some(json!({
-            "notifications": "off", "heroImages": false, "theme": "dark", "claudeUsage": false,
+            "notifications": "off", "heroImages": false, "theme": "dark", "claudeTheme": true, "claudeUsage": false,
             "compactCards": false, "hideNotNeeded": false, "hideInPlanning": false,
             "doneGrouping": "time", "doneArchiveDays": 0,
             "ntfy": false, "ntfyServer": "https://ntfy.sh", "ntfyTopic": "", "ntfyToken": "",

@@ -116,6 +116,14 @@ describe('ThemeIndex', () => {
     expect(themeIndex([mit('http://example.org/a.png')], { baseUrl: BASE })[0]).not.toHaveProperty('preview');
   });
 
+  it('übernimmt claudeTheme nur, wenn das Manifest es auf true setzt', () => {
+    const [mit] = themeIndex([paket({ ...OZEAN, claudeTheme: true })], { baseUrl: BASE });
+    expect(mit.claudeTheme).toBe(true);
+    for (const claudeTheme of [false, 'ja', undefined]) {
+      expect(themeIndex([paket({ ...OZEAN, claudeTheme })], { baseUrl: BASE })[0]).not.toHaveProperty('claudeTheme');
+    }
+  });
+
   it('benennt Pakete nach id und Version', () => {
     expect(packageName(OZEAN)).toBe('ozean-1.0.0.nexus');
   });

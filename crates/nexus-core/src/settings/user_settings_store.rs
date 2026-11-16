@@ -74,6 +74,11 @@ fn normalize(raw: &Value, home: &HarnessHome) -> UserSettings {
         notifications,
         hero_images: is_true(raw, "heroImages"),
         theme,
+        // Standard an: nur ein ausdrückliches false schaltet das Claude-Theme ab
+        claude_theme: raw
+            .get("claudeTheme")
+            .and_then(Value::as_bool)
+            .unwrap_or(true),
         claude_usage: is_true(raw, "claudeUsage"),
         compact_cards: is_true(raw, "compactCards"),
         hide_not_needed: is_true(raw, "hideNotNeeded"),
@@ -179,6 +184,7 @@ mod tests {
             notifications: NotificationMode::Windows,
             hero_images: true,
             theme: ThemeMode::from("dark"),
+            claude_theme: false,
             claude_usage: true,
             compact_cards: true,
             hide_not_needed: true,
@@ -318,6 +324,20 @@ mod tests {
         assert_eq!(settings.ntfy_server, DEFAULT_NTFY_SERVER);
         assert_eq!(settings.ntfy_topic, "");
         assert_eq!(settings.ntfy_token, "");
+    }
+
+    #[test]
+    fn claude_theme_ist_an_ausser_bei_ausdruecklichem_false() {
+        let (dir, store) = store();
+        for (raw, erwartet) in [
+            ("{}", true),
+            (r#"{"claudeTheme":true}"#, true),
+            (r#"{"claudeTheme":"nein"}"#, true),
+            (r#"{"claudeTheme":false}"#, false),
+        ] {
+            write_raw(&dir, raw);
+            assert_eq!(store.read().claude_theme, erwartet, "{raw}");
+        }
     }
 
     #[test]

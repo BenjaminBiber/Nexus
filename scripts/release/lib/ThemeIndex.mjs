@@ -1,5 +1,5 @@
 // Baut den Store-Index `nexus-themes.json` aus fertigen Theme-Paketen (`.nexus` = ZIP mit manifest.json).
-// Je Paket ein Eintrag `{ id, name, version, sdkVersion, downloadUrl, sha256, preview?, description? }` im Format, das
+// Je Paket ein Eintrag `{ id, name, version, sdkVersion, downloadUrl, sha256, preview?, description?, claudeTheme? }` im Format, das
 // `parse_index` in crates/nexus-core/src/theme/store_index.rs prüft. Reine Funktionen auf Bytes, damit sich das
 // ohne Build und ohne Netz testen lässt; Lesen und Schreiben der Dateien steckt in theme-index.mjs.
 
@@ -126,6 +126,8 @@ export function themeIndex(packages, { baseUrl }) {
       if (preview) entry.preview = `${base}/${preview.name}`;
     }
     if (typeof manifest.description === 'string' && manifest.description.trim()) entry.description = manifest.description;
+    // Claude-Theme für Claude Desktop: der Store zeigt dazu eine Marke und einen Hinweis
+    if (manifest.claudeTheme === true) entry.claudeTheme = true;
     return entry;
   });
   return entries.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));

@@ -139,10 +139,10 @@ describe('Synthwave-Theme-Paket', () => {
     expect(synth.get('--synth-glow-cyan')).toContain('var(--synth-glow)');
   });
 
-  it('hat die Version 1.1.0 und das SDK 1.2', () => {
+  it('hat die Version 1.2.0 und das SDK 1.3', () => {
     const manifest = JSON.parse(readFileSync(join(theme, 'manifest.json'), 'utf8'));
-    expect(manifest.version).toBe('1.1.0');
-    expect(manifest.sdkVersion).toBe('^1.2');
+    expect(manifest.version).toBe('1.2.0');
+    expect(manifest.sdkVersion).toBe('^1.3');
     expect(manifest.colorScheme).toBe('dark');
   });
 

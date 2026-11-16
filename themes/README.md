@@ -12,6 +12,7 @@ themes/<id>/
   theme.css       Pflicht; kein @import, url() nur relativ oder data:
   main.js         optional, ESM
   assets/**       optional (Bilder, Schriften, Klänge)
+  claude/**       optional, nur mit "claudeTheme": true – der Mod für Claude Desktop (siehe unten)
 ```
 
 Versteckte Dateien und Ordner (führender Punkt) und symbolische Links sind nicht erlaubt;
@@ -31,7 +32,7 @@ npm run build:themes
 packt jeden Ordner mit `nexus theme pack` nach `dist/themes/<id>.nexus` und bricht bei einem
 ungültigen Theme mit Exit-Code 1 ab. Code-Themes (`package.json` mit Skript `build`, z. B.
 `win95`, `minecraft`, `terminal`, `synthwave`, `dracula`, `alucard`, `gta`) baut das Skript vorher mit `npm run build` und packt dann ihr `dist/`
-(`main.js`, `manifest.json`, `theme.css`, `assets/`) statt des Quellordners. Die Pakete sind für Release und
+(`main.js`, `manifest.json`, `theme.css`, `assets/`, `claude/`) statt des Quellordners. Die Pakete sind für Release und
 Store-Index; die Desktop-App bündelt sie nicht. Wer sie lokal vorinstallieren will, gibt den Ordner
 `nexus serve` ausdrücklich mit (`--bundled-themes-dir dist/themes` / `NEXUS_BUNDLED_THEMES_DIR`).
 
@@ -72,6 +73,46 @@ node scripts/screenshots/theme-previews.mjs [<id> …]
 Themes mit fremden Ressourcen (`permissions.network`, z. B. Minecraft mit Mojang-Texturen)
 bekommen kein Bild: mit den Texturen dürfte es weder ins Repo noch ins Paket, ohne sie zeigt es
 nur die Rückfall-Ansicht. Ein neues Bild ist eine Änderung am Paket, also `version` erhöhen.
+
+## Claude-Theme
+
+Ein Theme kann Claude Desktop mitfärben. Dazu steht im Manifest `"claudeTheme": true`, und unter
+`claude/` liegt ein Claude-Code-Mod:
+
+```
+claude/hooks/
+  hooks.json         { "modules": ["./register.tsx"] }
+  register.tsx       ruft registerLook(on, lookFor(settings)) auf
+  look.ts            lookFor(settings): Farben (makeColors-Eingabe) und optional eine Szene
+  scene.ts           optional: die Szene als SVG-Text
+  nexus-look.tsx     ┐
+  make-colors.js     ├ Kopien aus themes/_claude-kit/, nicht von Hand bearbeiten
+  make-colors.d.ts   ┘
+  nexus-settings.ts  Standardwerte aus dem settingsSchema; Nexus überschreibt sie im Slot
+```
+
+Unter `claude/` sind zusätzlich `.ts`/`.tsx` erlaubt; ohne `claudeTheme` darf dort nichts liegen,
+mit muss `claude/hooks/hooks.json` dabei sein (`nexus theme pack` prüft beides). Die Kit-Dateien
+und `nexus-settings.ts` gleicht ein Skript ab; `--check` meldet Abweichungen mit Exit-Code 1:
+
+```
+node scripts/themes/sync-claude-kit.mjs [--check]
+```
+
+Solange das Theme in Nexus aktiv ist und die Einstellung „Claude übernimmt das Theme“
+(`claudeTheme` in den Benutzereinstellungen, Standard an) gilt, legt der Server `claude/` als
+Plugin nach `<Claude-Ordner>/skills/nexus-theme/` (`CLAUDE_CONFIG_DIR`, sonst `~/.claude`), mit
+`.claude-plugin/plugin.json`, der Marke `.nexus-theme.json` und den gewählten Theme-Einstellungen in
+`hooks/nexus-settings.ts`. Claude Desktop beobachtet den Ordner und lädt neu. Theme-Wechsel,
+Schalter, Theme-Einstellungen, Installation, Update und Entfernen gleichen den Slot ab; einen
+Ordner ohne Marke fasst Nexus nicht an und meldet ihn unter Darstellung › Themes › Claude Desktop.
+
+Farben: `makeColors` darf keine Zeile „Desktop won't paint“ melden (Test je Theme). Szenen sind
+eigene Kunst, liegen am Rand und nicht hinter Text oder Eingabefeld, haben `viewBox` mit
+`preserveAspectRatio="xMidYMid slice"` und bleiben unter 131.072 Zeichen. An den Rand heften lässt
+sich ein Motiv unter `slice` nur über `@media (min-aspect-ratio …)` / `(max-aspect-ratio …)` im
+eigenen `<style>`, nicht über verschachtelte `<svg>`. Prüfen lässt sich ein gebauter Slot mit
+`claude plugin validate <ordner>` (Claude Code ab 2.1.325).
 
 ## Versionsregel
 
