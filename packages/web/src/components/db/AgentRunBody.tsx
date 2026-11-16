@@ -146,7 +146,8 @@ export function AgentRunBody({ run, log, intervalMs = 3000, chipsSlot = null, he
             {tx.status !== 'loading' && (
               <button
                 type="button"
-                className="btn small run-collapse"
+                className="icon-btn run-collapse"
+                aria-label={collapsed ? 'Verlauf aufklappen' : 'Verlauf einklappen'}
                 title={collapsed ? 'Verlauf aufklappen' : 'Verlauf einklappen'}
                 aria-expanded={!collapsed}
                 aria-controls={timelineId}
@@ -156,7 +157,7 @@ export function AgentRunBody({ run, log, intervalMs = 3000, chipsSlot = null, he
                   setCollapsed((c) => !c);
                 }}
               >
-                {collapsed ? 'Aufklappen' : 'Einklappen'}
+                <span className="material-icons" aria-hidden="true">{collapsed ? 'unfold_more' : 'unfold_less'}</span>
               </button>
             )}
           </>,

@@ -506,7 +506,7 @@ describe('AgentRuns (Transcript)', () => {
     // Marke, Titel, Einstellungen und „Einklappen“ stehen in einer Zeile: im Kopf des Laufs
     const details = document.querySelector<HTMLDetailsElement>('details.agent-run')!;
     const summary = details.querySelector('summary')!;
-    const toggle = await within(summary).findByRole('button', { name: 'Einklappen' });
+    const toggle = await within(summary).findByRole('button', { name: 'Verlauf einklappen' });
     expect(chips.closest('summary')).toBe(summary);
     expect(Array.from(summary.children).map((el) => el.className))
       .toEqual(['badge outcome-neutral', 'run-title', 'run-head-chips', 'run-head-end']);
@@ -526,7 +526,9 @@ describe('AgentRuns (Transcript)', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
     expect(timeline.contains(document.getElementById(toggle.getAttribute('aria-controls')!))).toBe(true);
     await userEvent.click(toggle);
-    expect(toggle.textContent).toBe('Aufklappen');
+    // Ein Symbol-Schalter: Name und Symbol wechseln
+    expect(toggle.getAttribute('aria-label')).toBe('Verlauf aufklappen');
+    expect(toggle.textContent).toBe('unfold_more');
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(document.getElementById(toggle.getAttribute('aria-controls')!)!.hidden).toBe(true);
     expect(details.open).toBe(true);
@@ -553,7 +555,7 @@ describe('AgentRuns (Transcript)', () => {
     // Im Kopf ganz rechts, hinter Dauer und Modell und vor „Einklappen“; keine Leiste über dem Verlauf
     expect(head.closest('summary')).toBe(summary);
     expect(head.parentElement!.classList.contains('run-head-end')).toBe(true);
-    expect(head.nextElementSibling!.textContent).toBe('Einklappen');
+    expect(head.nextElementSibling!.getAttribute('aria-label')).toBe('Verlauf einklappen');
     expect(summary.lastElementChild).toBe(head.parentElement);
     expect(head.parentElement!.previousElementSibling!.classList.contains('run-facts')).toBe(true);
     expect(document.querySelector('.run-shots')).toBeNull();

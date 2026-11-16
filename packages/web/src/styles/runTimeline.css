@@ -13,17 +13,18 @@
 .run-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
   margin: 0;
   padding: 0;
   list-style: none;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 400;
+  line-height: 1.4;
   color: var(--text-soft);
 }
 .run-chips > li {
-  padding: 4px 10px;
+  padding: 1px 7px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
@@ -45,11 +46,18 @@
   text-transform: uppercase;
   color: var(--muted);
 }
+/* Schalter „Verlauf ein-/aufklappen“ als Symbol (unfold_less / unfold_more) ganz rechts in der Kopfzeile */
 .run-collapse {
   flex: none;
-  border-radius: 6px;
-  background: transparent;
+  border: 1px solid var(--line);
   color: var(--text-soft);
+}
+.run-collapse .material-icons {
+  font-size: 20px;
+}
+.run-collapse[aria-expanded='false'] {
+  background: var(--line-soft);
+  color: var(--text);
 }
 .run-scroll[hidden] {
   display: none;
