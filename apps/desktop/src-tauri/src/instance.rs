@@ -1,5 +1,6 @@
 // Eine Instanz und nexus://-Links: Ein zweiter Start holt das vorhandene Fenster nach vorn,
 // ein Link der Form nexus://ticket/ARC-0042 führt dort auf die Weiterleitungsseite der Oberfläche.
+// Systemmeldungen der App tragen nexus://open/<Pfad der Oberfläche>; ein Klick öffnet diesen Pfad.
 use tauri::{AppHandle, Runtime};
 use tauri_plugin_deep_link::DeepLinkExt;
 
@@ -8,12 +9,19 @@ use crate::server;
 
 // Schema, unter dem die App bei den Betriebssystemen angemeldet ist
 const SCHEMA: &str = "nexus://";
+// Vorsatz der Links aus Systemmeldungen; dahinter steht ein Pfad der Oberfläche
+const OPEN: &str = "nexus://open";
 // Längste ID, die noch plausibel ist; schützt vor aufgeblähten Links
 const ID_MAX: usize = 40;
+// Längster Pfad aus einer Meldung; Projekt, Reiter und Ticket passen weit darunter
+const PFAD_MAX: usize = 300;
 
 // Wandelt einen nexus://-Link in eine Seitenadresse der Oberfläche um; None bei unbekannten Links.
 // Die ID landet in einer Adresse, darum nur Großbuchstaben, Ziffern und Bindestriche durchlassen.
 pub fn deep_link_path(url: &str) -> Option<String> {
+    if let Some(pfad) = url.strip_prefix(OPEN) {
+        return meldungs_pfad(pfad);
+    }
     let rest = url.strip_prefix(SCHEMA)?.trim_end_matches('/');
     let (kind, id) = rest.split_once('/')?;
     if !matches!(kind, "ticket" | "question") {
@@ -29,6 +37,35 @@ pub fn deep_link_path(url: &str) -> Option<String> {
         return None;
     }
     Some(format!("/open/{kind}/{id}"))
+}
+
+// Pfad hinter nexus://open, so wie ihn die Adresszeile des Fensters bekommt. Erlaubt sind nur
+// Abschnitte aus Buchstaben, Ziffern und `-_.~%` – keine Abfrage, kein Anker, kein `//` und keine
+// Abschnitte aus Punkten (auch nicht kodiert), damit der Link nie aus der Oberfläche hinausführt.
+fn meldungs_pfad(pfad: &str) -> Option<String> {
+    if pfad.is_empty() || pfad == "/" {
+        return Some("/".to_string());
+    }
+    let rest = pfad.strip_prefix('/')?.trim_end_matches('/');
+    if rest.len() > PFAD_MAX {
+        return None;
+    }
+    let erlaubt = |zeichen: char| zeichen.is_ascii_alphanumeric() || "-_.~%".contains(zeichen);
+    for abschnitt in rest.split('/') {
+        if abschnitt.is_empty() || !abschnitt.chars().all(erlaubt) {
+            return None;
+        }
+        // „..“ ist auch als „%2e%2e“ oder „.%2E“ ein Schritt nach oben
+        if abschnitt
+            .to_ascii_lowercase()
+            .replace("%2e", ".")
+            .chars()
+            .all(|zeichen| zeichen == '.')
+        {
+            return None;
+        }
+    }
+    Some(format!("/{rest}"))
 }
 
 // Erster nexus://-Link in den Argumenten eines Starts; None, wenn keiner dabei ist
@@ -141,6 +178,59 @@ mod tests {
             .as_array()
             .unwrap();
         assert_eq!(schemes, &[serde_json::json!("nexus")]);
+    }
+
+    // Der Klick auf eine Systemmeldung der App öffnet die Stelle, die die Meldung nennt
+    #[test]
+    fn link_einer_meldung_oeffnet_ihren_pfad() {
+        for (link, pfad) in [
+            (
+                "nexus://open/p/webshop/board/t/ARC-0042",
+                "/p/webshop/board/t/ARC-0042",
+            ),
+            ("nexus://open/p/webshop/sessions", "/p/webshop/sessions"),
+            (
+                "nexus://open/p/webshop/questions/ARC-F0001",
+                "/p/webshop/questions/ARC-F0001",
+            ),
+            (
+                "nexus://open/p/web_shop.2/board/t/A%20B~1",
+                "/p/web_shop.2/board/t/A%20B~1",
+            ),
+            ("nexus://open/", "/"),
+            ("nexus://open", "/"),
+        ] {
+            assert_eq!(deep_link_path(link).as_deref(), Some(pfad), "{link}");
+        }
+    }
+
+    // Der Pfad landet in der Adresszeile des Fensters: nur Pfade der Oberfläche, nichts, was
+    // aus ihr hinausführt oder Abfrage und Anker mitbringt
+    #[test]
+    fn link_einer_meldung_bleibt_in_der_oberflaeche() {
+        for link in [
+            "nexus://openx/p/webshop",
+            "nexus://open/p/../../etc",
+            "nexus://open/p/./x",
+            "nexus://open/p/%2e%2e/x",
+            "nexus://open/p/.%2E/x",
+            "nexus://open//evil.example/x",
+            "nexus://open/p/x//y",
+            "nexus://open/p/x?y=1",
+            "nexus://open/p/x#anker",
+            "nexus://open/p/x\\y",
+            "nexus://open/javascript:alert(1)",
+            "nexus://open/p/x y",
+            "nexus://open/p/ä",
+        ] {
+            assert_eq!(deep_link_path(link), None, "{link} sollte abgelehnt werden");
+        }
+    }
+
+    #[test]
+    fn link_einer_meldung_bleibt_kurz() {
+        let lang = format!("nexus://open/p/{}", "a".repeat(PFAD_MAX));
+        assert_eq!(deep_link_path(&lang), None);
     }
 
     #[test]

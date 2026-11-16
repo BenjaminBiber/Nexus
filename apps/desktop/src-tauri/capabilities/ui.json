@@ -6,6 +6,7 @@
   "permissions": [
     "log:default",
     "notification:default",
+    "allow-meldung-zeigen",
     "dialog:allow-open",
     "opener:allow-reveal-item-in-dir",
     {

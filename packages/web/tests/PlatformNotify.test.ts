@@ -4,15 +4,17 @@ import type { ApiClient } from '../src/api/ApiClient.js';
 import { BrowserPlatform } from '../src/platform/BrowserPlatform.js';
 import { TauriPlatform } from '../src/platform/TauriPlatform.js';
 
-// Das Benachrichtigungs-Plugin gibt es im Test nicht als Fenster der App; seine Funktionen sind gefälscht
+// Das Benachrichtigungs-Plugin und die Befehle der App gibt es im Test nicht als Fenster der App; ihre Funktionen sind gefälscht
 const isPermissionGranted = vi.fn();
 const requestPermission = vi.fn();
 const sendNotification = vi.fn();
+const invoke = vi.fn();
 vi.mock('@tauri-apps/plugin-notification', () => ({
   isPermissionGranted: () => isPermissionGranted(),
   requestPermission: () => requestPermission(),
   sendNotification: (...args: unknown[]) => sendNotification(...args),
 }));
+vi.mock('@tauri-apps/api/core', () => ({ invoke: (...args: unknown[]) => invoke(...args) }));
 
 // Browser-Meldung zum Mitschreiben; welche Erlaubnis gilt, setzt jeder Fall selbst
 class FakeNotification {
@@ -71,9 +73,18 @@ describe('Meldungen der Desktop-App', () => {
     expect(requestPermission).toHaveBeenCalled();
   });
 
-  it('zeigt die Meldung mit Titel und Text über das Plugin', async () => {
-    await platform.notify({ title: 'Session braucht deine Antwort', body: 'webshop', tag: 'attention', url: '/p/p1/board/t/T-1' });
-    expect(sendNotification).toHaveBeenCalledWith({ title: 'Session braucht deine Antwort', body: 'webshop' });
+  // Die App zeigt die Meldung selbst, damit ein Klick die Stelle in ihrem Fenster öffnet (das Plugin kennt kein Klickziel)
+  it('gibt Anlass, Kennung, Texte und Ziel an die App weiter', async () => {
+    await platform.notify({ title: 'Session braucht deine Antwort', body: 'webshop', tag: 'attention', url: '/p/p1/board/t/T-1', kind: 'wartet' });
+    expect(invoke).toHaveBeenCalledWith('meldung_zeigen', {
+      meldung: { kind: 'wartet', tag: 'attention', title: 'Session braucht deine Antwort', body: 'webshop', url: '/p/p1/board/t/T-1' },
+    });
+    expect(sendNotification).not.toHaveBeenCalled();
+  });
+
+  it('nimmt ohne Anlass das Logo für bereite Sessions', async () => {
+    await platform.notify({ title: 'Session ist bereit', body: 'webshop', tag: 's1', url: '/p/p1/sessions' });
+    expect(invoke).toHaveBeenCalledWith('meldung_zeigen', { meldung: expect.objectContaining({ kind: 'bereit' }) });
   });
 
   it('nimmt für die Meldung nicht die Browser-Meldung', async () => {
@@ -81,12 +92,10 @@ describe('Meldungen der Desktop-App', () => {
     expect(FakeNotification.shown).toHaveLength(0);
   });
 
-  it('macht aus einem Fehler des Plugins einen verständlichen Text', async () => {
-    sendNotification.mockImplementationOnce(() => {
-      throw new Error('not allowed');
-    });
+  it('macht aus einem Fehler der App einen verständlichen Text', async () => {
+    invoke.mockRejectedValueOnce('Für die Systemmeldung fehlt das Toast-XML.');
     await expect(platform.notify({ title: 'Titel', body: 'Text', tag: 'tag', url: '/p/p1' }))
-      .rejects.toThrow('Die Meldung ließ sich nicht zeigen. (not allowed)');
+      .rejects.toThrow('Die Meldung ließ sich nicht zeigen. (Für die Systemmeldung fehlt das Toast-XML.)');
   });
 });
 

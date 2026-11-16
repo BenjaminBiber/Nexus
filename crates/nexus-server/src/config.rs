@@ -190,7 +190,7 @@ const TOAST_MARKER: &str = "logo-app.png";
 
 /// Bilder der Systemmeldung: `toast/` neben dem Programm (gebündelte App), sonst der
 /// Ordner im Crate (nur Entwicklung). `NEXUS_TOAST_DIR` geht beidem vor.
-fn default_toast_dir() -> PathBuf {
+pub fn default_toast_dir() -> PathBuf {
     let next_to_exe = std::env::current_exe()
         .ok()
         .and_then(|exe| exe.parent().map(|dir| dir.join("toast")));

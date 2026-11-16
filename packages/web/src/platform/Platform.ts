@@ -10,13 +10,17 @@ export interface OpenDocInput {
 // Stand der Erlaubnis für Meldungen: erteilt, abgelehnt oder noch nicht gefragt
 export type NotifyPermission = 'granted' | 'denied' | 'default';
 
-// Was eine Meldung braucht: Titel und Text, `tag` ersetzt eine gleichnamige frühere Meldung,
-// `url` und `onClick` gelten beim Klick (nur im Browser, die Desktop-App meldet keinen Klick zurück)
+// Anlass einer Meldung; wortgleich zu `ToastKind` im Server
+export type NoticeKind = 'bereit' | 'wartet' | 'gesammelt' | 'frage-neu' | 'recherche';
+
+// Was eine Meldung braucht: Titel und Text, `tag` ersetzt eine gleichnamige frühere Meldung, `kind` wählt in der
+// Desktop-App das Logo. Beim Klick ruft der Browser `onClick`; die Desktop-App öffnet `url` selbst in ihrem Fenster.
 export interface NotifyInput {
   title: string;
   body: string;
   tag: string;
   url: string;
+  kind?: NoticeKind;
   onClick?: () => void;
 }
 

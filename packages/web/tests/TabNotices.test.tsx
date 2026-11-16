@@ -118,8 +118,44 @@ describe('Meldungen des Servers in der Desktop-App', () => {
       FakeEventSource.current().emit({ type: 'notice', kind: 'wartet', tag: 'attention', title: 'Session braucht deine Antwort', body: 'webshop', url: '/p/p1/board/t/T-1' }),
     );
     expect(notify).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Session braucht deine Antwort', body: 'webshop', tag: 'attention', url: '/p/p1/board/t/T-1' }),
+      expect.objectContaining({ title: 'Session braucht deine Antwort', body: 'webshop', tag: 'attention', url: '/p/p1/board/t/T-1', kind: 'wartet' }),
     );
     expect(FakeNotification.shown).toHaveLength(0);
   });
+
+  // In der App gibt es nur an (Meldungen des Servers) oder aus; „browser“ aus dem Browser löst hier nichts aus
+  it('meldet im Modus „browser“ keine bereiten Sessions selbst', async () => {
+    const notify = vi.fn(async () => undefined);
+    const getSessions = vi
+      .fn()
+      .mockResolvedValueOnce([readySession('running')])
+      .mockResolvedValue([readySession('waiting')]);
+    const getUserSettings = vi.fn(async () => ({ notifications: 'browser' }));
+    const hasFocus = vi.spyOn(document, 'hasFocus').mockReturnValue(false);
+    const openEvents = vi.fn((..._args: unknown[]) => new FakeEventSource());
+    const platform = fakePlatform({ notificationPermission: vi.fn(async () => 'granted' as const), notify });
+    render(
+      <ApiProvider api={fakeApi({ getSessions, getUserSettings, openEvents } as never)}>
+        <PlatformProvider value={platform}>
+          <MemoryRouter initialEntries={['/p/p1/sessions']}>
+            <LiveProvider pid="p1">
+              <SessionNotifier pid="p1" />
+            </LiveProvider>
+          </MemoryRouter>
+        </PlatformProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(getSessions).toHaveBeenCalledTimes(1));
+    act(() => FakeEventSource.current().emit({ type: 'sessions' }));
+    await waitFor(() => expect(getSessions).toHaveBeenCalledTimes(2));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(getUserSettings).not.toHaveBeenCalled();
+    expect(notify).not.toHaveBeenCalled();
+    hasFocus.mockRestore();
+  });
 });
+
+// Session mit dem Zustand, den die Liste meldet; nur die Felder, die die Meldung liest
+function readySession(displayState: 'running' | 'waiting') {
+  return { id: 's1', displayState, title: 'Favoriten', tickets: ['T-1'], cwd: 'C:/repo' };
+}
