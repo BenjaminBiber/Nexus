@@ -383,3 +383,28 @@ describe('DocsPage – Board-Umschalter', () => {
     expect(getDoc).toHaveBeenCalledWith('p1', FREMD, 3);
   });
 });
+
+// Im schmalen Fenster liegen Explorer und Werkzeuge über dem Dokument; die Seite schließt sie wie eine Schublade
+describe('DocsPage – eingeblendete Spalten', () => {
+  it('schließt die eingeblendeten Werkzeuge mit Escape', async () => {
+    open(`/p/p1/docs/${ALT}`);
+    await screen.findByRole('navigation', { name: 'Inhaltsverzeichnis' });
+    const tools = screen.getByRole('button', { name: 'Werkzeuge' });
+    await userEvent.click(tools);
+    expect(tools.getAttribute('aria-pressed')).toBe('true');
+    await userEvent.keyboard('{Escape}');
+    expect(tools.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('schließt die eingeblendete Spalte bei einem Klick ins Dokument, nicht bei einem Klick in die Spalte', async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    open(`/p/p1/docs/${ALT}`);
+    const toc = within(await screen.findByRole('navigation', { name: 'Inhaltsverzeichnis' }));
+    const tools = screen.getByRole('button', { name: 'Werkzeuge' });
+    await userEvent.click(tools);
+    await userEvent.click(toc.getByRole('button', { name: 'Unter' }));
+    expect(tools.getAttribute('aria-pressed')).toBe('true');
+    await userEvent.click(screen.getByRole('heading', { name: 'Spec Z', level: 1 }));
+    expect(tools.getAttribute('aria-pressed')).toBe('false');
+  });
+});

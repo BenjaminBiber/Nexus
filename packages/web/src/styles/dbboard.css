@@ -75,7 +75,8 @@
 .db-panel-heading { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .db-panel-meta { display: flex; align-items: center; gap: 8px; min-height: 26px; font-size: 12px; }
 .db-panel-meta .icon-btn { width: 22px; height: 22px; min-height: 0; font-size: 12px; }
-.db-title { width: 100%; min-height: 0; padding: 2px 6px; margin-left: -6px; border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; box-shadow: none; font-size: 20px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.3; }
+/* Titel als mitwachsendes Textfeld: bricht um, höchstens drei Zeilen, darüber scrollt er */
+.db-title { display: block; width: 100%; min-height: 0; max-height: calc(3lh + 6px); padding: 2px 6px; margin-left: -6px; border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; box-shadow: none; font-family: inherit; font-size: 20px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.3; resize: none; overflow-y: auto; }
 .db-title:hover { border-color: var(--line); }
 .db-title:focus { border-color: var(--line-strong); background: var(--surface); }
 /* Körper: Inhalt links, Seitenleiste (Fortschritt, Planung, Abhängigkeiten, Löschen) rechts */
@@ -95,13 +96,23 @@
 .db-fields > * { grid-column: span 2; }
 .db-fields > .half { grid-column: span 3; }
 .db-fields > .wide { grid-column: 1 / -1; }
+/* Eigenschaften in der Seitenleiste: eine Spalte, Beschriftung über dem Feld, Felder über die volle Breite */
+.db-properties .db-fields { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.db-properties .db-fields > * { grid-column: 1 / -1; }
+/* Kompakte Beschriftung: klein und dicht über dem Feld */
+.db-properties .field { gap: 3px; font-size: 11px; }
+.db-properties .field > span { line-height: 1.2; }
 .db-field-check { min-height: 38px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); font-weight: 500; cursor: pointer; }
 .db-panel-foot { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--line); }
 .db-panel-side .db-panel-foot > .btn { width: 100%; }
 .db-panel-side .db-panel-foot > .actions { flex-wrap: wrap; }
+/* Schmal: eine Spalte; die Eigenschaften stehen über den Reitern, der Rest der Seitenleiste darunter */
 @media (max-width: 900px) {
-  .db-panel-body { grid-template-columns: minmax(0, 1fr); }
-  .db-panel-side { border-left: 0; border-top: 1px solid var(--line); }
+  .db-panel-body { display: flex; flex-direction: column; }
+  .db-panel-side { display: contents; }
+  .db-panel-side > * { order: 1; margin: 0 24px 24px; }
+  .db-panel-side > .db-properties { order: -1; margin: 20px 24px 0; }
+  .db-panel-side > .db-properties + * { padding-top: 20px; border-top: 1px solid var(--line); }
   .db-fields > *, .db-fields > .half { grid-column: 1 / -1; }
 }
 /* Fortschritt als Ring */
@@ -117,8 +128,8 @@
 .progress-ring-total { color: var(--muted); font-weight: 400; }
 .btn.danger { color: var(--blocked-fg); border-color: var(--blocked-fg); }
 
-/* Reiter im Ticket-Panel */
-.db-tablist { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: thin; border-bottom: 1px solid var(--line); }
+/* Reiter im Ticket-Panel (OverflowTabList: was nicht passt, liegt im ⋯-Menü, die Leiste scrollt nie) */
+.db-tablist { display: flex; gap: 2px; border-bottom: 1px solid var(--line); }
 .db-tablist [role="tab"] { flex: none; min-height: 40px; padding: 0 10px; white-space: nowrap; border: 0; box-shadow: inset 0 -2px 0 transparent; background: transparent; color: var(--muted); font-weight: 500; cursor: pointer; }
 .db-tablist [role="tab"].active { color: var(--text); font-weight: 600; box-shadow: inset 0 -2px 0 var(--text); }
 .db-tab-dot { color: var(--accent); }

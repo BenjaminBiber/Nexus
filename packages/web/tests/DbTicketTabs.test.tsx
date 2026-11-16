@@ -3,8 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError } from '../src/api/ApiError.js';
-import type { DbHistoryDto, DbTicketPatch } from '../src/api/dbTypes.js';
+import type { DbHistoryDto, DbTicketDetailDto, DbTicketPatch } from '../src/api/dbTypes.js';
 import { DETAIL, openPanel } from './helpers/dbPanel.js';
+import { overflowLayout, resetOverflowLayout } from './helpers/overflowLayout.js';
 import { timelineFrom } from './helpers/fakeApi.js';
 
 vi.mock('mermaid', () => ({ default: { initialize: vi.fn(), render: vi.fn(async () => ({ svg: '<svg viewBox="0 0 100 50"></svg>' })) } }));
@@ -214,5 +215,32 @@ describe('DbTicketTabs – Kommentare und Kommentarfeld im Verlauf', () => {
     // der Entwurf zählt als ungespeicherte Eingabe
     await userEvent.click(screen.getByRole('button', { name: 'Schließen' }));
     expect(await screen.findByRole('alertdialog', { name: 'Ungespeicherte Änderungen' })).toBeTruthy();
+  });
+
+  describe('in einer schmalen Leiste', () => {
+    afterEach(resetOverflowLayout);
+
+    it('legt Reiter ins ⋯-Menü statt die Leiste scrollen zu lassen', async () => {
+      overflowLayout(400);
+      openPanel();
+      await screen.findByRole('tab', { name: 'Beschreibung' });
+      expect(screen.getAllByRole('tab').map((tab) => tab.textContent?.replace(/\s*•$/, ''))).toEqual(['Beschreibung', 'Schritte (0/0)', 'Abnahme']);
+      await userEvent.click(screen.getByRole('button', { name: 'Weitere Reiter' }));
+      await userEvent.click(within(screen.getByRole('menu', { name: 'Weitere Reiter' })).getByRole('menuitem', { name: 'Verlauf' }));
+      expect(screen.getByRole('tab', { name: 'Verlauf', selected: true })).toBeTruthy();
+    });
+
+    it('markiert den ⋯-Knopf, solange ein Agent am ausgeblendeten Reiter „Agent“ läuft', async () => {
+      overflowLayout(400);
+      openPanel({ getDispatchRuns: async () => [{ name: 'ARC-0001-20261016-101500.log', kind: 'work', started: '2026-10-16T08:15:00.000Z', running: true }] });
+      expect(await screen.findByRole('button', { name: 'Weitere Reiter (mit Aktivität)' })).toBeTruthy();
+    });
+
+    it('markiert den ⋯-Knopf bei offenen Fragen am ausgeblendeten Reiter „Fragen“', async () => {
+      overflowLayout(400);
+      const question = { id: 'ARC-F0001', title: 'Welche Datenbank?', status: 'open' } as DbTicketDetailDto['waitingOnQuestions'][number];
+      openPanel({}, { ...DETAIL, waitingOnQuestions: [question] });
+      expect(await screen.findByRole('button', { name: 'Weitere Reiter (mit Aktivität)' })).toBeTruthy();
+    });
   });
 });

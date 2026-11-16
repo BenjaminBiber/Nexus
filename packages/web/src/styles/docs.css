@@ -6,7 +6,8 @@
   --docs-tools-w: 300px;
   position: relative;
   display: grid;
-  grid-template-columns: var(--docs-explorer-w) 5px minmax(0, 1fr);
+  /* Der Explorer nimmt höchstens 40 % der Werkbank, damit dem Dokument genug Platz bleibt */
+  grid-template-columns: min(var(--docs-explorer-w), 40cqi) 5px minmax(0, 1fr);
   /* Die Werkbank füllt den Inhaltsbereich des Rahmens (.shell-main); scrollen tun die Spalten selbst */
   height: 100%;
   min-height: 0;
@@ -429,54 +430,94 @@
   flex: none;
 }
 
-/* Ein Fenster für eine Spalte: Explorer und Werkzeuge legen sich auf Knopfdruck über das Dokument */
-@media (max-width: 1100px) {
-  /* Der Rahmen gibt seine Höhe hier nicht mehr vor (siehe base.css, .shell-content) */
-  .docs-workbench {
-    grid-template-columns: minmax(0, 1fr);
-    height: 100dvh;
-  }
+/* Die Spalten richten sich nach der Breite der Werkbank, nicht nach dem Fenster: die Seitenleiste des Rahmens
+   nimmt schon Platz weg. Drei Stufen: ab 1240px drei Spalten, darunter liegen erst die Werkzeuge und unter 860px
+   auch der Explorer auf Knopfdruck über dem Dokument. */
+.shell-main:has(> .docs-workbench) {
+  container: docs / inline-size;
+}
 
+/* Mittel (z. B. Laptop mit 1280 oder 1366 Pixeln): Explorer bleibt eine Spalte, die Werkzeuge kommen über den Knopf */
+@container docs (max-width: 1239px) {
+  /* Jeder Knopf steht auf der Seite, auf der seine Spalte aufgeht */
   .docs-bar {
     display: flex;
+    justify-content: flex-end;
   }
 
-  .docs-workbench > .docs-gutter,
+  .docs-bar .docs-bar-explorer {
+    display: none;
+  }
+
   .docs-workbench .doc-layout > .docs-gutter {
     display: none;
   }
 
-  /* Die Werkzeugspalte hängt wie der Explorer am Rahmen der Werkbank, nicht am mitscrollenden Dokument */
+  /* Die Werkzeugspalte hängt am Rahmen der Werkbank, nicht am mitscrollenden Dokument */
   .docs-workbench .doc-layout {
     position: static;
   }
 
-  .docs-workbench > .docs-explorer,
   .docs-workbench .doc-side {
     position: absolute;
     top: 0;
+    right: 0;
     bottom: 0;
     z-index: 5;
     display: none;
-    width: min(85vw, 340px);
+    flex: none;
+    width: min(85cqi, 340px);
     max-height: none;
+    border-left: 1px solid var(--line);
     background: var(--surface);
     box-shadow: 0 8px 24px var(--shadow-strong);
   }
 
-  .docs-workbench > .docs-explorer {
-    left: 0;
-    border-right: 1px solid var(--line);
-  }
-
-  .docs-workbench .doc-side {
-    right: 0;
-    flex: none;
-    border-left: 1px solid var(--line);
-  }
-
-  .docs-workbench[data-panel='explorer'] > .docs-explorer,
   .docs-workbench[data-panel='tools'] .doc-side {
     display: flex;
+  }
+}
+
+/* Schmal: eine Spalte, auch der Explorer legt sich auf Knopfdruck über das Dokument */
+@container docs (max-width: 859px) {
+  .docs-workbench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .docs-bar {
+    justify-content: space-between;
+  }
+
+  .docs-bar .docs-bar-explorer {
+    display: inline-flex;
+  }
+
+  .docs-workbench > .docs-gutter {
+    display: none;
+  }
+
+  .docs-workbench > .docs-explorer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 5;
+    display: none;
+    width: min(85cqi, 340px);
+    max-height: none;
+    border-right: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: 0 8px 24px var(--shadow-strong);
+  }
+
+  .docs-workbench[data-panel='explorer'] > .docs-explorer {
+    display: flex;
+  }
+}
+
+/* Schmales Fenster: der Rahmen gibt seine Höhe nicht mehr vor (siehe base.css, .shell-content) */
+@media (max-width: 900px) {
+  .docs-workbench {
+    height: 100dvh;
   }
 }

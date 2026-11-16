@@ -116,6 +116,27 @@ export function DocsPage() {
   const count = useMemo(() => countLabel(tree, filterDocTree(tree, filter)), [tree, filter]);
   const tools = useMemo(() => ({ width: widths.tools, setWidth: (w: number) => setWidths((prev) => ({ ...prev, tools: w })) }), [widths.tools]);
 
+  // Eine eingeblendete Seitenspalte schließt wie eine Schublade: mit Escape oder einem Klick daneben
+  // (Klicks in die Spalten und auf die Umschalter zählen nicht, die Umschalter schalten selbst)
+  useEffect(() => {
+    if (panel === 'none') return;
+    const outside = (event: PointerEvent) => {
+      if (event.target instanceof Element && event.target.closest('.docs-explorer, .doc-side, .docs-bar')) return;
+      setPanel('none');
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      setPanel('none');
+      document.querySelector<HTMLElement>(`.docs-bar-${panel}`)?.focus();
+    };
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [panel]);
+
   // Was die Seite gezeigt hat, gilt als gesehen (der Zähler am Menüpunkt fällt damit auf 0)
   useEffect(() => {
     if (newest > 0) saveDocsSeen(pid, newest);
@@ -236,8 +257,8 @@ export function DocsPage() {
         />
         <section className="docs-main">
           <div className="docs-bar">
-            <button type="button" className="btn small" aria-pressed={panel === 'explorer'} onClick={() => togglePanel('explorer')}>Dateien</button>
-            <button type="button" className="btn small" aria-pressed={panel === 'tools'} onClick={() => togglePanel('tools')}>Werkzeuge</button>
+            <button type="button" className="btn small docs-bar-explorer" aria-pressed={panel === 'explorer'} onClick={() => togglePanel('explorer')}>Dateien</button>
+            <button type="button" className="btn small docs-bar-tools" aria-pressed={panel === 'tools'} onClick={() => togglePanel('tools')}>Werkzeuge</button>
           </div>
           {hits !== null && (
             <div className="panel">

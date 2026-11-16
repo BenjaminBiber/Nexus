@@ -28,6 +28,26 @@ describe('DbTicketPanel', () => {
     expect(screen.getByText(/Version 3/)).toBeTruthy();
   });
 
+  it('zeigt Status, Priorität und die übrigen Felder als Eigenschaften in der Seitenleiste', async () => {
+    openPanel();
+    const properties = await screen.findByRole('region', { name: 'Eigenschaften' });
+    for (const name of ['Status', 'Priorität', 'Braucht Planung', 'Zuständig', 'Labels', 'Zielbranch', 'Blockiert-Grund']) {
+      expect(within(properties).getByLabelText(name)).toBeTruthy();
+    }
+  });
+
+  it('bricht lange Titel um und macht aus eingefügten Zeilenumbrüchen Leerzeichen', async () => {
+    const { patchDbTicket } = openPanel();
+    const title = (await screen.findByRole('textbox', { name: 'Titel' })) as HTMLTextAreaElement;
+    expect(title.tagName).toBe('TEXTAREA');
+    await userEvent.clear(title);
+    await userEvent.click(title);
+    await userEvent.paste('Login\nfertig');
+    expect(title.value).toBe('Login fertig');
+    await userEvent.keyboard('{Enter}');
+    expect(patchDbTicket).toHaveBeenCalledWith('ARC-0001', { title: 'Login fertig', rev: 3 });
+  });
+
   it('zeigt das Abzeichen Autopilot nur ohne Ausnahme-Label', async () => {
     const config = async () => ({ file: 'd.yaml', exists: true, raw: { autopilot: { enabled: true, exceptLabel: 'interaktiv' } }, config: null, error: null });
     openPanel({ getDispatchConfig: config });

@@ -9,6 +9,7 @@ import { DbCommentButton } from './DbCommentButton.js';
 import { DbCommentDialog } from './DbCommentDialog.js';
 import { DbTicketTimeline } from './DbTicketTimeline.js';
 import { Collapsible } from '../Collapsible.js';
+import { OverflowTabList } from '../OverflowTabList.js';
 
 export type DbTextField = 'description' | 'acceptance' | 'plan' | 'handbook' | 'diagram';
 type TabKey = DbTextField | 'steps' | 'questions' | 'comments' | 'history' | 'agent';
@@ -137,42 +138,46 @@ export function DbTicketTabs({ ticket, busy, conflictOpen = false, agentPrefix, 
     }
   });
 
-  const textTab = (t: (typeof TEXT_TABS)[number]) => ({ key: t.key as TabKey, label: t.label, filled: ticket[t.key].trim() !== '' });
-  const tabs: Array<{ key: TabKey; label: string; filled: boolean }> = [
+  // filled: Punkt am Reiter (Inhalt vorhanden bzw. etwas los); attention: liegt der Reiter im ⋯-Menü, markiert er den Knopf
+  const textTab = (t: (typeof TEXT_TABS)[number]) => ({ key: t.key as TabKey, label: t.label, filled: ticket[t.key].trim() !== '', attention: false });
+  const openQuestions = ticket.waitingOnQuestions.length > 0;
+  const tabs: Array<{ key: TabKey; label: string; filled: boolean; attention: boolean }> = [
     textTab(TEXT_TABS[0]),
-    ...(steps ? [{ key: 'steps' as TabKey, label: `Schritte (${ticket.stepsDone}/${ticket.stepsTotal})`, filled: false }] : []),
+    ...(steps ? [{ key: 'steps' as TabKey, label: `Schritte (${ticket.stepsDone}/${ticket.stepsTotal})`, filled: false, attention: false }] : []),
     textTab(TEXT_TABS[1]),
-    ...(questions ? [{ key: 'questions' as TabKey, label: `Fragen (${ticket.waitingOnQuestions.length})`, filled: ticket.waitingOnQuestions.length > 0 }] : []),
+    ...(questions ? [{ key: 'questions' as TabKey, label: `Fragen (${ticket.waitingOnQuestions.length})`, filled: openQuestions, attention: openQuestions }] : []),
     ...TEXT_TABS.slice(2).map(textTab),
-    { key: 'comments', label: `Kommentare (${ticket.comments.length})`, filled: false },
-    { key: 'history', label: 'Verlauf', filled: false },
-    { key: 'agent', label: 'Agent', filled: agentActive },
+    { key: 'comments', label: `Kommentare (${ticket.comments.length})`, filled: false, attention: false },
+    { key: 'history', label: 'Verlauf', filled: false, attention: false },
+    { key: 'agent', label: 'Agent', filled: agentActive, attention: agentActive },
   ];
   const text = TEXT_TABS.find((t) => t.key === tab);
 
   return (
     <div className="db-tabs">
-      <div role="tablist" aria-label="Ticketinhalt" className="db-tablist">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            role="tab"
-            id={`db-tab-${t.key}`}
-            aria-selected={tab === t.key}
-            aria-controls="db-tabpanel"
-            className={tab === t.key ? 'active' : ''}
-            onClick={() => setTab(t.key)}
-          >
-            {t.label}
-            {t.filled && (
-              <span aria-hidden="true" className="db-tab-dot">
-                {' '}•
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      <OverflowTabList
+        label="Ticketinhalt"
+        className="db-tablist"
+        active={tab}
+        tabId={(key) => `db-tab-${key}`}
+        panelId="db-tabpanel"
+        onSelect={(key) => setTab(key as TabKey)}
+        tabs={tabs.map((t) => ({
+          key: t.key,
+          label: t.label,
+          attention: t.attention,
+          content: (
+            <>
+              {t.label}
+              {t.filled && (
+                <span aria-hidden="true" className="db-tab-dot">
+                  {' '}•
+                </span>
+              )}
+            </>
+          ),
+        }))}
+      />
       {/* eigener Name statt aria-labelledby, damit das Textfeld allein den Reiternamen als Beschriftung trägt */}
       {askSwitch && editing && (
         <div role="alertdialog" aria-label="Ungespeicherter Inhalt" className="conflict">

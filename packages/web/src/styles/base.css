@@ -424,6 +424,22 @@ textarea.plain-text { font-family: var(--font-sans); font-size: 14px; font-weigh
 .tab { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 0; background: transparent; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; box-shadow: inset 0 -2px 0 transparent; }
 .tab:hover { color: var(--text); }
 .tab.on { color: var(--text); font-weight: 600; box-shadow: inset 0 -2px 0 var(--text); }
+
+/* Reiterleiste mit ⋯-Menü (OverflowTabList): der Rahmen trägt die Klasse des Aufrufers (z. B. .db-tablist) und dessen Abstand */
+.overflow-tabs { position: relative; display: flex; align-items: stretch; min-width: 0; }
+.overflow-tabs-list { display: flex; flex: 0 1 auto; gap: inherit; min-width: 0; overflow: hidden; }
+/* Der ⋯-Knopf steht immer ganz rechts in der Leiste, egal wie viele Reiter davor passen */
+.overflow-tabs-more { position: relative; flex: none; display: flex; align-items: center; margin-left: auto; }
+.overflow-tabs-more-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 28px; padding: 0; border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; color: var(--muted); cursor: pointer; }
+.overflow-tabs-more-btn:hover, .overflow-tabs-more-btn[aria-expanded='true'] { border-color: var(--line); background: var(--surface-alt); color: var(--text); }
+.overflow-tabs-more-btn .material-icons { font-size: 20px; }
+.overflow-tabs-attention { position: absolute; top: 3px; right: 3px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.overflow-tabs-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 30; display: flex; flex-direction: column; min-width: 180px; padding: 4px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); box-shadow: 0 12px 32px var(--shadow-strong); }
+.overflow-tabs-menu [role='menuitem'] { display: flex; align-items: center; padding: 7px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text); font: inherit; font-size: 13px; text-align: left; white-space: nowrap; cursor: pointer; }
+.overflow-tabs-menu [role='menuitem']:hover, .overflow-tabs-menu [role='menuitem']:focus-visible { background: var(--surface-alt); }
+/* Messkopie aller Reiter: nimmt keinen Platz ein und verursacht keine Scrollleiste */
+.overflow-tabs-ruler { position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; }
+.overflow-tabs-ruler-row { display: flex; width: max-content; }
 .state.empty .link-button { border: 0; background: none; padding: 0; color: var(--accent-hover); font: inherit; text-decoration: underline; cursor: pointer; }
 .badge-new { padding: 0 6px; border-radius: 999px; background: var(--danger); color: var(--on-accent); font-size: 11px; font-weight: 600; line-height: 18px; }
 .doc-layout { position: relative; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }

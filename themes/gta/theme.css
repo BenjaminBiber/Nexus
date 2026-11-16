@@ -468,7 +468,7 @@
 /* Felder: GTA V mit Linie unten, San Andreas als Kasten mit schwarzem Rand und feiner Kontur. Die Linien sind
    Schatten, damit Überfahren und Fokus keine Maße ändern. Der Titel im Ticket-Panel ist eine Überschrift zum
    Bearbeiten und bekommt keinen Feld-Kasten */
-:root[data-theme='gta'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not(.db-title), select, textarea) {
+:root[data-theme='gta'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not(.db-title), select, textarea:not(.db-title)) {
   border: var(--gta-field-border);
   border-radius: 0;
   background-color: var(--gta-field-bg);
@@ -477,7 +477,7 @@
   font-family: var(--gta-font-ui);
 }
 
-:root[data-theme='gta'] textarea {
+:root[data-theme='gta'] textarea:where(:not(.db-title)) {
   font-family: var(--gta-font-mono);
 }
 
@@ -490,11 +490,11 @@
   opacity: 1;
 }
 
-:root[data-theme='gta'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not(.db-title), select, textarea):hover:not(:focus):not(:disabled) {
+:root[data-theme='gta'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not(.db-title), select, textarea:not(.db-title)):hover:not(:focus):not(:disabled) {
   box-shadow: var(--gta-field-ring-hover);
 }
 
-:root[data-theme='gta'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not(.db-title), select, textarea):focus {
+:root[data-theme='gta'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not(.db-title), select, textarea:not(.db-title)):focus {
   border: var(--gta-field-border);
   box-shadow: var(--gta-field-ring-focus);
   outline: 2px solid var(--gta-accent);

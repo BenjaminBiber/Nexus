@@ -10,6 +10,7 @@ import { canEditDependencies } from '../../dbboard/dependencyPicker.js';
 import { useDbTicket, type DbChange } from '../../dbboard/useDbTicket.js';
 import { useRestoreFocus } from '../../hooks/useRestoreFocus.js';
 import { useLiveHandler } from '../../live/useLive.js';
+import { AutoHeightTextarea } from '../AutoHeightTextarea.js';
 import { ConflictDialog } from '../ConflictDialog.js';
 import { DbAcceptanceDialog } from './DbAcceptanceDialog.js';
 import { DbAskQuestionDialog } from './DbAskQuestionDialog.js';
@@ -239,7 +240,7 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
   });
 
   // Enter verlässt das Feld; gespeichert wird dann über onBlur
-  const blurOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
+  const blurOnEnter = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key !== 'Enter') return;
     event.preventDefault();
     event.currentTarget.blur();
@@ -341,7 +342,17 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
               )}
             </div>
             {ticket && drafts && (
-              <input className="db-title" aria-label="Titel" value={drafts.title} onChange={(e) => edit('title', e.target.value)} onBlur={() => commit('title')} onKeyDown={blurOnEnter} />
+              // Mehrzeilig, damit lange Titel umbrechen statt abgeschnitten zu werden; der Titel selbst bleibt einzeilig
+              // (Enter speichert, eingefügte Zeilenumbrüche werden zu Leerzeichen)
+              <AutoHeightTextarea
+                className="db-title"
+                aria-label="Titel"
+                rows={1}
+                value={drafts.title}
+                onChange={(e) => edit('title', e.target.value.replace(/[ \t]*\r?\n[ \t]*/g, ' '))}
+                onBlur={() => commit('title')}
+                onKeyDown={blurOnEnter}
+              />
             )}
           </div>
         </div>
@@ -382,57 +393,6 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
                   {t.error}
                 </p>
               )}
-              <div className="db-fields">
-                <label className="field">
-                  <span>Status</span>
-                  <select value={ticket.status} disabled={t.busy} onChange={(e) => changeStatus(e.target.value as DbStatus)}>
-                    {DB_STATUSES.map((status) => (
-                      <option key={status} value={status}>
-                        {DB_COLUMN_LABELS[status]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="field">
-                  <span>Priorität</span>
-                  <select value={ticket.priority} disabled={t.busy} onChange={(e) => void t.save({ priority: e.target.value as DbPriority })}>
-                    {DB_PRIORITIES.map((priority) => (
-                      <option key={priority} value={priority}>
-                        {DB_PRIORITY_LABELS[priority]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="option-row db-field-check">
-                  <input type="checkbox" checked={ticket.needsPlanning} disabled={t.busy} onChange={(e) => void t.save({ needsPlanning: e.target.checked })} />
-                  <span>Braucht Planung</span>
-                </label>
-                <label className="field">
-                  <span>Zuständig</span>
-                  <input value={drafts.assignee} placeholder="Niemand zugewiesen" onChange={(e) => edit('assignee', e.target.value)} onBlur={() => commit('assignee')} onKeyDown={blurOnEnter} />
-                </label>
-                <label className="field">
-                  <span>Labels</span>
-                  <input value={drafts.labels} placeholder="kommagetrennt" onChange={(e) => edit('labels', e.target.value)} onBlur={() => commit('labels')} onKeyDown={blurOnEnter} />
-                </label>
-                <label className="field">
-                  <span>Zielbranch</span>
-                  <BranchCombo
-                    value={drafts.targetBranch}
-                    options={branches}
-                    placeholder="ausgecheckter Branch"
-                    readOnly={!!ticket.branch}
-                    title={ticket.branch ? 'Nach dem Start nicht mehr änderbar' : undefined}
-                    onChange={(value) => edit('targetBranch', value)}
-                    onCommit={(value) => commit('targetBranch', value)}
-                    onCreate={repoReady ? setCreatingBranch : undefined}
-                  />
-                </label>
-                <label className="field wide">
-                  <span>Blockiert-Grund</span>
-                  <input value={drafts.blockedReason} placeholder="Nicht blockiert" onChange={(e) => edit('blockedReason', e.target.value)} onBlur={() => commit('blockedReason')} onKeyDown={blurOnEnter} />
-                </label>
-              </div>
               <DbMergeRetry ticket={ticket} mine={props.isOwnBoard?.(ticket.boardId) ?? false} onDone={() => { void reload(); props.onChanged(); }} />
               {showsReview(ticket, props.isOwnBoard?.(ticket.boardId) ?? false) && (
                 <DbReview ticket={ticket} onDone={() => { void reload(); props.onChanged(); }} />
@@ -462,6 +422,61 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
               />
             </div>
             <div className="db-panel-side">
+              {/* Eigenschaften stehen in der Seitenleiste, damit die Reiter direkt unter dem Titel beginnen */}
+              <section className="db-side-section db-properties" aria-label="Eigenschaften">
+                <h3 className="db-side-title">Eigenschaften</h3>
+                <div className="db-fields">
+                  <label className="field">
+                    <span>Status</span>
+                    <select value={ticket.status} disabled={t.busy} onChange={(e) => changeStatus(e.target.value as DbStatus)}>
+                      {DB_STATUSES.map((status) => (
+                        <option key={status} value={status}>
+                          {DB_COLUMN_LABELS[status]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Priorität</span>
+                    <select value={ticket.priority} disabled={t.busy} onChange={(e) => void t.save({ priority: e.target.value as DbPriority })}>
+                      {DB_PRIORITIES.map((priority) => (
+                        <option key={priority} value={priority}>
+                          {DB_PRIORITY_LABELS[priority]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Zuständig</span>
+                    <input value={drafts.assignee} placeholder="Niemand zugewiesen" onChange={(e) => edit('assignee', e.target.value)} onBlur={() => commit('assignee')} onKeyDown={blurOnEnter} />
+                  </label>
+                  <label className="field">
+                    <span>Labels</span>
+                    <input value={drafts.labels} placeholder="kommagetrennt" onChange={(e) => edit('labels', e.target.value)} onBlur={() => commit('labels')} onKeyDown={blurOnEnter} />
+                  </label>
+                  <label className="field">
+                    <span>Zielbranch</span>
+                    <BranchCombo
+                      value={drafts.targetBranch}
+                      options={branches}
+                      placeholder="ausgecheckter Branch"
+                      readOnly={!!ticket.branch}
+                      title={ticket.branch ? 'Nach dem Start nicht mehr änderbar' : undefined}
+                      onChange={(value) => edit('targetBranch', value)}
+                      onCommit={(value) => commit('targetBranch', value)}
+                      onCreate={repoReady ? setCreatingBranch : undefined}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Blockiert-Grund</span>
+                    <input value={drafts.blockedReason} placeholder="Nicht blockiert" onChange={(e) => edit('blockedReason', e.target.value)} onBlur={() => commit('blockedReason')} onKeyDown={blurOnEnter} />
+                  </label>
+                  <label className="option-row db-field-check">
+                    <input type="checkbox" checked={ticket.needsPlanning} disabled={t.busy} onChange={(e) => void t.save({ needsPlanning: e.target.checked })} />
+                    <span>Braucht Planung</span>
+                  </label>
+                </div>
+              </section>
               <section className="db-side-section" aria-label="Fortschritt">
                 <h3 className="db-side-title">Fortschritt</h3>
                 <ProgressRing done={ticket.stepsDone} total={ticket.stepsTotal} />

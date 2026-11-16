@@ -392,11 +392,11 @@
   border-radius: 11px 9px 4px 3px; background: var(--paper-clipboard);
   box-shadow: inset 0 0 0 3px var(--paper-clip-metal); transform: rotate(-.7deg); pointer-events: none;
 }
-[data-theme='pastel'] input.db-title {
+[data-theme='pastel'] .db-title {
   font-family: var(--paper-font-display); font-size: 30px; font-weight: 700; letter-spacing: 0;
   border: 1px solid transparent; background: linear-gradient(transparent 67%, var(--paper-yellow) 67% 91%, transparent 91%);
 }
-[data-theme='pastel'] input.db-title:focus { border-color: var(--accent); }
+[data-theme='pastel'] .db-title:focus { border-color: var(--accent); }
 [data-theme='pastel'] .db-panel-main { gap: 24px; }
 [data-theme='pastel'] .db-fields { gap: 18px 16px; }
 [data-theme='pastel'] .db-fields :is(input:not([type='checkbox']), select) {

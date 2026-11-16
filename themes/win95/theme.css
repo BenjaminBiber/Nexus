@@ -315,7 +315,7 @@
 [data-theme='win95'] :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea) {
   min-height: 22px; padding: 2px var(--w95-field-pad-end, 4px) 2px 4px; border: 0; border-radius: 0; background-color: var(--w95-field); color: var(--w95-dark); box-shadow: var(--w95-sunken); font-size: 12px;
 }
-[data-theme='win95'] textarea { padding: 4px; }
+[data-theme='win95'] textarea:where(:not(.db-title)) { padding: 4px; }
 [data-theme='win95'] :is(input, select, textarea):disabled { background-color: var(--w95-face); color: var(--w95-shadow); }
 /* Klappliste: Pfeilknopf rechts im Feld */
 [data-theme='win95'] select {
@@ -604,8 +604,13 @@
   [data-theme='win95'] .w95-window .shell-content:has(.docs-workbench) { display: flex; flex-direction: column; }
   [data-theme='win95'] .w95-window .shell-main:has(> .docs-workbench) { display: flex; flex-direction: column; overflow: hidden; }
   [data-theme='win95'] .w95-window .docs-workbench { flex: 1; height: auto; min-height: 0; }
-  [data-theme='win95'] .docs-workbench > .docs-explorer,
+}
+/* Explorer und Werkzeuge als Überlagerung (dieselben Stufen wie in docs.css: nach der Breite der Werkbank) */
+@container docs (max-width: 1239px) {
   [data-theme='win95'] .docs-workbench .doc-side { border: 0; background: var(--w95-face); box-shadow: var(--w95-outer); padding: 3px; }
+}
+@container docs (max-width: 859px) {
+  [data-theme='win95'] .docs-workbench > .docs-explorer { border: 0; background: var(--w95-face); box-shadow: var(--w95-outer); padding: 3px; }
 }
 
 /* Session-Details: eckig, Felder vertieft, Kopfangaben in Titelleistenfarbe */
