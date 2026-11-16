@@ -14,6 +14,10 @@
 
 ### Sonstiges
 
+- Der Autopilot holt keinen Merge mehr für Branches nach, die schon im Ziel stecken. Blieb ein
+  gemergter Branch stehen (z. B. wegen ungesicherter Änderungen im Worktree), mergte er ihn
+  bisher jede Minute erneut – mit Kommentar am Ticket und Benachrichtigung.
+
 ## 0.2.0 – 2026-11-12
 
 ### Vertrag

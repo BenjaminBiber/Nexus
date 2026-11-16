@@ -4,6 +4,8 @@
 mod common;
 mod dispatch_support;
 
+use std::path::Path;
+
 use nexus_core::board::basics::TicketStatus;
 use nexus_core::board::ticket_service::{TicketPatch, WriteOptions};
 use nexus_core::dispatch::config::REVIEW_REASON;
@@ -361,4 +363,49 @@ async fn wartender_merge_wird_nicht_doppelt_vorgemerkt() {
         .merges
         .contains_key(&id));
     assert_eq!(f.ticket(&id).await.status, TicketStatus::Done);
+}
+
+/// Nach dem Merge bleibt der Branch stehen, weil sein Worktree ungesicherte Änderungen hat;
+/// der Branch steckt schon im Ziel, also holt der Autopilot nichts mehr nach – sonst mergte und
+/// meldete er ihn jede Minute erneut
+#[tokio::test]
+async fn schon_gemergter_branch_wird_nicht_jede_minute_neu_gemergt() {
+    merges_only_once(TicketPatch::default()).await;
+}
+
+/// Wie oben, mit Zielbranch: gemergt wird in dessen Merge-Worktree, der Hauptordner bleibt auf
+/// seinem Branch – maßgeblich ist, ob der Branch im Zielbranch steckt
+#[tokio::test]
+async fn schon_in_den_zielbranch_gemergter_branch_wird_nicht_neu_gemergt() {
+    merges_only_once(TicketPatch {
+        target_branch: Some(Some("release/1".into())),
+        ..TicketPatch::default()
+    })
+    .await;
+}
+
+/// Abgenommenes Ticket, dessen Worktree eine ungesicherte Datei hat: der Autopilot holt den
+/// Merge genau einmal nach, auch über mehrere Durchläufe
+async fn merges_only_once(patch: TicketPatch) {
+    let f = DispatchFixture::create(json!({ "reviewBeforeMerge": false })).await;
+    let id = accepted_by_human(&f, "Liegengeblieben", patch).await;
+    let worktree = f.ticket(&id).await.worktree.expect("Worktree des Tickets");
+    std::fs::write(Path::new(&worktree).join("lokal.json"), "{}").expect("Datei");
+    f.write_config(autopilot(false));
+
+    let first = f.tick().await;
+    assert_eq!(first.merged, vec![id.clone()]);
+    assert!(f.ticket(&id).await.branch.is_some());
+    let second = f.tick().await;
+    let third = f.tick().await;
+
+    assert!(second.merged.is_empty() && third.merged.is_empty());
+    assert_eq!(catch_up_comments(&f, &id).await, 1);
+    let merged_notices = f
+        .notices
+        .all()
+        .iter()
+        .filter(|notice| notice.kind == DispatchNoticeKind::Merged)
+        .count();
+    assert_eq!(merged_notices, 1);
 }
