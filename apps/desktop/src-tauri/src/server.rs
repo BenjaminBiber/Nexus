@@ -646,7 +646,9 @@ fn resource_dir<R: Runtime>(app: &AppHandle<R>) -> Option<PathBuf> {
 }
 
 // Ordner mit den Bildern der Systemmeldung: `toast/` unter den Ressourcen der App, ohne ihn der
-// Ordner, den auch der Server ohne App nimmt (neben dem Programm bzw. im Crate)
+// Ordner, den auch der Server ohne App nimmt (neben dem Programm bzw. im Crate). Nur die
+// Windows-Meldung zeigt Bilder, macOS und Linux zeigen über das Plugin bloß Titel und Text
+#[cfg(windows)]
 pub fn toast_ordner<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
     app.path()
         .resource_dir()

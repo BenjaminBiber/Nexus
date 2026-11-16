@@ -318,9 +318,11 @@ export function SpeechPanel() {
 }
 
 // Logo des Dienstes aus /speech-logos/<id>.svg; fehlt die Datei, eine Kachel mit Kürzel (Eigene: Wellen-Symbol)
+// Gemerkt wird, welches Logo fehlte: Ein anderer Dienst versucht sein Logo wieder. Ein Effekt, der den
+// Fehler beim Wechsel zurücksetzt, liefe nach dem ersten Bild und könnte einen frühen Ladefehler überschreiben
 function ServiceLogo({ template, size }: { template?: Template; size: number }) {
-  const [missing, setMissing] = useState(false);
-  useEffect(() => setMissing(false), [template?.id]);
+  const [failedId, setFailedId] = useState<string | null>(null);
+  const missing = template !== undefined && failedId === template.id;
   const style = { width: size, height: size };
   if (!template) {
     return <span className={`speech-logo custom${size < 40 ? ' small' : ''}`} style={style} aria-hidden="true"><span className="material-icons">graphic_eq</span></span>;
@@ -336,7 +338,7 @@ function ServiceLogo({ template, size }: { template?: Template; size: number }) 
       style={style}
       width={size}
       height={size}
-      onError={() => setMissing(true)}
+      onError={() => setFailedId(template.id)}
     />
   );
 }

@@ -21,7 +21,9 @@ pub struct Meldung {
     pub url: String,
 }
 
-// Link, über den ein Klick den Pfad in diesem Fenster öffnet (siehe instance::deep_link_path)
+// Link, über den ein Klick den Pfad in diesem Fenster öffnet (siehe instance::deep_link_path).
+// Außerhalb von Windows brauchen ihn (wie `modell`) nur die Tests, die auf allen Plattformen laufen
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn klick_link(pfad: &str) -> String {
     match pfad.starts_with('/') {
         true => format!("nexus://open{pfad}"),
@@ -30,6 +32,7 @@ pub fn klick_link(pfad: &str) -> String {
 }
 
 // Modell der Meldung wie beim Server: erste Zeile des Texts oben, der Rest darunter
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn modell(meldung: &Meldung) -> ToastModel {
     let (line1, line2) = meldung
         .body

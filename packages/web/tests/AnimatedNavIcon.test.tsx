@@ -9,6 +9,7 @@ import { BoardIcon, SearchFieldIcon } from '../src/components/NavIcons.js';
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 const NAMES: NavIconName[] = ['board', 'dashboard', 'inbox', 'sessions', 'questions', 'docs', 'search', 'guide', 'settings'];
@@ -20,12 +21,17 @@ function inLink(node: React.ReactNode) {
 
 const leftColumn = (svg: SVGSVGElement) => svg.querySelector('[data-n="l"]')!.getAttribute('d');
 
-// Bilder von Hand weiterschalten: requestAnimationFrame sammelt, frame(ms) ruft mit Startzeit + ms auf
+// Bilder von Hand weiterschalten: requestAnimationFrame sammelt, frame(ms) ruft mit Startzeit + ms auf.
+// Die Uhr steht still und springt nur mit frame() weiter: Die Bewegung liest ihre Startzeit selbst aus
+// performance.now(), und mit echter Uhr läge sie ein paar Mikrosekunden vor t0 – auf langsamen Runnern
+// genug, um den Pfad in der dritten Nachkommastelle zu verschieben
 function manualFrames() {
   let queue: FrameRequestCallback[] = [];
-  let t0 = 0;
+  let clock = 1000;
+  let t0 = clock;
+  vi.spyOn(performance, 'now').mockImplementation(() => clock);
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
-    if (queue.length === 0) t0 = performance.now();
+    if (queue.length === 0) t0 = clock;
     queue.push(cb);
     return queue.length;
   });
@@ -36,7 +42,8 @@ function manualFrames() {
     act(() => {
       const run = queue;
       queue = [];
-      run.forEach((cb) => cb(t0 + ms));
+      clock = t0 + ms;
+      run.forEach((cb) => cb(clock));
     });
 }
 
