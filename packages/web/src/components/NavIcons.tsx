@@ -3,6 +3,7 @@ import { SlotBoundary } from '../theme/SlotBoundary.js';
 import type { NavIconName } from '@nexus/theme-sdk';
 import { useDisplayedTheme } from '../theme/useDisplayedTheme.js';
 import { useSlot } from '../theme/useSlot.js';
+import { AnimatedNavIcon } from './navicons/AnimatedNavIcon.js';
 
 // Linien-Symbol im 24er-Raster, Farbe aus currentColor
 function LineIcon({ children }: { children: ReactNode }) {
@@ -13,11 +14,12 @@ function LineIcon({ children }: { children: ReactNode }) {
   );
 }
 
-// Symbol der Navigation; mit `name` darf der Slot „NavIcon“ des Themes es ersetzen
-function Icon({ name, children }: { name?: NavIconName; children: ReactNode }) {
+// Symbol der Navigation; mit `name` darf der Slot „NavIcon“ des Themes es ersetzen. Ohne Slot zeichnet
+// AnimatedNavIcon dasselbe Liniensymbol, das sich beim Überfahren bewegt; `plain` bleibt still (z. B. im Suchfeld)
+function Icon({ name, plain, children }: { name?: NavIconName; plain?: boolean; children: ReactNode }) {
   const theme = useDisplayedTheme();
   const Custom = useSlot('NavIcon');
-  const standard = <LineIcon>{children}</LineIcon>;
+  const standard = name && !plain ? <AnimatedNavIcon name={name} /> : <LineIcon>{children}</LineIcon>;
   if (!name || !Custom) return standard;
   return (
     <SlotBoundary fallback={standard} resetKey={theme}>
@@ -33,6 +35,12 @@ export const SessionsIcon = () => <Icon name="sessions"><path d="M4 5h16v14H4zM8
 export const QuestionsIcon = () => <Icon name="questions"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01" /></Icon>;
 export const DocsIcon = () => <Icon name="docs"><path d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6" /></Icon>;
 export const SearchIcon = () => <Icon name="search"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4" /></Icon>;
+// Lupe im Suchfeld des Boards: bleibt ein schlichtes Liniensymbol
+export const SearchFieldIcon = () => <Icon name="search" plain><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4" /></Icon>;
+// Umschalter der Seitenleiste: Leiste mit Pfeil nach rechts (ausklappen) bzw. nach links (einklappen)
+export const SidebarToggleIcon = ({ collapsed }: { collapsed: boolean }) => (
+  <Icon><path d={collapsed ? 'M4 4h16v16H4zM9 4v16M13 9l3 3-3 3' : 'M4 4h16v16H4zM9 4v16M16 9l-3 3 3 3'} /></Icon>
+);
 export const GuideIcon = () => <Icon name="guide"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM9 7h6" /></Icon>;
 
 // Offizielles Claude-Logo als Ersatz für die Pille „Agent“ auf der kompakten Ticket-Kachel

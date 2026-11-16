@@ -20,7 +20,7 @@ import { DispatchIndicator } from '../components/db/DispatchIndicator.js';
 import { DbUnavailable } from '../components/db/DbUnavailable.js';
 import { ErrorState } from '../components/ErrorState.js';
 import { LoadingState } from '../components/LoadingState.js';
-import { SearchIcon } from '../components/NavIcons.js';
+import { SearchFieldIcon } from '../components/NavIcons.js';
 import { buildDoneLayout } from '../dbboard/doneSections.js';
 import { filterDbCards } from '../dbboard/filterDbCards.js';
 import { moveDbCard } from '../dbboard/moveDbCard.js';
@@ -261,7 +261,7 @@ export function DbBoardPage() {
       <div className="db-board-head">
         <h1 className="page-title">Board</h1>
         <label className="db-search">
-          <SearchIcon />
+          <SearchFieldIcon />
           <input type="search" aria-label="Suche im Board" placeholder="Board durchsuchen (ID, Titel, Label)" value={query} onChange={(e) => setQuery(e.target.value)} />
         </label>
         <button type="button" className="btn" disabled={!view || !showsActive} onClick={() => setDialog('specs')}>

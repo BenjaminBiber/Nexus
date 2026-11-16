@@ -194,6 +194,48 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
 .global-search-label { flex: 1; font-weight: 500; }
 .global-search .nav-kbd { background: var(--surface); }
 .nav-kbd { font-family: var(--font-mono); font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+/* Umschalter der Seitenleiste (DefaultShell) unten über der Nutzung, gebaut wie ein Navigationseintrag */
+.rail-toggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 12px; border: 0; border-radius: var(--radius-control); background: none; color: var(--muted); font: inherit; font-size: 13px; font-weight: 500; text-align: left; white-space: nowrap; cursor: pointer; }
+.rail-toggle:hover { background: var(--line-soft); color: var(--text); }
+.rail-toggle:not(:only-child) { margin-bottom: 8px; }
+@media (max-width: 900px) { .rail-toggle { display: none; } .usage-dock:has(> .rail-toggle:only-child) { display: none; } }
+/* Eingeklappte Seitenleiste (.is-rail, auf Laptop-Breite von sich aus, sonst von Hand): nur Symbole. Beim Überfahren, bei
+   Tastaturfokus oder offener Board-Auswahl klappt sie über den Inhalt auf; Breite und negativer Rand rechts gleichen sich
+   aus, der Inhalt bleibt stehen. Auf geht sie nach kurzem Zögern (0,12 s), zu etwas später (0,2 s), damit sie beim
+   Vorbeistreifen nicht flackert. Die Einträge folgen der Breite, Texte werden abgeschnitten und blenden aus. */
+@media (min-width: 901px) {
+  :root { --rail-width: 66px; --rail-ease: cubic-bezier(0.22, 1, 0.36, 1); }
+  .shell-sidebar { transition: margin-right 0.24s var(--rail-ease); }
+  .shell-sidebar.is-rail {
+    --rail-t: 0.24s var(--rail-ease) 0.12s;
+    --rail-fade: opacity 0.16s ease 0.2s;
+    flex: none; width: var(--rail-width); position: relative; z-index: 25; overflow-x: hidden;
+    transition: width var(--rail-t), margin-right var(--rail-t), box-shadow var(--rail-t);
+  }
+  .shell-sidebar.is-rail:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) {
+    width: var(--sidebar-width); margin-right: calc(var(--rail-width) - var(--sidebar-width)); box-shadow: 12px 0 32px var(--shadow-mid);
+  }
+  .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) { --rail-t: 0.24s var(--rail-ease) 0.2s; --rail-fade: opacity 0.1s ease 0.16s; }
+  .is-rail :is(.nav a, .global-search, .rail-toggle) { overflow: hidden; white-space: nowrap; }
+  .is-rail .global-search { padding: 0 12px; }
+  .is-rail :is(.nav-label, .global-search-label, .nav-kbd, .board-picker-trigger, .bp-edit) { transition: var(--rail-fade); }
+  .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) :is(.nav-label, .global-search-label, .nav-kbd, .board-picker-trigger, .bp-edit) { opacity: 0; }
+  /* Verbindungspunkt der Board-Auswahl rückt in die Symbolspalte */
+  .is-rail :is(.bp-status, .bp-status-only) { transition: padding-left var(--rail-t); }
+  .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) :is(.bp-status, .bp-status-only) { padding-left: 16px; }
+  /* Zähler werden zum Punkt an der Ecke des Symbols */
+  .is-rail .nav a { position: relative; }
+  .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .nav-badge { position: absolute; left: 26px; top: 9px; min-width: 0; width: 8px; height: 8px; padding: 0; font-size: 0; box-shadow: 0 0 0 2px var(--sidebar-bg); }
+  /* Nutzung: Ringe ohne Rahmen untereinander und etwas kleiner */
+  .is-rail .usage-meter { transition: padding var(--rail-t), border-color var(--rail-t), background-color var(--rail-t); }
+  .is-rail .usage-ring { width: 52px; height: 52px; transition: width var(--rail-t), height var(--rail-t); }
+  .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .usage-meter { padding: 0; border-color: transparent; background-color: transparent; }
+  .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .usage-ring { width: 40px; height: 40px; }
+}
+@media (min-width: 901px) and (prefers-reduced-motion: reduce) {
+  .shell-sidebar { transition: none; }
+  .shell-sidebar.is-rail, .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) { --rail-t: 0s linear 0.12s; --rail-fade: opacity 0s linear 0.12s; }
+}
 /* Such-Dialog über alle Boards (Strg+K) */
 .search-dialog { width: min(720px, 100%); display: flex; flex-direction: column; gap: 12px; }
 .search-dialog .search-dialog-input input { width: 100%; }
