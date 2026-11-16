@@ -16,7 +16,8 @@ const MODES: Array<{ mode: NotificationMode; label: string; hint: string; icon: 
 ];
 
 // Art der Meldung bei bereiter oder wartender Session (Aus, Browser, Windows) samt Optionen der Windows-Meldung
-// und zusätzlichem Push über ntfy.
+// und zusätzlichem Push über ntfy. In der Desktop-App gibt es keine Wahl der Art: dort zeigt immer das System die
+// Meldungen des Servers, ein Schalter stellt sie an („windows“) oder aus.
 export function NotificationPanel() {
   const api = useApi();
   const platform = usePlatform();
@@ -27,6 +28,7 @@ export function NotificationPanel() {
   const [ntfyTest, setNtfyTest] = useState<{ ok: boolean; text: string } | null>(null);
   const settings = loaded.state.status === 'ready' ? loaded.state.data : null;
   const supported = platform.notificationsSupported();
+  const app = platform.kind === 'tauri';
 
   // Speichert eine Änderung; für „Browser“ wird zuerst die Erlaubnis eingeholt.
   // Für „Windows“ wird sie nur erfragt: mit Erlaubnis zeigt ein offener Tab die Meldung (Klick bleibt im Tab), sonst Windows.
@@ -60,53 +62,71 @@ export function NotificationPanel() {
     setTest(null);
     try {
       const result = await api.sendTestNotification();
-      setTest(result.ok ? { ok: true, text: 'Testmeldung gesendet. Bei offenem Board zeigt sie der Browser, sonst Windows – jeweils unten rechts.' } : { ok: false, text: result.error ?? 'Die Testmeldung konnte nicht gezeigt werden.' });
+      const sent = app ? 'Testmeldung gesendet. Ein Klick darauf holt Nexus nach vorn.' : 'Testmeldung gesendet. Bei offenem Board zeigt sie der Browser, sonst Windows – jeweils unten rechts.';
+      setTest(result.ok ? { ok: true, text: sent } : { ok: false, text: result.error ?? 'Die Testmeldung konnte nicht gezeigt werden.' });
     } catch (e) {
       setTest({ ok: false, text: (e as Error).message });
     }
   };
 
+  // Optionen der Systemmeldung, sobald sie eingeschaltet ist; im Browser unter „Windows-Meldung“, in der App unter dem Schalter
+  const systemOptions = settings?.notifications === 'windows' && (
+    <>
+      <SettingRow label="Großes Bild bei „braucht deine Antwort“" hint="Macht wartende Sessions in der Meldung auffälliger.">
+        <input type="checkbox" checked={settings.heroImages} onChange={(e) => void save({ heroImages: e.target.checked })} />
+      </SettingRow>
+      <SettingRow label="Testmeldung" hint="Zeigt eine Beispielmeldung, um Aussehen und Schaltflächen zu prüfen." group>
+        <button type="button" className="btn small" onClick={() => void sendTest()}>
+          Testmeldung senden
+        </button>
+      </SettingRow>
+      {test && <Notice tone={test.ok ? 'ok' : 'error'}>{test.text}</Notice>}
+    </>
+  );
+
   return (
     <SettingsPanel label="Benachrichtigungen" status={state}>
-      <SettingsSection title="Art der Meldung" bare>
-        <fieldset className="choice-group" disabled={!settings}>
-          <legend className="sr-only">Art der Benachrichtigung</legend>
-          {MODES.map(({ mode, label, hint: modeHint, icon }) => {
-            const unavailable = mode === 'browser' && !supported;
-            // In der Desktop-App zeigt nicht Windows die Meldung, sondern das System dieses Rechners
-            const hint = mode === 'windows' && platform.kind === 'tauri' ? 'Auch ohne geöffnetes Board; in der App erscheint die Meldung als Systemmeldung.' : modeHint;
-            return (
-              <label key={mode} className={`choice${settings?.notifications === mode ? ' selected' : ''}${unavailable ? ' unavailable' : ''}`}>
-                <input
-                  type="radio"
-                  name="notification-mode"
-                  className="sr-only"
-                  checked={settings?.notifications === mode}
-                  disabled={unavailable}
-                  onChange={() => void save({ notifications: mode })}
-                />
-                <svg className="choice-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d={icon} />
-                </svg>
-                <span className="choice-label">{label}</span>
-                <span className="choice-hint">{unavailable ? 'Dieser Browser unterstützt das nicht.' : hint}</span>
-              </label>
-            );
-          })}
-        </fieldset>
-      </SettingsSection>
-      {settings?.notifications === 'windows' && (
-        <SettingsSection title="Windows-Meldung">
-          <SettingRow label="Großes Bild bei „braucht deine Antwort“" hint="Macht wartende Sessions in der Meldung auffälliger.">
-            <input type="checkbox" checked={settings.heroImages} onChange={(e) => void save({ heroImages: e.target.checked })} />
+      {app ? (
+        <SettingsSection title="Meldungen">
+          <SettingRow label="Meldungen zeigen" hint="Bereite und wartende Sessions, neue Fragen und Dispatcher-Ereignisse, auch bei verstecktem Fenster. Ein Klick öffnet die Stelle in Nexus.">
+            <input
+              type="checkbox"
+              checked={settings?.notifications === 'windows'}
+              disabled={!settings}
+              onChange={(e) => void save({ notifications: e.target.checked ? 'windows' : 'off' })}
+            />
           </SettingRow>
-          <SettingRow label="Testmeldung" hint="Zeigt eine Beispielmeldung, um Aussehen und Schaltflächen zu prüfen." group>
-            <button type="button" className="btn small" onClick={() => void sendTest()}>
-              Testmeldung senden
-            </button>
-          </SettingRow>
-          {test && <Notice tone={test.ok ? 'ok' : 'error'}>{test.text}</Notice>}
+          {systemOptions}
         </SettingsSection>
+      ) : (
+        <>
+          <SettingsSection title="Art der Meldung" bare>
+            <fieldset className="choice-group" disabled={!settings}>
+              <legend className="sr-only">Art der Benachrichtigung</legend>
+              {MODES.map(({ mode, label, hint, icon }) => {
+                const unavailable = mode === 'browser' && !supported;
+                return (
+                  <label key={mode} className={`choice${settings?.notifications === mode ? ' selected' : ''}${unavailable ? ' unavailable' : ''}`}>
+                    <input
+                      type="radio"
+                      name="notification-mode"
+                      className="sr-only"
+                      checked={settings?.notifications === mode}
+                      disabled={unavailable}
+                      onChange={() => void save({ notifications: mode })}
+                    />
+                    <svg className="choice-icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d={icon} />
+                    </svg>
+                    <span className="choice-label">{label}</span>
+                    <span className="choice-hint">{unavailable ? 'Dieser Browser unterstützt das nicht.' : hint}</span>
+                  </label>
+                );
+              })}
+            </fieldset>
+          </SettingsSection>
+          {systemOptions && <SettingsSection title="Windows-Meldung">{systemOptions}</SettingsSection>}
+        </>
       )}
       {settings && (
         <SettingsSection

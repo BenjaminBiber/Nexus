@@ -3,6 +3,7 @@ mod http;
 mod instance;
 mod legacy;
 mod lifecycle;
+mod meldung;
 mod server;
 mod tray;
 mod updater;
@@ -53,6 +54,8 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build());
     // Folge-Tickets hängen hier je Funktion genau eine Zeile an (tray::init, …)
     let builder = builder
+        // Einziger eigener Befehl der Oberfläche: Systemmeldung mit Klickziel in diesem Fenster
+        .invoke_handler(tauri::generate_handler![meldung::meldung_zeigen])
         .on_page_load(server::on_page_load)
         // Schließen versteckt das Fenster, solange es ein Tray-Symbol gibt
         .on_window_event(lifecycle::fenster_ereignis)

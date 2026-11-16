@@ -93,13 +93,14 @@ export class TauriPlatform implements Platform {
     }
   }
 
-  // Systemmeldung dieses Rechners, auch bei verstecktem Fenster.
-  // Das Plugin nimmt nur Titel und Text; ein Klick holt die App nach vorn, meldet sich aber nicht zurück – `onClick` und `url` bleiben ungenutzt.
-  // Zwei Meldungen mit gleichem `tag` ersetzen sich nicht, sie stehen nebeneinander.
+  // Systemmeldung dieses Rechners, auch bei verstecktem Fenster. Die App zeigt sie selbst (Befehl `meldung_zeigen`):
+  // unter Windows wie die Meldung des Servers, und ein Klick holt die App nach vorn und öffnet dort `url`.
+  // Den Klick nimmt das System entgegen, deshalb bleibt `onClick` ungenutzt.
   async notify(input: NotifyInput): Promise<void> {
-    const { sendNotification } = await import('@tauri-apps/plugin-notification');
+    const { invoke } = await import('@tauri-apps/api/core');
+    const meldung = { kind: input.kind ?? 'bereit', tag: input.tag, title: input.title, body: input.body, url: input.url };
     try {
-      sendNotification({ title: input.title, body: input.body });
+      await invoke('meldung_zeigen', { meldung });
     } catch (e) {
       throw failed('Die Meldung ließ sich nicht zeigen.', e);
     }

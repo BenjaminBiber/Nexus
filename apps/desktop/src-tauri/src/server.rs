@@ -645,6 +645,20 @@ fn resource_dir<R: Runtime>(app: &AppHandle<R>) -> Option<PathBuf> {
     Some(base)
 }
 
+// Ordner mit den Bildern der Systemmeldung: `toast/` unter den Ressourcen der App, ohne ihn der
+// Ordner, den auch der Server ohne App nimmt (neben dem Programm bzw. im Crate)
+pub fn toast_ordner<R: Runtime>(app: &AppHandle<R>) -> PathBuf {
+    app.path()
+        .resource_dir()
+        .ok()
+        .map(|base| base.join("toast"))
+        .filter(|dir| {
+            dir.join(nexus_server::notifications::service::APP_ICON)
+                .is_file()
+        })
+        .unwrap_or_else(nexus_server::config::default_toast_dir)
+}
+
 // Die Seite ist fertig geladen: ab jetzt nimmt die Oberfläche Pfade an, ein gemerkter Deep-Link
 // kommt dran, und eine Meldung aus der Vorbereitung wird nachgetragen
 pub fn on_page_load<R: Runtime>(
@@ -978,7 +992,8 @@ mod tests {
         assert_eq!(datei["windows"], serde_json::json!(["main"]));
     }
 
-    // Ordnerauswahl, Öffnen und Systemmeldungen sind freigegeben, aber nur diese Befehle; Adressen nur für Browser und VS Code
+    // Ordnerauswahl, Öffnen und Systemmeldungen (Plugin und der eigene Befehl `meldung_zeigen`)
+    // sind freigegeben, aber nur diese Befehle; Adressen nur für Browser und VS Code
     #[test]
     fn capability_gibt_nur_dialog_opener_und_meldungen_frei() {
         let datei: serde_json::Value =
@@ -998,6 +1013,7 @@ mod tests {
             [
                 "log:default",
                 "notification:default",
+                "allow-meldung-zeigen",
                 "dialog:allow-open",
                 "opener:allow-reveal-item-in-dir",
                 "opener:allow-open-url",

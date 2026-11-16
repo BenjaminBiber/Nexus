@@ -1,11 +1,12 @@
 import { createContext } from 'react';
+import type { NoticeKind } from '../platform/Platform.js';
 
 export type ConnectionState = 'connecting' | 'connected' | 'disconnected';
 
 // Meldung des Servers, die der Tab statt des Windows-Toasts zeigt; `url` ist ein Pfad der Oberfläche
 export interface TabNotice {
   type: 'notice';
-  kind: 'bereit' | 'wartet' | 'gesammelt' | 'frage-neu' | 'recherche';
+  kind: NoticeKind;
   tag: string;
   title: string;
   body: string;
