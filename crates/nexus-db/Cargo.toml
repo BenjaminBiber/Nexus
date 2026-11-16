@@ -4,6 +4,8 @@ description = "Datenzugriff von Nexus (SQLite und SQL Server)"
 edition.workspace = true
 version.workspace = true
 rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
 
 # Alle Abhängigkeiten, die SQLite (P2-5 ff.) und SQL Server (P2-11 ff.) brauchen, stehen hier
 # schon vollständig: so müssen die beiden Tickets diese Datei nicht mehr ändern und laufen

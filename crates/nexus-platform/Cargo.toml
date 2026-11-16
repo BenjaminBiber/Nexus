@@ -4,6 +4,8 @@ description = "Systemfunktionen des Rechners: Ordnerdialog, Dateien öffnen, Sys
 edition.workspace = true
 version.workspace = true
 rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 async-trait = { workspace = true }

@@ -16,6 +16,8 @@ members = [
 edition = "2021"
 version = "0.2.0"
 rust-version = "1.99"
+license = "MIT"
+repository = "https://github.com/BenjaminBiber/Nexus"
 
 # Gemeinsame Lints für die Nexus-Crates; die Desktop-App bleibt davon unberührt,
 # weil Tauri dort eigene Anforderungen mitbringt.
