@@ -22,6 +22,7 @@ use nexus_core::board::ticket_service::{TicketListFilter, TicketView};
 use nexus_core::board::types::Board;
 use nexus_core::clock::{iso, parse_millis, Clock};
 use nexus_core::dispatch::autopilot::autopilot_for;
+use nexus_core::dispatch::git::BranchMerger;
 use nexus_core::dispatch::{
     markers, DispatchConfig, DispatchConfigNormalizer, DispatchConfigStore, DispatchLog,
     DispatchPrompt, DispatchStateStore, MergeEntry, ProfileTicket, PromptKind, ReadinessBoard,
@@ -1231,7 +1232,8 @@ impl DispatchService {
 
     /// Autopilot: erledigte Dispatcher-Tickets mit Branch, aber ohne Merge-Auftrag (z. B. von
     /// Hand abgenommen) zum Merge vormerken. Von Hand abgeschlossene Tickets (Zuständiger kein
-    /// Agent) und Branches, die es im Repo nicht gibt, bleiben still liegen.
+    /// Agent), Branches, die es im Repo nicht gibt, und Branches, die schon im Ziel stecken,
+    /// bleiben still liegen.
     async fn catch_up_merges(
         &self,
         ctx: &DispatchContext,
@@ -1248,6 +1250,7 @@ impl DispatchService {
             .map(|run| run.ticket_id)
             .collect();
         let git = GitRunner::new();
+        let merger = BranchMerger::new();
         for board in self.own_boards(ctx).await? {
             let Some(repo_path) = board
                 .repo_path
@@ -1305,6 +1308,16 @@ impl DispatchService {
                     )
                     .ok;
                 if !exists {
+                    continue;
+                }
+                // Steckt der Branch schon im Ziel (gemergt, aber nicht aufgeräumt, z. B. wegen
+                // ungesicherter Änderungen im Worktree), gibt es nichts nachzuholen – sonst
+                // käme derselbe Merge samt Meldung jede Minute wieder
+                let target = match ticket.target_branch.as_deref() {
+                    Some(target) => format!("refs/heads/{target}"),
+                    None => "HEAD".to_string(),
+                };
+                if merger.integrated(Path::new(&repo_path), branch, &target) {
                     continue;
                 }
                 let id = ticket.id.clone();
