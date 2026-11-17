@@ -254,7 +254,11 @@ impl FakeServer {
 
     /// Liest eine Anfrage, zeichnet sie auf und antwortet mit einer Dispatcher-Übersicht
     fn handle(mut stream: TcpStream, sender: &Sender<Aufruf>) -> std::io::Result<()> {
-        let mut reader = BufReader::new(stream.try_clone()?);
+        // Gelesen wird über `&stream`, nicht über `try_clone()`: Unter Windows ist das Duplikat
+        // vererbbar. Ein `nexus`, den ein parallel laufender Test gerade startet, erbt es dann und
+        // hält die Verbindung offen; statt des Verbindungsendes bekommt der Client später einen
+        // Reset (os error 10054), und `read_to_end` scheitert trotz vollständiger Antwort.
+        let mut reader = BufReader::new(&stream);
         let mut start = String::new();
         reader.read_line(&mut start)?;
         let mut teile = start.split_whitespace();

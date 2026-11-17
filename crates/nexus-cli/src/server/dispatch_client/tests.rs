@@ -50,7 +50,10 @@ impl FakeServer {
         mut stream: TcpStream,
         sender: &std::sync::mpsc::Sender<Aufruf>,
     ) -> std::io::Result<()> {
-        let mut reader = BufReader::new(stream.try_clone()?);
+        // Über `&stream` statt `try_clone()`: Das Duplikat ist unter Windows vererbbar, und ein
+        // Kindprozess eines parallel laufenden Tests hielte die Verbindung sonst offen, bis der
+        // Client einen Reset statt des Verbindungsendes bekommt (os error 10054).
+        let mut reader = BufReader::new(&stream);
         let mut start = String::new();
         reader.read_line(&mut start)?;
         let mut teile = start.split_whitespace();
