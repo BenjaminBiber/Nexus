@@ -1,4 +1,6 @@
+import type { RailHover } from '../../api/types.js';
 import { COMPACT_CARDS_EVENT } from '../../dbboard/compactCards.js';
+import { RAIL_HOVER_EVENT } from '../railHover.js';
 import { SettingsPanel } from './SettingsPanel.js';
 import { SettingRow, SettingsSection } from './SettingRow.js';
 import { SnippetsSection } from './SnippetsSection.js';
@@ -13,7 +15,7 @@ function archiveLabel(days: number) {
   return days === 1 ? 'nach 1 Tag' : `nach ${days} Tagen`;
 }
 
-// Darstellung › Oberfläche: Aussehen des Boards und eigene CSS-Schnipsel, unabhängig vom gewählten Theme.
+// Darstellung › Oberfläche: Seitenleiste, Aussehen des Boards und eigene CSS-Schnipsel, unabhängig vom gewählten Theme.
 export function InterfacePanel() {
   const { settings, save, state } = useUserSettings();
   // Eine gespeicherte Dauer außerhalb der Auswahl (über die API gesetzt) erscheint als eigene Option
@@ -25,8 +27,21 @@ export function InterfacePanel() {
     if (await save({ compactCards })) window.dispatchEvent(new Event(COMPACT_CARDS_EVENT));
   };
 
+  // Speichert das Verhalten der eingeklappten Leiste und lässt sie sofort nachziehen
+  const changeRailHover = async (railHover: RailHover) => {
+    if (await save({ railHover })) window.dispatchEvent(new Event(RAIL_HOVER_EVENT));
+  };
+
   return (
     <SettingsPanel label="Oberfläche" status={state}>
+      <SettingsSection title="Seitenleiste">
+        <SettingRow label="Eingeklappte Leiste unter dem Zeiger" hint="Fließend: der Eintrag fließt mit Namen aus der Leiste heraus. Nur Symbole: das Symbol wird kräftig und dunkel.">
+          <select aria-label="Eingeklappte Leiste unter dem Zeiger" disabled={!settings} value={settings?.railHover ?? 'liquid'} onChange={(e) => void changeRailHover(e.target.value as RailHover)}>
+            <option value="liquid">Fließend</option>
+            <option value="icons">Nur Symbole</option>
+          </select>
+        </SettingRow>
+      </SettingsSection>
       <SettingsSection title="Board">
         <SettingRow label="Kompakte Ticket-Kacheln" hint="Tags eingeklappt, Agent nur als Claude-Logo.">
           <input

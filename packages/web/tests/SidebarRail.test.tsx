@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type { ShellParts } from '@nexus/theme-sdk';
+import { ApiProvider } from '../src/api/ApiContext.js';
+import type { RailHover } from '../src/api/types.js';
 import { DefaultShell } from '../src/components/DefaultShell.js';
+import { RAIL_HOVER_EVENT } from '../src/components/railHover.js';
+import { fakeApi } from './helpers/fakeApi.js';
 import { LAPTOP_QUERY, SIDEBAR_KEY } from '../src/components/sidebarRail.js';
 
 const parts: ShellParts = {
@@ -85,5 +89,46 @@ describe('Seitenleiste als Symbolleiste', () => {
   it('kommt ohne matchMedia aus (offen)', () => {
     const { aside } = renderShell();
     expect(aside().classList.contains('is-rail')).toBe(false);
+  });
+});
+
+describe('Eingeklappte Leiste unter dem Zeiger', () => {
+  function renderWithHover(read: () => RailHover) {
+    const api = fakeApi({ getUserSettings: async () => ({ ...SETTINGS, railHover: read() }) } as never);
+    render(
+      <ApiProvider api={api}>
+        <MemoryRouter>
+          <DefaultShell pid="p1" nav={<a href="#b">Board</a>} content={null} parts={parts} />
+        </MemoryRouter>
+      </ApiProvider>,
+    );
+    return () => document.querySelector('aside.shell-sidebar')!;
+  }
+  const SETTINGS = { notifications: 'off', heroImages: false, theme: 'system', claudeUsage: false, compactCards: false, hideNotNeeded: false, hideInPlanning: false, doneGrouping: 'time', doneArchiveDays: 0 };
+
+  it('lässt standardmäßig die Pille herausfließen', async () => {
+    viewport(true);
+    const aside = renderWithHover(() => 'liquid');
+    await waitFor(() => expect(document.querySelector('.rail-pill')).not.toBeNull());
+    expect(aside().classList.contains('rail-icons')).toBe(false);
+  });
+
+  it('zeigt mit „Nur Symbole“ keine Pille und zieht nach dem Umstellen sofort nach', async () => {
+    viewport(true);
+    let hover: RailHover = 'icons';
+    const aside = renderWithHover(() => hover);
+    await waitFor(() => expect(aside().classList.contains('rail-icons')).toBe(true));
+    expect(document.querySelector('.rail-pill')).toBeNull();
+    hover = 'liquid';
+    window.dispatchEvent(new Event(RAIL_HOVER_EVENT));
+    await waitFor(() => expect(aside().classList.contains('rail-icons')).toBe(false));
+    expect(document.querySelector('.rail-pill')).not.toBeNull();
+  });
+
+  it('setzt „Nur Symbole“ nur auf die eingeklappte Leiste', async () => {
+    viewport(false);
+    const aside = renderWithHover(() => 'icons');
+    await waitFor(() => expect(aside().classList.contains('is-rail')).toBe(false));
+    expect(aside().classList.contains('rail-icons')).toBe(false);
   });
 });

@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import type { ShellProps } from '@nexus/theme-sdk';
 import { RailPill } from './goo/RailPill.js';
 import { SidebarToggleIcon } from './NavIcons.js';
+import { useRailHover } from './railHover.js';
 import { useSidebarRail } from './sidebarRail.js';
 
 // Standard-Layout: Seitenleiste mit Suche ganz oben, darunter Board-Auswahl, dann die Navigation und ganz unten der
@@ -11,9 +12,11 @@ import { useSidebarRail } from './sidebarRail.js';
 export function DefaultShell({ nav, content, parts }: ShellProps) {
   const { collapsed, toggle } = useSidebarRail();
   const aside = useRef<HTMLElement>(null);
+  // In der Einstellung „Nur Symbole“ fließt keine Pille heraus, das überfahrene Symbol wird nur kräftig (base.css)
+  const liquid = useRailHover() === 'liquid';
   return (
     <>
-      <aside ref={aside} className={`shell-sidebar${collapsed ? ' is-rail' : ''}`}>
+      <aside ref={aside} className={`shell-sidebar${collapsed ? ' is-rail' : ''}${collapsed && !liquid ? ' rail-icons' : ''}`}>
         <div className="shell-dock">
           {parts.search}
           <div className="dock-row">{parts.boardSwitcher}</div>
@@ -34,7 +37,7 @@ export function DefaultShell({ nav, content, parts }: ShellProps) {
           </button>
           {parts.usage}
         </div>
-        {collapsed && <RailPill rail={aside} />}
+        {collapsed && liquid && <RailPill rail={aside} />}
       </aside>
       {content}
     </>

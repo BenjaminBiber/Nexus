@@ -40,6 +40,7 @@
         "ntfyServer": "https://ntfy.sh",
         "ntfyToken": "",
         "ntfyTopic": "",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false

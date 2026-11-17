@@ -365,6 +365,9 @@ export interface SetupPromptsDto {
 /** Gruppierung der Spalte „Erledigt“ auf dem Board */
 export type DoneGrouping = 'time' | 'spec';
 
+/** Eingeklappte Seitenleiste unter dem Zeiger: Pille fließt heraus (liquid) oder nur das Symbol wird kräftig (icons) */
+export type RailHover = 'liquid' | 'icons';
+
 export interface UserSettingsDto {
   notifications: NotificationMode;
   heroImages: boolean;
@@ -375,6 +378,8 @@ export interface UserSettingsDto {
   compactCards: boolean;
   hideNotNeeded: boolean;
   hideInPlanning: boolean;
+  /** Eingeklappte Seitenleiste unter dem Zeiger: herausfließende Pille oder nur kräftige Symbole; fehlt es, gilt liquid */
+  railHover?: RailHover;
   /** Gruppierung der Spalte „Erledigt“ */
   doneGrouping: DoneGrouping;
   /** Gemergte Tickets verschwinden nach so vielen Tagen aus „Erledigt“ (0 = nie) */

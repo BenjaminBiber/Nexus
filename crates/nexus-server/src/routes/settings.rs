@@ -19,7 +19,7 @@ use nexus_core::project::TokenStore;
 use nexus_core::registry::NexusHome;
 use nexus_core::settings::{
     known_theme, SetupPrompts, ThemeMode, UserSettings, UserSettingsStore, DONE_ARCHIVE_MAX_DAYS,
-    DONE_GROUPINGS, NOTIFICATION_MODES, NTFY_TOPIC_PATTERN,
+    DONE_GROUPINGS, NOTIFICATION_MODES, NTFY_TOPIC_PATTERN, RAIL_HOVERS,
 };
 use nexus_core::{Error, HarnessError, Result};
 use nexus_db::ConnectOptions;
@@ -184,6 +184,12 @@ fn merge_user_settings(
     }
     if let Some(value) = field("hideInPlanning") {
         next.hide_in_planning = flag("hideInPlanning", value)?;
+    }
+    if let Some(value) = field("railHover") {
+        next.rail_hover = RAIL_HOVERS
+            .into_iter()
+            .find(|hover| value.as_str() == Some(hover.as_str()))
+            .ok_or_else(|| settings_invalid("railHover muss liquid oder icons sein."))?;
     }
     if let Some(value) = field("doneGrouping") {
         next.done_grouping = DONE_GROUPINGS

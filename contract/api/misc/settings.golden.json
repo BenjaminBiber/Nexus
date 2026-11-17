@@ -68,6 +68,7 @@
         "ntfyServer": "https://ntfy.sh",
         "ntfyToken": "",
         "ntfyTopic": "",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false
@@ -112,6 +113,7 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false
@@ -143,6 +145,7 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false
@@ -177,6 +180,7 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false
@@ -209,6 +213,7 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false
@@ -243,6 +248,7 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false
@@ -278,6 +284,7 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false
@@ -543,6 +550,7 @@
         "ntfyServer": "https://push.example",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false

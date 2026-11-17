@@ -182,7 +182,7 @@ async fn liefert_system_als_standard_und_speichert_das_theme() {
         saved.json(),
         Some(json!({
             "notifications": "off", "heroImages": false, "theme": "dark", "claudeTheme": true, "claudeUsage": false,
-            "compactCards": false, "hideNotNeeded": false, "hideInPlanning": false,
+            "compactCards": false, "hideNotNeeded": false, "hideInPlanning": false, "railHover": "liquid",
             "doneGrouping": "time", "doneArchiveDays": 0,
             "ntfy": false, "ntfyServer": "https://ntfy.sh", "ntfyTopic": "", "ntfyToken": "",
             "setupPrompts": { "pluginDismissed": false, "migrationDismissed": [] },
@@ -222,6 +222,31 @@ async fn speichert_die_kompakten_ticket_kacheln() {
     assert_eq!(
         server.get("/api/user-settings").await.json().expect("JSON")["compactCards"],
         true
+    );
+}
+
+#[tokio::test]
+async fn speichert_das_verhalten_der_eingeklappten_leiste() {
+    let server = TestServer::start();
+    assert_eq!(
+        server.get("/api/user-settings").await.json().expect("JSON")["railHover"],
+        "liquid"
+    );
+    let saved = server
+        .put("/api/user-settings", r#"{"railHover":"icons"}"#)
+        .await;
+    assert_eq!(saved.status, 200);
+    assert_eq!(
+        server.get("/api/user-settings").await.json().expect("JSON")["railHover"],
+        "icons"
+    );
+    let reply = server
+        .put("/api/user-settings", r#"{"railHover":"blob"}"#)
+        .await;
+    assert_eq!(reply.status, 422);
+    assert_eq!(
+        reply.json().expect("JSON")["message"],
+        "railHover muss liquid oder icons sein."
     );
 }
 

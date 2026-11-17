@@ -263,6 +263,16 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
   .is-rail :is(.nav a, .rail-toggle)[data-rail-pill] { font-weight: 600; }
   .is-rail :is(.nav a, .rail-toggle)[data-rail-pill] .nav-icon { stroke-width: 2.25px; }
   .is-rail .bp-field[data-rail-pill] { background: transparent; border-color: transparent; }
+  /* Einstellung „Nur Symbole“ (.rail-icons, ohne RailPill): unter dem Zeiger oder mit Tastaturfokus wird nur das Symbol
+     kräftig und dunkel und federt kurz auf; zurück gleitet es ohne Überschwingen */
+  .rail-icons :is(.nav a, .global-search, .rail-toggle) .nav-icon { transition: stroke-width 0.18s ease, transform 0.22s ease; transform-origin: center; }
+  .rail-icons :is(.nav a, .rail-toggle):is(:hover, :focus-visible) { color: var(--text); }
+  .rail-icons :is(.nav a, .global-search, .rail-toggle):is(:hover, :focus-visible) .nav-icon {
+    stroke-width: 2.75px;
+    transform: scale(1.18);
+    transition: stroke-width 0.18s ease, transform 0.34s cubic-bezier(0.34, 1.8, 0.64, 1);
+  }
+  .rail-icons .global-search:is(:hover, :focus-visible) { background: var(--line-soft); color: var(--text); }
 }
 /* Ausbeulung der eingeklappten Leiste (RailPill): Goo-Ebene in Farbe und Rand der Leiste, aus Kantenstreifen, Körper,
    Nachlauf, Steg, Hals und Tropfen (Lage setzt das Skript), sichtbar nur jenseits der Kante; darüber die Kopie des
@@ -295,6 +305,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
   .shell-sidebar, .shell-sidebar :is(.nav-label, .global-search-label, .nav-kbd, .board-picker-trigger, .bp-edit, .bp-status, .bp-status-only) { transition: none; }
   .rail-pill, .rail-pill.is-open, .usage-meter.compact { transition: none; }
   :is(.nav a, .rail-toggle), :is(.nav a, .rail-toggle) .nav-icon { transition: none; }
+  .rail-icons :is(.nav a, .global-search, .rail-toggle) .nav-icon { transition: none !important; transform: none !important; }
   .bp-rail-key { animation: none !important; transition: none !important; }
 }
 /* Such-Dialog über alle Boards (Strg+K) */

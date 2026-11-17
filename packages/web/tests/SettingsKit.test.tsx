@@ -41,6 +41,16 @@ describe('Bausteine der Einstellungen', () => {
     expect(await screen.findByText('Gespeichert')).toBeTruthy();
   });
 
+  it('speichert das Verhalten der eingeklappten Leiste', async () => {
+    const saveUserSettings = vi.fn(async (patch: Partial<UserSettingsDto>) => ({ ...SETTINGS, ...patch }));
+    render(<ApiProvider api={fakeApi({ getUserSettings: async () => SETTINGS, saveUserSettings })}><InterfacePanel /></ApiProvider>);
+    const select = await screen.findByRole('combobox', { name: 'Eingeklappte Leiste unter dem Zeiger' });
+    await waitFor(() => expect((select as HTMLSelectElement).disabled).toBe(false));
+    expect((select as HTMLSelectElement).value).toBe('liquid');
+    await userEvent.selectOptions(select, 'icons');
+    expect(saveUserSettings).toHaveBeenCalledWith({ railHover: 'icons' });
+  });
+
   it('zeigt einen Speicherfehler als Meldung', async () => {
     const saveUserSettings = vi.fn(async () => { throw new Error('Datei schreibgeschützt'); });
     render(<ApiProvider api={fakeApi({ getUserSettings: async () => SETTINGS, saveUserSettings })}><InterfacePanel /></ApiProvider>);

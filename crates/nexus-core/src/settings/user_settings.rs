@@ -64,6 +64,32 @@ impl DoneGrouping {
 /// Alle Gruppierungen der Spalte „Erledigt“
 pub const DONE_GROUPINGS: [DoneGrouping; 2] = DoneGrouping::ALL;
 
+/// Verhalten der eingeklappten Seitenleiste unter dem Zeiger
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum RailHover {
+    /// Der überfahrene Eintrag fließt als Pille aus der Leiste heraus
+    Liquid,
+    /// Nur das Symbol wird kräftig und dunkel, mit kurzer Animation
+    Icons,
+}
+
+impl RailHover {
+    /// Alle Varianten in der Reihenfolge der Oberfläche
+    pub const ALL: [RailHover; 2] = [RailHover::Liquid, RailHover::Icons];
+
+    /// Schreibweise in `settings.json`
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            RailHover::Liquid => "liquid",
+            RailHover::Icons => "icons",
+        }
+    }
+}
+
+/// Alle Varianten der eingeklappten Seitenleiste unter dem Zeiger
+pub const RAIL_HOVERS: [RailHover; 2] = RailHover::ALL;
+
 /// Höchstes Alter erledigter Tickets in Tagen, ab dem sie ins Archiv wandern
 pub const DONE_ARCHIVE_MAX_DAYS: u16 = 365;
 
@@ -149,6 +175,8 @@ pub struct UserSettings {
     pub hide_not_needed: bool,
     /// Spalte „In Planung“ auf dem Board ausblenden
     pub hide_in_planning: bool,
+    /// Eingeklappte Seitenleiste unter dem Zeiger: herausfließende Pille oder nur kräftige Symbole
+    pub rail_hover: RailHover,
     /// Gruppierung der Spalte „Erledigt“: nach Zeitabschnitten oder nach Spec
     pub done_grouping: DoneGrouping,
     /// Erledigte Tickets, die älter als so viele Tage sind, wandern ins Archiv der Spalte
@@ -178,6 +206,7 @@ impl Default for UserSettings {
             compact_cards: false,
             hide_not_needed: false,
             hide_in_planning: false,
+            rail_hover: RailHover::Liquid,
             done_grouping: DoneGrouping::Time,
             done_archive_days: 0,
             ntfy: false,
@@ -207,6 +236,7 @@ mod tests {
                 "compactCards": false,
                 "hideNotNeeded": false,
                 "hideInPlanning": false,
+                "railHover": "liquid",
                 "doneGrouping": "time",
                 "doneArchiveDays": 0,
                 "ntfy": false,
@@ -229,6 +259,7 @@ mod tests {
             DONE_GROUPINGS.map(|grouping| grouping.as_str()),
             ["time", "spec"]
         );
+        assert_eq!(RAIL_HOVERS.map(|hover| hover.as_str()), ["liquid", "icons"]);
     }
 
     #[test]

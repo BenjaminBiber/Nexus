@@ -10,7 +10,7 @@ use crate::registry::HarnessHome;
 use crate::settings::user_settings::{
     known_theme, DoneGrouping, NotificationMode, SetupPrompts, ThemeMode, UserSettings,
     DEFAULT_NTFY_SERVER, DONE_ARCHIVE_MAX_DAYS, DONE_GROUPINGS, NOTIFICATION_MODES,
-    NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN,
+    NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN, RAIL_HOVERS, RailHover,
 };
 
 /// Liest und schreibt `settings.json`.
@@ -83,6 +83,7 @@ fn normalize(raw: &Value, home: &HarnessHome) -> UserSettings {
         compact_cards: is_true(raw, "compactCards"),
         hide_not_needed: is_true(raw, "hideNotNeeded"),
         hide_in_planning: is_true(raw, "hideInPlanning"),
+        rail_hover: rail_hover(raw),
         done_grouping: done_grouping(raw),
         done_archive_days: done_archive_days(raw),
         ntfy: is_true(raw, "ntfy"),
@@ -96,6 +97,14 @@ fn normalize(raw: &Value, home: &HarnessHome) -> UserSettings {
         ntfy_token: text(raw, "ntfyToken").unwrap_or_default(),
         setup_prompts: setup_prompts(raw.get("setupPrompts")),
     }
+}
+
+/// Eingeklappte Seitenleiste unter dem Zeiger; Unbekanntes ergibt den Standard
+fn rail_hover(raw: &Value) -> RailHover {
+    RAIL_HOVERS
+        .into_iter()
+        .find(|hover| raw.get("railHover").and_then(Value::as_str) == Some(hover.as_str()))
+        .unwrap_or(UserSettings::default().rail_hover)
 }
 
 /// Gruppierung der Spalte „Erledigt“; Unbekanntes ergibt den Standard
@@ -189,6 +198,7 @@ mod tests {
             compact_cards: true,
             hide_not_needed: true,
             hide_in_planning: true,
+            rail_hover: RailHover::Icons,
             done_grouping: DoneGrouping::Spec,
             done_archive_days: 30,
             ntfy: true,

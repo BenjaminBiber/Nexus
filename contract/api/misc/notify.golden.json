@@ -67,6 +67,7 @@
         "ntfyServer": "<var:ntfyUrl>",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false
@@ -158,6 +159,7 @@
         "ntfyServer": "<var:fehlerUrl>",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false
@@ -236,6 +238,7 @@
         "ntfyServer": "<var:fehlerUrl>",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false
@@ -286,6 +289,7 @@
         "ntfyServer": "http://127.0.0.1:9",
         "ntfyToken": "tk_vertrag",
         "ntfyTopic": "harness-vertrag",
+        "railHover": "liquid",
         "setupPrompts": {
           "migrationDismissed": [],
           "pluginDismissed": false
