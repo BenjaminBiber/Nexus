@@ -14,6 +14,18 @@
 
 ### Sonstiges
 
+## 0.3.6 – 2026-11-17
+
+### Vertrag
+
+- Keine Änderungen.
+
+### Angekündigt
+
+- Keine.
+
+### Sonstiges
+
 ## 0.3.5 – 2026-11-17
 
 ### Vertrag
