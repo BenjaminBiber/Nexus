@@ -1,59 +1,102 @@
+import { useId } from 'react';
 import { Link } from 'react-router-dom';
-import { DB_QUESTION_STATE_LABELS, type DbQuestionDto } from '../../api/dbTypes.js';
+import type { DbQuestionDto } from '../../api/dbTypes.js';
+import { dayMonthDe, optionsLabel } from '../../dbquestion/questionFormat.js';
 import { formatAgo } from '../../sessions/format.js';
 
-const ORIGIN: Record<string, string> = { human: 'Mensch', session: 'Session', subagent: 'Subagent' };
+interface Group {
+  key: string;
+  label: string;
+  items: DbQuestionDto[];
+}
 
-// Liste der Fragen eines Board-Projekts in Server-Reihenfolge (bereite zuerst, älteste zuerst); Tickets führen ins Ticket-Panel.
-export function DbQuestionList({ pid, questions, freshId }: { pid: string; questions: DbQuestionDto[]; freshId: string | null }) {
+// Gruppen der Liste: offene nach „Bereit“ (nichts offen, worauf sie wartet) und „Wartet“, erledigte nach „Beantwortet“ und „Verworfen“
+export function questionGroups(questions: DbQuestionDto[]): Group[] {
+  const groups: Group[] = [
+    { key: 'ready', label: 'Bereit', items: questions.filter((q) => q.state === 'open' && q.waitingOn.length === 0) },
+    { key: 'waiting', label: 'Wartet', items: questions.filter((q) => q.state === 'open' && q.waitingOn.length > 0) },
+    { key: 'answered', label: 'Beantwortet', items: questions.filter((q) => q.state === 'answered') },
+    { key: 'discarded', label: 'Verworfen', items: questions.filter((q) => q.state === 'discarded') },
+  ];
+  return groups.filter((g) => g.items.length > 0);
+}
+
+// Zweite Zeile einer Frage: Nummer, Alter bzw. Entscheidungsdatum, Optionen, worauf sie wartet
+function metaOf(q: DbQuestionDto): string[] {
+  const parts: string[] = [];
+  if (q.state === 'open') {
+    parts.push(formatAgo(q.createdAt));
+    if (q.optionCount > 0) parts.push(optionsLabel(q.optionCount));
+    if (q.waitingOn.length > 0) parts.push(`wartet auf ${q.waitingOn.map((w) => w.id).join(', ')}`);
+  } else if (q.decision) {
+    parts.push(`${q.state === 'answered' ? 'entschieden' : 'verworfen'} ${dayMonthDe(q.decision.at)}`);
+  }
+  return parts;
+}
+
+// Fragenliste der Seite „Fragen“: gruppiert, jede Zeile führt zur Frage (rechts daneben im Detail). Offene Fragen zeigen,
+// wie viele Tickets auf sie warten; erledigte, ob sie beantwortet oder verworfen sind.
+export function DbQuestionList({ pid, questions, currentId, freshId }: {
+  pid: string;
+  questions: DbQuestionDto[];
+  currentId: string | null;
+  freshId: string | null;
+}) {
+  const baseId = useId();
   return (
-    <section className="card question-list" aria-label="Fragenliste">
-      <div className="question-head" aria-hidden="true">
-        <span>Nr.</span>
-        <span>
-          Frage <span className="question-sort">· bereite zuerst, älteste zuerst</span>
-        </span>
-        <span>Herkunft</span>
-        <span>Kennzeichen</span>
-        <span>Alter</span>
-      </div>
-      <ul>
-        {questions.map((q) => {
-          const fresh = q.id === freshId;
-          return (
-            <li key={q.id} className={`question-row${fresh ? ' fresh' : ''}`}>
-              <span className="mono muted question-id">{q.id}</span>
-              <div className="question-main">
-                <span className="question-title">
-                  <Link to={`/p/${pid}/questions/${q.id}`}>{q.title}</Link>
-                  {fresh && <span className="badge q-new">neu</span>}
-                </span>
-                <span className="question-meta">
-                  {q.tags.map((t) => (
-                    <span key={t} className="tag">
-                      {t}
+    <div className="qx-groups">
+      {questionGroups(questions).map((group) => {
+        const headingId = `${baseId}-${group.key}`;
+        return (
+          <section key={group.key} aria-labelledby={headingId}>
+            <h2 id={headingId} className="qx-group">
+              {group.label} · {group.items.length}
+            </h2>
+            <ul className="qx-rows">
+              {group.items.map((q) => {
+                const current = q.id === currentId;
+                const waiting = q.state === 'open' ? q.ticketIds.length : 0;
+                const waitLabel = waiting === 1 ? '1 Ticket wartet' : `${waiting} Tickets warten`;
+                return (
+                  <li key={q.id} className={`qx-row${current ? ' current' : ''}${q.id === freshId ? ' fresh' : ''}`}>
+                    {q.state === 'answered' && (
+                      <span className="material-icons qx-row-icon ok" aria-hidden="true">
+                        check
+                      </span>
+                    )}
+                    {q.state === 'discarded' && (
+                      <span className="material-icons qx-row-icon" aria-hidden="true">
+                        remove
+                      </span>
+                    )}
+                    <span className="qx-row-main">
+                      <span className="qx-row-title">
+                        <Link className="qx-row-link" to={`/p/${pid}/questions/${q.id}`} aria-current={current ? 'page' : undefined}>
+                          {q.title}
+                        </Link>
+                        {q.id === freshId && <span className="qx-chip new">neu</span>}
+                      </span>
+                      <span className="qx-row-meta">
+                        <span className="mono">{q.id}</span>
+                        {metaOf(q).map((part) => ` · ${part}`)}
+                      </span>
                     </span>
-                  ))}
-                  {q.tickets.map((t) => (
-                    <Link key={t.id} className="qlink" to={`/p/${pid}/board/t/${t.id}`} title={t.title}>
-                      <span className="muted">Ticket</span> <span className="mono">{t.id}</span>
-                    </Link>
-                  ))}
-                </span>
-              </div>
-              <span className="question-origin">{ORIGIN[q.originKind] ?? q.originKind}</span>
-              <span className="question-marks">
-                {q.state !== 'open' && <span className={`badge q-${q.state}`}>{DB_QUESTION_STATE_LABELS[q.state]}</span>}
-                {q.ready && <span className="badge q-ready">bereit</span>}
-                {q.waitingOn.length > 0 && <span className="badge q-waiting">wartet auf {q.waitingOn.map((w) => w.id).join(', ')}</span>}
-                {q.researched && <span className="badge q-researched">recherchiert</span>}
-                {q.optionCount > 0 && <span className="badge">{q.optionCount === 1 ? '1 Option' : `${q.optionCount} Optionen`}</span>}
-              </span>
-              <span className="muted question-age">{formatAgo(q.createdAt)}</span>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+                    {waiting > 0 && (
+                      <span className="qx-wait" title={waitLabel}>
+                        <span className="material-icons" aria-hidden="true">
+                          schedule
+                        </span>
+                        <span aria-hidden="true">{waiting}</span>
+                        <span className="sr-only">{waitLabel}</span>
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
   );
 }

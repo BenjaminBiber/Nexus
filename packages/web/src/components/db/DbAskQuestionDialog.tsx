@@ -8,20 +8,25 @@ function listOf(value: string): string[] {
   return value.split(',').map((s) => s.trim()).filter(Boolean);
 }
 
-// Dialog „Frage stellen“: im Board-Projekt, auf Wunsch vorbelegt mit einem Ticket, das dann auf die Frage wartet.
+// Dialog „Frage stellen“: im Board-Projekt, auf Wunsch vorbelegt mit einem Ticket, das dann auf die Frage wartet, oder als
+// Folgefrage aus der Recherche einer anderen Frage (Titel und Beschreibung vorbelegt, hängt von ihr ab).
 // Mit eigenen Eingaben fragen Abbrechen und Esc nach; während des Sendens sind die Knöpfe gesperrt.
-export function DbAskQuestionDialog({ projectKey, ticketId, onClose, onCreated }: {
+export function DbAskQuestionDialog({ projectKey, ticketId, followUp, onClose, onCreated }: {
   projectKey: string;
   ticketId?: string;
+  /** Folgefrage zu einer Frage: Vorschlag ihrer Recherche */
+  followUp?: { questionId: string; title: string; description: string };
   onClose: () => void;
   onCreated: (question: DbQuestionDetailDto) => void;
 }) {
   const api = useApi();
   const titleId = useId();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const initialTitle = followUp?.title ?? '';
+  const initialDescription = followUp?.description ?? '';
+  const [title, setTitle] = useState(initialTitle);
+  const [description, setDescription] = useState(initialDescription);
   const initialTickets = ticketId ?? '';
-  const initialOccasion = ticketId ? `Ticket ${ticketId}` : '';
+  const initialOccasion = followUp ? `Folgefrage zu ${followUp.questionId}` : ticketId ? `Ticket ${ticketId}` : '';
   const [tickets, setTickets] = useState(initialTickets);
   const [occasion, setOccasion] = useState(initialOccasion);
   const [tags, setTags] = useState('');
@@ -29,7 +34,8 @@ export function DbAskQuestionDialog({ projectKey, ticketId, onClose, onCreated }
   const [busy, setBusy] = useState(false);
   const [asking, setAsking] = useState(false);
   const sending = useRef(false);
-  const dirty = [title, description, tags].some((text) => text.trim() !== '') || tickets !== initialTickets || occasion !== initialOccasion;
+  const dirty =
+    title.trim() !== initialTitle.trim() || description.trim() !== initialDescription.trim() || tags.trim() !== '' || tickets !== initialTickets || occasion !== initialOccasion;
 
   // Prüft den Titel und stellt die Frage; Fehler des Servers bleiben im Dialog sichtbar
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -49,6 +55,7 @@ export function DbAskQuestionDialog({ projectKey, ticketId, onClose, onCreated }
         occasion: occasion.trim() || null,
         tags: listOf(tags),
         ticketIds: listOf(tickets),
+        ...(followUp ? { dependsOn: [followUp.questionId] } : {}),
       });
       onCreated(created);
     } catch (failure) {
@@ -77,8 +84,11 @@ export function DbAskQuestionDialog({ projectKey, ticketId, onClose, onCreated }
       className="panel db-dialog db-ask-question"
       onSubmit={(event) => void submit(event)}
     >
-      <strong id={titleId}>{ticketId ? `Frage zu ${ticketId} stellen` : `Neue Frage in ${projectKey}`}</strong>
-      <p className="db-dialog-hint">Betroffene Tickets warten, bis die Frage entschieden ist. Entscheiden kannst nur du.</p>
+      <strong id={titleId}>{followUp ? `Folgefrage zu ${followUp.questionId}` : ticketId ? `Frage zu ${ticketId} stellen` : `Neue Frage in ${projectKey}`}</strong>
+      <p className="db-dialog-hint">
+        {followUp ? `Die neue Frage hängt von ${followUp.questionId} ab. ` : ''}Betroffene Tickets warten, bis die Frage entschieden ist.
+        Entscheiden kannst nur du.
+      </p>
       <label className="field">
         <span>Titel</span>
         <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} />
