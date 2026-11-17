@@ -261,6 +261,36 @@ describe('Dispatcher am Board', () => {
     expect(screen.queryByRole('button', { name: 'Mergen' })).toBeNull();
   });
 
+  it('zeigt bei laufendem Merge des Dispatchers den Stand statt „noch nicht gemergt“, ohne Knopf', () => {
+    const finished = { ...dbDetail(dbCard('ARC-0004', 'Y', 'done', { boardId: 1 })), branch: 'ticket/ARC-0004-y' };
+    const { rerender } = render(<ApiProvider api={fakeApi()}><DbMergeRetry ticket={finished} mine merge="session" onDone={() => undefined} /></ApiProvider>);
+    expect(screen.getByText('Eine Merge-Session führt den Branch ticket/ARC-0004-y gerade zusammen.')).toBeTruthy();
+    expect(screen.queryByText(/noch nicht gemergt/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Mergen' })).toBeNull();
+    rerender(<ApiProvider api={fakeApi()}><DbMergeRetry ticket={finished} mine merge="pending" onDone={() => undefined} /></ApiProvider>);
+    expect(screen.getByText('Der Dispatcher mergt den Branch ticket/ARC-0004-y als Nächstes.')).toBeTruthy();
+    // Gescheiterter Merge, den der Dispatcher gerade erneut versucht: kein „Erneut mergen“
+    const blocked = { ...dbDetail(dbCard('ARC-0004', 'Y', 'blocked', { blockedReason: 'Merge: Konflikt', boardId: 1 })), branch: 'ticket/ARC-0004-y' };
+    rerender(<ApiProvider api={fakeApi()}><DbMergeRetry ticket={blocked} mine merge="waiting" onDone={() => undefined} /></ApiProvider>);
+    expect(screen.getByText('Der Merge des Branches ticket/ARC-0004-y wartet auf weitere Tickets.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Erneut mergen' })).toBeNull();
+  });
+
+  it('zeigt im Panel den laufenden Merge aus dem Status des Dispatchers', async () => {
+    const finished = { ...dbDetail(dbCard('ARC-0004', 'Y', 'done', { boardId: 1 })), branch: 'ticket/ARC-0004-y' };
+    renderWithApp(<DbBoardPage />, {
+      api: fakeApi({
+        getDbBoardView: async () => dbView([dbCard('ARC-0004', 'Y', 'done', { boardId: 1 })]),
+        getDbTicket: async () => finished,
+        getDispatchStatus: async () => dispatchStatus({ merges: [{ ticketId: 'ARC-0004', phase: 'session', branch: 'ticket/ARC-0004-y' }] }),
+      }),
+      path: '/p/p1/board/t/ARC-0004',
+      route: '/p/:pid/board/*',
+    });
+    expect(await screen.findByText('Eine Merge-Session führt den Branch ticket/ARC-0004-y gerade zusammen.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Mergen' })).toBeNull();
+  });
+
   it('zeigt das Ergebnis „gemergt“ auch nach dem Neuladen ohne Branch; Ausblenden per Knopf', async () => {
     const retry = vi.fn(async () => ({ ...dispatchStatus(), result: { outcome: 'merged' as const, text: 'ARC-0004 gemergt in main (abc1234).' } }));
     const finished = { ...dbDetail(dbCard('ARC-0004', 'Y', 'done', { boardId: 1 })), branch: 'ticket/ARC-0004-y' };

@@ -410,6 +410,7 @@ export function DbBoardPage() {
           guard={panelGuard}
           agentPrefix={dispatch.status?.agentPrefix}
           userName={active?.user.name}
+          merge={merges.get(ticketId)}
         />
       )}
       {askAcceptance && (

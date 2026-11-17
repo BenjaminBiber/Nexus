@@ -1,12 +1,22 @@
 import type { DbTicketDetailDto } from '../../api/dbTypes.js';
+import type { DispatchMergeDto } from '../../api/dispatchTypes.js';
 import { useDispatchAction } from '../../dbboard/useDispatchAction.js';
 import { showsReview } from './DbReview.js';
+
+// Hinweis, solange der Dispatcher den Merge in Arbeit hat, je Phase
+const MERGE_TEXTS: Record<DispatchMergeDto['phase'], (branch: string) => string> = {
+  pending: (branch) => `Der Dispatcher mergt den Branch ${branch} als Nächstes.`,
+  waiting: (branch) => `Der Merge des Branches ${branch} wartet auf weitere Tickets.`,
+  session: (branch) => `Eine Merge-Session führt den Branch ${branch} gerade zusammen.`,
+};
 
 // Hinweis und Knopf zum Merge des Dispatchers: „Erneut mergen“ bei Blockiert mit Grund „Merge: …“ (Merge gescheitert),
 // „Mergen“ bei Erledigt mit noch gesetztem Branch (z. B. von Hand abgeschlossen). Diese Knöpfe gibt es nur auf eigenen
 // Boards (`mine`). „Abnehmen“ bei Blockiert mit Grund „Human Interaction: …“ gibt es immer: Erledigt, auf eigenem Board
 // danach der Merge; auf eigenen Boards mit Branch übernimmt das der Review-Block (DbReview). Das Ergebnis bleibt auch nach dem Neuladen sichtbar, bis es ausgeblendet wird (Knopf oder nach 4 s).
-export function DbMergeRetry({ ticket, mine, onDone }: { ticket: DbTicketDetailDto; mine: boolean; onDone: () => void }) {
+// Hat der Dispatcher den Merge des Tickets schon in Arbeit (`merge`, z. B. eine laufende Merge-Session), steht statt
+// „noch nicht gemergt“ bzw. „konnte nicht mergen“ der Stand des Merges da, ohne Knopf.
+export function DbMergeRetry({ ticket, mine, merge, onDone }: { ticket: DbTicketDetailDto; mine: boolean; merge?: DispatchMergeDto['phase']; onDone: () => void }) {
   const { busy, error, outcome, hideOutcome, run } = useDispatchAction();
   const failed = ticket.status === 'blocked' && (ticket.blockedReason ?? '').startsWith('Merge:');
   const unmerged = ticket.status === 'done' && Boolean(ticket.branch);
@@ -39,6 +49,15 @@ export function DbMergeRetry({ ticket, mine, onDone }: { ticket: DbTicketDetailD
         {error && <div className="banner" role="alert">{error}</div>}
         {result}
         <button type="button" className="btn primary" disabled={busy} onClick={() => void retry()}>Abnehmen</button>
+      </div>
+    );
+  }
+
+  if (merge) {
+    return (
+      <div className="db-merge-retry merging">
+        <p>{MERGE_TEXTS[merge](ticket.branch ?? ticket.id)}</p>
+        {result}
       </div>
     );
   }

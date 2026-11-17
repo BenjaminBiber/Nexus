@@ -4,7 +4,7 @@ import {
   type DbCardDto, type DbColumnId, type DbPriority, type DbStatus, type DbTicketDetailDto,
 } from '../../api/dbTypes.js';
 import { useApi } from '../../api/ApiContext.js';
-import type { RawDispatchConfigDto } from '../../api/dispatchTypes.js';
+import type { DispatchMergeDto, RawDispatchConfigDto } from '../../api/dispatchTypes.js';
 import { isAutopilot } from '../../dbboard/autopilot.js';
 import { canEditDependencies } from '../../dbboard/dependencyPicker.js';
 import { useDbTicket, type DbChange } from '../../dbboard/useDbTicket.js';
@@ -45,6 +45,8 @@ export interface DbTicketPanelProps {
   agentPrefix?: string;
   // Anzeigename des angemeldeten Benutzers (Avatar am Kommentarfeld)
   userName?: string;
+  // Phase des Merges, den der Dispatcher für das Ticket gerade in Arbeit hat (ohne Angabe: keiner)
+  merge?: DispatchMergeDto['phase'];
 }
 
 // Führt einen Wechsel aus, sobald das Panel verlassen werden darf (ggf. nach Rückfrage)
@@ -483,7 +485,7 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
                 </p>
               )}
               {desktop && renderProperties()}
-              <DbMergeRetry ticket={ticket} mine={props.isOwnBoard?.(ticket.boardId) ?? false} onDone={() => { void reload(); props.onChanged(); }} />
+              <DbMergeRetry ticket={ticket} mine={props.isOwnBoard?.(ticket.boardId) ?? false} merge={props.merge} onDone={() => { void reload(); props.onChanged(); }} />
               {showsReview(ticket, props.isOwnBoard?.(ticket.boardId) ?? false) && (
                 <DbReview ticket={ticket} onDone={() => { void reload(); props.onChanged(); }} />
               )}
