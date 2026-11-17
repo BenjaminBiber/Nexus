@@ -10,7 +10,8 @@
   /* Helle Unterlage für Markenlogos, in allen Themen gleich: viele Logos sind schwarz */
   --logo-plate: #ffffff;
   --sidebar-bg: #fbfbfc;
-  --nav-active-bg: #ffffff;
+  /* Aktive Seite in der Navigation: schlicht abgegraut, ohne Kachel */
+  --nav-active-bg: #ededf0;
   --line: #e8e8ec;
   --line-input: #e2e2e7;
   --line-soft: #f0f0f3;

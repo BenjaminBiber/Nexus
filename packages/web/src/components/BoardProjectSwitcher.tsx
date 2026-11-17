@@ -84,6 +84,12 @@ export function BoardProjectSwitcher({ pid, status }: { pid: string; status?: Re
       {/* Eine Zeile: Verbindungspunkt, die Auswahl (Projekt über Board) und der Stift zur Verwaltung */}
       <div ref={field} className="bp-field">
         {status && <span className="bp-status">{status}</span>}
+        {/* Kürzel des Projekts, nur in der eingeklappten Leiste sichtbar (neben dem Verbindungspunkt) */}
+        {project && (
+          <span className="bp-rail-key" aria-hidden="true">
+            {project.key}
+          </span>
+        )}
         <button
           ref={trigger}
           type="button"

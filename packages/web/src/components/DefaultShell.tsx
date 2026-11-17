@@ -1,23 +1,26 @@
+import { useRef } from 'react';
 import type { ShellProps } from '@nexus/theme-sdk';
-import { GooNav } from './goo/GooNav.js';
+import { RailPill } from './goo/RailPill.js';
 import { SidebarToggleIcon } from './NavIcons.js';
 import { useSidebarRail } from './sidebarRail.js';
 
 // Standard-Layout: Seitenleiste mit Suche ganz oben, darunter Board-Auswahl, dann die Navigation und ganz unten der
 // Umschalter der Leiste und die Claude-Nutzung; rechts daneben der Inhalt. Eingeklappt (auf Laptop-Breite von sich aus)
-// zeigt die Leiste nur Symbole und klappt beim Überfahren über den Inhalt auf, Regeln in base.css
+// zeigt die Leiste nur Symbole; sie klappt nicht auf, der überfahrene Eintrag fließt als Pille heraus (RailPill).
+// Regeln in base.css
 export function DefaultShell({ nav, content, parts }: ShellProps) {
   const { collapsed, toggle } = useSidebarRail();
+  const aside = useRef<HTMLElement>(null);
   return (
     <>
-      <aside className={`shell-sidebar${collapsed ? ' is-rail' : ''}`}>
+      <aside ref={aside} className={`shell-sidebar${collapsed ? ' is-rail' : ''}`}>
         <div className="shell-dock">
           {parts.search}
           <div className="dock-row">{parts.boardSwitcher}</div>
         </div>
-        <GooNav className="nav" aria-label="Hauptnavigation">
+        <nav className="nav" aria-label="Hauptnavigation">
           {nav}
-        </GooNav>
+        </nav>
         <div className="usage-dock">
           <button
             type="button"
@@ -31,6 +34,7 @@ export function DefaultShell({ nav, content, parts }: ShellProps) {
           </button>
           {parts.usage}
         </div>
+        {collapsed && <RailPill rail={aside} />}
       </aside>
       {content}
     </>

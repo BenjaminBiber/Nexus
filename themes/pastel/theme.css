@@ -231,8 +231,17 @@
 [data-theme='pastel'] :is(.nav a.active, .settings-nav a.active)::before { opacity: 1; }
 [data-theme='pastel'] :is(.nav a:hover, .settings-nav a:hover):not(.active) { background: transparent; }
 [data-theme='pastel'] :is(.nav a:hover, .settings-nav a:hover):not(.active)::before { background: var(--paper-mint); opacity: .7; }
-/* Der flüssige Navigationsblob gehört zu den glatten Themes. */
-[data-theme='pastel'] .goo-nav-blob { display: none; }
+/* Eingeklappte Leiste: der überfahrene Eintrag zieht sich als Papierstreifen mit Textmarker auf, statt dass die Leiste
+   flüssig ausbeult */
+[data-theme='pastel'] .rail-pill-goo { display: none; }
+[data-theme='pastel'] .rail-pill .rail-pill-content[data-kind] {
+  background: var(--sidebar-bg); border: 1px solid var(--paper-margin); border-radius: 4px 6px 5px 3px; box-shadow: none;
+}
+[data-theme='pastel'] .rail-pill-content::before {
+  content: ''; position: absolute; inset: 5px 4px; z-index: -1;
+  background: var(--paper-mint); clip-path: var(--paper-marker); transform: rotate(-.7deg); opacity: .7;
+}
+[data-theme='pastel'] .rail-pill-content.is-active::before { background: var(--paper-yellow); opacity: 1; }
 [data-theme='pastel'] :is(.nav-icon, .choice-icon, .icon-btn svg, .btn svg, .db-search svg, .global-search svg, .bp-edit svg, .db-fab-btn svg, .db-fab-item svg) {
   filter: var(--paper-ink-filter); stroke-linecap: round; stroke-linejoin: round;
 }
