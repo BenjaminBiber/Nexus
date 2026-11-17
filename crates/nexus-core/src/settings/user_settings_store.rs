@@ -8,9 +8,9 @@ use crate::error::{Error, Result};
 use crate::locking::AtomicWriter;
 use crate::registry::HarnessHome;
 use crate::settings::user_settings::{
-    known_theme, DoneGrouping, NotificationMode, SetupPrompts, ThemeMode, UserSettings,
+    known_theme, DoneGrouping, NotificationMode, RailHover, SetupPrompts, ThemeMode, UserSettings,
     DEFAULT_NTFY_SERVER, DONE_ARCHIVE_MAX_DAYS, DONE_GROUPINGS, NOTIFICATION_MODES,
-    NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN, RAIL_HOVERS, RailHover,
+    NTFY_SERVER_PATTERN, NTFY_TOPIC_PATTERN, RAIL_HOVERS,
 };
 
 /// Liest und schreibt `settings.json`.
