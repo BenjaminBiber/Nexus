@@ -563,6 +563,12 @@
 .dd-frees { color: var(--accent); }
 .dd-protocol { margin-left: auto; font-size: 12px; }
 .dd-branch { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-queue h3 { margin: 0 0 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-soft); }
+.dd-queue ul { display: flex; flex-direction: column; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); list-style: none; }
+.dd-queue li { display: grid; grid-template-columns: 82px auto minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 8px 14px; font-size: 13px; }
+.dd-queue li + li { border-top: 1px solid var(--line-soft); }
+.dd-queue-phase { white-space: nowrap; }
+.dd-queue .dd-branch { font-size: 12px; color: var(--muted); }
 .dd-errors h3 { margin: 0 0 6px; font-size: 13px; }
 .dd-errors ul { margin: 0; padding-left: 18px; color: var(--blocked-fg); font-size: 13px; }
 .dd-planned { display: flex; flex-direction: column; gap: 8px; padding: 18px 18px 20px; border-left: 1px solid var(--line); background: var(--surface-alt); min-width: 0; }

@@ -51,6 +51,11 @@ export function DispatchDialog({ boardId, status, error: loadError, pid, onClose
   };
 
   const research = status?.research;
+  // Laufend sind nur die Läufe; ein Merge in der Phase „session“ erscheint nur, wenn zu seinem Ticket kein Merge-Lauf
+  // gemeldet ist (sonst doppelt). Anstehende und wartende Merges laufen nicht und stehen in der Warteschlange darunter.
+  const mergeRuns = new Set(status?.runs.filter((r) => r.kind === 'merge').map((r) => r.ticketId) ?? []);
+  const sessionMerges = status?.merges.filter((m) => m.phase === 'session' && !mergeRuns.has(m.ticketId)) ?? [];
+  const queuedMerges = status?.merges.filter((m) => m.phase !== 'session') ?? [];
 
   return (
     <>
@@ -120,16 +125,17 @@ export function DispatchDialog({ boardId, status, error: loadError, pid, onClose
                 </p>
               )}
               {!status.boardInScope && boardId !== null && <p className="muted">Dieses Board gehört nicht zu den Boards des Dispatchers (Einstellungen → Dispatcher).</p>}
-              {status.runs.length === 0 && status.merges.length === 0 ? (
+              {status.runs.length === 0 && sessionMerges.length === 0 ? (
                 <p className="dd-empty">Keine laufenden Worker.</p>
               ) : (
                 <ul className="dd-cards" aria-label="Laufende Worker">
                   {status.runs.map((r) => (
                     <RunCard key={r.id} run={r} pid={pid} freed={unlocks(r.ticketId, status.tickets)} onClose={onClose} onOpenTicket={onOpenTicket} onLog={setLog} />
                   ))}
-                  {status.merges.map((m) => <MergeCard key={m.ticketId} merge={m} onOpenTicket={onOpenTicket} />)}
+                  {sessionMerges.map((m) => <MergeCard key={m.ticketId} merge={m} onOpenTicket={onOpenTicket} />)}
                 </ul>
               )}
+              {queuedMerges.length > 0 && <MergeQueue merges={queuedMerges} onOpenTicket={onOpenTicket} />}
               {status.lastErrors.length > 0 && (
                 <section className="dd-errors">
                   <h3>Fehler beim letzten Durchlauf</h3>
@@ -185,6 +191,27 @@ function MergeCard({ merge, onOpenTicket }: { merge: DispatchMergeDto; onOpenTic
         <span className="dd-branch" title={`${merge.branch}${merge.target ? ` → ${merge.target}` : ''}`}>{`${merge.branch}${merge.target ? ` → ${merge.target}` : ''}`}</span>
       </div>
     </li>
+  );
+}
+
+// Merges, die anstehen oder auf weitere Tickets warten: keine Session, daher als Zeilen statt als Worker-Karten
+function MergeQueue({ merges, onOpenTicket }: { merges: DispatchMergeDto[]; onOpenTicket: (id: string) => void }) {
+  return (
+    <section className="dd-queue" aria-label="Merge-Warteschlange">
+      <h3>Merge-Warteschlange</h3>
+      <ul>
+        {merges.map((m) => {
+          const branch = `${m.branch}${m.target ? ` → ${m.target}` : ''}`;
+          return (
+            <li key={m.ticketId}>
+              <button type="button" className="link-btn dd-id" onClick={() => onOpenTicket(m.ticketId)}>{m.ticketId}</button>
+              <span className="dd-queue-phase">{MERGE_PHASE_LABELS[m.phase]}</span>
+              <span className="dd-branch" title={branch}>{branch}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
