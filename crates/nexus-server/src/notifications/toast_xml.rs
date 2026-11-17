@@ -77,9 +77,10 @@ fn opens_sessions(url: &str) -> bool {
     trimmed.ends_with("/sessions")
 }
 
-/// Pfad eines Bildes als Attributwert
+/// Pfad eines Bildes als Attributwert (ohne `\\?\`, sonst zeigt Windows nur „Neue
+/// Benachrichtigung“)
 fn asset(dir: &Path, name: &str) -> String {
-    attr(&dir.join(name).to_string_lossy())
+    attr(&nexus_platform::notifier::toast_path(&dir.join(name)))
 }
 
 /// Text für Elementinhalt

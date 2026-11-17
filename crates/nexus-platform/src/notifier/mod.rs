@@ -18,7 +18,7 @@ pub mod desktop;
 #[cfg(windows)]
 pub mod windows;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -57,6 +57,19 @@ impl ToastRequest {
     pub fn tag(&self) -> &str {
         self.tag.as_deref().unwrap_or(DEFAULT_TAG)
     }
+}
+
+/// Pfad ohne das Windows-Präfix `\\?\` (bzw. `\\?\UNC\` → `\\`).
+///
+/// Tauri bestimmt den Ressourcenordner über `canonicalize`, unter Windows also mit diesem
+/// Präfix. Bilder mit so einem Pfad kann Windows in einer Meldung nicht laden und zeigt dann
+/// statt Titel und Text nur „Neue Benachrichtigung“.
+pub fn toast_path(path: &Path) -> String {
+    let text = path.to_string_lossy();
+    if let Some(rest) = text.strip_prefix(r"\\?\UNC\") {
+        return format!(r"\\{rest}");
+    }
+    text.strip_prefix(r"\\?\").unwrap_or(&text).to_string()
 }
 
 /// Systemmeldung zeigen; `None` = gezeigt, `Some(text)` = nicht gezeigt mit Grund
@@ -114,6 +127,20 @@ mod tests {
             .tag(),
             "question-db-ARC-F0001"
         );
+    }
+
+    #[test]
+    fn bildpfade_verlieren_das_windows_praefix() {
+        assert_eq!(
+            toast_path(Path::new(r"\\?\C:\Programme\Nexus\toast\logo-app.png")),
+            r"C:\Programme\Nexus\toast\logo-app.png"
+        );
+        assert_eq!(
+            toast_path(Path::new(r"\\?\UNC\server\freigabe\toast")),
+            r"\\server\freigabe\toast"
+        );
+        assert_eq!(toast_path(Path::new(r"C:\Nexus\toast")), r"C:\Nexus\toast");
+        assert_eq!(toast_path(Path::new("/a/toast")), "/a/toast");
     }
 
     #[tokio::test]

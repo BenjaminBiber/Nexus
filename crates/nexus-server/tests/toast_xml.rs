@@ -106,3 +106,19 @@ fn das_toast_xml_ist_wortgleich_zu_dem_aus_typescript() {
     assert_eq!(geprueft, 10);
     assert_eq!(golden.len(), 10);
 }
+
+/// Tauri liefert den Ressourcenordner unter Windows als `\\?\C:\…`; mit diesem Präfix lädt
+/// Windows die Bilder nicht und zeigt nur „Neue Benachrichtigung“ (Issue #10)
+#[test]
+fn bildpfade_tragen_kein_windows_praefix() {
+    let (_, model) = models().remove(1);
+    let xml = ToastXmlBuilder.build(
+        &model,
+        &ToastOptions {
+            assets_dir: PathBuf::from(r"\\?\C:\Programme\Nexus\toast"),
+            hero_images: true,
+        },
+    );
+    assert!(!xml.contains(r"\\?\"), "{xml}");
+    assert!(xml.contains(r#"src="C:\Programme\Nexus\toast"#), "{xml}");
+}

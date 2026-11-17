@@ -26,7 +26,7 @@ impl Notifier for WindowsNotifier {
         let icon = toast
             .icon
             .as_ref()
-            .map(|icon| icon.to_string_lossy().to_string())
+            .map(|icon| super::toast_path(icon))
             .unwrap_or_default();
         let tag = toast.tag().to_string();
         // WinRT blockiert; deshalb im Blockier-Pool statt im Ereignis-Pool von tokio
