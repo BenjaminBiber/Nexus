@@ -24,6 +24,27 @@ describe('RunThumbs', () => {
     expect(container.innerHTML).toBe('');
   });
 
+  it('zeigt beim Überfahren nach kurzer Pause eine Vorschau an <body>, die beim Verlassen verschwindet', async () => {
+    vi.useFakeTimers();
+    try {
+      const { fireEvent, act } = await import('@testing-library/react');
+      show(FIVE.slice(0, 1));
+      const thumb = screen.getByRole('button', { name: 'Screenshot 1 von 1 vergrößern' });
+      fireEvent.mouseEnter(thumb);
+      expect(document.querySelector('.run-thumb-preview')).toBeNull();
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      const preview = document.body.querySelector(':scope > .run-thumb-preview');
+      expect(preview?.querySelector('img')?.getAttribute('src')).toBe('/shots/run/001.png');
+      expect(preview?.textContent).toBe('Screenshot 1 von 1');
+      fireEvent.mouseLeave(thumb);
+      expect(document.querySelector('.run-thumb-preview')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('zeigt bis zu drei Screenshots ohne „+N“', () => {
     show(FIVE.slice(0, 3));
     const group = screen.getByRole('group', { name: 'Screenshots des Laufs' });

@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type CSSProperties, type MouseEvent, type SyntheticEvent } from 'react';
+import { createPortal } from 'react-dom';
 import type { DispatchRunShotDto } from '../../../api/dispatchTypes.js';
 import { formatDateTime } from '../../../sessions/format.js';
 import { DbModal } from '../DbModal.js';
@@ -28,7 +29,7 @@ function Icon({ name }: { name: string }) {
 // Großansicht eines Screenshots wie in Claude: dunkle Fläche über das ganze Fenster, Bild mittig und so groß wie möglich,
 // Schließen oben rechts, unten links Tool und Zeitpunkt, unten mittig „‹ 2 von 5 ›“. Pfeiltasten blättern, Esc und ein
 // Klick auf die dunkle Fläche neben dem Bild schließen. Der Dialog heißt „Screenshot 2 von 5“ (Überschrift nur für
-// Hilfstechnik).
+// Hilfstechnik). Sie hängt an <body>: im Ticket-Panel (eigene Stapelebene) läge sie sonst unter der Navigationsleiste.
 export function RunShotViewer({ shots, file, url, caption, onChange, onClose }: RunShotViewerProps) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -72,7 +73,7 @@ export function RunShotViewer({ shots, file, url, caption, onChange, onClose }: 
   const label = `Screenshot ${index + 1} von ${shots.length}`;
   const tool = caption?.(shot) ?? '';
   const fitted = fit?.file === shot.file ? fit : null;
-  return (
+  return createPortal(
     <DbModal labelledBy={titleId} onEscape={onClose} onBackdrop={onClose} className="run-viewer" backdropClassName="run-viewer-backdrop" initialFocus={closeRef}>
       <div className="run-viewer-surface" onMouseDown={onDarkDown} onClick={onDarkClick}>
         <h2 id={titleId} className="sr-only">
@@ -107,6 +108,7 @@ export function RunShotViewer({ shots, file, url, caption, onChange, onClose }: 
           </div>
         )}
       </div>
-    </DbModal>
+    </DbModal>,
+    document.body,
   );
 }

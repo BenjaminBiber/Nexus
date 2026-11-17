@@ -14,7 +14,7 @@
   border: 1px solid var(--line);
   border-radius: 4px;
   background: var(--surface-alt);
-  cursor: pointer;
+  cursor: zoom-in;
   overflow: hidden;
 }
 .run-thumb:hover,
@@ -43,6 +43,48 @@
 .run-thumbs-more:hover,
 .run-thumbs-more:focus-visible {
   color: var(--text);
+}
+
+/* Vorschau beim Überfahren eines Vorschaubilds (wie in Claude): Karte mit Bild und Beschriftung, über allem außer
+   der Großansicht, fängt keine Klicks */
+.run-thumb-preview {
+  position: fixed;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 12px 32px var(--shadow-strong), 0 1px 3px var(--shadow-soft);
+  pointer-events: none;
+  animation: run-thumb-preview-in 120ms ease-out;
+}
+.run-thumb-preview.is-above {
+  transform: translateY(-100%);
+}
+.run-thumb-preview img {
+  display: block;
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: var(--surface-alt);
+}
+.run-thumb-preview-label {
+  padding: 0 4px;
+  color: var(--text);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@keyframes run-thumb-preview-in {
+  from { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .run-thumb-preview { animation: none; }
 }
 
 /* Großansicht: dunkel über das ganze Fenster, unabhängig vom Farbschema */
