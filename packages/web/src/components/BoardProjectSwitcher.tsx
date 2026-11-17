@@ -6,6 +6,7 @@ import { notifyDbBoardsChanged } from '../dbquestion/activeBoard.js';
 import { DbAdminDialog } from './db/DbAdminDialog.js';
 import { prefersReducedMotion } from './goo/goo.js';
 import { GooMorph } from './goo/GooMorph.js';
+import { useMenuAim } from './menuAim.js';
 
 const POPOVER_WIDTH = 480;
 // Spätestens danach verschwindet die Goo-Ebene von Aufgang und Abgang (ms), auch wenn ihre Animation nicht zu Ende läuft
@@ -211,6 +212,9 @@ function BoardPickerPopover({ anchor, projects, boards, projectKey, boardId, clo
   const search = useRef<HTMLInputElement>(null);
   const projectList = useRef<HTMLUListElement>(null);
   const boardList = useRef<HTMLUListElement>(null);
+  // Auf dem schrägen Weg zu den Boards wechselt ein überfahrenes Projekt nicht gleich
+  const boardCol = useRef<HTMLDivElement>(null);
+  const aim = useMenuAim(boardCol, setPreview);
   // Goo-Aufgang: vom Feld auf die Größe des Popovers. Gemessen wird vor dem ersten Zeichnen, die Ebene läuft nur kurz.
   // Beim Schließen läuft sie rückwärts und löst dann das eigentliche Schließen aus.
   const [morph, setMorph] = useState<{ from: DOMRect; to: DOMRect; closing: boolean } | null>(null);
@@ -307,7 +311,7 @@ function BoardPickerPopover({ anchor, projects, boards, projectKey, boardId, clo
   return (
     <>
     {morph && <GooMorph key={morph.closing ? 'out' : 'in'} from={morph.from} to={morph.to} closing={morph.closing} onDone={() => (morph.closing ? onClosed() : setMorph(null))} />}
-    <div ref={root} className={`board-picker-pop${closing ? ' is-closing' : ''}`} role="dialog" aria-label="Board wählen" style={style} onKeyDown={onKeyDown}>
+    <div ref={root} className={`board-picker-pop${closing ? ' is-closing' : ''}`} role="dialog" aria-label="Board wählen" style={style} onKeyDown={onKeyDown} onMouseMove={aim.track}>
       <input
         ref={search}
         type="search"
@@ -324,7 +328,7 @@ function BoardPickerPopover({ anchor, projects, boards, projectKey, boardId, clo
         <div className="bp-cols">
           <div className="bp-col">
             <span className="bp-col-title" id="bp-projects">Projekte</span>
-            <ul ref={projectList} className="bp-list" aria-labelledby="bp-projects" onKeyDown={onProjectKey}>
+            <ul ref={projectList} className="bp-list" aria-labelledby="bp-projects" onKeyDown={onProjectKey} onMouseLeave={aim.cancel}>
               {visibleProjects.map((p) => {
                 const count = boards.filter((b) => b.projectKey === p.key).length;
                 return (
@@ -335,7 +339,7 @@ function BoardPickerPopover({ anchor, projects, boards, projectKey, boardId, clo
                       aria-current={p.key === current ? 'true' : undefined}
                       tabIndex={p.key === current ? 0 : -1}
                       onFocus={() => setPreview(p.key)}
-                      onMouseEnter={() => setPreview(p.key)}
+                      onMouseEnter={() => aim.enter(p.key)}
                       onClick={() => onChoose({ project: p.key, board: boards.find((b) => b.projectKey === p.key)?.id ?? null })}
                     >
                       <span className="bp-key">{p.key}</span>
@@ -347,7 +351,7 @@ function BoardPickerPopover({ anchor, projects, boards, projectKey, boardId, clo
               })}
             </ul>
           </div>
-          <div className="bp-col">
+          <div ref={boardCol} className="bp-col">
             <span className="bp-col-title" id="bp-boards">
               Boards{currentProject ? ` in ${currentProject.key}` : ''}
             </span>
