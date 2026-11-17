@@ -134,6 +134,33 @@ describe('Dispatcher am Board', () => {
     expect(within(dialog).getByText('ticket/ARC-0004-y')).toBeTruthy();
   });
 
+  it('zeigt als Worker nur Läufe; Merge-Session ohne Doppel, wartende Merges in der Warteschlange', () => {
+    const status = dispatchStatus({
+      state: 'running', message: 'läuft · 1/10', active: 1,
+      runs: [{ id: 'ARC-0093-20261117-082500-merge', kind: 'merge', ticketId: 'ARC-0093', title: 'Einstellungen', profile: 'standard', model: 'opus', effort: 'low', startedAt: '2026-11-17T07:25:00.000Z', log: 'ARC-0093-20261117-082500-merge.log' }],
+      merges: [
+        { ticketId: 'ARC-0069', phase: 'waiting', branch: 'ticket/ARC-0069-x' },
+        { ticketId: 'ARC-0093', phase: 'session', branch: 'ticket/ARC-0093-y' },
+        { ticketId: 'ARC-0094', phase: 'session', branch: 'ticket/ARC-0094-z' },
+      ],
+    });
+    render(
+      <ApiProvider api={fakeApi()}>
+        <MemoryRouter>
+          <DispatchDialog boardId={1} status={status} error={null} pid="p1" onClose={() => undefined} onStatus={() => undefined} onReload={() => undefined} onOpenTicket={() => undefined} onChanged={() => undefined} />
+        </MemoryRouter>
+      </ApiProvider>,
+    );
+    const workers = screen.getByRole('list', { name: 'Laufende Worker' });
+    expect(within(workers).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(workers).getAllByText('ARC-0093')).toHaveLength(1);
+    expect(within(workers).getByText('ARC-0094')).toBeTruthy();
+    expect(within(workers).queryByText('ARC-0069')).toBeNull();
+    const queue = screen.getByRole('region', { name: 'Merge-Warteschlange' });
+    expect(within(queue).getByText('ARC-0069')).toBeTruthy();
+    expect(within(queue).getByText('wartet auf weitere Tickets')).toBeTruthy();
+  });
+
   it('Indikator zeigt „Recherche läuft“, wenn nur Recherchen laufen', () => {
     const only = dispatchStatus({ state: 'off', message: 'Dispatcher ist ausgeschaltet', active: 0, research: { auto: false, wip: 2, active: 2 } });
     const { rerender } = render(<DispatchIndicator status={only} error={null} onOpen={() => undefined} />);
