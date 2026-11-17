@@ -251,7 +251,7 @@ impl AccountPool for StoredAccountPool {
             );
             (
                 own.reserve,
-                Some(own.source),
+                Some((own.source, own.minutes)),
                 pending_reserve(running, &samples, fallback, &states),
             )
         };
@@ -274,12 +274,17 @@ impl AccountPool for StoredAccountPool {
                     why,
                     snapshot,
                 },
-                Some(source),
+                Some((source, minutes)),
             ) => AccountChoice::Picked {
                 account,
+                // Die Ticket-Ansicht liest Reserve und Dauer aus diesem Text (DbTicketWork)
                 why: format!(
-                    "{why}; Reserve 5 h {} %, Woche {} % ({source})",
-                    reserve.five_hour, reserve.week
+                    "{why}; Reserve 5 h {} %, Woche {} % ({source}){}",
+                    reserve.five_hour,
+                    reserve.week,
+                    minutes
+                        .map(|minutes| format!("; Dauer etwa {minutes} min"))
+                        .unwrap_or_default()
                 ),
                 snapshot,
             },
@@ -662,7 +667,9 @@ mod tests {
             panic!("es sollte starten: {choice:?}");
         };
         assert!(
-            why.contains("Reserve 5 h 3 %, Woche 1 % (aus 5 Läufen profil:klein/sonnet/high)"),
+            why.ends_with(
+                "Reserve 5 h 3 %, Woche 1 % (aus 5 Läufen profil:klein/sonnet/high); Dauer etwa 30 min"
+            ),
             "{why}"
         );
     }

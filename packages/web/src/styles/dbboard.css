@@ -264,6 +264,9 @@
 .db-panel-side .db-work-list dt { font-weight: 600; color: var(--text); }
 .db-panel-side .db-work-list dd { color: var(--muted); }
 .db-panel-side .db-work-list .db-session { margin-right: 6px; }
+.db-work-list .db-work-info { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.db-work-list .db-work-info .info-tip { width: 18px; height: 18px; }
+.db-work-list .db-work-info .info-tip svg { width: 14px; height: 14px; }
 .db-session { margin-right: 8px; }
 .db-step-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 0; padding-left: 0; list-style: none; }
 .db-step-row { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }

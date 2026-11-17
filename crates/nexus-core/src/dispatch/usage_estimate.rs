@@ -2,7 +2,9 @@
 //!
 //! Zuerst zählen Proben mit gleichem Profil, Modell und Effort, sonst nur die mit gleichem
 //! Profil; je Fenster das 75. Perzentil der letzten 20 passenden Verbräuche, ab 5 Proben. Sonst
-//! gilt der feste Puffer aus der Einstellung. Reine Logik – die Proben kommen von außen.
+//! gilt der feste Puffer aus der Einstellung. Die Dauer schätzt sie genauso (75. Perzentil der
+//! Laufzeiten), aber ohne Puffer: zu wenige Proben ergeben keine Dauer. Reine Logik – die
+//! Proben kommen von außen.
 
 use chrono::DateTime;
 
@@ -28,6 +30,8 @@ pub struct EstimatedReserve {
     pub reserve: AccountReserve,
     /// Woher die Reserve stammt, z. B. „aus 7 Läufen profil:klein/sonnet/high“ oder „Puffer“
     pub source: String,
+    /// Erwartete Dauer des Laufs in Minuten (aufgerundet); `None` bei zu wenigen Proben
+    pub minutes: Option<i64>,
 }
 
 /// Reserve eines Laufs aus vergangenen Proben (älteste zuerst); `fallback` = Puffer aus der
@@ -55,7 +59,26 @@ pub fn estimate_reserve(
             week: week.0,
         },
         source: five.1,
+        minutes: estimate_minutes(&same_all, &same_profile),
     }
+}
+
+/// Erwartete Dauer in Minuten: 75. Perzentil der letzten passenden Laufzeiten, erst Stufe
+/// Profil/Modell/Effort, dann Profil; zu wenige Proben ergeben `None`
+fn estimate_minutes(same_all: &[&UsageSample], same_profile: &[&UsageSample]) -> Option<i64> {
+    [same_all, same_profile].into_iter().find_map(|candidates| {
+        let seconds: Vec<i64> = candidates.iter().filter_map(|s| run_seconds(s)).collect();
+        let recent = &seconds[seconds.len().saturating_sub(MAX_SAMPLES)..];
+        (recent.len() >= MIN_SAMPLES).then(|| (percentile_75(recent) + 59) / 60)
+    })
+}
+
+/// Laufzeit einer Probe in Sekunden; `None`, wenn eine Zeit nicht lesbar oder die Dauer negativ ist
+fn run_seconds(sample: &UsageSample) -> Option<i64> {
+    let started = DateTime::parse_from_rfc3339(&sample.started_at).ok()?;
+    let ended = DateTime::parse_from_rfc3339(&sample.ended_at).ok()?;
+    let seconds = (ended - started).num_seconds();
+    (seconds >= 0).then_some(seconds)
 }
 
 /// Wie der Verbrauch eines Fensters aus einer Probe gelesen wird
@@ -273,6 +296,30 @@ mod tests {
         assert_eq!(estimate.reserve.five_hour, 6);
         assert_eq!(estimate.reserve.week, FALLBACK.week);
         assert_eq!(estimate.source, "aus 8 Läufen profil:klein/sonnet/high");
+    }
+
+    #[test]
+    fn duration_is_the_75th_percentile_in_whole_minutes() {
+        let mut samples: Vec<_> = (1..=8).map(|n| used("klein", n, n)).collect();
+        // Start 10:00, Laufzeiten 10, 20, …, 80 Minuten plus 30 Sekunden
+        for (i, sample) in samples.iter_mut().enumerate() {
+            let minutes = (i + 1) * 10;
+            sample.ended_at = format!(
+                "2026-11-03T{:02}:{:02}:30.000Z",
+                10 + minutes / 60,
+                minutes % 60
+            );
+        }
+        let estimate = estimate_reserve(&samples, &run(), FALLBACK);
+        // P75 von 8 Werten = 6. Wert = 60 min 30 s → aufgerundet 61
+        assert_eq!(estimate.minutes, Some(61));
+    }
+
+    #[test]
+    fn few_samples_give_no_duration() {
+        let samples: Vec<_> = (1..=4).map(|n| used("klein", n, n)).collect();
+        assert_eq!(estimate_reserve(&samples, &run(), FALLBACK).minutes, None);
+        assert_eq!(estimate_reserve(&[], &run(), FALLBACK).minutes, None);
     }
 
     #[test]

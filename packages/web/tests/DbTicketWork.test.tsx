@@ -32,6 +32,39 @@ describe('DbTicketWork', () => {
     expect(value.getAttribute('title')).toBe('max – Profil schwer → max, meiste freie Kapazität: max (20 %), pro-2 (?)');
   });
 
+  it('zeigt hinter dem Account ein (i) mit geschätzter Limit-Belastung und Dauer', async () => {
+    const ticket = dbDetail(dbCard('ARC-0001', 'Schwer'), {
+      branch: 'ticket/x',
+      comments: [comment(1, `${START}\nAccount: max (alle Accounts → max; Reserve 5 h 4 %, Woche 1 % (aus 8 Läufen Profil schwer); Dauer etwa 95 min).`)],
+    });
+    show(ticket);
+    const name = await screen.findByText('Arbeit-Max');
+    expect(name.closest('dd')?.previousElementSibling?.textContent).toBe('Account');
+    expect(screen.getByRole('button', { name: 'Erklärung: Geschätzter Verbrauch des Laufs' })).toBeTruthy();
+    expect(screen.getByText('5-Stunden-Limit: etwa +4 %')).toBeTruthy();
+    expect(screen.getByText('Wochenlimit: etwa +1 %')).toBeTruthy();
+    expect(screen.getByText('Dauer: etwa 1 h 35 min')).toBeTruthy();
+    expect(screen.getByText('Grundlage: aus 8 Läufen Profil schwer (75. Perzentil).')).toBeTruthy();
+  });
+
+  it('mit Puffer und ohne Dauer: Dauer unbekannt, Hinweis auf den Puffer', async () => {
+    const ticket = dbDetail(dbCard('ARC-0001', 'Neu'), {
+      branch: 'ticket/x',
+      comments: [comment(1, `${START}\nAccount: max (alle Accounts → max; Reserve 5 h 10 %, Woche 2 % (Puffer)).`)],
+    });
+    show(ticket);
+    await screen.findByText('Arbeit-Max');
+    expect(screen.getByText('Dauer: noch unbekannt')).toBeTruthy();
+    expect(screen.getByText(/zu wenige vergleichbare Läufe/)).toBeTruthy();
+  });
+
+  it('ohne Schätzung in der Begründung kein (i)', async () => {
+    const ticket = dbDetail(dbCard('ARC-0001', 'Alt'), { branch: 'ticket/x', comments: [comment(1, `${START}\nAccount: max (alle Accounts → max).`)] });
+    show(ticket);
+    await screen.findByText('Arbeit-Max');
+    expect(screen.queryByRole('button', { name: /Erklärung/ })).toBeNull();
+  });
+
   it('ohne Account im letzten Start (älterer Lauf, ein Account) keine Zeile', () => {
     const ticket = dbDetail(dbCard('ARC-0001', 'Alt'), { branch: 'ticket/x', comments: [comment(1, START)] });
     show(ticket);
