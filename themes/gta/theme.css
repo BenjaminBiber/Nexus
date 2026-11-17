@@ -338,7 +338,7 @@
    mit den Tokens der Stile; Rundungen, Maße und Mono-Schrift kommen über die Variablen des Kerns. ---- */
 
 /* Überschriften: GTA V in Versalien der Titelschrift, San Andreas in Pirata One mit Kontur */
-:root[data-theme='gta'] :is(.page-title, .page > h1, .page > div > h1, .page-head > h1, .questions-head > h1, .dash-title > h1, .settings-head h2, .settings-nav-title) {
+:root[data-theme='gta'] :is(.page-title, .page > h1, .page > div > h1, .page-head > h1, .questions-head > h1, .qx-head > h1, .dash-title > h1, .settings-head h2, .settings-nav-title) {
   color: var(--gta-title-color);
   font-family: var(--gta-head-family);
   font-weight: var(--gta-head-weight);
@@ -347,7 +347,7 @@
   text-shadow: var(--gta-title-shadow);
 }
 
-:root[data-theme='gta'] :is(.page-title, .page > h1, .page > div > h1, .page-head > h1, .questions-head > h1, .dash-title > h1, .settings-head h2) {
+:root[data-theme='gta'] :is(.page-title, .page > h1, .page > div > h1, .page-head > h1, .questions-head > h1, .qx-head > h1, .dash-title > h1, .settings-head h2) {
   font-size: var(--gta-title-size);
   line-height: 1.05;
 }
@@ -1378,8 +1378,8 @@
 
 /* ---- Seiten Meine Aufgaben, Dashboard, Sessions und Fragen: Kästen als Paneele des Spiels, Zähler und Kennzahlen in
    der HUD-Schrift. Hier stehen Form und Zustände, den Look der Spiele setzen die Stil-Abschnitte ---- */
-:root[data-theme='gta'] :is(.card.group, .question-list, .research-current, .research-request, .research-earlier, .decision-form, .dash-card, .kpi, .todo-group, .fc-list, .ri-list, .ri-stat),
-:root[data-theme='gta'] :is(.card.group, .question-list, .research-current, .research-request, .research-earlier, .decision-form, .dash-card, .kpi, .todo-group, .fc-list, .ri-list, .ri-stat):hover {
+:root[data-theme='gta'] :is(.card.group, .qx-decide, .qx-content, .dash-card, .kpi, .todo-group, .fc-list, .ri-list, .ri-stat),
+:root[data-theme='gta'] :is(.card.group, .qx-decide, .qx-content, .dash-card, .kpi, .todo-group, .fc-list, .ri-list, .ri-stat):hover {
   border: var(--gta-panel-border);
   border-radius: 0;
   background: var(--gta-panel);
@@ -1808,145 +1808,180 @@
   font-weight: 400;
 }
 
-/* Fragen: Liste als Paneel mit Kopfzeile, Zustände als Marken in ihrer Farbe (--q-color, Hilfsvariable), Optionen als
-   wählbare Kästen; die gewählte Option ist in jedem Stil deutlich hervorgehoben */
-:root[data-theme='gta'] .question-list,
-:root[data-theme='gta'] .question-list:hover {
-  gap: 0;
-  padding: 0;
+/* Fragen: Liste, Frage und Bezüge als Paneele des Spiels, alles eckig; Marken, Reiter und Umschalter in der Sprache der
+   übrigen Bausteine, Beschriftungen in der Label-Schrift; Titel der Frage in der Schmuckschrift wie der Titel des
+   Auftrags. Die gewählte Frage und Option setzen die Stil-Abschnitte */
+:root[data-theme='gta'] .qx {
+  background: transparent;
 }
 
-:root[data-theme='gta'] .question-head {
-  border-bottom-color: var(--gta-line);
-  background: rgba(0, 0, 0, 0.6);
+:root[data-theme='gta'] :is(.qx-head, .qx-filterbar, .qx-list, .qx-rail) {
+  border-color: var(--gta-line);
+  background: var(--gta-panel);
+}
+
+:root[data-theme='gta'] :is(.qx-btn, .qx-chip, .qx-badge, .qx-key, .qx-wait, .qx-count, .qx-followup-dot, .qx-seg, .qx-seg-tab, .qx-search input, .qx-option, .qx-option-pick, .qx-custom, .qx-context, .qx-reason textarea, .qx-outcome, .qx-followup, .qx-findings, .qx-older, .qx-ro-option, .qx-ro-body .qx-proscons, .qx-comment) {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .qx-btn {
+  font: var(--gta-btn-font);
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] .qx-btn.accent {
+  background: var(--gta-primary-bg);
+  color: var(--gta-primary-fg);
+}
+
+:root[data-theme='gta'] .qx-btn.accent:hover:not(:disabled) {
+  background: var(--gta-primary-hover);
+  color: var(--gta-primary-fg);
+}
+
+:root[data-theme='gta'] .qx-btn:not(.accent, .danger):hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--gta-sel-bg);
+  color: var(--gta-sel-fg);
+}
+
+:root[data-theme='gta'] :is(.qx-chip, .qx-badge, .qx-wait, .qx-count) {
+  font: var(--gta-chip-font);
+  letter-spacing: var(--gta-chip-track);
+  text-transform: var(--gta-chip-case);
+}
+
+:root[data-theme='gta'] :is(.qx-label, .qx-group, .qx-pc-label, .qx-rail-sec h3, .qx-sec h3) {
   color: var(--gta-label-color);
   font: var(--gta-label-font);
   letter-spacing: var(--gta-label-track);
   text-transform: uppercase;
 }
 
-:root[data-theme='gta'] .question-row {
+:root[data-theme='gta'] .qx-pc.pros .qx-pc-label {
+  color: var(--gta-ok);
+}
+
+:root[data-theme='gta'] .qx-pc.cons .qx-pc-label {
+  color: color-mix(in srgb, var(--gta-danger) 70%, #fff);
+}
+
+/* Reiter und Umschalter wie die Reiter des Pausenmenüs */
+:root[data-theme='gta'] :is(.qx-tab, .qx-seg-tab) {
+  border-bottom: 0;
+  background: var(--gta-tab-bg);
+  color: var(--gta-tab-fg);
+  font: var(--gta-tab-font);
+  letter-spacing: var(--gta-btn-track);
+  text-transform: uppercase;
+}
+
+:root[data-theme='gta'] :is(.qx-tab, .qx-seg-tab):hover {
+  background: var(--gta-hover-bg);
+  color: var(--gta-hover-fg);
+}
+
+:root[data-theme='gta'] :is(.qx-tab, .qx-seg-tab)[aria-selected='true'],
+:root[data-theme='gta'] :is(.qx-tab, .qx-seg-tab)[aria-selected='true']:hover {
+  background: var(--gta-tab-on-bg);
+  box-shadow: var(--gta-tab-on-mark);
+  color: var(--gta-tab-on-fg);
+  font-weight: inherit;
+}
+
+:root[data-theme='gta'] :is(.qx-tab, .qx-seg-tab)[aria-selected='true'] :is(.qx-tab-count, .qx-seg-count) {
+  color: inherit;
+}
+
+:root[data-theme='gta'] .qx-seg {
+  gap: 2px;
+  padding: 0;
+  background: transparent;
+}
+
+:root[data-theme='gta'] .qx-tabs {
+  gap: 2px;
+  padding: 0;
+  border-bottom-color: var(--gta-line);
+}
+
+/* Liste: Zeilen mit feiner Trennlinie, eine neue Frage mit Akzentrahmen */
+:root[data-theme='gta'] .qx-row {
   border-top-color: rgba(255, 255, 255, 0.08);
   transition: background-color 0.12s, color 0.12s;
 }
 
-:root[data-theme='gta'] .question-row.fresh {
+:root[data-theme='gta'] .qx-row.fresh {
   box-shadow: inset 0 0 0 2px var(--gta-accent);
 }
 
-:root[data-theme='gta'] .question-title a {
+:root[data-theme='gta'] .qx-row-link {
   color: inherit;
 }
 
-:root[data-theme='gta'] .question-title a:hover {
-  color: inherit;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-:root[data-theme='gta'] .qlink {
-  border-radius: 0;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-:root[data-theme='gta'] a.qlink:hover {
-  background: rgba(255, 255, 255, 0.24);
-}
-
-:root[data-theme='gta'] .badge:is(.q-ready, .q-waiting, .q-researched, .q-new, .q-answered, .q-discarded) {
-  background: color-mix(in srgb, var(--q-color) 20%, #000);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--q-color) 50%, transparent);
-  color: var(--q-color);
-}
-
-:root[data-theme='gta'] .badge.q-ready {
-  --q-color: var(--gta-ok);
-}
-
-:root[data-theme='gta'] .badge.q-waiting {
-  --q-color: var(--gta-warn);
-}
-
-:root[data-theme='gta'] .badge.q-researched {
-  --q-color: var(--gta-c-in_planning);
-}
-
-:root[data-theme='gta'] .badge:is(.q-new, .q-answered) {
-  --q-color: var(--gta-accent);
-}
-
-:root[data-theme='gta'] .badge.q-discarded {
-  --q-color: var(--gta-text-dim);
-}
-
-/* Titel der Frage in der Schmuckschrift wie der Titel des Auftrags */
-:root[data-theme='gta'] .question-detail-head h1 {
+:root[data-theme='gta'] .qx-title h2 {
   color: var(--gta-title-color);
   font: 400 clamp(26px, 2.8vw, 36px)/1.2 var(--gta-font-script);
   letter-spacing: 0.01em;
   text-shadow: var(--gta-title-shadow);
 }
 
-/* Bezüge (wartende Tickets, Abhängigkeiten): Überschriften in der Akzentfarbe wie die Zwischentitel der Preview */
-:root[data-theme='gta'] .db-question-relations h2 {
-  color: var(--gta-head-accent);
-  font-family: var(--gta-head-family);
-  font-weight: var(--gta-head-weight);
-  letter-spacing: var(--gta-head-track);
-  text-transform: var(--gta-head-case);
-  text-shadow: var(--gta-head-shadow);
-}
-
-:root[data-theme='gta'] .option-card,
-:root[data-theme='gta'] .option-card:hover {
+/* Entscheidung: Optionen als wählbare Kästen auf dem Paneel, Vor- und Nachteile auf dunklem Grund */
+:root[data-theme='gta'] :is(.qx-option, .qx-custom),
+:root[data-theme='gta'] :is(.qx-option, .qx-custom):hover {
   border: 1px solid var(--gta-line);
-  border-radius: 0;
   background: rgba(0, 0, 0, 0.6);
-  box-shadow: none;
   color: var(--gta-text);
   transition: background-color 0.12s, color 0.12s;
 }
 
-:root[data-theme='gta'] .option-card.recommended {
-  border-color: var(--gta-text-dim);
+:root[data-theme='gta'] .qx-proscons {
+  border-color: var(--gta-line);
+  background: rgba(0, 0, 0, 0.35);
 }
 
-:root[data-theme='gta'] .option-list .pro {
-  color: var(--gta-ok);
-  font-weight: 700;
+:root[data-theme='gta'] :is(.qx-context, .qx-decide-foot, .qx-comment-foot) {
+  background: rgba(0, 0, 0, 0.45);
 }
 
-:root[data-theme='gta'] .option-list .con {
-  color: color-mix(in srgb, var(--gta-danger) 70%, #fff);
-  font-weight: 700;
-}
-
-:root[data-theme='gta'] .option-label {
-  color: var(--gta-label-color);
-  font: var(--gta-label-font);
-  letter-spacing: var(--gta-label-track);
-  text-transform: uppercase;
-}
-
-:root[data-theme='gta'] .decision-choice {
-  border-radius: 0;
-  background: rgba(0, 0, 0, 0.5);
-  box-shadow: inset 3px 0 0 var(--gta-accent);
-}
-
-:root[data-theme='gta'] .decision-box {
-  border-radius: 0;
+/* Ergebnis: getroffene Entscheidung mit grüner, verworfene mit gedämpfter Linie; Folgefrage mit Akzentlinie */
+:root[data-theme='gta'] .qx-outcome {
+  border: 0;
   background: color-mix(in srgb, var(--gta-ok) 12%, #000);
   box-shadow: inset 3px 0 0 var(--gta-ok);
 }
 
-:root[data-theme='gta'] .decision-box.discarded {
+:root[data-theme='gta'] .qx-outcome.discarded {
   background: var(--gta-panel);
   box-shadow: inset 3px 0 0 var(--gta-text-dim);
 }
 
-:root[data-theme='gta'] .research-earlier summary:hover {
+:root[data-theme='gta'] .qx-outcome-icon {
+  border-radius: 0;
+}
+
+:root[data-theme='gta'] .qx-followup {
+  border: 0;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: inset 3px 0 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'] :is(.qx-findings, .qx-older, .qx-ro-option) {
+  border-color: var(--gta-line);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme='gta'] :is(.qx-findings, .qx-older, .qx-ro-option) > summary:hover {
   background: var(--gta-hover-bg);
+}
+
+/* Zustandsmarken im Entwurf einer Frage */
+:root[data-theme='gta'] .badge:is(.q-new, .q-answered) {
+  --q-color: var(--gta-accent);
+  background: color-mix(in srgb, var(--q-color) 20%, #000);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--q-color) 50%, transparent);
+  color: var(--q-color);
 }
 
 /* ---- Docs, Anleitung, Einstellungen samt Theme-Store, Diff und Code, Diagramme und Seiten ohne Rahmen. Hier stehen
@@ -4517,74 +4552,84 @@
 
 /* Fragen: Liste wie die Fragenliste der Preview mit weißer Auswahl; Optionen als Kästen, die gewählte weiß mit
    Akzentlinie oben wie ein gewählter Reiter */
-:root[data-theme='gta']:not([data-gta-style='sa']) .question-row:is(:hover, :focus-within) {
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-row:is(:hover, :focus-within, .current) {
   background: #ffffff;
   color: #000000;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .question-row:is(:hover, :focus-within) :is(.muted, .question-origin) {
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-row:is(:hover, :focus-within, .current) :is(.qx-row-meta, .qx-row-icon) {
   color: rgba(0, 0, 0, 0.68);
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .question-row:is(:hover, :focus-within) :is(.tag:not(.add), .qlink, .badge:not(:is(.q-ready, .q-waiting, .q-researched, .q-new, .q-answered, .q-discarded))) {
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-row:is(:hover, :focus-within, .current) .qx-chip {
   background: rgba(0, 0, 0, 0.13);
   color: #000000;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .question-row:is(:hover, :focus-within) :focus-visible {
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-row:has(.qx-row-link:focus-visible) {
   outline-color: #000000;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .question-title {
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-row-title {
   font: 600 15px/1.25 var(--gta-font-ui);
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .question-id {
-  font: 500 13.5px/1.2 var(--gta-font-title);
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-row-meta .mono {
+  font: 500 12.5px/1.2 var(--gta-font-title);
   letter-spacing: 0.08em;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .option-card {
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-option {
   border-color: transparent;
   background: var(--gta-panel);
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .option-card.recommended {
-  border-color: var(--gta-text-dim);
-}
-
-:root[data-theme='gta']:not([data-gta-style='sa']) .option-title {
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-option-title {
   font: 700 17px/1.2 var(--gta-font-title);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .option-card.picked,
-:root[data-theme='gta']:not([data-gta-style='sa']) .option-card.picked:hover {
+:root[data-theme='gta']:not([data-gta-style='sa']) :is(.qx-option, .qx-custom).on,
+:root[data-theme='gta']:not([data-gta-style='sa']) :is(.qx-option, .qx-custom).on:hover {
   border-color: #ffffff;
   background: #ffffff;
   box-shadow: inset 0 4px 0 var(--gta-accent);
   color: #000000;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .option-card.picked .muted {
+:root[data-theme='gta']:not([data-gta-style='sa']) :is(.qx-option, .qx-custom).on :is(.qx-option-desc, .qx-chip, .material-icons) {
   color: rgba(0, 0, 0, 0.68);
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .option-card.picked .option-list .pro {
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-custom.on input {
+  color: #000000;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-option.on .qx-proscons {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: #f2f2f2;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-option.on .qx-pc li {
+  color: #000000;
+}
+
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-option.on .qx-pc.pros .qx-pc-label,
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-option.on .qx-pc.pros li::before {
   color: #1d7a1d;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .option-card.picked .option-list .con {
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-option.on .qx-pc.cons .qx-pc-label,
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-option.on .qx-pc.cons li::before {
   color: #b01818;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .option-card.picked .btn.primary {
-  background: #000000;
-  color: #ffffff;
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-option.on .qx-radio {
+  border-color: #000000;
 }
 
-:root[data-theme='gta']:not([data-gta-style='sa']) .option-card.picked :focus-visible {
+:root[data-theme='gta']:not([data-gta-style='sa']) .qx-option.on :focus-visible {
   outline-color: #000000;
 }
 
@@ -6116,8 +6161,8 @@
 }
 
 /* Kästen der Seiten mit schwarzer Kontur und feiner Linie wie die Tafeln der Preview */
-:root[data-theme='gta'][data-gta-style='sa'] :is(.card.group, .question-list, .research-current, .research-request, .research-earlier, .decision-form, .dash-card, .kpi, .todo-group, .fc-list, .ri-list, .ri-stat),
-:root[data-theme='gta'][data-gta-style='sa'] :is(.card.group, .question-list, .research-current, .research-request, .research-earlier, .decision-form, .dash-card, .kpi, .todo-group, .fc-list, .ri-list, .ri-stat):hover {
+:root[data-theme='gta'][data-gta-style='sa'] :is(.card.group, .qx-decide, .qx-content, .dash-card, .kpi, .todo-group, .fc-list, .ri-list, .ri-stat),
+:root[data-theme='gta'][data-gta-style='sa'] :is(.card.group, .qx-decide, .qx-content, .dash-card, .kpi, .todo-group, .fc-list, .ri-list, .ri-stat):hover {
   box-shadow: 0 0 0 1px var(--gta-line);
 }
 
@@ -6278,58 +6323,54 @@
 
 /* Fragen wie die Tafeln „Anrufe“: Zeilen mit Trennlinie, Optionen als Kästen, die gewählte mit Rahmen in der
    Akzentfarbe und Titel in der Akzentfarbe */
-:root[data-theme='gta'][data-gta-style='sa'] .question-head {
+:root[data-theme='gta'][data-gta-style='sa'] :is(.qx-head, .qx-filterbar) {
   background: #050505;
 }
 
-:root[data-theme='gta'][data-gta-style='sa'] .question-row:hover {
+:root[data-theme='gta'][data-gta-style='sa'] .qx-row:hover {
   background: color-mix(in srgb, var(--gta-accent) 12%, transparent);
 }
 
-:root[data-theme='gta'][data-gta-style='sa'] .question-title {
+:root[data-theme='gta'][data-gta-style='sa'] .qx-row.current {
+  background: color-mix(in srgb, var(--gta-accent) 22%, transparent);
+  box-shadow: inset 3px 0 0 var(--gta-accent);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .qx-row.current .qx-row-link {
+  color: var(--gta-accent);
+}
+
+:root[data-theme='gta'][data-gta-style='sa'] .qx-row-title {
   font: 700 14px/1.3 var(--gta-font-ui);
 }
 
-:root[data-theme='gta'][data-gta-style='sa'] .question-id {
+:root[data-theme='gta'][data-gta-style='sa'] .qx-row-meta .mono {
   color: var(--sa-slate);
   font: 400 10px/1.4 var(--gta-font-title);
   letter-spacing: 0.05em;
   white-space: nowrap;
 }
 
-/* Spalte „Nr.“ breit genug für Nummern wie NOVA-F0001 in der breiten Michroma; sonst wie im Kern (unter 800 px
-   stapelt der Kern die Zeile, dort gilt seine Regel) */
-@media (min-width: 801px) {
-  :root[data-theme='gta'][data-gta-style='sa'] :is(.question-head, .question-row) {
-    grid-template-columns: 104px minmax(0, 1fr) 110px minmax(200px, 260px) 120px;
-  }
-}
-
-:root[data-theme='gta'][data-gta-style='sa'] .option-card {
+:root[data-theme='gta'][data-gta-style='sa'] :is(.qx-option, .qx-custom) {
   border: 2px solid #000;
   background: rgba(0, 0, 0, 0.7);
   box-shadow: 0 0 0 1px var(--gta-line);
 }
 
-:root[data-theme='gta'][data-gta-style='sa'] .option-card.recommended {
-  border-color: #000;
-  box-shadow: 0 0 0 1px var(--gta-text-dim);
-}
-
-:root[data-theme='gta'][data-gta-style='sa'] .option-title {
+:root[data-theme='gta'][data-gta-style='sa'] .qx-option-title {
   color: #ffffff;
   font: 400 22px/1.1 var(--gta-font-script);
   text-shadow: var(--sa-o1);
 }
 
-:root[data-theme='gta'][data-gta-style='sa'] .option-card.picked,
-:root[data-theme='gta'][data-gta-style='sa'] .option-card.picked:hover {
+:root[data-theme='gta'][data-gta-style='sa'] :is(.qx-option, .qx-custom).on,
+:root[data-theme='gta'][data-gta-style='sa'] :is(.qx-option, .qx-custom).on:hover {
   border-color: #000;
   background: color-mix(in srgb, var(--gta-accent) 16%, rgba(0, 0, 0, 0.85));
   box-shadow: 0 0 0 2px var(--gta-accent);
 }
 
-:root[data-theme='gta'][data-gta-style='sa'] .option-card.picked .option-title {
+:root[data-theme='gta'][data-gta-style='sa'] .qx-option.on .qx-option-title {
   color: var(--gta-accent);
 }
 
@@ -6501,6 +6542,7 @@
     .db-board-head > .page-title,
     .dash-title > h1,
     .page > .questions-head > h1,
+    .qx-head > h1,
     .page-head > h1,
     .docs-explorer-title > h1,
     .page > div > h1:has(+ .lead),
