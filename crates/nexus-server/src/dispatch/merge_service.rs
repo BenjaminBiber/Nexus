@@ -38,6 +38,10 @@ use crate::dispatch::result_handler::MergeSessionEnd;
 /// Bezeichnung des Hauptordners in Meldungen
 const MAIN_LABEL: &str = "Hauptordner";
 
+/// Ab so vielen Minuten seit dem Merge-Auftrag meldet sich ein Merge, der auf seinen Ordner
+/// wartet (kurze Git-Aktionen im Hauptordner erledigen sich vorher von selbst)
+const HOLD_NOTICE_MINUTES: i64 = 15;
+
 /// Schluss des Kommentars, wenn der Autopilot nach einer gescheiterten Merge-Session die nächste
 /// vormerkt; der Prompt der nächsten Session liest den Kommentar daran wieder
 const NEXT_SESSION: &str = ", nächster Versuch.";
@@ -281,6 +285,7 @@ Grund „Merge: …“).",
             target_head: None,
             conflict_seen: Some(false),
             held_by: None,
+            hold_noticed: None,
             since,
         };
         ctx.stores
@@ -297,6 +302,7 @@ Grund „Merge: …“).",
                     entry.target_head = None;
                     entry.conflict_seen = Some(false);
                     entry.held_by = Some(None);
+                    entry.hold_noticed = None;
                 }
                 state.merges.insert(id.clone(), fresh.clone());
             })
@@ -838,7 +844,7 @@ dort („Mergen“ bzw. nexus board merge)"
                 self.close(ctx, &work, &place);
             }
             return match held {
-                Some(held) => self.hold(ctx, &job, &place, &held).await,
+                Some(held) => self.hold(ctx, &job, &work, &place, &held).await,
                 None => Ok(Vec::new()),
             };
         }
@@ -875,6 +881,7 @@ dort („Mergen“ bzw. nexus board merge)"
                         .hold(
                             ctx,
                             &job,
+                            &work,
                             &place,
                             &HoldReason {
                                 kind: HoldKind::Overlap,
@@ -1306,11 +1313,12 @@ Worktrees fertig sind.",
     /// Der Ordner lässt den Merge gerade nicht zu: je Art des Grundes einmal kommentieren, dann
     /// still warten – eine andere Dateiliste desselben Grundes kommentiert nicht erneut. Jeder
     /// Durchlauf prüft erneut und mergt, sobald der Grund weg ist (committet, verworfen,
-    /// Git-Aktion beendet)
+    /// Git-Aktion beendet). Wartet der Auftrag schon länger, kommt einmal eine Meldung
     async fn hold(
         &self,
         ctx: &DispatchContext,
         job: &BranchJob,
+        work: &RepoWork,
         place: &MergePlace,
         reason: &HoldReason,
     ) -> Result<Vec<String>> {
@@ -1320,23 +1328,27 @@ Worktrees fertig sind.",
             .iter()
             .filter(|entry| entry.held_by.clone().flatten().as_deref() != Some(kind))
             .collect();
-        if fresh.is_empty() {
+        let notice = hold_notice(ctx, job, work, place, reason);
+        if fresh.is_empty() && notice.is_none() {
             return Ok(Vec::new());
         }
+        let commented = !fresh.is_empty();
         for entry in fresh {
             ctx.comment(
                 &entry.ticket_id,
                 &format!(
-                    "{} auf den {}: {} – gemergt wird automatisch, sobald das erledigt ist.",
+                    "{} auf den {}: {} – gemergt wird automatisch, sobald das erledigt ist.{}",
                     markers::MERGE_WAIT,
                     place.label,
-                    reason.text
+                    reason.text,
+                    retired_hint(ctx, reason)
                 ),
             )
             .await?;
         }
         let branch = job.branch.clone();
         let kind = kind.to_string();
+        let noticed = notice.is_some();
         ctx.stores
             .state
             .update(move |state| {
@@ -1346,14 +1358,26 @@ Worktrees fertig sind.",
                     }
                     entry.phase = MergePhase::Waiting;
                     entry.held_by = Some(Some(kind.clone()));
+                    if noticed {
+                        entry.hold_noticed = Some(true);
+                    }
                 }
             })
             .await?;
-        ctx.log(&format!(
-            "Merge wartet {}: {}",
-            job.ids().join(", "),
-            reason.text
-        ));
+        if commented {
+            ctx.log(&format!(
+                "Merge wartet {}: {}",
+                job.ids().join(", "),
+                reason.text
+            ));
+        }
+        if let Some(notice) = notice {
+            ctx.log(&format!(
+                "Merge wartet länger {}: gemeldet",
+                job.ids().join(", ")
+            ));
+            ctx.notify(&notice).await;
+        }
         Ok(Vec::new())
     }
 
@@ -1767,6 +1791,67 @@ fn abort_failure(error: &nexus_core::Error, place: &MergePlace) -> String {
             place.label
         ),
         _ => format!("Im {}: {message}", place.label),
+    }
+}
+
+/// Meldung „Merge wartet“ für einen Auftrag, der seit mindestens [`HOLD_NOTICE_MINUTES`]
+/// besteht und gerade auf seinen Ordner wartet; je Auftrag nur einmal, sonst `None`
+fn hold_notice(
+    ctx: &DispatchContext,
+    job: &BranchJob,
+    work: &RepoWork,
+    place: &MergePlace,
+    reason: &HoldReason,
+) -> Option<DispatchNotice> {
+    if job
+        .entries
+        .iter()
+        .any(|entry| entry.hold_noticed == Some(true))
+    {
+        return None;
+    }
+    let oldest = job
+        .entries
+        .iter()
+        .filter_map(|entry| entry.since.parse::<chrono::DateTime<chrono::Utc>>().ok())
+        .min()?;
+    let minutes = (ctx.now() - oldest).num_minutes();
+    if minutes < HOLD_NOTICE_MINUTES {
+        return None;
+    }
+    let primary = &job.tickets.first()?.ticket;
+    let waited = if minutes < 120 {
+        format!("{minutes} Minuten")
+    } else {
+        format!("{} Stunden", minutes / 60)
+    };
+    let mut text = format!(
+        "Merge wartet seit {waited} auf den {}: {}",
+        place.label, reason.text
+    );
+    let hint = retired_hint(ctx, reason);
+    if !hint.is_empty() {
+        text.push('.');
+        text.push_str(hint);
+    }
+    Some(DispatchNotice {
+        kind: DispatchNoticeKind::MergeWaiting,
+        ticket_id: Some(primary.id.clone()),
+        title: primary.title.clone(),
+        text,
+        repo_path: work.board.repo_path.clone(),
+    })
+}
+
+/// Hinweis an einen Wartegrund, wenn `dispatch.yaml` noch `mergeIgnore` enthält: früher ließ
+/// die Einstellung überschneidende lokale Änderungen durchgehen, heute wirkt sie nicht mehr.
+/// Beginnt mit einem Leerzeichen; sonst leer
+fn retired_hint(ctx: &DispatchContext, reason: &HoldReason) -> &'static str {
+    if reason.kind == HoldKind::Overlap && ctx.cfg.retired.iter().any(|key| key == "mergeIgnore") {
+        " Die Einstellung mergeIgnore in dispatch.yaml wirkt nicht mehr: lokale Änderungen bitte \
+committen, verwerfen oder mit git stash beiseitelegen."
+    } else {
+        ""
     }
 }
 

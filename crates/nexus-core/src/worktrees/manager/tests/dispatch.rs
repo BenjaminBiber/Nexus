@@ -10,8 +10,10 @@ use crate::board::basics::TicketStatus;
 use crate::board::ticket_service::{NewTicketInput, TicketPatch};
 use crate::dispatch::git::{BranchMerger, MergeOutcome};
 use crate::dispatch::merge_strategy::MergeStrategy;
+use crate::git::{GitAttempt, GitCommands, GitRunner};
 use crate::test_support::link_dir;
 use crate::worktrees::manager::{ResumeResult, StartOptions, StartResult};
+use crate::worktrees::WorktreeCleaner;
 
 /// Beitritt nur innerhalb derselben Spec (Dispatcher)
 fn dispatch_join() -> StartOptions {
@@ -422,6 +424,179 @@ async fn raumt_einen_leeren_rest_ordner_eines_halb_entfernten_worktrees_weg() {
     assert_eq!(ticket.worktree, None);
 }
 
+/// Warnung für den stehen gebliebenen Rest eines entfernten Worktrees
+fn rest_warning(path: &str) -> String {
+    format!(
+        "Vom Worktree {path} ist ein Rest stehen geblieben, den Git nicht mehr als Worktree \
+führt; er wird nicht angefasst. Vermutlich hält ein Programm noch Dateien darin offen: bitte \
+es schließen und den Ordner von Hand löschen."
+    )
+}
+
+#[tokio::test]
+async fn raumt_branch_und_ticket_auf_wenn_vom_gemergten_worktree_nur_ein_rest_steht() {
+    let e = Env::new().await;
+    let started = start_with_commit(&e, true).await;
+    // Ein früheres `worktree remove` löschte den Verwaltungseintrag, gesperrte Dateien
+    // blieben stehen
+    e.repo
+        .git(&["worktree", "remove", "--force", &started.path]);
+    leave_rest_of(&started.path);
+
+    let result = e
+        .manager
+        .remove_merged(&started.branch, &e.f.actor, None)
+        .await
+        .unwrap();
+
+    assert_eq!(result.removed, None);
+    assert_eq!(result.tickets, ["ARC-0001"]);
+    assert_eq!(result.warnings, [rest_warning(&started.path)]);
+    // Der Rest selbst bleibt unangetastet
+    assert_eq!(
+        fs::read_to_string(Path::new(&started.path).join("bin").join("gesperrt.dll")).unwrap(),
+        "alt"
+    );
+    assert_eq!(
+        e.manager
+            .registry
+            .read()
+            .unwrap()
+            .get(&started.branch)
+            .unwrap()
+            .removed,
+        Some(true)
+    );
+    assert_eq!(e.repo.git(&["branch", "--list", &started.branch]), "");
+    let ticket = e.f.tickets.get("ARC-0001").await.unwrap();
+    assert_eq!(ticket.branch, None);
+    assert_eq!(ticket.worktree, None);
+}
+
+#[tokio::test]
+async fn fasst_ein_eigenes_repo_am_platz_des_gemergten_worktrees_nicht_an() {
+    let e = Env::new().await;
+    let started = start_with_commit(&e, true).await;
+    e.repo
+        .git(&["worktree", "remove", "--force", &started.path]);
+    fs::create_dir_all(&started.path).unwrap();
+    e.git_in(Path::new(&started.path), &["init", "-q"]);
+
+    let result = e
+        .manager
+        .remove_merged(&started.branch, &e.f.actor, None)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        result.warnings,
+        [format!(
+            "Der Ordner {} ist kein Worktree von Branch {}; er wird nicht angefasst. \
+Bitte von Hand prüfen.",
+            started.path, started.branch
+        )]
+    );
+    assert!(Path::new(&started.path).join(".git").is_dir());
+    assert_ne!(e.repo.git(&["branch", "--list", &started.branch]), "");
+    let ticket = e.f.tickets.get("ARC-0001").await.unwrap();
+    assert_eq!(ticket.branch.as_deref(), Some(started.branch.as_str()));
+}
+
+/// Hält eine Datei unter `dir` so fest, dass Git sie beim Entfernen des Worktrees nicht löschen
+/// kann – wie ein Programm, das unter Windows noch Dateien offen hat. Gibt sie beim Drop frei.
+/// `None`, wo sich das nicht nachstellen lässt (Unix als root darf trotzdem löschen).
+struct HeldFile {
+    #[cfg(windows)]
+    _handle: fs::File,
+    #[cfg(unix)]
+    dir: PathBuf,
+}
+
+impl HeldFile {
+    fn new(dir: &Path) -> Option<Self> {
+        fs::create_dir_all(dir).unwrap();
+        let file = dir.join("datei.bin");
+        fs::write(&file, "x").unwrap();
+        #[cfg(windows)]
+        {
+            use std::os::windows::fs::OpenOptionsExt;
+            let handle = fs::OpenOptions::new()
+                .read(true)
+                .share_mode(0)
+                .open(&file)
+                .unwrap();
+            Some(Self { _handle: handle })
+        }
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(dir, fs::Permissions::from_mode(0o555)).unwrap();
+            let held = Self {
+                dir: dir.to_path_buf(),
+            };
+            let probe = dir.join("probe");
+            if fs::write(&probe, "").is_ok() {
+                let _ = fs::remove_file(probe);
+                return None;
+            }
+            Some(held)
+        }
+    }
+}
+
+#[cfg(unix)]
+impl Drop for HeldFile {
+    fn drop(&mut self) {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(&self.dir, fs::Permissions::from_mode(0o755));
+    }
+}
+
+#[tokio::test]
+async fn raumt_branch_und_ticket_auf_wenn_git_den_gemergten_worktree_nur_halb_entfernt() {
+    let e = Env::new().await;
+    let started = start_with_commit(&e, true).await;
+    // Ausgaben eines Builds, nicht im Git, von einem noch laufenden Programm offen gehalten
+    let exclude = e.repo.path().join(".git").join("info").join("exclude");
+    let mut patterns = fs::read_to_string(&exclude).unwrap_or_default();
+    patterns.push_str("\ngesperrt/\n");
+    fs::write(&exclude, patterns).unwrap();
+    let Some(held) = HeldFile::new(&Path::new(&started.path).join("gesperrt")) else {
+        eprintln!("übersprungen: gesperrte Dateien lassen sich hier nicht nachstellen");
+        return;
+    };
+
+    let result = e
+        .manager
+        .remove_merged(&started.branch, &e.f.actor, None)
+        .await
+        .unwrap();
+
+    assert_eq!(result.removed, None);
+    assert_eq!(result.warnings.len(), 1, "{:?}", result.warnings);
+    assert!(
+        result.warnings[0].contains(&rest_warning(&started.path)),
+        "{:?}",
+        result.warnings
+    );
+    assert!(Path::new(&started.path).join("gesperrt").exists());
+    assert_eq!(
+        e.manager
+            .registry
+            .read()
+            .unwrap()
+            .get(&started.branch)
+            .unwrap()
+            .removed,
+        Some(true)
+    );
+    assert_eq!(e.repo.git(&["branch", "--list", &started.branch]), "");
+    let ticket = e.f.tickets.get("ARC-0001").await.unwrap();
+    assert_eq!(ticket.branch, None);
+    assert_eq!(ticket.worktree, None);
+    drop(held);
+}
+
 #[tokio::test]
 async fn raumt_nach_einem_squash_worktree_und_branch_auf() {
     let e = Env::new().await;
@@ -620,19 +795,209 @@ async fn ensure_worktree_lehnt_einen_vorhandenen_fremden_ordner_ab() {
     let started = start(&e, "ARC-0001").await.unwrap();
     e.repo
         .git(&["worktree", "remove", "--force", &started.path]);
-    fs::create_dir_all(&started.path).unwrap();
-
-    assert_eq!(
-        code(e.manager.ensure_worktree("ARC-0001").await),
-        "worktree-mismatch"
-    );
-
-    fs::remove_dir_all(&started.path).unwrap();
     e.repo
         .git(&["worktree", "add", "-q", "-b", "anders", &started.path]);
 
     assert_eq!(
         code(e.manager.ensure_worktree("ARC-0001").await),
         "worktree-mismatch"
+    );
+
+    // Ein eigenes Repo (mit .git) an der Stelle wird ebenso wenig angefasst
+    e.repo
+        .git(&["worktree", "remove", "--force", &started.path]);
+    fs::create_dir_all(Path::new(&started.path).join(".git")).unwrap();
+
+    assert_eq!(
+        code(e.manager.ensure_worktree("ARC-0001").await),
+        "worktree-mismatch"
+    );
+    assert!(Path::new(&started.path).join(".git").exists());
+}
+
+/// Rest eines halb entfernten Worktrees: Git kennt ihn nicht mehr, ohne `.git`, aber mit
+/// Dateien, die Windows beim Entfernen gesperrt hielt
+fn leave_rest_of(path: &str) {
+    let bin = Path::new(path).join("bin");
+    fs::create_dir_all(&bin).unwrap();
+    fs::write(bin.join("gesperrt.dll"), "alt").unwrap();
+}
+
+#[tokio::test]
+async fn ensure_worktree_schiebt_einen_rest_ordner_beiseite_und_legt_den_worktree_neu_an() {
+    let e = Env::new().await;
+    e.ticket(NewTicketInput::titled("Erstes")).await;
+    let started = start(&e, "ARC-0001").await.unwrap();
+    e.repo
+        .git(&["worktree", "remove", "--force", &started.path]);
+    leave_rest_of(&started.path);
+
+    assert_eq!(
+        e.manager.ensure_worktree("ARC-0001").await.unwrap(),
+        started.path
+    );
+
+    assert!(Path::new(&started.path).join(".git").exists());
+    assert!(!Path::new(&started.path).join("bin").exists());
+    let aside = PathBuf::from(format!("{}.rest", started.path));
+    assert_eq!(
+        fs::read_to_string(aside.join("bin").join("gesperrt.dll")).unwrap(),
+        "alt"
+    );
+    assert_eq!(
+        e.manager
+            .registry
+            .read()
+            .unwrap()
+            .get(&started.branch)
+            .unwrap()
+            .removed,
+        Some(false)
+    );
+}
+
+#[tokio::test]
+async fn ensure_worktree_nimmt_fur_den_rest_einen_freien_namen() {
+    let e = Env::new().await;
+    e.ticket(NewTicketInput::titled("Erstes")).await;
+    let started = start(&e, "ARC-0001").await.unwrap();
+    fs::create_dir_all(format!("{}.rest", started.path)).unwrap();
+    e.repo
+        .git(&["worktree", "remove", "--force", &started.path]);
+    leave_rest_of(&started.path);
+
+    e.manager.ensure_worktree("ARC-0001").await.unwrap();
+
+    assert!(Path::new(&format!("{}.rest-2", started.path))
+        .join("bin")
+        .join("gesperrt.dll")
+        .exists());
+}
+
+#[tokio::test]
+async fn ensure_worktree_entfernt_einen_leeren_rest_ordner() {
+    let e = Env::new().await;
+    e.ticket(NewTicketInput::titled("Erstes")).await;
+    let started = start(&e, "ARC-0001").await.unwrap();
+    e.repo
+        .git(&["worktree", "remove", "--force", &started.path]);
+    fs::create_dir_all(&started.path).unwrap();
+
+    assert_eq!(
+        e.manager.ensure_worktree("ARC-0001").await.unwrap(),
+        started.path
+    );
+
+    assert!(Path::new(&started.path).join(".git").exists());
+    assert!(!Path::new(&format!("{}.rest", started.path)).exists());
+}
+
+/// Git, das beim Entfernen eines Worktrees scheitert wie unter Windows mit gesperrten
+/// Dateien: Verwaltungseintrag gelöscht, der Ordner bleibt mit Resten stehen
+struct LockedRemove(GitRunner);
+
+impl GitCommands for LockedRemove {
+    fn raw(&self, cwd: &Path, args: &[&str]) -> crate::error::Result<String> {
+        self.0.raw(cwd, args)
+    }
+
+    fn try_run(&self, cwd: &Path, args: &[&str]) -> GitAttempt {
+        if args.starts_with(&["worktree", "remove"]) {
+            let path = args.last().expect("Pfad des Worktrees");
+            assert!(self.0.try_run(cwd, args).ok);
+            leave_rest_of(path);
+            return GitAttempt {
+                ok: false,
+                out: String::new(),
+                err: format!("error: failed to delete '{path}': Permission denied"),
+            };
+        }
+        self.0.try_run(cwd, args)
+    }
+}
+
+#[tokio::test]
+async fn cleanup_tragt_einen_halb_entfernten_worktree_als_aufgeraumt_ein() {
+    let e = Env::new().await;
+    e.ticket(NewTicketInput {
+        acceptance: Some("ok".into()),
+        ..NewTicketInput::titled("Erstes")
+    })
+    .await;
+    let started = start(&e, "ARC-0001").await.unwrap();
+    // Abschluss aus dem eigenen Worktree: der bleibt dabei stehen
+    let done = finish_in(&e, "ARC-0001", None, Path::new(&started.path))
+        .await
+        .unwrap();
+    assert!(done.removed.is_empty());
+
+    let removed = WorktreeCleaner::new(&e.manager.registry, &LockedRemove(GitRunner::new()))
+        .cleanup(e.repo.path())
+        .unwrap();
+
+    // Der Ordner steht noch (Reste), gilt aber nicht als aufgeräumt gemeldet
+    assert!(removed.is_empty());
+    assert_eq!(
+        e.manager
+            .registry
+            .read()
+            .unwrap()
+            .get(&started.branch)
+            .unwrap()
+            .removed,
+        Some(true)
+    );
+    // Beim Merge legt Nexus den Worktree wieder an
+    assert_eq!(
+        e.manager.ensure_worktree("ARC-0001").await.unwrap(),
+        started.path
+    );
+    assert!(Path::new(&started.path).join(".git").exists());
+}
+
+#[tokio::test]
+async fn cleanup_lasst_einen_worktree_den_git_noch_kennt_unverandert() {
+    let e = Env::new().await;
+    e.ticket(NewTicketInput {
+        acceptance: Some("ok".into()),
+        ..NewTicketInput::titled("Erstes")
+    })
+    .await;
+    let started = start(&e, "ARC-0001").await.unwrap();
+    finish_in(&e, "ARC-0001", None, Path::new(&started.path))
+        .await
+        .unwrap();
+    // Git scheitert, ohne etwas zu entfernen
+    struct Refusing(GitRunner);
+    impl GitCommands for Refusing {
+        fn raw(&self, cwd: &Path, args: &[&str]) -> crate::error::Result<String> {
+            self.0.raw(cwd, args)
+        }
+        fn try_run(&self, cwd: &Path, args: &[&str]) -> GitAttempt {
+            if args.starts_with(&["worktree", "remove"]) {
+                return GitAttempt {
+                    ok: false,
+                    out: String::new(),
+                    err: "fatal: gesperrt".into(),
+                };
+            }
+            self.0.try_run(cwd, args)
+        }
+    }
+
+    let removed = WorktreeCleaner::new(&e.manager.registry, &Refusing(GitRunner::new()))
+        .cleanup(e.repo.path())
+        .unwrap();
+
+    assert!(removed.is_empty());
+    assert_ne!(
+        e.manager
+            .registry
+            .read()
+            .unwrap()
+            .get(&started.branch)
+            .unwrap()
+            .removed,
+        Some(true)
     );
 }

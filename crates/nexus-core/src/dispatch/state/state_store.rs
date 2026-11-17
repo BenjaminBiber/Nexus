@@ -69,6 +69,11 @@ pub struct MergeEntry {
     )]
     #[ts(optional)]
     pub held_by: Option<Option<String>>,
+    /// Der Merge wartet schon länger auf seinen Ordner und das wurde gemeldet (einmal je
+    /// Auftrag; „Erneut mergen“ beginnt einen neuen Auftrag)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub hold_noticed: Option<bool>,
     pub since: String,
 }
 
@@ -86,6 +91,7 @@ impl MergeEntry {
             target_head: None,
             conflict_seen: None,
             held_by: None,
+            hold_noticed: None,
             since,
         }
     }

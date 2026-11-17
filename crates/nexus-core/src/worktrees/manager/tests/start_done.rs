@@ -693,6 +693,65 @@ async fn lehnt_start_und_done_ab_wenn_das_ticket_auf_einem_anderen_board_liegt()
     );
 }
 
+#[tokio::test]
+async fn nimmt_start_und_done_an_wenn_das_board_des_tickets_auf_dasselbe_repo_zeigt() {
+    let e = Env::new().await;
+    e.ticket(NewTicketInput {
+        acceptance: Some("ok".into()),
+        ..NewTicketInput::titled("Zweites Board, selbes Repo")
+    })
+    .await;
+    // Zwei Boards auf demselben Repo; dem Repo zugeordnet wird nur eines davon
+    let other =
+        e.f.boards
+            .create("ARC", "Anderes", &e.f.actor)
+            .await
+            .unwrap();
+    let root = e.repo.path().to_string_lossy().into_owned();
+    e.f.boards
+        .set_repo_path(other.id, Some(&root))
+        .await
+        .unwrap();
+    e.f.boards
+        .set_repo_path(e.f.board_id, Some(&root.replace('\\', "/")))
+        .await
+        .unwrap();
+    let picked = RepoBoard {
+        id: other.id,
+        name: other.name.clone(),
+    };
+
+    let started = start_with(
+        &e,
+        "ARC-0001",
+        StartOptions {
+            repo_board: Some(picked.clone()),
+            ..StartOptions::default()
+        },
+    )
+    .await
+    .unwrap();
+    let done = e
+        .manager
+        .finish(
+            "ARC-0001",
+            &crate::worktrees::manager::FinishOptions {
+                repo_board: Some(picked),
+                ..Default::default()
+            },
+            Path::new(&started.path),
+            &e.f.actor,
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(done.id, "ARC-0001");
+    assert_eq!(
+        e.f.tickets.get("ARC-0001").await.unwrap().status,
+        TicketStatus::Done
+    );
+}
+
 // ---------------------------------------------------------------------------------------------
 // Zielbranch
 // ---------------------------------------------------------------------------------------------

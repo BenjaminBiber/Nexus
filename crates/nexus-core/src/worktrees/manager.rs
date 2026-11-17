@@ -22,7 +22,7 @@ use crate::project::HarnessLayout;
 use crate::registry::HarnessHome;
 use crate::text::SlugBuilder;
 use crate::tx;
-use crate::worktrees::cleaner::WorktreeCleaner;
+use crate::worktrees::cleaner::{is_listed, WorktreeCleaner};
 use crate::worktrees::links::WorktreeLinks;
 use crate::worktrees::registry::{SetupState, WorktreeRegistry};
 use crate::worktrees::touches::TouchesChecker;
@@ -65,6 +65,17 @@ pub struct RemoveMergedResult {
     pub removed: Option<String>,
     pub tickets: Vec<String>,
     pub warnings: Vec<String>,
+}
+
+/// Was beim Aufräumen nach dem Merge mit dem Ordner des Worktrees geschah
+enum DirRemoval {
+    /// Entfernt
+    Removed,
+    /// Nur ein Rest steht noch, den Git nicht mehr als Worktree führt: gilt als entfernt,
+    /// bleibt aber stehen (Warnung)
+    Rest(String),
+    /// Bleibt stehen (Gründe); dann bleiben auch Branch und Ticket-Felder
+    Kept(Vec<String>),
 }
 
 /// Fortsetzung eines gestarteten Tickets: sein Worktree – oder der Hinweis, dass Branch und
@@ -308,17 +319,10 @@ impl<D: BoardDatabase> WorktreeManager<D> {
             }
         };
         if Path::new(&worktree).exists() {
-            if !self.is_worktree_of(Path::new(&worktree), &branch)? {
-                return Err(HarnessError::new(
-                    "worktree-mismatch",
-                    format!(
-                        "Der Ordner {worktree} ist kein Worktree von Branch {branch}. \
-Bitte den Ordner prüfen und von Hand aufräumen."
-                    ),
-                )
-                .into());
+            if self.is_worktree_of(Path::new(&worktree), &branch)? {
+                return Ok(worktree);
             }
-            return Ok(worktree);
+            self.clear_rest(&worktree, &branch)?;
         }
         self.git.run(&self.root, &["worktree", "prune"])?;
         self.long_paths.ensure(&self.root);
@@ -545,98 +549,17 @@ Branch (der alte Branch bleibt im Repo)."
         if let Some(entry) =
             entry.filter(|entry| !entry.is_removed() && Path::new(&entry.path).exists())
         {
-            let path = PathBuf::from(&entry.path);
-            if is_empty_dir(&path) {
-                // Rest eines halb entfernten Worktrees (Windows ließ den gesperrten leeren
-                // Ordner stehen): ohne .git kein Worktree; `remove_dir` löscht nur leere Ordner
-                fs::remove_dir(&path).map_err(Error::unexpected)?;
-                self.registry.mark_removed(branch)?;
-                removed = Some(entry.path.clone());
-            } else {
-                if self.keys.same(&path, &self.root) {
-                    warnings.push(format!(
-                        "Der Worktree-Eintrag von Branch {branch} zeigt auf den Hauptordner {}; \
-er wird nicht entfernt.",
-                        entry.path
-                    ));
+            match self.remove_worktree_dir(&entry.path, branch)? {
+                DirRemoval::Removed => removed = Some(entry.path.clone()),
+                DirRemoval::Rest(warning) => warnings.push(warning),
+                DirRemoval::Kept(kept) => {
+                    warnings.extend(kept);
                     return Ok(RemoveMergedResult {
                         removed: None,
                         tickets,
                         warnings,
                     });
                 }
-                if !self.is_worktree_of(&path, branch)? {
-                    warnings.push(format!(
-                        "Der Ordner {} ist kein Worktree von Branch {branch}; er wird nicht \
-angefasst. Bitte von Hand prüfen.",
-                        entry.path
-                    ));
-                    return Ok(RemoveMergedResult {
-                        removed: None,
-                        tickets,
-                        warnings,
-                    });
-                }
-                if !self.is_clean(&path) {
-                    warnings.push(format!(
-                        "Worktree {} hat ungesicherte Änderungen und bleibt stehen.",
-                        entry.path
-                    ));
-                    return Ok(RemoveMergedResult {
-                        removed: None,
-                        tickets,
-                        warnings,
-                    });
-                }
-                // Symlinks/Junctions (z. B. node_modules auf den Hauptordner) zuerst
-                // entfernen – nur die Links, nie ihr Ziel; sonst könnte Git beim Entfernen
-                // durch den Link hindurch löschen
-                let links = self.links.remove_all(&path);
-                if !links.failed.is_empty() {
-                    let failed: Vec<String> = links
-                        .failed
-                        .iter()
-                        .map(|link| link.to_string_lossy().into_owned())
-                        .collect();
-                    warnings.push(format!(
-                        "Worktree {} nicht entfernt: Links ließen sich nicht entfernen ({}). \
-Bitte von Hand prüfen.",
-                        entry.path,
-                        failed.join(", ")
-                    ));
-                    return Ok(RemoveMergedResult {
-                        removed: None,
-                        tickets,
-                        warnings,
-                    });
-                }
-                // Plugin-Einstellung und Rules liegen nicht im Git und würden
-                // `worktree remove` ohne --force verhindern
-                for file in harness_files() {
-                    let mut local = path.clone();
-                    for part in file.split('/') {
-                        local.push(part);
-                    }
-                    let _ = fs::remove_file(local);
-                }
-                let attempt = self
-                    .git
-                    .try_run(&self.root, &["worktree", "remove", &entry.path]);
-                if !attempt.ok {
-                    let plugin = self.enable_plugin(&path);
-                    warnings.push(format!(
-                        "Worktree {} nicht entfernt: {}",
-                        entry.path, attempt.err
-                    ));
-                    warnings.extend(plugin);
-                    return Ok(RemoveMergedResult {
-                        removed: None,
-                        tickets,
-                        warnings,
-                    });
-                }
-                self.registry.mark_removed(branch)?;
-                removed = Some(entry.path.clone());
             }
         }
         self.git.try_run(&self.root, &["worktree", "prune"]);
@@ -659,6 +582,96 @@ Bitte von Hand prüfen.",
             tickets,
             warnings,
         })
+    }
+
+    /// Entfernt den Ordner eines gemergten Worktrees, wo das gefahrlos geht. Ein Rest, den Git
+    /// nicht mehr als Worktree führt (Windows ließ beim Entfernen gesperrte Dateien stehen),
+    /// gilt als entfernt und bleibt unangetastet stehen – sonst hinge der Merge an ihm fest.
+    fn remove_worktree_dir(&self, worktree: &str, branch: &str) -> Result<DirRemoval> {
+        let path = PathBuf::from(worktree);
+        if is_empty_dir(&path) {
+            // Rest eines halb entfernten Worktrees (Windows ließ den gesperrten leeren
+            // Ordner stehen): ohne .git kein Worktree; `remove_dir` löscht nur leere Ordner
+            fs::remove_dir(&path).map_err(Error::unexpected)?;
+            self.registry.mark_removed(branch)?;
+            return Ok(DirRemoval::Removed);
+        }
+        if self.keys.same(&path, &self.root) {
+            return Ok(DirRemoval::Kept(vec![format!(
+                "Der Worktree-Eintrag von Branch {branch} zeigt auf den Hauptordner {worktree}; \
+er wird nicht entfernt."
+            )]));
+        }
+        if !self.is_worktree_of(&path, branch)? {
+            if self.is_rest(&path)? {
+                self.registry.mark_removed(branch)?;
+                return Ok(DirRemoval::Rest(rest_warning(worktree)));
+            }
+            return Ok(DirRemoval::Kept(vec![format!(
+                "Der Ordner {worktree} ist kein Worktree von Branch {branch}; er wird nicht \
+angefasst. Bitte von Hand prüfen."
+            )]));
+        }
+        if !self.is_clean(&path) {
+            return Ok(DirRemoval::Kept(vec![format!(
+                "Worktree {worktree} hat ungesicherte Änderungen und bleibt stehen."
+            )]));
+        }
+        // Symlinks/Junctions (z. B. node_modules auf den Hauptordner) zuerst entfernen – nur
+        // die Links, nie ihr Ziel; sonst könnte Git beim Entfernen durch den Link hindurch
+        // löschen
+        let links = self.links.remove_all(&path);
+        if !links.failed.is_empty() {
+            let failed: Vec<String> = links
+                .failed
+                .iter()
+                .map(|link| link.to_string_lossy().into_owned())
+                .collect();
+            return Ok(DirRemoval::Kept(vec![format!(
+                "Worktree {worktree} nicht entfernt: Links ließen sich nicht entfernen ({}). \
+Bitte von Hand prüfen.",
+                failed.join(", ")
+            )]));
+        }
+        // Plugin-Einstellung und Rules liegen nicht im Git und würden `worktree remove` ohne
+        // --force verhindern
+        for file in harness_files() {
+            let mut local = path.clone();
+            for part in file.split('/') {
+                local.push(part);
+            }
+            let _ = fs::remove_file(local);
+        }
+        let attempt = self
+            .git
+            .try_run(&self.root, &["worktree", "remove", worktree]);
+        if !attempt.ok {
+            // Git löscht den Verwaltungseintrag auch dann, wenn es den Ordner nicht ganz
+            // löschen konnte; dann steht nur noch ein Rest. Im Zweifel (Git scheitert auch
+            // hier) gilt der Worktree als noch vorhanden.
+            if !is_listed(&self.git, &self.keys, &self.root, &path).unwrap_or(true) {
+                self.registry.mark_removed(branch)?;
+                return Ok(DirRemoval::Rest(format!(
+                    "{} Git: {}",
+                    rest_warning(worktree),
+                    attempt.err
+                )));
+            }
+            let mut kept = vec![format!(
+                "Worktree {worktree} nicht entfernt: {}",
+                attempt.err
+            )];
+            kept.extend(self.enable_plugin(&path));
+            return Ok(DirRemoval::Kept(kept));
+        }
+        self.registry.mark_removed(branch)?;
+        Ok(DirRemoval::Removed)
+    }
+
+    /// Rest eines halb entfernten Worktrees: Git führt den Ordner nicht (mehr) als Worktree,
+    /// und er hat kein `.git` – ein eigenes Repo an der Stelle ist kein Rest
+    fn is_rest(&self, path: &Path) -> Result<bool> {
+        Ok(!path.join(".git").exists() && !is_listed(&self.git, &self.keys, &self.root, path)?)
     }
 
     /// Leert Branch und Worktree an allen Tickets, die noch auf diesem Branch stehen
@@ -740,6 +753,41 @@ Bitte von Hand prüfen.",
         true
     }
 
+    /// Macht den Platz eines Worktrees frei, an dem nur noch der Rest eines halb entfernten
+    /// Worktrees steht (Git kennt den Ordner nicht mehr, ohne `.git`; unter Windows bleiben
+    /// gesperrte Dateien beim Entfernen stehen): ein leerer Ordner wird gelöscht, sonst wird
+    /// er unter `<Ordner>.rest` beiseitegeschoben, nie gelöscht. Alles andere bleibt
+    /// unangetastet und ist ein Fehler.
+    fn clear_rest(&self, worktree: &str, branch: &str) -> Result<()> {
+        let path = Path::new(worktree);
+        if !self.is_rest(path)? {
+            return Err(HarnessError::new(
+                "worktree-mismatch",
+                format!(
+                    "Der Ordner {worktree} ist kein Worktree von Branch {branch}. \
+Bitte den Ordner prüfen und von Hand aufräumen."
+                ),
+            )
+            .into());
+        }
+        let cleared = if is_empty_dir(path) {
+            fs::remove_dir(path)
+        } else {
+            fs::rename(path, free_rest_path(worktree))
+        };
+        cleared.map_err(|error| {
+            HarnessError::new(
+                "worktree-mismatch",
+                format!(
+                    "Der Ordner {worktree} ist der Rest eines entfernten Worktrees von Branch \
+{branch} und ließ sich nicht beiseiteschieben ({error}). Vermutlich hält ein Programm noch \
+Dateien darin offen: bitte es schließen oder den Ordner von Hand löschen."
+                ),
+            )
+            .into()
+        })
+    }
+
     /// Ist der Ordner in `git worktree list` als Worktree des Branches eingetragen?
     fn is_worktree_of(&self, path: &Path, branch: &str) -> Result<bool> {
         let wanted = self.keys.of(path);
@@ -763,7 +811,9 @@ Bitte von Hand prüfen.",
     }
 
     /// Lehnt Tickets ab, die nicht auf dem Board des Repos liegen (Worktrees entstehen immer
-    /// neben diesem Repo)
+    /// neben diesem Repo). Zeigen mehrere Boards auf dieses Repo, ist `repo_board` nur eines
+    /// davon: ein Ticket gilt auch dann als passend, wenn der wirksame Repo-Pfad seines
+    /// Boards dieses Repo ist.
     async fn assert_repo_board(
         &self,
         ticket: &Ticket,
@@ -776,10 +826,18 @@ Bitte von Hand prüfen.",
             return Ok(());
         }
         let board_id = ticket.board_id;
-        let own = tx!(self.services.db, [board_id], |u| {
-            u.boards().by_id(board_id).await
-        })
-        .await?;
+        let own = match self.services.boards.require(board_id).await {
+            Ok(board) => Some(board),
+            Err(error) if error.code() == Some("board-not-found") => None,
+            Err(error) => return Err(error),
+        };
+        let points_here = own
+            .as_ref()
+            .and_then(|board| board.repo_path.as_deref())
+            .is_some_and(|path| !path.trim().is_empty() && self.keys.same(path, &self.root));
+        if points_here {
+            return Ok(());
+        }
         let ticket_board = match own {
             Some(board) => format!("Board {board_id} „{}“", board.name),
             None => format!("Board {board_id}"),
@@ -1220,4 +1278,26 @@ fn is_empty_dir(path: &Path) -> bool {
         Ok(mut entries) => entries.next().is_none(),
         Err(_) => false,
     }
+}
+
+/// Warnung für den stehen gebliebenen Rest eines entfernten Worktrees
+fn rest_warning(worktree: &str) -> String {
+    format!(
+        "Vom Worktree {worktree} ist ein Rest stehen geblieben, den Git nicht mehr als Worktree \
+führt; er wird nicht angefasst. Vermutlich hält ein Programm noch Dateien darin offen: bitte \
+es schließen und den Ordner von Hand löschen."
+    )
+}
+
+/// Freier Name neben dem Ordner für seinen beiseitegeschobenen Rest: `<Ordner>.rest`, sonst
+/// `<Ordner>.rest-2`, `-3`, …
+fn free_rest_path(worktree: &str) -> PathBuf {
+    let first = PathBuf::from(format!("{worktree}.rest"));
+    if !first.exists() {
+        return first;
+    }
+    (2..)
+        .map(|n| PathBuf::from(format!("{worktree}.rest-{n}")))
+        .find(|path| !path.exists())
+        .expect("irgendein Name ist frei")
 }

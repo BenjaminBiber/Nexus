@@ -276,6 +276,70 @@ Branch ebenfalls ändert – gemergt wird automatisch, sobald das erledigt ist."
 }
 
 #[tokio::test]
+async fn ein_wartender_merge_weist_auf_die_stillgelegte_einstellung_merge_ignore_hin() {
+    let f = DispatchFixture::create(json!({ "mergeIgnore": ["cfg.yaml"] })).await;
+    commit_on_main(&f, "cfg.yaml", "alt");
+    let id = done_by_agent_with(&f, "Konfig", "cfg.yaml", "ticket").await;
+    std::fs::write(f.repo.path().join("cfg.yaml"), "lokal").expect("lokale Änderung");
+    let before = f.notices.all().len();
+
+    assert!(f.tick().await.merged.is_empty());
+    f.advance(20);
+    assert!(f.tick().await.merged.is_empty());
+
+    let waiting = f.notices.all()[before..].to_vec();
+    assert_eq!(waiting.len(), 1, "{waiting:?}");
+    assert_eq!(
+        waiting[0].text,
+        "Merge wartet seit 20 Minuten auf den Hauptordner: lokale Änderungen in cfg.yaml, die \
+der Branch ebenfalls ändert. Die Einstellung mergeIgnore in dispatch.yaml wirkt nicht mehr: \
+lokale Änderungen bitte committen, verwerfen oder mit git stash beiseitelegen."
+    );
+    assert_eq!(
+        comments_starting(&f, &id, "[dispatch] Merge wartet auf den Hauptordner").await,
+        vec![
+            "[dispatch] Merge wartet auf den Hauptordner: lokale Änderungen in cfg.yaml, die der \
+Branch ebenfalls ändert – gemergt wird automatisch, sobald das erledigt ist. Die Einstellung \
+mergeIgnore in dispatch.yaml wirkt nicht mehr: lokale Änderungen bitte committen, verwerfen \
+oder mit git stash beiseitelegen."
+                .to_string()
+        ]
+    );
+}
+
+#[tokio::test]
+async fn ein_merge_der_langer_wartet_meldet_sich_einmal() {
+    let f = DispatchFixture::create(json!({})).await;
+    commit_on_main(&f, "cfg.yaml", "alt");
+    let id = done_by_agent_with(&f, "Konfig", "cfg.yaml", "ticket").await;
+    std::fs::write(f.repo.path().join("cfg.yaml"), "lokal").expect("lokale Änderung");
+    let before = f.notices.all().len();
+
+    assert!(f.tick().await.merged.is_empty());
+    f.advance(10);
+    assert!(f.tick().await.merged.is_empty());
+    assert_eq!(f.notices.all().len(), before);
+
+    f.advance(10);
+    assert!(f.tick().await.merged.is_empty());
+    f.advance(30);
+    assert!(f.tick().await.merged.is_empty());
+
+    let waiting = f.notices.all()[before..].to_vec();
+    assert_eq!(waiting.len(), 1, "{waiting:?}");
+    assert_eq!(waiting[0].kind, DispatchNoticeKind::MergeWaiting);
+    assert_eq!(waiting[0].ticket_id.as_deref(), Some(id.as_str()));
+    assert_eq!(
+        waiting[0].text,
+        "Merge wartet seit 20 Minuten auf den Hauptordner: lokale Änderungen in cfg.yaml, die \
+der Branch ebenfalls ändert"
+    );
+
+    f.repo.run_git(&["checkout", "--", "cfg.yaml"]);
+    assert_eq!(f.tick().await.merged, vec![id]);
+}
+
+#[tokio::test]
 async fn vorgemerkte_anderungen_lassen_den_merge_warten() {
     let f = DispatchFixture::create(json!({})).await;
     let id = done_by_agent(&f, "Index").await;
@@ -1585,6 +1649,7 @@ async fn ohne_zielbranch_am_ticket_steht_im_dispatch_status_kein_ziel() {
         target_head: None,
         conflict_seen: Some(false),
         held_by: None,
+        hold_noticed: None,
         since: "2026-10-22T08:00:00.000Z".into(),
     };
     f.ctx

@@ -84,6 +84,8 @@ impl TelegramNotice<'_> {
             DispatchNoticeKind::Paused => Occasion::Paused,
             // Eine Sackgasse im Autopilot: Schalter und Knöpfe wie bei einem blockierten Ticket
             DispatchNoticeKind::Stuck => Occasion::Blocked,
+            // Wartet der Merge auf den Ordner, hilft nach dem Aufräumen „Erneut mergen“
+            DispatchNoticeKind::MergeWaiting => Occasion::Merge,
             DispatchNoticeKind::Blocked => match notice.text.trim() {
                 reason if reason.starts_with(MERGE_PREFIX) => Occasion::Merge,
                 reason if reason.starts_with(REVIEW_PREFIX) => Occasion::Review,

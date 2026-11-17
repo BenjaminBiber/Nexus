@@ -20,6 +20,9 @@ pub enum DispatchNoticeKind {
     Review,
     /// Ein Autopilot-Ticket steckt in einer Sackgasse fest (statt `Blocked`)
     Stuck,
+    /// Ein Merge wartet schon länger auf seinen Ordner (z. B. lokale Änderungen im
+    /// Hauptordner), ohne dass sich das von selbst erledigt
+    MergeWaiting,
 }
 
 impl DispatchNoticeKind {
@@ -32,6 +35,7 @@ impl DispatchNoticeKind {
             Self::Paused => "paused",
             Self::Review => "review",
             Self::Stuck => "stuck",
+            Self::MergeWaiting => "mergeWaiting",
         }
     }
 }
@@ -158,6 +162,15 @@ impl DispatchNotify for ServerDispatchNotify {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn merge_waiting_heisst_im_json_und_in_der_kennung_gleich() {
+        assert_eq!(DispatchNoticeKind::MergeWaiting.as_str(), "mergeWaiting");
+        assert_eq!(
+            serde_json::to_string(&DispatchNoticeKind::MergeWaiting).expect("serialisieren"),
+            "\"mergeWaiting\""
+        );
+    }
 
     #[test]
     fn stuck_heisst_im_json_und_in_der_kennung_stuck() {

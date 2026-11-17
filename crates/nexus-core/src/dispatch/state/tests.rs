@@ -187,6 +187,7 @@ async fn dispatch_state_store_schreibt_anderungen_nacheinander() {
                     target_head: None,
                     conflict_seen: None,
                     held_by: None,
+                    hold_noticed: None,
                     since: "x".to_string(),
                 },
             );

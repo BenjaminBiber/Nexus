@@ -386,6 +386,11 @@ pub struct DispatchConfig {
     /// Setzt sich das 5-Stunden-Fenster innerhalb dieser Minuten zurück, zählt die Reserve dort
     /// nicht (0–300)
     pub account_reset_grace_minutes: i64,
+    /// Stillgelegte Einstellungen, die in der Datei noch stehen (z. B. `mergeIgnore`); sie wirken
+    /// nicht mehr, der Dispatcher weist dort darauf hin, wo jemand sie erwarten würde
+    #[serde(skip)]
+    #[ts(skip)]
+    pub retired: Vec<String>,
 }
 
 /// Werkzeuge, die ein Umsetzungslauf ohne Rückfrage benutzen darf
