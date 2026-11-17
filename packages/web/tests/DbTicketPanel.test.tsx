@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { ApiError } from '../src/api/ApiError.js';
 import type { DbTicketPatch } from '../src/api/dbTypes.js';
 import { ACCEPTANCE_QUESTION } from '../src/components/db/DbAcceptanceDialog.js';
+import { DESKTOP_QUERY } from '../src/hooks/useMediaQuery.js';
 import { DbBoardPage } from '../src/pages/DbBoardPage.js';
 import { DETAIL, openPanel } from './helpers/dbPanel.js';
 import { dbCard, dbView, fakeApi } from './helpers/fakeApi.js';
@@ -31,8 +32,29 @@ describe('DbTicketPanel', () => {
   it('zeigt Status, Priorität und die übrigen Felder als Eigenschaften in der Seitenleiste', async () => {
     openPanel();
     const properties = await screen.findByRole('region', { name: 'Eigenschaften' });
+    expect(properties.closest('.db-panel-side')).toBeTruthy();
     for (const name of ['Status', 'Priorität', 'Braucht Planung', 'Zuständig', 'Labels', 'Zielbranch', 'Blockiert-Grund']) {
       expect(within(properties).getByLabelText(name)).toBeTruthy();
+    }
+  });
+
+  it('zeigt die Eigenschaften auf großen Bildschirmen als Raster über den Reitern', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === DESKTOP_QUERY,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    try {
+      openPanel();
+      const properties = await screen.findByRole('region', { name: 'Eigenschaften' });
+      const main = properties.closest('.db-panel-main');
+      expect(main).toBeTruthy();
+      expect(properties.compareDocumentPosition(within(main as HTMLElement).getByRole('tablist')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      const labels = [...properties.querySelectorAll('.db-fields > label')].map((label) => label.querySelector('span')?.textContent);
+      expect(labels).toEqual(['Status', 'Priorität', 'Braucht Planung', 'Zuständig', 'Labels', 'Zielbranch', 'Blockiert-Grund']);
+      expect(within(properties).getByLabelText('Blockiert-Grund').closest('label')?.classList.contains('wide')).toBe(true);
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 

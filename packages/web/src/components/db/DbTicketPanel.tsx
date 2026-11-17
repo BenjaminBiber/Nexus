@@ -8,6 +8,7 @@ import type { RawDispatchConfigDto } from '../../api/dispatchTypes.js';
 import { isAutopilot } from '../../dbboard/autopilot.js';
 import { canEditDependencies } from '../../dbboard/dependencyPicker.js';
 import { useDbTicket, type DbChange } from '../../dbboard/useDbTicket.js';
+import { DESKTOP_QUERY, useMediaQuery } from '../../hooks/useMediaQuery.js';
 import { useRestoreFocus } from '../../hooks/useRestoreFocus.js';
 import { useLiveHandler } from '../../live/useLive.js';
 import { AutoHeightTextarea } from '../AutoHeightTextarea.js';
@@ -143,6 +144,8 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [copied, setCopied] = useState(false);
   const [askAcceptance, setAskAcceptance] = useState(false);
+  // Großer Bildschirm: Eigenschaften als Raster über den Reitern; auf Laptop-Breite und schmaler in der Seitenleiste
+  const desktop = useMediaQuery(DESKTOP_QUERY);
   const [conflictHint, setConflictHint] = useState(false);
   // Dialog „Frage stellen“ zu diesem Ticket
   const [asking, setAsking] = useState(false);
@@ -301,6 +304,92 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
     if (await t.remove()) props.onClose();
   };
 
+  // Eigenschaften des Tickets. Auf großen Bildschirmen stehen sie als Raster über den Reitern (Status, Priorität und
+  // Braucht Planung in der ersten Zeile, Blockiert-Grund über die volle Breite); auf Laptop-Breite und schmaler in der
+  // Seitenleiste, damit die Reiter direkt unter dem Titel beginnen
+  const renderProperties = () => {
+    if (!ticket || !drafts) return null;
+    const status = (
+      <label className="field">
+        <span>Status</span>
+        <select value={ticket.status} disabled={t.busy} onChange={(e) => changeStatus(e.target.value as DbStatus)}>
+          {DB_STATUSES.map((value) => (
+            <option key={value} value={value}>
+              {DB_COLUMN_LABELS[value]}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+    const priority = (
+      <label className="field">
+        <span>Priorität</span>
+        <select value={ticket.priority} disabled={t.busy} onChange={(e) => void t.save({ priority: e.target.value as DbPriority })}>
+          {DB_PRIORITIES.map((value) => (
+            <option key={value} value={value}>
+              {DB_PRIORITY_LABELS[value]}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+    const planning = (
+      <label className="option-row db-field-check">
+        <input type="checkbox" checked={ticket.needsPlanning} disabled={t.busy} onChange={(e) => void t.save({ needsPlanning: e.target.checked })} />
+        <span>Braucht Planung</span>
+      </label>
+    );
+    const rest = (
+      <>
+        <label className="field">
+          <span>Zuständig</span>
+          <input value={drafts.assignee} placeholder="Niemand zugewiesen" onChange={(e) => edit('assignee', e.target.value)} onBlur={() => commit('assignee')} onKeyDown={blurOnEnter} />
+        </label>
+        <label className="field">
+          <span>Labels</span>
+          <input value={drafts.labels} placeholder="kommagetrennt" onChange={(e) => edit('labels', e.target.value)} onBlur={() => commit('labels')} onKeyDown={blurOnEnter} />
+        </label>
+        <label className="field">
+          <span>Zielbranch</span>
+          <BranchCombo
+            value={drafts.targetBranch}
+            options={branches}
+            placeholder="ausgecheckter Branch"
+            readOnly={!!ticket.branch}
+            title={ticket.branch ? 'Nach dem Start nicht mehr änderbar' : undefined}
+            onChange={(value) => edit('targetBranch', value)}
+            onCommit={(value) => commit('targetBranch', value)}
+            onCreate={repoReady ? setCreatingBranch : undefined}
+          />
+        </label>
+        <label className={desktop ? 'field wide' : 'field'}>
+          <span>Blockiert-Grund</span>
+          <input value={drafts.blockedReason} placeholder="Nicht blockiert" onChange={(e) => edit('blockedReason', e.target.value)} onBlur={() => commit('blockedReason')} onKeyDown={blurOnEnter} />
+        </label>
+      </>
+    );
+    return desktop ? (
+      <section className="db-properties-grid" aria-label="Eigenschaften">
+        <div className="db-fields">
+          {status}
+          {priority}
+          {planning}
+          {rest}
+        </div>
+      </section>
+    ) : (
+      <section className="db-side-section db-properties" aria-label="Eigenschaften">
+        <h3 className="db-side-title">Eigenschaften</h3>
+        <div className="db-fields">
+          {status}
+          {priority}
+          {rest}
+          {planning}
+        </div>
+      </section>
+    );
+  };
+
   return (
     <>
       <aside
@@ -393,6 +482,7 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
                   {t.error}
                 </p>
               )}
+              {desktop && renderProperties()}
               <DbMergeRetry ticket={ticket} mine={props.isOwnBoard?.(ticket.boardId) ?? false} onDone={() => { void reload(); props.onChanged(); }} />
               {showsReview(ticket, props.isOwnBoard?.(ticket.boardId) ?? false) && (
                 <DbReview ticket={ticket} onDone={() => { void reload(); props.onChanged(); }} />
@@ -422,61 +512,7 @@ export function DbTicketPanel(props: DbTicketPanelProps) {
               />
             </div>
             <div className="db-panel-side">
-              {/* Eigenschaften stehen in der Seitenleiste, damit die Reiter direkt unter dem Titel beginnen */}
-              <section className="db-side-section db-properties" aria-label="Eigenschaften">
-                <h3 className="db-side-title">Eigenschaften</h3>
-                <div className="db-fields">
-                  <label className="field">
-                    <span>Status</span>
-                    <select value={ticket.status} disabled={t.busy} onChange={(e) => changeStatus(e.target.value as DbStatus)}>
-                      {DB_STATUSES.map((status) => (
-                        <option key={status} value={status}>
-                          {DB_COLUMN_LABELS[status]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="field">
-                    <span>Priorität</span>
-                    <select value={ticket.priority} disabled={t.busy} onChange={(e) => void t.save({ priority: e.target.value as DbPriority })}>
-                      {DB_PRIORITIES.map((priority) => (
-                        <option key={priority} value={priority}>
-                          {DB_PRIORITY_LABELS[priority]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="field">
-                    <span>Zuständig</span>
-                    <input value={drafts.assignee} placeholder="Niemand zugewiesen" onChange={(e) => edit('assignee', e.target.value)} onBlur={() => commit('assignee')} onKeyDown={blurOnEnter} />
-                  </label>
-                  <label className="field">
-                    <span>Labels</span>
-                    <input value={drafts.labels} placeholder="kommagetrennt" onChange={(e) => edit('labels', e.target.value)} onBlur={() => commit('labels')} onKeyDown={blurOnEnter} />
-                  </label>
-                  <label className="field">
-                    <span>Zielbranch</span>
-                    <BranchCombo
-                      value={drafts.targetBranch}
-                      options={branches}
-                      placeholder="ausgecheckter Branch"
-                      readOnly={!!ticket.branch}
-                      title={ticket.branch ? 'Nach dem Start nicht mehr änderbar' : undefined}
-                      onChange={(value) => edit('targetBranch', value)}
-                      onCommit={(value) => commit('targetBranch', value)}
-                      onCreate={repoReady ? setCreatingBranch : undefined}
-                    />
-                  </label>
-                  <label className="field">
-                    <span>Blockiert-Grund</span>
-                    <input value={drafts.blockedReason} placeholder="Nicht blockiert" onChange={(e) => edit('blockedReason', e.target.value)} onBlur={() => commit('blockedReason')} onKeyDown={blurOnEnter} />
-                  </label>
-                  <label className="option-row db-field-check">
-                    <input type="checkbox" checked={ticket.needsPlanning} disabled={t.busy} onChange={(e) => void t.save({ needsPlanning: e.target.checked })} />
-                    <span>Braucht Planung</span>
-                  </label>
-                </div>
-              </section>
+              {!desktop && renderProperties()}
               <section className="db-side-section" aria-label="Fortschritt">
                 <h3 className="db-side-title">Fortschritt</h3>
                 <ProgressRing done={ticket.stepsDone} total={ticket.stepsTotal} />
