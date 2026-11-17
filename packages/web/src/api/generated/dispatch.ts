@@ -441,7 +441,12 @@ conflictSeen?: boolean,
  * Änderungen) oder `leftover` (Reste im Merge-Worktree); nur eine neue Art wird erneut
  * kommentiert. „Erneut mergen“ setzt sie zurück.
  */
-heldBy?: string | null, since: string, };
+heldBy?: string | null, 
+/**
+ * Der Merge wartet schon länger auf seinen Ordner und das wurde gemeldet (einmal je
+ * Auftrag; „Erneut mergen“ beginnt einen neuen Auftrag)
+ */
+holdNoticed?: boolean, since: string, };
 
 /**
  * Stand eines Merge-Auftrags

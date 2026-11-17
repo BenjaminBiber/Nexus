@@ -119,6 +119,7 @@ impl ToastTexts {
             DispatchNoticeKind::Paused => "Dispatcher pausiert",
             DispatchNoticeKind::Review => "Dispatcher: wartet auf Review",
             DispatchNoticeKind::Stuck => "Autopilot steckt fest",
+            DispatchNoticeKind::MergeWaiting => "Dispatcher: Merge wartet",
         };
         let kind = match notice.kind {
             DispatchNoticeKind::Merged => ToastKind::Bereit,

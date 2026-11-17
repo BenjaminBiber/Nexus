@@ -74,6 +74,13 @@ impl<'a, G: GitCommands> WorktreeCleaner<'a, G> {
                 .try_run(cwd, &["worktree", "remove", "--force", &entry.path])
                 .ok
             {
+                // Git entfernt den Verwaltungseintrag auch dann, wenn es den Ordner nicht ganz
+                // löschen konnte (Windows: gesperrte Dateien). Dann ist der Worktree weg, nur
+                // ein Rest steht noch; den räumt `ensure_worktree` beim nächsten Bedarf beiseite.
+                // Im Zweifel (Git scheitert auch hier) gilt er als noch vorhanden.
+                if !is_listed(self.git, &self.keys, cwd, Path::new(&entry.path)).unwrap_or(true) {
+                    self.registry.mark_removed(&branch)?;
+                }
                 continue;
             }
             self.registry.mark_removed(&branch)?;
@@ -118,6 +125,22 @@ impl<'a, G: GitCommands> WorktreeCleaner<'a, G> {
             .map(|line| strip_status(line.trim()))
             .all(|file| harness.contains(&file.replace('\\', "/")))
     }
+}
+
+/// Führt `git worktree list` (aufgerufen in `cwd`) den Ordner als Worktree, gleich welchen
+/// Branches?
+pub(crate) fn is_listed<G: GitCommands>(
+    git: &G,
+    keys: &PathKey,
+    cwd: &Path,
+    path: &Path,
+) -> Result<bool> {
+    let wanted = keys.of(path);
+    let listed = git.run(cwd, &["worktree", "list", "--porcelain"])?;
+    Ok(listed
+        .split('\n')
+        .filter_map(|line| line.trim().strip_prefix("worktree "))
+        .any(|found| keys.of(found) == wanted))
 }
 
 /// Schneidet das Statuskürzel und die folgenden Leerzeichen ab

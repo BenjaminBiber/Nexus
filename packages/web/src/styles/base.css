@@ -79,6 +79,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
 @keyframes goo-morph-out { to { opacity: 0; } }
 @keyframes bp-surface-in { from { background-color: transparent; border-color: transparent; box-shadow: none; } }
 @keyframes bp-content-in { from { opacity: 0; transform: translateY(-4px); } }
+@keyframes rail-key-in { from { opacity: 0; } }
 /* Abgang: erst die Höhe, dann die Breite schrumpft zurück ins Feld, die Tropfen fließen hinterher; der Popover wird durchsichtig */
 .goo-morph.is-closing { animation: goo-morph-out 0.12s ease 0.46s forwards; }
 .goo-morph.is-closing .goo-morph-blob { animation: goo-morph-narrow 0.26s cubic-bezier(0.5, 0, 0.7, 1) 0.18s forwards; }
@@ -115,26 +116,26 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
 .bp-empty { margin: 4px 8px; font-size: 13px; }
 @media (max-width: 600px) { .bp-cols { grid-template-columns: 1fr; } .bp-col + .bp-col { padding: 10px 0 0; border-left: 0; border-top: 1px solid var(--line); } }
 .nav { display: flex; flex-direction: column; gap: 2px; }
-.nav a { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: var(--radius-control); color: var(--text-soft); font-size: 14px; font-weight: 500; }
-.nav a:hover { background: var(--line-soft); color: var(--text); }
-.nav a.active { background: var(--nav-active-bg); color: var(--text); box-shadow: 0 1px 2px var(--shadow-soft), 0 0 0 1px var(--line); }
+/* Links stehen grau; unter dem Zeiger werden Symbol und Text kräftiger und dunkel, ohne eigene Fläche */
+.nav a { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: var(--radius-control); color: var(--muted); font-size: 14px; font-weight: 500; transition: color 0.15s ease; }
+.nav a .nav-icon { transition: stroke-width 0.15s ease; }
+.nav a:hover { color: var(--text); font-weight: 600; }
+.nav a:hover .nav-icon { stroke-width: 2.25px; }
+/* Die aktive Seite liegt auf schlichtem Grau (ohne Rand und Schatten), kräftig wie unter dem Zeiger */
+.nav a.active { background: var(--nav-active-bg); color: var(--text); font-weight: 600; }
+.nav a.active .nav-icon { stroke-width: 2.25px; }
 .nav-label { flex: 1; }
-/* Goo-Markierung (GooNav): Kopf, Schwanz und Steg unter den Links (Lage setzt das Skript); die Links liegen darüber */
-.goo-nav { position: relative; }
-.goo-nav-layer { position: absolute; inset: 0; z-index: 0; pointer-events: none; filter: url(#goo-nav) drop-shadow(0 0 1px var(--line)) drop-shadow(0 1px 2px var(--shadow-soft)); }
-.goo-nav-blob { position: absolute; left: 0; top: 0; border-radius: var(--radius-control); background: var(--nav-active-bg); opacity: 0; transition: opacity 0.2s ease; }
-.goo-nav a { position: relative; z-index: 1; }
-.goo-nav a.active, .goo-nav a.active:hover { background: none; box-shadow: none; }
-/* Oben in der Seitenleiste ein kompakter Block: globale Suche, darunter Board-Auswahl (mit Verbindung) */
+/* Oben in der Seitenleiste ein kompakter Block: globale Suche, darunter Board-Auswahl (mit Verbindung). Die Kopie der
+   Board-Auswahl in der Pille der eingeklappten Leiste (RailPill) sieht genauso aus */
 .shell-dock { display: flex; flex-direction: column; gap: 8px; }
 .shell-dock .proj { padding: 0; }
 .shell-dock .bp-field { height: auto; align-items: center; gap: 4px; border: 0; background: none; overflow: visible; }
-.shell-dock .board-picker-trigger { align-self: stretch; gap: 4px; padding: 0 2px 0 4px; border-radius: var(--radius-control); }
-.shell-dock .bp-text { gap: 1px; }
-.shell-dock .bp-project { font-size: 12px; }
-.shell-dock .bp-text .bp-name { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
-.shell-dock .bp-edit { align-self: center; width: 28px; height: 28px; border: 0; border-radius: var(--radius-control); position: relative; margin-left: 5px; }
-.shell-dock .bp-edit::before { content: ""; position: absolute; left: -5px; top: 7px; bottom: 7px; border-left: 1px solid var(--line); }
+:is(.shell-dock, .rail-pill-content) .board-picker-trigger { align-self: stretch; gap: 4px; padding: 0 2px 0 4px; border-radius: var(--radius-control); }
+:is(.shell-dock, .rail-pill-content) .bp-text { gap: 1px; }
+:is(.shell-dock, .rail-pill-content) .bp-project { font-size: 12px; }
+:is(.shell-dock, .rail-pill-content) .bp-text .bp-name { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+:is(.shell-dock, .rail-pill-content) .bp-edit { align-self: center; width: 28px; height: 28px; border: 0; border-radius: var(--radius-control); position: relative; margin-left: 5px; }
+:is(.shell-dock, .rail-pill-content) .bp-edit::before { content: ""; position: absolute; left: -5px; top: 7px; bottom: 7px; border-left: 1px solid var(--line); }
 /* Verbindung: Punkt links neben der Auswahl; der Text erscheint beim Überfahren */
 .bp-status { flex: none; display: grid; place-items: center; padding-left: 4px; }
 .bp-status .live { position: relative; display: block; }
@@ -142,6 +143,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
 .bp-status .live-text { position: absolute; left: 0; top: calc(100% + 8px); padding: 4px 8px; border-radius: 6px; background: var(--text); color: var(--surface); font-size: 12px; font-weight: 500; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.12s; z-index: 20; }
 .bp-status .live:hover .live-text { opacity: 1; }
 .bp-status-only { padding: 0 4px; }
+/* Projekt-Kürzel neben dem Verbindungspunkt: nur in der eingeklappten Leiste, wo der Name keinen Platz hat */
+.bp-rail-key { display: none; }
 .dock-row { display: flex; align-items: center; gap: 8px; }
 .dock-row .proj { flex: 1; min-width: 0; }
 /* Claude-Nutzungslimits ganz unten in der Seitenleiste: je Account ein Doppelring (außen 5 Stunden, innen Woche, Strich =
@@ -196,45 +199,103 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outlin
 .nav-kbd { font-family: var(--font-mono); font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
 /* Umschalter der Seitenleiste (DefaultShell) unten über der Nutzung, gebaut wie ein Navigationseintrag */
 .rail-toggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 12px; border: 0; border-radius: var(--radius-control); background: none; color: var(--muted); font: inherit; font-size: 13px; font-weight: 500; text-align: left; white-space: nowrap; cursor: pointer; }
-.rail-toggle:hover { background: var(--line-soft); color: var(--text); }
+/* Wie die Links der Navigation: unter dem Zeiger kräftiger und dunkel statt einer Fläche */
+.rail-toggle { transition: color 0.15s ease; }
+.rail-toggle .nav-icon { transition: stroke-width 0.15s ease; }
+.rail-toggle:hover { color: var(--text); font-weight: 600; }
+.rail-toggle:hover .nav-icon { stroke-width: 2.25px; }
 .rail-toggle:not(:only-child) { margin-bottom: 8px; }
 @media (max-width: 900px) { .rail-toggle { display: none; } .usage-dock:has(> .rail-toggle:only-child) { display: none; } }
-/* Eingeklappte Seitenleiste (.is-rail, auf Laptop-Breite von sich aus, sonst von Hand): nur Symbole. Beim Überfahren, bei
-   Tastaturfokus oder offener Board-Auswahl klappt sie über den Inhalt auf; Breite und negativer Rand rechts gleichen sich
-   aus, der Inhalt bleibt stehen. Auf geht sie nach kurzem Zögern (0,12 s), zu etwas später (0,2 s), damit sie beim
-   Vorbeistreifen nicht flackert. Die Einträge folgen der Breite, Texte werden abgeschnitten und blenden aus. */
+/* Eingeklappte Seitenleiste (.is-rail, auf Laptop-Breite von sich aus, sonst von Hand): nur Symbole, sie klappt auch beim
+   Überfahren nicht auf. Welcher Eintrag was ist, zeigt die Ausbeulung (RailPill): neben dem überfahrenen oder per
+   Tastatur fokussierten Eintrag wächst die Leiste flüssig nach rechts. Beim Einklappen per Knopf folgen die Einträge der
+   Breite, Texte blenden aus. */
 @media (min-width: 901px) {
   :root { --rail-width: 66px; --rail-ease: cubic-bezier(0.22, 1, 0.36, 1); }
-  .shell-sidebar { transition: margin-right 0.24s var(--rail-ease); }
+  /* Die Übergänge stehen auch im offenen Zustand, sonst springt die Leiste beim Ausklappen (die Regeln von .is-rail fallen
+     mit der Klasse weg). Breite statt flex-basis, damit sie gleitet; Einträge brechen währenddessen nicht um, die Texte
+     blenden ein, wenn schon etwas Platz da ist. */
+  .shell-sidebar { flex: none; overflow-x: hidden; transition: width 0.24s var(--rail-ease); }
+  .shell-sidebar :is(.nav a, .global-search, .rail-toggle) { overflow: hidden; white-space: nowrap; }
+  .shell-sidebar :is(.shell-dock, .nav, .usage-dock) :is(.nav-label, .global-search-label, .nav-kbd, .board-picker-trigger, .bp-edit) { transition: opacity 0.16s ease 0.08s; }
+  .shell-sidebar :is(.bp-status, .bp-status-only) { transition: padding-left 0.24s var(--rail-ease); }
+  /* Das Projekt-Kürzel blendet beim Ausklappen aus und verschwindet erst danach (display wechselt am Ende) */
+  .shell-dock .bp-rail-key { opacity: 0; transition: opacity 0.1s ease, display 0.1s allow-discrete; }
   .shell-sidebar.is-rail {
-    --rail-t: 0.24s var(--rail-ease) 0.12s;
-    --rail-fade: opacity 0.16s ease 0.2s;
+    --rail-t: 0.24s var(--rail-ease);
+    --rail-fade: opacity 0.1s ease;
     flex: none; width: var(--rail-width); position: relative; z-index: 25; overflow-x: hidden;
-    transition: width var(--rail-t), margin-right var(--rail-t), box-shadow var(--rail-t);
+    transition: width var(--rail-t);
   }
-  .shell-sidebar.is-rail:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) {
-    width: var(--sidebar-width); margin-right: calc(var(--rail-width) - var(--sidebar-width)); box-shadow: 12px 0 32px var(--shadow-mid);
-  }
-  .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) { --rail-t: 0.24s var(--rail-ease) 0.2s; --rail-fade: opacity 0.1s ease 0.16s; }
   .is-rail :is(.nav a, .global-search, .rail-toggle) { overflow: hidden; white-space: nowrap; }
+  /* Die Einträge liegen über der Pille, ihre Symbole bleiben beim Herausfließen oben */
+  .is-rail :is(.nav a, .global-search, .rail-toggle, .bp-field) { position: relative; z-index: 1; }
   .is-rail .global-search { padding: 0 12px; }
-  .is-rail :is(.nav-label, .global-search-label, .nav-kbd, .board-picker-trigger, .bp-edit) { transition: var(--rail-fade); }
-  .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) :is(.nav-label, .global-search-label, .nav-kbd, .board-picker-trigger, .bp-edit) { opacity: 0; }
-  /* Verbindungspunkt der Board-Auswahl rückt in die Symbolspalte */
-  .is-rail :is(.bp-status, .bp-status-only) { transition: padding-left var(--rail-t); }
-  .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) :is(.bp-status, .bp-status-only) { padding-left: 16px; }
+  /* Texte und Zähler nur in den Einträgen selbst ausblenden, nicht in ihrer Kopie in der Pille (die liegt auch in der Leiste) */
+  .is-rail :is(.shell-dock, .nav, .usage-dock) :is(.nav-label, .global-search-label, .nav-kbd, .board-picker-trigger, .bp-edit) { opacity: 0; transition: var(--rail-fade); }
+  /* Verbindungspunkt der Board-Auswahl rückt in die Symbolspalte (auch in der Pille, dort bleibt er so stehen) */
+  .is-rail :is(.bp-status, .bp-status-only) { padding-left: 16px; transition: padding-left var(--rail-t); }
+  /* Board-Auswahl: das ganze Feld öffnet die Auswahl; der Stift nimmt keine Klicks (er läge unsichtbar am Rand), bleibt
+     aber per Tastatur erreichbar */
+  .is-rail .shell-dock .board-picker-trigger { position: absolute; inset: 0; }
+  .is-rail .shell-dock .bp-edit { position: absolute; right: 0; pointer-events: none; }
+  .is-rail .shell-dock .bp-field { min-height: 28px; }
+  /* Mit Projekt stehen Verbindungspunkt und Kürzel gemeinsam mittig; das Feld nutzt dafür fast die ganze Leistenbreite.
+     Unter dem Zeiger zeigt die Kopie Projekt und Board, das Kürzel tritt dann zurück. */
+  .is-rail .shell-dock .bp-field:has(> .bp-rail-key) { justify-content: safe center; gap: 4px; margin-inline: -6px; }
+  .is-rail :is(.bp-field, .rail-pill-content):has(> .bp-rail-key) .bp-status { padding-left: 0; }
+  .is-rail .shell-dock .bp-rail-key { display: block; opacity: 1; flex: none; color: var(--text-soft); font-family: var(--font-mono); font-size: 11px; font-weight: 600; line-height: 20px; transition: var(--rail-fade); animation: rail-key-in 0.2s ease; }
+  .is-rail .shell-dock .bp-field[data-rail-pill] .bp-rail-key { opacity: 0; }
   /* Zähler werden zum Punkt an der Ecke des Symbols */
-  .is-rail .nav a { position: relative; }
-  .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .nav-badge { position: absolute; left: 26px; top: 9px; min-width: 0; width: 8px; height: 8px; padding: 0; font-size: 0; box-shadow: 0 0 0 2px var(--sidebar-bg); }
-  /* Nutzung: Ringe ohne Rahmen untereinander und etwas kleiner */
-  .is-rail .usage-meter { transition: padding var(--rail-t), border-color var(--rail-t), background-color var(--rail-t); }
-  .is-rail .usage-ring { width: 52px; height: 52px; transition: width var(--rail-t), height var(--rail-t); }
-  .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .usage-meter { padding: 0; border-color: transparent; background-color: transparent; }
-  .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .usage-ring { width: 40px; height: 40px; }
+  .is-rail .nav .nav-badge { position: absolute; left: 26px; top: 9px; min-width: 0; width: 8px; height: 8px; padding: 0; font-size: 0; box-shadow: 0 0 0 2px var(--sidebar-bg); }
+  /* Nutzung: Ringe ohne Rahmen untereinander und etwas kleiner. Sie stehen sofort in ihrer Spalte (links bündig, damit die
+     schrumpfende Breite sie nicht verschiebt); den Weg dorthin gleiten sie (useRailGlide), der Rahmen blendet in beide
+     Richtungen */
+  .usage-meter.compact { transition: border-color 0.24s var(--rail-ease), background-color 0.24s var(--rail-ease); }
+  .is-rail .usage-meter { padding: 0; border-color: transparent; background-color: transparent; }
+  .is-rail .usage-meter.compact .usage-accounts { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; }
+  /* Die Kontoangaben passen nicht in die schmale Leiste (und würden an ihr abgeschnitten): sie öffnen rechts daneben */
+  .is-rail .usage-pop { position: fixed; left: calc(var(--rail-width) + 8px); right: auto; bottom: 16px; width: 240px; z-index: 30; }
+  .is-rail .usage-ring { width: 40px; height: 40px; }
+  /* Eintrag mit Ausbeulung: eigene Fläche weg, seine Zeile zeichnet die Kopie in voller Breite */
+  .is-rail :is(.nav a, .global-search, .rail-toggle)[data-rail-pill] { background: none; box-shadow: none; color: var(--text); }
+  /* Wie unter dem Zeiger in der offenen Leiste: Symbol und Text kräftiger (die Kopie übernimmt das Gewicht) */
+  .is-rail :is(.nav a, .rail-toggle)[data-rail-pill] { font-weight: 600; }
+  .is-rail :is(.nav a, .rail-toggle)[data-rail-pill] .nav-icon { stroke-width: 2.25px; }
+  .is-rail .bp-field[data-rail-pill] { background: transparent; border-color: transparent; }
 }
-@media (min-width: 901px) and (prefers-reduced-motion: reduce) {
-  .shell-sidebar { transition: none; }
-  .shell-sidebar.is-rail, .shell-sidebar.is-rail:not(:hover, :has(:focus-visible), :has([aria-expanded='true'])) { --rail-t: 0s linear 0.12s; --rail-fade: opacity 0s linear 0.12s; }
+/* Ausbeulung der eingeklappten Leiste (RailPill): Goo-Ebene in Farbe und Rand der Leiste, aus Kantenstreifen, Körper,
+   Nachlauf, Steg, Hals und Tropfen (Lage setzt das Skript), sichtbar nur jenseits der Kante; darüber die Kopie des
+   Eintrags als Zeile der offenen Leiste, beschnitten auf den Körper. Fest positioniert, damit die schmale Leiste sie
+   nicht abschneidet; sie liegt im Stapel der Leiste über dem Inhalt, aber unter den Einträgen (im Fuß der Leiste
+   darüber, .is-raised). */
+.rail-pill { position: fixed; left: 0; top: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.14s ease; }
+.rail-pill.is-raised { z-index: 2; }
+.rail-pill.is-open { opacity: 1; transition-duration: 0.05s; }
+.rail-pill-goo { position: fixed; filter: url(#goo-rail); }
+.rail-pill-ink { flood-color: var(--line); }
+.rail-pill-blob { position: absolute; left: 0; top: 0; border-radius: var(--rail-pill-radius, var(--radius-control)); background: var(--sidebar-bg); }
+.rail-pill-blob.is-drop { border-radius: 50%; }
+.rail-pill-blob.is-strip { border-radius: 0; }
+.rail-pill-content { position: fixed; box-sizing: border-box; display: flex; align-items: center; border-radius: var(--rail-item-radius, var(--radius-control)); white-space: nowrap; text-decoration: none; cursor: pointer; }
+.rail-pill-content, .rail-pill-content:hover { color: var(--text); }
+/* Die Zeile sieht aus wie in der offenen Leiste unter dem Zeiger: ohne Fläche, nur der aktive Eintrag behält seine */
+.rail-pill-content[data-kind='nav'].is-active { background: var(--nav-active-bg); }
+.rail-pill-content[data-kind='search'] { background: var(--line); }
+.rail-pill.is-open .rail-pill-content { pointer-events: auto; }
+/* Kopie des vorigen Eintrags, die beim Wechsel mit dem Nachlauf abfließt */
+.rail-pill .rail-pill-content.is-ghost { pointer-events: none; }
+/* Das Symbol zeigt der Eintrag selbst (er liegt darüber); doppelt gezeichnet wirkt es fett. Im Fuß der Leiste liegt die
+   Kopie oben, dort bleibt ihr Symbol. */
+.rail-pill:not(.is-raised) .rail-pill-content > .nav-icon { visibility: hidden; }
+.rail-pill-content[hidden] { display: none; }
+.rail-pill-content .nav-label { flex: none; }
+@media (prefers-reduced-motion: reduce) {
+  .shell-sidebar.is-rail { --rail-t: 0s; --rail-fade: opacity 0s; }
+  .shell-sidebar, .shell-sidebar :is(.nav-label, .global-search-label, .nav-kbd, .board-picker-trigger, .bp-edit, .bp-status, .bp-status-only) { transition: none; }
+  .rail-pill, .rail-pill.is-open, .usage-meter.compact { transition: none; }
+  :is(.nav a, .rail-toggle), :is(.nav a, .rail-toggle) .nav-icon { transition: none; }
+  .bp-rail-key { animation: none !important; transition: none !important; }
 }
 /* Such-Dialog über alle Boards (Strg+K) */
 .search-dialog { width: min(720px, 100%); display: flex; flex-direction: column; gap: 12px; }
@@ -674,7 +735,7 @@ details p { margin: 0 0 12px; max-width: 70ch; color: var(--text-soft); }
 .settings-nav a { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: var(--radius-control); color: var(--text-soft); font-size: 13.5px; font-weight: 500; }
 .settings-nav a .nav-icon { color: var(--muted); }
 .settings-nav a:hover { background: var(--line-soft); color: var(--text); }
-.settings-nav a.active { background: var(--nav-active-bg); color: var(--text); box-shadow: 0 1px 2px var(--shadow-soft), 0 0 0 1px var(--line); }
+.settings-nav a.active { background: var(--nav-active-bg); color: var(--text); }
 .settings-nav a.active .nav-icon { color: var(--accent); }
 .settings-content { flex: 1; min-width: 0; max-width: var(--page-width); padding: 36px var(--gutter) 64px; }
 .settings-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 20px; }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useApi } from '../api/ApiContext.js';
 import type { AccountUsageEntryDto, ClaudeUsageDto, UsageOverviewDto, UsageWindowDto } from '../api/usageTypes.js';
@@ -257,11 +257,79 @@ export function AccountUsageLines({ entry, defaultLimit }: { entry: AccountUsage
 function AccountDot({ row, defaultLimit, now, to }: { row: Row; defaultLimit: number; now: Date; to: string | null }) {
   const ring = <Ring row={row} defaultLimit={defaultLimit} now={now} />;
   return (
-    <div className={`usage-dot${row.stale || !row.usage ? ' stale' : ''}`} role="group" aria-label={row.entry.name}>
+    <div className={`usage-dot${row.stale || !row.usage ? ' stale' : ''}`} data-account={row.entry.id} role="group" aria-label={row.entry.name}>
       {to ? <Link className="usage-dot-link" to={to} aria-label={`${row.entry.name}: alle Accounts`}>{ring}</Link> : ring}
       <Details row={row} defaultLimit={defaultLimit} now={now} />
     </div>
   );
+}
+
+// Dauer und Kurve wie die Breite der Seitenleiste (--rail-t in base.css)
+const RAIL_MS = 240;
+const RAIL_EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+interface Box { x: number; y: number; w: number }
+
+// Ein- und Ausklappen der Seitenleiste: die Ringe stehen offen nebeneinander und eingeklappt untereinander (kleiner). Statt
+// an die neue Stelle zu springen, gleitet jeder Ring von seiner alten Lage und Größe dorthin (FLIP). Die Lagen werden
+// gemerkt, solange nichts läuft; wechselt die Leiste mitten im Gleiten, startet der Ring dort, wo er gerade zu sehen ist.
+function useRailGlide(root: RefObject<HTMLElement | null>, shown: boolean) {
+  useEffect(() => {
+    const meter = root.current;
+    const rail = meter?.closest('.shell-sidebar');
+    if (!shown || !meter || !rail || typeof ResizeObserver === 'undefined' || typeof meter.getAnimations !== 'function') return;
+    const rings = () => [...meter.querySelectorAll<SVGSVGElement>('.usage-ring')];
+    const key = (ring: Element) => ring.closest('[data-account]')?.getAttribute('data-account') ?? '';
+    const boxes = new Map<string, Box>();
+    const remember = () => {
+      if (meter.getAnimations({ subtree: true }).some((a) => a.playState === 'running')) return;
+      boxes.clear();
+      for (const ring of rings()) {
+        const r = ring.getBoundingClientRect();
+        boxes.set(key(ring), { x: r.left, y: r.top, w: r.width });
+      }
+    };
+    let wasRail = rail.classList.contains('is-rail');
+    const observer = new MutationObserver(() => {
+      const isRail = rail.classList.contains('is-rail');
+      if (isRail === wasRail) return;
+      wasRail = isRail;
+      const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      for (const ring of rings()) {
+        const from = boxes.get(key(ring));
+        // Läuft noch ein Gleiten, beginnt das neue an der Stelle, die gerade zu sehen ist
+        const running = ring.getAnimations()[0];
+        let shift = { x: 0, y: 0, s: 1 };
+        if (running) {
+          const m = new DOMMatrixReadOnly(getComputedStyle(ring).transform);
+          shift = { x: m.e, y: m.f, s: m.a };
+          running.cancel();
+        }
+        const to = ring.getBoundingClientRect();
+        if (!from || still || !to.width) continue;
+        const dx = from.x + shift.x - to.left;
+        const dy = from.y + shift.y - to.top;
+        const s = (from.w * shift.s) / to.width;
+        if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && Math.abs(s - 1) < 0.01) continue;
+        ring.animate(
+          [{ transformOrigin: '0 0', transform: `translate(${dx}px, ${dy}px) scale(${s})` }, { transformOrigin: '0 0', transform: 'none' }],
+          { duration: RAIL_MS, easing: RAIL_EASE },
+        ).finished.then(remember, () => {});
+      }
+      remember();
+    });
+    observer.observe(rail, { attributes: true, attributeFilter: ['class'] });
+    // Lage nach dem Laden, bei neuen Accounts und bei geänderter Fenstergröße neu merken
+    const resize = new ResizeObserver(remember);
+    resize.observe(meter);
+    window.addEventListener('resize', remember);
+    remember();
+    return () => {
+      observer.disconnect();
+      resize.disconnect();
+      window.removeEventListener('resize', remember);
+    };
+  }, [root, shown]);
 }
 
 // Lädt die Limits aller aktiven Accounts und hält je Account den letzten guten Stand. Vorübergehende Fehlschläge (Netz,
@@ -331,12 +399,14 @@ function useUsageOverview(): { overview: UsageOverviewDto | null; rows: Row[]; w
 export function ClaudeUsageMeter({ variant = 'compact' }: { variant?: 'compact' | 'full' }) {
   const { pid = '' } = useParams();
   const { overview, rows, waiting } = useUsageOverview();
+  const section = useRef<HTMLElement>(null);
+  useRailGlide(section, variant === 'compact' && rows.length > 0);
   const skeleton = variant === 'compact' && remembered() ? <div className="usage-meter usage-skel" aria-hidden="true" /> : null;
   if (!overview || !rows.length) return waiting ? skeleton : null;
   const now = new Date();
   const to = pid ? `/p/${pid}/settings#accounts` : null;
   return (
-    <section className={`usage-meter ${variant}`} aria-label="Claude-Nutzungslimits">
+    <section ref={section} className={`usage-meter ${variant}`} aria-label="Claude-Nutzungslimits">
       <div className="usage-accounts">
         {rows.map((row) => variant === 'full'
           ? <AccountCard key={row.entry.id} row={row} defaultLimit={overview.defaultLimit} now={now} />

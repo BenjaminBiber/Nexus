@@ -28,6 +28,10 @@ const MAX_RESEARCH_WIP: i64 = 5;
 /// Obergrenze gleichzeitiger Planungsläufe
 const MAX_PLANNING_WIP: i64 = 5;
 
+/// Frühere Einstellungen, die nicht mehr wirken; steht eine davon noch in der Datei, merkt sich
+/// die Einstellung das für Hinweise
+const RETIRED: [&str; 1] = ["mergeIgnore"];
+
 static HHMM: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^([01]\d|2[0-3]):([0-5]\d)$").unwrap());
 
@@ -214,6 +218,11 @@ impl DispatchConfigNormalizer {
                 0,
                 Some(300),
             )?,
+            retired: RETIRED
+                .iter()
+                .filter(|key| field(input, key).is_some())
+                .map(|key| key.to_string())
+                .collect(),
         })
     }
 
@@ -1048,6 +1057,20 @@ mod tests {
         // Unbekannte Schlüssel der Datei werden einfach übergangen
         let cfg = normalize(json!({ "mergeIgnore": ["*.yaml"] }));
         assert_eq!(cfg.merge_strategy, MergeStrategy::Merge);
+    }
+
+    #[test]
+    fn merkt_sich_stillgelegte_einstellungen_fur_hinweise() {
+        assert_eq!(
+            normalize(json!({ "mergeIgnore": ["*.yaml"] })).retired,
+            ["mergeIgnore"]
+        );
+        assert!(normalize(json!({})).retired.is_empty());
+        // Auch eine leere Liste ist ein Hinweis wert: sie zeigt, dass jemand sie erwartet
+        assert_eq!(
+            normalize(json!({ "mergeIgnore": [] })).retired,
+            ["mergeIgnore"]
+        );
     }
 
     #[test]

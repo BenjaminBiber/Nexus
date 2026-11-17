@@ -3,7 +3,6 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { AppShell } from './components/AppShell.js';
 import { DashboardPage } from './pages/DashboardPage.js';
 import { DbBoardPage } from './pages/DbBoardPage.js';
-import { DbQuestionDetailPage } from './pages/DbQuestionDetailPage.js';
 import { DbQuestionsPage } from './pages/DbQuestionsPage.js';
 import { DocsPage } from './pages/DocsPage.js';
 import { GuidePage } from './pages/GuidePage.js';
@@ -41,8 +40,7 @@ export function App() {
             <Route path="dashboard" element={<ThemePage name="dashboard" standard={<DashboardPage />} />} />
             <Route path="inbox" element={<InboxPage />} />
             <Route path="sessions/*" element={<SessionsPage />} />
-            <Route path="questions" element={<DbQuestionsPage />} />
-            <Route path="questions/:id" element={<DbQuestionDetailPage />} />
+            <Route path="questions/:id?" element={<DbQuestionsPage />} />
             <Route path="docs/*" element={<DocsPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="guide" element={<GuidePage />} />
