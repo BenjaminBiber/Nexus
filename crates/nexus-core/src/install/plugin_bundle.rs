@@ -40,6 +40,11 @@ impl PluginBundle {
         value.get("version")?.as_str().map(ToString::to_string)
     }
 
+    /// Inhalts-Hash aus `content-hash` (vom Plugin-Build geschrieben); fehlt er, `None`
+    pub fn content_hash(&self) -> Option<String> {
+        read_content_hash(&self.root)
+    }
+
     /// Kopiert das Plugin nach `~/.nexus/plugin/nexus`, schreibt den Marktplatz daneben und legt
     /// Regeln und Anpassungen im Benutzerordner ab; liefert den Marktplatz-Ordner
     pub fn stage(&self, home: &HarnessHome) -> Result<PathBuf> {
@@ -63,6 +68,16 @@ impl PluginBundle {
         copy_home_data(&self.root, home)?;
         Ok(marketplace)
     }
+}
+
+/// Datei mit dem Inhalts-Hash im Plugin-Ordner (siehe `packages/plugin/scripts/content-hash.mjs`)
+pub const CONTENT_HASH_FILE: &str = "content-hash";
+
+/// Inhalts-Hash eines Plugin-Ordners; fehlt die Datei oder ist sie leer, `None`
+pub fn read_content_hash(root: &Path) -> Option<String> {
+    let text = fs::read_to_string(root.join(CONTENT_HASH_FILE)).ok()?;
+    let hash = text.trim();
+    (!hash.is_empty()).then(|| hash.to_string())
 }
 
 /// `plugin.json` eines Plugin-Ordners

@@ -5,6 +5,7 @@ import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFi
 import { spawnSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { writeContentHash } from './content-hash.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 // Zielordner: Vorgabe im Repo, für Testläufe über NEXUS_PLUGIN_OUT (alt: HARNESS_PLUGIN_OUT) umstellbar
@@ -93,5 +94,8 @@ if (applied.status !== 0) {
   console.warn(`Anpassungen ließen sich nicht anwenden: ${message}. Es gilt der Standard.`);
   writeFallbackOverview(customDir, message);
 }
+
+// Inhalts-Hash zuletzt, damit er alles enthält; die App bietet ein Update nur bei anderem Hash an
+writeContentHash(OUT);
 
 console.log(`Plugin gebaut: ${OUT}`);

@@ -1,7 +1,7 @@
 //! Installiert das mitgelieferte Plugin: in den Benutzerordner legen, Regeln kopieren und bei
 //! Claude Code anmelden.
 
-use nexus_core::install::{ClaudePluginInstall, PluginBundle};
+use nexus_core::install::{ClaudePluginInstall, InstallProgress, PluginBundle};
 use nexus_core::{HarnessHome, Result};
 use serde::Serialize;
 
@@ -27,13 +27,20 @@ pub fn install_plugin(
     bundle: &PluginBundle,
     home: &HarnessHome,
 ) -> Result<PluginSetupResult> {
+    setup.set_progress(InstallProgress {
+        label: "Plugin-Dateien ablegen".into(),
+        done: 0,
+        total: 0,
+    });
     let marketplace = bundle.stage(home)?;
     let mut steps = vec![format!(
         "Plugin, Regeln und Anpassungen nach {} gelegt",
         home.dir().display()
     )];
-    let result =
-        ClaudePluginInstall::new(setup.claude(), Some(setup.claude_dir())).install(&marketplace);
+    let report = |progress: InstallProgress| setup.set_progress(progress);
+    let result = ClaudePluginInstall::new(setup.claude(), Some(setup.claude_dir()))
+        .with_progress(&report)
+        .install(&marketplace);
     if result.marketplace_added {
         steps.push("Marktplatz nexus-local bei Claude Code angemeldet".into());
     }

@@ -19,12 +19,13 @@ pub mod user_path;
 pub mod windows_user_path;
 
 pub use claude_plugin::{
-    ClaudeCli, ClaudeOutput, ClaudePluginInstall, PluginInstallResult, SystemClaudeCli, MARKETPLACE,
+    ClaudeCli, ClaudeOutput, ClaudePluginInstall, InstallProgress, PluginInstallResult,
+    SystemClaudeCli, MARKETPLACE,
 };
 pub use cli_installer::{CliInstaller, InstallOptions, InstallResult};
 pub use import_approval::{ApprovalResult, ApprovalStatus, ClaudeImportApproval};
 pub use launcher_writer::{LauncherWriter, BINARY_NAME};
-pub use plugin_bundle::{PluginBundle, BUNDLE_PLUGIN_DIR};
+pub use plugin_bundle::{read_content_hash, PluginBundle, BUNDLE_PLUGIN_DIR};
 pub use plugin_switch::{ProjectPluginSwitch, SwitchResult, LEGACY_PLUGIN_ID, PLUGIN_ID};
 pub use project_rule::{
     ProjectRule, ProjectRuleSpec, BOARD_RULE_PATH, DOCS_RULE_PATH, LEGACY_BOARD_RULE_PATH,

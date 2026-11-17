@@ -405,6 +405,12 @@ export interface PluginInstallDto {
   hints: string[];
 }
 
+/** Stand der laufenden Einrichtung (`GET /api/setup/plugin/progress`); `total` 0 heißt unbestimmt */
+export interface PluginInstallProgressDto {
+  running: boolean;
+  progress: { label: string; done: number; total: number } | null;
+}
+
 export type MigrationReason = 'legacy-plugin' | 'legacy-rules';
 
 /** Braucht das Repo des Boards eine Migration? (`GET /api/db/boards/{id}/migration`) */

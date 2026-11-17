@@ -9,10 +9,13 @@ pub mod plugin_status;
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 
-use nexus_core::install::{ClaudeCli, ClaudeImportApproval, ClaudeOutput, SystemClaudeCli};
+use nexus_core::install::{
+    ClaudeCli, ClaudeImportApproval, ClaudeOutput, InstallProgress, SystemClaudeCli,
+};
 use nexus_core::{HarnessError, Result};
+use serde::Serialize;
 
 /// Umgebung der Einrichtung: Kommandozeile von Claude Code, Claude-Ordner, Benutzerordner,
 /// dazu die Sperre gegen gleichzeitige Läufe. Tests setzen Attrappe und Temp-Ordner ein.
@@ -23,6 +26,17 @@ pub struct SetupContext {
     user_home: PathBuf,
     found: Arc<OnceLock<bool>>,
     busy: Arc<AtomicBool>,
+    progress: Arc<Mutex<Option<InstallProgress>>>,
+}
+
+/// Antwort von `GET /api/setup/plugin/progress`: läuft eine Einrichtung, und wie weit ist sie
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SetupProgressReport {
+    /// Eine Einrichtung läuft
+    pub running: bool,
+    /// Letzter gemeldeter Stand; vor dem ersten Schritt `None`
+    pub progress: Option<InstallProgress>,
 }
 
 impl fmt::Debug for SetupContext {
@@ -47,6 +61,7 @@ impl SetupContext {
             user_home,
             found: Arc::new(OnceLock::new()),
             busy: Arc::new(AtomicBool::new(false)),
+            progress: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -91,6 +106,24 @@ impl SetupContext {
         )
     }
 
+    /// Merkt sich den Stand des laufenden Laufs
+    pub fn set_progress(&self, progress: InstallProgress) {
+        if let Ok(mut slot) = self.progress.lock() {
+            *slot = Some(progress);
+        }
+    }
+
+    /// Läuft ein Lauf, und welchen Stand hat er zuletzt gemeldet
+    pub fn progress(&self) -> SetupProgressReport {
+        let running = self.busy.load(Ordering::SeqCst);
+        let progress = if running {
+            self.progress.lock().ok().and_then(|slot| slot.clone())
+        } else {
+            None
+        };
+        SetupProgressReport { running, progress }
+    }
+
     /// Beginnt einen Lauf; läuft schon einer, `setup-busy` (409)
     pub fn try_begin(&self) -> Result<RunGuard> {
         if self
@@ -103,6 +136,9 @@ impl SetupContext {
                 "Die Einrichtung läuft schon. Bitte warten, bis sie fertig ist.",
             )
             .into());
+        }
+        if let Ok(mut slot) = self.progress.lock() {
+            *slot = None;
         }
         Ok(RunGuard {
             busy: self.busy.clone(),
@@ -159,6 +195,34 @@ mod tests {
         assert_eq!(eigene.claude_dir(), PathBuf::from("/c"));
         let standard = SetupContext::new(Arc::new(NoClaude), None, user.clone());
         assert_eq!(standard.claude_dir(), user.join(".claude"));
+    }
+
+    #[test]
+    fn meldet_den_stand_nur_waehrend_eines_laufs() {
+        let setup = SetupContext::new(Arc::new(NoClaude), None, PathBuf::from("/x"));
+        let stand = InstallProgress {
+            label: "Plugin aktualisieren".into(),
+            done: 3,
+            total: 6,
+        };
+        let guard = setup.try_begin().unwrap();
+        assert_eq!(setup.progress().progress, None);
+        setup.set_progress(stand.clone());
+        assert_eq!(
+            setup.progress(),
+            SetupProgressReport {
+                running: true,
+                progress: Some(stand)
+            }
+        );
+        drop(guard);
+        assert_eq!(
+            setup.progress(),
+            SetupProgressReport {
+                running: false,
+                progress: None
+            }
+        );
     }
 
     #[test]

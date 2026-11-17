@@ -147,6 +147,7 @@ export function fakeApi(overrides: Partial<Record<keyof ApiClient, unknown>> = {
     listStoreRepos: async () => [],
     getStoreIndex: async () => ({ entries: [], repos: [] }),
     getStoreUpdates: async () => ({ updates: [], errors: [] }),
+    getPluginInstallProgress: async () => ({ running: false, progress: null }),
     getPluginSetup: async () => ({ bundled: false, claude: false, state: 'missing', installedVersion: null, bundledVersion: null }),
     getBoardMigration: async () => ({ needed: false, repoPath: null, reasons: [] }),
     getDbQuestions: async () => dbQuestionList([]),

@@ -1,11 +1,13 @@
 //! Zustand des Claude-Code-Plugins: installiert, fehlt oder älter als das mitgelieferte.
-//! Gelesen aus `plugins/installed_plugins.json`, ohne `claude` aufzurufen.
+//! Gelesen aus `plugins/installed_plugins.json`, ohne `claude` aufzurufen. Haben das installierte
+//! und das mitgelieferte Plugin denselben Inhalts-Hash, gilt es als aktuell, auch wenn die
+//! Build-Version (Zeitstempel) älter ist.
 
 use std::cmp::Ordering;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use nexus_core::install::{PluginBundle, PLUGIN_ID};
+use nexus_core::install::{read_content_hash, PluginBundle, PLUGIN_ID};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -13,11 +15,11 @@ use serde_json::Value;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum PluginState {
-    /// Eingetragen, mindestens so neu wie das mitgelieferte
+    /// Eingetragen, mindestens so neu wie das mitgelieferte oder mit gleichem Inhalt
     Installed,
     /// Kein Eintrag
     Missing,
-    /// Eingetragen, aber älter als das mitgelieferte
+    /// Eingetragen, aber älter als das mitgelieferte und mit anderem Inhalt
     Outdated,
 }
 
@@ -43,17 +45,19 @@ pub fn read_status(
     bundle: Option<&PluginBundle>,
     claude: bool,
 ) -> PluginStatusReport {
-    let installed_version = installed_version(claude_dir);
+    let installed = installed_entry(claude_dir);
     let bundled_version = bundle.and_then(PluginBundle::version);
-    let state = match (&installed_version, &bundled_version) {
+    let state = match (&installed, &bundled_version) {
         (None, _) => PluginState::Missing,
-        (Some(installed), Some(bundled))
-            if compare_versions(installed, bundled) == Ordering::Less =>
+        (Some(entry), Some(bundled))
+            if compare_versions(&entry.version, bundled) == Ordering::Less
+                && !same_content(entry, bundle) =>
         {
             PluginState::Outdated
         }
         (Some(_), _) => PluginState::Installed,
     };
+    let installed_version = installed.map(|entry| entry.version);
     PluginStatusReport {
         bundled: bundle.is_some(),
         claude,
@@ -63,17 +67,39 @@ pub fn read_status(
     }
 }
 
-/// Höchste Version aller Einträge des Plugins; fehlende oder unlesbare Datei: `None`
-fn installed_version(claude_dir: &Path) -> Option<String> {
+/// Ein Eintrag aus `installed_plugins.json`
+struct InstalledEntry {
+    version: String,
+    install_path: Option<PathBuf>,
+}
+
+/// Eintrag mit der höchsten Version; fehlende oder unlesbare Datei: `None`
+fn installed_entry(claude_dir: &Path) -> Option<InstalledEntry> {
     let text =
         fs::read_to_string(claude_dir.join("plugins").join("installed_plugins.json")).ok()?;
     let value: Value = serde_json::from_str(&text).ok()?;
     let entries = value.get("plugins")?.get(PLUGIN_ID)?.as_array()?;
     entries
         .iter()
-        .map(|entry| entry.get("version").and_then(Value::as_str).unwrap_or("0"))
-        .max_by(|a, b| compare_versions(a, b))
-        .map(ToString::to_string)
+        .map(|entry| InstalledEntry {
+            version: entry
+                .get("version")
+                .and_then(Value::as_str)
+                .unwrap_or("0")
+                .to_string(),
+            install_path: entry
+                .get("installPath")
+                .and_then(Value::as_str)
+                .map(PathBuf::from),
+        })
+        .max_by(|a, b| compare_versions(&a.version, &b.version))
+}
+
+/// Installiertes und mitgeliefertes Plugin haben denselben Inhalts-Hash; fehlt einer, nein
+fn same_content(entry: &InstalledEntry, bundle: Option<&PluginBundle>) -> bool {
+    let bundled = bundle.and_then(PluginBundle::content_hash);
+    let installed = entry.install_path.as_deref().and_then(read_content_hash);
+    matches!((bundled, installed), (Some(a), Some(b)) if a == b)
 }
 
 /// Vergleicht Versionen Teil für Teil als Zahlen (`0.1.10` > `0.1.9`); Unlesbares zählt als 0
@@ -116,6 +142,28 @@ mod tests {
         .unwrap();
     }
 
+    /// Schreibt einen installierten Plugin-Ordner mit Inhalts-Hash und einen Eintrag, der auf ihn zeigt
+    fn installed_with_hash(dir: &Path, version: &str, hash: &str) {
+        let path = dir.join("cache").join(version);
+        fs::create_dir_all(&path).unwrap();
+        fs::write(path.join("content-hash"), format!("{hash}\n")).unwrap();
+        fs::create_dir_all(dir.join("plugins")).unwrap();
+        let entry = serde_json::json!({
+            "scope": "user", "version": version, "installPath": path.to_string_lossy(),
+        });
+        fs::write(
+            dir.join("plugins/installed_plugins.json"),
+            serde_json::json!({ "version": 2, "plugins": { PLUGIN_ID: [entry] } }).to_string(),
+        )
+        .unwrap();
+    }
+
+    fn bundle_with_hash(dir: &Path, version: &str, hash: &str) -> PluginBundle {
+        let bundle = bundle(dir, version);
+        fs::write(bundle.root().join("content-hash"), hash).unwrap();
+        bundle
+    }
+
     fn bundle(dir: &Path, version: &str) -> PluginBundle {
         let root: PathBuf = dir.join("bundle");
         fs::create_dir_all(root.join(".claude-plugin")).unwrap();
@@ -147,6 +195,34 @@ mod tests {
         let report = read_status(dir.path(), Some(&bundle), true);
         assert_eq!(report.state, PluginState::Outdated);
         assert_eq!(report.installed_version.as_deref(), Some("0.1.1793607011"));
+    }
+
+    #[test]
+    fn aelteres_plugin_mit_gleichem_inhalt_gilt_als_installiert() {
+        let dir = temp();
+        installed_with_hash(dir.path(), "0.3.1793607011", "abc");
+        let bundle = bundle_with_hash(dir.path(), "0.3.1793700000", "abc");
+        let report = read_status(dir.path(), Some(&bundle), true);
+        assert_eq!(report.state, PluginState::Installed);
+        assert_eq!(report.installed_version.as_deref(), Some("0.3.1793607011"));
+    }
+
+    #[test]
+    fn aelteres_plugin_mit_anderem_inhalt_ist_veraltet() {
+        let dir = temp();
+        installed_with_hash(dir.path(), "0.3.1793607011", "abc");
+        let bundle = bundle_with_hash(dir.path(), "0.3.1793700000", "def");
+        let report = read_status(dir.path(), Some(&bundle), true);
+        assert_eq!(report.state, PluginState::Outdated);
+    }
+
+    #[test]
+    fn ohne_hash_beim_installierten_plugin_zaehlt_die_version() {
+        let dir = temp();
+        installed(dir.path(), &["0.3.1793607011"]);
+        let bundle = bundle_with_hash(dir.path(), "0.3.1793700000", "abc");
+        let report = read_status(dir.path(), Some(&bundle), true);
+        assert_eq!(report.state, PluginState::Outdated);
     }
 
     #[test]

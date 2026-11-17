@@ -47,6 +47,21 @@ describe('PluginSetupDialog', () => {
   it('nennt bei veraltetem Plugin beide Versionen', () => {
     openPlugin({ ...missing, state: 'outdated', installedVersion: '0.1.1' });
     expect(screen.getByText(/installiert 0\.1\.1, mitgeliefert 0\.1\.2/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Aktualisieren' })).toBeTruthy();
+  });
+
+  it('zeigt während der Installation den Schritt und den Anteil vom Server', async () => {
+    let finish: (value: unknown) => void = () => {};
+    const installPlugin = vi.fn(() => new Promise((resolve) => { finish = resolve; }));
+    const getPluginInstallProgress = vi.fn(async () => ({ running: true, progress: { label: 'Projekt 3 von 10: my4SELLERS', done: 6, total: 15 } }));
+    openPlugin(missing, { installPlugin, getPluginInstallProgress });
+    await userEvent.click(screen.getByRole('button', { name: 'Installieren' }));
+    expect(await screen.findByText(/Projekt 3 von 10: my4SELLERS/)).toBeTruthy();
+    expect(screen.getByText(/40 %/)).toBeTruthy();
+    expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('40');
+    finish({ ok: true, installed: true, steps: ['Plugin nexus@nexus-local installiert'], hints: [] });
+    expect(await screen.findByText('Plugin nexus@nexus-local installiert')).toBeTruthy();
+    expect(screen.queryByRole('progressbar')).toBeNull();
   });
 
   it('sperrt die Installation ohne claude', () => {
@@ -68,7 +83,7 @@ describe('PluginSetupDialog', () => {
     const installPlugin = vi.fn(() => new Promise((resolve) => { finish = resolve; }));
     const handlers = openPlugin(missing, { installPlugin });
     await userEvent.click(screen.getByRole('button', { name: 'Installieren' }));
-    expect(screen.getByText(/wird bei Claude Code angemeldet/)).toBeTruthy();
+    expect(screen.getByRole('progressbar', { name: 'Fortschritt der Installation' })).toBeTruthy();
     expect((screen.getByRole('button', { name: 'Nicht jetzt' }) as HTMLButtonElement).disabled).toBe(true);
     await userEvent.keyboard('{Escape}');
     expect(handlers.onLater).not.toHaveBeenCalled();

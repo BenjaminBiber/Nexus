@@ -33,6 +33,10 @@ pub fn routes() -> Router<Arc<AppState>> {
                 .fallback(static_or_not_found),
         )
         .route(
+            "/api/setup/plugin/progress",
+            get(plugin_progress).fallback(static_or_not_found),
+        )
+        .route(
             "/api/db/boards/{id}/migration",
             get(migration_check)
                 .post(migration_run)
@@ -59,6 +63,11 @@ async fn plugin_status(State(state): State<Arc<AppState>>) -> ApiResult<Response
     .await
     .map_err(Error::unexpected)?;
     Ok(json(&report))
+}
+
+/// Stand der laufenden Einrichtung, damit die Oberfläche einen Fortschritt zeigen kann
+async fn plugin_progress(State(state): State<Arc<AppState>>) -> ApiResult<Response> {
+    Ok(json(&state.config.setup.progress()))
 }
 
 /// Installiert das mitgelieferte Plugin; ohne Bundle oder bei laufendem Lauf 409

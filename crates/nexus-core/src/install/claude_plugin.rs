@@ -98,18 +98,57 @@ pub struct PluginInstallResult {
     pub hints: Vec<String>,
 }
 
+/// Stand der Einrichtung für eine Fortschrittsanzeige: `done` von `total` Schritten erledigt,
+/// `label` ist der laufende Schritt
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InstallProgress {
+    /// Laufender Schritt in Klartext
+    pub label: String,
+    /// Erledigte Schritte
+    pub done: usize,
+    /// Alle Schritte (fest plus einer je Projekt)
+    pub total: usize,
+}
+
+/// Schritte der Einrichtung ohne die Projekte: Claude prüfen, Marktplatz anmelden, Marktplatz
+/// einlesen, Plugin installieren, auf Benutzerebene ausschalten
+const FIXED_STEPS: usize = 5;
+
 /// Richtet das Plugin bei Claude Code ein: Marktplatz anmelden, Plugin installieren oder
 /// aktualisieren, Projekt-Einträge auffrischen und es auf Benutzerebene ausschalten.
 pub struct ClaudePluginInstall<'a> {
     claude: &'a dyn ClaudeCli,
     config_dir: Option<PathBuf>,
+    progress: Option<&'a (dyn Fn(InstallProgress) + 'a)>,
 }
 
 impl<'a> ClaudePluginInstall<'a> {
     /// Einrichtung mit der echten oder einer gefälschten Kommandozeile; `config_dir` ist der
     /// Ordner mit `plugins/installed_plugins.json` (`CLAUDE_CONFIG_DIR`, sonst `~/.claude`)
     pub fn new(claude: &'a dyn ClaudeCli, config_dir: Option<PathBuf>) -> Self {
-        Self { claude, config_dir }
+        Self {
+            claude,
+            config_dir,
+            progress: None,
+        }
+    }
+
+    /// Meldet vor jedem Schritt den Stand an `report`
+    pub fn with_progress(mut self, report: &'a (dyn Fn(InstallProgress) + 'a)) -> Self {
+        self.progress = Some(report);
+        self
+    }
+
+    /// Meldet den Stand, wenn jemand zuhört
+    fn report(&self, label: impl Into<String>, done: usize, total: usize) {
+        if let Some(report) = self.progress {
+            report(InstallProgress {
+                label: label.into(),
+                done,
+                total,
+            });
+        }
     }
 
     /// Einrichtung aus der Umgebung des laufenden Prozesses
@@ -139,6 +178,13 @@ impl<'a> ClaudePluginInstall<'a> {
     pub fn install(&self, marketplace_dir: &Path) -> PluginInstallResult {
         let mut result = PluginInstallResult::default();
         let dir = marketplace_dir.to_string_lossy().into_owned();
+        let projects: Vec<_> = self
+            .project_entries()
+            .into_iter()
+            .filter(|(_, path)| Path::new(path).exists())
+            .collect();
+        let total = FIXED_STEPS + projects.len();
+        self.report("Claude Code suchen", 0, total);
         if !self.claude.run(&["--version"], None).ok {
             result.hints.push(
                 "Claude Code (Befehl `claude`) wurde nicht gefunden. Das Plugin muss später selbst installiert werden:"
@@ -153,6 +199,7 @@ impl<'a> ClaudePluginInstall<'a> {
             return result;
         }
         result.available = true;
+        self.report("Marktplatz nexus-local anmelden", 1, total);
         if !self
             .claude
             .run(&["plugin", "marketplace", "list"], None)
@@ -171,6 +218,7 @@ impl<'a> ClaudePluginInstall<'a> {
             result.marketplace_added = true;
         }
         // Marktplatz neu einlesen, sonst sieht `plugin update` den frisch gebauten Stand nicht
+        self.report("Marktplatz neu einlesen", 2, total);
         self.claude
             .run(&["plugin", "marketplace", "update", MARKETPLACE], None);
         let list = self.claude.run(&["plugin", "list"], None).out;
@@ -179,6 +227,12 @@ impl<'a> ClaudePluginInstall<'a> {
         } else {
             "install"
         };
+        let label = if step == "update" {
+            "Plugin aktualisieren"
+        } else {
+            "Plugin installieren"
+        };
+        self.report(label, 3, total);
         if !self.claude.run(&["plugin", step, PLUGIN_ID], None).ok {
             result
                 .hints
@@ -186,7 +240,8 @@ impl<'a> ClaudePluginInstall<'a> {
             return result;
         }
         result.installed = true;
-        result.updated_projects = self.update_projects();
+        result.updated_projects = self.update_projects(&projects, total);
+        self.report("Plugin auf Benutzerebene ausschalten", total - 1, total);
         // Auf Benutzerebene ausschalten: `nexus init` schaltet es je Projekt ein, sonst kostet
         // es in jedem Projekt Zeit und Kontext
         result.disabled_for_user = self
@@ -203,26 +258,33 @@ impl<'a> ClaudePluginInstall<'a> {
                 )
                 .ok;
         }
+        self.report("Fertig", total, total);
         result
     }
 
     /// Frischt die Projekt-Einträge des Plugins auf (die `nexus init` eingeschaltet hat);
     /// sonst bleiben sie auf dem alten Stand
-    fn update_projects(&self) -> Vec<String> {
+    fn update_projects(&self, projects: &[(String, String)], total: usize) -> Vec<String> {
         let mut updated = Vec::new();
-        for (scope, path) in self.project_entries() {
-            if !Path::new(&path).exists() {
-                continue;
-            }
+        for (index, (scope, path)) in projects.iter().enumerate() {
+            let name = Path::new(path)
+                .file_name()
+                .map(|name| name.to_string_lossy().into_owned())
+                .unwrap_or_else(|| path.clone());
+            self.report(
+                format!("Projekt {} von {}: {name}", index + 1, projects.len()),
+                4 + index,
+                total,
+            );
             if self
                 .claude
                 .run(
-                    &["plugin", "update", PLUGIN_ID, "--scope", &scope],
-                    Some(Path::new(&path)),
+                    &["plugin", "update", PLUGIN_ID, "--scope", scope],
+                    Some(Path::new(path)),
                 )
                 .ok
             {
-                updated.push(path);
+                updated.push(path.clone());
             }
         }
         updated
@@ -420,6 +482,50 @@ mod tests {
         assert!(claude
             .calls()
             .contains(&"plugin update nexus@nexus-local --scope local".to_string()));
+    }
+
+    #[test]
+    fn meldet_jeden_schritt_mit_projekt_zaehler() {
+        let base = temp();
+        let projekt = base.path().join("projekt");
+        fs::create_dir_all(&projekt).unwrap();
+        let config = base.path().join("claude");
+        fs::create_dir_all(config.join("plugins")).unwrap();
+        let eintraege = serde_json::json!({
+            "plugins": { PLUGIN_ID: [{ "scope": "local", "projectPath": projekt.to_string_lossy() }] }
+        });
+        fs::write(
+            config.join("plugins").join("installed_plugins.json"),
+            eintraege.to_string(),
+        )
+        .unwrap();
+        let claude = FakeClaude::new(vec![
+            ("plugin marketplace list", true, "nexus-local"),
+            ("plugin list", true, PLUGIN_ID),
+        ]);
+        let stand = RefCell::new(Vec::new());
+        let melden = |progress: InstallProgress| stand.borrow_mut().push(progress);
+        let install = ClaudePluginInstall::new(&claude, Some(config)).with_progress(&melden);
+
+        install.install(Path::new("/clone"));
+
+        let stand = stand.into_inner();
+        let labels: Vec<_> = stand.iter().map(|p| p.label.as_str()).collect();
+        assert_eq!(
+            labels,
+            [
+                "Claude Code suchen",
+                "Marktplatz nexus-local anmelden",
+                "Marktplatz neu einlesen",
+                "Plugin aktualisieren",
+                "Projekt 1 von 1: projekt",
+                "Plugin auf Benutzerebene ausschalten",
+                "Fertig",
+            ]
+        );
+        assert!(stand.iter().all(|p| p.total == 6));
+        let done: Vec<_> = stand.iter().map(|p| p.done).collect();
+        assert_eq!(done, [0, 1, 2, 3, 4, 5, 6]);
     }
 
     #[test]

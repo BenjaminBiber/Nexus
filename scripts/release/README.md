@@ -247,6 +247,8 @@ echten Repo sind nur die lesenden Befehle gedacht: `check`, `next`, `current` un
 - **`build-plugin.mjs` bleibt wie es ist.** Der Plugin-Build überschreibt die Version des Manifests mit
   `<major>.<minor>.<zeitstempel>`, damit `claude plugin update` jeden lokalen Build als neueren erkennt. Ein
   Release-Bündel trägt damit nicht die Release-Version – ob es das soll, ist offen (NXS-0021, Abschlusskommentar).
+  Damit die App nicht nach jedem Release ein Plugin-Update anbietet, schreibt der Build zusätzlich einen
+  Inhalts-Hash (`content-hash`, ohne Zeitstempel-Felder); bei gleichem Hash gilt das Plugin als aktuell.
 - **Nur `version`-Stellen.** Formatversionen (`lockfileVersion`, `version = 4` in `Cargo.lock`,
   `.claude/launch.json`, `skills-lock.json`) sind keine Release-Versionen und bleiben außen vor.
 - **Gemischte Zeilenenden.** Eine Datei mit teils `\n` und teils `\r\n` wird beim Schreiben auf das häufigere

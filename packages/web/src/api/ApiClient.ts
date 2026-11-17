@@ -7,7 +7,7 @@ import type {
   BoardConfigDto, BoardConfigInput, BoardConfigTestDto, FavoriteDto, DocFileContentDto, DocsListDto, SessionDto, SettingsDto, UserSettingsDto, TestNotificationDto,
   SearchHitDto, QuestionDraftInputDto, QuestionDraftResultDto, DocQuestionResultDto, TicketDraftDto, TicketDraftInput, TicketDraftResultDto, DocTicketInput, DocTicketRefDto, DocTicketResultDto, DocCommentDto, NewDocCommentInput, DocCommentPatch, DocWriteResultDto, WriteDocSectionInput,
   ReviseDocInput, ReviseDocResultDto, ProjectDto,
-  WorkflowDto, CustomizationsDto, PluginSetupDto, PluginInstallDto, BoardMigrationDto, BoardMigrationResultDto, SnippetDto, StoreRepoDto,
+  WorkflowDto, CustomizationsDto, PluginSetupDto, PluginInstallDto, PluginInstallProgressDto, BoardMigrationDto, BoardMigrationResultDto, SnippetDto, StoreRepoDto,
   StoreIndexDto, StoreInstallResultDto, StoreUpdatesDto,
 } from './types.js';
 import type {
@@ -421,6 +421,10 @@ export class ApiClient {
 
   installPlugin(): Promise<PluginInstallDto> {
     return this.request('POST', '/api/setup/plugin', {});
+  }
+
+  getPluginInstallProgress(): Promise<PluginInstallProgressDto> {
+    return this.request('GET', '/api/setup/plugin/progress');
   }
 
   getBoardMigration(id: number): Promise<BoardMigrationDto> {

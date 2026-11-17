@@ -700,6 +700,11 @@
     "pattern": "/api/setup/plugin"
   },
   {
+    "file": "crates/nexus-server/src/routes/setup.rs",
+    "method": "GET",
+    "pattern": "/api/setup/plugin/progress"
+  },
+  {
     "file": "crates/nexus-server/src/routes/snippets.rs",
     "method": "GET",
     "pattern": "/api/snippets"
